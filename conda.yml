@@ -1,0 +1,12 @@
+name: dms_stan
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - conda-forge::arviz
+  - conda-forge::cmdstanpy
+  - conda-forge::typeguard
+  - jupyter
+  - panel
+  - python=3.12
+  - watchfiles
