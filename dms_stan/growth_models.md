@@ -1,6 +1,6 @@
 Growth Models
 =============
-This file describes the different models that are included in DMS-Stan.
+This file describes the different models of organismal growth that are included in DMS-Stan.
 
 ## Competitive Lotka-Volterra
 The base growth model that we start from is the [Lotka-Volterra equation for competitive growth](https://journals.biologists.com/jeb/article/9/4/389/22702/Experimental-Studies-on-the-Struggle-for):
@@ -13,11 +13,11 @@ $$
 
 which is a differential equation that describes the rate of change in a population of species $i$ with size $x_i$ given their base rate of change ($r_i$), their carrying capacity ($K_i$), the current population sizes of all competing species ($x_j$) including competition amongst the population itself, and a coefficient that describes the level of impact species $j$ has on species $i$ ($\alpha_{ij}$).
 
-Notably, as applied in DMS Stan where we parametrize our models such that we are working with relative proportions of variants and not absolute abundances, the carrying capacity for all variants will be 1, as this is when they dominate the population. Thus, our form of the Lotka-Volterra equation is
+Notably, as applied in DMS Stan where we parametrize our models such that we are working with relative proportions of variants and not absolute abundances, the carrying capacity for all variants must be the same (i.e., when they are the only variant in the population). Thus, all $K_i$ must be equal and so we will ignore it as a scaling factor (an alternative way to think about it is that it is implicitly encoded in all $\alpha_{ij}$). The form of the Lotka-Volterra equation used in DMS Stan is thus
 
 $$
 \begin{align}
-\frac{dx_i}{dt} = r_ix_i \left(1 - \sum_{j = 1}^{N}\alpha_{ij}x_j\right),
+\frac{dx_i}{dt} = r_ix_i \left(1 - \sum_{j = 1}^{N}\alpha_{ij}x_j\right).
 \end{align}
 $$
 
@@ -32,7 +32,7 @@ $$
 \end{align}
 $$
 
-Again, because DMS Stan works with relative proportions of variants, not absolute counts. The total sum of the proportions of all variants ($\sum_{j = 1}^Nx_j$) must thus be equal to 1. This gives us
+Again, because DMS Stan works with relative proportions of variants, not absolute counts. The total sum of the proportions of all variants ($\sum_{j = 1}^Nx_j$) must thus be constant. This constant can be captured in the $\alpha$ parameter itself, allowing us to simplify to
 
 $$
 \begin{align}
@@ -40,7 +40,7 @@ $$
 \end{align}
 $$
 
-which we will parametrize as
+which can in turn be reparametrized as
 
 $$
 \begin{align}
@@ -76,17 +76,17 @@ $$
 \end{align}
 $$
 
-When performing our regression in Stan, we will keep this in logarithmic form for the sake of numerical stability. However, expanding it we can see that this is just the equation for unbounded exponential growth:
+When performing our regression in Stan, we will keep this in logarithmic form for the sake of numerical stability. However, by expanding it we can see that this is just the equation for unbounded exponential growth:
 
 $$
 \begin{align}
 x_i &= \textrm{e} ^ {r_it + C_i} \\
 &= \textrm{e} ^ {r_it}\textrm{e} ^ {C_i} \\
-&= A\textrm{e} ^ {r_it}, \\
+&= A_i\textrm{e} ^ {r_it}, \\
 \end{align}
 $$
 
-where we are defining $A = \textrm{e}^C_i$ as a scaling constant.
+where we are defining $A_i = \textrm{e}^{C_i}$ as a scaling constant.
 
 ## Modified Sigmoid Growth
 It might not necessarily be reasonable to assume that all variants have equivalent impact on one another. Indeed, we may want to assume that each population of variants imparts a different-strength effect on the others. In this case, we can write Eq. 2 as
@@ -97,7 +97,7 @@ $$
 \end{align}
 $$
 
-where each variant has a distinct parameter for $\alpha$ that describes the strength of the impact of its population on both its own and other populations. Because $0 \le x_j \le 1$, the model is identifiable, as rescaling all $\alpha_j$ will result in a different summation.
+where each variant has a distinct parameter for $\alpha$ that describes the strength of the impact of its population on both its own and other populations.
 
 This integral is more tricky to solve, but it can be done. First, we need to isolate $x_i$ from the summation:
 
