@@ -1,6 +1,6 @@
-TrpB Generative Models
+Count Models
 =====================
-This file describes the distributions available for modeling DMS datasets in DMS Stan.
+This file describes the distributions available for modeling next generation sequencing counts datasets in DMS Stan.
 
 ## The Multinomial Distribution
 
