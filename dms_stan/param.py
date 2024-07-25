@@ -20,6 +20,47 @@ class AbstractParameter(ABC):
     def sample(self, n: int) -> npt.NDArray:
         """Sample from the distribution that represents the parameter."""
 
+    @abstractmethod
+    def get_parents(self) -> list["AbstractParameter"]:
+        """
+        Gathers the parent parameters of the current parameter.
+
+        Returns:
+            list[AbstractParameter]: Parent parameters of the current parameter.
+        """
+
+    def recurse_parents(
+        self, _current_depth: int = 0
+    ) -> list[tuple[int, "AbstractParameter", "AbstractParameter"]]:
+        """
+        Recursively calls get_parents on the current parameter to get the entire
+        lineage of the parameter.
+
+        Returns:
+            list[tuple[int, AbstractParameter, AbstractParameter]]: A list of tuples
+                containing the depth of the parameter in the lineage, the parent
+                parameter, and the current parameter, in that order.
+        """
+        # Get the parents of the current parameter
+        parents = self.get_parents()
+
+        # Call `recurse_parents` on each parent
+        to_return = []
+        for parent in parents:
+
+            # Skip non-parameters
+            if not isinstance(parent, AbstractParameter):
+                continue
+
+            # Add the parent to the list of tuples that will be returned
+            to_return.append((_current_depth, parent, self))
+
+            # Get the parent's lineage and add it to the list
+            to_return.extend(parent.recurse_parents(_current_depth + 1))
+
+        # Return the list of tuples
+        return to_return
+
     def __str__(self):
         return f"{self.__class__.__name__}"
 
@@ -88,6 +129,10 @@ class BinaryTransformedParameter(TransformedParameter):
         # Perform the operation
         return self.operation(sample1, sample2)
 
+    def get_parents(self) -> list[AbstractParameter]:
+        """Get the parent parameters of the current parameter"""
+        return [self.param1, self.param2]
+
     @abstractmethod
     def operation(
         self,
@@ -112,6 +157,10 @@ class UnaryTransformedParameter(TransformedParameter):
     def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray: ...
 
     # pylint: enable=arguments-differ
+
+    def get_parents(self) -> list[AbstractParameter]:
+        """Get the parent parameters of the current parameter"""
+        return [self.param1]
 
 
 class AddParameter(BinaryTransformedParameter):
@@ -257,15 +306,19 @@ class Parameter(AbstractParameter):
         # Sample from this distribution using numpy
         return self.numpy_dist(**param_draws, size=n)
 
-    def set_as_observable(self):
+    def as_observable(self):
         """Redefines the parameter as an observable variable (i.e., data)"""
         self.observable = True
         return self
 
-    def set_as_unobservable(self):
+    def as_unobservable(self):
         """Redefines the parameter as an unobservable variable (i.e., a parameter)"""
         self.observable = False
         return self
+
+    def get_parents(self) -> list[AbstractParameter]:
+        """Get the parent parameters of the current parameter"""
+        return list(self.parameters.values())
 
     @property
     def rng(self) -> np.random.Generator:
