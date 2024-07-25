@@ -1,246 +1,88 @@
 """Holds classes that can be used for defining models in DMS Stan models."""
 
-import functools
-
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Optional, ParamSpec, TypeVar, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
 
-P = ParamSpec("P")
-T = TypeVar("T")
+# TODO: Different parameters need different starting seeds!
 
 
-def _transform_parameter(func: Callable[P, T]) -> Callable[P, T]:
-    """
-    Decorates mathematical operator dunder methods of the Parameter class
-    to build transformed parameters.
-
-    Args:
-        func: The decorated function. This is the operator dunder method. The equivalent
-            method from the distribution instance contained within a parameter is
-            called to create a TransformedDistribution which is then used to create
-            a Parameter instance.
-
-    Returns:
-        A new function that wraps the distribution dunder methods as appropriate
-        to create Parameter instances.
-    """
-
-    @functools.wraps(func)
-    def inner(*args: P.args, **kwargs: P.kwargs) -> T:
-
-        # There should be no keyword arguments
-        if kwargs:
-            raise ValueError("No keyword arguments are allowed")
-
-        # The first argument must be a Parameter instance
-        if not isinstance(args[0], Parameter):
-            raise ValueError("The first argument must be a Parameter instance")
-
-        # Get the parameter
-        parameter = args[0]
-
-        # Get the same function belonging to the distribution contained in the
-        # parameter
-        distfunc = getattr(parameter.distribution, func.__name__)
-
-        # If there are no other arguments, this must be a unary operation. If
-        # there is one, it must be a binary operation. There should never be more.
-        # For allowed cases, create the transformed distribution
-        if len(args) == 1:  # Accounting for the self argument
-            dist = distfunc()
-            assert isinstance(dist, UnaryTransformedDistribution)
-        elif len(args) == 2:
-            other = args[-1]
-            dist = distfunc(
-                other.distribution if isinstance(other, Parameter) else other,
-            )
-            assert isinstance(dist, BinaryTransformedDistribution)
-        else:
-            raise ValueError("Invalid number of arguments")
-
-        # Create the new, transformed parameter
-        return parameter.__class__(dist)
-
-    # Update the docstring
-    inner.__doc__ = """
-    Enables the use of mathematical operators on parameters. The result is a
-    Parameter instance that represents the result of the operation.
-    """
-
-    return inner
-
-
-class Parameter:
-    """Defines a parameter that can be sampled from a distribution."""
-
-    # Used for naming default parameters. Increments with each new parameter that
-    # is created without a name.
-    parameter_counter: int = 0
+class AbstractParameter(ABC):
+    """Template class for parameters used in DMS Stan models."""
 
     # Define special types for parameters
-    CombinedParamType = Union["Parameter", int, float, npt.NDArray]
-
-    def __init__(
-        self,
-        distribution: Union["ContinuousDistribution", "TransformedDistribution"],
-        name: Optional[str] = None,
-    ):
-        # Get the name of the parameter if not provided
-        if name is None:
-
-            # Get the name of the parameter and increment the counter
-            name = f"TP_{Parameter.parameter_counter}"
-            Parameter.parameter_counter += 1
-
-        # Record the name and distribution of the parameter
-        self.name = name
-        self.distribution = distribution
-
-        # Register the parameter with the distribution
-        self.distribution.register_parameter(self)
-
-    def __str__(self) -> str:
-        """Return a string representation of the parameter."""
-        return f"{self.name} ~ {self.distribution}"
-
-    @_transform_parameter
-    def __add__(self, other: CombinedParamType) -> "Parameter": ...
-
-    @_transform_parameter
-    def __radd__(self, other: CombinedParamType) -> "Parameter": ...
-
-    @_transform_parameter
-    def __sub__(self, other: CombinedParamType) -> "Parameter": ...
-
-    @_transform_parameter
-    def __rsub__(self, other: CombinedParamType) -> "Parameter": ...
-
-    @_transform_parameter
-    def __mul__(self, other: CombinedParamType) -> "Parameter": ...
-
-    @_transform_parameter
-    def __rmul__(self, other: CombinedParamType) -> "Parameter": ...
-
-    @_transform_parameter
-    def __truediv__(self, other: CombinedParamType) -> "Parameter": ...
-
-    @_transform_parameter
-    def __rtruediv__(self, other: CombinedParamType) -> "Parameter": ...
-
-    @_transform_parameter
-    def __pow__(self, other: CombinedParamType) -> "Parameter": ...
-
-    @_transform_parameter
-    def __rpow__(self, other: CombinedParamType) -> "Parameter": ...
-
-    @_transform_parameter
-    def __neg__(self) -> "Parameter": ...
-
-
-class AbstractDistribution(ABC):
-    """Template class for distributions"""
-
-    # Define special types for distributions
     SampleType = Union[int, float, npt.NDArray]
-    CombinedDistType = Union["ContinuousDistribution", int, float, npt.NDArray]
-
-    def __init__(self):
-        """
-        Should be called by all subclasses. Defines the empty generated parameters
-        list.
-        """
-        self.generated_parameters: list[Parameter] = []
-
-    def register_parameter(self, param: Parameter):
-        """
-        Register a parameter to be sampled from the distribution. The parameter
-        becomes referenced in the `generated_parameters` list.
-        """
-        # If we do not have a `generated_parameters` list, the user forgot to call
-        # the parent class's `__init__` method
-        if not hasattr(self, "generated_parameters"):
-            raise ValueError(
-                "No `generated_parameters` list found in the distribution class. "
-                "Did you for get to call super().__init__() in the subclass?"
-            )
-
-        # Add the parameter to the list of generated parameters
-        self.generated_parameters.append(param)
+    CombinableParameterType = Union["ContinuousParameter", int, float, npt.NDArray]
 
     @abstractmethod
     def sample(self, n: int) -> npt.NDArray:
-        """Sample from the distribution"""
+        """Sample from the distribution that represents the parameter."""
 
     def __str__(self):
         return f"{self.__class__.__name__}"
 
 
-class TransformedDistribution(AbstractDistribution):
+class TransformedParameter(AbstractParameter):
     """
-    Class representing a distribution that is the result of combining other distributions
-    using mathematical operations.
+    Base class representing a parameter that is the result of combining other
+    parameters using mathematical operations.
     """
 
     def __init__(
         self,
-        dist1: AbstractDistribution.CombinedDistType,
-        dist2: Optional[AbstractDistribution.CombinedDistType],
+        param1: AbstractParameter.CombinableParameterType,
+        param2: Optional[AbstractParameter.CombinableParameterType],
     ):
         """
-        Create a transformed distribution by combining two continuous distributions.
+        Create a transformed parameter by combining two parameters that are represented
+        by continuous distributions.
         """
-        # Run the parent class's init
-        super().__init__()
-
-        # Store the two distributions
-        self.dist1 = dist1
-        self.dist2 = dist2
+        # Store the two parameters
+        self.param1 = param1
+        self.param2 = param2
 
     @abstractmethod
-    def sample(self, n: int) -> AbstractDistribution.SampleType:
-        """Sample from the distribution"""
+    def sample(self, n: int) -> AbstractParameter.SampleType:
         # Sample from the first distribution
         return (
-            self.dist1.sample(n)
-            if isinstance(self.dist1, ContinuousDistribution)
-            else self.dist1
+            self.param1.sample(n)
+            if isinstance(self.param1, ContinuousParameter)
+            else self.param1
         )
 
     @abstractmethod
     def operation(
         self,
-        sample1: AbstractDistribution.SampleType,
-        sample2: Optional[AbstractDistribution.SampleType],
+        sample1: AbstractParameter.SampleType,
+        sample2: Optional[AbstractParameter.SampleType],
     ) -> npt.NDArray:
         """Perform the operation on the samples"""
 
 
-class BinaryTransformedDistribution(TransformedDistribution):
+class BinaryTransformedParameter(TransformedParameter):
     """
-    Identical to the TransformedDistribution class, but only for operations involving
-    two distributions. In other words, both distributions must be provided.
+    Identical to the TransformedParameter class, but only for operations involving
+    two parameters. In other words, two parameters must be passed to the class.
     """
 
     def __init__(
         self,
-        dist1: AbstractDistribution.CombinedDistType,
-        dist2: AbstractDistribution.CombinedDistType,
+        dist1: AbstractParameter.CombinableParameterType,
+        dist2: AbstractParameter.CombinableParameterType,
     ):
         super().__init__(dist1, dist2)
 
     def sample(self, n: int) -> npt.NDArray:
-        """Sample from the distribution"""
         # Sample from the first distribution using the parent class's method
         sample1 = super().sample(n)
 
         # Sample from the second distribution
         sample2 = (
-            self.dist2.sample(n)
-            if isinstance(self.dist2, ContinuousDistribution)
-            else self.dist2
+            self.param2.sample(n)
+            if isinstance(self.param2, ContinuousParameter)
+            else self.param2
         )
 
         # Perform the operation
@@ -249,128 +91,117 @@ class BinaryTransformedDistribution(TransformedDistribution):
     @abstractmethod
     def operation(
         self,
-        sample1: AbstractDistribution.SampleType,
-        sample2: AbstractDistribution.SampleType,
-    ):
-        """Perform the operation on the samples"""
+        sample1: AbstractParameter.SampleType,
+        sample2: AbstractParameter.SampleType,
+    ): ...
 
 
-class UnaryTransformedDistribution(TransformedDistribution):
-    """Transformed distribution that only requires one distribution."""
+class UnaryTransformedParameter(TransformedParameter):
+    """Transformed parameter that only requires one parameter."""
 
-    def __init__(self, dist1: "ContinuousDistribution"):
+    def __init__(self, dist1: "ContinuousParameter"):
         super().__init__(dist1, None)
 
     def sample(self, n: int) -> npt.NDArray:
-        """Sample from the distribution"""
-        # Sample from the first distribution using the parent class's method
+        # Sample from the first distribution using the parent class's method, then
+        # perform the operation
         return self.operation(super().sample(n))
 
+    # pylint: disable=arguments-differ
     @abstractmethod
-    def operation(
-        self, sample1: AbstractDistribution.SampleType, sample2: None = None
-    ) -> npt.NDArray:
-        """Perform the operation on the sample."""
+    def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray: ...
+
+    # pylint: enable=arguments-differ
 
 
-class AddDistribution(BinaryTransformedDistribution):
-    """Defines a distribution that is the sum of two other distributions."""
+class AddParameter(BinaryTransformedParameter):
+    """Defines a parameter that is the sum of two other parameters."""
 
     def operation(
         self,
-        sample1: AbstractDistribution.SampleType,
-        sample2: AbstractDistribution.SampleType,
+        sample1: AbstractParameter.SampleType,
+        sample2: AbstractParameter.SampleType,
     ) -> npt.NDArray:
         return sample1 + sample2
 
 
-class SubtractDistribution(BinaryTransformedDistribution):
-    """Defines a distribution that is the difference of two other distributions."""
+class SubtractParameter(BinaryTransformedParameter):
+    """Defines a parameter that is the difference of two other parameters."""
 
     def operation(
         self,
-        sample1: AbstractDistribution.SampleType,
-        sample2: AbstractDistribution.SampleType,
+        sample1: AbstractParameter.SampleType,
+        sample2: AbstractParameter.SampleType,
     ) -> npt.NDArray:
         return sample1 - sample2
 
 
-class MultiplyDistribution(BinaryTransformedDistribution):
-    """Defines a distribution that is the product of two other distributions."""
+class MultiplyParameter(BinaryTransformedParameter):
+    """Defines a parameter that is the product of two other parameters."""
 
     def operation(
         self,
-        sample1: AbstractDistribution.SampleType,
-        sample2: AbstractDistribution.SampleType,
+        sample1: AbstractParameter.SampleType,
+        sample2: AbstractParameter.SampleType,
     ) -> npt.NDArray:
         return sample1 * sample2
 
 
-class DivideDistribution(BinaryTransformedDistribution):
-    """Defines a distribution that is the quotient of two other distributions."""
+class DivideParameter(BinaryTransformedParameter):
+    """Defines a parameter that is the quotient of two other parameters."""
 
     def operation(
         self,
-        sample1: AbstractDistribution.SampleType,
-        sample2: AbstractDistribution.SampleType,
+        sample1: AbstractParameter.SampleType,
+        sample2: AbstractParameter.SampleType,
     ) -> npt.NDArray:
         return sample1 / sample2
 
 
-class PowerDistribution(BinaryTransformedDistribution):
-    """Defines a distribution that is the power of another distribution."""
+class PowerParameter(BinaryTransformedParameter):
+    """Defines a parameter raised to the power of another parameter."""
 
     def operation(
         self,
-        sample1: AbstractDistribution.SampleType,
-        sample2: AbstractDistribution.SampleType,
+        sample1: AbstractParameter.SampleType,
+        sample2: AbstractParameter.SampleType,
     ) -> npt.NDArray:
         return sample1**sample2
 
 
-class NegateDistribution(UnaryTransformedDistribution):
-    """Defines a distribution that is the negative of another distribution."""
+class NegateParameter(UnaryTransformedParameter):
+    """Defines a parameter that is the negative of another parameter."""
 
-    def __init__(self, dist1: AbstractDistribution.CombinedDistType):
+    def __init__(self, dist1: AbstractParameter.CombinableParameterType):
         super().__init__(dist1)
 
-    def operation(
-        self,
-        sample1: AbstractDistribution.SampleType,
-        sample2: None = None,
-    ) -> npt.NDArray:
+    def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray:
         return -sample1
 
 
-class AbsDistribution(UnaryTransformedDistribution):
-    """Defines a distribution that is the absolute value of another distribution."""
+class AbsParameter(UnaryTransformedParameter):
+    """Defines a parameter that is the absolute value of another."""
 
-    def operation(
-        self, sample1: AbstractDistribution.SampleType, sample2: None = None
-    ) -> npt.NDArray:
+    def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray:
         return np.abs(sample1)
 
 
-class LogDistribution(UnaryTransformedDistribution):
-    """Defines a distribution that is the natural logarithm of another distribution."""
+class LogParameter(UnaryTransformedParameter):
+    """Defines a parameter that is the natural logarithm of another."""
 
-    def operation(
-        self, sample1: AbstractDistribution.SampleType, sample2: None = None
-    ) -> npt.NDArray:
+    def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray:
         return np.log(sample1)
 
 
-class ExpDistribution(UnaryTransformedDistribution):
-    """Defines a distribution that is the exponential of another distribution."""
+class ExpParameter(UnaryTransformedParameter):
+    """Defines a parameter that is the exponential of another."""
 
-    def operation(
-        self, sample1: AbstractDistribution.SampleType, sample2: None = None
-    ) -> npt.NDArray:
+    def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray:
         return np.exp(sample1)
 
 
-class Distribution(AbstractDistribution):
-    """Abstract class for distributions used in DMS Stan"""
+class Parameter(AbstractParameter):
+    """Base class for parameters used in DMS Stan"""
 
     def __init__(
         self,
@@ -380,7 +211,10 @@ class Distribution(AbstractDistribution):
         seed: int = 2,
         **parameters,
     ):
-        """Sets up random number generation and handles all parameters"""
+        """
+        Sets up random number generation and handles all parameters on which this
+        parameter depends.
+        """
         # Run the parent class's init
         super().__init__()
 
@@ -398,7 +232,7 @@ class Distribution(AbstractDistribution):
 
         # Populate the parameters and constants
         for paramname, val in parameters.items():
-            if isinstance(val, Parameter):
+            if isinstance(val, AbstractParameter):
                 self.parameters[paramname] = val
             else:
                 self.constants[paramname] = val
@@ -413,10 +247,9 @@ class Distribution(AbstractDistribution):
         self.stan_to_np_names = stan_to_np_names
 
     def sample(self, n: int) -> npt.NDArray:
-        """Sample from the distribution"""
         # Sample from the parameter distributions
         param_draws = {
-            self.stan_to_np_names[name]: param.distribution.sample(n)
+            self.stan_to_np_names[name]: param.sample(n)
             for name, param in self.parameters.items()
         }
 
@@ -429,59 +262,59 @@ class Distribution(AbstractDistribution):
         return self.numpy_dist(**param_draws, size=n)
 
 
-class ContinuousDistribution(Distribution):
-    """Base class for continuous distributions."""
+class ContinuousParameter(Parameter):
+    """Base class for parameters represented by continuous distributions."""
 
-    def __add__(self, other: AbstractDistribution.CombinedDistType):
-        return AddDistribution(self, other)
+    def __add__(self, other: AbstractParameter.CombinableParameterType):
+        return AddParameter(self, other)
 
-    def __radd__(self, other: AbstractDistribution.CombinedDistType):
-        return AddDistribution(other, self)
+    def __radd__(self, other: AbstractParameter.CombinableParameterType):
+        return AddParameter(other, self)
 
-    def __sub__(self, other: AbstractDistribution.CombinedDistType):
-        return SubtractDistribution(self, other)
+    def __sub__(self, other: AbstractParameter.CombinableParameterType):
+        return SubtractParameter(self, other)
 
-    def __rsub__(self, other: AbstractDistribution.CombinedDistType):
-        return SubtractDistribution(other, self)
+    def __rsub__(self, other: AbstractParameter.CombinableParameterType):
+        return SubtractParameter(other, self)
 
-    def __mul__(self, other: AbstractDistribution.CombinedDistType):
-        return MultiplyDistribution(self, other)
+    def __mul__(self, other: AbstractParameter.CombinableParameterType):
+        return MultiplyParameter(self, other)
 
-    def __rmul__(self, other: AbstractDistribution.CombinedDistType):
-        return MultiplyDistribution(other, self)
+    def __rmul__(self, other: AbstractParameter.CombinableParameterType):
+        return MultiplyParameter(other, self)
 
-    def __truediv__(self, other: AbstractDistribution.CombinedDistType):
-        return DivideDistribution(self, other)
+    def __truediv__(self, other: AbstractParameter.CombinableParameterType):
+        return DivideParameter(self, other)
 
-    def __rtruediv__(self, other: AbstractDistribution.CombinedDistType):
-        return DivideDistribution(other, self)
+    def __rtruediv__(self, other: AbstractParameter.CombinableParameterType):
+        return DivideParameter(other, self)
 
-    def __pow__(self, other: AbstractDistribution.CombinedDistType):
-        return PowerDistribution(self, other)
+    def __pow__(self, other: AbstractParameter.CombinableParameterType):
+        return PowerParameter(self, other)
 
-    def __rpow__(self, other: AbstractDistribution.CombinedDistType):
-        return PowerDistribution(other, self)
+    def __rpow__(self, other: AbstractParameter.CombinableParameterType):
+        return PowerParameter(other, self)
 
     def __neg__(self):
-        return NegateDistribution(self)
+        return NegateParameter(self)
 
 
-class DiscreteDistribution(Distribution):
-    """Base class for discrete distributions."""
+class DiscreteParameter(Parameter):
+    """Base class for parameters represented by discrete distributions."""
 
 
-class Normal(ContinuousDistribution):
-    """Defines the normal distribution."""
+class Normal(ContinuousParameter):
+    """Parameter that is represented by the normal distribution."""
 
     def __init__(
         self,
         *,
-        mu: Union[Parameter, float],
-        sigma: Union[Parameter, float],
+        mu: Union[AbstractParameter, float],
+        sigma: Union[AbstractParameter, float],
         **kwargs,
     ):
         # Sigma must be positive
-        if not isinstance(sigma, Parameter) and sigma <= 0:
+        if not isinstance(sigma, AbstractParameter) and sigma <= 0:
             raise ValueError("`sigma` must be positive")
 
         super().__init__(
@@ -494,9 +327,9 @@ class Normal(ContinuousDistribution):
 
 
 class HalfNormal(Normal):
-    """Defines the half-normal distribution."""
+    """Parameter that is represented by the half-normal distribution."""
 
-    def __init__(self, *, sigma: Union[Parameter, float], **kwargs):
+    def __init__(self, *, sigma: Union[AbstractParameter, float], **kwargs):
         super().__init__(mu=0, sigma=sigma, **kwargs)
 
     # Overwrite the sample method to ensure that the sampled values are positive
@@ -505,24 +338,70 @@ class HalfNormal(Normal):
 
 
 class UnitNormal(Normal):
-    """Defines the unit normal distribution."""
+    """Parameter that is represented by the unit normal distribution."""
 
     def __init__(self, **kwargs):
         super().__init__(mu=0, sigma=1, **kwargs)
 
 
-class Binomial(DiscreteDistribution):
-    """Defines the binomial distribution."""
+class Beta(ContinuousParameter):
+    """Defines the beta distribution."""
 
     def __init__(
         self,
         *,
-        theta: Union[Parameter, float],
-        N: Union[Parameter, int],
+        alpha: Union[AbstractParameter, float],
+        beta: Union[AbstractParameter, float],
+        **kwargs,
+    ):
+
+        # Alpha and beta must be positive
+        if not isinstance(alpha, AbstractParameter) and alpha <= 0:
+            raise ValueError("`alpha` must be positive")
+        if not isinstance(beta, AbstractParameter) and beta <= 0:
+            raise ValueError("`beta` must be positive")
+
+        super().__init__(
+            numpy_dist="beta",
+            stan_to_np_names={"alpha": "a", "beta": "b"},
+            alpha=alpha,
+            beta=beta,
+            **kwargs,
+        )
+
+
+class Dirichlet(ContinuousParameter):
+    """Defines the Dirichlet distribution."""
+
+    def __init__(self, *, alpha: Union[AbstractParameter, npt.ArrayLike], **kwargs):
+        # All alpha values must be positive
+        if isinstance(alpha, AbstractParameter):
+            test_alpha = np.array(alpha.distribution.sample(1))
+        else:
+            test_alpha = np.array(alpha)
+        if not np.all(test_alpha > 0):
+            raise ValueError("All `alpha` values must be positive")
+
+        super().__init__(
+            numpy_dist="dirichlet",
+            stan_to_np_names={"alpha": "alpha"},
+            alpha=alpha,
+            **kwargs,
+        )
+
+
+class Binomial(DiscreteParameter):
+    """Parameter that is represented by the binomial distribution"""
+
+    def __init__(
+        self,
+        *,
+        theta: Union[AbstractParameter, float],
+        N: Union[AbstractParameter, int],
         **kwargs,
     ):
         # Theta must be between 0 and 1
-        if not isinstance(theta, Parameter) and not 0 <= theta <= 1:
+        if not isinstance(theta, AbstractParameter) and not 0 <= theta <= 1:
             raise ValueError("`theta` must be between 0 and 1")
 
         super().__init__(
@@ -534,13 +413,13 @@ class Binomial(DiscreteDistribution):
         )
 
 
-class Poisson(DiscreteDistribution):
-    """Defines the Poisson distribution."""
+class Poisson(DiscreteParameter):
+    """Parameter that is represented by the Poisson distribution."""
 
-    def __init__(self, *, lambda_: Union[Parameter, float], **kwargs):
+    def __init__(self, *, lambda_: Union[AbstractParameter, float], **kwargs):
 
         # Lambda must be positive
-        if not isinstance(lambda_, Parameter) and lambda_ <= 0:
+        if not isinstance(lambda_, AbstractParameter) and lambda_ <= 0:
             raise ValueError("`lambda_` must be positive")
 
         super().__init__(
@@ -551,18 +430,18 @@ class Poisson(DiscreteDistribution):
         )
 
 
-class Multinomial(DiscreteDistribution):
+class Multinomial(DiscreteParameter):
     """Defines the multinomial distribution."""
 
     def __init__(
         self,
         *,
-        theta: Union[Parameter, npt.ArrayLike],
-        N: Optional[Union[Parameter, int]] = None,
+        theta: Union[AbstractParameter, npt.ArrayLike],
+        N: Optional[Union[AbstractParameter, int]] = None,
         **kwargs,
     ):
         # Sample the theta parameter if it is a distribution
-        if isinstance(theta, Parameter):
+        if isinstance(theta, AbstractParameter):
             sampled = np.array(theta.distribution.sample(1))
             sampled = sampled.unsqueeze(0) if sampled.ndim == 1 else sampled
 
@@ -594,49 +473,3 @@ class Multinomial(DiscreteDistribution):
             )
 
         return super().sample(n)
-
-
-class Beta(ContinuousDistribution):
-    """Defines the beta distribution."""
-
-    def __init__(
-        self,
-        *,
-        alpha: Union[Parameter, float],
-        beta: Union[Parameter, float],
-        **kwargs,
-    ):
-
-        # Alpha and beta must be positive
-        if not isinstance(alpha, Parameter) and alpha <= 0:
-            raise ValueError("`alpha` must be positive")
-        if not isinstance(beta, Parameter) and beta <= 0:
-            raise ValueError("`beta` must be positive")
-
-        super().__init__(
-            numpy_dist="beta",
-            stan_to_np_names={"alpha": "a", "beta": "b"},
-            alpha=alpha,
-            beta=beta,
-            **kwargs,
-        )
-
-
-class Dirichlet(ContinuousDistribution):
-    """Defines the Dirichlet distribution."""
-
-    def __init__(self, *, alpha: Union[Parameter, npt.ArrayLike], **kwargs):
-        # All alpha values must be positive
-        if isinstance(alpha, Parameter):
-            test_alpha = np.array(alpha.distribution.sample(1))
-        else:
-            test_alpha = np.array(alpha)
-        if not np.all(test_alpha > 0):
-            raise ValueError("All `alpha` values must be positive")
-
-        super().__init__(
-            numpy_dist="dirichlet",
-            stan_to_np_names={"alpha": "alpha"},
-            alpha=alpha,
-            **kwargs,
-        )
