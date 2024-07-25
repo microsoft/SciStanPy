@@ -6,7 +6,7 @@ from typing import Any, Callable, Optional, Union
 import numpy as np
 import numpy.typing as npt
 
-# TODO: Different parameters need different starting seeds!
+import dms_stan as dms
 
 
 class AbstractParameter(ABC):
@@ -14,7 +14,7 @@ class AbstractParameter(ABC):
 
     # Define special types for parameters
     SampleType = Union[int, float, npt.NDArray]
-    CombinableParameterType = Union["ContinuousParameter", int, float, npt.NDArray]
+    CombinableParameterType = Union["ContinuousDistribution", int, float, npt.NDArray]
 
     @abstractmethod
     def sample(self, n: int) -> npt.NDArray:
@@ -48,7 +48,7 @@ class TransformedParameter(AbstractParameter):
         # Sample from the first distribution
         return (
             self.param1.sample(n)
-            if isinstance(self.param1, ContinuousParameter)
+            if isinstance(self.param1, ContinuousDistribution)
             else self.param1
         )
 
@@ -81,7 +81,7 @@ class BinaryTransformedParameter(TransformedParameter):
         # Sample from the second distribution
         sample2 = (
             self.param2.sample(n)
-            if isinstance(self.param2, ContinuousParameter)
+            if isinstance(self.param2, ContinuousDistribution)
             else self.param2
         )
 
@@ -99,7 +99,7 @@ class BinaryTransformedParameter(TransformedParameter):
 class UnaryTransformedParameter(TransformedParameter):
     """Transformed parameter that only requires one parameter."""
 
-    def __init__(self, dist1: "ContinuousParameter"):
+    def __init__(self, dist1: "ContinuousDistribution"):
         super().__init__(dist1, None)
 
     def sample(self, n: int) -> npt.NDArray:
@@ -207,8 +207,7 @@ class Parameter(AbstractParameter):
         self,
         numpy_dist: str,
         stan_to_np_names: dict[str, str],
-        *,
-        seed: int = 2,
+        seed: Optional[Union[np.random.Generator, int]] = None,
         **parameters,
     ):
         """
@@ -219,16 +218,13 @@ class Parameter(AbstractParameter):
         super().__init__()
 
         # Define variables with types that are created within this function
-        self.rng: np.random.Generator
-        self.numpy_dist: Callable[..., npt.NDArray]
         self.parameters: dict[str, AbstractParameter] = {}
         self.constants: dict[str, Any] = {}
+        self.observable: bool = False
 
-        # Define the random number generator
-        self.rng = np.random.default_rng(seed)
-
-        # Store the numpy distribution
-        self.numpy_dist = getattr(self.rng, numpy_dist)
+        # Store the seed and the numpy distribution
+        self._numpy_dist = numpy_dist
+        self._seed = seed
 
         # Populate the parameters and constants
         for paramname, val in parameters.items():
@@ -261,8 +257,41 @@ class Parameter(AbstractParameter):
         # Sample from this distribution using numpy
         return self.numpy_dist(**param_draws, size=n)
 
+    def set_as_observable(self):
+        """Redefines the parameter as an observable variable (i.e., data)"""
+        self.observable = True
+        return self
 
-class ContinuousParameter(Parameter):
+    def set_as_unobservable(self):
+        """Redefines the parameter as an unobservable variable (i.e., a parameter)"""
+        self.observable = False
+        return self
+
+    @property
+    def rng(self) -> np.random.Generator:
+        """Return the random number generator"""
+        if self._seed is None:
+            return dms.RNG
+        elif isinstance(self._seed, int):
+            return np.random.default_rng(self._seed)
+        else:
+            return self._seed
+
+    @property
+    def numpy_dist(self) -> Callable[..., npt.NDArray]:
+        """Returns the numpy distribution function"""
+        return getattr(self.rng, self._numpy_dist)
+
+
+class Distribution(Parameter):
+    """
+    Defines distributions, which are a special type of parameter. This class is
+    a passthrough to the Parameter class, but it is used to differentiate between
+    parameters and distributions in the code.
+    """
+
+
+class ContinuousDistribution(Distribution):
     """Base class for parameters represented by continuous distributions."""
 
     def __add__(self, other: AbstractParameter.CombinableParameterType):
@@ -299,11 +328,19 @@ class ContinuousParameter(Parameter):
         return NegateParameter(self)
 
 
-class DiscreteParameter(Parameter):
-    """Base class for parameters represented by discrete distributions."""
+class DiscreteDistribution(Distribution):
+    """
+    Base class for parameters represented by discrete distributions. This is
+    more-or-less a passthrough to the Parameter class; however, the default for
+    discrete distributions is to set the observable attribute to True.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.observable = True
 
 
-class Normal(ContinuousParameter):
+class Normal(ContinuousDistribution):
     """Parameter that is represented by the normal distribution."""
 
     def __init__(
@@ -344,7 +381,7 @@ class UnitNormal(Normal):
         super().__init__(mu=0, sigma=1, **kwargs)
 
 
-class Beta(ContinuousParameter):
+class Beta(ContinuousDistribution):
     """Defines the beta distribution."""
 
     def __init__(
@@ -370,7 +407,7 @@ class Beta(ContinuousParameter):
         )
 
 
-class Dirichlet(ContinuousParameter):
+class Dirichlet(ContinuousDistribution):
     """Defines the Dirichlet distribution."""
 
     def __init__(self, *, alpha: Union[AbstractParameter, npt.ArrayLike], **kwargs):
@@ -390,7 +427,7 @@ class Dirichlet(ContinuousParameter):
         )
 
 
-class Binomial(DiscreteParameter):
+class Binomial(DiscreteDistribution):
     """Parameter that is represented by the binomial distribution"""
 
     def __init__(
@@ -413,7 +450,7 @@ class Binomial(DiscreteParameter):
         )
 
 
-class Poisson(DiscreteParameter):
+class Poisson(DiscreteDistribution):
     """Parameter that is represented by the Poisson distribution."""
 
     def __init__(self, *, lambda_: Union[AbstractParameter, float], **kwargs):
@@ -430,7 +467,7 @@ class Poisson(DiscreteParameter):
         )
 
 
-class Multinomial(DiscreteParameter):
+class Multinomial(DiscreteDistribution):
     """Defines the multinomial distribution."""
 
     def __init__(
