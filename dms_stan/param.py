@@ -17,7 +17,7 @@ class AbstractParameter(ABC):
     CombinableParameterType = Union["ContinuousDistribution", int, float, npt.NDArray]
 
     @abstractmethod
-    def sample(self, n: int) -> npt.NDArray:
+    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
         """Sample from the distribution that represents the parameter."""
 
     @abstractmethod
@@ -85,10 +85,10 @@ class TransformedParameter(AbstractParameter):
         self.param2 = param2
 
     @abstractmethod
-    def sample(self, n: int) -> AbstractParameter.SampleType:
+    def draw(self, size: Union[int, tuple[int, ...]]) -> AbstractParameter.SampleType:
         # Sample from the first distribution
         return (
-            self.param1.sample(n)
+            self.param1.draw(size)
             if isinstance(self.param1, ContinuousDistribution)
             else self.param1
         )
@@ -96,10 +96,10 @@ class TransformedParameter(AbstractParameter):
     @abstractmethod
     def operation(
         self,
-        sample1: AbstractParameter.SampleType,
-        sample2: Optional[AbstractParameter.SampleType],
+        draw1: AbstractParameter.SampleType,
+        draw2: Optional[AbstractParameter.SampleType],
     ) -> npt.NDArray:
-        """Perform the operation on the samples"""
+        """Perform the operation on the draws"""
 
 
 class BinaryTransformedParameter(TransformedParameter):
@@ -115,19 +115,19 @@ class BinaryTransformedParameter(TransformedParameter):
     ):
         super().__init__(dist1, dist2)
 
-    def sample(self, n: int) -> npt.NDArray:
+    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
         # Sample from the first distribution using the parent class's method
-        sample1 = super().sample(n)
+        draw1 = super().draw(size)
 
         # Sample from the second distribution
-        sample2 = (
-            self.param2.sample(n)
+        draw2 = (
+            self.param2.draw(size)
             if isinstance(self.param2, ContinuousDistribution)
             else self.param2
         )
 
         # Perform the operation
-        return self.operation(sample1, sample2)
+        return self.operation(draw1, draw2)
 
     def get_parents(self) -> list[AbstractParameter]:
         """Get the parent parameters of the current parameter"""
@@ -136,8 +136,8 @@ class BinaryTransformedParameter(TransformedParameter):
     @abstractmethod
     def operation(
         self,
-        sample1: AbstractParameter.SampleType,
-        sample2: AbstractParameter.SampleType,
+        draw1: AbstractParameter.SampleType,
+        draw2: AbstractParameter.SampleType,
     ): ...
 
 
@@ -147,14 +147,14 @@ class UnaryTransformedParameter(TransformedParameter):
     def __init__(self, dist1: "ContinuousDistribution"):
         super().__init__(dist1, None)
 
-    def sample(self, n: int) -> npt.NDArray:
+    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
         # Sample from the first distribution using the parent class's method, then
         # perform the operation
-        return self.operation(super().sample(n))
+        return self.operation(super().draw(size))
 
     # pylint: disable=arguments-differ
     @abstractmethod
-    def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray: ...
+    def operation(self, draw1: AbstractParameter.SampleType) -> npt.NDArray: ...
 
     # pylint: enable=arguments-differ
 
@@ -168,10 +168,10 @@ class AddParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        sample1: AbstractParameter.SampleType,
-        sample2: AbstractParameter.SampleType,
+        draw1: AbstractParameter.SampleType,
+        draw2: AbstractParameter.SampleType,
     ) -> npt.NDArray:
-        return sample1 + sample2
+        return draw1 + draw2
 
 
 class SubtractParameter(BinaryTransformedParameter):
@@ -179,10 +179,10 @@ class SubtractParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        sample1: AbstractParameter.SampleType,
-        sample2: AbstractParameter.SampleType,
+        draw1: AbstractParameter.SampleType,
+        draw2: AbstractParameter.SampleType,
     ) -> npt.NDArray:
-        return sample1 - sample2
+        return draw1 - draw2
 
 
 class MultiplyParameter(BinaryTransformedParameter):
@@ -190,10 +190,10 @@ class MultiplyParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        sample1: AbstractParameter.SampleType,
-        sample2: AbstractParameter.SampleType,
+        draw1: AbstractParameter.SampleType,
+        draw2: AbstractParameter.SampleType,
     ) -> npt.NDArray:
-        return sample1 * sample2
+        return draw1 * draw2
 
 
 class DivideParameter(BinaryTransformedParameter):
@@ -201,10 +201,10 @@ class DivideParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        sample1: AbstractParameter.SampleType,
-        sample2: AbstractParameter.SampleType,
+        draw1: AbstractParameter.SampleType,
+        draw2: AbstractParameter.SampleType,
     ) -> npt.NDArray:
-        return sample1 / sample2
+        return draw1 / draw2
 
 
 class PowerParameter(BinaryTransformedParameter):
@@ -212,10 +212,10 @@ class PowerParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        sample1: AbstractParameter.SampleType,
-        sample2: AbstractParameter.SampleType,
+        draw1: AbstractParameter.SampleType,
+        draw2: AbstractParameter.SampleType,
     ) -> npt.NDArray:
-        return sample1**sample2
+        return draw1**draw2
 
 
 class NegateParameter(UnaryTransformedParameter):
@@ -224,29 +224,29 @@ class NegateParameter(UnaryTransformedParameter):
     def __init__(self, dist1: AbstractParameter.CombinableParameterType):
         super().__init__(dist1)
 
-    def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray:
-        return -sample1
+    def operation(self, draw1: AbstractParameter.SampleType) -> npt.NDArray:
+        return -draw1
 
 
 class AbsParameter(UnaryTransformedParameter):
     """Defines a parameter that is the absolute value of another."""
 
-    def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray:
-        return np.abs(sample1)
+    def operation(self, draw1: AbstractParameter.SampleType) -> npt.NDArray:
+        return np.abs(draw1)
 
 
 class LogParameter(UnaryTransformedParameter):
     """Defines a parameter that is the natural logarithm of another."""
 
-    def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray:
-        return np.log(sample1)
+    def operation(self, draw1: AbstractParameter.SampleType) -> npt.NDArray:
+        return np.log(draw1)
 
 
 class ExpParameter(UnaryTransformedParameter):
     """Defines a parameter that is the exponential of another."""
 
-    def operation(self, sample1: AbstractParameter.SampleType) -> npt.NDArray:
-        return np.exp(sample1)
+    def operation(self, draw1: AbstractParameter.SampleType) -> npt.NDArray:
+        return np.exp(draw1)
 
 
 class Parameter(AbstractParameter):
@@ -291,10 +291,10 @@ class Parameter(AbstractParameter):
         # Store the stan names to numpy names dictionary
         self.stan_to_np_names = stan_to_np_names
 
-    def sample(self, n: int) -> npt.NDArray:
+    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
         # Sample from the parameter distributions
         param_draws = {
-            self.stan_to_np_names[name]: param.sample(n)
+            self.stan_to_np_names[name]: param.draw(size)
             for name, param in self.parameters.items()
         }
 
@@ -304,7 +304,7 @@ class Parameter(AbstractParameter):
         )
 
         # Sample from this distribution using numpy
-        return self.numpy_dist(**param_draws, size=n)
+        return self.numpy_dist(**param_draws, size=size)
 
     def as_observable(self):
         """Redefines the parameter as an observable variable (i.e., data)"""
@@ -422,9 +422,9 @@ class HalfNormal(Normal):
     def __init__(self, *, sigma: Union[AbstractParameter, float], **kwargs):
         super().__init__(mu=0, sigma=sigma, **kwargs)
 
-    # Overwrite the sample method to ensure that the sampled values are positive
-    def sample(self, n: int) -> npt.NDArray:
-        return np.abs(super().sample(n))
+    # Overwrite the draw method to ensure that the drawn values are positive
+    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
+        return np.abs(super().draw(size))
 
 
 class UnitNormal(Normal):
@@ -466,7 +466,7 @@ class Dirichlet(ContinuousDistribution):
     def __init__(self, *, alpha: Union[AbstractParameter, npt.ArrayLike], **kwargs):
         # All alpha values must be positive
         if isinstance(alpha, AbstractParameter):
-            test_alpha = np.array(alpha.distribution.sample(1))
+            test_alpha = np.array(alpha.distribution.draw(1))
         else:
             test_alpha = np.array(alpha)
         if not np.all(test_alpha > 0):
@@ -532,17 +532,17 @@ class Multinomial(DiscreteDistribution):
     ):
         # Sample the theta parameter if it is a distribution
         if isinstance(theta, AbstractParameter):
-            sampled = np.array(theta.distribution.sample(1))
-            sampled = sampled.unsqueeze(0) if sampled.ndim == 1 else sampled
+            drawn = np.array(theta.distribution.draw(1))
+            drawn = drawn.unsqueeze(0) if drawn.ndim == 1 else drawn
 
         # Otherwise make sure that it is a 1D array
         else:
-            sampled = np.expand_dims(np.array(theta), 0)
-            if sampled.ndim != 2:
+            drawn = np.expand_dims(np.array(theta), 0)
+            if drawn.ndim != 2:
                 raise ValueError("Thetas must be passed as a 1D array")
 
         # Whether passed as a parameter or not, the thetas must sum to 1
-        if not np.allclose(sampled.sum(axis=-1), 1):
+        if not np.allclose(drawn.sum(axis=-1), 1):
             raise ValueError("All arrays of thetas must sum to 1")
 
         # Run the parent class's init
@@ -554,7 +554,7 @@ class Multinomial(DiscreteDistribution):
             **kwargs,
         )
 
-    def sample(self, n: int) -> npt.NDArray:
+    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
         # There must be a value for `N` in the parameters if we are sampling
         if (self.parameters.get("N") is None) and (self.constants.get("N") is None):
             raise ValueError(
@@ -562,4 +562,4 @@ class Multinomial(DiscreteDistribution):
                 "'N' is provided'"
             )
 
-        return super().sample(n)
+        return super().draw(size)
