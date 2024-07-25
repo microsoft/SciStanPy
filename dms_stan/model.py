@@ -2,7 +2,9 @@
 
 import collections
 
-from typing import Generator, NamedTuple
+from typing import Generator, NamedTuple, Optional, Union
+
+import numpy.typing as npt
 
 import dms_stan.param as dmsp
 
@@ -111,6 +113,32 @@ class Model:
                     parameter_depths[name] = max(parameter_depths.get(name, 0), depth)
 
         return parameter_depths
+
+    def draw(
+        self, size: Union[int, tuple[int, ...]], param: Optional[str] = None
+    ) -> dict[str, npt.NDArray]:
+        """Draws from the model. By default, this will draw from the observable
+        values of the model. If a parameter is specified, then it will draw from
+        the distribution of that parameter.
+
+        Args:
+            size (Union[int, tuple[int, ...]]): The size of the sample to draw.
+                This is treated as the size parameter for the underlying numpy
+                random number generator.
+            param (Optional[str], optional): The parameter whose values should be
+                returned. Defaults to None, meaning that observable values will
+                be returned.
+
+        Returns:
+            dict[str, npt.NDArray]: A dictionary where the keys are the names of
+                the observables or parameters and the values are the samples drawn.
+        """
+        # If a parameter is specified, draw from that parameter
+        if param is not None:
+            return {param: self.parameter_dict[param].draw(size)}
+
+        # Otherwise, return draws from the observables
+        return {name: obs.draw(size) for name, obs in self.observable_dict.items()}
 
     def __iter__(self) -> Generator[tuple[str, dmsp.Parameter], None, None]:
         """
