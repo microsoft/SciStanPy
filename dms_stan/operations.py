@@ -9,6 +9,7 @@ from dms_stan.modeling import (
     AbstractDistribution,
     ExpDistribution,
     LogDistribution,
+    Parameter,
     UnaryTransformedDistribution,
 )
 
@@ -43,6 +44,11 @@ class UnaryOperation(Operation):
         Returns:
             The result of applying the operation to x.
         """
+        # If a dms_stan parameter, transform the underlying distribution object
+        # and return a new parameter
+        if isinstance(x, Parameter):
+            return Parameter(self.distclass(x.distribution), **kwargs)
+
         # If a dms_stan distribution, apply the distribution transformation
         if isinstance(x, AbstractDistribution):
             return self.distclass(x)
