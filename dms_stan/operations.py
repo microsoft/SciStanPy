@@ -5,12 +5,11 @@ from typing import Any, Callable
 import numpy as np
 
 from dms_stan.modeling import (
-    AbsDistribution,
-    AbstractDistribution,
-    ExpDistribution,
-    LogDistribution,
-    Parameter,
-    UnaryTransformedDistribution,
+    AbsParameter,
+    AbstractParameter,
+    ExpParameter,
+    LogParameter,
+    UnaryTransformedParameter,
 )
 
 
@@ -21,12 +20,12 @@ class Operation:
 class UnaryOperation(Operation):
     """Base class for dms_stan unary operations."""
 
-    def __init__(self, distclass: type[UnaryTransformedDistribution], func: Callable):
+    def __init__(self, distclass: type[UnaryTransformedParameter], func: Callable):
         """
-        Sets up an operation, which is a unary transformation of a distribution.
+        Sets up an operation, which is a unary transformation of a parameter.
 
         Args:
-            distclass: The distribution class to use when applied to dms_stan distributions.
+            distclass: The parameter class to use when applied to dms_stan parameters.
             func: The function to use when applied to anything else.
         """
         self.distclass = distclass
@@ -34,7 +33,7 @@ class UnaryOperation(Operation):
 
     def __call__(self, x: Any, **kwargs) -> Any:
         """
-        If x is a dms_stan distribution, apply the distribution transformation.
+        If x is a dms_stan parameter, apply the parameter transformation.
         Otherwise, apply the other function passed at init.
 
         Args:
@@ -44,13 +43,8 @@ class UnaryOperation(Operation):
         Returns:
             The result of applying the operation to x.
         """
-        # If a dms_stan parameter, transform the underlying distribution object
-        # and return a new parameter
-        if isinstance(x, Parameter):
-            return Parameter(self.distclass(x.distribution), **kwargs)
-
-        # If a dms_stan distribution, apply the distribution transformation
-        if isinstance(x, AbstractDistribution):
+        # If a dms_stan parameter, apply the transformation
+        if isinstance(x, AbstractParameter):
             return self.distclass(x)
 
         # Otherwise, apply the numpy function
@@ -58,6 +52,6 @@ class UnaryOperation(Operation):
 
 
 # Define our operations
-abs_ = UnaryOperation(AbsDistribution, np.abs)
-exp = UnaryOperation(ExpDistribution, np.exp)
-log = UnaryOperation(LogDistribution, np.log)
+abs_ = UnaryOperation(AbsParameter, np.abs)
+exp = UnaryOperation(ExpParameter, np.exp)
+log = UnaryOperation(LogParameter, np.log)
