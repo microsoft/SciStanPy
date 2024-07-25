@@ -221,7 +221,7 @@ class Parameter(AbstractParameter):
         # Define variables with types that are created within this function
         self.rng: np.random.Generator
         self.numpy_dist: Callable[..., npt.NDArray]
-        self.parameters: dict[str, Parameter] = {}
+        self.parameters: dict[str, AbstractParameter] = {}
         self.constants: dict[str, Any] = {}
 
         # Define the random number generator

@@ -4,7 +4,7 @@ from typing import Any, Callable
 
 import numpy as np
 
-from dms_stan.modeling import (
+from dms_stan.param import (
     AbsParameter,
     AbstractParameter,
     ExpParameter,
