@@ -14,7 +14,9 @@ class AbstractParameter(ABC):
 
     # Define special types for parameters
     SampleType = Union[int, float, npt.NDArray]
-    CombinableParameterType = Union["ContinuousDistribution", int, float, npt.NDArray]
+    CombinableParameterType = Union[
+        "ContinuousDistribution", "TransformedParameter", int, float, npt.NDArray
+    ]
 
     @abstractmethod
     def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
@@ -71,34 +73,33 @@ class TransformedParameter(AbstractParameter):
     parameters using mathematical operations.
     """
 
-    def __init__(
-        self,
-        param1: AbstractParameter.CombinableParameterType,
-        param2: Optional[AbstractParameter.CombinableParameterType],
-    ):
+    def __init__(self, *parameters: AbstractParameter.CombinableParameterType):
         """
-        Create a transformed parameter by combining two parameters that are represented
+        Create a transformed parameter by combining parameters that are represented
         by continuous distributions.
         """
-        # Store the two parameters
-        self.param1 = param1
-        self.param2 = param2
+        # There must be at least one parameter
+        if len(parameters) < 1:
+            raise ValueError("At least one parameter must be passed to the class")
 
-    @abstractmethod
-    def draw(self, size: Union[int, tuple[int, ...]]) -> AbstractParameter.SampleType:
-        # Sample from the first distribution
-        return (
-            self.param1.draw(size)
-            if isinstance(self.param1, ContinuousDistribution)
-            else self.param1
+        # Store the parameters
+        self.parameters = parameters
+
+    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
+        # Draw all parameters and appliy the operation
+        return self.operation(
+            [
+                param.draw(size) if isinstance(param, ContinuousDistribution) else param
+                for param in self.parameters
+            ]
         )
 
+    def get_parents(self) -> list[AbstractParameter.CombinableParameterType]:
+        """Get the parent parameters of the current parameters"""
+        return list(self.parameters)
+
     @abstractmethod
-    def operation(
-        self,
-        draw1: AbstractParameter.SampleType,
-        draw2: Optional[AbstractParameter.SampleType],
-    ) -> npt.NDArray:
+    def operation(self, *draws: AbstractParameter.SampleType) -> npt.NDArray:
         """Perform the operation on the draws"""
 
 
@@ -115,26 +116,8 @@ class BinaryTransformedParameter(TransformedParameter):
     ):
         super().__init__(dist1, dist2)
 
-    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
-        # Sample from the first distribution using the parent class's method
-        draw1 = super().draw(size)
-
-        # Sample from the second distribution
-        draw2 = (
-            self.param2.draw(size)
-            if isinstance(self.param2, ContinuousDistribution)
-            else self.param2
-        )
-
-        # Perform the operation
-        return self.operation(draw1, draw2)
-
-    def get_parents(self) -> list[AbstractParameter]:
-        """Get the parent parameters of the current parameter"""
-        return [self.param1, self.param2]
-
     @abstractmethod
-    def operation(
+    def operation(  # pylint: disable=arguments-differ
         self,
         draw1: AbstractParameter.SampleType,
         draw2: AbstractParameter.SampleType,
@@ -145,22 +128,12 @@ class UnaryTransformedParameter(TransformedParameter):
     """Transformed parameter that only requires one parameter."""
 
     def __init__(self, dist1: "ContinuousDistribution"):
-        super().__init__(dist1, None)
+        super().__init__(dist1)
 
-    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
-        # Sample from the first distribution using the parent class's method, then
-        # perform the operation
-        return self.operation(super().draw(size))
-
-    # pylint: disable=arguments-differ
     @abstractmethod
-    def operation(self, draw1: AbstractParameter.SampleType) -> npt.NDArray: ...
-
-    # pylint: enable=arguments-differ
-
-    def get_parents(self) -> list[AbstractParameter]:
-        """Get the parent parameters of the current parameter"""
-        return [self.param1]
+    def operation(  # pylint: disable=arguments-differ
+        self, draw1: AbstractParameter.SampleType
+    ) -> npt.NDArray: ...
 
 
 class AddParameter(BinaryTransformedParameter):
