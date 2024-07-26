@@ -1,5 +1,7 @@
 """Holds classes that can be used for defining models in DMS Stan models."""
 
+import itertools
+
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Optional, Union
 
@@ -13,8 +15,25 @@ import dms_stan.constant as dmsc
 class AbstractParameter(ABC):
     """Template class for parameters used in DMS Stan models."""
 
+    def __init__(  # pylint: disable=unused-argument
+        self, *args, shape=tuple[int, ...], **kwargs
+    ):
+        """Builds a parameter instance with the given shape."""
+        # Set the shape
+        self.shape = shape
+
+        # Initialize the shape of the parameter
+        self.initialize_shape()
+
     @abstractmethod
-    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
+    def initialize_shape(self, *candidate_shapes: tuple[int, ...]) -> None:
+        """Initialize the shape of the parameter"""
+        # Get the shape that would result from broadcasting the parameters against
+        # the defined shape
+        self.shape = np.broadcast_shapes(self.shape, *candidate_shapes)
+
+    @abstractmethod
+    def draw(self, n: int) -> npt.NDArray:
         """Sample from the distribution that represents the parameter."""
 
     @abstractmethod
@@ -61,6 +80,11 @@ class AbstractParameter(ABC):
     def __str__(self):
         return f"{self.__class__.__name__}"
 
+    @property
+    def ndim(self) -> int:
+        """Return the number of dimensions of the parameter"""
+        return len(self.shape)
+
 
 class TransformedParameter(AbstractParameter):
     """
@@ -68,7 +92,7 @@ class TransformedParameter(AbstractParameter):
     parameters using mathematical operations.
     """
 
-    def __init__(self, *parameters: "CombinableParameterType"):
+    def __init__(self, *parameters: "CombinableParameterType", shape=tuple[int, ...]):
         """
         Create a transformed parameter by combining parameters that are represented
         by continuous distributions.
@@ -80,18 +104,48 @@ class TransformedParameter(AbstractParameter):
         # Store the parameters
         self.parameters = parameters
 
-    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
-        # Draw all parameters and appliy the operation
-        return self.operation(
-            [
-                param.draw(size) if isinstance(param, ContinuousDistribution) else param
-                for param in self.parameters
-            ]
-        )
+        # Run the parent class's init
+        super().__init__(shape=shape)
+
+    def draw(self, n: int) -> npt.NDArray:
+
+        # Draw from all parameters that are continuous distributions
+        draws = [
+            param.draw(n)
+            for param in self.parameters
+            if isinstance(param, ContinuousDistribution)
+        ]
+
+        # We know from the `initialize_shape` method that the shapes are compatible,
+        # but drawing adds a leading dimension to the draws to reflect 'n', which
+        # might make the shapes incompatible. We will explicitly add intermediate
+        # dimensions to make the shapes compatible.
+        most_dims = max(draw.ndim for draw in draws if isinstance(draw, np.ndarray))
+        draws = [
+            (
+                np.expand_dims(draw, axis=tuple(range(1, most_dims - draw.ndim + 1)))
+                if isinstance(draw, np.ndarray)
+                else draw
+            )
+            for draw in draws
+        ]
+
+        # Apply the operation to the draws
+        return self.operation(*draws)
 
     def get_parents(self) -> list["CombinableParameterType"]:
         """Get the parent parameters of the current parameters"""
         return list(self.parameters)
+
+    def initialize_shape(self, *candidate_shapes: tuple[int, ...]) -> None:
+
+        # Extend the list of candidates to include the shapes of the parameters
+        all_candidates = list(candidate_shapes) + [
+            getattr(param, "shape", tuple()) for param in self.parameters
+        ]
+
+        # Make sure the shapes are compatible
+        super().initialize_shape(*all_candidates)
 
     @abstractmethod
     def operation(self, *draws: "SampleType") -> npt.NDArray:
@@ -108,8 +162,9 @@ class BinaryTransformedParameter(TransformedParameter):
         self,
         dist1: "CombinableParameterType",
         dist2: "CombinableParameterType",
+        shape=tuple[int, ...],
     ):
-        super().__init__(dist1, dist2)
+        super().__init__(dist1, dist2, shape=shape)
 
     @abstractmethod
     def operation(  # pylint: disable=arguments-differ
@@ -122,8 +177,8 @@ class BinaryTransformedParameter(TransformedParameter):
 class UnaryTransformedParameter(TransformedParameter):
     """Transformed parameter that only requires one parameter."""
 
-    def __init__(self, dist1: "ContinuousDistribution"):
-        super().__init__(dist1)
+    def __init__(self, dist1: "ContinuousDistribution", shape=tuple[int, ...]):
+        super().__init__(dist1, shape=shape)
 
     @abstractmethod
     def operation(  # pylint: disable=arguments-differ
@@ -225,15 +280,13 @@ class Parameter(AbstractParameter):
         numpy_dist: str,
         stan_to_np_names: dict[str, str],
         seed: Optional[Union[np.random.Generator, int]] = None,
+        shape: tuple[int, ...] = tuple(),
         **parameters,
     ):
         """
         Sets up random number generation and handles all parameters on which this
         parameter depends.
         """
-        # Run the parent class's init
-        super().__init__()
-
         # Define variables with types that are created within this function
         self.parameters: dict[str, AbstractParameter] = {}
         self.constants: dict[str, Any] = {}
@@ -259,10 +312,13 @@ class Parameter(AbstractParameter):
         # Store the stan names to numpy names dictionary
         self.stan_to_np_names = stan_to_np_names
 
-    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
+        # Run the parent class's init
+        super().__init__(shape=shape)
+
+    def draw(self, n: int) -> npt.NDArray:
         # Sample from the parameter distributions
         param_draws = {
-            self.stan_to_np_names[name]: param.draw(size)
+            self.stan_to_np_names[name]: param.draw(n)
             for name, param in self.parameters.items()
         }
 
@@ -271,8 +327,15 @@ class Parameter(AbstractParameter):
             {self.stan_to_np_names[name]: val for name, val in self.constants.items()}
         )
 
-        # Sample from this distribution using numpy
-        return self.numpy_dist(**param_draws, size=size)
+        # Sample from this distribution using numpy. If we have parameters feeding
+        # into this one, then they will have determined the shape of the draws, so
+        # we do not modify the `size` kwarg. If it is only constants feeding this
+        # distribution, however, the size parameter must be set to the appropriate
+        # shape
+        return self.numpy_dist(
+            **param_draws,
+            size=(n,) + self.shape if len(self.parameters) == 0 else None,
+        )
 
     def as_observable(self):
         """Redefines the parameter as an observable variable (i.e., data)"""
@@ -287,6 +350,18 @@ class Parameter(AbstractParameter):
     def get_parents(self) -> list[AbstractParameter]:
         """Get the parent parameters of the current parameter"""
         return list(self.parameters.values())
+
+    def initialize_shape(self, *candidate_shapes: tuple[int, ...]) -> None:
+        # Update the list of candidates from the parameters and constants
+        all_candidates = list(candidate_shapes) + [
+            getattr(param, "shape", tuple())
+            for param in itertools.chain(
+                self.parameters.values(), self.constants.values()
+            )
+        ]
+
+        # Make sure the shapes are compatible
+        super().initialize_shape(*all_candidates)
 
     @property
     def rng(self) -> np.random.Generator:
@@ -391,8 +466,8 @@ class HalfNormal(Normal):
         super().__init__(mu=0, sigma=sigma, **kwargs)
 
     # Overwrite the draw method to ensure that the drawn values are positive
-    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
-        return np.abs(super().draw(size))
+    def draw(self, n: int) -> npt.NDArray:
+        return np.abs(super().draw(n))
 
 
 class UnitNormal(Normal):
@@ -433,11 +508,7 @@ class Dirichlet(ContinuousDistribution):
 
     def __init__(self, *, alpha: Union[AbstractParameter, npt.ArrayLike], **kwargs):
         # All alpha values must be positive
-        if isinstance(alpha, AbstractParameter):
-            test_alpha = np.array(alpha.distribution.draw(1))
-        else:
-            test_alpha = np.array(alpha)
-        if not np.all(test_alpha > 0):
+        if not isinstance(alpha, AbstractParameter) and np.all(np.array(alpha) <= 0):
             raise ValueError("All `alpha` values must be positive")
 
         super().__init__(
@@ -498,19 +569,8 @@ class Multinomial(DiscreteDistribution):
         N: Optional[Union[AbstractParameter, int]] = None,
         **kwargs,
     ):
-        # Sample the theta parameter if it is a distribution
-        if isinstance(theta, AbstractParameter):
-            drawn = np.array(theta.distribution.draw(1))
-            drawn = drawn.unsqueeze(0) if drawn.ndim == 1 else drawn
-
-        # Otherwise make sure that it is a 1D array
-        else:
-            drawn = np.expand_dims(np.array(theta), 0)
-            if drawn.ndim != 2:
-                raise ValueError("Thetas must be passed as a 1D array")
-
-        # Whether passed as a parameter or not, the thetas must sum to 1
-        if not np.allclose(drawn.sum(axis=-1), 1):
+        # Thetas must sum to 1
+        if not isinstance(theta, AbstractParameter) and abs(np.sum(theta) % 1) > 1e-6:
             raise ValueError("All arrays of thetas must sum to 1")
 
         # Run the parent class's init
@@ -522,7 +582,7 @@ class Multinomial(DiscreteDistribution):
             **kwargs,
         )
 
-    def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
+    def draw(self, n: int) -> npt.NDArray:
         # There must be a value for `N` in the parameters if we are sampling
         if (self.parameters.get("N") is None) and (self.constants.get("N") is None):
             raise ValueError(
@@ -530,7 +590,7 @@ class Multinomial(DiscreteDistribution):
                 "'N' is provided'"
             )
 
-        return super().draw(size)
+        return super().draw(n)
 
 
 # Define custom types for this module
