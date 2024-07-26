@@ -7,16 +7,11 @@ import numpy as np
 import numpy.typing as npt
 
 import dms_stan as dms
+import dms_stan.constant as dmsc
 
 
 class AbstractParameter(ABC):
     """Template class for parameters used in DMS Stan models."""
-
-    # Define special types for parameters
-    SampleType = Union[int, float, npt.NDArray]
-    CombinableParameterType = Union[
-        "ContinuousDistribution", "TransformedParameter", int, float, npt.NDArray
-    ]
 
     @abstractmethod
     def draw(self, size: Union[int, tuple[int, ...]]) -> npt.NDArray:
@@ -73,7 +68,7 @@ class TransformedParameter(AbstractParameter):
     parameters using mathematical operations.
     """
 
-    def __init__(self, *parameters: AbstractParameter.CombinableParameterType):
+    def __init__(self, *parameters: "CombinableParameterType"):
         """
         Create a transformed parameter by combining parameters that are represented
         by continuous distributions.
@@ -94,12 +89,12 @@ class TransformedParameter(AbstractParameter):
             ]
         )
 
-    def get_parents(self) -> list[AbstractParameter.CombinableParameterType]:
+    def get_parents(self) -> list["CombinableParameterType"]:
         """Get the parent parameters of the current parameters"""
         return list(self.parameters)
 
     @abstractmethod
-    def operation(self, *draws: AbstractParameter.SampleType) -> npt.NDArray:
+    def operation(self, *draws: "SampleType") -> npt.NDArray:
         """Perform the operation on the draws"""
 
 
@@ -111,16 +106,16 @@ class BinaryTransformedParameter(TransformedParameter):
 
     def __init__(
         self,
-        dist1: AbstractParameter.CombinableParameterType,
-        dist2: AbstractParameter.CombinableParameterType,
+        dist1: "CombinableParameterType",
+        dist2: "CombinableParameterType",
     ):
         super().__init__(dist1, dist2)
 
     @abstractmethod
     def operation(  # pylint: disable=arguments-differ
         self,
-        draw1: AbstractParameter.SampleType,
-        draw2: AbstractParameter.SampleType,
+        draw1: "SampleType",
+        draw2: "SampleType",
     ): ...
 
 
@@ -132,7 +127,7 @@ class UnaryTransformedParameter(TransformedParameter):
 
     @abstractmethod
     def operation(  # pylint: disable=arguments-differ
-        self, draw1: AbstractParameter.SampleType
+        self, draw1: "SampleType"
     ) -> npt.NDArray: ...
 
 
@@ -141,8 +136,8 @@ class AddParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        draw1: AbstractParameter.SampleType,
-        draw2: AbstractParameter.SampleType,
+        draw1: "SampleType",
+        draw2: "SampleType",
     ) -> npt.NDArray:
         return draw1 + draw2
 
@@ -152,8 +147,8 @@ class SubtractParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        draw1: AbstractParameter.SampleType,
-        draw2: AbstractParameter.SampleType,
+        draw1: "SampleType",
+        draw2: "SampleType",
     ) -> npt.NDArray:
         return draw1 - draw2
 
@@ -163,8 +158,8 @@ class MultiplyParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        draw1: AbstractParameter.SampleType,
-        draw2: AbstractParameter.SampleType,
+        draw1: "SampleType",
+        draw2: "SampleType",
     ) -> npt.NDArray:
         return draw1 * draw2
 
@@ -174,8 +169,8 @@ class DivideParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        draw1: AbstractParameter.SampleType,
-        draw2: AbstractParameter.SampleType,
+        draw1: "SampleType",
+        draw2: "SampleType",
     ) -> npt.NDArray:
         return draw1 / draw2
 
@@ -185,8 +180,8 @@ class PowerParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        draw1: AbstractParameter.SampleType,
-        draw2: AbstractParameter.SampleType,
+        draw1: "SampleType",
+        draw2: "SampleType",
     ) -> npt.NDArray:
         return draw1**draw2
 
@@ -194,31 +189,31 @@ class PowerParameter(BinaryTransformedParameter):
 class NegateParameter(UnaryTransformedParameter):
     """Defines a parameter that is the negative of another parameter."""
 
-    def __init__(self, dist1: AbstractParameter.CombinableParameterType):
+    def __init__(self, dist1: "CombinableParameterType"):
         super().__init__(dist1)
 
-    def operation(self, draw1: AbstractParameter.SampleType) -> npt.NDArray:
+    def operation(self, draw1: "SampleType") -> npt.NDArray:
         return -draw1
 
 
 class AbsParameter(UnaryTransformedParameter):
     """Defines a parameter that is the absolute value of another."""
 
-    def operation(self, draw1: AbstractParameter.SampleType) -> npt.NDArray:
+    def operation(self, draw1: "SampleType") -> npt.NDArray:
         return np.abs(draw1)
 
 
 class LogParameter(UnaryTransformedParameter):
     """Defines a parameter that is the natural logarithm of another."""
 
-    def operation(self, draw1: AbstractParameter.SampleType) -> npt.NDArray:
+    def operation(self, draw1: "SampleType") -> npt.NDArray:
         return np.log(draw1)
 
 
 class ExpParameter(UnaryTransformedParameter):
     """Defines a parameter that is the exponential of another."""
 
-    def operation(self, draw1: AbstractParameter.SampleType) -> npt.NDArray:
+    def operation(self, draw1: "SampleType") -> npt.NDArray:
         return np.exp(draw1)
 
 
@@ -320,34 +315,34 @@ class Distribution(Parameter):
 class ContinuousDistribution(Distribution):
     """Base class for parameters represented by continuous distributions."""
 
-    def __add__(self, other: AbstractParameter.CombinableParameterType):
+    def __add__(self, other: "CombinableParameterType"):
         return AddParameter(self, other)
 
-    def __radd__(self, other: AbstractParameter.CombinableParameterType):
+    def __radd__(self, other: "CombinableParameterType"):
         return AddParameter(other, self)
 
-    def __sub__(self, other: AbstractParameter.CombinableParameterType):
+    def __sub__(self, other: "CombinableParameterType"):
         return SubtractParameter(self, other)
 
-    def __rsub__(self, other: AbstractParameter.CombinableParameterType):
+    def __rsub__(self, other: "CombinableParameterType"):
         return SubtractParameter(other, self)
 
-    def __mul__(self, other: AbstractParameter.CombinableParameterType):
+    def __mul__(self, other: "CombinableParameterType"):
         return MultiplyParameter(self, other)
 
-    def __rmul__(self, other: AbstractParameter.CombinableParameterType):
+    def __rmul__(self, other: "CombinableParameterType"):
         return MultiplyParameter(other, self)
 
-    def __truediv__(self, other: AbstractParameter.CombinableParameterType):
+    def __truediv__(self, other: "CombinableParameterType"):
         return DivideParameter(self, other)
 
-    def __rtruediv__(self, other: AbstractParameter.CombinableParameterType):
+    def __rtruediv__(self, other: "CombinableParameterType"):
         return DivideParameter(other, self)
 
-    def __pow__(self, other: AbstractParameter.CombinableParameterType):
+    def __pow__(self, other: "CombinableParameterType"):
         return PowerParameter(self, other)
 
-    def __rpow__(self, other: AbstractParameter.CombinableParameterType):
+    def __rpow__(self, other: "CombinableParameterType"):
         return PowerParameter(other, self)
 
     def __neg__(self):
@@ -536,3 +531,15 @@ class Multinomial(DiscreteDistribution):
             )
 
         return super().draw(size)
+
+
+# Define custom types for this module
+SampleType = Union[int, float, npt.NDArray]
+CombinableParameterType = Union[
+    ContinuousDistribution,
+    TransformedParameter,
+    dmsc.Constant,
+    int,
+    float,
+    npt.NDArray,
+]
