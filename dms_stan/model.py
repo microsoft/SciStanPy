@@ -6,6 +6,7 @@ from typing import Generator, NamedTuple, Optional, Union
 
 import numpy.typing as npt
 
+import dms_stan.constant as dmsc
 import dms_stan.param as dmsp
 
 
@@ -51,26 +52,23 @@ class Model:
                     "The attribute `_observables` cannot be defined in `Model` subclasses"
                 )
 
-            # Now we need to find all the parameters and observables that are defined
-            # in the class.
-            parameters, observables = {}, {}
-            for attr in dir(self):
-                # Skip properties of this class
-                if attr in {
-                    "parameters",
-                    "observables",
-                    "parameter_dict",
-                    "observable_dict",
-                }:
-                    continue
+            # Now we need to find all the parameters, observables, and constants
+            # that are defined in the class. Skip any attributes defined in this
+            # meta class.
+            parameters, observables, constants = {}, {}, {}
+            for attr in set(dir(self)) - set(dir(Model)):
 
                 # If the attribute is a parameter, add it to the parameters dictionary.
-                # If it is an observable, add it to the observables dictionary.
-                if isinstance(retrieved := getattr(self, attr), dmsp.Parameter):
+                # If it is an observable, add it to the observables dictionary. If
+                # it is a constant, add it to the constants dictionary.
+                retrieved = getattr(self, attr)
+                if isinstance(retrieved, dmsp.Parameter):
                     if retrieved.observable:
                         observables[attr] = retrieved
                     else:
                         parameters[attr] = retrieved
+                elif isinstance(retrieved, dmsc.Constant):
+                    constants[attr] = retrieved
 
             # At least one of these parameters must be an observable and at least
             # one of them must be a parameter.
