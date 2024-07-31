@@ -60,9 +60,7 @@ class AbstractParameter(ABC):
             and draws from the distributions.
 
         In child classes, this should return a numpy array. In this base class,
-        however, a dictionary is returned that maps from parameter names to draws
-        and a boolean indicating whether there are no distributions in the parameters.
-        This boolean is `True` if there are no distributions and `False` otherwise.
+        however, a dictionary is returned that maps from parameter names to draws.
         """
         # Separate constants and distributions.
         constants, dists = {}, {}
@@ -75,7 +73,7 @@ class AbstractParameter(ABC):
         # If there are no distributions, then we copy the constants `n` times.
         # If there are parent distributions, then add a singleton dimension to the
         # constants and draw `n` from the parent distributions.
-        if nodists := len(dists) == 0:
+        if len(dists) == 0:
             draws = {
                 name: np.broadcast_to(val, (n,) + val.shape)
                 for name, val in constants.items()
@@ -95,7 +93,7 @@ class AbstractParameter(ABC):
                 val, axis=tuple(range(1, to_add + 1))
             )
 
-        return finalized_draws, nodists
+        return finalized_draws
 
     def get_parents(self) -> list["AbstractParameter"]:
         """
@@ -157,8 +155,7 @@ class TransformedParameter(AbstractParameter):
         """Sample from this parameter's distribution `n` times."""
 
         # Perform the operation on the draws
-        draws, _ = super().draw(n)
-        return self.operation(**draws)
+        return self.operation(**super().draw(n))
 
     @abstractmethod
     def operation(self, **draws: "SampleType") -> npt.NDArray:
@@ -325,20 +322,14 @@ class Parameter(AbstractParameter):
     def draw(self, n: int) -> npt.NDArray:
         """Sample from the distribution that represents the parameter `n` times"""
         # Get draws from the parent parameters
-        draws, nodists = super().draw(n)
+        draws = super().draw(n)
 
         # Rename the parameters to the names used by numpy
         draws = {self.stan_to_np_names[name]: val for name, val in draws.items()}
 
-        # Sample from this distribution using numpy. If we have distributions feeding
-        # into this one, then they will have determined the shape of the draws, so
-        # we do not modify the `size` kwarg. If it is only constants feeding this
-        # distribution, however, the size parameter must be set to the appropriate
-        # shape
-        return self.numpy_dist(
-            **draws,
-            size=(n,) + self.shape if nodists else None,
-        )
+        # Sample from this distribution using numpy. Alter the shape to account
+        # for the new first dimension of length `n`.
+        return self.numpy_dist(**draws, size=(n,) + self.shape)
 
     def as_observable(self):
         """Redefines the parameter as an observable variable (i.e., data)"""
