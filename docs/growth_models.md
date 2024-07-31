@@ -64,29 +64,25 @@ $$
 \begin{align}
 \frac{1}{x_i}dx_i &= r_i dt \\
 \int \frac{1}{x_i}dx_i &= \int r_i dt \\
-\ln{x_i} + C_{1_i} &= r_it + C_{2_i}
+\ln{x_i} + C_{1_i} &= r_it + C_{2}
 \end{align}
 $$
 
-where $C_{n_i}$ is some unknown constant. We can group these constants together to get our final equation of
+where $C_{1_i}$ and $C_2$ are some unknown constants. We can group these constants together to get
 
 $$
 \begin{align}
-\ln{x_i} &= r_it + C_i
+\ln{x_i} &= r_it + C_i.
 \end{align}
 $$
 
-When performing our regression in Stan, we will keep this in logarithmic form for the sake of numerical stability. However, by expanding it we can see that this is just the equation for unbounded exponential growth:
+By solving for $x_i$, we can see that this is just the equation for unbounded exponential growth:
 
 $$
 \begin{align}
-x_i &= \textrm{e} ^ {r_it + C_i} \\
-&= \textrm{e} ^ {r_it}\textrm{e} ^ {C_i} \\
-&= A_i\textrm{e} ^ {r_it}, \\
+x_i &= \textrm{e} ^ {r_it + C_i}. \\
 \end{align}
 $$
-
-where we are defining $A_i = \textrm{e}^{C_i}$ as a scaling constant.
 
 ## Modified Sigmoid Growth
 It might not necessarily be reasonable to assume that all variants have equivalent impact on one another. Indeed, we may want to assume that each population of variants imparts a different-strength effect on the others. In this case, we can write Eq. 2 as
@@ -120,61 +116,36 @@ Now let's rearrange to get the above into an integratable form:
 $$
 \begin{align}
 r_idt &= \frac{1}{x_i (\omega_i - \alpha_i x_i )}dx_i \\
-r_idt&=\left(\frac{1}{x_i (\omega_i - \alpha_i x_i)}\right)\left(\frac{-\alpha_i^{-1}}{-\alpha_i^{-1}}\right)dx_i \\
-r_idt&=-\frac{\alpha_i^{-1}}{x_i (x_i - \alpha_i^{-1}\omega_i)}dx_i \\
 \end{align}
 $$
 
-For simplicity going forward, we reparametrize such that $\delta_i =\alpha_i^{-1}$ to get
-
+The above can be integrated by partial fractions after some further rearranging:
 
 $$
 \begin{align}
--r_idt&=\frac{\delta_i}{x_i (x_i - \delta_i\omega_i)}dx_i \\
+r_idt &= \left(\frac{1}{\omega_i}\right)\left(\frac{\omega_i}{x_i (\omega_i - \alpha_i x_i) }\right) dx_i\\
+r_i\omega_idt &= \frac{\omega_i\alpha^{-1}}{x_i\alpha^{-1} (\omega_i - \alpha_i x_i) } dx_i\\
+&= \frac{\omega_i\alpha^{-1}}{x_i (\omega_i\alpha^{-1} - x_i) } dx_i\\
+&= \frac{\omega_i\alpha^{-1} - x_i + x_i}{x_i (\omega_i\alpha^{-1} - x_i) } dx_i\\
+&=\left(\frac{\omega_i\alpha^{-1} - x_i}{x_i (\omega_i\alpha^{-1} - x_i) } + \frac{x_i}{x_i (\omega_i\alpha^{-1} - x_i) }\right) dx_i\\
+&=\left(\frac{1}{x_i} + \frac{1}{\omega_i\alpha^{-1} - x_i }\right) dx_i\\
+\int r_i\omega_idt &=\int\frac{1}{x_i} dx_i + \int\frac{1}{\omega_i\alpha_i^{-1} -  x_i}dx_i \\
+r_i\omega_it + C &= \ln{x_i} + C_{1_i} - \ln{(\omega_i\alpha_i^{-1} -  x_i)} + C_{2_i}\\
 \end{align}
 $$
 
-The above can be integrated by partial fractions if we do some rearranging:
+As with earlier, the $C$ terms are unknown constants that can be combined. Doing this, then rearranging to solve for $x_i$ gives us:
 
 $$
 \begin{align}
--r_idt&=\left(\frac{\delta_i}{x_i (x_i - \delta_i\omega_i)}\right)\left(\frac{\omega_i}{\omega_i}\right)dx_i \\
-&=\frac{1}{\omega_i}\left(\frac{\delta_i\omega_i}{x_i (x_i - \delta_i\omega_i)}\right)dx_i \\
-&=\frac{1}{\omega_i}\left(\frac{\delta_i\omega_i + x_i - x_i}{x_i (x_i - \delta_i\omega_i)}\right)dx_i \\
-&=\frac{1}{\omega_i}\left(\frac{\delta_i\omega_i - x_i}{x_i (x_i - \delta_i\omega_i)} + \frac{x_i}{x_i (x_i - \delta_i\omega_i)}\right)dx_i \\
-&=\frac{1}{\omega_i}\left(\frac{x_i}{x_i (x_i - \delta_i\omega_i)} - \frac{x_i - \delta_i\omega_i}{x_i (x_i - \delta_i\omega_i)}\right)dx_i \\
--r_i\omega_i dt &= \left(\frac{1}{x_i - \delta_i\omega_i} - \frac{1}{x_i}\right)dx_i
-\end{align}
-$$
-
-Now we can integrate:
-
-$$
-\begin{align}
--\int r_i\omega_i dt &= \int\frac{1}{x_i - \delta_i\omega_i} dx_i - \int\frac{1}{x_i}dx_i\\
--r_i\omega_i t + C_{1_i} &= \ln{\left(x_i - \delta_i\omega_i\right)} + C_{2_i} - \ln{(x_i)} + C_{3_i}
-\end{align}
-$$
-
-As with earlier, the $C_{n_i}$ terms are unknown constants that can be grouped into a single $C_i$. Doing this, then rearranging to solve for $x_i$ gives us:
-
-$$
-\begin{align}
-\ln{\left(\frac{x_i}{x_i - \delta_i\omega_i}\right)} &= r_i \omega_i t + C_i  \\
-\frac{x_i}{x_i - \delta_i\omega_i} &= \textrm{e}^{r_i \omega_i t + C_i}  \\
-x_i &= x_i\textrm{e}^{r_i \omega_i t + C_i} - \delta_i\omega_i\textrm{e}^{r_i \omega_i t + C_i} \\
-x_i\left(1 - \textrm{e}^{r_i \omega_i t + C_i}\right) &= - \delta_i\omega_i\textrm{e}^{r_i \omega_i t + C_i} \\
-x_i &= - \frac{\delta_i\omega_i\textrm{e}^{r_i \omega_i t + C_i}}{1 - \textrm{e}^{r_i \omega_i t + C_i}} \\
-x_i &= - \frac{\delta_i\omega_i\textrm{e}^{r_i \omega_i t + C_i}}{1 - \textrm{e}^{r_i \omega_i t + C_i}} \\
-\end{align}
-$$
-
-We can further simplify to the below:
-
-$$
-\begin{align}
-x_i &= - \frac{\delta_i\omega_i}{\textrm{e}^{-r_i \omega_i t + C_i} - 1} \\
-x_i &= \frac{\delta_i\omega_i}{1 - \textrm{e}^{-r_i \omega_i t + C_i}} \\
+r_i\omega_it + C - C_{1_i} - C_{2_i} &= \ln{\left(\frac{x_i}{\omega_i\alpha_i^{-1} -  x_i}\right)} \\
+\textrm{e}^{r_i\omega_it + C_i} &= \frac{x_i}{\omega_i\alpha_i^{-1} -  x_i} \\
+\omega_i\alpha_i^{-1}\textrm{e}^{r_i\omega_it + C_i} -  x_i\textrm{e}^{r_i\omega_it + C_i} &= x_i \\
+\omega_i\alpha_i^{-1}\textrm{e}^{r_i\omega_it + C_i} &= x_i + x_i\textrm{e}^{r_i\omega_it + C_i} \\
+\omega_i\alpha_i^{-1}\textrm{e}^{r_i\omega_it + C_i} &= x_i\left(1 + \textrm{e}^{r_i\omega_it + C_i}\right) \\
+ x_i &= \omega_i\alpha_i^{-1}\frac{\textrm{e}^{r_i\omega_it + C_i}}{\left(1 + \textrm{e}^{r_i\omega_it + C_i}\right)} \\
+ &= \omega_i\alpha_i^{-1}\frac{1}{\left(1 + \textrm{e}^{-r_i\omega_it - C_i}\right)} \\
+ &= \frac{\omega_i}{\alpha_i\left(1 + \textrm{e}^{-r_i\omega_it - C_i}\right)}
 \end{align}
 $$
 
@@ -184,6 +155,6 @@ Notably, if we assume that there is no interaction between different variants, t
 
 $$
 \begin{align}
-x_i &= \frac{\delta_i}{1 - \textrm{e}^{-r_i t + C_i}}
+x_i &= \frac{1}{\alpha_i\left(1 + \textrm{e}^{-r_it - C_i}\right)}
 \end{align}
 $$
