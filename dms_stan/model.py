@@ -32,46 +32,37 @@ class Model:
             # Run the init method that was defined in the class.
             cls._wrapped_init(self, *init_args, **init_kwargs)
 
-            # If this is not the first class in the MRO, then we do not want to
-            # review parameters and observables further, as this is duplicate effort
-            if self.__class__.mro()[0] is not cls:
-                return
-
-            # Our parameters and observables are what are already in the class
+            # If we already have parameters, observables, and constants defined in
+            # the class, update them with the new parameters, observables, and constants.
+            # This situation occurs when a child class is defined that inherits
+            # from a parent class that is also a model.
             if hasattr(self, "_parameters"):
-                # if not all()
-                raise ValueError(
-                    "The attribute `_parameters` cannot be defined `Model` subclasses"
-                )
-            if hasattr(self, "_observables"):
-                raise ValueError(
-                    "The attribute `_observables` cannot be defined in `Model` subclasses"
-                )
+                assert hasattr(self, "_observables")
+                assert hasattr(self, "_constants")
+                parameters = self.parameter_dict
+                observables = self.observable_dict
+                constants = self.constant_dict
+            else:
+                assert not hasattr(self, "_observables")
+                assert not hasattr(self, "_constants")
+                parameters, observables, constants = {}, {}, {}
 
             # Now we need to find all the parameters, observables, and constants
             # that are defined in the class. Skip any attributes defined in this
             # meta class.
-            parameters, observables, constants = {}, {}, {}
             for attr in set(dir(self)) - set(dir(Model)):
 
                 # If the attribute is a parameter, add it to the parameters dictionary.
                 # If it is an observable, add it to the observables dictionary. If
                 # it is a constant, add it to the constants dictionary.
                 retrieved = getattr(self, attr)
-                if isinstance(retrieved, dmsp.Parameter):
+                if isinstance(retrieved, dmsp.AbstractParameter):
                     if retrieved.observable:
                         observables[attr] = retrieved
                     else:
                         parameters[attr] = retrieved
                 elif isinstance(retrieved, dmsc.Constant):
                     constants[attr] = retrieved
-
-            # At least one of these parameters must be an observable and at least
-            # one of them must be a parameter.
-            if len(parameters) == 0:
-                raise ValueError("At least one parameter must be defined in the model")
-            if len(observables) == 0:
-                raise ValueError("At least one observable must be defined in the model")
 
             # Convert the parameters, observables, and constants to named tuples
             self._parameters = collections.namedtuple("Parameters", parameters.keys())(
@@ -137,7 +128,7 @@ class Model:
         # Otherwise, return draws from the observables
         return {name: obs.draw(size) for name, obs in self.observable_dict.items()}
 
-    def __iter__(self) -> Generator[tuple[str, dmsp.Parameter], None, None]:
+    def __iter__(self) -> Generator[tuple[str, dmsp.AbstractParameter], None, None]:
         """
         Loops over the parameters and observables in the model. Parameters are
         emitted first in order of depth from deepest to shallowest. Ties in depth
@@ -151,9 +142,7 @@ class Model:
         parameter_depths = self.get_parameter_depths()
 
         # Sort all the parameters by depth and then by name
-        sorted_param_names = sorted(
-            parameters, key=lambda x: (-parameter_depths[x[0]], x[0])
-        )
+        sorted_param_names = sorted(parameters, key=lambda x: (-parameter_depths[x], x))
 
         # Sort the observables by name
         sorted_obs_names = sorted(observables)
