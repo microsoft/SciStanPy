@@ -160,16 +160,8 @@ class Model:
         """Returns the parameters of the model."""
         return self._parameters  # pylint: disable=no-member
 
-    @parameters.setter
-    def parameters(self, value) -> None:
-        raise ValueError("The parameters attribute cannot be set")
-
-    @parameters.deleter
-    def parameters(self) -> None:
-        raise ValueError("The parameters attribute cannot be deleted")
-
     @property
-    def parameter_dict(self) -> dict[str, dmsp.Parameter]:
+    def parameter_dict(self) -> dict[str, dmsp.AbstractParameter]:
         """Returns the parameters of the model as a dictionary."""
         return self._parameters._asdict()  # pylint: disable=no-member
 
@@ -177,14 +169,6 @@ class Model:
     def observables(self) -> NamedTuple:
         """Returns the observables of the model."""
         return self._observables  # pylint: disable=no-member
-
-    @observables.setter
-    def observables(self, value) -> None:
-        raise ValueError("The observables attribute cannot be set")
-
-    @observables.deleter
-    def observables(self) -> None:
-        raise ValueError("The observables attribute cannot be deleted")
 
     @property
     def observable_dict(self) -> dict:
@@ -196,15 +180,16 @@ class Model:
         """Returns the constants of the model."""
         return self._constants  # pylint: disable=no-member
 
-    @constants.setter
-    def constants(self, value) -> None:
-        raise ValueError("The constants attribute cannot be set")
-
-    @constants.deleter
-    def constants(self) -> None:
-        raise ValueError("The constants attribute cannot be deleted")
-
     @property
     def constant_dict(self) -> dict:
         """Returns the constants of the model as a dictionary."""
         return self._constants._asdict()  # pylint: disable=no-member
+
+    @property
+    def togglable_params(self) -> dict[str, dmsp.AbstractParameter]:
+        """Returns the parameters that can be toggled in the model."""
+        return {
+            name: param
+            for name, param in self.parameter_dict.items()
+            if param.togglable
+        }

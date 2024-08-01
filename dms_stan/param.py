@@ -28,6 +28,13 @@ class AbstractParameter(ABC):
         if len(parameters) < 1:
             raise ValueError("At least one parameter must be passed to the class")
 
+        # No incoming parameters can be observables
+        if any(
+            isinstance(param, AbstractParameter) and param.observable
+            for param in parameters.values()
+        ):
+            raise ValueError("Parent parameters cannot be observables")
+
         # Populate the parameters
         self.parameters = {
             name: (
@@ -95,7 +102,7 @@ class AbstractParameter(ABC):
 
         return finalized_draws
 
-    def get_parents(self) -> list["AbstractParameter"]:
+    def get_parents(self) -> list["CombinableParameterType"]:
         """
         Gathers the parent parameters of the current parameter.
 
@@ -143,6 +150,16 @@ class AbstractParameter(ABC):
     def ndim(self) -> int:
         """Return the number of dimensions of the parameter"""
         return len(self.shape)
+
+    @property
+    def togglable(self) -> bool:
+        """
+        Return the parameters that can be toggled. These are the ones that have
+        no parents.
+        """
+        return not any(
+            isinstance(param, AbstractParameter) for param in self.parameters.values()
+        )
 
 
 class TransformedParameter(AbstractParameter):
