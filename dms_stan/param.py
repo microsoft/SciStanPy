@@ -30,20 +30,19 @@ class AbstractParameter(ABC):
 
         # Populate the parameters
         self.parameters = {
-            name: (val if isinstance(val, AbstractParameter) else np.array(val))
+            name: (
+                val
+                if isinstance(val, (AbstractParameter, dmsc.Constant))
+                else np.array(val)
+            )
             for name, val in parameters.items()
         }
 
-        # Initialize the shape of the parameter
-        new_shape = np.broadcast_shapes(
-            *[param.shape for param in self.parameters.values()]
+        # Initialize the shape of the parameter. The shape must be broadcastable
+        # to the shapes of the parameters.
+        self.shape = np.broadcast_shapes(
+            shape, *[param.shape for param in self.parameters.values()]
         )
-        if shape != tuple() and new_shape != shape:
-            raise ValueError(
-                f"Shape mismatch: broadcasted shape of {new_shape} does not match"
-                f"provided shape of {shape}"
-            )
-        self.shape = new_shape
 
     @abstractmethod
     def draw(self, n: int) -> Any:
@@ -193,7 +192,7 @@ class UnaryTransformedParameter(TransformedParameter):
     """Transformed parameter that only requires one parameter."""
 
     def __init__(
-        self, dist1: "ContinuousDistribution", shape: tuple[int, ...] = tuple()
+        self, dist1: "CombinableParameterType", shape: tuple[int, ...] = tuple()
     ):
         super().__init__(dist1=dist1, shape=shape)
 
@@ -313,6 +312,9 @@ class Parameter(AbstractParameter):
         self,
         numpy_dist: str,
         stan_to_np_names: dict[str, str],
+        stan_to_np_transforms: Optional[
+            dict[str, Callable[[npt.NDArray], npt.NDArray]]
+        ] = None,
         seed: Optional[Union[np.random.Generator, int]] = None,
         shape: tuple[int, ...] = tuple(),
         **parameters,
@@ -328,19 +330,35 @@ class Parameter(AbstractParameter):
         self._numpy_dist = numpy_dist
         self._seed = seed
 
+        # Default value for the transforms dictionary is an empty dictionary
+        stan_to_np_transforms = stan_to_np_transforms or {}
+
         # All parameter names must be in the stan_to_np_names dictionary
         if missing_names := set(parameters.keys()) - set(stan_to_np_names.keys()):
             raise ValueError(
                 f"Missing names in stan_to_np_names: {', '.join(missing_names)}"
             )
 
-        # Store the stan names to numpy names dictionary
+        # Any key in the `stan_to_np_transforms` dictionary must be in `stan_to_np_names`
+        # dictionary as well
+        if not set(stan_to_np_transforms.keys()).issubset(stan_to_np_names.keys()):
+            raise ValueError(
+                "All keys in `stan_to_np_transforms` must be in `stan_to_np_names`"
+            )
+
+        # Store the stan names to numpy names dictionary and the numpy distribution
+        # transformation dictionary
         self.stan_to_np_names = stan_to_np_names
+        self.stan_to_np_transforms = stan_to_np_transforms
 
     def draw(self, n: int) -> npt.NDArray:
         """Sample from the distribution that represents the parameter `n` times"""
         # Get draws from the parent parameters
         draws = super().draw(n)
+
+        # Perform transforms
+        for name, transform in self.stan_to_np_transforms.items():
+            draws[name] = transform(draws[name])
 
         # Rename the parameters to the names used by numpy
         draws = {self.stan_to_np_names[name]: val for name, val in draws.items()}
@@ -438,8 +456,8 @@ class Normal(ContinuousDistribution):
     def __init__(
         self,
         *,
-        mu: Union[AbstractParameter, float],
-        sigma: Union[AbstractParameter, float],
+        mu: "ContinuousParameterType",
+        sigma: "ContinuousParameterType",
         **kwargs,
     ):
         # Sigma must be positive
@@ -458,7 +476,7 @@ class Normal(ContinuousDistribution):
 class HalfNormal(Normal):
     """Parameter that is represented by the half-normal distribution."""
 
-    def __init__(self, *, sigma: Union[AbstractParameter, float], **kwargs):
+    def __init__(self, *, sigma: "ContinuousParameterType", **kwargs):
         super().__init__(mu=0, sigma=sigma, **kwargs)
 
     # Overwrite the draw method to ensure that the drawn values are positive
@@ -473,14 +491,35 @@ class UnitNormal(Normal):
         super().__init__(mu=0, sigma=1, **kwargs)
 
 
+class LogNormal(ContinuousDistribution):
+    """Parameter that is represented by the log-normal distribution."""
+
+    def __init__(
+        self,
+        mu: "ContinuousParameterType",
+        sigma: "ContinuousParameterType",
+        **kwargs,
+    ):
+        # Sigma must be positive
+        if not isinstance(sigma, AbstractParameter) and sigma <= 0:
+            raise ValueError("`sigma` must be positive")
+        super().__init__(
+            numpy_dist="lognormal",
+            stan_to_np_names={"mu": "mean", "sigma": "sigma"},
+            mu=mu,
+            sigma=sigma,
+            **kwargs,
+        )
+
+
 class Beta(ContinuousDistribution):
     """Defines the beta distribution."""
 
     def __init__(
         self,
         *,
-        alpha: Union[AbstractParameter, float],
-        beta: Union[AbstractParameter, float],
+        alpha: "ContinuousParameterType",
+        beta: "ContinuousParameterType",
         **kwargs,
     ):
 
@@ -494,6 +533,50 @@ class Beta(ContinuousDistribution):
             numpy_dist="beta",
             stan_to_np_names={"alpha": "a", "beta": "b"},
             alpha=alpha,
+            beta=beta,
+            **kwargs,
+        )
+
+
+class Gamma(ContinuousDistribution):
+    """Defines the gamma distribution."""
+
+    def __init__(
+        self,
+        *,
+        alpha: "ContinuousParameterType",
+        beta: "ContinuousParameterType",
+        **kwargs,
+    ):
+
+        # Alpha and beta must be positive
+        if not isinstance(alpha, AbstractParameter) and alpha <= 0:
+            raise ValueError("`alpha` must be positive")
+        if not isinstance(beta, AbstractParameter) and beta <= 0:
+            raise ValueError("`beta` must be positive")
+
+        super().__init__(
+            numpy_dist="gamma",
+            stan_to_np_names={"alpha": "shape", "beta": "scale"},
+            stan_to_np_transforms={"beta": lambda x: 1 / x},
+            alpha=alpha,
+            beta=beta,
+            **kwargs,
+        )
+
+
+class Exponential(ContinuousDistribution):
+    """Defines the exponential distribution."""
+
+    def __init__(self, *, beta: "ContinuousParameterType", **kwargs):
+        # Beta must be positive
+        if not isinstance(beta, AbstractParameter) and beta <= 0:
+            raise ValueError("`beta` must be positive")
+
+        super().__init__(
+            numpy_dist="exponential",
+            stan_to_np_names={"beta": "scale"},
+            stan_to_np_transforms={"beta": lambda x: 1 / x},
             beta=beta,
             **kwargs,
         )
@@ -521,8 +604,8 @@ class Binomial(DiscreteDistribution):
     def __init__(
         self,
         *,
-        theta: Union[AbstractParameter, float],
-        N: Union[AbstractParameter, int],
+        theta: "ContinuousParameterType",
+        N: "DiscreteParameterType",
         **kwargs,
     ):
         # Theta must be between 0 and 1
@@ -541,7 +624,7 @@ class Binomial(DiscreteDistribution):
 class Poisson(DiscreteDistribution):
     """Parameter that is represented by the Poisson distribution."""
 
-    def __init__(self, *, lambda_: Union[AbstractParameter, float], **kwargs):
+    def __init__(self, *, lambda_: "ContinuousParameterType", **kwargs):
 
         # Lambda must be positive
         if not isinstance(lambda_, AbstractParameter) and lambda_ <= 0:
@@ -591,11 +674,18 @@ class Multinomial(DiscreteDistribution):
 
 # Define custom types for this module
 SampleType = Union[int, float, npt.NDArray]
-CombinableParameterType = Union[
+ContinuousParameterType = Union[
     ContinuousDistribution,
     TransformedParameter,
     dmsc.Constant,
-    int,
     float,
-    npt.NDArray,
+    npt.NDArray[np.floating],
 ]
+DiscreteParameterType = Union[
+    DiscreteDistribution,
+    TransformedParameter,
+    dmsc.Constant,
+    int,
+    npt.NDArray[np.integer],
+]
+CombinableParameterType = Union[ContinuousParameterType, DiscreteParameterType]
