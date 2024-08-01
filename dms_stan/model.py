@@ -20,10 +20,6 @@ class Model:
 
     def __init_subclass__(cls, **kwargs):
         """"""
-        # Make sure an `__init__` method is defined in the class
-        if "__init__" not in cls.__dict__:
-            raise ValueError("`Model` subclasses must define an `__init__` method")
-
         # The old __init__ method of the class is renamed to '_wrapped_init'
         if "_wrapped_init" in cls.__dict__:
             raise ValueError(
@@ -77,13 +73,16 @@ class Model:
             if len(observables) == 0:
                 raise ValueError("At least one observable must be defined in the model")
 
-            # Convert the parameters and observables to named tuples
+            # Convert the parameters, observables, and constants to named tuples
             self._parameters = collections.namedtuple("Parameters", parameters.keys())(
                 **parameters
             )
             self._observables = collections.namedtuple(
                 "Observables", observables.keys()
             )(**observables)
+            self._constants = collections.namedtuple("Constants", constants.keys())(
+                **constants
+            )
 
         # Add the new __init__ method
         cls._wrapped_init = cls.__init__
@@ -202,3 +201,21 @@ class Model:
     def observable_dict(self) -> dict:
         """Returns the observables of the model as a dictionary."""
         return self._observables._asdict()  # pylint: disable=no-member
+
+    @property
+    def constants(self) -> NamedTuple:
+        """Returns the constants of the model."""
+        return self._constants  # pylint: disable=no-member
+
+    @constants.setter
+    def constants(self, value) -> None:
+        raise ValueError("The constants attribute cannot be set")
+
+    @constants.deleter
+    def constants(self) -> None:
+        raise ValueError("The constants attribute cannot be deleted")
+
+    @property
+    def constant_dict(self) -> dict:
+        """Returns the constants of the model as a dictionary."""
+        return self._constants._asdict()  # pylint: disable=no-member
