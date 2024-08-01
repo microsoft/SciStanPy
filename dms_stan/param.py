@@ -5,6 +5,7 @@ from typing import Any, Callable, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
+import scipy.special as sp
 
 import dms_stan as dms
 import dms_stan.constant as dmsc
@@ -286,6 +287,23 @@ class ExpParameter(UnaryTransformedParameter):
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.exp(dist1)
+
+
+class NormalizeParameter(UnaryTransformedParameter):
+    """Defines a parameter that is normalized to sum to 1."""
+
+    def operation(self, dist1: "SampleType") -> npt.NDArray:
+        return dist1 / np.sum(dist1)
+
+
+class NormalizeLogParameter(UnaryTransformedParameter):
+    """
+    Defines a parameter that is normalized such that exp(x) sums to 1. By extension,
+    this assumes that the input is log-transformed.
+    """
+
+    def operation(self, dist1: "SampleType") -> npt.NDArray:
+        return dist1 - sp.logsumexp(dist1)
 
 
 class Parameter(AbstractParameter):
