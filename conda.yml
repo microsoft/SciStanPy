@@ -6,6 +6,7 @@ dependencies:
   - conda-forge::arviz
   - conda-forge::cmdstanpy
   - conda-forge::typeguard
+  - conda-forge::hvplot
   - jupyter
   - panel
   - python=3.12

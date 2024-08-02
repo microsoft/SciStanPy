@@ -4,10 +4,17 @@ import collections
 
 from typing import Generator, NamedTuple, Optional, Union
 
+import numpy as np
 import numpy.typing as npt
 
-import dms_stan.constant as dmsc
-import dms_stan.param as dmsp
+import dms_stan as dms
+from dms_stan.constant import Constant
+from dms_stan.param import (
+    AbstractParameter,
+    Binomial,
+    CombinableParameterType,
+    ExponentialGrowth,
+)
 
 
 class Model:
@@ -56,12 +63,12 @@ class Model:
                 # If it is an observable, add it to the observables dictionary. If
                 # it is a constant, add it to the constants dictionary.
                 retrieved = getattr(self, attr)
-                if isinstance(retrieved, dmsp.AbstractParameter):
+                if isinstance(retrieved, AbstractParameter):
                     if retrieved.observable:
                         observables[attr] = retrieved
                     else:
                         parameters[attr] = retrieved
-                elif isinstance(retrieved, dmsc.Constant):
+                elif isinstance(retrieved, Constant):
                     constants[attr] = retrieved
 
             # Convert the parameters, observables, and constants to named tuples
@@ -128,7 +135,7 @@ class Model:
         # Otherwise, return draws from the observables
         return {name: obs.draw(size) for name, obs in self.observable_dict.items()}
 
-    def __iter__(self) -> Generator[tuple[str, dmsp.AbstractParameter], None, None]:
+    def __iter__(self) -> Generator[tuple[str, AbstractParameter], None, None]:
         """
         Loops over the parameters and observables in the model. Parameters are
         emitted first in order of depth from deepest to shallowest. Ties in depth
@@ -161,7 +168,7 @@ class Model:
         return self._parameters  # pylint: disable=no-member
 
     @property
-    def parameter_dict(self) -> dict[str, dmsp.AbstractParameter]:
+    def parameter_dict(self) -> dict[str, AbstractParameter]:
         """Returns the parameters of the model as a dictionary."""
         return self._parameters._asdict()  # pylint: disable=no-member
 
@@ -186,10 +193,93 @@ class Model:
         return self._constants._asdict()  # pylint: disable=no-member
 
     @property
-    def togglable_params(self) -> dict[str, dmsp.AbstractParameter]:
+    def togglable_params(self) -> dict[str, AbstractParameter]:
         """Returns the parameters that can be toggled in the model."""
         return {
             name: param
             for name, param in self.parameter_dict.items()
             if param.togglable
         }
+
+
+class BaseGrowthModel(Model):
+    """Defines a model of count data over time."""
+
+    def __init__(  # pylint: disable=super-init-not-called, unused-argument
+        self, *, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer], **kwargs
+    ):
+
+        # Time should be 1D
+        if t.ndim != 1:
+            raise ValueError("`t` should be a 1D array")
+
+        # Counts should be 3D. The first dimension is replicates, the second is
+        # timepoints, and the third is the counts.
+        if counts.ndim != 3:
+            raise ValueError("`counts` should be a 3D array")
+
+        # The second counts dimension should be the same as the length of the time
+        # array.
+        if counts.shape[1] != len(t):
+            raise ValueError(
+                "Mismatch between the length of `t` and the second dimension of `counts`"
+            )
+
+        # Record the timepoints as a constant. Expand the timepoints to the same
+        # dimensionality as the counts.
+        self.t = Constant(t[None, :, None])
+
+
+class ExponentialGrowthMixIn(BaseGrowthModel):
+    """Mix in class for exponential growth."""
+
+    def __init__(
+        self,
+        *,
+        t: npt.NDArray[np.floating],
+        counts: npt.NDArray[np.integer],
+        A: CombinableParameterType,
+        r: CombinableParameterType,
+        **kwargs,
+    ):
+        # Call the parent class constructor. This will set up the timepoints as a
+        # constant but do nothing with the counts except check their shape.
+        super().__init__(t=t, counts=counts, **kwargs)
+
+        # Assign the growth parameters
+        self.A = A  # pylint: disable=invalid-name
+        self.r = r
+
+        # Our thetas are modeled as exponential growth.
+        self.theta_unorm = ExponentialGrowth(
+            t=self.t, A=self.A, r=self.r, shape=counts.shape
+        )
+        self.theta = dms.operations.normalize(
+            self.theta_unorm, shape=counts.shape, axis=-1
+        )
+
+
+class BaseBinomialGrowthModel(BaseGrowthModel):
+    """
+    Defines a growth model of count data over time where the counts are modeled
+    as binomially distributed.
+    """
+
+    def __init__(
+        self, *, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer], **kwargs
+    ):
+
+        # Call the parent class constructor
+        super().__init__(t=t, counts=counts, **kwargs)
+
+        # Set up the binomial distribution for the counts. "N" is inferred as the
+        # sum of the counts at each timepoint.
+        self.counts = Binomial(
+            theta=self.theta,  # pylint: disable=no-member
+            N=counts.sum(axis=2, keepdims=True),
+            shape=counts.shape,
+        ).as_observable()
+
+
+class ExponentialGrowthBinomialModel(BaseBinomialGrowthModel, ExponentialGrowthMixIn):
+    """Defines a model of count data over time with exponential growth."""

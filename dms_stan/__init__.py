@@ -9,6 +9,9 @@ from typeguard import install_import_hook
 
 import numpy as np
 
+from dms_stan import constant, model, operations, param
+
+
 # Set up type checking
 install_import_hook("dms_stan")
 
