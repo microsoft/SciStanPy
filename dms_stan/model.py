@@ -135,6 +135,10 @@ class Model:
         # Otherwise, return draws from the observables
         return {name: obs.draw(size) for name, obs in self.observable_dict.items()}
 
+    def draw_from(self, paramname: str, size: int) -> npt.NDArray:
+        """Draw from a parameter."""
+        return getattr(self, paramname).draw(size)
+
     def __iter__(self) -> Generator[tuple[str, AbstractParameter], None, None]:
         """
         Loops over the parameters and observables in the model. Parameters are
@@ -161,6 +165,14 @@ class Model:
         # Yield the observables in order
         for obs_name in sorted_obs_names:
             yield obs_name, observables[obs_name]
+
+    def __contains__(self, paramname: str) -> bool:
+        """Checks if the model contains a parameter or observable with the given name."""
+        return paramname in self.parameter_dict or paramname in self.observable_dict
+
+    def __getitem__(self, paramname: str) -> AbstractParameter:
+        """Returns the parameter or observable with the given name."""
+        return getattr(self, paramname)
 
     @property
     def parameters(self) -> NamedTuple:
@@ -200,6 +212,14 @@ class Model:
             for name, param in self.parameter_dict.items()
             if param.togglable
         }
+
+    @property
+    def togglable_param_values(self) -> dict[str, dict[str, npt.NDArray]]:
+        """
+        Returns the values of the constants that define the togglable parameters
+        in the model.
+        """
+        return {name: param.parameters for name, param in self.togglable_params.items()}
 
 
 class BaseGrowthModel(Model):
