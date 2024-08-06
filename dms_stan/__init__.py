@@ -9,11 +9,11 @@ from typeguard import install_import_hook
 
 import numpy as np
 
-from dms_stan import constant, model, operations, param
-
-
 # Set up type checking
 install_import_hook("dms_stan")
+
+# pylint: disable=wrong-import-position
+from dms_stan import constant, model, operations, param, prior_predictive
 
 # Define the global random number generator
 RNG: np.random.Generator
