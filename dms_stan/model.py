@@ -13,7 +13,9 @@ from dms_stan.param import (
     AbstractParameter,
     Binomial,
     CombinableParameterType,
-    ExponentialGrowth,
+    LogExponentialGrowth,
+    LogSigmoidGrowth,
+    Normal,
 )
 
 
@@ -139,6 +141,23 @@ class Model:
         """Draw from a parameter."""
         return getattr(self, paramname).draw(size)
 
+    def to_pytorch(self):
+        """
+        Compiles the model to a trainable PyTorch model. How this is done:
+
+        1)  Identify all parameters by recursively walking up the tree from the observables.
+        2)  Within `__init__`:
+            a)  Root nodes are set as constants, as are any nodes that are not `Parameter`
+                types.
+            b)  All other Parameter types are set up as trainable.
+        3)  Within `forward`L
+            a)  The method takes in observed data and calculates the log likelihood
+                using the relevant distribution.
+            b)  The log-likelihood of the latent variables is calculated using the
+                relevant distributions.
+            c)  The log-likelihoods of the latent variables are summed and returned.
+        """
+
     def __iter__(self) -> Generator[tuple[str, AbstractParameter], None, None]:
         """
         Loops over the parameters and observables in the model. Parameters are
@@ -258,8 +277,9 @@ class ExponentialGrowthMixIn(BaseGrowthModel):
         *,
         t: npt.NDArray[np.floating],
         counts: npt.NDArray[np.integer],
-        A: CombinableParameterType,
+        log_A: CombinableParameterType,
         r: CombinableParameterType,
+        sigma: CombinableParameterType,
         **kwargs,
     ):
         # Call the parent class constructor. This will set up the timepoints as a
@@ -267,16 +287,27 @@ class ExponentialGrowthMixIn(BaseGrowthModel):
         super().__init__(t=t, counts=counts, **kwargs)
 
         # Assign the growth parameters
-        self.A = A  # pylint: disable=invalid-name
+        self.log_A = log_A  # pylint: disable=invalid-name
         self.r = r
 
-        # Our thetas are modeled as exponential growth.
-        self.theta_unorm = ExponentialGrowth(
-            t=self.t, A=self.A, r=self.r, shape=counts.shape
+        # Assign the noise parameter
+        self.sigma = sigma
+
+        # Get the log theta values
+        self.log_theta_unorm_mean = LogExponentialGrowth(
+            t=self.t, log_A=self.log_A, r=self.r, shape=counts.shape
         )
-        self.theta = dms.operations.normalize(
-            self.theta_unorm, shape=counts.shape, axis=-1
+        self.log_theta_unorm = Normal(
+            mu=self.log_theta_unorm_mean, sigma=self.sigma, shape=counts.shape
         )
+
+        # We normalize the thetas to add to 1
+        self.log_theta = dms.operations.normalize_log(
+            self.log_theta_unorm, shape=counts.shape, axis=-1
+        )
+
+        # Transform the log thetas to thetas
+        self.theta = dms.operations.exp(self.log_theta)
 
 
 class BaseBinomialGrowthModel(BaseGrowthModel):
