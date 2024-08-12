@@ -6,6 +6,7 @@ from typing import Any, Callable, Optional, Union
 import numpy as np
 import numpy.typing as npt
 import scipy.special as sp
+import torch.distributions as dist
 
 import dms_stan as dms
 import dms_stan.constant as dmsc
@@ -342,90 +343,6 @@ class Growth(TransformedParameter):
         super().__init__(t=t, shape=shape, **params)
 
 
-class ExponentialGrowth(Growth):
-    """
-    A distribution that describes the exponential growth model. Specifically, parameters
-    `t`, `A`, and `r` are used to calculate the exponential growth model as follows:
-
-    $$
-    x &= A \textrm{e}^{rt}
-    $$
-    """
-
-    def __init__(  # pylint: disable=useless-parent-delegation
-        self,
-        *,
-        t: "CombinableParameterType",
-        A: "CombinableParameterType",
-        r: "CombinableParameterType",
-        shape: tuple[int, ...] = tuple(),
-    ):
-        """Initializes the ExponentialGrowth distribution.
-
-        Args:
-            t ("CombinableParameterType"): The time parameter.
-
-            A ("CombinableParameterType"): The amplitude parameter.
-
-            r ("CombinableParameterType"): The rate parameter.
-
-            shape (tuple[int, ...], optional): The shape of the distribution. In
-                most cases, this can be ignored as it will be calculated automatically.
-        """
-        super().__init__(t=t, A=A, r=r, shape=shape)
-
-    def operation(  # pylint: disable=arguments-differ
-        self, *, t: "SampleType", A: "SampleType", r: "SampleType"
-    ) -> npt.NDArray:
-        return A * np.exp(r * t)
-
-
-class SigmoidGrowth(Growth):
-    r"""
-    A distribution that describes the sigmoid growth model. Specifically, parameters
-    `t`, `A`, `r`, and `c` are used to calculate the sigmoid growth model as follows:
-
-    $$
-    x &= \frac{A}{1 + \textrm{e}^{-r(t - c)}}
-    $$
-    """
-
-    def __init__(  # pylint: disable=useless-parent-delegation
-        self,
-        *,
-        t: "CombinableParameterType",
-        A: "CombinableParameterType",
-        r: "CombinableParameterType",
-        c: "CombinableParameterType",
-        shape: tuple[int, ...] = tuple(),
-    ):
-        """Initializes the SigmoidGrowth distribution.
-
-        Args:
-            t ("CombinableParameterType"): The time parameter.
-
-            A ("CombinableParameterType"): The amplitude parameter.
-
-            r ("CombinableParameterType"): The rate parameter.
-
-            c ("CombinableParameterType"): The offset parameter.
-
-            shape (tuple[int, ...], optional): The shape of the distribution. In
-                most cases, this can be ignored as it will be calculated automatically.
-        """
-        super().__init__(t=t, A=A, r=r, c=c, shape=shape)
-
-    def operation(  # pylint: disable=arguments-differ
-        self,
-        *,
-        t: "SampleType",
-        A: "SampleType",
-        r: "SampleType",
-        c: "SampleType",
-    ) -> npt.NDArray:
-        return A / (1 + np.exp(-r * (t - c)))
-
-
 class LogExponentialGrowth(Growth):
     """
     A distribution that models the natural log of the `ExponentialGrowth` distribution.
@@ -447,9 +364,9 @@ class LogExponentialGrowth(Growth):
     def __init__(
         self,
         *,
-        t: "SampleType",
-        log_A: "SampleType",
-        r: "SampleType",
+        t: "CombinableParameterType",
+        log_A: "CombinableParameterType",
+        r: "CombinableParameterType",
         shape: tuple[int, ...] = tuple(),
     ):
         """Initializes the LogExponentialGrowth distribution.
@@ -493,10 +410,10 @@ class LogSigmoidGrowth(Growth):
     def __init__(
         self,
         *,
-        t: "SampleType",
-        log_A: "SampleType",
-        r: "SampleType",
-        c: "SampleType",
+        t: "CombinableParameterType",
+        log_A: "CombinableParameterType",
+        r: "CombinableParameterType",
+        c: "CombinableParameterType",
         shape: tuple[int, ...] = tuple(),
     ):
         """Initializes the LogSigmoidGrowth distribution.
@@ -532,7 +449,9 @@ class Parameter(AbstractParameter):
     def __init__(
         self,
         numpy_dist: str,
+        torch_dist,
         stan_to_np_names: dict[str, str],
+        stan_to_torch_names: dict[str, str],
         stan_to_np_transforms: Optional[
             dict[str, Callable[[npt.NDArray], npt.NDArray]]
         ] = None,
@@ -547,8 +466,9 @@ class Parameter(AbstractParameter):
         # Initialize the parameters
         super().__init__(shape=shape, **parameters)
 
-        # Store the seed and the numpy distribution
+        # Store the seed and distributions
         self._numpy_dist = numpy_dist
+        self._torch_dist = torch_dist
         self._seed = seed
 
         # Default value for the transforms dictionary is an empty dictionary
@@ -560,6 +480,12 @@ class Parameter(AbstractParameter):
                 f"Missing names in stan_to_np_names: {', '.join(missing_names)}"
             )
 
+        # All parameter names must be in the stan_to_torch_names dictionary
+        if missing_names := set(parameters.keys()) - set(stan_to_torch_names.keys()):
+            raise ValueError(
+                f"Missing names in stan_to_torch_names: {', '.join(missing_names)}"
+            )
+
         # Any key in the `stan_to_np_transforms` dictionary must be in `stan_to_np_names`
         # dictionary as well
         if not set(stan_to_np_transforms.keys()).issubset(stan_to_np_names.keys()):
@@ -567,10 +493,11 @@ class Parameter(AbstractParameter):
                 "All keys in `stan_to_np_transforms` must be in `stan_to_np_names`"
             )
 
-        # Store the stan names to numpy names dictionary and the numpy distribution
+        # Store the stan names to names dictionaries and the numpy distribution
         # transformation dictionary
         self.stan_to_np_names = stan_to_np_names
         self.stan_to_np_transforms = stan_to_np_transforms
+        self.stan_to_torch_names = stan_to_torch_names
 
     def draw(self, n: int) -> npt.NDArray:
         """Sample from the distribution that represents the parameter `n` times"""
@@ -604,9 +531,8 @@ class Parameter(AbstractParameter):
         if self._seed is None:
             return dms.RNG
         elif isinstance(self._seed, int):
-            return np.random.default_rng(self._seed)
-        else:
-            return self._seed
+            self._seed = np.random.default_rng(self._seed)
+        return self._seed
 
     @property
     def numpy_dist(self) -> Callable[..., npt.NDArray]:
@@ -687,7 +613,9 @@ class Normal(ContinuousDistribution):
 
         super().__init__(
             numpy_dist="normal",
+            torch_dist=dist.normal.Normal,
             stan_to_np_names={"mu": "loc", "sigma": "scale"},
+            stan_to_torch_names={"mu": "loc", "sigma": "scale"},
             mu=mu,
             sigma=sigma,
             **kwargs,
@@ -726,7 +654,9 @@ class LogNormal(ContinuousDistribution):
             raise ValueError("`sigma` must be positive")
         super().__init__(
             numpy_dist="lognormal",
+            torch_dist=dist.log_normal.LogNormal,
             stan_to_np_names={"mu": "mean", "sigma": "sigma"},
+            stan_to_torch_names={"mu": "loc", "sigma": "scale"},
             mu=mu,
             sigma=sigma,
             **kwargs,
@@ -752,7 +682,9 @@ class Beta(ContinuousDistribution):
 
         super().__init__(
             numpy_dist="beta",
+            torch_dist=dist.beta.Beta,
             stan_to_np_names={"alpha": "a", "beta": "b"},
+            stan_to_torch_names={"alpha": "concentration1", "beta": "concentration0"},
             alpha=alpha,
             beta=beta,
             **kwargs,
@@ -778,7 +710,9 @@ class Gamma(ContinuousDistribution):
 
         super().__init__(
             numpy_dist="gamma",
+            torch_dist=dist.gamma.Gamma,
             stan_to_np_names={"alpha": "shape", "beta": "scale"},
+            stan_to_torch_names={"alpha": "concentration", "beta": "rate"},
             stan_to_np_transforms={"beta": lambda x: 1 / x},
             alpha=alpha,
             beta=beta,
@@ -796,7 +730,9 @@ class Exponential(ContinuousDistribution):
 
         super().__init__(
             numpy_dist="exponential",
+            torch_dist=dist.exponential.Exponential,
             stan_to_np_names={"beta": "scale"},
+            stan_to_torch_names={"beta": "rate"},
             stan_to_np_transforms={"beta": lambda x: 1 / x},
             beta=beta,
             **kwargs,
@@ -813,7 +749,9 @@ class Dirichlet(ContinuousDistribution):
 
         super().__init__(
             numpy_dist="dirichlet",
+            torch_dist=dist.dirichlet.Dirichlet,
             stan_to_np_names={"alpha": "alpha"},
+            stan_to_torch_names={"alpha": "concentration"},
             alpha=alpha,
             **kwargs,
         )
@@ -835,7 +773,9 @@ class Binomial(DiscreteDistribution):
 
         super().__init__(
             numpy_dist="binomial",
+            torch_dist=dist.binomial.Binomial,
             stan_to_np_names={"N": "n", "theta": "p"},
+            stan_to_torch_names={"N": "total_count", "theta": "probs"},
             N=N,
             theta=theta,
             **kwargs,
@@ -853,7 +793,9 @@ class Poisson(DiscreteDistribution):
 
         super().__init__(
             numpy_dist="poisson",
+            torch_dist=dist.poisson.Poisson,
             stan_to_np_names={"lambda_": "lam"},
+            stan_to_torch_names={"lambda_": "rate"},
             lambda_=lambda_,
             **kwargs,
         )
@@ -876,7 +818,9 @@ class Multinomial(DiscreteDistribution):
         # Run the parent class's init
         super().__init__(
             numpy_dist="multinomial",
+            torch_dist=dist.multinomial.Multinomial,
             stan_to_np_names={"N": "n", "theta": "pvals"},
+            stan_to_torch_names={"N": "total_count", "theta": "probs"},
             N=N,
             theta=theta,
             **kwargs,
