@@ -9,7 +9,6 @@ import scipy.special as sp
 import torch.distributions as dist
 
 import dms_stan as dms
-import dms_stan.constant as dmsc
 
 
 class AbstractParameter(ABC):
@@ -36,11 +35,11 @@ class AbstractParameter(ABC):
         ):
             raise ValueError("Parent parameters cannot be observables")
 
-        # Populate the parameters
+        # Populate the parameters and record this distribution as a child
         self.parameters = {
             name: (
-                val
-                if isinstance(val, (AbstractParameter, dmsc.Constant))
+                val.record_child(self)
+                if isinstance(val, AbstractParameter)
                 else np.array(val)
             )
             for name, val in parameters.items()
@@ -51,6 +50,9 @@ class AbstractParameter(ABC):
         self.shape = np.broadcast_shapes(
             shape, *[param.shape for param in self.parameters.values()]
         )
+
+        # We need a list for children
+        self.children = []
 
     @abstractmethod
     def draw(self, n: int) -> Any:
@@ -103,6 +105,27 @@ class AbstractParameter(ABC):
 
         return finalized_draws
 
+    def record_child(self, child: "AbstractParameter") -> "AbstractParameter":
+        """
+        Records a child parameter of the current parameter. This is used to keep
+        track of the lineage of the parameter.
+
+        Args:
+            child (AbstractParameter): The child parameter to record.
+
+        Returns:
+            AbstractParameter: Self.
+        """
+
+        # If the child is already in the list of children, then we don't need to
+        # add it again
+        assert child not in self.children, "Child already recorded"
+
+        # Record the child
+        self.children.append(child)
+
+        return self
+
     def get_parents(self) -> list["CombinableParameterType"]:
         """
         Gathers the parent parameters of the current parameter.
@@ -112,11 +135,20 @@ class AbstractParameter(ABC):
         """
         return list(self.parameters.values())
 
+    def get_children(self) -> list["AbstractParameter"]:
+        """
+        Gathers the children parameters of the current parameter.
+
+        Returns:
+            list[AbstractParameter]: Children parameters of the current parameter.
+        """
+        return self.children
+
     def recurse_parents(
         self, _current_depth: int = 0
     ) -> list[tuple[int, "AbstractParameter", "AbstractParameter"]]:
         """
-        Recursively calls get_parents on the current parameter to get the entire
+        Recursively calls `get_parents` on the current parameter to get the entire
         lineage of the parameter.
 
         Returns:
@@ -142,6 +174,36 @@ class AbstractParameter(ABC):
             to_return.extend(parent.recurse_parents(_current_depth + 1))
 
         # Return the list of tuples
+        return to_return
+
+    def recurse_children(
+        self, _current_depth: int = 0
+    ) -> list[tuple[int, "AbstractParameter", "AbstractParameter"]]:
+        """
+        Recursively calls `get_children` on the current parameter to get the entire
+        lineage of the parameter.
+
+        Returns:
+            list[tuple[int, AbstractParameter, AbstractParameter]]: A list of tuples
+                containing the depth of the parameter in the lineage, the child
+                parameter, and the current parameter, in that order.
+        """
+        # Get the children of the current parameter
+        children = self.get_children()
+
+        # Call `recurse_children` on each child
+        to_return = []
+        for child in children:
+
+            # Must be a parameter
+            assert isinstance(child, AbstractParameter)
+
+            # Add the child to the list of tuples that will be returned
+            to_return.append((_current_depth, child, self))
+
+            # Get the child's lineage and add it to the list
+            to_return.extend(child.recurse_children(_current_depth + 1))
+
         return to_return
 
     def __str__(self):
@@ -842,14 +904,14 @@ SampleType = Union[int, float, npt.NDArray]
 ContinuousParameterType = Union[
     ContinuousDistribution,
     TransformedParameter,
-    dmsc.Constant,
+    dms.constant.Constant,
     float,
     npt.NDArray[np.floating],
 ]
 DiscreteParameterType = Union[
     DiscreteDistribution,
     TransformedParameter,
-    dmsc.Constant,
+    dms.constant.Constant,
     int,
     npt.NDArray[np.integer],
 ]
