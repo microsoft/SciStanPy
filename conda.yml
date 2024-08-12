@@ -1,7 +1,7 @@
 name: dms_stan
 channels:
-  - conda-forge
   - defaults
+  - conda-forge
 dependencies:
   - bokeh::jupyter_bokeh
   - conda-forge::arviz
@@ -9,6 +9,10 @@ dependencies:
   - conda-forge::hvplot
   - conda-forge::typeguard
   - jupyter
+  - pytorch::pytorch-cuda=12.4
   - panel
   - python=3.12
+  - pytorch::pytorch
+  - pytorch::torchvision
+  - pytorch::torchaudio
   - watchfiles
