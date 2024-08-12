@@ -268,6 +268,23 @@ class BaseGrowthModel(Model):
         # dimensionality as the counts.
         self.t = Constant(t[None, :, None])
 
+    def _finalize_regressor(self):
+
+        # pylint: disable = no-member, attribute-defined-outside-init
+        self.log_theta_unorm = Normal(
+            mu=self.log_theta_unorm_mean,
+            sigma=self.sigma,
+            shape=self.log_theta_unorm_mean.shape,
+        )
+
+        # We normalize the thetas to add to 1
+        self.log_theta = dms.operations.normalize_log(
+            self.log_theta_unorm, shape=self.log_theta_unorm_mean.shape, axis=-1
+        )
+
+        # Transform the log thetas to thetas
+        self.theta = dms.operations.exp(self.log_theta)
+
 
 class ExponentialGrowthMixIn(BaseGrowthModel):
     """Mix in class for exponential growth."""
@@ -297,17 +314,9 @@ class ExponentialGrowthMixIn(BaseGrowthModel):
         self.log_theta_unorm_mean = LogExponentialGrowth(
             t=self.t, log_A=self.log_A, r=self.r, shape=counts.shape
         )
-        self.log_theta_unorm = Normal(
-            mu=self.log_theta_unorm_mean, sigma=self.sigma, shape=counts.shape
-        )
 
-        # We normalize the thetas to add to 1
-        self.log_theta = dms.operations.normalize_log(
-            self.log_theta_unorm, shape=counts.shape, axis=-1
-        )
-
-        # Transform the log thetas to thetas
-        self.theta = dms.operations.exp(self.log_theta)
+        # Build regressor params
+        self._finalize_regressor()
 
 
 class BaseBinomialGrowthModel(BaseGrowthModel):
