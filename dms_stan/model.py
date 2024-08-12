@@ -268,9 +268,13 @@ class BaseGrowthModel(Model):
         # dimensionality as the counts.
         self.t = Constant(t[None, :, None])
 
-    def _finalize_regressor(self):
+    def _finalize_regressor(self, sigma: CombinableParameterType):
 
         # pylint: disable = no-member, attribute-defined-outside-init
+        # Assign the noise parameter
+        self.sigma = sigma
+
+        # Define the regression distribution
         self.log_theta_unorm = Normal(
             mu=self.log_theta_unorm_mean,
             sigma=self.sigma,
@@ -307,16 +311,45 @@ class ExponentialGrowthMixIn(BaseGrowthModel):
         self.log_A = log_A  # pylint: disable=invalid-name
         self.r = r
 
-        # Assign the noise parameter
-        self.sigma = sigma
-
         # Get the log theta values
         self.log_theta_unorm_mean = LogExponentialGrowth(
             t=self.t, log_A=self.log_A, r=self.r, shape=counts.shape
         )
 
         # Build regressor params
-        self._finalize_regressor()
+        self._finalize_regressor(sigma=sigma)
+
+
+class SigmoidGrowthMixIn(BaseGrowthModel):
+    """Mix in class for sigmoid growth."""
+
+    def __init__(
+        self,
+        *,
+        t: npt.NDArray[np.floating],
+        counts: npt.NDArray[np.integer],
+        log_A: CombinableParameterType,
+        r: CombinableParameterType,
+        c: CombinableParameterType,
+        sigma: CombinableParameterType,
+        **kwargs,
+    ):
+        # Call the parent class constructor. This will set up the timepoints as a
+        # constant but do nothing with the counts except check their shape.
+        super().__init__(t=t, counts=counts, **kwargs)
+
+        # Assign the growth parameters
+        self.log_A = log_A  # pylint: disable=invalid-name
+        self.r = r
+        self.c = c
+
+        # Get the log theta values
+        self.log_theta_unorm_mean = LogSigmoidGrowth(
+            t=self.t, log_A=self.log_A, r=self.r, c=self.c, shape=counts.shape
+        )
+
+        # Build regressor params
+        self._finalize_regressor(sigma=sigma)
 
 
 class BaseBinomialGrowthModel(BaseGrowthModel):
