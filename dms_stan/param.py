@@ -6,6 +6,7 @@ from typing import Any, Callable, Optional, Union
 import numpy as np
 import numpy.typing as npt
 import scipy.special as sp
+import torch
 import torch.distributions as dist
 
 import dms_stan as dms
@@ -47,12 +48,28 @@ class AbstractParameter(ABC):
 
         # Initialize the shape of the parameter. The shape must be broadcastable
         # to the shapes of the parameters.
-        self.shape = np.broadcast_shapes(
-            shape, *[param.shape for param in self.parameters.values()]
-        )
+        self.shape = shape
+        try:
+            self.draw_shape = np.broadcast_shapes(
+                shape, *[param.shape for param in self.parameters.values()]
+            )
+        except ValueError as error:
+            raise ValueError("Shape is not broadcastable to parent shapes") from error
 
         # We need a list for children
         self.children = []
+
+        # Set up a placeholder for the Pytorch container
+        self._torch_container: Optional[dms.pytorch.TorchContainer] = None
+
+    @abstractmethod
+    def init_pytorch(self) -> None:
+        """
+        Sets up the parameters needed for training a Pytorch model and defines the
+        Pytorch operation that will be performed on the parameter. Operations can
+        be either calculation of loss or transformation of the parameter, depending
+        on the subclass.
+        """
 
     @abstractmethod
     def draw(self, n: int) -> Any:
@@ -223,6 +240,13 @@ class AbstractParameter(ABC):
         return not any(
             isinstance(param, AbstractParameter) for param in self.parameters.values()
         )
+
+    @property
+    def torch_container(self) -> dms.pytorch.TorchContainer:
+        """Return the Pytorch container for this parameter. Error if not initialized."""
+        if self._torch_container is None:
+            raise ValueError("Pytorch container not initialized. Run `init_pytorch`.")
+        return self._torch_container
 
 
 class TransformedParameter(AbstractParameter):
@@ -575,7 +599,7 @@ class Parameter(AbstractParameter):
 
         # Sample from this distribution using numpy. Alter the shape to account
         # for the new first dimension of length `n`.
-        return self.numpy_dist(**draws, size=(n,) + self.shape)
+        return self.numpy_dist(**draws, size=(n,) + self.draw_shape)
 
     def as_observable(self):
         """Redefines the parameter as an observable variable (i.e., data)"""
@@ -600,6 +624,11 @@ class Parameter(AbstractParameter):
     def numpy_dist(self) -> Callable[..., npt.NDArray]:
         """Returns the numpy distribution function"""
         return getattr(self.rng, self._numpy_dist)
+
+    @property
+    def torch_dist(self):
+        """Returns the torch distribution class"""
+        return self._torch_dist
 
 
 class Distribution(Parameter):
