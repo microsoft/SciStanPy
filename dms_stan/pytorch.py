@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Union
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -602,3 +603,97 @@ class LogSigmoidGrowthContainer(TransformedContainer):
             torch.log(torch.exp(transformed_params["log_A"] - observable) - 1)
             / transformed_params["r"]
         )
+
+
+class PyTorchModel(nn.Module):
+    """
+    A PyTorch-trainable version of a `dms_stan.model.Model`. This should not be
+    used directly, but instead accessed by calling the `to_pytorch` method on a
+    `dms_stan.model.Model` instance.
+    """
+
+    def __init__(self, model: dms.model.Model):
+        """
+        Args:
+            model: The `dms_stan.model.Model` instance to convert to PyTorch.
+        """
+        super().__init__()
+
+        # Define types for variables where it is unclear
+        observable: dms.param.Parameter
+        encountered_params: set[dms.param.Parameter] = set()
+        self._observable_loss_calculators: dict[str, ParameterContainer] = {}
+        self._loss_calculators: list[ParameterContainer] = []
+        torch_params: list[nn.Parameter] = []
+
+        # Record the model
+        self.model = model
+
+        # Starting from each observable, walk up the tree and initialize the PyTorch
+        # containers, recording Parameter instances that are used to calculate the
+        # loss.
+        for obsname, observable in model.observable_dict.items():
+
+            # Initialize and record the observable
+            observable.init_pytorch()
+            self._observable_loss_calculators[obsname] = observable.torch_container
+
+            # Record the PyTorch parameters
+            torch_params.extend(observable.torch_container._torch_parameters.values())
+
+            # Process all parents
+            for _, parent, _ in observable.recurse_parents():
+
+                # If we have already encountered this parent, we can skip it
+                if parent in encountered_params:
+                    continue
+
+                # Note that the parent has been encountered
+                encountered_params.add(parent)
+
+                # Initialize the PyTorch container
+                parent.init_pytorch()
+
+                # If the parent is a Parameter, record it as a loss calculator
+                if isinstance(parent, dms.param.Parameter):
+                    self._loss_calculators.append(parent.torch_container)
+
+                # Record the torch parameters
+                torch_params.extend(parent.torch_container._torch_parameters.values())
+
+        # Record the PyTorch parameters as a parameter list. This is necessary for
+        # PyTorch to recognize the parameters.
+        self.torch_params = nn.ParameterList(torch_params)
+
+    def forward(
+        self, **observed_data: Union[np.NDArray, torch.Tensor, float, int]
+    ) -> torch.Tensor:
+        """
+        Each observation is passed in as a keyword argument whose name matches the
+        name of the corresponding observable distribution in the `dms_stan.model.Model`
+        instance. This will calculate the log probability of the observed data given
+        the parameters of the model. Stress: this is the log-probability, not the
+        log loss, which is the negative log-probability.
+        """
+        # There must be perfect overlap between the provided names and the observable
+        # distribution names
+        if set(observed_data.keys()) != set(self._observable_loss_calculators.keys()):
+            raise ValueError(
+                "The provided data must match the observable distribution names."
+                f"The distribution names are: {', '.join(self._observable_loss_calculators.keys())}"
+                f"The provided names are: {', '.join(observed_data.keys())}"
+            )
+
+        # Sum the log-probs of the observables
+        log_prob = 0.0
+        for name, container in self._observable_loss_calculators.items():
+            log_prob += container.calculate_log_prob(observed_data[name])
+
+        # Sum the log-probs of the parameters
+        for container in self._loss_calculators:
+            log_prob += container.calculate_log_prob()
+
+        return log_prob
+
+    def optimize(self):
+        """Optimizes the parameters of the model."""
