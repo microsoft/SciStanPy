@@ -14,6 +14,12 @@ import dms_stan as dms
 class AbstractParameter(ABC):
     """Template class for parameters used in DMS Stan models."""
 
+    # Define allowed ranges for the parameters
+    POSITIVE_PARAMS: tuple[str, ...] = tuple()
+    NEGATIVE_PARAMS: tuple[str, ...] = tuple()
+    SIMPLEX_PARAMS: tuple[str, ...] = tuple()
+
+    # Define the class that will be used for compiling to PyTorch
     _torch_container_class: type[dms.pytorch.TorchContainer]
 
     def __init__(  # pylint: disable=unused-argument
@@ -47,6 +53,9 @@ class AbstractParameter(ABC):
             for name, val in parameters.items()
         }
 
+        # Check parameter ranges
+        self._check_parameter_ranges()
+
         # Initialize the shape of the parameter. The shape must be broadcastable
         # to the shapes of the parameters.
         self.shape = shape
@@ -62,6 +71,40 @@ class AbstractParameter(ABC):
 
         # Set up a placeholder for the Pytorch container
         self._torch_container: Optional[dms.pytorch.TorchContainer] = None
+
+    def _check_parameter_ranges(
+        self, draws: Optional[dict[str, npt.NDArray]] = None
+    ) -> None:
+        """Makes sure that the parameters are within the allowed ranges."""
+        # The positive and negative sets must be disjoint
+        pos_set, neg_set = set(self.POSITIVE_PARAMS), set(self.NEGATIVE_PARAMS)
+        if pos_set & neg_set:
+            raise ValueError("Positive and negative parameter sets must be disjoint")
+
+        # Convert the list of simplex parameters to a set. Anything that is a simplex
+        # is also positive
+        simplex_set = set(self.SIMPLEX_PARAMS) | pos_set
+
+        # If draws are not provided, use parameters
+        checkdict = self.parameters if draws is None else draws
+
+        # Check the parameter ranges
+        for paramname, paramval in checkdict.items():
+
+            # Skip distributions
+            if isinstance(paramval, AbstractParameter):
+                continue
+
+            # Check ranges
+            if paramname in pos_set and np.any(paramval <= 0):
+                raise ValueError(f"{paramname} must be positive")
+            elif paramname in neg_set and np.any(paramval >= 0):
+                raise ValueError(f"{paramname} must be negative")
+            elif paramname in simplex_set:
+                if not isinstance(paramval, np.ndarray):
+                    raise ValueError(f"{paramname} must be a numpy array")
+                if not np.allclose(np.sum(paramval, axis=-1), 1):
+                    raise ValueError(f"{paramname} must sum to 1 over the last axis")
 
     def init_pytorch(self) -> None:
         """
@@ -125,6 +168,9 @@ class AbstractParameter(ABC):
             finalized_draws[name] = np.expand_dims(
                 val, axis=tuple(range(1, to_add + 1))
             )
+
+        # Check the parameter ranges
+        self._check_parameter_ranges(finalized_draws)
 
         return finalized_draws
 
@@ -409,6 +455,9 @@ class AbsParameter(UnaryTransformedParameter):
 
 class LogParameter(UnaryTransformedParameter):
     """Defines a parameter that is the natural logarithm of another."""
+
+    # The distribution must be positive
+    POSITIVE_PARAMS = ("dist1",)
 
     _torch_container_class = dms.pytorch.LogTransformedContainer
 
@@ -728,6 +777,8 @@ class DiscreteDistribution(Distribution):
 class Normal(ContinuousDistribution):
     """Parameter that is represented by the normal distribution."""
 
+    POSITIVE_PARAMS = ("sigma",)
+
     def __init__(
         self,
         *,
@@ -771,6 +822,8 @@ class UnitNormal(Normal):
 class LogNormal(ContinuousDistribution):
     """Parameter that is represented by the log-normal distribution."""
 
+    POSITIVE_PARAMS = ("sigma",)
+
     def __init__(
         self,
         mu: "ContinuousParameterType",
@@ -793,6 +846,8 @@ class LogNormal(ContinuousDistribution):
 
 class Beta(ContinuousDistribution):
     """Defines the beta distribution."""
+
+    POSITIVE_PARAMS = ("alpha", "beta")
 
     def __init__(
         self,
@@ -821,6 +876,8 @@ class Beta(ContinuousDistribution):
 
 class Gamma(ContinuousDistribution):
     """Defines the gamma distribution."""
+
+    POSITIVE_PARAMS = ("alpha", "beta")
 
     def __init__(
         self,
@@ -851,6 +908,8 @@ class Gamma(ContinuousDistribution):
 class Exponential(ContinuousDistribution):
     """Defines the exponential distribution."""
 
+    POSITIVE_PARAMS = ("beta",)
+
     def __init__(self, *, beta: "ContinuousParameterType", **kwargs):
         # Beta must be positive
         if not isinstance(beta, AbstractParameter) and beta <= 0:
@@ -870,6 +929,8 @@ class Exponential(ContinuousDistribution):
 class Dirichlet(ContinuousDistribution):
     """Defines the Dirichlet distribution."""
 
+    POSITIVE_PARAMS = ("alpha",)
+
     def __init__(self, *, alpha: Union[AbstractParameter, npt.ArrayLike], **kwargs):
         # All alpha values must be positive
         if not isinstance(alpha, AbstractParameter) and np.all(np.array(alpha) <= 0):
@@ -887,6 +948,8 @@ class Dirichlet(ContinuousDistribution):
 
 class Binomial(DiscreteDistribution):
     """Parameter that is represented by the binomial distribution"""
+
+    POSITIVE_PARAMS = ("theta", "N")
 
     def __init__(
         self,
@@ -913,6 +976,8 @@ class Binomial(DiscreteDistribution):
 class Poisson(DiscreteDistribution):
     """Parameter that is represented by the Poisson distribution."""
 
+    POSITIVE_PARAMS = ("lambda_",)
+
     def __init__(self, *, lambda_: "ContinuousParameterType", **kwargs):
 
         # Lambda must be positive
@@ -931,6 +996,8 @@ class Poisson(DiscreteDistribution):
 
 class Multinomial(DiscreteDistribution):
     """Defines the multinomial distribution."""
+
+    SIMPLEX_PARAMS = ("theta",)
 
     def __init__(
         self,
