@@ -17,9 +17,9 @@ class AbstractParameter(ABC):
     """Template class for parameters used in DMS Stan models."""
 
     # Define allowed ranges for the parameters
-    POSITIVE_PARAMS: tuple[str, ...] = tuple()
-    NEGATIVE_PARAMS: tuple[str, ...] = tuple()
-    SIMPLEX_PARAMS: tuple[str, ...] = tuple()
+    POSITIVE_PARAMS: set[str] = set()
+    NEGATIVE_PARAMS: set[str] = set()
+    SIMPLEX_PARAMS: set[str] = set()
 
     # Define the class that will be used for compiling to PyTorch
     _torch_container_class: type[dms.pytorch.TorchContainer]
@@ -55,6 +55,15 @@ class AbstractParameter(ABC):
             for name, val in parameters.items()
         }
 
+        # All bounded parameters must be named in the parameter dictionary
+        if missing_names := (
+            self.POSITIVE_PARAMS | self.NEGATIVE_PARAMS | self.SIMPLEX_PARAMS
+        ) - set(self.parameters.keys()):
+            raise ValueError(
+                f"{', '.join(missing_names)} are bounded parameters but are missing "
+                "from those defined"
+            )
+
         # Check parameter ranges
         self._check_parameter_ranges()
 
@@ -79,13 +88,12 @@ class AbstractParameter(ABC):
     ) -> None:
         """Makes sure that the parameters are within the allowed ranges."""
         # The positive and negative sets must be disjoint
-        pos_set, neg_set = set(self.POSITIVE_PARAMS), set(self.NEGATIVE_PARAMS)
-        if pos_set & neg_set:
+        if self.POSITIVE_PARAMS & self.NEGATIVE_PARAMS:
             raise ValueError("Positive and negative parameter sets must be disjoint")
 
         # Convert the list of simplex parameters to a set. Anything that is a simplex
         # is also positive
-        simplex_set = set(self.SIMPLEX_PARAMS) | pos_set
+        simplex_set = self.SIMPLEX_PARAMS | self.POSITIVE_PARAMS
 
         # If draws are not provided, use parameters
         checkdict = self.parameters if draws is None else draws
@@ -98,9 +106,9 @@ class AbstractParameter(ABC):
                 continue
 
             # Check ranges
-            if paramname in pos_set and np.any(paramval <= 0):
+            if paramname in self.POSITIVE_PARAMS and np.any(paramval <= 0):
                 raise ValueError(f"{paramname} must be positive")
-            elif paramname in neg_set and np.any(paramval >= 0):
+            elif paramname in self.NEGATIVE_PARAMS and np.any(paramval >= 0):
                 raise ValueError(f"{paramname} must be negative")
             elif paramname in simplex_set:
                 if not isinstance(paramval, np.ndarray):

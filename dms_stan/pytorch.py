@@ -103,10 +103,45 @@ class TorchContainer(ABC):
 
         return vals
 
+    def _parameter_transform(self) -> dict[str, torch.Tensor]:
+        """
+        Takes the self._torch_parameters dictionary and transforms it to the appropriate
+        space. Essentially, this means that the parameters that are bounded to be
+        positive, negative, or simplexes, are defined in log space to ensure that
+        they remain in the appropriate range. This function will exponentiate the
+        raw parameters, apply the appropriate sign, and, if necessary, normalize
+        them to sum to 1.
+        """
+        # Get the identities of the parameters that need to be transformed
+        to_transform = (
+            self.bound_param.POSITIVE_PARAMS
+            | self.bound_param.NEGATIVE_PARAMS
+            | self.bound_param.SIMPLEX_PARAMS
+        )
+
+        # Build the transformed parameters
+        transformed_params = {}
+        for param_name, param in self._torch_parameters.items():
+
+            # If the parameter is to be transformed, apply the appropriate transformation
+            if param_name in to_transform:
+                transformed_param = torch.exp(param)
+                if param_name in self.bound_param.NEGATIVE_PARAMS:
+                    transformed_param *= -1
+                if param_name in self.bound_param.SIMPLEX_PARAMS:
+                    transformed_param = transformed_param / transformed_param.sum()
+                transformed_params[param_name] = transformed_param
+
+            # Otherwise, just add the parameter to the dictionary
+            else:
+                transformed_params[param_name] = param
+
+        return transformed_params
+
     @property
     def parameters(self) -> dict[str, torch.Tensor]:
         """Gets the parameters of the bound parameter as PyTorch parameters."""
-        return self._torch_parameters
+        return self._parameter_transform()
 
 
 class ParameterContainer(TorchContainer):
@@ -122,14 +157,6 @@ class ParameterContainer(TorchContainer):
         """
         # Assign the bound parameter to the container
         super().__init__(bound_param)
-
-        # Set up the distribution
-        self.distribution = bound_param.torch_dist(
-            {
-                bound_param.stan_to_torch_names[param_name]: param
-                for param_name, param in self._torch_parameters.items()
-            }
-        )
 
     def calculate_log_prob(
         self, observed: Optional[torch.Tensor] = None
@@ -155,6 +182,19 @@ class ParameterContainer(TorchContainer):
             log_prob += self.distribution.log_prob(val).sum()
 
         return log_prob
+
+    @property
+    def distribution(self) -> torch.distributions.Distribution:
+        """
+        Gets the distribution of the bound parameter. The transformed parameters
+        are used to define the distribution, not the raw torch parameters.
+        """
+        return self.bound_param.torch_dist(
+            {
+                self.bound_param.stan_to_torch_names[param_name]: param
+                for param_name, param in self.parameters.items()
+            }
+        )
 
 
 class TransformedContainer(TorchContainer):
@@ -212,23 +252,22 @@ class TransformedContainer(TorchContainer):
             torch.Tensor: The missing parameter.
         """
 
-    # The bound parameter must have inverse operations defined and mapped to the
-    # parameter names in the child.
-    @property
-    def parameters(self) -> dict[str, torch.Tensor]:
+    def _parameter_transform(self) -> dict[str, torch.Tensor]:
+
+        # Transform the parameters
+        transformed_params = super()._parameter_transform()
 
         # Get the observables from the perspective of the bound parameter. There
         # should be exactly one observable.
         observables = self.get_observables()
         assert len(observables) == 1
 
-        # Get a shallow copy of the parameters
-        all_params = self._torch_parameters.copy()
-
         # Add the missing parameter back to the dictionary
-        all_params[self.missing_param] = self.calculate_missing_param(observables[0])
+        transformed_params[self.missing_param] = self.calculate_missing_param(
+            observables[0]
+        )
 
-        return all_params
+        return transformed_params
 
 
 class BinaryTransformedContainer(TransformedContainer):
@@ -311,10 +350,10 @@ class AddTransformedContainer(BinaryTransformedContainer):
         super().__init__(bound_param)
 
     def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable - self._torch_parameters["dist2"]
+        return observable - self.parameters["dist2"]
 
     def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable - self._torch_parameters["dist1"]
+        return observable - self.parameters["dist1"]
 
 
 class SubtractTransformedContainer(BinaryTransformedContainer):
@@ -324,10 +363,10 @@ class SubtractTransformedContainer(BinaryTransformedContainer):
         super().__init__(bound_param)
 
     def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable + self._torch_parameters["dist2"]
+        return observable + self.parameters["dist2"]
 
     def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        return self._torch_parameters["dist1"] - observable
+        return self.parameters["dist1"] - observable
 
 
 class MultiplyTransformedContainer(BinaryTransformedContainer):
@@ -337,10 +376,10 @@ class MultiplyTransformedContainer(BinaryTransformedContainer):
         super().__init__(bound_param)
 
     def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable / self._torch_parameters["dist2"]
+        return observable / self.parameters["dist2"]
 
     def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable / self._torch_parameters["dist1"]
+        return observable / self.parameters["dist1"]
 
 
 class DivideTransformedContainer(BinaryTransformedContainer):
@@ -350,10 +389,10 @@ class DivideTransformedContainer(BinaryTransformedContainer):
         super().__init__(bound_param)
 
     def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable * self._torch_parameters["dist2"]
+        return observable * self.parameters["dist2"]
 
     def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        return self._torch_parameters["dist1"] / observable
+        return self.parameters["dist1"] / observable
 
 
 class PowerTransformedContainer(BinaryTransformedContainer):
@@ -363,10 +402,10 @@ class PowerTransformedContainer(BinaryTransformedContainer):
         super().__init__(bound_param)
 
     def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable ** (1 / self._torch_parameters["dist2"])
+        return observable ** (1 / self.parameters["dist2"])
 
     def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        return torch.log(observable) / torch.log(self._torch_parameters["dist1"])
+        return torch.log(observable) / torch.log(self.parameters["dist1"])
 
 
 class NegateTransformedContainer(UnaryTransformedContainer):
@@ -387,14 +426,12 @@ class AbsTransformedContainer(UnaryTransformedContainer):
 
         # Add another parameter to the dictionary. This is a learnable parameter
         # that gives the sign of the observable.
-        self._torch_parameters["latent_sign"] = nn.Parameter(
-            torch.rand(self.missing_shape)
-        )
+        self.parameters["latent_sign"] = nn.Parameter(torch.rand(self.missing_shape))
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
 
         # Get the sign of the observable
-        sign = (self._torch_parameters["latent_sign"] > 0.5).float() * 2 - 1
+        sign = (self.parameters["latent_sign"] > 0.5).float() * 2 - 1
 
         # Add the sign to the observable
         return observable * sign
@@ -449,7 +486,7 @@ class ScaledTransformedContainer(UnaryTransformedContainer):
                 raise ValueError("Invalid initialization method.")
         else:
             init_params = torch.full(scale_shape, init_scale)
-        self._torch_parameters["latent_scale"] = nn.Parameter(init_params)
+        self.parameters["latent_scale"] = nn.Parameter(init_params)
 
 
 class NormalizeTransformedContainer(ScaledTransformedContainer):
@@ -459,7 +496,7 @@ class NormalizeTransformedContainer(ScaledTransformedContainer):
         super().__init__(bound_param, init_scale=1.0)
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable * self._torch_parameters["latent_scale"]
+        return observable * self.parameters["latent_scale"]
 
 
 class NormalizeLogTransformedContainer(ScaledTransformedContainer):
@@ -469,7 +506,7 @@ class NormalizeLogTransformedContainer(ScaledTransformedContainer):
         super().__init__(bound_param, init_scale=0.0)
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable + self._torch_parameters["latent_scale"]
+        return observable + self.parameters["latent_scale"]
 
 
 class LogExponentialGrowthContainer(TransformedContainer):
@@ -484,19 +521,24 @@ class LogExponentialGrowthContainer(TransformedContainer):
         self, observable: torch.Tensor
     ) -> torch.Tensor:
         """Calculates the log of the amplitude from the observable."""
-        return observable - self._torch_parameters["r"] * self._torch_parameters["t"]
+        # Calling `self.parameters` multiple times is inefficient. We call the
+        # function wrapped by that property once and store the result.
+        transformed_params = self._parameter_transform()
+        return observable - transformed_params["r"] * transformed_params["t"]
 
     def calculate_r(self, observable: torch.Tensor) -> torch.Tensor:
         """Calculates the growth rate from the observable."""
-        return (observable - self._torch_parameters["log_A"]) / self._torch_parameters[
-            "t"
-        ]
+        # Calling `self.parameters` multiple times is inefficient. We call the
+        # function wrapped by that property once and store the result.
+        transformed_params = self._parameter_transform()
+        return (observable - transformed_params["log_A"]) / transformed_params["t"]
 
     def calculate_t(self, observable: torch.Tensor) -> torch.Tensor:
         """Calculates the time from the observable."""
-        return (observable - self._torch_parameters["log_A"]) / self._torch_parameters[
-            "r"
-        ]
+        # Calling `self.parameters` multiple times is inefficient. We call the
+        # function wrapped by that property once and store the result.
+        transformed_params = self._parameter_transform()
+        return (observable - transformed_params["log_A"]) / transformed_params["r"]
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
         if self.missing_param == "log_A":
@@ -521,34 +563,42 @@ class LogSigmoidGrowthContainer(TransformedContainer):
         self, observable: torch.Tensor
     ) -> torch.Tensor:
         """Calculates the log of the amplitude from the observable."""
+        # Calling `self.parameters` multiple times is inefficient. We call the
+        # function wrapped by that property once and store the result.
+        transformed_params = self._parameter_transform()
         return observable + torch.log(
             1
             + torch.exp(
-                self._torch_parameters["r"]
-                * (self._torch_parameters["c"] - self._torch_parameters["t"])
+                transformed_params["r"]
+                * (transformed_params["c"] - transformed_params["t"])
             )
         )
 
     def calculate_r(self, observable: torch.Tensor) -> torch.Tensor:
         """Calculates the growth rate from the observable."""
-        return torch.log(
-            torch.exp(self._torch_parameters["log_A"] - observable) - 1
-        ) / (self._torch_parameters["c"] - self._torch_parameters["t"])
+        # Calling `self.parameters` multiple times is inefficient. We call the
+        # function wrapped by that property once and store the result.
+        transformed_params = self._parameter_transform()
+        return torch.log(torch.exp(transformed_params["log_A"] - observable) - 1) / (
+            transformed_params["c"] - transformed_params["t"]
+        )
 
     def calculate_c(self, observable: torch.Tensor) -> torch.Tensor:
         """Calculates the inflection point from the observable."""
+        # Calling `self.parameters` multiple times is inefficient. We call the
+        # function wrapped by that property once and store the result.
+        transformed_params = self._parameter_transform()
         return (
-            torch.log(torch.exp(self._torch_parameters["log_A"] - observable) - 1)
-            / self._torch_parameters["r"]
-        ) + self._torch_parameters["t"]
+            torch.log(torch.exp(transformed_params["log_A"] - observable) - 1)
+            / transformed_params["r"]
+        ) + transformed_params["t"]
 
     def calculate_t(self, observable: torch.Tensor) -> torch.Tensor:
         """Calculates the time from the observable."""
-        return self._torch_parameters["c"] - (
-            torch.log(torch.exp(self._torch_parameters["log_A"] - observable) - 1)
-            / self._torch_parameters["r"]
+        # Calling `self.parameters` multiple times is inefficient. We call the
+        # function wrapped by that property once and store the result.
+        transformed_params = self._parameter_transform()
+        return transformed_params["c"] - (
+            torch.log(torch.exp(transformed_params["log_A"] - observable) - 1)
+            / transformed_params["r"]
         )
-
-
-# TODO: Figure out which parameters need to be kept in log space during optimization
-# to force positivity.
