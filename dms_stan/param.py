@@ -10,6 +10,8 @@ import torch.distributions as dist
 
 import dms_stan as dms
 
+# pylint: disable=too-many-lines
+
 
 class AbstractParameter(ABC):
     """Template class for parameters used in DMS Stan models."""
@@ -786,9 +788,6 @@ class Normal(ContinuousDistribution):
         sigma: "ContinuousParameterType",
         **kwargs,
     ):
-        # Sigma must be positive
-        if not isinstance(sigma, AbstractParameter) and sigma <= 0:
-            raise ValueError("`sigma` must be positive")
 
         super().__init__(
             numpy_dist="normal",
@@ -830,9 +829,6 @@ class LogNormal(ContinuousDistribution):
         sigma: "ContinuousParameterType",
         **kwargs,
     ):
-        # Sigma must be positive
-        if not isinstance(sigma, AbstractParameter) and sigma <= 0:
-            raise ValueError("`sigma` must be positive")
         super().__init__(
             numpy_dist="lognormal",
             torch_dist=dist.log_normal.LogNormal,
@@ -856,12 +852,6 @@ class Beta(ContinuousDistribution):
         beta: "ContinuousParameterType",
         **kwargs,
     ):
-
-        # Alpha and beta must be positive
-        if not isinstance(alpha, AbstractParameter) and alpha <= 0:
-            raise ValueError("`alpha` must be positive")
-        if not isinstance(beta, AbstractParameter) and beta <= 0:
-            raise ValueError("`beta` must be positive")
 
         super().__init__(
             numpy_dist="beta",
@@ -887,12 +877,6 @@ class Gamma(ContinuousDistribution):
         **kwargs,
     ):
 
-        # Alpha and beta must be positive
-        if not isinstance(alpha, AbstractParameter) and alpha <= 0:
-            raise ValueError("`alpha` must be positive")
-        if not isinstance(beta, AbstractParameter) and beta <= 0:
-            raise ValueError("`beta` must be positive")
-
         super().__init__(
             numpy_dist="gamma",
             torch_dist=dist.gamma.Gamma,
@@ -911,9 +895,6 @@ class Exponential(ContinuousDistribution):
     POSITIVE_PARAMS = ("beta",)
 
     def __init__(self, *, beta: "ContinuousParameterType", **kwargs):
-        # Beta must be positive
-        if not isinstance(beta, AbstractParameter) and beta <= 0:
-            raise ValueError("`beta` must be positive")
 
         super().__init__(
             numpy_dist="exponential",
@@ -932,9 +913,6 @@ class Dirichlet(ContinuousDistribution):
     POSITIVE_PARAMS = ("alpha",)
 
     def __init__(self, *, alpha: Union[AbstractParameter, npt.ArrayLike], **kwargs):
-        # All alpha values must be positive
-        if not isinstance(alpha, AbstractParameter) and np.all(np.array(alpha) <= 0):
-            raise ValueError("All `alpha` values must be positive")
 
         super().__init__(
             numpy_dist="dirichlet",
@@ -958,9 +936,6 @@ class Binomial(DiscreteDistribution):
         N: "DiscreteParameterType",
         **kwargs,
     ):
-        # Theta must be between 0 and 1
-        if not isinstance(theta, AbstractParameter) and not 0 <= theta <= 1:
-            raise ValueError("`theta` must be between 0 and 1")
 
         super().__init__(
             numpy_dist="binomial",
@@ -979,10 +954,6 @@ class Poisson(DiscreteDistribution):
     POSITIVE_PARAMS = ("lambda_",)
 
     def __init__(self, *, lambda_: "ContinuousParameterType", **kwargs):
-
-        # Lambda must be positive
-        if not isinstance(lambda_, AbstractParameter) and lambda_ <= 0:
-            raise ValueError("`lambda_` must be positive")
 
         super().__init__(
             numpy_dist="poisson",
@@ -1006,9 +977,6 @@ class Multinomial(DiscreteDistribution):
         N: Optional[Union[AbstractParameter, int]] = None,
         **kwargs,
     ):
-        # Thetas must sum to 1
-        if not isinstance(theta, AbstractParameter) and abs(np.sum(theta) % 1) > 1e-6:
-            raise ValueError("All arrays of thetas must sum to 1")
 
         # Run the parent class's init
         super().__init__(
