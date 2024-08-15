@@ -6,7 +6,6 @@ from typing import Any, Callable, Optional, Union
 import numpy as np
 import numpy.typing as npt
 import scipy.special as sp
-import torch
 import torch.distributions as dist
 
 import dms_stan as dms
@@ -14,6 +13,8 @@ import dms_stan as dms
 
 class AbstractParameter(ABC):
     """Template class for parameters used in DMS Stan models."""
+
+    _torch_container_class: type[dms.pytorch.TorchContainer]
 
     def __init__(  # pylint: disable=unused-argument
         self,
@@ -62,7 +63,6 @@ class AbstractParameter(ABC):
         # Set up a placeholder for the Pytorch container
         self._torch_container: Optional[dms.pytorch.TorchContainer] = None
 
-    @abstractmethod
     def init_pytorch(self) -> None:
         """
         Sets up the parameters needed for training a Pytorch model and defines the
@@ -70,6 +70,12 @@ class AbstractParameter(ABC):
         be either calculation of loss or transformation of the parameter, depending
         on the subclass.
         """
+        # We must have defined the PyTorch container class
+        if not hasattr(self, "_torch_container_class"):
+            raise ValueError("Pytorch container class not defined in the subclass")
+
+        # Initialize the Pytorch container
+        self._torch_container = self._torch_container_class(self)
 
     @abstractmethod
     def draw(self, n: int) -> Any:
@@ -255,6 +261,8 @@ class TransformedParameter(AbstractParameter):
     parameters using mathematical operations.
     """
 
+    _torch_container_class: dms.pytorch.TransformedContainer
+
     def draw(self, n: int) -> npt.NDArray:
         """Sample from this parameter's distribution `n` times."""
 
@@ -276,6 +284,8 @@ class BinaryTransformedParameter(TransformedParameter):
     two parameters. In other words, two parameters must be passed to the class.
     """
 
+    _torch_container_class: dms.pytorch.BinaryTransformedContainer
+
     def __init__(
         self,
         dist1: "CombinableParameterType",
@@ -294,6 +304,8 @@ class BinaryTransformedParameter(TransformedParameter):
 
 class UnaryTransformedParameter(TransformedParameter):
     """Transformed parameter that only requires one parameter."""
+
+    _torch_container_class: dms.pytorch.UnaryTransformedContainer
 
     def __init__(
         self,
@@ -315,6 +327,8 @@ class UnaryTransformedParameter(TransformedParameter):
 class AddParameter(BinaryTransformedParameter):
     """Defines a parameter that is the sum of two other parameters."""
 
+    _torch_container_class = dms.pytorch.AddTransformedContainer
+
     def operation(
         self,
         dist1: "SampleType",
@@ -325,6 +339,8 @@ class AddParameter(BinaryTransformedParameter):
 
 class SubtractParameter(BinaryTransformedParameter):
     """Defines a parameter that is the difference of two other parameters."""
+
+    _torch_container_class = dms.pytorch.SubtractTransformedContainer
 
     def operation(
         self,
@@ -337,6 +353,8 @@ class SubtractParameter(BinaryTransformedParameter):
 class MultiplyParameter(BinaryTransformedParameter):
     """Defines a parameter that is the product of two other parameters."""
 
+    _torch_container_class = dms.pytorch.MultiplyTransformedContainer
+
     def operation(
         self,
         dist1: "SampleType",
@@ -347,6 +365,8 @@ class MultiplyParameter(BinaryTransformedParameter):
 
 class DivideParameter(BinaryTransformedParameter):
     """Defines a parameter that is the quotient of two other parameters."""
+
+    _torch_container_class = dms.pytorch.DivideTransformedContainer
 
     def operation(
         self,
@@ -359,6 +379,8 @@ class DivideParameter(BinaryTransformedParameter):
 class PowerParameter(BinaryTransformedParameter):
     """Defines a parameter raised to the power of another parameter."""
 
+    _torch_container_class = dms.pytorch.PowerTransformedContainer
+
     def operation(
         self,
         dist1: "SampleType",
@@ -370,8 +392,7 @@ class PowerParameter(BinaryTransformedParameter):
 class NegateParameter(UnaryTransformedParameter):
     """Defines a parameter that is the negative of another parameter."""
 
-    def __init__(self, dist1: "CombinableParameterType"):
-        super().__init__(dist1)
+    _torch_container_class = dms.pytorch.NegateTransformedContainer
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return -dist1
@@ -380,12 +401,16 @@ class NegateParameter(UnaryTransformedParameter):
 class AbsParameter(UnaryTransformedParameter):
     """Defines a parameter that is the absolute value of another."""
 
+    _torch_container_class = dms.pytorch.AbsTransformedContainer
+
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.abs(dist1, **self.operation_kwargs)
 
 
 class LogParameter(UnaryTransformedParameter):
     """Defines a parameter that is the natural logarithm of another."""
+
+    _torch_container_class = dms.pytorch.LogTransformedContainer
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.log(dist1, **self.operation_kwargs)
@@ -394,12 +419,16 @@ class LogParameter(UnaryTransformedParameter):
 class ExpParameter(UnaryTransformedParameter):
     """Defines a parameter that is the exponential of another."""
 
+    _torch_container_class = dms.pytorch.ExpTransformedContainer
+
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.exp(dist1, **self.operation_kwargs)
 
 
 class NormalizeParameter(UnaryTransformedParameter):
     """Defines a parameter that is normalized to sum to 1."""
+
+    _torch_container_class = dms.pytorch.NormalizeTransformedContainer
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return dist1 / np.sum(dist1, keepdims=True, **self.operation_kwargs)
@@ -410,6 +439,8 @@ class NormalizeLogParameter(UnaryTransformedParameter):
     Defines a parameter that is normalized such that exp(x) sums to 1. By extension,
     this assumes that the input is log-transformed.
     """
+
+    _torch_container_class = dms.pytorch.NormalizeLogTransformedContainer
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return dist1 - sp.logsumexp(dist1, keepdims=True, **self.operation_kwargs)
@@ -446,6 +477,8 @@ class LogExponentialGrowth(Growth):
     This parametrization is particularly useful for modeling the proportions of
     different populations as is done in DMS Stan, as proportions are always positive.
     """
+
+    _torch_container_class = dms.pytorch.LogExponentialGrowthContainer
 
     def __init__(
         self,
@@ -493,6 +526,8 @@ class LogSigmoidGrowth(Growth):
     that $x > 0$.
     """
 
+    _torch_container_class = dms.pytorch.LogSigmoidGrowthContainer
+
     def __init__(
         self,
         *,
@@ -531,6 +566,8 @@ class LogSigmoidGrowth(Growth):
 
 class Parameter(AbstractParameter):
     """Base class for parameters used in DMS Stan"""
+
+    _torch_container_class = dms.pytorch.ParameterContainer
 
     def __init__(
         self,

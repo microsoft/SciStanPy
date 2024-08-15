@@ -1,7 +1,7 @@
 """Holds utilities for integrating DMS Stan with Pytorch"""
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Union
 
 import torch
 import torch.nn as nn
@@ -423,7 +423,11 @@ class ExpTransformedContainer(UnaryTransformedContainer):
 class ScaledTransformedContainer(UnaryTransformedContainer):
     """Pairs with any class that scales the observable."""
 
-    def __init__(self, bound_param: dms.param.UnaryTransformedParameter):
+    def __init__(
+        self,
+        bound_param: dms.param.UnaryTransformedParameter,
+        init_scale: Union[str, float],
+    ):
         super().__init__(bound_param)
 
         # If "axis" is an additional keyword argument provided to the bound parameter,
@@ -436,14 +440,23 @@ class ScaledTransformedContainer(UnaryTransformedContainer):
 
         # Add a scale parameter to the dictionary. This is a learnable parameter
         # that scales the observable.
-        self._torch_parameters["latent_scale"] = nn.Parameter(torch.randn(scale_shape))
+        if isinstance(init_scale, str):
+            if init_scale == "normal":
+                init_params = torch.randn(scale_shape)
+            elif init_scale == "uniform":
+                init_params = torch.rand(scale_shape)
+            else:
+                raise ValueError("Invalid initialization method.")
+        else:
+            init_params = torch.full(scale_shape, init_scale)
+        self._torch_parameters["latent_scale"] = nn.Parameter(init_params)
 
 
 class NormalizeTransformedContainer(ScaledTransformedContainer):
     """Pairs with the `dms_stan.param.NormalizeParameter` class."""
 
     def __init__(self, bound_param: dms.param.NormalizeParameter):
-        super().__init__(bound_param)
+        super().__init__(bound_param, init_scale=1.0)
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
         return observable * self._torch_parameters["latent_scale"]
@@ -453,7 +466,7 @@ class NormalizeLogTransformedContainer(ScaledTransformedContainer):
     """Pairs with the `dms_stan.param.NormalizeLogParameter` class."""
 
     def __init__(self, bound_param: dms.param.NormalizeLogParameter):
-        super().__init__(bound_param)
+        super().__init__(bound_param, init_scale=0.0)
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
         return observable + self._torch_parameters["latent_scale"]
