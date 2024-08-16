@@ -27,7 +27,7 @@ class AbstractParameter(ABC):
     def __init__(  # pylint: disable=unused-argument
         self,
         *,
-        shape: tuple[int, ...] = tuple(),
+        shape: Optional[tuple[int, ...]] = None,
         **parameters: "CombinableParameterType",
     ):
         """Builds a parameter instance with the given shape."""
@@ -67,13 +67,16 @@ class AbstractParameter(ABC):
         # Check parameter ranges
         self._check_parameter_ranges()
 
-        # Initialize the shape of the parameter. The shape must be broadcastable
-        # to the shapes of the parameters.
-        self.shape = shape
+        # If the shape is not provided, then we use the broadcasted shape of the
+        # parameters
+        param_broadcast_shape = np.broadcast_shapes(
+            *[param.shape for param in self.parameters.values()]
+        )
+        self.shape = param_broadcast_shape if shape is None else shape
+
+        # The shape must be broadcastable to the shapes of the parameters.
         try:
-            self.draw_shape = np.broadcast_shapes(
-                shape, *[param.shape for param in self.parameters.values()]
-            )
+            self.draw_shape = np.broadcast_shapes(shape, param_broadcast_shape)
         except ValueError as error:
             raise ValueError("Shape is not broadcastable to parent shapes") from error
 
@@ -93,7 +96,7 @@ class AbstractParameter(ABC):
 
         # Convert the list of simplex parameters to a set. Anything that is a simplex
         # is also positive
-        simplex_set = self.SIMPLEX_PARAMS | self.POSITIVE_PARAMS
+        positive_set = self.SIMPLEX_PARAMS | self.POSITIVE_PARAMS
 
         # If draws are not provided, use parameters
         checkdict = self.parameters if draws is None else draws
@@ -106,11 +109,11 @@ class AbstractParameter(ABC):
                 continue
 
             # Check ranges
-            if paramname in self.POSITIVE_PARAMS and np.any(paramval <= 0):
+            if paramname in positive_set and np.any(paramval <= 0):
                 raise ValueError(f"{paramname} must be positive")
             elif paramname in self.NEGATIVE_PARAMS and np.any(paramval >= 0):
                 raise ValueError(f"{paramname} must be negative")
-            elif paramname in simplex_set:
+            elif paramname in self.SIMPLEX_PARAMS:
                 if not isinstance(paramval, np.ndarray):
                     raise ValueError(f"{paramname} must be a numpy array")
                 if not np.allclose(np.sum(paramval, axis=-1), 1):
@@ -346,7 +349,7 @@ class BinaryTransformedParameter(TransformedParameter):
         self,
         dist1: "CombinableParameterType",
         dist2: "CombinableParameterType",
-        shape: tuple[int, ...] = tuple(),
+        shape: Optional[tuple[int, ...]] = None,
     ):
         super().__init__(dist1=dist1, dist2=dist2, shape=shape)
 
@@ -366,7 +369,7 @@ class UnaryTransformedParameter(TransformedParameter):
     def __init__(
         self,
         dist1: "CombinableParameterType",
-        shape: tuple[int, ...] = tuple(),
+        shape: Optional[tuple[int, ...]] = None,
         **kwargs: Any,
     ):
         super().__init__(dist1=dist1, shape=shape)
@@ -467,7 +470,7 @@ class LogParameter(UnaryTransformedParameter):
     """Defines a parameter that is the natural logarithm of another."""
 
     # The distribution must be positive
-    POSITIVE_PARAMS = ("dist1",)
+    POSITIVE_PARAMS = set(["dist1"])
 
     _torch_container_class = dms.pytorch.LogTransformedContainer
 
@@ -512,7 +515,7 @@ class Growth(TransformedParameter):
         self,
         *,
         t: "CombinableParameterType",
-        shape: tuple[int, ...] = tuple(),
+        shape: Optional[tuple[int, ...]] = None,
         **params: "CombinableParameterType",
     ):
         # Store all parameters as a list by calling the super class
@@ -545,7 +548,7 @@ class LogExponentialGrowth(Growth):
         t: "CombinableParameterType",
         log_A: "CombinableParameterType",
         r: "CombinableParameterType",
-        shape: tuple[int, ...] = tuple(),
+        shape: Optional[tuple[int, ...]] = None,
     ):
         """Initializes the LogExponentialGrowth distribution.
 
@@ -594,7 +597,7 @@ class LogSigmoidGrowth(Growth):
         log_A: "CombinableParameterType",
         r: "CombinableParameterType",
         c: "CombinableParameterType",
-        shape: tuple[int, ...] = tuple(),
+        shape: Optional[tuple[int, ...]] = None,
     ):
         """Initializes the LogSigmoidGrowth distribution.
 
@@ -638,7 +641,7 @@ class Parameter(AbstractParameter):
             dict[str, Callable[[npt.NDArray], npt.NDArray]]
         ] = None,
         seed: Optional[Union[np.random.Generator, int]] = None,
-        shape: tuple[int, ...] = tuple(),
+        shape: Optional[tuple[int, ...]] = None,
         **parameters,
     ):
         """
@@ -787,7 +790,7 @@ class DiscreteDistribution(Distribution):
 class Normal(ContinuousDistribution):
     """Parameter that is represented by the normal distribution."""
 
-    POSITIVE_PARAMS = ("sigma",)
+    POSITIVE_PARAMS = set(["sigma"])
 
     def __init__(
         self,
@@ -812,7 +815,7 @@ class HalfNormal(Normal):
     """Parameter that is represented by the half-normal distribution."""
 
     def __init__(self, *, sigma: "ContinuousParameterType", **kwargs):
-        super().__init__(mu=0, sigma=sigma, **kwargs)
+        super().__init__(mu=0.0, sigma=sigma, **kwargs)
 
     # Overwrite the draw method to ensure that the drawn values are positive
     def draw(self, n: int) -> npt.NDArray:
@@ -823,13 +826,13 @@ class UnitNormal(Normal):
     """Parameter that is represented by the unit normal distribution."""
 
     def __init__(self, **kwargs):
-        super().__init__(mu=0, sigma=1, **kwargs)
+        super().__init__(mu=0.0, sigma=1.0, **kwargs)
 
 
 class LogNormal(ContinuousDistribution):
     """Parameter that is represented by the log-normal distribution."""
 
-    POSITIVE_PARAMS = ("sigma",)
+    POSITIVE_PARAMS = set(["sigma"])
 
     def __init__(
         self,
@@ -851,7 +854,7 @@ class LogNormal(ContinuousDistribution):
 class Beta(ContinuousDistribution):
     """Defines the beta distribution."""
 
-    POSITIVE_PARAMS = ("alpha", "beta")
+    POSITIVE_PARAMS = set(["alpha", "beta"])
 
     def __init__(
         self,
@@ -875,7 +878,7 @@ class Beta(ContinuousDistribution):
 class Gamma(ContinuousDistribution):
     """Defines the gamma distribution."""
 
-    POSITIVE_PARAMS = ("alpha", "beta")
+    POSITIVE_PARAMS = set(["alpha", "beta"])
 
     def __init__(
         self,
@@ -900,7 +903,7 @@ class Gamma(ContinuousDistribution):
 class Exponential(ContinuousDistribution):
     """Defines the exponential distribution."""
 
-    POSITIVE_PARAMS = ("beta",)
+    POSITIVE_PARAMS = set(["beta"])
 
     def __init__(self, *, beta: "ContinuousParameterType", **kwargs):
 
@@ -918,7 +921,7 @@ class Exponential(ContinuousDistribution):
 class Dirichlet(ContinuousDistribution):
     """Defines the Dirichlet distribution."""
 
-    POSITIVE_PARAMS = ("alpha",)
+    POSITIVE_PARAMS = set(["alpha"])
 
     def __init__(self, *, alpha: Union[AbstractParameter, npt.ArrayLike], **kwargs):
 
@@ -935,7 +938,7 @@ class Dirichlet(ContinuousDistribution):
 class Binomial(DiscreteDistribution):
     """Parameter that is represented by the binomial distribution"""
 
-    POSITIVE_PARAMS = ("theta", "N")
+    POSITIVE_PARAMS = set(["theta", "N"])
 
     def __init__(
         self,
@@ -959,7 +962,7 @@ class Binomial(DiscreteDistribution):
 class Poisson(DiscreteDistribution):
     """Parameter that is represented by the Poisson distribution."""
 
-    POSITIVE_PARAMS = ("lambda_",)
+    POSITIVE_PARAMS = set(["lambda_"])
 
     def __init__(self, *, lambda_: "ContinuousParameterType", **kwargs):
 
@@ -976,7 +979,7 @@ class Poisson(DiscreteDistribution):
 class Multinomial(DiscreteDistribution):
     """Defines the multinomial distribution."""
 
-    SIMPLEX_PARAMS = ("theta",)
+    SIMPLEX_PARAMS = set(["theta"])
 
     def __init__(
         self,

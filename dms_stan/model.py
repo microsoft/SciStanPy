@@ -134,20 +134,9 @@ class Model:
 
     def to_pytorch(self):
         """
-        Compiles the model to a trainable PyTorch model. How this is done:
-
-        1)  Identify all parameters by recursively walking up the tree from the observables.
-        2)  Within `__init__`:
-            a)  Root nodes are set as constants, as are any nodes that are not `Parameter`
-                types.
-            b)  All other Parameter types are set up as trainable.
-        3)  Within `forward`L
-            a)  The method takes in observed data and calculates the log likelihood
-                using the relevant distribution.
-            b)  The log-likelihood of the latent variables is calculated using the
-                relevant distributions.
-            c)  The log-likelihoods of the latent variables are summed and returned.
+        Compiles the model to a trainable PyTorch model.
         """
+        return dms.pytorch.PyTorchModel(self)
 
     def __iter__(
         self,
