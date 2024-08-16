@@ -13,7 +13,8 @@ import numpy as np
 install_import_hook("dms_stan")
 
 # pylint: disable=wrong-import-position
-from dms_stan import constant, model, operations, param, prior_predictive, pytorch
+from dms_stan import pytorch
+from dms_stan import constant, model, operations, param, prior_predictive
 
 # Define the global random number generator
 RNG: np.random.Generator
