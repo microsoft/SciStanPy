@@ -8,11 +8,14 @@ dependencies:
   - conda-forge::cmdstanpy
   - conda-forge::hvplot
   - conda-forge::typeguard
+  - dask
   - jupyter
   - pytorch::pytorch-cuda=12.4
   - panel
+  - pip
   - python=3.12
   - pytorch::pytorch
   - pytorch::torchvision
   - pytorch::torchaudio
+  - pyviz::datashader
   - watchfiles

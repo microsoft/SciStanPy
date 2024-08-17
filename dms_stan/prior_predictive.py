@@ -5,6 +5,7 @@ from typing import Optional, overload
 
 import bokeh.plotting as bkp
 import holoviews as hv
+import hvplot.interactive
 import hvplot.pandas
 import numpy as np
 import numpy.typing as npt
@@ -35,6 +36,9 @@ def aggregate_data(
     # If the independent dimension is provided, first move that dimension to
     # the end (reshape is C-major), then reshape the data to flatten all other dimensions
     else:
+        independent_dim = (
+            independent_dim + 1 if independent_dim >= 0 else independent_dim
+        )
         n_independent = data.shape[independent_dim]
         return np.moveaxis(data, independent_dim, -1).reshape((-1, n_independent))
 
@@ -46,7 +50,7 @@ def plot_ecdf_kde(plotting_df: pd.DataFrame, paramname: str) -> bkp.figure: ...
 @overload
 def plot_ecdf_kde(
     plotting_df: hvplot.interactive.Interactive, paramname: pnw.Select
-) -> bkp.figure: ...
+) -> hvplot.interactive.Interactive: ...
 
 
 def plot_ecdf_kde(plotting_df, paramname):
@@ -70,7 +74,7 @@ def plot_ecdf_violin(plotting_df: pd.DataFrame, paramname: str) -> bkp.figure: .
 @overload
 def plot_ecdf_violin(
     plotting_df: hvplot.interactive.Interactive, paramname: pnw.Select
-) -> bkp.figure: ...
+) -> hvplot.interactive.Interactive: ...
 
 
 def plot_ecdf_violin(plotting_df, paramname):
@@ -102,6 +106,9 @@ def plot_ecdf_violin(plotting_df, paramname):
     return (ecdfplot + violinplot).cols(1)
 
 
+# TODO: Add ability to slice out specific dimensions
+
+
 @overload
 def plot_relationship(plotting_df: pd.DataFrame, paramname: str) -> bkp.figure: ...
 
@@ -109,7 +116,7 @@ def plot_relationship(plotting_df: pd.DataFrame, paramname: str) -> bkp.figure: 
 @overload
 def plot_relationship(
     plotting_df: hvplot.interactive.Interactive, paramname: pnw.Select
-) -> bkp.figure: ...
+) -> hvplot.interactive.Interactive: ...
 
 
 def plot_relationship(plotting_df, paramname):
@@ -117,7 +124,17 @@ def plot_relationship(plotting_df, paramname):
     Renders the plots for 2D data treating the second dimension elements as dependent
     on a provided label.
     """
-    pass
+    return plotting_df.hvplot.line(
+        x="Independent Label",
+        y=paramname,
+        title="Relationship",
+        width=600,
+        height=400,
+        datashade=True,
+        dynamic=False,
+        aggregator="count",
+        cmap="inferno",
+    ).opts(autorange="y")
 
 
 class PriorPredictiveCheck:
@@ -132,7 +149,7 @@ class PriorPredictiveCheck:
     def build_plotting_df(
         self,
         paramname: str,
-        n_draws: int,
+        n_experiments: int,
         independent_dim: Optional[int] = None,
         independent_labels: Optional[npt.NDArray] = None,
     ) -> pd.DataFrame:
@@ -142,31 +159,46 @@ class PriorPredictiveCheck:
         """
         # Get the samples from the model
         data = aggregate_data(
-            self.model.draw_from(paramname, n_draws), independent_dim=independent_dim
+            self.model.draw_from(paramname, n_experiments),
+            independent_dim=independent_dim,
         )
 
         # If the independent dimension is provided, one path
-        if independent_dim:
+        if independent_dim is not None:
 
             # The data must be a 2D array
             assert data.ndim == 2
 
             # Build the independent labels if they are not provided. If they are
             # provided, make sure they are the right length.
-            if build_ecdf := independent_labels is None:
+            if no_labels := independent_labels is None:
                 independent_labels = np.arange(data.shape[1])
             assert len(independent_labels) == data.shape[1]
 
-            # Build the dataframe
-            plotting_df = pd.DataFrame(
-                {
-                    "Independent Label": np.tile(independent_labels, data.shape[0]),
-                    paramname: data.flatten(),
-                }
-            )
+            # Add the data to a dataframe, separating each trace with a row of NaNs
+            sub_dfs = [None] * len(data)
+            for i, data_row in enumerate(data):
+                # Combine arrays and add a row of NaNs
+                combined = np.vstack([data_row, independent_labels]).T
+                combined = np.vstack([combined, np.full(2, np.nan)])
 
-            # Build an ECDF column if we need one
-            if build_ecdf:
+                # Build the dataframe
+                temp_df = pd.DataFrame(
+                    combined, columns=[paramname, "Independent Label"]
+                )
+                temp_df["Trace"] = i
+                sub_dfs[i] = temp_df
+
+            # Combine all dataframes
+            plotting_df = pd.concat(sub_dfs, ignore_index=True)
+
+            # If no labels were provided, drop the NaN rows and add an ECDF column
+            if no_labels:
+
+                # Drop the NaN rows
+                plotting_df = plotting_df.dropna()
+
+                # Add an ECDF column
                 plotting_df["Cumulative Probability"] = plotting_df.groupby(
                     by="Independent Label"
                 )[paramname].rank(method="max", pct=True)
@@ -174,8 +206,6 @@ class PriorPredictiveCheck:
                 plotting_df = plotting_df.sort_values(
                     by=["Independent Label", "Cumulative Probability"]
                 )
-
-                return plotting_df
 
             return plotting_df
 
@@ -272,14 +302,14 @@ class PriorPredictiveCheck:
     def _init_draw_slider(self) -> pnw.EditableIntSlider:
         """Gets the slider for the number of draws to use in the prior predictive check."""
         return pnw.EditableIntSlider(
-            name="Number of Draws", value=100, start=1, end=10000
+            name="Number of Experiments", value=1, start=1, end=100
         )
 
     # We need a function that updates the model with new parameters
     def _viewer_backend(
         self,
         paramname: str,
-        n_draws: int,
+        n_experiments: int,
         independent_dim: Optional[int],
         independent_labels: Optional[npt.NDArray],
         **kwargs: float,
@@ -322,7 +352,7 @@ class PriorPredictiveCheck:
         # Return the dataframes for plotting
         return self.build_plotting_df(
             paramname=paramname,
-            n_draws=n_draws,
+            n_experiments=n_experiments,
             independent_dim=independent_dim,
             independent_labels=independent_labels,
         )
@@ -332,7 +362,7 @@ class PriorPredictiveCheck:
         initial_view: Optional[str] = None,
         independent_dim: Optional[int] = None,
         independent_labels: Optional[npt.NDArray] = None,
-    ):
+    ) -> hvplot.interactive.Interactive:
         """
         Renders a display of samples drawn from the parameter given by `initial_view`.
 
@@ -360,8 +390,8 @@ class PriorPredictiveCheck:
         # labels, then we will plot a series of ECDFs and violin plots. If we have
         # an independent dimension and labels, then we will plot lines describing
         # those relationships.
-        if independent_dim:
-            if independent_labels:
+        if independent_dim is not None:
+            if independent_labels is not None:
                 plotting_func = plot_relationship
             else:
                 plotting_func = plot_ecdf_violin
@@ -386,7 +416,7 @@ class PriorPredictiveCheck:
         plot_df = hvplot.bind(
             self._viewer_backend,
             paramname=target_dropdown,
-            n_draws=draw_slider,
+            n_experiments=draw_slider,
             independent_dim=independent_dim,
             independent_labels=independent_labels,
             **float_sliders,

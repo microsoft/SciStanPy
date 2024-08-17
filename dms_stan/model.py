@@ -4,6 +4,7 @@ import collections
 
 from typing import Generator, NamedTuple, Optional, Union
 
+import hvplot.interactive
 import numpy as np
 import numpy.typing as npt
 
@@ -137,6 +138,29 @@ class Model:
         Compiles the model to a trainable PyTorch model.
         """
         return dms.pytorch.PyTorchModel(self)
+
+    def prior_predictive(
+        self,
+        *,
+        copy_model: bool = False,
+        initial_view: Optional[str] = None,
+        independent_dim: Optional[int] = None,
+        independent_labels: Optional[npt.NDArray] = None,
+    ) -> hvplot.interactive.Interactive:
+        """
+        Creates an interactive plot of the prior predictive distribution of the
+        model. The plot can be used to update the model's parameters dynamically.
+        See `dms_stan.prior_predictive.PriorPredictiveCheck` for more details.
+        """
+        # Create the prior predictive object
+        pp = dms.prior_predictive.PriorPredictiveCheck(self, copy_model=copy_model)
+
+        # Return the plot
+        return pp.display(
+            initial_view=initial_view,
+            independent_dim=independent_dim,
+            independent_labels=independent_labels,
+        )
 
     def __iter__(
         self,
