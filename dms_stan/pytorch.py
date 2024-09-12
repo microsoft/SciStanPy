@@ -28,21 +28,24 @@ class TorchContainer(ABC):
         # Record the bound parameter
         self.bound_param = bound_param
 
+        # Set for parameters that are shared
+        self._shared_params: set[str] = set()
+
         # Get the PyTorch parameters from the parent parameters
         self._torch_parameters: dict[str, torch.Tensor] = {}
-        self._learnable_parameters: set[str] = set()
+        self._parent_to_paramname: dict[dms.param.AbstractParameter, str] = {}
         for param_name, param in bound_param.parameters.items():
 
             # Add to the dictionary. Parent parameters drawn from a distribution
             # will be defined as torch parameters. Non-parameters will be defined
             # as torch tensors.
             if isinstance(param, dms.param.AbstractParameter):
-                self._learnable_parameters.add(param_name)
                 init_vals = self._inverse_transform_parameter(
                     param_name, torch.tensor(param.draw(1).squeeze(0))
                 )
                 assert init_vals.shape == param.shape
                 self._torch_parameters[param_name] = nn.Parameter(init_vals)
+                self._parent_to_paramname[param] = param_name
 
             else:
                 self._torch_parameters[param_name] = torch.tensor(param)
@@ -109,6 +112,10 @@ class TorchContainer(ABC):
             # from the inverse operation's output.
             vals.append(child_param.torch_container.parameters[child_paramname])
 
+        # In the case of multiple observables, they must be the same object
+        if len(vals) > 1:
+            assert all(val is vals[0] for val in vals[1:])
+
         return vals
 
     def _transform_parameter(self, param_name: str) -> torch.Tensor:
@@ -120,7 +127,7 @@ class TorchContainer(ABC):
         # If the parameter is to be transformed, apply the appropriate transformation
         # We only need to transform the parameters that are learnable
         if (
-            param_name in self._learnable_parameters
+            param_name in self._torch_parameters
             and param_name in self.transformed_parameters
         ):
             transformed_param = torch.exp(param)
@@ -140,7 +147,7 @@ class TorchContainer(ABC):
         # If the parameter is to be transformed, apply the appropriate transformation
         # We only need to transform the parameters that are learnable
         if (
-            param_name in self._learnable_parameters
+            param_name in self._torch_parameters
             and param_name in self.transformed_parameters
         ):
 
@@ -173,6 +180,29 @@ class TorchContainer(ABC):
             param_name: self._transform_parameter(param_name)
             for param_name in self._torch_parameters
         }
+
+    def _link_torch_parameters(
+        self, parent: "dms.param.AbstractParameter", sibling: "TorchContainer"
+    ):
+        """
+        Replaces the torch parameters of this instance with the shared torch parameters
+        of the sibling instance. A sibling instance is another parameter whose
+        prior is the same parent parameter as this instance.
+        """
+        # pylint: disable=protected-access
+        # Get the name of the parameter in this instance and the sibling instance
+        param_name = self._parent_to_paramname[parent]
+        sibling_param_name = sibling._parent_to_paramname[parent]
+        assert param_name in self._torch_parameters
+        assert sibling_param_name in sibling._torch_parameters
+
+        # Replace the parameter
+        self._torch_parameters[param_name] = sibling._torch_parameters[
+            sibling_param_name
+        ]
+
+        # Note that this parameter is shared
+        self._shared_params.add(param_name)
 
     @property
     def parameters(self) -> dict[str, torch.Tensor]:
@@ -271,22 +301,53 @@ class TransformedContainer(TorchContainer):
                 "The torch parameters must match the potential missing parameters."
             )
 
-        # Now choose a missing parameter. This is the degree of freedom that we
-        # solve for in order to calculate the inverse-transformed parameters.
+        # Store a shallow copy of the torch parameters. We need this for setting
+        # changing the missing parameter later if necessary.
+        self._copied_torch_parameters = self._torch_parameters.copy()
+
+        # Choose a missing parameter.
+        self._set_missing_param()
+
+    def _set_missing_param(self):
+        """
+        Selects the missing parameter from the list of potential missing parameters.
+        This is the degree of freedom that we solve for in order to calculate the
+        inverse-transformed parameters.
+        """
+        # Set the missing parameter
         for param in self.missing_param_order:
+
+            # The parameter cannot be shared
+            if param in self._shared_params:
+                continue
+
+            # Take the first allowable parameter
             if isinstance(self._torch_parameters[param], nn.Parameter):
                 self.missing_param = param
                 break
         else:
-            raise ValueError("All parameters are constants. Cannot backpropagate.")
+            raise ValueError(
+                "All parameters are constants and/or shared already. Cannot backpropagate."
+            )
 
         # Record the shape of the missing parameter. The default hidden shape is
         # also this shape
-        self.missing_shape = bound_param.parameters[self.missing_param].shape
+        self.missing_shape = self.bound_param.parameters[self.missing_param].shape
 
         # Remove the missing parameter from the dictionary
+        self._torch_parameters = self._copied_torch_parameters.copy()
         del self._torch_parameters[self.missing_param]
-        self._learnable_parameters.remove(self.missing_param)
+
+    def _link_torch_parameters(
+        self, parent: "dms.param.AbstractParameter", sibling: TorchContainer
+    ):
+
+        # Run the parent method
+        super()._link_torch_parameters(parent, sibling)
+
+        # If the missing parameter is shared, we need to reset it
+        if self.missing_param in self._shared_params:
+            self._set_missing_param()
 
     @abstractmethod
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
@@ -669,7 +730,7 @@ class PyTorchModel(nn.Module):
 
         # Define types for variables where it is unclear
         observable: dms.param.Parameter
-        encountered_params: set[dms.param.Parameter] = set()
+        encountered_params: dict[dms.param.Parameter, dms.param.Parameter] = {}
         self._observable_loss_calculators: dict[str, ParameterContainer] = {}
         self._loss_calculators: list[ParameterContainer] = []
         torch_params: list[nn.Parameter] = []
@@ -690,14 +751,22 @@ class PyTorchModel(nn.Module):
             torch_params.extend(observable.torch_container._torch_parameters.values())
 
             # Process all parents
-            for _, parent, _ in observable.recurse_parents():
+            for _, parent, child in observable.recurse_parents():
 
-                # If we have already encountered this parent, we can skip it
-                if parent in encountered_params:
+                # If we have already encountered this parent, we link the appropriate
+                # parameters between the shared children and continue
+                if shared_child := encountered_params.get(parent, None):
+                    child.torch_container._link_torch_parameters(
+                        parent, shared_child.torch_container
+                    )
+                    print(
+                        child.torch_container.parameters,
+                        encountered_params[parent].torch_container.parameters,
+                    )
                     continue
 
                 # Note that the parent has been encountered
-                encountered_params.add(parent)
+                encountered_params[parent] = child
 
                 # Initialize the PyTorch container
                 parent.init_pytorch()
