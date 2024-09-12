@@ -1,11 +1,15 @@
 """Holds utilities for integrating DMS Stan with Pytorch"""
 
+import warnings
+
 from abc import ABC, abstractmethod
 from typing import Optional, Union
 
 import numpy.typing as npt
 import torch
 import torch.nn as nn
+
+from tqdm import tqdm
 
 import dms_stan as dms
 
@@ -139,7 +143,7 @@ class TorchContainer(ABC):
             param_name in self._learnable_parameters
             and param_name in self.transformed_parameters
         ):
-            print(param_name, param)
+
             # Negative parameters will be defined as such
             if param_name in self.bound_param.NEGATIVE_PARAMS:
                 if not torch.all(param < 0):
@@ -730,6 +734,12 @@ class PyTorchModel(nn.Module):
                 f"The provided names are: {', '.join(observed_data.keys())}"
             )
 
+        # Any observed data that is not a tensor is converted to a tensor
+        observed_data = {
+            k: torch.tensor(v) if not isinstance(v, torch.Tensor) else v
+            for k, v in observed_data.items()
+        }
+
         # Sum the log-probs of the observables
         log_prob = 0.0
         for name, container in self._observable_loss_calculators.items():
@@ -741,5 +751,68 @@ class PyTorchModel(nn.Module):
 
         return log_prob
 
-    def optimize(self):
+    def fit(
+        self,
+        epochs: int = 10000,
+        early_stop: int = 5,
+        lr: float = 0.1,
+        **observed_data: Union[torch.Tensor, npt.NDArray, float, int],
+    ) -> torch.Tensor:
         """Optimizes the parameters of the model."""
+        # Train mode. This should be a null-op, but it is set to future-proof in
+        # case this ever changes
+        self.train()
+
+        # Build the optimizer
+        optim = torch.optim.Adam(self.parameters(), lr=lr)
+
+        # Set up for optimization
+        best_loss = float("inf")  # Records the best loss
+        loss_trajectory = [None] * (epochs + 1)  # Records all losses
+        n_without_improvement = 0  # Epochs without improvement
+
+        # Run optimization
+        with tqdm(total=epochs, desc="Epochs", postfix={"loss": "N/A"}) as pbar:
+            for epoch in range(epochs):
+
+                # Get the loss
+                log_loss = -1 * self(**observed_data)
+
+                # Step the optimizer
+                optim.zero_grad()
+                log_loss.backward()
+                optim.step()
+
+                # Record loss
+                log_loss = log_loss.item()
+                loss_trajectory[epoch] = log_loss
+
+                # Update best loss
+                if log_loss < best_loss:
+                    n_without_improvement = 0
+                    best_loss = log_loss
+                else:
+                    n_without_improvement += 1
+
+                # Update progress bar
+                pbar.update(1)
+                pbar.set_postfix({"loss": f"{log_loss:.2f}"})
+
+                # Check for early stopping
+                if early_stop > 0 and n_without_improvement >= early_stop:
+                    break
+
+            # Note that early stopping was not triggered if the loop completes
+            else:
+                if early_stop > 0:
+                    warnings.warn("Early stopping not triggered.")
+
+        # Back to eval mode
+        self.eval()
+
+        # Get a final loss
+        with torch.no_grad():
+            loss_trajectory[epoch + 1] = -1 * self(**observed_data).item()
+
+        # Trim off the None values of the loss trajectory and convert to a tensor
+        return torch.tensor(loss_trajectory[: epoch + 2], dtype=torch.float32)
