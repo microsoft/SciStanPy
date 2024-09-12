@@ -7,6 +7,7 @@ from typing import Generator, NamedTuple, Optional, Union
 import hvplot.interactive
 import numpy as np
 import numpy.typing as npt
+import torch
 
 import dms_stan as dms
 
@@ -138,6 +139,36 @@ class Model:
         Compiles the model to a trainable PyTorch model.
         """
         return dms.pytorch.PyTorchModel(self)
+
+    def get_map(
+        self,
+        epochs: int = dms.defaults.DEFAULT_N_EPOCHS,
+        early_stop: int = dms.defaults.DEFAULT_EARLY_STOP,
+        lr: float = dms.defaults.DEFAULT_LR,
+        **observed_data: Union[torch.Tensor, npt.NDArray],
+    ) -> dict[str, npt.NDArray]:
+        """
+        Get the maximum a posteriori (MAP) estimate of the model parameters. Under
+        the hood, this fits a PyTorch model to the data and then gathers parameter
+        values.
+        """
+        # Check observed data
+        dms.pytorch.check_observable_data(self, observed_data)
+
+        # Fit the model
+        pytorch_model = self.to_pytorch()
+        pytorch_model.fit(
+            epochs=epochs,
+            early_stop=early_stop,
+            lr=lr,
+            **observed_data,
+        )
+
+        # Get the MAP estimate for all model parameters
+        return {
+            k: v.detach().cpu().numpy()
+            for k, v in pytorch_model.export_params().items()
+        }
 
     def prior_predictive(
         self,

@@ -14,6 +14,40 @@ from tqdm import tqdm
 import dms_stan as dms
 
 
+def check_observable_data(
+    model: "dms.model.Model", observed_data: dict[str, Union[torch.Tensor, npt.NDArray]]
+):
+
+    # There must be perfect overlap between the keys of the provided data and the
+    # expected observations
+    expected_set = set(model.observable_dict.keys())
+    provided_set = set(observed_data.keys())
+    missing = expected_set - provided_set
+    extra = provided_set - expected_set
+
+    # If there are missing or extra, raise an error
+    if missing:
+        raise ValueError(
+            "The provided data must match the observable distribution names."
+            f"The following observables are missing: {', '.join(missing)}"
+        )
+    if extra:
+        raise ValueError(
+            "The provided data must match the observable distribution names. The "
+            "following observables were provided in addition to the expected: "
+            f"{', '.join(extra)}"
+        )
+
+    # Shapes must match
+    for name, param in model.observable_dict.items():
+        if observed_data[name].shape != param.shape:
+            raise ValueError(
+                f"The shape of the provided data for observable {name} does not match "
+                f"the expected shape. Expected: {param.shape}, provided: "
+                f"{observed_data[name].shape}"
+            )
+
+
 class TorchContainer(ABC):
     """
     Holds all the necessary information to use a `dms_stan.param.AbstractParameter`
@@ -33,6 +67,7 @@ class TorchContainer(ABC):
 
         # Get the PyTorch parameters from the parent parameters
         self._torch_parameters: dict[str, torch.Tensor] = {}
+        self._learnable_parameters: set[str] = set()
         self._parent_to_paramname: dict[dms.param.AbstractParameter, str] = {}
         for param_name, param in bound_param.parameters.items():
 
@@ -40,6 +75,7 @@ class TorchContainer(ABC):
             # will be defined as torch parameters. Non-parameters will be defined
             # as torch tensors.
             if isinstance(param, dms.param.AbstractParameter):
+                self._learnable_parameters.add(param_name)
                 init_vals = self._inverse_transform_parameter(
                     param_name, torch.tensor(param.draw(1).squeeze(0))
                 )
@@ -127,7 +163,7 @@ class TorchContainer(ABC):
         # If the parameter is to be transformed, apply the appropriate transformation
         # We only need to transform the parameters that are learnable
         if (
-            param_name in self._torch_parameters
+            param_name in self._learnable_parameters
             and param_name in self.transformed_parameters
         ):
             transformed_param = torch.exp(param)
@@ -147,7 +183,7 @@ class TorchContainer(ABC):
         # If the parameter is to be transformed, apply the appropriate transformation
         # We only need to transform the parameters that are learnable
         if (
-            param_name in self._torch_parameters
+            param_name in self._learnable_parameters
             and param_name in self.transformed_parameters
         ):
 
@@ -759,10 +795,6 @@ class PyTorchModel(nn.Module):
                     child.torch_container._link_torch_parameters(
                         parent, shared_child.torch_container
                     )
-                    print(
-                        child.torch_container.parameters,
-                        encountered_params[parent].torch_container.parameters,
-                    )
                     continue
 
                 # Note that the parent has been encountered
@@ -794,14 +826,8 @@ class PyTorchModel(nn.Module):
         the parameters of the model. Stress: this is the log-probability, not the
         log loss, which is the negative log-probability.
         """
-        # There must be perfect overlap between the provided names and the observable
-        # distribution names
-        if set(observed_data.keys()) != set(self._observable_loss_calculators.keys()):
-            raise ValueError(
-                "The provided data must match the observable distribution names."
-                f"The distribution names are: {', '.join(self._observable_loss_calculators.keys())}"
-                f"The provided names are: {', '.join(observed_data.keys())}"
-            )
+        # Check the observed data
+        check_observable_data(self.model, observed_data)
 
         # Any observed data that is not a tensor is converted to a tensor
         observed_data = {
@@ -822,9 +848,9 @@ class PyTorchModel(nn.Module):
 
     def fit(
         self,
-        epochs: int = 10000,
-        early_stop: int = 5,
-        lr: float = 0.1,
+        epochs: int = dms.defaults.DEFAULT_N_EPOCHS,
+        early_stop: int = dms.defaults.DEFAULT_EARLY_STOP,
+        lr: float = dms.defaults.DEFAULT_LR,
         **observed_data: Union[torch.Tensor, npt.NDArray, float, int],
     ) -> torch.Tensor:
         """Optimizes the parameters of the model."""
@@ -885,3 +911,24 @@ class PyTorchModel(nn.Module):
 
         # Trim off the None values of the loss trajectory and convert to a tensor
         return torch.tensor(loss_trajectory[: epoch + 2], dtype=torch.float32)
+
+    def export_params(self) -> dict[str, torch.Tensor]:
+        """
+        Exports all parameters from the DMS Stan model used to construct the PyTorch
+        model. This is primarily used once the model has been fit.
+        """
+        return {
+            name: param.torch_container.get_observables()[0]
+            for name, param in self.model.parameter_dict.items()
+        }
+
+    def export_distributions(self) -> dict[str, torch.distributions.Distribution]:
+        """
+        Exports all distributions from the DMS Stan model used to construct the PyTorch
+        model. This is primarily used once the model has been fit.
+        """
+        return {
+            name: param.torch_container.distribution
+            for name, param in self.model.parameter_dict.items()
+            if isinstance(param, dms.param.Parameter)
+        }
