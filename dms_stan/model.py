@@ -14,6 +14,8 @@ import dms_stan as dms
 
 # Special type for the MAP estimate
 class MAPDict(TypedDict):
+    """Type for `Model.get_map` method return value."""
+
     MAP: dict[str, npt.NDArray]
     distributions: dict[str, torch.distributions.Distribution]
     losses: npt.NDArray

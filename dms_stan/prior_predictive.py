@@ -1,10 +1,8 @@
 """This module is used for building and displaying prior predictive checks."""
 
 from copy import deepcopy
-from typing import Optional, overload
+from typing import Optional
 
-import bokeh.plotting as bkp
-import holoviews as hv
 import hvplot.interactive
 import hvplot.pandas
 import numpy as np
@@ -13,128 +11,6 @@ import pandas as pd
 import panel.widgets as pnw
 
 import dms_stan as dms
-
-
-def aggregate_data(
-    data: npt.NDArray, independent_dim: Optional[int] = None
-) -> npt.NDArray:
-    """
-    Aggregates data from a numpy array. Here are the rules:
-
-    1.  If the independent dimension is not provided, the data array is flattened.
-        In this case, the `independent_labels` parameter is ignored.
-    2.  If the independent dimension is provided and the independent labels
-        are not provided, then the data array is flattened along all dimensions
-        except for the independent dimension. That is, a 2D array is returned
-        with shape (-1, n_independent), where "-1" indicates the product of
-        all other dimensions.
-    """
-    # Flatten the data if the independent dimension is not provided.
-    if independent_dim is None:
-        return data.flatten()
-
-    # If the independent dimension is provided, first move that dimension to
-    # the end (reshape is C-major), then reshape the data to flatten all other dimensions
-    else:
-        independent_dim = (
-            independent_dim + 1 if independent_dim >= 0 else independent_dim
-        )
-        n_independent = data.shape[independent_dim]
-        return np.moveaxis(data, independent_dim, -1).reshape((-1, n_independent))
-
-
-@overload
-def plot_ecdf_kde(plotting_df: pd.DataFrame, paramname: str) -> bkp.figure: ...
-
-
-@overload
-def plot_ecdf_kde(
-    plotting_df: hvplot.interactive.Interactive, paramname: pnw.Select
-) -> hvplot.interactive.Interactive: ...
-
-
-def plot_ecdf_kde(plotting_df, paramname):
-    """Renders the plots for 1D data."""
-
-    # Build the plots, combine, and return
-    ecdf_plot = plotting_df.hvplot.line(
-        x=paramname, y="Cumulative Probability", title="ECDF", width=600, height=400
-    )
-    kde_plot = plotting_df.hvplot.kde(
-        y=paramname, title="KDE", width=600, height=400, cut=0, autorange="y"
-    )
-
-    return (kde_plot + ecdf_plot).cols(1)
-
-
-@overload
-def plot_ecdf_violin(plotting_df: pd.DataFrame, paramname: str) -> bkp.figure: ...
-
-
-@overload
-def plot_ecdf_violin(
-    plotting_df: hvplot.interactive.Interactive, paramname: pnw.Select
-) -> hvplot.interactive.Interactive: ...
-
-
-def plot_ecdf_violin(plotting_df, paramname):
-    """
-    Renders the plots for 2D data treating the second dimension elements as independent.
-    """
-    ecdfplot = plotting_df.hvplot.line(
-        x=paramname,
-        y="Cumulative Probability",
-        by="Independent Label",
-        color=hv.Palette("Inferno"),
-        title="ECDF",
-        width=600,
-        height=400,
-    )
-
-    violinplot = plotting_df.hvplot.violin(
-        y=paramname,
-        by="Independent Label",
-        title="Violin Plot",
-        c="Independent Label",
-        cmap="inferno",
-        width=600,
-        height=400,
-        invert=True,
-        colorbar=True,
-    )
-
-    return (ecdfplot + violinplot).cols(1)
-
-
-# TODO: Add ability to slice out specific dimensions
-
-
-@overload
-def plot_relationship(plotting_df: pd.DataFrame, paramname: str) -> bkp.figure: ...
-
-
-@overload
-def plot_relationship(
-    plotting_df: hvplot.interactive.Interactive, paramname: pnw.Select
-) -> hvplot.interactive.Interactive: ...
-
-
-def plot_relationship(plotting_df, paramname):
-    """
-    Renders the plots for 2D data treating the second dimension elements as dependent
-    on a provided label.
-    """
-    return plotting_df.hvplot.line(
-        x="Independent Label",
-        y=paramname,
-        title="Relationship",
-        width=600,
-        height=400,
-        datashade=True,
-        dynamic=False,
-        aggregator="count",
-        cmap="inferno",
-    ).opts(autorange="y")
 
 
 class PriorPredictiveCheck:
@@ -157,70 +33,13 @@ class PriorPredictiveCheck:
         Builds the dataframes that will be used for plotting the prior predictive
         check. The dataframes are built from the samples drawn from the model.
         """
-        # Get the samples from the model
-        data = aggregate_data(
-            self.model.draw_from(paramname, n_experiments),
+        # Get the samples from the model and build the dataframe
+        return dms.plotting.build_plotting_df(
+            samples=self.model.draw_from(paramname, n_experiments),
+            paramname=paramname,
             independent_dim=independent_dim,
+            independent_labels=independent_labels,
         )
-
-        # If the independent dimension is provided, one path
-        if independent_dim is not None:
-
-            # The data must be a 2D array
-            assert data.ndim == 2
-
-            # Build the independent labels if they are not provided. If they are
-            # provided, make sure they are the right length.
-            if no_labels := independent_labels is None:
-                independent_labels = np.arange(data.shape[1])
-            assert len(independent_labels) == data.shape[1]
-
-            # Add the data to a dataframe, separating each trace with a row of NaNs
-            sub_dfs = [None] * len(data)
-            for i, data_row in enumerate(data):
-                # Combine arrays and add a row of NaNs
-                combined = np.vstack([data_row, independent_labels]).T
-                combined = np.vstack([combined, np.full(2, np.nan)])
-
-                # Build the dataframe
-                temp_df = pd.DataFrame(
-                    combined, columns=[paramname, "Independent Label"]
-                )
-                temp_df["Trace"] = i
-                sub_dfs[i] = temp_df
-
-            # Combine all dataframes
-            plotting_df = pd.concat(sub_dfs, ignore_index=True)
-
-            # If no labels were provided, drop the NaN rows and add an ECDF column
-            if no_labels:
-
-                # Drop the NaN rows
-                plotting_df = plotting_df.dropna()
-
-                # Add an ECDF column
-                plotting_df["Cumulative Probability"] = plotting_df.groupby(
-                    by="Independent Label"
-                )[paramname].rank(method="max", pct=True)
-
-                plotting_df = plotting_df.sort_values(
-                    by=["Independent Label", "Cumulative Probability"]
-                )
-
-            return plotting_df
-
-        # If the independent dimension is not provided, we need to add an ECDF
-        # column
-        else:
-            # Get the dataframe
-            plotting_df = pd.DataFrame({paramname: data})
-
-            # Add an ECDF to the dataframe
-            plotting_df["Cumulative Probability"] = plotting_df[paramname].rank(
-                method="max", pct=True
-            )
-
-            return plotting_df.sort_values(by="Cumulative Probability")
 
     def _process_display_inputs(
         self,
@@ -385,18 +204,10 @@ class PriorPredictiveCheck:
                 dimension. If not provided, the independent dimension is treated
                 as a simple index.
         """
-        # Decide on the plotting function. If we just have the initial view, then
-        # we will plot an ECDF and KDE. If we have an independent dimension but no
-        # labels, then we will plot a series of ECDFs and violin plots. If we have
-        # an independent dimension and labels, then we will plot lines describing
-        # those relationships.
-        if independent_dim is not None:
-            if independent_labels is not None:
-                plotting_func = plot_relationship
-            else:
-                plotting_func = plot_ecdf_violin
-        else:
-            plotting_func = plot_ecdf_kde
+        # Choose the appropriate plotting function
+        plotting_func = dms.plotting.choose_plotting_function(
+            independent_dim=independent_dim, independent_labels=independent_labels
+        )
 
         # Process the input parameters
         initial_view, legal_targets = self._process_display_inputs(

@@ -14,7 +14,7 @@ install_import_hook("dms_stan")
 
 # pylint: disable=wrong-import-position
 from dms_stan import defaults
-from dms_stan import pytorch
+from dms_stan import plotting, pytorch
 from dms_stan import constant, model, operations, param, prior_predictive
 
 # Define the global random number generator

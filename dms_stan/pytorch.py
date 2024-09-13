@@ -17,7 +17,7 @@ import dms_stan as dms
 def check_observable_data(
     model: "dms.model.Model", observed_data: dict[str, Union[torch.Tensor, npt.NDArray]]
 ):
-
+    """Makes sure that the correct observables are provided for a givne model."""
     # There must be perfect overlap between the keys of the provided data and the
     # expected observations
     expected_set = set(model.observable_dict.keys())
