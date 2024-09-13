@@ -931,4 +931,8 @@ class PyTorchModel(nn.Module):
             name: param.torch_container.distribution
             for name, param in self.model.parameter_dict.items()
             if isinstance(param, dms.param.Parameter)
+        } | {
+            name: param.torch_container.distribution
+            for name, param in self.model.observable_dict.items()
+            if isinstance(param, dms.param.Parameter)
         }

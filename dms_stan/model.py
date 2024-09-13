@@ -2,7 +2,7 @@
 
 import collections
 
-from typing import Generator, NamedTuple, Optional, Union
+from typing import Generator, NamedTuple, Optional, TypedDict, Union
 
 import hvplot.interactive
 import numpy as np
@@ -10,6 +10,13 @@ import numpy.typing as npt
 import torch
 
 import dms_stan as dms
+
+
+# Special type for the MAP estimate
+class MAPDict(TypedDict):
+    MAP: dict[str, npt.NDArray]
+    distributions: dict[str, torch.distributions.Distribution]
+    losses: npt.NDArray
 
 
 class Model:
@@ -146,7 +153,7 @@ class Model:
         early_stop: int = dms.defaults.DEFAULT_EARLY_STOP,
         lr: float = dms.defaults.DEFAULT_LR,
         **observed_data: Union[torch.Tensor, npt.NDArray],
-    ) -> dict[str, npt.NDArray]:
+    ) -> MAPDict:
         """
         Get the maximum a posteriori (MAP) estimate of the model parameters. Under
         the hood, this fits a PyTorch model to the data and then gathers parameter
@@ -157,7 +164,7 @@ class Model:
 
         # Fit the model
         pytorch_model = self.to_pytorch()
-        pytorch_model.fit(
+        loss_trajectory = pytorch_model.fit(
             epochs=epochs,
             early_stop=early_stop,
             lr=lr,
@@ -165,9 +172,19 @@ class Model:
         )
 
         # Get the MAP estimate for all model parameters
-        return {
+        map_ = {
             k: v.detach().cpu().numpy()
             for k, v in pytorch_model.export_params().items()
+        }
+
+        # Get the distributions of the parameters
+        distributions = pytorch_model.export_distributions()
+
+        # Return the MAP estimate, the distributions, and the loss trajectory
+        return {
+            "MAP": map_,
+            "distributions": distributions,
+            "losses": loss_trajectory.detach().cpu().numpy(),
         }
 
     def prior_predictive(
