@@ -14,7 +14,7 @@ import dms_stan as dms
 
 # Special type for the MAP estimate
 class MAPDict(TypedDict):
-    """Type for `Model.get_map` method return value."""
+    """Type for `Model.approximate_map` method return value."""
 
     MAP: dict[str, npt.NDArray]
     distributions: dict[str, torch.distributions.Distribution]
@@ -149,7 +149,7 @@ class Model:
         """
         return dms.pytorch.PyTorchModel(self)
 
-    def get_map(
+    def approximate_map(
         self,
         epochs: int = dms.defaults.DEFAULT_N_EPOCHS,
         early_stop: int = dms.defaults.DEFAULT_EARLY_STOP,
@@ -157,9 +157,10 @@ class Model:
         **observed_data: Union[torch.Tensor, npt.NDArray],
     ) -> MAPDict:
         """
-        Get the maximum a posteriori (MAP) estimate of the model parameters. Under
-        the hood, this fits a PyTorch model to the data and then gathers parameter
-        values.
+        Approximate the maximum a posteriori (MAP) estimate of the model parameters.
+        Under the hood, this fits a PyTorch model to the data that minimizes the
+        sum of `log_pdf` and `log_pmf` for all distributions. The parameter values
+        that minimize this loss are then returned.
         """
         # Check observed data
         dms.pytorch.check_observable_data(self, observed_data)

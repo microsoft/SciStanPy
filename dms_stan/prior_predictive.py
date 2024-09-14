@@ -234,4 +234,4 @@ class PriorPredictiveCheck:
         ).interactive()
 
         # Make the plot
-        return plotting_func(plotting_df=plot_df, paramname=target_dropdown)
+        return plotting_func(plot_df, paramname=target_dropdown)
