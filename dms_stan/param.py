@@ -1,7 +1,7 @@
 """Holds classes that can be used for defining models in DMS Stan models."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Literal, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -23,6 +23,11 @@ class AbstractParameter(ABC):
 
     # Define the class that will be used for compiling to PyTorch
     _torch_container_class: type[dms.pytorch.TorchContainer]
+
+    # Define the stan data type
+    base_stan_dtype: Literal["real", "int", "simplex"] = "real"
+    stan_lower_bound: Optional[float | int] = None
+    stan_upper_bound: Optional[float | int] = None
 
     def __init__(  # pylint: disable=unused-argument
         self,
@@ -85,6 +90,9 @@ class AbstractParameter(ABC):
 
         # Set up a placeholder for the Pytorch container
         self._torch_container: Optional[dms.pytorch.TorchContainer] = None
+
+        # Set up a placeholder for the DMS Stan Model variable name
+        self._model_varname: str = ""
 
     def _check_parameter_ranges(
         self, draws: Optional[dict[str, npt.NDArray]] = None
@@ -313,6 +321,83 @@ class AbstractParameter(ABC):
             raise ValueError("Pytorch container not initialized. Run `init_pytorch`.")
         return self._torch_container
 
+    @property
+    def model_varname(self) -> str:
+        """Return the DMS Stan variable name for this parameter"""
+        if self._model_varname == "":
+            raise ValueError(
+                "DMS Stan variable name not set. This is only set when the parameter"
+                "is used in a DMS Stan model."
+            )
+        return self._model_varname
+
+    @model_varname.setter
+    def model_varname(self, name: str) -> None:
+        """Set the DMS Stan variable name for this parameter"""
+        self._model_varname = name
+
+    @property
+    def stan_bounds(self) -> str:
+        """Return the Stan bounds for this parameter"""
+        # Format the lower and upper bounds
+        lower = (
+            "" if self.stan_lower_bound is None else f"lower={self.stan_lower_bound}"
+        )
+        upper = (
+            "" if self.stan_upper_bound is None else f"upper={self.stan_upper_bound}"
+        )
+
+        # Combine the bounds
+        if lower and upper:
+            bounds = f"{lower}, {upper}"
+        elif lower:
+            bounds = lower
+        elif upper:
+            bounds = upper
+        else:
+            return ""
+
+        # Return the bounds
+        return f"<{bounds}>"
+
+    @property
+    def stan_dtype(self) -> str:
+        """Return the Stan data type for this parameter"""
+
+        # Get the base datatype
+        dtype = self.__class__.base_stan_dtype
+
+        # Base data type for 0-dimensional parameters. If the parameter is 0-dimensional,
+        # then we can only have real or int as the data type.
+        if self.ndim == 0:
+            assert dtype in {"real", "int"}
+            return dtype
+
+        # Convert shape to strings
+        string_shape = [str(dim) for dim in self.shape]
+
+        # Handle different data types for different dimensions
+        if dtype == "real":  # Becomes vector or array of vectors
+            dtype = f"vector[{string_shape[-1]}]"
+            if self.ndim > 1:
+                dtype = f"array[{','.join(string_shape[:-1])}] {dtype}"
+
+        elif dtype == "int":  # Becomes array
+            dtype = f"array[{','.join(string_shape)}] int"
+
+        elif dtype == "simplex":  # Becomes array of simplexes
+            dtype = f"array[{','.join(string_shape[:-1])}] simplex[{string_shape[-1]}]"
+
+        else:
+            raise AssertionError(f"Unknown data type {dtype}")
+
+        return dtype
+
+    @property
+    def stan_parameter_declaration(self) -> str:
+        """Returns the Stan parameter declaration for this parameter."""
+        return f"{self.stan_dtype}{self.stan_bounds} {self.model_varname}"
+
 
 class TransformedParameter(AbstractParameter):
     """
@@ -461,6 +546,7 @@ class AbsParameter(UnaryTransformedParameter):
     """Defines a parameter that is the absolute value of another."""
 
     _torch_container_class = dms.pytorch.AbsTransformedContainer
+    stan_lower_bound: float = 0.0
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.abs(dist1, **self.operation_kwargs)
@@ -473,6 +559,7 @@ class LogParameter(UnaryTransformedParameter):
     POSITIVE_PARAMS = set(["dist1"])
 
     _torch_container_class = dms.pytorch.LogTransformedContainer
+    stan_lower_bound: float = 0.0
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.log(dist1, **self.operation_kwargs)
@@ -482,6 +569,7 @@ class ExpParameter(UnaryTransformedParameter):
     """Defines a parameter that is the exponential of another."""
 
     _torch_container_class = dms.pytorch.ExpTransformedContainer
+    stan_lower_bound: float = 0.0
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.exp(dist1, **self.operation_kwargs)
@@ -491,6 +579,8 @@ class NormalizeParameter(UnaryTransformedParameter):
     """Defines a parameter that is normalized to sum to 1."""
 
     _torch_container_class = dms.pytorch.NormalizeTransformedContainer
+    stan_lower_bound: float = 0.0
+    stan_upper_bound: float = 1.0
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return dist1 / np.sum(dist1, keepdims=True, **self.operation_kwargs)
@@ -503,6 +593,7 @@ class NormalizeLogParameter(UnaryTransformedParameter):
     """
 
     _torch_container_class = dms.pytorch.NormalizeLogTransformedContainer
+    stan_upper_bound: float = 0.0
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return dist1 - sp.logsumexp(dist1, keepdims=True, **self.operation_kwargs)
@@ -782,6 +873,9 @@ class DiscreteDistribution(Distribution):
     discrete distributions is to set the observable attribute to True.
     """
 
+    base_stan_dtype: str = "int"
+    stan_lower_bound: int = 0
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.observable = True
@@ -814,6 +908,8 @@ class Normal(ContinuousDistribution):
 class HalfNormal(Normal):
     """Parameter that is represented by the half-normal distribution."""
 
+    stan_lower_bound: float = 0.0
+
     def __init__(self, *, sigma: "ContinuousParameterType", **kwargs):
         super().__init__(mu=0.0, sigma=sigma, **kwargs)
 
@@ -833,6 +929,7 @@ class LogNormal(ContinuousDistribution):
     """Parameter that is represented by the log-normal distribution."""
 
     POSITIVE_PARAMS = set(["sigma"])
+    stan_lower_bound: float = 0.0
 
     def __init__(
         self,
@@ -855,6 +952,8 @@ class Beta(ContinuousDistribution):
     """Defines the beta distribution."""
 
     POSITIVE_PARAMS = set(["alpha", "beta"])
+    stan_lower_bound: float = 0.0
+    stan_upper_bound: float = 1.0
 
     def __init__(
         self,
@@ -879,6 +978,8 @@ class Gamma(ContinuousDistribution):
     """Defines the gamma distribution."""
 
     POSITIVE_PARAMS = set(["alpha", "beta"])
+
+    stan_lower_bound: float = 0.0
 
     def __init__(
         self,
@@ -905,6 +1006,9 @@ class Exponential(ContinuousDistribution):
 
     POSITIVE_PARAMS = set(["beta"])
 
+    # Overwrite the stan data type
+    stan_lower_bound: float = 0.0
+
     def __init__(self, *, beta: "ContinuousParameterType", **kwargs):
 
         super().__init__(
@@ -922,6 +1026,7 @@ class Dirichlet(ContinuousDistribution):
     """Defines the Dirichlet distribution."""
 
     POSITIVE_PARAMS = set(["alpha"])
+    base_stan_dtype: str = "simplex"
 
     def __init__(self, *, alpha: Union[AbstractParameter, npt.ArrayLike], **kwargs):
 
