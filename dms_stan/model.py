@@ -68,6 +68,7 @@ class Model:
                 # it is a constant, add it to the constants dictionary.
                 retrieved = getattr(self, attr)
                 if isinstance(retrieved, dms.param.AbstractParameter):
+                    retrieved.model_varname = attr
                     if retrieved.observable:
                         observables[attr] = retrieved
                     else:
@@ -148,6 +149,12 @@ class Model:
         Compiles the model to a trainable PyTorch model.
         """
         return dms.pytorch.PyTorchModel(self)
+
+    def to_stan(self):
+        """
+        Compiles the model to a Stan model.
+        """
+        return dms.stan.StanModel(self)
 
     def approximate_map(
         self,
@@ -276,7 +283,7 @@ class Model:
         return self._constants  # pylint: disable=no-member
 
     @property
-    def constant_dict(self) -> dict:
+    def constant_dict(self) -> dict[str, "dms.constant.Constant"]:
         """Returns the constants of the model as a dictionary."""
         return self._constants._asdict()  # pylint: disable=no-member
 
