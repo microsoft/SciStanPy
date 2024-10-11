@@ -574,6 +574,36 @@ class TransformedParameter(AbstractParameter):
     def operation(self, **draws: "SampleType") -> npt.NDArray:
         """Perform the operation on the draws"""
 
+    def get_stan_transformation(self, index_opts: tuple[str, ...]) -> str:
+        """
+        Return the Stan transformation for this parameter. This recursively calls
+        the equivalent method on parent transformed parameters until we hit a
+        non-transformed parameter.
+        """
+        # Recursively gather the transformations until we hit a non-transformed
+        # parameter
+        to_format: dict[str, str] = {}
+        for name, param in self.parameters.items():
+
+            # If the parameter is non-transformed, record the variable name
+            if isinstance(param, (Constant, Parameter)):
+                to_format[name] = param.get_indexed_varname(index_opts)
+
+            # Otherwise, get the transformation of the parent
+            elif isinstance(param, TransformedParameter):
+                to_format[name] = f"( {param.get_stan_transformation(index_opts)} )"
+
+            # Otherwise, raise an error
+            else:
+                raise TypeError(f"Unknown model component type {type(param)}")
+
+        # Format the transformation
+        return self.format_stan_transformation(**to_format)
+
+    @abstractmethod
+    def format_stan_transformation(self, **param_vals: str) -> str:
+        """Return the base Stan transformation for this parameter."""
+
     # Calling this class should return the result of the operation.
     def __call__(self, *args, **kwargs):
         return self.operation(*args, **kwargs)
@@ -602,6 +632,11 @@ class BinaryTransformedParameter(TransformedParameter):
         dist2: "SampleType",
     ): ...
 
+    @abstractmethod
+    def format_stan_transformation(  # pylint: disable=arguments-differ
+        self, dist1: str, dist2: str
+    ) -> str: ...
+
 
 class UnaryTransformedParameter(TransformedParameter):
     """Transformed parameter that only requires one parameter."""
@@ -624,6 +659,11 @@ class UnaryTransformedParameter(TransformedParameter):
         self, dist1: "SampleType"
     ) -> npt.NDArray: ...
 
+    @abstractmethod
+    def format_stan_transformation(  # pylint: disable=arguments-differ
+        self, dist1: str
+    ) -> str: ...
+
 
 class AddParameter(BinaryTransformedParameter):
     """Defines a parameter that is the sum of two other parameters."""
@@ -636,6 +676,13 @@ class AddParameter(BinaryTransformedParameter):
         dist2: "SampleType",
     ) -> npt.NDArray:
         return dist1 + dist2
+
+    def format_stan_transformation(
+        self,
+        dist1: str,
+        dist2: str,
+    ) -> str:
+        return f"{dist1} + {dist2}"
 
 
 class SubtractParameter(BinaryTransformedParameter):
@@ -650,6 +697,13 @@ class SubtractParameter(BinaryTransformedParameter):
     ) -> npt.NDArray:
         return dist1 - dist2
 
+    def format_stan_transformation(
+        self,
+        dist1: str,
+        dist2: str,
+    ) -> str:
+        return f"{dist1} - {dist2}"
+
 
 class MultiplyParameter(BinaryTransformedParameter):
     """Defines a parameter that is the product of two other parameters."""
@@ -662,6 +716,13 @@ class MultiplyParameter(BinaryTransformedParameter):
         dist2: "SampleType",
     ) -> npt.NDArray:
         return dist1 * dist2
+
+    def format_stan_transformation(
+        self,
+        dist1: str,
+        dist2: str,
+    ) -> str:
+        return f"{dist1} .* {dist2}"
 
 
 class DivideParameter(BinaryTransformedParameter):
@@ -676,6 +737,13 @@ class DivideParameter(BinaryTransformedParameter):
     ) -> npt.NDArray:
         return dist1 / dist2
 
+    def format_stan_transformation(
+        self,
+        dist1: str,
+        dist2: str,
+    ) -> str:
+        return f"{dist1} ./ {dist2}"
+
 
 class PowerParameter(BinaryTransformedParameter):
     """Defines a parameter raised to the power of another parameter."""
@@ -689,6 +757,13 @@ class PowerParameter(BinaryTransformedParameter):
     ) -> npt.NDArray:
         return dist1**dist2
 
+    def format_stan_transformation(
+        self,
+        dist1: str,
+        dist2: str,
+    ) -> str:
+        return f"{dist1} .^ {dist2}"
+
 
 class NegateParameter(UnaryTransformedParameter):
     """Defines a parameter that is the negative of another parameter."""
@@ -697,6 +772,9 @@ class NegateParameter(UnaryTransformedParameter):
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return -dist1
+
+    def format_stan_transformation(self, dist1: str) -> str:
+        return f"-{dist1}"
 
 
 class AbsParameter(UnaryTransformedParameter):
@@ -707,6 +785,9 @@ class AbsParameter(UnaryTransformedParameter):
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.abs(dist1, **self.operation_kwargs)
+
+    def format_stan_transformation(self, dist1: str) -> str:
+        return f"abs({dist1})"
 
 
 class LogParameter(UnaryTransformedParameter):
@@ -721,6 +802,9 @@ class LogParameter(UnaryTransformedParameter):
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.log(dist1, **self.operation_kwargs)
 
+    def format_stan_transformation(self, dist1: str) -> str:
+        return f"log({dist1})"
+
 
 class ExpParameter(UnaryTransformedParameter):
     """Defines a parameter that is the exponential of another."""
@@ -730,6 +814,9 @@ class ExpParameter(UnaryTransformedParameter):
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.exp(dist1, **self.operation_kwargs)
+
+    def format_stan_transformation(self, dist1: str) -> str:
+        return f"exp({dist1})"
 
 
 class NormalizeParameter(UnaryTransformedParameter):
@@ -741,6 +828,9 @@ class NormalizeParameter(UnaryTransformedParameter):
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return dist1 / np.sum(dist1, keepdims=True, **self.operation_kwargs)
+
+    def format_stan_transformation(self, dist1: str) -> str:
+        return f"{dist1} ./ sum({dist1})"
 
 
 class NormalizeLogParameter(UnaryTransformedParameter):
@@ -754,6 +844,9 @@ class NormalizeLogParameter(UnaryTransformedParameter):
 
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return dist1 - sp.logsumexp(dist1, keepdims=True, **self.operation_kwargs)
+
+    def format_stan_transformation(self, dist1: str) -> str:
+        return f"{dist1} - log_sum_exp({dist1})"
 
 
 class Growth(TransformedParameter):
@@ -821,6 +914,11 @@ class LogExponentialGrowth(Growth):
     ) -> npt.NDArray:
         return log_A + r * t
 
+    def format_stan_transformation(  # pylint: disable=arguments-differ
+        self, t: str, log_A: str, r: str
+    ) -> str:
+        return f"{log_A} + {r} .* {t}"
+
 
 class LogSigmoidGrowth(Growth):
     r"""
@@ -872,6 +970,11 @@ class LogSigmoidGrowth(Growth):
         c: "SampleType",
     ) -> npt.NDArray:
         return log_A - np.log(1 + np.exp(-r * (t - c)))
+
+    def format_stan_transformation(  # pylint: disable=arguments-differ
+        self, t: str, log_A: str, r: str, c: str
+    ) -> str:
+        return f"{log_A} - log(1 + exp(-{r} .* ({t} - {c})))"
 
 
 class Parameter(AbstractParameter):
@@ -957,6 +1060,13 @@ class Parameter(AbstractParameter):
         """Redefines the parameter as an unobservable variable (i.e., a parameter)"""
         self.observable = False
         return self
+
+    def get_stan_distribution(self, index_opts: tuple[str, ...]) -> str:
+        """Return the Stan distribution for this parameter"""
+
+    @abstractmethod
+    def format_stan_distribution(self, **param_vals: str) -> str:
+        """Return the base Stan distribution for this parameter"""
 
     @property
     def rng(self) -> np.random.Generator:
@@ -1278,14 +1388,14 @@ SampleType = Union[int, float, npt.NDArray]
 ContinuousParameterType = Union[
     ContinuousDistribution,
     TransformedParameter,
-    dms.model.components.Constant,
+    Constant,
     float,
     npt.NDArray[np.floating],
 ]
 DiscreteParameterType = Union[
     DiscreteDistribution,
     TransformedParameter,
-    dms.model.components.Constant,
+    Constant,
     int,
     npt.NDArray[np.integer],
 ]

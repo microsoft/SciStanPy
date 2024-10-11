@@ -40,9 +40,6 @@ class Model:
         # Redefine the __init__ method of the class
         def __init__(self, *init_args, **init_kwargs):
 
-            # Define types
-            retrieved: dms.model.components.AbstractModelComponent
-
             # Run the init method that was defined in the class.
             cls._wrapped_init(self, *init_args, **init_kwargs)
 
@@ -70,8 +67,16 @@ class Model:
                 # If it is an observable, add it to the observables dictionary. If
                 # it is a constant, add it to the constants dictionary.
                 retrieved = getattr(self, attr)
+
+                # Continue if not a model component
+                if not isinstance(
+                    retrieved, dms.model.components.AbstractModelComponent
+                ):
+                    continue
+
+                # Bin the model component appropriately
                 retrieved.model_varname = attr
-                if isinstance(retrieved, dms.param.AbstractParameter):
+                if isinstance(retrieved, dms.model.components.AbstractParameter):
                     if retrieved.observable:
                         observables[attr] = retrieved
                     else:
@@ -225,7 +230,7 @@ class Model:
 
     def __iter__(
         self,
-    ) -> Generator[tuple[str, "dms.param.AbstractParameter"], None, None]:
+    ) -> Generator[tuple[str, "dms.model.components.AbstractParameter"], None, None]:
         """
         Loops over the parameters and observables in the model. Parameters are
         emitted first in order of depth from deepest to shallowest. Ties in depth
@@ -256,7 +261,7 @@ class Model:
         """Checks if the model contains a parameter or observable with the given name."""
         return paramname in self.parameter_dict or paramname in self.observable_dict
 
-    def __getitem__(self, paramname: str) -> "dms.param.AbstractParameter":
+    def __getitem__(self, paramname: str) -> "dms.model.components.AbstractParameter":
         """Returns the parameter or observable with the given name."""
         return getattr(self, paramname)
 
@@ -266,7 +271,7 @@ class Model:
         return self._parameters  # pylint: disable=no-member
 
     @property
-    def parameter_dict(self) -> dict[str, "dms.param.AbstractParameter"]:
+    def parameter_dict(self) -> dict[str, "dms.model.components.AbstractParameter"]:
         """Returns the parameters of the model as a dictionary."""
         return self._parameters._asdict()  # pylint: disable=no-member
 
@@ -291,7 +296,7 @@ class Model:
         return self._constants._asdict()  # pylint: disable=no-member
 
     @property
-    def togglable_params(self) -> dict[str, "dms.param.AbstractParameter"]:
+    def togglable_params(self) -> dict[str, "dms.model.components.AbstractParameter"]:
         """Returns the parameters that can be toggled in the model."""
         return {
             name: param
@@ -335,14 +340,16 @@ class BaseGrowthModel(Model):
         # dimensionality as the counts.
         self.t = dms.model.components.Constant(t[None, :, None])
 
-    def _finalize_regressor(self, sigma: "dms.param.CombinableParameterType"):
+    def _finalize_regressor(
+        self, sigma: "dms.model.components.CombinableParameterType"
+    ):
 
         # pylint: disable = no-member, attribute-defined-outside-init
         # Assign the noise parameter
         self.sigma = sigma
 
         # Define the regression distribution
-        self.log_theta_unorm = dms.param.Normal(
+        self.log_theta_unorm = dms.model.components.Normal(
             mu=self.log_theta_unorm_mean,
             sigma=self.sigma,
             shape=self.log_theta_unorm_mean.shape,
@@ -365,9 +372,9 @@ class ExponentialGrowthMixIn(BaseGrowthModel):
         *,
         t: npt.NDArray[np.floating],
         counts: npt.NDArray[np.integer],
-        log_A: "dms.param.CombinableParameterType",
-        r: "dms.param.CombinableParameterType",
-        sigma: "dms.param.CombinableParameterType",
+        log_A: "dms.model.components.CombinableParameterType",
+        r: "dms.model.components.CombinableParameterType",
+        sigma: "dms.model.components.CombinableParameterType",
         **kwargs,
     ):
         # Call the parent class constructor. This will set up the timepoints as a
@@ -379,7 +386,7 @@ class ExponentialGrowthMixIn(BaseGrowthModel):
         self.r = r
 
         # Get the log theta values
-        self.log_theta_unorm_mean = dms.param.LogExponentialGrowth(
+        self.log_theta_unorm_mean = dms.model.components.LogExponentialGrowth(
             t=self.t, log_A=self.log_A, r=self.r, shape=counts.shape
         )
 
@@ -395,10 +402,10 @@ class SigmoidGrowthMixIn(BaseGrowthModel):
         *,
         t: npt.NDArray[np.floating],
         counts: npt.NDArray[np.integer],
-        log_A: "dms.param.CombinableParameterType",
-        r: "dms.param.CombinableParameterType",
-        c: "dms.param.CombinableParameterType",
-        sigma: "dms.param.CombinableParameterType",
+        log_A: "dms.model.components.CombinableParameterType",
+        r: "dms.model.components.CombinableParameterType",
+        c: "dms.model.components.CombinableParameterType",
+        sigma: "dms.model.components.CombinableParameterType",
         **kwargs,
     ):
         # Call the parent class constructor. This will set up the timepoints as a
@@ -411,7 +418,7 @@ class SigmoidGrowthMixIn(BaseGrowthModel):
         self.c = c
 
         # Get the log theta values
-        self.log_theta_unorm_mean = dms.param.LogSigmoidGrowth(
+        self.log_theta_unorm_mean = dms.model.components.LogSigmoidGrowth(
             t=self.t, log_A=self.log_A, r=self.r, c=self.c, shape=counts.shape
         )
 
@@ -434,7 +441,7 @@ class BaseBinomialGrowthModel(BaseGrowthModel):
 
         # Set up the binomial distribution for the counts. "N" is inferred as the
         # sum of the counts at each timepoint.
-        self.counts = dms.param.Binomial(
+        self.counts = dms.model.components.Binomial(
             theta=self.theta,  # pylint: disable=no-member
             N=counts.sum(axis=2, keepdims=True),
             shape=counts.shape,

@@ -4,13 +4,22 @@ import os.path
 import weakref
 
 from tempfile import TemporaryDirectory
-from typing import Any, Optional
-
-import numpy as np
+from typing import Any, Optional, TypedDict
 
 from cmdstanpy import CmdStanModel
 
 import dms_stan as dms
+
+
+# We need a specific type for the steps of the Stan model
+class StanStepsType(TypedDict):
+    """Type for the steps of the Stan model."""
+
+    data: list[str]
+    parameters: list[str]
+    transformed_parameters: list[str]
+    model: str
+    generated_quantities: list[str]
 
 
 class StanModel(CmdStanModel):
@@ -32,13 +41,16 @@ class StanModel(CmdStanModel):
         self.dms_stan_model = model
 
         # A dictionary stores the steps of the program
-        self.steps = {
+        self.steps: StanStepsType = {
             "data": [],
             "parameters": [],
             "transformed parameters": [],
             "model": "",
             "generated quantities": [],
         }
+
+        # All variable names in the model
+        self.all_varnames: set[str] = set()
 
         # Required data for the Stan model
         self.data_inputs: list[str] = []
@@ -65,46 +77,45 @@ class StanModel(CmdStanModel):
         # Set the output directory
         self.output_dir = output_dir
 
-    def _record_parameter(self, param: dms.param.Parameter):
+    def _record_parameter(self, param: dms.model.components.Parameter):
         """Record a parameter in the steps."""
         self.steps["parameters"].append(param.stan_parameter_declaration)
 
-    def _record_transformed_parameter(self, param: dms.param.TransformedParameter):
+    def _record_transformed_parameter(
+        self, param: dms.model.components.TransformedParameter
+    ):
         """Record a transformed parameter in the steps."""
         self.steps["transformed parameters"].append(param.stan_parameter_declaration)
 
     def _write_parameters(self):
         """Write the parameters of the model."""
 
-        # We need a set for the parameters that have been written
-        written_parameters = set()
-
         # Loop over the togglable parameters. This takes us from hyperparameters
         # to observables (top to bottom)
         for togglable in self.dms_stan_model.togglable_params.values():
 
             # Make sure this parameter has not been written yet
-            assert togglable not in written_parameters
+            assert togglable not in self.all_varnames
 
             # Record the parameter
             self._record_parameter(togglable)
-            written_parameters.add(togglable)
+            self.all_varnames.add(togglable.model_varname)
 
             # Recurse through the children of the togglable parameter and add them
             # to the steps as well
             for _, child, _ in togglable.recurse_children():
 
-                # If the child has been handled already or it is an observable, skip it
-                if child in written_parameters or child.observable:
+                # If the child has been handled already or is an observable skip it
+                if child.model_varname in self.all_varnames or child.observable:
                     continue
 
                 # If the child is a parameter, add it to the parameters list
-                if isinstance(child, dms.param.Parameter):
+                if isinstance(child, dms.model.components.Parameter):
                     self._record_parameter(child)
 
                 # If it is a transformed parameter, add it to the transformed parameters
                 # list
-                elif isinstance(child, dms.param.TransformedParameter):
+                elif isinstance(child, dms.model.components.TransformedParameter):
                     self._record_transformed_parameter(child)
 
                 # Otherwise, raise an error
@@ -112,47 +123,52 @@ class StanModel(CmdStanModel):
                     raise ValueError(f"Unknown child type {type(child)}")
 
                 # Note that the child has been written
-                written_parameters.add(child)
+                self.all_varnames.add(child.model_varname)
 
     def _write_data(self):
         """Write the data of the model."""
+        # Define types
+        param_declarations: tuple[str, ...]
+        varnames: tuple[str, ...]
+
         # There can only be one observable
         if len(self.dms_stan_model.observables) > 1:
             raise ValueError(
                 "Compilation to Stan currently only supports one observable."
             )
 
-        # Add observables to the data
-        param: "dms.param.Parameter" = self.dms_stan_model.observables[0]
-        self.steps["data"].append(param.stan_parameter_declaration)
-        self.data_inputs.append(param.model_varname)
+        # Get variable names and parameter declarations for the observables and
+        # constants
+        param_declarations, varnames = zip(
+            *[
+                (obj.stan_parameter_declaration, obj.model_varname)
+                for obj in (
+                    self.dms_stan_model.observables + self.dms_stan_model.constants
+                )
+            ]
+        )
 
-        # Now add the constants
-        for name, constant in self.dms_stan_model.constant_dict.items():
+        # Add the parameter declarations to the data steps
+        self.steps["data"].extend(param_declarations)
 
-            # Get the data type
-            dtype = "real" if isinstance(constant.value.dtype, np.floating) else "int"
+        # Update the data inputs
+        self.data_inputs.extend(varnames)
 
-            # Get the declaration
-            declaration = f"{dtype} {name}"
+        # Any data input is also a reserved word. There should be no overlap between
+        # the two sets
+        if (di_set := set(self.data_inputs)).intersection(self.all_varnames):
+            raise AssertionError(
+                "Name collision between data inputs and variable names."
+            )
 
-            # If a scalar, the declaration needs no modification
-            if constant.value.ndim == 0:
-                self.steps["data"].append(declaration)
-
-            # Otherwise, it is part of an array
-            else:
-                str_shape = [str(s) for s in constant.value.shape]
-                self.steps["data"].append(f"array[{','.join(str_shape)}] {declaration}")
-
-            # Add the constant to the data inputs
-            self.data_inputs.append(name)
+        # Add the data inputs to the reserved words
+        self.all_varnames.update(di_set)
 
     def _write_model(self):
         """Write the model of the Stan code."""
         # We need one less nested for-loops than the number of dimensions in the
         # observable
-        observable: dms.param.Parameter = self.dms_stan_model.observables[0]
+        observable: dms.model.components.Parameter = self.dms_stan_model.observables[0]
         n_for_loops = observable.ndim - 1
 
         # We begin the model as a list in the inner loop
