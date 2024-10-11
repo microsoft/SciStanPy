@@ -562,7 +562,6 @@ class AbstractParameter(AbstractModelComponent):
         return f"{self.stan_dtype}{self.stan_bounds} {self.model_varname}"
 
 
-# TODO: Elementwise operations if both components are non-scalar. Otherwise default.
 class TransformedParameter(AbstractParameter):
     """
     Base class representing a parameter that is the result of combining other
@@ -846,7 +845,7 @@ class LogParameter(UnaryTransformedParameter):
     """Defines a parameter that is the natural logarithm of another."""
 
     # The distribution must be positive
-    POSITIVE_PARAMS = set(["dist1"])
+    POSITIVE_PARAMS = {"dist1"}
 
     _torch_container_class = dms.pytorch.LogTransformedContainer
     stan_lower_bound: float = 0.0
@@ -1123,6 +1122,31 @@ class Parameter(AbstractParameter):
     def get_stan_distribution(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan distribution for this parameter"""
 
+        # Recursively gather the transformations until we hit a non-transformed
+        # parameter or a recorded variable
+        to_format: dict[str, str] = {}
+        for name, param in self.parameters.items():
+
+            # If the parameter is a constant or another parameter, record
+            if isinstance(param, (Constant, Parameter)):
+                to_format[name] = param.get_indexed_varname(index_opts)
+
+            # If the parameter is transformed and not named, the computation is
+            # happening in the model. Otherwise, the computation has already happened
+            # in the transformed parameters block.
+            elif isinstance(param, TransformedParameter):
+                if param._model_varname != "":  # pylint: disable=protected-access
+                    to_format[name] = param.get_stan_transformation(index_opts)
+                else:
+                    to_format[name] = param.get_indexed_varname(index_opts)
+
+            # Otherwise, raise an error
+            else:
+                raise TypeError(f"Unknown model component type {type(param)}")
+
+        # Format the distribution
+        return self.format_stan_distribution(**to_format)
+
     @abstractmethod
     def format_stan_distribution(self, **param_vals: str) -> str:
         """Return the base Stan distribution for this parameter"""
@@ -1210,7 +1234,7 @@ class DiscreteDistribution(Distribution):
 class Normal(ContinuousDistribution):
     """Parameter that is represented by the normal distribution."""
 
-    POSITIVE_PARAMS = set(["sigma"])
+    POSITIVE_PARAMS = {"sigma"}
 
     def __init__(
         self,
@@ -1229,6 +1253,11 @@ class Normal(ContinuousDistribution):
             sigma=sigma,
             **kwargs,
         )
+
+    def format_stan_distribution(  # pylint: disable=arguments-differ
+        self, mu: str, sigma: str
+    ) -> str:
+        return f"normal({mu}, {sigma})"
 
 
 class HalfNormal(Normal):
@@ -1254,7 +1283,7 @@ class UnitNormal(Normal):
 class LogNormal(ContinuousDistribution):
     """Parameter that is represented by the log-normal distribution."""
 
-    POSITIVE_PARAMS = set(["sigma"])
+    POSITIVE_PARAMS = {"sigma"}
     stan_lower_bound: float = 0.0
 
     def __init__(
@@ -1273,11 +1302,16 @@ class LogNormal(ContinuousDistribution):
             **kwargs,
         )
 
+    def format_stan_distribution(  # pylint: disable=arguments-differ
+        self, mu: str, sigma: str
+    ) -> str:
+        return f"lognormal({mu}, {sigma})"
+
 
 class Beta(ContinuousDistribution):
     """Defines the beta distribution."""
 
-    POSITIVE_PARAMS = set(["alpha", "beta"])
+    POSITIVE_PARAMS = {"alpha", "beta"}
     stan_lower_bound: float = 0.0
     stan_upper_bound: float = 1.0
 
@@ -1299,11 +1333,16 @@ class Beta(ContinuousDistribution):
             **kwargs,
         )
 
+    def format_stan_distribution(  # pylint: disable=arguments-differ
+        self, alpha: str, beta: str
+    ) -> str:
+        return f"beta({alpha}, {beta})"
+
 
 class Gamma(ContinuousDistribution):
     """Defines the gamma distribution."""
 
-    POSITIVE_PARAMS = set(["alpha", "beta"])
+    POSITIVE_PARAMS = {"alpha", "beta"}
 
     stan_lower_bound: float = 0.0
 
@@ -1326,11 +1365,16 @@ class Gamma(ContinuousDistribution):
             **kwargs,
         )
 
+    def format_stan_distribution(  # pylint: disable=arguments-differ
+        self, alpha: str, beta: str
+    ) -> str:
+        return f"gamma({alpha}, {beta})"
+
 
 class Exponential(ContinuousDistribution):
     """Defines the exponential distribution."""
 
-    POSITIVE_PARAMS = set(["beta"])
+    POSITIVE_PARAMS = {"beta"}
 
     # Overwrite the stan data type
     stan_lower_bound: float = 0.0
@@ -1347,11 +1391,16 @@ class Exponential(ContinuousDistribution):
             **kwargs,
         )
 
+    def format_stan_distribution(  # pylint: disable=arguments-differ
+        self, beta: str
+    ) -> str:
+        return f"exponential({beta})"
+
 
 class Dirichlet(ContinuousDistribution):
     """Defines the Dirichlet distribution."""
 
-    POSITIVE_PARAMS = set(["alpha"])
+    POSITIVE_PARAMS = {"alpha"}
     base_stan_dtype: str = "simplex"
 
     def __init__(self, *, alpha: Union[AbstractParameter, npt.ArrayLike], **kwargs):
@@ -1365,11 +1414,16 @@ class Dirichlet(ContinuousDistribution):
             **kwargs,
         )
 
+    def format_stan_distribution(  # pylint: disable=arguments-differ
+        self, alpha: str
+    ) -> str:
+        return f"dirichlet({alpha})"
+
 
 class Binomial(DiscreteDistribution):
     """Parameter that is represented by the binomial distribution"""
 
-    POSITIVE_PARAMS = set(["theta", "N"])
+    POSITIVE_PARAMS = {"theta", "N"}
 
     def __init__(
         self,
@@ -1389,11 +1443,16 @@ class Binomial(DiscreteDistribution):
             **kwargs,
         )
 
+    def format_stan_distribution(  # pylint: disable=arguments-differ
+        self, N: str, theta: str
+    ) -> str:
+        return f"binomial({N}, {theta})"
+
 
 class Poisson(DiscreteDistribution):
     """Parameter that is represented by the Poisson distribution."""
 
-    POSITIVE_PARAMS = set(["lambda_"])
+    POSITIVE_PARAMS = {"lambda_"}
 
     def __init__(self, *, lambda_: "ContinuousParameterType", **kwargs):
 
@@ -1406,11 +1465,16 @@ class Poisson(DiscreteDistribution):
             **kwargs,
         )
 
+    def format_stan_distribution(  # pylint: disable=arguments-differ
+        self, lambda_: str
+    ) -> str:
+        return f"poisson({lambda_})"
+
 
 class Multinomial(DiscreteDistribution):
     """Defines the multinomial distribution."""
 
-    SIMPLEX_PARAMS = set(["theta"])
+    SIMPLEX_PARAMS = {"theta"}
 
     def __init__(
         self,
@@ -1440,6 +1504,11 @@ class Multinomial(DiscreteDistribution):
             )
 
         return super().draw(n)
+
+    def format_stan_distribution(  # pylint: disable=arguments-differ, unused-argument
+        self, N: str, theta: str
+    ) -> str:
+        return f"multinomial({theta})"
 
 
 # Define custom types for this module
