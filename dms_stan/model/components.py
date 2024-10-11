@@ -20,7 +20,7 @@ class AbstractModelComponent(ABC):
         # Set up a placeholder for the DMS Stan Model variable name
         self._model_varname: str = ""
 
-    def get_indexed_varname(self, index_opts: tuple[str, ...]) -> str:
+    def get_indexed_varname(self, index_opts: tuple[str, ...]) -> tuple[str, bool]:
         """
         Returns the variable name used by stan with the appropriate indices. Note
         that DMS Stan always assumes that computations on the last dimension can
@@ -31,16 +31,22 @@ class AbstractModelComponent(ABC):
 
         Returns:
             str: The variable name with the appropriate indices (if any).
+            bool: Whether the variable is a vector.
         """
         # Get the number of indices needed
         n_indices = len(self.shape) - 1
 
         # If there are no indices, then we just return the variable name
         if n_indices <= 0:
-            return self.model_varname
+            return self.model_varname, False
 
-        # Otherwise, we need to add the indices
-        return f"{self.model_varname}[{','.join(index_opts[:n_indices])}]"
+        # Vector if the last dimension is not singleton
+        is_vector = self.shape[-1] != 1
+
+        # Build the indexed variable name
+        indexed_varname = f"{self.model_varname}[{','.join(index_opts[:n_indices])}]"
+
+        return indexed_varname, is_vector
 
     @property
     def model_varname(self) -> str:
@@ -556,6 +562,7 @@ class AbstractParameter(AbstractModelComponent):
         return f"{self.stan_dtype}{self.stan_bounds} {self.model_varname}"
 
 
+# TODO: Elementwise operations if both components are non-scalar. Otherwise default.
 class TransformedParameter(AbstractParameter):
     """
     Base class representing a parameter that is the result of combining other
@@ -574,34 +581,42 @@ class TransformedParameter(AbstractParameter):
     def operation(self, **draws: "SampleType") -> npt.NDArray:
         """Perform the operation on the draws"""
 
-    def get_stan_transformation(self, index_opts: tuple[str, ...]) -> str:
+    def get_stan_transformation(self, index_opts: tuple[str, ...]) -> tuple[str, bool]:
         """
         Return the Stan transformation for this parameter. This recursively calls
         the equivalent method on parent transformed parameters until we hit a
         non-transformed parameter.
         """
         # Recursively gather the transformations until we hit a non-transformed
-        # parameter
-        to_format: dict[str, str] = {}
+        # parameter or a recorded variable
+        to_format: dict[str, tuple[str, bool]] = {}
         for name, param in self.parameters.items():
 
-            # If the parameter is non-transformed, record the variable name
-            if isinstance(param, (Constant, Parameter)):
+            # If the parameter is non-transformed or named in a varaible, record
+            # the variable name
+            if (
+                isinstance(param, (Constant, Parameter))
+                or param._component_varname != ""  # pylint: disable=protected-access
+            ):
                 to_format[name] = param.get_indexed_varname(index_opts)
 
             # Otherwise, get the transformation of the parent
             elif isinstance(param, TransformedParameter):
-                to_format[name] = f"( {param.get_stan_transformation(index_opts)} )"
+                transformation, is_vector = param.get_stan_transformation(index_opts)
+                to_format[name] = (f"( {transformation} )", is_vector)
 
             # Otherwise, raise an error
             else:
                 raise TypeError(f"Unknown model component type {type(param)}")
 
+        # We are a vector if any formatted variables are vectors
+        is_vector = any(is_vector for _, is_vector in to_format.values())
+
         # Format the transformation
-        return self.format_stan_transformation(**to_format)
+        return self.format_stan_transformation(**to_format), is_vector
 
     @abstractmethod
-    def format_stan_transformation(self, **param_vals: str) -> str:
+    def format_stan_transformation(self, **param_vals: tuple[str, bool]) -> str:
         """Return the base Stan transformation for this parameter."""
 
     # Calling this class should return the result of the operation.
@@ -634,8 +649,15 @@ class BinaryTransformedParameter(TransformedParameter):
 
     @abstractmethod
     def format_stan_transformation(  # pylint: disable=arguments-differ
-        self, dist1: str, dist2: str
-    ) -> str: ...
+        self, dist1: tuple[str, bool], dist2: tuple[str, bool]
+    ) -> tuple[str, str, bool]:
+
+        # Unpack the variable names and scalar flags
+        dist1_name, dist1_is_vector = dist1
+        dist2_name, dist2_is_vector = dist2
+
+        # Return the names and whether or not this will be an elementwise operation
+        return dist1_name, dist2_name, dist1_is_vector and dist2_is_vector
 
 
 class UnaryTransformedParameter(TransformedParameter):
@@ -661,8 +683,8 @@ class UnaryTransformedParameter(TransformedParameter):
 
     @abstractmethod
     def format_stan_transformation(  # pylint: disable=arguments-differ
-        self, dist1: str
-    ) -> str: ...
+        self, dist1: tuple[str, bool]
+    ) -> tuple[str, bool]: ...
 
 
 class AddParameter(BinaryTransformedParameter):
@@ -679,10 +701,13 @@ class AddParameter(BinaryTransformedParameter):
 
     def format_stan_transformation(
         self,
-        dist1: str,
-        dist2: str,
+        dist1: tuple[str, bool],
+        dist2: tuple[str, bool],
     ) -> str:
-        return f"{dist1} + {dist2}"
+        # Unpack the variable names
+        dist1_name, dist2_name, _ = super().format_stan_transformation(dist1, dist2)
+
+        return f"{dist1_name} + {dist2_name}"
 
 
 class SubtractParameter(BinaryTransformedParameter):
@@ -699,10 +724,13 @@ class SubtractParameter(BinaryTransformedParameter):
 
     def format_stan_transformation(
         self,
-        dist1: str,
-        dist2: str,
+        dist1: tuple[str, bool],
+        dist2: tuple[str, bool],
     ) -> str:
-        return f"{dist1} - {dist2}"
+        # Unpack the variable names
+        dist1_name, dist2_name, _ = super().format_stan_transformation(dist1, dist2)
+
+        return f"{dist1_name} - {dist2_name}"
 
 
 class MultiplyParameter(BinaryTransformedParameter):
@@ -719,10 +747,18 @@ class MultiplyParameter(BinaryTransformedParameter):
 
     def format_stan_transformation(
         self,
-        dist1: str,
-        dist2: str,
+        dist1: tuple[str, bool],
+        dist2: tuple[str, bool],
     ) -> str:
-        return f"{dist1} .* {dist2}"
+        # Unpack the variable names and determine if this is an elementwise operation
+        dist1_name, dist2_name, elementwise = super().format_stan_transformation(
+            dist1, dist2
+        )
+
+        # Get the operator
+        operator = ".*" if elementwise else "*"
+
+        return f"{dist1_name} {operator} {dist2_name}"
 
 
 class DivideParameter(BinaryTransformedParameter):
@@ -739,10 +775,18 @@ class DivideParameter(BinaryTransformedParameter):
 
     def format_stan_transformation(
         self,
-        dist1: str,
-        dist2: str,
+        dist1: tuple[str, bool],
+        dist2: tuple[str, bool],
     ) -> str:
-        return f"{dist1} ./ {dist2}"
+        # Unpack the variable names and determine if this is an elementwise operation
+        dist1_name, dist2_name, elementwise = super().format_stan_transformation(
+            dist1, dist2
+        )
+
+        # Get the operator
+        operator = "./" if elementwise else "/"
+
+        return f"{dist1_name} {operator} {dist2_name}"
 
 
 class PowerParameter(BinaryTransformedParameter):
@@ -759,10 +803,18 @@ class PowerParameter(BinaryTransformedParameter):
 
     def format_stan_transformation(
         self,
-        dist1: str,
-        dist2: str,
+        dist1: tuple[str, bool],
+        dist2: tuple[str, bool],
     ) -> str:
-        return f"{dist1} .^ {dist2}"
+        # Unpack the variable names and determine if this is an elementwise operation
+        dist1_name, dist2_name, elementwise = super().format_stan_transformation(
+            dist1, dist2
+        )
+
+        # Get the operator
+        operator = ".^" if elementwise else "^"
+
+        return f"{dist1_name} {operator} {dist2_name}"
 
 
 class NegateParameter(UnaryTransformedParameter):
@@ -773,8 +825,8 @@ class NegateParameter(UnaryTransformedParameter):
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return -dist1
 
-    def format_stan_transformation(self, dist1: str) -> str:
-        return f"-{dist1}"
+    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+        return f"-{dist1[0]}"
 
 
 class AbsParameter(UnaryTransformedParameter):
@@ -786,8 +838,8 @@ class AbsParameter(UnaryTransformedParameter):
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.abs(dist1, **self.operation_kwargs)
 
-    def format_stan_transformation(self, dist1: str) -> str:
-        return f"abs({dist1})"
+    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+        return f"abs({dist1[0]})"
 
 
 class LogParameter(UnaryTransformedParameter):
@@ -802,8 +854,8 @@ class LogParameter(UnaryTransformedParameter):
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.log(dist1, **self.operation_kwargs)
 
-    def format_stan_transformation(self, dist1: str) -> str:
-        return f"log({dist1})"
+    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+        return f"log({dist1[0]})"
 
 
 class ExpParameter(UnaryTransformedParameter):
@@ -815,8 +867,8 @@ class ExpParameter(UnaryTransformedParameter):
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return np.exp(dist1, **self.operation_kwargs)
 
-    def format_stan_transformation(self, dist1: str) -> str:
-        return f"exp({dist1})"
+    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+        return f"exp({dist1[0]})"
 
 
 class NormalizeParameter(UnaryTransformedParameter):
@@ -829,8 +881,8 @@ class NormalizeParameter(UnaryTransformedParameter):
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return dist1 / np.sum(dist1, keepdims=True, **self.operation_kwargs)
 
-    def format_stan_transformation(self, dist1: str) -> str:
-        return f"{dist1} ./ sum({dist1})"
+    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+        return f"{dist1[0]} / sum({dist1[0]})"
 
 
 class NormalizeLogParameter(UnaryTransformedParameter):
@@ -845,14 +897,14 @@ class NormalizeLogParameter(UnaryTransformedParameter):
     def operation(self, dist1: "SampleType") -> npt.NDArray:
         return dist1 - sp.logsumexp(dist1, keepdims=True, **self.operation_kwargs)
 
-    def format_stan_transformation(self, dist1: str) -> str:
-        return f"{dist1} - log_sum_exp({dist1})"
+    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+        return f"{dist1[0]} - log_sum_exp({dist1[0]})"
 
 
 class Growth(TransformedParameter):
     """Base class for growth models."""
 
-    def __init__(
+    def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
         t: "CombinableParameterType",
@@ -883,7 +935,7 @@ class LogExponentialGrowth(Growth):
 
     _torch_container_class = dms.pytorch.LogExponentialGrowthContainer
 
-    def __init__(
+    def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
         t: "CombinableParameterType",
@@ -915,9 +967,13 @@ class LogExponentialGrowth(Growth):
         return log_A + r * t
 
     def format_stan_transformation(  # pylint: disable=arguments-differ
-        self, t: str, log_A: str, r: str
+        self, t: tuple[str, bool], log_A: [str, bool], r: [str, bool]
     ) -> str:
-        return f"{log_A} + {r} .* {t}"
+        # Decide on operator between r and t
+        operator = ".*" if t[1] and r[1] else "*"
+
+        # Build the transformation
+        return f"{log_A[0]} + {r[0]} {operator} {t[0]}"
 
 
 class LogSigmoidGrowth(Growth):
@@ -936,7 +992,7 @@ class LogSigmoidGrowth(Growth):
 
     _torch_container_class = dms.pytorch.LogSigmoidGrowthContainer
 
-    def __init__(
+    def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
         t: "CombinableParameterType",
@@ -974,7 +1030,10 @@ class LogSigmoidGrowth(Growth):
     def format_stan_transformation(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str, c: str
     ) -> str:
-        return f"{log_A} - log(1 + exp(-{r} .* ({t} - {c})))"
+        # Determine the operator between r and t
+        operator = ".*" if r[1] and t[1] else "*"
+
+        return f"{log_A} - log(1 + exp(-{r} {operator} ({t} - {c})))"
 
 
 class Parameter(AbstractParameter):
