@@ -8,8 +8,10 @@ from typing import Union
 import numpy as np
 import numpy.typing as npt
 
+import dms_stan as dms
 
-class Constant:
+
+class Constant(dms.param.AbstractModelComponent):
     """
     This class is used to wrap values that are intended to stay constant in the
     Stan model. This is effectively a wrapper around the value that forwards all
@@ -22,6 +24,9 @@ class Constant:
         """
         Wraps the value in a Constant instance. Any numerical type is legal.
         """
+        # Initialize the parent class
+        super().__init__()
+
         # Assign the value
         self.value: npt.NDArray = np.array(value)
 
@@ -82,3 +87,32 @@ class Constant:
 
     def __rmatmul__(self, other):
         return other @ self.value
+
+    @property
+    def shape(self) -> tuple[int, ...]:
+        """
+        Returns the shape of the value.
+        """
+        return self.value.shape
+
+    @property
+    def stan_dtype(self) -> str:
+        """
+        Returns the Stan data type of the value.
+        """
+        return "real" if isinstance(self.value.dtype, np.floating) else "int"
+
+    @property
+    def stan_parameter_declaration(self) -> str:
+        """Declare the parameter in Stan"""
+        # Get the base declaration
+        declaration = f"{self.stan_dtype} {self.model_varname}"
+
+        # If a scalar, the declaration needs no modification
+        if self.value.ndim == 0:
+            return declaration
+
+        # Otherwise, it is part of an array
+        else:
+            str_shape = [str(s) for s in self.value.shape]
+            return f"array[{','.join(str_shape)}] {declaration}"

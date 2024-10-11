@@ -40,6 +40,9 @@ class Model:
         # Redefine the __init__ method of the class
         def __init__(self, *init_args, **init_kwargs):
 
+            # Define types
+            retrieved: dms.model.components.AbstractModelComponent
+
             # Run the init method that was defined in the class.
             cls._wrapped_init(self, *init_args, **init_kwargs)
 
@@ -67,13 +70,13 @@ class Model:
                 # If it is an observable, add it to the observables dictionary. If
                 # it is a constant, add it to the constants dictionary.
                 retrieved = getattr(self, attr)
+                retrieved.model_varname = attr
                 if isinstance(retrieved, dms.param.AbstractParameter):
-                    retrieved.model_varname = attr
                     if retrieved.observable:
                         observables[attr] = retrieved
                     else:
                         parameters[attr] = retrieved
-                elif isinstance(retrieved, dms.constant.Constant):
+                elif isinstance(retrieved, dms.model.components.Constant):
                     constants[attr] = retrieved
 
             # Convert the parameters, observables, and constants to named tuples
@@ -283,7 +286,7 @@ class Model:
         return self._constants  # pylint: disable=no-member
 
     @property
-    def constant_dict(self) -> dict[str, "dms.constant.Constant"]:
+    def constant_dict(self) -> dict[str, "dms.model.components.Constant"]:
         """Returns the constants of the model as a dictionary."""
         return self._constants._asdict()  # pylint: disable=no-member
 
@@ -330,7 +333,7 @@ class BaseGrowthModel(Model):
 
         # Record the timepoints as a constant. Expand the timepoints to the same
         # dimensionality as the counts.
-        self.t = dms.constant.Constant(t[None, :, None])
+        self.t = dms.model.components.Constant(t[None, :, None])
 
     def _finalize_regressor(self, sigma: "dms.param.CombinableParameterType"):
 
