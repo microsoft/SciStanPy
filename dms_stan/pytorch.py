@@ -54,7 +54,7 @@ class TorchContainer(ABC):
     child class with Pytorch.
     """
 
-    def __init__(self, bound_param: "dms.param.AbstractParameter"):
+    def __init__(self, bound_param: "dms.model.components.AbstractParameter"):
         """
         Args:
             bound_param: The dms_stan parameter to which this container is bound.
@@ -68,13 +68,15 @@ class TorchContainer(ABC):
         # Get the PyTorch parameters from the parent parameters
         self._torch_parameters: dict[str, torch.Tensor] = {}
         self._learnable_parameters: set[str] = set()
-        self._parent_to_paramname: dict[dms.param.AbstractParameter, str] = {}
+        self._parent_to_paramname: dict[dms.model.components.AbstractParameter, str] = (
+            {}
+        )
         for param_name, param in bound_param.parameters.items():
 
             # Add to the dictionary. Parent parameters drawn from a distribution
             # will be defined as torch parameters. Non-parameters will be defined
             # as torch tensors.
-            if isinstance(param, dms.param.AbstractParameter):
+            if isinstance(param, dms.model.components.AbstractParameter):
                 self._learnable_parameters.add(param_name)
                 init_vals = self._inverse_transform_parameter(
                     param_name, torch.tensor(param.draw(1).squeeze(0))
@@ -86,12 +88,14 @@ class TorchContainer(ABC):
             else:
                 self._torch_parameters[param_name] = torch.tensor(param)
 
-    def get_child_paramname(self, child_param: "dms.param.AbstractParameter") -> str:
+    def get_child_paramname(
+        self, child_param: "dms.model.components.AbstractParameter"
+    ) -> str:
         """
         Gets the name of the parameter that the bound parameter defines in the child.
 
         Args:
-            child_param (dms.param.AbstractParameter): A child of the bound parameter.
+            child_param (dms.model.components.AbstractParameter): A child of the bound parameter.
 
         Returns:
             str: The name of the parameter in the child that the bound parameter
@@ -218,7 +222,9 @@ class TorchContainer(ABC):
         }
 
     def _link_torch_parameters(
-        self, parent: "dms.param.AbstractParameter", sibling: "TorchContainer"
+        self,
+        parent: "dms.model.components.AbstractParameter",
+        sibling: "TorchContainer",
     ):
         """
         Replaces the torch parameters of this instance with the shared torch parameters
@@ -264,7 +270,7 @@ class ParameterContainer(TorchContainer):
     child class with Pytorch.
     """
 
-    def __init__(self, bound_param: "dms.param.Parameter"):
+    def __init__(self, bound_param: "dms.model.components.Parameter"):
         """
         Args:
             bound_param: The dms_stan parameter to which this container is bound.
@@ -323,7 +329,7 @@ class TransformedContainer(TorchContainer):
     # the first one that is not a constant
     missing_param_order: tuple[str, ...]
 
-    def __init__(self, bound_param: "dms.param.TransformedParameter"):
+    def __init__(self, bound_param: "dms.model.components.TransformedParameter"):
         """
         Args:
             bound_param: The dms_stan parameter to which this container is bound.
@@ -375,7 +381,7 @@ class TransformedContainer(TorchContainer):
         del self._torch_parameters[self.missing_param]
 
     def _link_torch_parameters(
-        self, parent: "dms.param.AbstractParameter", sibling: TorchContainer
+        self, parent: "dms.model.components.AbstractParameter", sibling: TorchContainer
     ):
 
         # Run the parent method
@@ -425,7 +431,7 @@ class BinaryTransformedContainer(TransformedContainer):
     # Prioritize the first distribution as the missing parameter
     missing_param_order = ("dist1", "dist2")
 
-    def __init__(self, bound_param: "dms.param.BinaryTransformedParameter"):
+    def __init__(self, bound_param: "dms.model.components.BinaryTransformedParameter"):
         """
         Args:
             bound_param: The dms_stan parameter to which this container is bound.
@@ -478,7 +484,7 @@ class UnaryTransformedContainer(TransformedContainer):
 
     missing_param_order = ("dist1",)  # The one and only parameter
 
-    def __init__(self, bound_param: "dms.param.UnaryTransformedParameter"):
+    def __init__(self, bound_param: "dms.model.components.UnaryTransformedParameter"):
         """
         Args:
             bound_param: The dms_stan parameter to which this container is bound.
@@ -492,7 +498,7 @@ class UnaryTransformedContainer(TransformedContainer):
 class AddTransformedContainer(BinaryTransformedContainer):
     """Pairs with the `dms_stan.param.AddParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.AddParameter"):
+    def __init__(self, bound_param: "dms.model.components.AddParameter"):
         super().__init__(bound_param)
 
     def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
@@ -505,7 +511,7 @@ class AddTransformedContainer(BinaryTransformedContainer):
 class SubtractTransformedContainer(BinaryTransformedContainer):
     """Pairs with the `dms_stan.param.SubtractParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.SubtractParameter"):
+    def __init__(self, bound_param: "dms.model.components.SubtractParameter"):
         super().__init__(bound_param)
 
     def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
@@ -518,7 +524,7 @@ class SubtractTransformedContainer(BinaryTransformedContainer):
 class MultiplyTransformedContainer(BinaryTransformedContainer):
     """Pairs with the `dms_stan.param.MultiplyParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.MultiplyParameter"):
+    def __init__(self, bound_param: "dms.model.components.MultiplyParameter"):
         super().__init__(bound_param)
 
     def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
@@ -531,7 +537,7 @@ class MultiplyTransformedContainer(BinaryTransformedContainer):
 class DivideTransformedContainer(BinaryTransformedContainer):
     """Pairs with the `dms_stan.param.DivideParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.DivideParameter"):
+    def __init__(self, bound_param: "dms.model.components.DivideParameter"):
         super().__init__(bound_param)
 
     def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
@@ -544,7 +550,7 @@ class DivideTransformedContainer(BinaryTransformedContainer):
 class PowerTransformedContainer(BinaryTransformedContainer):
     """Pairs with the `dms_stan.param.PowerParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.PowerParameter"):
+    def __init__(self, bound_param: "dms.model.components.PowerParameter"):
         super().__init__(bound_param)
 
     def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
@@ -557,7 +563,7 @@ class PowerTransformedContainer(BinaryTransformedContainer):
 class NegateTransformedContainer(UnaryTransformedContainer):
     """Pairs with the `dms_stan.param.NegateParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.NegateParameter"):
+    def __init__(self, bound_param: "dms.model.components.NegateParameter"):
         super().__init__(bound_param)
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
@@ -567,7 +573,7 @@ class NegateTransformedContainer(UnaryTransformedContainer):
 class AbsTransformedContainer(UnaryTransformedContainer):
     """Pairs with the `dms_stan.param.AbsParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.AbsParameter"):
+    def __init__(self, bound_param: "dms.model.components.AbsParameter"):
         super().__init__(bound_param)
 
         # Add another parameter to the dictionary. This is a learnable parameter
@@ -588,7 +594,7 @@ class AbsTransformedContainer(UnaryTransformedContainer):
 class LogTransformedContainer(UnaryTransformedContainer):
     """Pairs with the `dms_stan.param.LogParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.LogParameter"):
+    def __init__(self, bound_param: "dms.model.components.LogParameter"):
         super().__init__(bound_param)
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
@@ -598,7 +604,7 @@ class LogTransformedContainer(UnaryTransformedContainer):
 class ExpTransformedContainer(UnaryTransformedContainer):
     """Pairs with the `dms_stan.param.ExpParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.ExpParameter"):
+    def __init__(self, bound_param: "dms.model.components.ExpParameter"):
         super().__init__(bound_param)
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
@@ -610,7 +616,7 @@ class ScaledTransformedContainer(UnaryTransformedContainer):
 
     def __init__(
         self,
-        bound_param: "dms.param.UnaryTransformedParameter",
+        bound_param: "dms.model.components.UnaryTransformedParameter",
         init_scale: Union[str, float],
     ):
         super().__init__(bound_param)
@@ -641,7 +647,7 @@ class ScaledTransformedContainer(UnaryTransformedContainer):
 class NormalizeTransformedContainer(ScaledTransformedContainer):
     """Pairs with the `dms_stan.param.NormalizeParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.NormalizeParameter"):
+    def __init__(self, bound_param: "dms.model.components.NormalizeParameter"):
         super().__init__(bound_param, init_scale=1.0)
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
@@ -651,7 +657,7 @@ class NormalizeTransformedContainer(ScaledTransformedContainer):
 class NormalizeLogTransformedContainer(ScaledTransformedContainer):
     """Pairs with the `dms_stan.param.NormalizeLogParameter` class."""
 
-    def __init__(self, bound_param: "dms.param.NormalizeLogParameter"):
+    def __init__(self, bound_param: "dms.model.components.NormalizeLogParameter"):
         super().__init__(bound_param, init_scale=0.0)
 
     def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
@@ -663,7 +669,7 @@ class LogExponentialGrowthContainer(TransformedContainer):
 
     missing_param_order = ("log_A", "r", "t")
 
-    def __init__(self, bound_param: "dms.param.LogExponentialGrowth"):
+    def __init__(self, bound_param: "dms.model.components.LogExponentialGrowth"):
         super().__init__(bound_param)
 
     def calculate_logA(  # pylint: disable=invalid-name
@@ -706,7 +712,7 @@ class LogSigmoidGrowthContainer(TransformedContainer):
 
     missing_param_order = ("log_A", "r", "c", "t")
 
-    def __init__(self, bound_param: "dms.param.LogSigmoidGrowth"):
+    def __init__(self, bound_param: "dms.model.components.LogSigmoidGrowth"):
         super().__init__(bound_param)
 
     def calculate_logA(  # pylint: disable=invalid-name
@@ -765,8 +771,10 @@ class PyTorchModel(nn.Module):
         super().__init__()
 
         # Define types for variables where it is unclear
-        observable: dms.param.Parameter
-        encountered_params: dict[dms.param.Parameter, dms.param.Parameter] = {}
+        observable: dms.model.components.Parameter
+        encountered_params: dict[
+            dms.model.components.Parameter, dms.model.components.Parameter
+        ] = {}
         self._observable_loss_calculators: dict[str, ParameterContainer] = {}
         self._loss_calculators: list[ParameterContainer] = []
         torch_params: list[nn.Parameter] = []
@@ -804,7 +812,7 @@ class PyTorchModel(nn.Module):
                 parent.init_pytorch()
 
                 # If the parent is a Parameter, record it as a loss calculator
-                if isinstance(parent, dms.param.Parameter):
+                if isinstance(parent, dms.model.components.Parameter):
                     self._loss_calculators.append(parent.torch_container)
 
                 # Record the torch parameters
@@ -930,9 +938,9 @@ class PyTorchModel(nn.Module):
         return {
             name: param.torch_container.distribution
             for name, param in self.model.parameter_dict.items()
-            if isinstance(param, dms.param.Parameter)
+            if isinstance(param, dms.model.components.Parameter)
         } | {
             name: param.torch_container.distribution
             for name, param in self.model.observable_dict.items()
-            if isinstance(param, dms.param.Parameter)
+            if isinstance(param, dms.model.components.Parameter)
         }
