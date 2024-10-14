@@ -10,6 +10,9 @@ from cmdstanpy import CmdStanModel
 
 import dms_stan as dms
 
+from dms_stan.model.components.parameters import Parameter
+from dms_stan.model.components.transformed_parameters import TransformedParameter
+
 
 # We need a specific type for the steps of the Stan model
 class StanStepsType(TypedDict):
@@ -77,13 +80,11 @@ class StanModel(CmdStanModel):
         # Set the output directory
         self.output_dir = output_dir
 
-    def _record_parameter(self, param: dms.model.components.Parameter):
+    def _record_parameter(self, param: Parameter):
         """Record a parameter in the steps."""
         self.steps["parameters"].append(param.stan_parameter_declaration)
 
-    def _record_transformed_parameter(
-        self, param: dms.model.components.TransformedParameter
-    ):
+    def _record_transformed_parameter(self, param: TransformedParameter):
         """Record a transformed parameter in the steps."""
         self.steps["transformed parameters"].append(param.stan_parameter_declaration)
 
@@ -110,12 +111,12 @@ class StanModel(CmdStanModel):
                     continue
 
                 # If the child is a parameter, add it to the parameters list
-                if isinstance(child, dms.model.components.Parameter):
+                if isinstance(child, Parameter):
                     self._record_parameter(child)
 
                 # If it is a transformed parameter, add it to the transformed parameters
                 # list
-                elif isinstance(child, dms.model.components.TransformedParameter):
+                elif isinstance(child, TransformedParameter):
                     self._record_transformed_parameter(child)
 
                 # Otherwise, raise an error
@@ -168,7 +169,7 @@ class StanModel(CmdStanModel):
         """Write the model of the Stan code."""
         # We need one less nested for-loops than the number of dimensions in the
         # observable
-        observable: dms.model.components.Parameter = self.dms_stan_model.observables[0]
+        observable: Parameter = self.dms_stan_model.observables[0]
         n_for_loops = observable.ndim - 1
 
         # We begin the model as a list in the inner loop

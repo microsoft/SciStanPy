@@ -10,6 +10,11 @@ import numpy.typing as npt
 import torch
 
 import dms_stan as dms
+from .components.abstract_classes import AbstractModelComponent, AbstractParameter
+from .components.constants import Constant
+from .components.custom_types import CombinableParameterType
+from .components.parameters import Binomial
+from .components.transformed_parameters import LogExponentialGrowth, LogSigmoidGrowth
 
 
 # Special type for the MAP estimate
@@ -69,19 +74,17 @@ class Model:
                 retrieved = getattr(self, attr)
 
                 # Continue if not a model component
-                if not isinstance(
-                    retrieved, dms.model.components.AbstractModelComponent
-                ):
+                if not isinstance(retrieved, AbstractModelComponent):
                     continue
 
                 # Bin the model component appropriately
                 retrieved.model_varname = attr
-                if isinstance(retrieved, dms.model.components.AbstractParameter):
+                if isinstance(retrieved, AbstractParameter):
                     if retrieved.observable:
                         observables[attr] = retrieved
                     else:
                         parameters[attr] = retrieved
-                elif isinstance(retrieved, dms.model.components.Constant):
+                elif isinstance(retrieved, Constant):
                     constants[attr] = retrieved
 
             # Convert the parameters, observables, and constants to named tuples
@@ -230,7 +233,7 @@ class Model:
 
     def __iter__(
         self,
-    ) -> Generator[tuple[str, "dms.model.components.AbstractParameter"], None, None]:
+    ) -> Generator[tuple[str, AbstractParameter], None, None]:
         """
         Loops over the parameters and observables in the model. Parameters are
         emitted first in order of depth from deepest to shallowest. Ties in depth
@@ -261,7 +264,7 @@ class Model:
         """Checks if the model contains a parameter or observable with the given name."""
         return paramname in self.parameter_dict or paramname in self.observable_dict
 
-    def __getitem__(self, paramname: str) -> "dms.model.components.AbstractParameter":
+    def __getitem__(self, paramname: str) -> AbstractParameter:
         """Returns the parameter or observable with the given name."""
         return getattr(self, paramname)
 
@@ -271,7 +274,7 @@ class Model:
         return self._parameters  # pylint: disable=no-member
 
     @property
-    def parameter_dict(self) -> dict[str, "dms.model.components.AbstractParameter"]:
+    def parameter_dict(self) -> dict[str, AbstractParameter]:
         """Returns the parameters of the model as a dictionary."""
         return self._parameters._asdict()  # pylint: disable=no-member
 
@@ -291,12 +294,12 @@ class Model:
         return self._constants  # pylint: disable=no-member
 
     @property
-    def constant_dict(self) -> dict[str, "dms.model.components.Constant"]:
+    def constant_dict(self) -> dict[str, Constant]:
         """Returns the constants of the model as a dictionary."""
         return self._constants._asdict()  # pylint: disable=no-member
 
     @property
-    def togglable_params(self) -> dict[str, "dms.model.components.AbstractParameter"]:
+    def togglable_params(self) -> dict[str, AbstractParameter]:
         """Returns the parameters that can be toggled in the model."""
         return {
             name: param
@@ -338,18 +341,16 @@ class BaseGrowthModel(Model):
 
         # Record the timepoints as a constant. Expand the timepoints to the same
         # dimensionality as the counts.
-        self.t = dms.model.components.Constant(t[None, :, None])
+        self.t = Constant(t[None, :, None])
 
-    def _finalize_regressor(
-        self, sigma: "dms.model.components.CombinableParameterType"
-    ):
+    def _finalize_regressor(self, sigma: CombinableParameterType):
 
         # pylint: disable = no-member, attribute-defined-outside-init
         # Assign the noise parameter
         self.sigma = sigma
 
         # Define the regression distribution
-        self.log_theta_unorm = dms.model.components.Normal(
+        self.log_theta_unorm = dms_components.parameters.Normal(
             mu=self.log_theta_unorm_mean,
             sigma=self.sigma,
             shape=self.log_theta_unorm_mean.shape,
@@ -372,9 +373,9 @@ class ExponentialGrowthMixIn(BaseGrowthModel):
         *,
         t: npt.NDArray[np.floating],
         counts: npt.NDArray[np.integer],
-        log_A: "dms.model.components.CombinableParameterType",
-        r: "dms.model.components.CombinableParameterType",
-        sigma: "dms.model.components.CombinableParameterType",
+        log_A: CombinableParameterType,
+        r: CombinableParameterType,
+        sigma: CombinableParameterType,
         **kwargs,
     ):
         # Call the parent class constructor. This will set up the timepoints as a
@@ -386,7 +387,7 @@ class ExponentialGrowthMixIn(BaseGrowthModel):
         self.r = r
 
         # Get the log theta values
-        self.log_theta_unorm_mean = dms.model.components.LogExponentialGrowth(
+        self.log_theta_unorm_mean = LogExponentialGrowth(
             t=self.t, log_A=self.log_A, r=self.r, shape=counts.shape
         )
 
@@ -402,10 +403,10 @@ class SigmoidGrowthMixIn(BaseGrowthModel):
         *,
         t: npt.NDArray[np.floating],
         counts: npt.NDArray[np.integer],
-        log_A: "dms.model.components.CombinableParameterType",
-        r: "dms.model.components.CombinableParameterType",
-        c: "dms.model.components.CombinableParameterType",
-        sigma: "dms.model.components.CombinableParameterType",
+        log_A: CombinableParameterType,
+        r: CombinableParameterType,
+        c: CombinableParameterType,
+        sigma: CombinableParameterType,
         **kwargs,
     ):
         # Call the parent class constructor. This will set up the timepoints as a
@@ -418,7 +419,7 @@ class SigmoidGrowthMixIn(BaseGrowthModel):
         self.c = c
 
         # Get the log theta values
-        self.log_theta_unorm_mean = dms.model.components.LogSigmoidGrowth(
+        self.log_theta_unorm_mean = LogSigmoidGrowth(
             t=self.t, log_A=self.log_A, r=self.r, c=self.c, shape=counts.shape
         )
 
@@ -441,7 +442,7 @@ class BaseBinomialGrowthModel(BaseGrowthModel):
 
         # Set up the binomial distribution for the counts. "N" is inferred as the
         # sum of the counts at each timepoint.
-        self.counts = dms.model.components.Binomial(
+        self.counts = Binomial(
             theta=self.theta,  # pylint: disable=no-member
             N=counts.sum(axis=2, keepdims=True),
             shape=counts.shape,
