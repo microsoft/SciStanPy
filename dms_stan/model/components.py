@@ -34,17 +34,23 @@ class AbstractModelComponent(ABC):
             bool: Whether the variable is a vector.
         """
         # Get the number of indices needed
-        n_indices = len(self.shape) - 1
+        n_indices = len(self.shape)
 
         # If there are no indices, then we just return the variable name
-        if n_indices <= 0:
+        if n_indices == 0:
             return self.model_varname, False
 
-        # Vector if the last dimension is not singleton
-        is_vector = self.shape[-1] != 1
+        # Singleton dimensions get a "1" index. All others get the index options.
+        indices = [
+            "1" if dimsize == 1 else index_opts[i]
+            for i, dimsize in enumerate(self.shape)
+        ]
+
+        # Vector if at least one dimension is not 1
+        is_vector = any(dimsize != 1 for dimsize in self.shape)
 
         # Build the indexed variable name
-        indexed_varname = f"{self.model_varname}[{','.join(index_opts[:n_indices])}]"
+        indexed_varname = f"{self.model_varname}[{','.join(indices)}]"
 
         return indexed_varname, is_vector
 
@@ -77,6 +83,19 @@ class AbstractModelComponent(ABC):
     @abstractmethod
     def stan_parameter_declaration(self) -> str:
         """Declare the parameter in Stan"""
+
+    @property
+    def stan_code_level(self) -> int:
+        """The level at which the code is written. 0 is the highest level."""
+        # Strip off leading 1s. The level is the remaining dimensions.
+        level = 0
+        for dimsize in self.shape:
+            if dimsize == 1:
+                level += 1
+            else:
+                break
+
+        return level
 
 
 class Constant(AbstractModelComponent):
@@ -561,6 +580,11 @@ class AbstractParameter(AbstractModelComponent):
         """Returns the Stan parameter declaration for this parameter."""
         return f"{self.stan_dtype}{self.stan_bounds} {self.model_varname}"
 
+    @property
+    def is_named(self) -> bool:
+        """Return whether or not the parameter has a name."""
+        return self._model_varname != ""
+
 
 class TransformedParameter(AbstractParameter):
     """
@@ -580,6 +604,15 @@ class TransformedParameter(AbstractParameter):
     def operation(self, **draws: "SampleType") -> npt.NDArray:
         """Perform the operation on the draws"""
 
+    def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
+        """Return the assignment for the transformation."""
+        return (
+            f"{self.get_indexed_varname(index_opts)} = "
+            + self.get_stan_transformation(index_opts)[0]
+        )
+
+    # TODO: We need to handle the set hyperparameter values. How do we populate
+    # them in the distribution?
     def get_stan_transformation(self, index_opts: tuple[str, ...]) -> tuple[str, bool]:
         """
         Return the Stan transformation for this parameter. This recursively calls
@@ -591,18 +624,20 @@ class TransformedParameter(AbstractParameter):
         to_format: dict[str, tuple[str, bool]] = {}
         for name, param in self.parameters.items():
 
-            # If the parameter is non-transformed or named in a varaible, record
-            # the variable name
-            if (
-                isinstance(param, (Constant, Parameter))
-                or param._component_varname != ""  # pylint: disable=protected-access
-            ):
+            # If the parameter is non-transformed, record
+            if isinstance(param, (Constant, Parameter)):
                 to_format[name] = param.get_indexed_varname(index_opts)
 
-            # Otherwise, get the transformation of the parent
+            # Otherwise, get the transformation of the parent unless the parent
+            # transformation is named, in which case we just use the name
             elif isinstance(param, TransformedParameter):
-                transformation, is_vector = param.get_stan_transformation(index_opts)
-                to_format[name] = (f"( {transformation} )", is_vector)
+                if param.is_named:
+                    to_format[name] = param.get_indexed_varname(index_opts)
+                else:
+                    transformation, is_vector = param.get_stan_transformation(
+                        index_opts
+                    )
+                    to_format[name] = (f"( {transformation} )", is_vector)
 
             # Otherwise, raise an error
             else:
@@ -1119,6 +1154,15 @@ class Parameter(AbstractParameter):
         self.observable = False
         return self
 
+    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
+        """Return the Stan target incrementation for this parameter."""
+        return (
+            f"{self.get_indexed_varname(index_opts)} ~ "
+            + self.get_stan_distribution(index_opts)
+        )
+
+    # TODO: We need to handle the set hyperparameter values. How do we populate
+    # them in the distribution?
     def get_stan_distribution(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan distribution for this parameter"""
 
@@ -1135,7 +1179,7 @@ class Parameter(AbstractParameter):
             # happening in the model. Otherwise, the computation has already happened
             # in the transformed parameters block.
             elif isinstance(param, TransformedParameter):
-                if param._model_varname != "":  # pylint: disable=protected-access
+                if param.is_named:
                     to_format[name] = param.get_stan_transformation(index_opts)
                 else:
                     to_format[name] = param.get_indexed_varname(index_opts)
