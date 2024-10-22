@@ -11,7 +11,7 @@ import torch
 
 import dms_stan as dms
 from .components.abstract_classes import AbstractModelComponent, AbstractParameter
-from .components.constants import Constant
+from .components.constants import Constant, Hyperparameter
 from .components.custom_types import CombinableParameterType
 from .components.parameters import Binomial
 from .components.transformed_parameters import LogExponentialGrowth, LogSigmoidGrowth
@@ -55,22 +55,23 @@ class Model:
             if hasattr(self, "_parameters"):
                 assert hasattr(self, "_observables")
                 assert hasattr(self, "_constants")
+                assert hasattr(self, "_hyperparameters")
                 parameters = self.parameter_dict
                 observables = self.observable_dict
                 constants = self.constant_dict
+                hyperparameters = self.hyperparameter_dict
             else:
                 assert not hasattr(self, "_observables")
                 assert not hasattr(self, "_constants")
-                parameters, observables, constants = {}, {}, {}
+                assert not hasattr(self, "_hyperparameters")
+                parameters, observables, constants, hyperparameters = {}, {}, {}, {}
 
-            # Now we need to find all the parameters, observables, and constants
-            # that are defined in the class. Skip any attributes defined in this
-            # meta class.
+            # Now we need to find all the parameters, observables, hyperparameters,
+            # and constants that are defined in the class. Skip any attributes defined
+            # in this meta class.
             for attr in set(dir(self)) - set(dir(Model)):
 
-                # If the attribute is a parameter, add it to the parameters dictionary.
-                # If it is an observable, add it to the observables dictionary. If
-                # it is a constant, add it to the constants dictionary.
+                # Get the attribute's value
                 retrieved = getattr(self, attr)
 
                 # Continue if not a model component
@@ -80,17 +81,32 @@ class Model:
                 # Bin the model component appropriately
                 retrieved.model_varname = attr
                 if isinstance(retrieved, AbstractParameter):
+
+                    # Parameters are either observables or not
                     if retrieved.observable:
                         observables[attr] = retrieved
                     else:
                         parameters[attr] = retrieved
+
+                    # Check to see if there are any hyperparameters
+                    hyperparameters.update(
+                        {
+                            f"{attr}.{name}": param
+                            for name, param in retrieved.hyperparameters.items()
+                        }
+                    )
+
                 elif isinstance(retrieved, Constant):
                     constants[attr] = retrieved
 
-            # Convert the parameters, observables, and constants to named tuples
+            # Convert the parameters, observables, hyperparameters, and constants
+            # to named tuples
             self._parameters = collections.namedtuple("Parameters", parameters.keys())(
                 **parameters
             )
+            self._hyperparameters = collections.namedtuple(
+                "Hyperparameters", hyperparameters.keys()
+            )(**hyperparameters)
             self._observables = collections.namedtuple(
                 "Observables", observables.keys()
             )(**observables)
@@ -279,12 +295,22 @@ class Model:
         return self._parameters._asdict()  # pylint: disable=no-member
 
     @property
+    def hyperparameters(self) -> NamedTuple:
+        """Returns the hyperparameters of the model."""
+        return self._hyperparameters
+
+    @property
+    def hyperparameter_dict(self) -> dict[str, Hyperparameter]:
+        """Returns the hyperparameters of the model as a dictionary."""
+        return self._hyperparameters._asdict()  # pylint: disable=no-member
+
+    @property
     def observables(self) -> NamedTuple:
         """Returns the observables of the model."""
         return self._observables  # pylint: disable=no-member
 
     @property
-    def observable_dict(self) -> dict:
+    def observable_dict(self) -> dict[str, AbstractParameter]:
         """Returns the observables of the model as a dictionary."""
         return self._observables._asdict()  # pylint: disable=no-member
 
@@ -299,21 +325,13 @@ class Model:
         return self._constants._asdict()  # pylint: disable=no-member
 
     @property
-    def togglable_params(self) -> dict[str, AbstractParameter]:
-        """Returns the parameters that can be toggled in the model."""
+    def root_nodes(self) -> dict[str, AbstractParameter]:
+        """Returns the parameters that are root nodes in the model."""
         return {
             name: param
             for name, param in self.parameter_dict.items()
-            if param.togglable
+            if param.is_root_node
         }
-
-    @property
-    def togglable_param_values(self) -> dict[str, dict[str, npt.NDArray]]:
-        """
-        Returns the values of the constants that define the togglable parameters
-        in the model.
-        """
-        return {name: param.parameters for name, param in self.togglable_params.items()}
 
 
 class BaseGrowthModel(Model):

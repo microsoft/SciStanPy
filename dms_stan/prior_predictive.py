@@ -11,6 +11,7 @@ import pandas as pd
 import panel.widgets as pnw
 
 import dms_stan as dms
+import dms_stan.model.components as dms_components
 
 
 class PriorPredictiveCheck:
@@ -96,12 +97,43 @@ class PriorPredictiveCheck:
         """Gets the float sliders for the togglable parameters in the model."""
         # Each togglable parameter gets its own float slider
         sliders = {}
-        for paramname, paramdict in self.model.togglable_param_values.items():
-            for constant_name, constant_value in paramdict.items():
-                combined_name = f"{paramname}.{constant_name}"
-                sliders[combined_name] = pnw.EditableFloatSlider(
-                    name=combined_name, value=constant_value.item()
+
+        # If multiple dimensions on a hyperparameter, we need to create a slider
+        # for each entry
+        for hyperparam_name, hyperparam_val in self.model.hyperparameter_dict.items():
+            # If no dimensions, just create a slider
+            if hyperparam_val.ndim == 0:
+                sliders[hyperparam_name] = pnw.EditableFloatSlider(
+                    name=hyperparam_name, value=hyperparam_val.item()
                 )
+                continue
+
+            # Otherwise, create a slider for each entry
+            target_shape = hyperparam_val.shape
+            remaining_elements = np.prod(target_shape)
+            current_index = [0] * len(target_shape)
+            current_dim = len(target_shape) - 1
+            while remaining_elements > 0:
+
+                # Build the slider name
+                name = f"{hyperparam_name}.{'.'.join(map(str, current_index))}"
+
+                # Get the slider value
+                slider_val = hyperparam_val[tuple(current_index)].item()
+
+                # Add the slider
+                sliders[name] = pnw.EditableFloatSlider(name=name, value=slider_val)
+
+                # Increment the current index. If we have reached the end of the
+                # current dimension, move to the next dimension
+                if current_index[current_dim] == target_shape[current_dim] - 1:
+                    current_index[current_dim:] = [0] * (
+                        len(target_shape) - current_dim
+                    )
+                    current_dim -= 1
+
+                # Decrement the remaining elements
+                remaining_elements -= 1
 
         return sliders
 
@@ -142,28 +174,61 @@ class PriorPredictiveCheck:
         # Define helper functions. This is just for scoping and readability.
         def process_kwargs() -> dict[str, dict[str, npt.NDArray]]:
             """
-            Kwargs passed in to the parent function are formatted as `paramname.constantname`
+            Kwargs passed in to the parent function are formatted as `paramname.constantname.indices`
             mapped to floats. This function processes those kwargs into a dictionary
             of dictionaries, where the outer dictionary maps parameter names to
             dictionaries that map constant names to new values. The new values are
-            also converted to numpy arrays.
+            also converted to hyperparameters.
             """
             processed_kwargs = {}
             for key, val in kwargs.items():
-                paramname, constantname = key.split(".")
+
+                # Get the parameter name and hyperparameter name
+                paramname, hypername = key.split(".", maxsplit=1)
+
+                # Separate the hyperparameter name from index names
+                hypername, *indices = hypername.split(".")
+
+                # Indices to integers
+                indices = tuple(map(int, indices))
+
+                # Create an entry in the processed_kwargs dictionary if it doesn't
+                # exist
                 if paramname not in processed_kwargs:
+
+                    # Build the entry
                     processed_kwargs[paramname] = {}
-                processed_kwargs[paramname][constantname] = np.array(val)
+
+                    # If there are indices, we are working with a numpy array
+                    if indices:
+                        processed_kwargs[paramname][hypername] = (
+                            dms_components.Hyperparameter(
+                                np.empty(self.model[paramname].shape)
+                            )
+                        )
+
+                # If there are indices, add the value to the hyperparameter
+                if indices:
+                    processed_kwargs[paramname][hypername][indices] = val
+
+                # Otherwise, just add the value to the dictionary
+                else:
+                    processed_kwargs[paramname][hypername] = (
+                        dms_components.Hyperparameter(val)
+                    )
+
             return processed_kwargs
 
-        def update_model(processed_kwargs: dict[str, dict[str, npt.NDArray]]):
+        def update_model(
+            processed_kwargs: dict[str, dict[str, dms_components.Hyperparameter]]
+        ):
             """
             Changes the values of the constants in the model according to the processed
             kwargs.
             """
-            for paramname, constant_dict in processed_kwargs.items():
-                assert set(constant_dict) == set(self.model[paramname].parameters)
-                self.model[paramname].parameters.update(constant_dict)
+            for paramname, hyperdict in processed_kwargs.items():
+                assert set(hyperdict) == set(self.model[paramname].parameters)
+                self.model[paramname].parameters.update(hyperdict)
 
         # Update the model with the new parameters
         update_model(process_kwargs())
