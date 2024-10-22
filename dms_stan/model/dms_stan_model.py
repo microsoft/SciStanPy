@@ -464,7 +464,7 @@ class BaseBinomialGrowthModel(BaseGrowthModel):
         # sum of the counts at each timepoint.
         self.counts = Binomial(
             theta=self.theta,  # pylint: disable=no-member
-            N=counts.sum(axis=2, keepdims=True),
+            N=Constant(counts.sum(axis=2, keepdims=True)),
             shape=counts.shape,
         ).as_observable()
 
