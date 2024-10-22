@@ -14,6 +14,8 @@ from tqdm import tqdm
 import dms_stan as dms
 import dms_stan.model.components as dms_components
 
+from .abstract_classes import AbstractParameter, AbstractPassthrough
+
 
 def check_observable_data(
     model: "dms.model.Model", observed_data: dict[str, Union[torch.Tensor, npt.NDArray]]
@@ -55,9 +57,7 @@ class TorchContainer(ABC):
     child class with Pytorch.
     """
 
-    def __init__(
-        self, bound_param: "dms_components.abstract_classes.AbstractParameter"
-    ):
+    def __init__(self, bound_param: AbstractParameter):
         """
         Args:
             bound_param: The dms_stan parameter to which this container is bound.
@@ -71,15 +71,13 @@ class TorchContainer(ABC):
         # Get the PyTorch parameters from the parent parameters
         self._torch_parameters: dict[str, torch.Tensor] = {}
         self._learnable_parameters: set[str] = set()
-        self._parent_to_paramname: dict[
-            dms_components.abstract_classes.AbstractParameter, str
-        ] = {}
+        self._parent_to_paramname: dict[AbstractParameter, str] = {}
         for param_name, param in bound_param.parameters.items():
 
             # Add to the dictionary. Parent parameters drawn from a distribution
             # will be defined as torch parameters. Non-parameters will be defined
             # as torch tensors.
-            if isinstance(param, dms_components.abstract_classes.AbstractParameter):
+            if isinstance(param, AbstractParameter):
                 self._learnable_parameters.add(param_name)
                 init_vals = self._inverse_transform_parameter(
                     param_name, torch.tensor(param.draw(1).squeeze(0))
@@ -88,17 +86,19 @@ class TorchContainer(ABC):
                 self._torch_parameters[param_name] = nn.Parameter(init_vals)
                 self._parent_to_paramname[param] = param_name
 
-            else:
-                self._torch_parameters[param_name] = torch.tensor(param)
+            # Otherwise, it must be a constant
+            elif isinstance(param, AbstractPassthrough):
+                self._torch_parameters[param_name] = torch.from_numpy(param.value)
 
-    def get_child_paramname(
-        self, child_param: "dms_components.abstract_classes.AbstractParameter"
-    ) -> str:
+            else:
+                raise TypeError("Parameter must be a Parameter or Passthrough.")
+
+    def get_child_paramname(self, child_param: AbstractParameter) -> str:
         """
         Gets the name of the parameter that the bound parameter defines in the child.
 
         Args:
-            child_param (dms_components.abstract_classes.AbstractParameter): A child of the bound parameter.
+            child_param (AbstractParameter): A child of the bound parameter.
 
         Returns:
             str: The name of the parameter in the child that the bound parameter
@@ -226,7 +226,7 @@ class TorchContainer(ABC):
 
     def _link_torch_parameters(
         self,
-        parent: "dms_components.abstract_classes.AbstractParameter",
+        parent: AbstractParameter,
         sibling: "TorchContainer",
     ):
         """
@@ -385,7 +385,7 @@ class TransformedContainer(TorchContainer):
 
     def _link_torch_parameters(
         self,
-        parent: "dms_components.abstract_classes.AbstractParameter",
+        parent: AbstractParameter,
         sibling: TorchContainer,
     ):
 
