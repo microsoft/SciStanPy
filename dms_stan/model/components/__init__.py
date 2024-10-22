@@ -8,7 +8,7 @@ import dms_stan.model.components.parameters
 import dms_stan.model.components.custom_types
 
 # Import frequently used classes and types
-from dms_stan.model.components.constants import Constant
+from dms_stan.model.components.constants import Constant, Hyperparameter
 from dms_stan.model.components.parameters import (
     Beta,
     Binomial,
