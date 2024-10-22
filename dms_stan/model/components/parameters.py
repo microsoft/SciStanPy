@@ -10,9 +10,10 @@ import torch.distributions as dist
 import dms_stan as dms
 import dms_stan.model.components as dms_components
 
-from dms_stan.model.components.abstract_classes import AbstractParameter
-from dms_stan.model.components.constants import Constant
-from dms_stan.model.components.transformed_parameters import (
+from .abstract_classes import AbstractParameter
+from .constants import Constant
+from .pytorch import ParameterContainer
+from .transformed_parameters import (
     AddParameter,
     DivideParameter,
     MultiplyParameter,
@@ -26,7 +27,7 @@ from dms_stan.model.components.transformed_parameters import (
 class Parameter(AbstractParameter):
     """Base class for parameters used in DMS Stan"""
 
-    _torch_container_class = dms.pytorch.ParameterContainer
+    _torch_container_class = ParameterContainer
 
     def __init__(
         self,

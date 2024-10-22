@@ -5,12 +5,9 @@ from typing import Union
 import numpy as np
 import numpy.typing as npt
 
-from dms_stan.model.components.constants import Constant, Hyperparameter
-from dms_stan.model.components.parameters import (
-    ContinuousDistribution,
-    DiscreteDistribution,
-)
-from dms_stan.model.components.transformed_parameters import TransformedParameter
+from .constants import Constant, Hyperparameter
+from .parameters import ContinuousDistribution, DiscreteDistribution
+from .transformed_parameters import TransformedParameter
 
 
 # Define custom types for this module

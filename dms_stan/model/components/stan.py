@@ -10,8 +10,8 @@ from cmdstanpy import CmdStanModel
 
 import dms_stan as dms
 
-from dms_stan.model.components.parameters import Parameter
-from dms_stan.model.components.transformed_parameters import TransformedParameter
+from .parameters import Parameter
+from .transformed_parameters import TransformedParameter
 
 
 # We need a specific type for the steps of the Stan model

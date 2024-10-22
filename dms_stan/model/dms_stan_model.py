@@ -10,11 +10,20 @@ import numpy.typing as npt
 import torch
 
 import dms_stan as dms
+
+from .components import (
+    Binomial,
+    Constant,
+    Hyperparameter,
+    LogExponentialGrowth,
+    LogSigmoidGrowth,
+    Normal,
+)
 from .components.abstract_classes import AbstractModelComponent, AbstractParameter
-from .components.constants import Constant, Hyperparameter
 from .components.custom_types import CombinableParameterType
-from .components.parameters import Binomial, Normal
-from .components.transformed_parameters import LogExponentialGrowth, LogSigmoidGrowth
+from .components.pytorch import check_observable_data, PyTorchModel
+from .components.stan import StanModel
+from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
 
 
 # Special type for the MAP estimate
@@ -173,19 +182,19 @@ class Model:
         """
         Compiles the model to a trainable PyTorch model.
         """
-        return dms.pytorch.PyTorchModel(self)
+        return PyTorchModel(self)
 
     def to_stan(self):
         """
         Compiles the model to a Stan model.
         """
-        return dms.stan.StanModel(self)
+        return StanModel(self)
 
     def approximate_map(
         self,
-        epochs: int = dms.defaults.DEFAULT_N_EPOCHS,
-        early_stop: int = dms.defaults.DEFAULT_EARLY_STOP,
-        lr: float = dms.defaults.DEFAULT_LR,
+        epochs: int = DEFAULT_N_EPOCHS,
+        early_stop: int = DEFAULT_EARLY_STOP,
+        lr: float = DEFAULT_LR,
         **observed_data: Union[torch.Tensor, npt.NDArray],
     ) -> MAPDict:
         """
@@ -195,7 +204,7 @@ class Model:
         that minimize this loss are then returned.
         """
         # Check observed data
-        dms.pytorch.check_observable_data(self, observed_data)
+        check_observable_data(self, observed_data)
 
         # Fit the model
         pytorch_model = self.to_pytorch()
@@ -236,7 +245,7 @@ class Model:
         See `dms_stan.prior_predictive.PriorPredictiveCheck` for more details.
         """
         # Create the prior predictive object
-        pp = dms.prior_predictive.PriorPredictiveCheck(self, copy_model=copy_model)
+        pp = dms.model.PriorPredictiveCheck(self, copy_model=copy_model)
 
         # Return the plot
         return pp.display(

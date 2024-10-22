@@ -11,13 +11,15 @@ import pandas as pd
 import panel.widgets as pnw
 
 import dms_stan as dms
-import dms_stan.model.components as dms_components
+
+from .components.constants import Hyperparameter
+from .dms_stan_model import Model
 
 
 class PriorPredictiveCheck:
     """Base class for prior predictive checks."""
 
-    def __init__(self, model: dms.model.Model, copy_model: bool = False):
+    def __init__(self, model: Model, copy_model: bool = False):
 
         # Copy the model if requested. If we don't copy, then we can modify our
         # values on the model directly.
@@ -173,7 +175,7 @@ class PriorPredictiveCheck:
         """
 
         # Define helper functions. This is just for scoping and readability.
-        def process_kwargs() -> dict[str, dict[str, dms_components.Hyperparameter]]:
+        def process_kwargs() -> dict[str, dict[str, Hyperparameter]]:
             """
             Kwargs passed in to the parent function are formatted as `paramname.constantname.indices`
             mapped to floats. This function processes those kwargs into a dictionary
@@ -202,12 +204,8 @@ class PriorPredictiveCheck:
 
                     # If there are indices, we are working with a numpy array
                     if indices:
-                        processed_kwargs[paramname][hypername] = (
-                            dms_components.Hyperparameter(
-                                np.empty_like(
-                                    self.model[paramname].parameters[hypername]
-                                )
-                            )
+                        processed_kwargs[paramname][hypername] = Hyperparameter(
+                            np.empty_like(self.model[paramname].parameters[hypername])
                         )
 
                 # If there are indices, add the value to the hyperparameter
@@ -216,15 +214,11 @@ class PriorPredictiveCheck:
 
                 # Otherwise, just add the value to the dictionary
                 else:
-                    processed_kwargs[paramname][hypername] = (
-                        dms_components.Hyperparameter(val)
-                    )
+                    processed_kwargs[paramname][hypername] = Hyperparameter(val)
 
             return processed_kwargs
 
-        def update_model(
-            processed_kwargs: dict[str, dict[str, dms_components.Hyperparameter]]
-        ):
+        def update_model(processed_kwargs: dict[str, dict[str, Hyperparameter]]):
             """
             Changes the values of the constants in the model according to the processed
             kwargs.
@@ -233,7 +227,7 @@ class PriorPredictiveCheck:
                 assert set(hyperdict) == set(
                     key
                     for key, val in self.model[paramname].parameters.items()
-                    if isinstance(val, dms_components.Hyperparameter)
+                    if isinstance(val, Hyperparameter)
                 )
                 self.model[paramname].parameters.update(hyperdict)
 

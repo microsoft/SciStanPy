@@ -273,7 +273,7 @@ class AbstractParameter(AbstractModelComponent):
     SIMPLEX_PARAMS: set[str] = set()
 
     # Define the class that will be used for compiling to PyTorch
-    _torch_container_class: type["dms.pytorch.TorchContainer"]
+    _torch_container_class: type["dms.model.components.pytorch.TorchContainer"]
 
     # Define the stan data type
     base_stan_dtype: Literal["real", "int", "simplex"] = "real"
@@ -349,7 +349,9 @@ class AbstractParameter(AbstractModelComponent):
         self.children = []
 
         # Set up a placeholder for the Pytorch container
-        self._torch_container: Optional["dms.pytorch.TorchContainer"] = None
+        self._torch_container: Optional[
+            "dms.model.components.pytorch.TorchContainer"
+        ] = None
 
     def _check_parameter_ranges(
         self, draws: Optional[dict[str, npt.NDArray]] = None
@@ -569,7 +571,7 @@ class AbstractParameter(AbstractModelComponent):
         return len(self.shape)
 
     @property
-    def torch_container(self) -> "dms.pytorch.TorchContainer":
+    def torch_container(self) -> "dms.model.components.pytorch.TorchContainer":
         """Return the Pytorch container for this parameter. Error if not initialized."""
         if self._torch_container is None:
             raise ValueError("Pytorch container not initialized. Run `init_pytorch`.")

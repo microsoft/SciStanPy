@@ -13,9 +13,9 @@ import numpy as np
 install_import_hook("dms_stan")
 
 # pylint: disable=wrong-import-position
-from dms_stan import defaults
-from dms_stan import plotting, pytorch
-from dms_stan import model, operations, prior_predictive, stan
+from dms_stan import defaults, plotting
+from dms_stan import model
+from dms_stan import operations
 
 # Define the global random number generator
 RNG: np.random.Generator
