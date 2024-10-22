@@ -8,6 +8,7 @@ import numpy.typing as npt
 import torch.distributions as dist
 
 import dms_stan as dms
+import dms_stan.model.components as dms_components
 
 from dms_stan.model.components.abstract_classes import AbstractParameter
 from dms_stan.model.components.constants import Constant

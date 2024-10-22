@@ -60,7 +60,6 @@ def allow_interactive(plotting_func: Callable[P, T]) -> Callable[P, T]:
 
         # If the first argument is a dataframe, then we return the plot
         if isinstance(args[0], pd.DataFrame):
-            print(type(plot))
             return plot
 
         # If a list, then we combine the plots

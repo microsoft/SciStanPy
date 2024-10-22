@@ -117,11 +117,15 @@ class AbstractPassthrough(AbstractModelComponent):
     def __repr__(self):
         return f"{self.__class__.__name__}({self.value.__repr__()})"
 
+    # Handling items in `value`
     def __getitem__(self, key):
         return self.value[key]
 
     def __setitem__(self, key, value):
         self.value[key] = value
+
+    def __delitem__(self, key):
+        del self.value[key]
 
     # Mathematical operations are forwarded to the value
     def __add__(self, other):
@@ -172,6 +176,64 @@ class AbstractPassthrough(AbstractModelComponent):
     def __rmatmul__(self, other):
         return other @ self.value
 
+    # Comparison operations are forwarded to the value
+    def __eq__(self, other):
+        return self.value == other
+
+    def __ne__(self, other):
+        return self.value != other
+
+    def __lt__(self, other):
+        return self.value < other
+
+    def __le__(self, other):
+        return self.value <= other
+
+    def __rt__(self, other):
+        return self.value > other
+
+    def __ge__(self, other):
+        return self.value >= other
+
+    def __and__(self, other):
+        return self.value & other
+
+    def __rand__(self, other):
+        return other & self.value
+
+    def __or__(self, other):
+        return self.value | other
+
+    def __ror__(self, other):
+        return other | self.value
+
+    def __contains__(self, item):
+        return item in self.value
+
+    # Unary operations are forwarded to the value
+    def __neg__(self):
+        return -self.value
+
+    def __pos__(self):
+        return +self.value
+
+    def __invert__(self):
+        return ~self.value
+
+    # Other mathematical operations are forwarded to the value
+    def __abs__(self):
+        return abs(self.value)
+
+    def __round__(self, n=None):
+        return round(self.value, n)
+
+    # Iterators
+    def __iter__(self):
+        return iter(self.value)
+
+    def __len__(self):
+        return len(self.value)
+
     @property
     def shape(self) -> tuple[int, ...]:
         """
@@ -211,7 +273,7 @@ class AbstractParameter(AbstractModelComponent):
     SIMPLEX_PARAMS: set[str] = set()
 
     # Define the class that will be used for compiling to PyTorch
-    _torch_container_class: type[dms.pytorch.TorchContainer]
+    _torch_container_class: type["dms.pytorch.TorchContainer"]
 
     # Define the stan data type
     base_stan_dtype: Literal["real", "int", "simplex"] = "real"
@@ -243,14 +305,20 @@ class AbstractParameter(AbstractModelComponent):
             raise ValueError("Parent parameters cannot be observables")
 
         # Populate the parameters and record this distribution as a child
-        self.parameters = {
-            name: (
-                val.record_child(self)
-                if isinstance(val, AbstractParameter)
-                else dms_components.Hyperparameter(val)
-            )
-            for name, val in parameters.items()
-        }
+        self.parameters = {}
+        for name, val in parameters.items():
+            if isinstance(val, AbstractParameter):
+                self.parameters[name] = val.record_child(self)
+            elif isinstance(val, (int, float, np.ndarray)):
+                self.parameters[name] = dms_components.Hyperparameter(val)
+            elif isinstance(val, dms_components.Constant):
+                self.parameters[name] = val
+            else:
+                raise TypeError(
+                    f"Unexpected type passed for {name}: {type(val)}. Should be "
+                    "an int, float, np.ndarray, Hyperparameter, Constant, or child "
+                    "of AbstractParameter"
+                )
 
         # All bounded parameters must be named in the parameter dictionary
         if missing_names := (
@@ -281,7 +349,7 @@ class AbstractParameter(AbstractModelComponent):
         self.children = []
 
         # Set up a placeholder for the Pytorch container
-        self._torch_container: Optional[dms.pytorch.TorchContainer] = None
+        self._torch_container: Optional["dms.pytorch.TorchContainer"] = None
 
     def _check_parameter_ranges(
         self, draws: Optional[dict[str, npt.NDArray]] = None
@@ -501,7 +569,7 @@ class AbstractParameter(AbstractModelComponent):
         return len(self.shape)
 
     @property
-    def torch_container(self) -> dms.pytorch.TorchContainer:
+    def torch_container(self) -> "dms.pytorch.TorchContainer":
         """Return the Pytorch container for this parameter. Error if not initialized."""
         if self._torch_container is None:
             raise ValueError("Pytorch container not initialized. Run `init_pytorch`.")

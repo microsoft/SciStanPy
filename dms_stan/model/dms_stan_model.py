@@ -13,7 +13,7 @@ import dms_stan as dms
 from .components.abstract_classes import AbstractModelComponent, AbstractParameter
 from .components.constants import Constant, Hyperparameter
 from .components.custom_types import CombinableParameterType
-from .components.parameters import Binomial
+from .components.parameters import Binomial, Normal
 from .components.transformed_parameters import LogExponentialGrowth, LogSigmoidGrowth
 
 
@@ -104,9 +104,7 @@ class Model:
             self._parameters = collections.namedtuple("Parameters", parameters.keys())(
                 **parameters
             )
-            self._hyperparameters = collections.namedtuple(
-                "Hyperparameters", hyperparameters.keys()
-            )(**hyperparameters)
+            self._hyperparameters = hyperparameters
             self._observables = collections.namedtuple(
                 "Observables", observables.keys()
             )(**observables)
@@ -295,14 +293,9 @@ class Model:
         return self._parameters._asdict()  # pylint: disable=no-member
 
     @property
-    def hyperparameters(self) -> NamedTuple:
-        """Returns the hyperparameters of the model."""
-        return self._hyperparameters
-
-    @property
     def hyperparameter_dict(self) -> dict[str, Hyperparameter]:
         """Returns the hyperparameters of the model as a dictionary."""
-        return self._hyperparameters._asdict()  # pylint: disable=no-member
+        return self._hyperparameters
 
     @property
     def observables(self) -> NamedTuple:
@@ -368,7 +361,7 @@ class BaseGrowthModel(Model):
         self.sigma = sigma
 
         # Define the regression distribution
-        self.log_theta_unorm = dms_components.parameters.Normal(
+        self.log_theta_unorm = Normal(
             mu=self.log_theta_unorm_mean,
             sigma=self.sigma,
             shape=self.log_theta_unorm_mean.shape,

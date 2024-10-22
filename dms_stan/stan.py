@@ -93,18 +93,18 @@ class StanModel(CmdStanModel):
 
         # Loop over the togglable parameters. This takes us from hyperparameters
         # to observables (top to bottom)
-        for togglable in self.dms_stan_model.togglable_params.values():
+        for root_node in self.dms_stan_model.root_nodes.values():
 
             # Make sure this parameter has not been written yet
-            assert togglable not in self.all_varnames
+            assert root_node not in self.all_varnames
 
             # Record the parameter
-            self._record_parameter(togglable)
-            self.all_varnames.add(togglable.model_varname)
+            self._record_parameter(root_node)
+            self.all_varnames.add(root_node.model_varname)
 
             # Recurse through the children of the togglable parameter and add them
             # to the steps as well
-            for _, child, _ in togglable.recurse_children():
+            for _, child, _ in root_node.recurse_children():
 
                 # If the child has been handled already or is an observable skip it
                 if child.model_varname in self.all_varnames or child.observable:

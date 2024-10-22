@@ -1,10 +1,5 @@
 """Holds code for working with constant values in a DMS Stan model."""
 
-from typing import Union
-
-import numpy as np
-import numpy.typing as npt
-
 from dms_stan.model.components.abstract_classes import AbstractPassthrough
 
 

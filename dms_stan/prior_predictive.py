@@ -132,8 +132,9 @@ class PriorPredictiveCheck:
                     )
                     current_dim -= 1
 
-                # Decrement the remaining elements
+                # Decrement the remaining elements. Increment the current index
                 remaining_elements -= 1
+                current_index[current_dim] += 1
 
         return sliders
 
@@ -172,7 +173,7 @@ class PriorPredictiveCheck:
         """
 
         # Define helper functions. This is just for scoping and readability.
-        def process_kwargs() -> dict[str, dict[str, npt.NDArray]]:
+        def process_kwargs() -> dict[str, dict[str, dms_components.Hyperparameter]]:
             """
             Kwargs passed in to the parent function are formatted as `paramname.constantname.indices`
             mapped to floats. This function processes those kwargs into a dictionary
@@ -203,7 +204,9 @@ class PriorPredictiveCheck:
                     if indices:
                         processed_kwargs[paramname][hypername] = (
                             dms_components.Hyperparameter(
-                                np.empty(self.model[paramname].shape)
+                                np.empty_like(
+                                    self.model[paramname].parameters[hypername]
+                                )
                             )
                         )
 
@@ -227,7 +230,11 @@ class PriorPredictiveCheck:
             kwargs.
             """
             for paramname, hyperdict in processed_kwargs.items():
-                assert set(hyperdict) == set(self.model[paramname].parameters)
+                assert set(hyperdict) == set(
+                    key
+                    for key, val in self.model[paramname].parameters.items()
+                    if isinstance(val, dms_components.Hyperparameter)
+                )
                 self.model[paramname].parameters.update(hyperdict)
 
         # Update the model with the new parameters
