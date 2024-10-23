@@ -9,7 +9,7 @@ import scipy.special as sp
 
 import dms_stan.model.components as dms_components
 
-from .abstract_classes import AbstractParameter
+from .abstract_classes import AbstractModelComponent
 from .constants import Constant
 from .pytorch import (
     AbsTransformedContainer,
@@ -31,7 +31,7 @@ from .pytorch import (
 )
 
 
-class TransformedParameter(AbstractParameter):
+class TransformedParameter(AbstractModelComponent):
     """
     Base class representing a parameter that is the result of combining other
     parameters using mathematical operations.
@@ -39,11 +39,12 @@ class TransformedParameter(AbstractParameter):
 
     _torch_container_class: TransformedContainer
 
-    def draw(self, n: int) -> npt.NDArray:
+    def _draw(
+        self, n: int, level_draws: dict[str, npt.NDArray]
+    ) -> tuple[npt.NDArray, dict[AbstractModelComponent, npt.NDArray]]:
         """Sample from this parameter's distribution `n` times."""
-
         # Perform the operation on the draws
-        return self.operation(**super().draw(n))
+        return self.operation(**level_draws)
 
     @abstractmethod
     def operation(
@@ -58,47 +59,14 @@ class TransformedParameter(AbstractParameter):
             + self.get_stan_transformation(index_opts)[0]
         )
 
-    # TODO: We need to handle the set hyperparameter values. How do we populate
-    # them in the distribution?
-    def get_stan_transformation(self, index_opts: tuple[str, ...]) -> tuple[str, bool]:
-        """
-        Return the Stan transformation for this parameter. This recursively calls
-        the equivalent method on parent transformed parameters until we hit a
-        non-transformed parameter.
-        """
-        # Recursively gather the transformations until we hit a non-transformed
-        # parameter or a recorded variable
-        to_format: dict[str, tuple[str, bool]] = {}
-        for name, param in self.parameters.items():
-
-            # If the parameter is non-transformed, record
-            if isinstance(param, (Constant, dms_components.parameters.Parameter)):
-                to_format[name] = param.get_indexed_varname(index_opts)
-
-            # Otherwise, get the transformation of the parent unless the parent
-            # transformation is named, in which case we just use the name
-            elif isinstance(param, TransformedParameter):
-                if param.is_named:
-                    to_format[name] = param.get_indexed_varname(index_opts)
-                else:
-                    transformation, is_vector = param.get_stan_transformation(
-                        index_opts
-                    )
-                    to_format[name] = (f"( {transformation} )", is_vector)
-
-            # Otherwise, raise an error
-            else:
-                raise TypeError(f"Unknown model component type {type(param)}")
-
-        # We are a vector if any formatted variables are vectors
-        is_vector = any(is_vector for _, is_vector in to_format.values())
-
-        # Format the transformation
-        return self.format_stan_transformation(**to_format), is_vector
-
-    @abstractmethod
-    def format_stan_transformation(self, **param_vals: tuple[str, bool]) -> str:
-        """Return the base Stan transformation for this parameter."""
+    def _handle_transformation_code(
+        self, param: AbstractModelComponent, index_opts: tuple[str, ...]
+    ) -> str:
+        """Works with the `get_stan_code` method from the parent class"""
+        if param.is_named:
+            return param.get_indexed_varname(index_opts)
+        else:
+            return f"( {param.get_stan_code(index_opts)} )"
 
     # Calling this class should return the result of the operation.
     def __call__(self, *args, **kwargs):
@@ -129,16 +97,9 @@ class BinaryTransformedParameter(TransformedParameter):
     ): ...
 
     @abstractmethod
-    def format_stan_transformation(  # pylint: disable=arguments-differ
-        self, dist1: tuple[str, bool], dist2: tuple[str, bool]
-    ) -> tuple[str, str, bool]:
-
-        # Unpack the variable names and scalar flags
-        dist1_name, dist1_is_vector = dist1
-        dist2_name, dist2_is_vector = dist2
-
-        # Return the names and whether or not this will be an elementwise operation
-        return dist1_name, dist2_name, dist1_is_vector and dist2_is_vector
+    def format_stan_code(  # pylint: disable=arguments-differ
+        self, dist1: str, dist2: str
+    ) -> str: ...
 
 
 class UnaryTransformedParameter(TransformedParameter):
@@ -163,9 +124,9 @@ class UnaryTransformedParameter(TransformedParameter):
     ) -> npt.NDArray: ...
 
     @abstractmethod
-    def format_stan_transformation(  # pylint: disable=arguments-differ
-        self, dist1: tuple[str, bool]
-    ) -> tuple[str, bool]: ...
+    def format_stan_code(  # pylint: disable=arguments-differ
+        self, dist1: str
+    ) -> str: ...
 
 
 class AddParameter(BinaryTransformedParameter):
@@ -180,15 +141,8 @@ class AddParameter(BinaryTransformedParameter):
     ) -> npt.NDArray:
         return dist1 + dist2
 
-    def format_stan_transformation(
-        self,
-        dist1: tuple[str, bool],
-        dist2: tuple[str, bool],
-    ) -> str:
-        # Unpack the variable names
-        dist1_name, dist2_name, _ = super().format_stan_transformation(dist1, dist2)
-
-        return f"{dist1_name} + {dist2_name}"
+    def format_stan_code(self, dist1: str, dist2: str) -> str:
+        return f"{dist1} + {dist2}"
 
 
 class SubtractParameter(BinaryTransformedParameter):
@@ -203,15 +157,8 @@ class SubtractParameter(BinaryTransformedParameter):
     ) -> npt.NDArray:
         return dist1 - dist2
 
-    def format_stan_transformation(
-        self,
-        dist1: tuple[str, bool],
-        dist2: tuple[str, bool],
-    ) -> str:
-        # Unpack the variable names
-        dist1_name, dist2_name, _ = super().format_stan_transformation(dist1, dist2)
-
-        return f"{dist1_name} - {dist2_name}"
+    def format_stan_code(self, dist1: str, dist2: str) -> str:
+        return f"{dist1} - {dist2}"
 
 
 class MultiplyParameter(BinaryTransformedParameter):
@@ -226,20 +173,16 @@ class MultiplyParameter(BinaryTransformedParameter):
     ) -> npt.NDArray:
         return dist1 * dist2
 
-    def format_stan_transformation(
-        self,
-        dist1: tuple[str, bool],
-        dist2: tuple[str, bool],
-    ) -> str:
+    def format_stan_code(self, dist1: str, dist2: str) -> str:
+        # TODO: Figure out elementwise operations
+
         # Unpack the variable names and determine if this is an elementwise operation
-        dist1_name, dist2_name, elementwise = super().format_stan_transformation(
-            dist1, dist2
-        )
+        dist1, dist2, elementwise = super().format_stan_code(dist1, dist2)
 
         # Get the operator
         operator = ".*" if elementwise else "*"
 
-        return f"{dist1_name} {operator} {dist2_name}"
+        return f"{dist1} {operator} {dist2}"
 
 
 class DivideParameter(BinaryTransformedParameter):
@@ -254,20 +197,14 @@ class DivideParameter(BinaryTransformedParameter):
     ) -> npt.NDArray:
         return dist1 / dist2
 
-    def format_stan_transformation(
-        self,
-        dist1: tuple[str, bool],
-        dist2: tuple[str, bool],
-    ) -> str:
+    def format_stan_code(self, dist1: str, dist2: str) -> str:
         # Unpack the variable names and determine if this is an elementwise operation
-        dist1_name, dist2_name, elementwise = super().format_stan_transformation(
-            dist1, dist2
-        )
+        dist1, dist2, elementwise = super().format_stan_code(dist1, dist2)
 
         # Get the operator
         operator = "./" if elementwise else "/"
 
-        return f"{dist1_name} {operator} {dist2_name}"
+        return f"{dist1} {operator} {dist2}"
 
 
 class PowerParameter(BinaryTransformedParameter):
@@ -282,20 +219,14 @@ class PowerParameter(BinaryTransformedParameter):
     ) -> npt.NDArray:
         return dist1**dist2
 
-    def format_stan_transformation(
-        self,
-        dist1: tuple[str, bool],
-        dist2: tuple[str, bool],
-    ) -> str:
+    def format_stan_code(self, dist1: str, dist2: str) -> str:
         # Unpack the variable names and determine if this is an elementwise operation
-        dist1_name, dist2_name, elementwise = super().format_stan_transformation(
-            dist1, dist2
-        )
+        dist1, dist2, elementwise = super().format_stan_code(dist1, dist2)
 
         # Get the operator
         operator = ".^" if elementwise else "^"
 
-        return f"{dist1_name} {operator} {dist2_name}"
+        return f"{dist1} {operator} {dist2}"
 
 
 class NegateParameter(UnaryTransformedParameter):
@@ -306,7 +237,7 @@ class NegateParameter(UnaryTransformedParameter):
     def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
         return -dist1
 
-    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+    def format_stan_code(self, dist1: str) -> str:
         return f"-{dist1[0]}"
 
 
@@ -319,7 +250,7 @@ class AbsParameter(UnaryTransformedParameter):
     def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
         return np.abs(dist1, **self.operation_kwargs)
 
-    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+    def format_stan_code(self, dist1: str) -> str:
         return f"abs({dist1[0]})"
 
 
@@ -335,7 +266,7 @@ class LogParameter(UnaryTransformedParameter):
     def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
         return np.log(dist1, **self.operation_kwargs)
 
-    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+    def format_stan_code(self, dist1: str) -> str:
         return f"log({dist1[0]})"
 
 
@@ -348,7 +279,7 @@ class ExpParameter(UnaryTransformedParameter):
     def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
         return np.exp(dist1, **self.operation_kwargs)
 
-    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+    def format_stan_code(self, dist1: str) -> str:
         return f"exp({dist1[0]})"
 
 
@@ -362,7 +293,7 @@ class NormalizeParameter(UnaryTransformedParameter):
     def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
         return dist1 / np.sum(dist1, keepdims=True, **self.operation_kwargs)
 
-    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+    def format_stan_code(self, dist1: str) -> str:
         return f"{dist1[0]} / sum({dist1[0]})"
 
 
@@ -378,7 +309,7 @@ class NormalizeLogParameter(UnaryTransformedParameter):
     def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
         return dist1 - sp.logsumexp(dist1, keepdims=True, **self.operation_kwargs)
 
-    def format_stan_transformation(self, dist1: tuple[str, bool]) -> str:
+    def format_stan_code(self, dist1: str) -> str:
         return f"{dist1[0]} - log_sum_exp({dist1[0]})"
 
 
@@ -447,7 +378,7 @@ class LogExponentialGrowth(Growth):
     ) -> npt.NDArray:
         return log_A + r * t
 
-    def format_stan_transformation(  # pylint: disable=arguments-differ
+    def format_stan_code(  # pylint: disable=arguments-differ
         self, t: tuple[str, bool], log_A: [str, bool], r: [str, bool]
     ) -> str:
         # Decide on operator between r and t
@@ -508,7 +439,7 @@ class LogSigmoidGrowth(Growth):
     ) -> npt.NDArray:
         return log_A - np.log(1 + np.exp(-r * (t - c)))
 
-    def format_stan_transformation(  # pylint: disable=arguments-differ
+    def format_stan_code(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str, c: str
     ) -> str:
         # Determine the operator between r and t

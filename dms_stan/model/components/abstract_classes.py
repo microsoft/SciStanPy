@@ -13,12 +13,153 @@ import dms_stan.model.components as dms_components
 class AbstractModelComponent(ABC):
     """Base class for all core components of a DMS Stan model."""
 
-    def __init__(self):
+    # Define allowed ranges for the parameters
+    POSITIVE_PARAMS: set[str] = set()
+    NEGATIVE_PARAMS: set[str] = set()
+    SIMPLEX_PARAMS: set[str] = set()
 
-        # Set up a placeholder for the DMS Stan Model variable name
-        self._model_varname: str = ""
+    # Define the class that will be used for compiling to PyTorch
+    _torch_container_class: type["dms.model.components.pytorch.TorchContainer"]
 
-    def get_indexed_varname(self, index_opts: tuple[str, ...]) -> tuple[str, bool]:
+    # Define the stan data type
+    base_stan_dtype: Literal["real", "int", "simplex"] = "real"
+    stan_lower_bound: Optional[float | int] = None
+    stan_upper_bound: Optional[float | int] = None
+
+    def __init__(  # pylint: disable=unused-argument
+        self,
+        *,
+        shape: tuple[int, ...] = (),
+        **parameters: "dms_components.custom_types.CombinableParameterType",
+    ):
+        """Builds a parameter instance with the given shape."""
+
+        # Define placeholder variables
+        self._model_varname: str = ""  # DMS Stan Model variable name
+        self.observable: bool = False  # Whether the parameter is observable
+        self._parents: dict[str, "dms_components.custom_types.CombinableParameterType"]
+        self._component_to_paramname: dict["AbstractModelComponent", str]
+        self._shape: tuple[int, ...] = shape  # Shape of the parameter
+        self._draw_shape: tuple[int, ...]  # Shape of the draws
+        self._children: list["AbstractModelComponent"] = []  # Children of the component
+        self._torch_container: Optional[  # For PyTorch operations
+            "dms.model.components.pytorch.TorchContainer"
+        ] = None
+
+        # Validate incoming parameters
+        self._validate_parameters(parameters)
+
+        # Set parents
+        self._set_parents(parameters)
+
+        # Link parent and child parameters
+        for val in self._parents.values():
+            val._record_child(self)
+
+        # Set the draw shape
+        self._set_draw_shape()
+
+    def _validate_parameters(
+        self,
+        parameters: dict[str, "dms_components.custom_types.CombinableParameterType"],
+    ) -> None:
+        """Checks inputs to the __init__ method for validity."""
+        # No incoming parameters can be observables
+        if any(
+            isinstance(param, AbstractModelComponent) and param.observable
+            for param in parameters.values()
+        ):
+            raise ValueError("Parent parameters cannot be observables")
+
+        # All bounded parameters must be named in the parameter dictionary
+        if missing_names := (
+            self.POSITIVE_PARAMS | self.NEGATIVE_PARAMS | self.SIMPLEX_PARAMS
+        ) - set(parameters.keys()):
+            raise ValueError(
+                f"{', '.join(missing_names)} are bounded parameters but are missing "
+                "from those defined"
+            )
+
+    def _set_parents(
+        self,
+        parameters: dict[str, "dms_components.custom_types.CombinableParameterType"],
+    ) -> None:
+        """Sets the parent parameters of the current parameter."""
+
+        # Convert any non-model components to model components
+        self._parents = {
+            name: (
+                dms_components.Constant(value=val)
+                if not isinstance(val, AbstractModelComponent)
+                else val
+            )
+            for name, val in parameters.items()
+        }
+
+        # Map components to param names
+        self._component_to_paramname = {v: k for k, v in self._parents.items()}
+        assert len(self._component_to_paramname) == len(self._parents)
+
+    def _record_child(self, child: "AbstractModelComponent") -> None:
+        """
+        Records a child parameter of the current parameter. This is used to keep
+        track of the lineage of the parameter.
+
+        Args:
+            child (AbstractModelComponent): The child parameter to record.
+        """
+
+        # If the child is already in the list of children, then we don't need to
+        # add it again
+        assert child not in self._children, "Child already recorded"
+
+        # Record the child
+        self._children.append(child)
+
+    def _set_draw_shape(self) -> None:
+        """Sets the shape of the draws for the parameter."""
+
+        # The shape must be broadcastable to the shapes of the parameters.
+        try:
+            self._draw_shape = np.broadcast_shapes(
+                self._shape, *[param.shape for param in self.parents.values()]
+            )
+        except ValueError as error:
+            raise ValueError("Shape is not broadcastable to parent shapes") from error
+
+    def get_child_paramnames(self) -> dict["AbstractModelComponent", str]:
+        """
+        Gets the names of the parameters that this component defines in its children
+
+        Returns:
+            dict[AbstractModelComponent, str]: The child objects mapped to the names
+            of their parameters defiend by this object.
+        """
+        # Set up the dictionary to return
+        child_paramnames = {}
+
+        # Process all children
+        for child in self._children:
+
+            # Make sure the child is not already recorded
+            assert child not in child_paramnames
+
+            # Get the name of the parameter in the child that the bound parameter
+            # defines. There should only be one parameter in the child that the
+            # bound parameter defines.
+            names = [
+                paramname
+                for paramname, param in child.parameters.items()
+                if param is self
+            ]
+            assert len(names) == 1
+
+            # Record the name
+            child_paramnames[child] = names[0]
+
+        return child_paramnames
+
+    def get_indexed_varname(self, index_opts: tuple[str, ...]) -> str:
         """
         Returns the variable name used by stan with the appropriate indices. Note
         that DMS Stan always assumes that computations on the last dimension can
@@ -44,321 +185,22 @@ class AbstractModelComponent(ABC):
             for i, dimsize in enumerate(self.shape)
         ]
 
-        # Vector if at least one dimension is not 1
-        is_vector = any(dimsize != 1 for dimsize in self.shape)
-
         # Build the indexed variable name
         indexed_varname = f"{self.model_varname}[{','.join(indices)}]"
 
-        return indexed_varname, is_vector
+        return indexed_varname
 
-    @property
-    def model_varname(self) -> str:
-        """Return the DMS Stan variable name for this parameter"""
-        if self._model_varname == "":
-            print(type(self))
-            raise ValueError(
-                "DMS Stan variable name not set. This is only set when the parameter"
-                "is used in a DMS Stan model."
-            )
-        return self._model_varname
-
-    @model_varname.setter
-    def model_varname(self, name: str) -> None:
-        """Set the DMS Stan variable name for this parameter"""
-        self._model_varname = name
-
-    @property
-    @abstractmethod
-    def shape(self) -> tuple[int, ...]:
-        """Return the shape of the parameter"""
-
-    @property
-    @abstractmethod
-    def stan_dtype(self) -> str:
-        """Return the Stan data type for this parameter"""
-
-    @property
-    @abstractmethod
-    def stan_parameter_declaration(self) -> str:
-        """Declare the parameter in Stan"""
-
-    @property
-    def stan_code_level(self) -> int:
-        """The level at which the code is written. 0 is the highest level."""
-        # Strip off leading 1s. The level is the remaining dimensions.
-        level = 0
-        for dimsize in self.shape:
-            if dimsize == 1:
-                level += 1
-            else:
-                break
-
-        return level
-
-
-class AbstractPassthrough(AbstractModelComponent):
-    """
-    Abstract class for components that pass through the values of their children.
-    """
-
-    def __init__(self, value: Union[int, float, npt.NDArray]):
+    def init_pytorch(self) -> None:
         """
-        Wraps the value in a Constant instance. Any numerical type is legal.
+        Sets up the parameters needed for training a Pytorch model and defines the
+        Pytorch operation that will be performed on the parameter. Operations can
+        be either calculation of loss or transformation of the parameter, depending
+        on the subclass.
         """
-        # Initialize the parent class
-        super().__init__()
+        # Initialize the Pytorch container
+        self._torch_container = self._torch_container_class(self)
 
-        # Assign the value
-        self.value = np.array(value)
-
-    def __getattr__(self, name):
-        return getattr(self.value, name)
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.value.__repr__()})"
-
-    # Handling items in `value`
-    def __getitem__(self, key):
-        return self.value[key]
-
-    def __setitem__(self, key, value):
-        self.value[key] = value
-
-    def __delitem__(self, key):
-        del self.value[key]
-
-    # Mathematical operations are forwarded to the value
-    def __add__(self, other):
-        return self.value + other
-
-    def __radd__(self, other):
-        return other + self.value
-
-    def __sub__(self, other):
-        return self.value - other
-
-    def __rsub__(self, other):
-        return other - self.value
-
-    def __mul__(self, other):
-        return self.value * other
-
-    def __rmul__(self, other):
-        return other * self.value
-
-    def __truediv__(self, other):
-        return self.value / other
-
-    def __rtruediv__(self, other):
-        return other / self.value
-
-    def __floordiv__(self, other):
-        return self.value // other
-
-    def __rflooriv__(self, other):
-        return other // self.value
-
-    def __mod__(self, other):
-        return self.value % other
-
-    def __rmod__(self, other):
-        return other % self.value
-
-    def __pow__(self, other):
-        return self.value**other
-
-    def __rpow__(self, other):
-        return other**self.value
-
-    def __matmul__(self, other):
-        return self.value @ other
-
-    def __rmatmul__(self, other):
-        return other @ self.value
-
-    # Comparison operations are forwarded to the value
-    def __eq__(self, other):
-        return self.value == other
-
-    def __ne__(self, other):
-        return self.value != other
-
-    def __lt__(self, other):
-        return self.value < other
-
-    def __le__(self, other):
-        return self.value <= other
-
-    def __rt__(self, other):
-        return self.value > other
-
-    def __ge__(self, other):
-        return self.value >= other
-
-    def __and__(self, other):
-        return self.value & other
-
-    def __rand__(self, other):
-        return other & self.value
-
-    def __or__(self, other):
-        return self.value | other
-
-    def __ror__(self, other):
-        return other | self.value
-
-    def __contains__(self, item):
-        return item in self.value
-
-    # Unary operations are forwarded to the value
-    def __neg__(self):
-        return -self.value
-
-    def __pos__(self):
-        return +self.value
-
-    def __invert__(self):
-        return ~self.value
-
-    # Other mathematical operations are forwarded to the value
-    def __abs__(self):
-        return abs(self.value)
-
-    def __round__(self, n=None):
-        return round(self.value, n)
-
-    # Iterators
-    def __iter__(self):
-        return iter(self.value)
-
-    def __len__(self):
-        return len(self.value)
-
-    @property
-    def shape(self) -> tuple[int, ...]:
-        """
-        Returns the shape of the value.
-        """
-        return self.value.shape
-
-    @property
-    def stan_dtype(self) -> str:
-        """
-        Returns the Stan data type of the value.
-        """
-        return "real" if isinstance(self.value.dtype, np.floating) else "int"
-
-    @property
-    def stan_parameter_declaration(self) -> str:
-        """Declare the parameter in Stan"""
-        # Get the base declaration
-        declaration = f"{self.stan_dtype} {self.model_varname}"
-
-        # If a scalar, the declaration needs no modification
-        if self.value.ndim == 0:
-            return declaration
-
-        # Otherwise, it is part of an array
-        else:
-            str_shape = [str(s) for s in self.value.shape]
-            return f"array[{','.join(str_shape)}] {declaration}"
-
-
-class AbstractParameter(AbstractModelComponent):
-    """Template class for parameters used in DMS Stan models."""
-
-    # Define allowed ranges for the parameters
-    POSITIVE_PARAMS: set[str] = set()
-    NEGATIVE_PARAMS: set[str] = set()
-    SIMPLEX_PARAMS: set[str] = set()
-
-    # Define the class that will be used for compiling to PyTorch
-    _torch_container_class: type["dms.model.components.pytorch.TorchContainer"]
-
-    # Define the stan data type
-    base_stan_dtype: Literal["real", "int", "simplex"] = "real"
-    stan_lower_bound: Optional[float | int] = None
-    stan_upper_bound: Optional[float | int] = None
-
-    def __init__(  # pylint: disable=unused-argument
-        self,
-        *,
-        shape: Optional[tuple[int, ...]] = None,
-        **parameters: "dms_components.custom_types.CombinableParameterType",
-    ):
-        """Builds a parameter instance with the given shape."""
-        # Initialize the parent class
-        super().__init__()
-
-        # Not observable by default
-        self.observable: bool = False
-
-        # There must be at least one parameter
-        if len(parameters) < 1:
-            raise ValueError("At least one parameter must be passed to the class")
-
-        # No incoming parameters can be observables
-        if any(
-            isinstance(param, AbstractParameter) and param.observable
-            for param in parameters.values()
-        ):
-            raise ValueError("Parent parameters cannot be observables")
-
-        # Populate the parameters and record this distribution as a child
-        self.parameters = {}
-        for name, val in parameters.items():
-            if isinstance(val, AbstractParameter):
-                self.parameters[name] = val.record_child(self)
-            elif isinstance(val, (int, float, np.ndarray)):
-                self.parameters[name] = dms_components.Hyperparameter(val)
-                self.parameters[name].child = self
-                self.parameters[name].name = name
-            elif isinstance(val, dms_components.Constant):
-                self.parameters[name] = val
-            else:
-                raise TypeError(
-                    f"Unexpected type passed for {name}: {type(val)}. Should be "
-                    "an int, float, np.ndarray, Hyperparameter, Constant, or child "
-                    "of AbstractParameter"
-                )
-
-        # All bounded parameters must be named in the parameter dictionary
-        if missing_names := (
-            self.POSITIVE_PARAMS | self.NEGATIVE_PARAMS | self.SIMPLEX_PARAMS
-        ) - set(self.parameters.keys()):
-            raise ValueError(
-                f"{', '.join(missing_names)} are bounded parameters but are missing "
-                "from those defined"
-            )
-
-        # Check parameter ranges
-        self._check_parameter_ranges()
-
-        # If the shape is not provided, then we use the broadcasted shape of the
-        # parameters
-        param_broadcast_shape = np.broadcast_shapes(
-            *[param.shape for param in self.parameters.values()]
-        )
-        self._shape = param_broadcast_shape if shape is None else shape
-
-        # The shape must be broadcastable to the shapes of the parameters.
-        try:
-            self.draw_shape = np.broadcast_shapes(shape, param_broadcast_shape)
-        except ValueError as error:
-            raise ValueError("Shape is not broadcastable to parent shapes") from error
-
-        # We need a list for children
-        self.children = []
-
-        # Set up a placeholder for the Pytorch container
-        self._torch_container: Optional[
-            "dms.model.components.pytorch.TorchContainer"
-        ] = None
-
-    def _check_parameter_ranges(
-        self, draws: Optional[dict[str, npt.NDArray]] = None
-    ) -> None:
+    def _check_parameter_ranges(self, draws: dict[str, npt.NDArray]) -> None:
         """Makes sure that the parameters are within the allowed ranges."""
         # The positive and negative sets must be disjoint
         if self.POSITIVE_PARAMS & self.NEGATIVE_PARAMS:
@@ -368,17 +210,8 @@ class AbstractParameter(AbstractModelComponent):
         # is also positive
         positive_set = self.SIMPLEX_PARAMS | self.POSITIVE_PARAMS
 
-        # If draws are not provided, use parameters
-        checkdict = self.parameters if draws is None else draws
-
         # Check the parameter ranges
-        for paramname, paramval in checkdict.items():
-
-            # Skip distributions
-            if isinstance(paramval, AbstractParameter):
-                continue
-
-            # Check ranges
+        for paramname, paramval in draws.items():
             if paramname in positive_set and np.any(paramval <= 0):
                 raise ValueError(f"{paramname} must be positive")
             elif paramname in self.NEGATIVE_PARAMS and np.any(paramval >= 0):
@@ -389,176 +222,126 @@ class AbstractParameter(AbstractModelComponent):
                 if not np.allclose(np.sum(paramval, axis=-1), 1):
                     raise ValueError(f"{paramname} must sum to 1 over the last axis")
 
-    def init_pytorch(self) -> None:
-        """
-        Sets up the parameters needed for training a Pytorch model and defines the
-        Pytorch operation that will be performed on the parameter. Operations can
-        be either calculation of loss or transformation of the parameter, depending
-        on the subclass.
-        """
-        # We must have defined the PyTorch container class
-        if not hasattr(self, "_torch_container_class"):
-            raise ValueError("Pytorch container class not defined in the subclass")
-
-        # Initialize the Pytorch container
-        self._torch_container = self._torch_container_class(self)
-
     @abstractmethod
-    def draw(self, n: int) -> Any:
-        """
-        Sample from the distribution that represents the parameter. This method
-        should be overwritten by the subclasses, though they may choose to call
-        this method to perform the following set of operations:
+    def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
+        """Sample from the distribution that represents the parameter"""
 
-        1.  Separate the constants and distributions.
-        2.  If there are no distributions, then copy the constants `n` times. This
-            creates a draw for the constants with a new first dimension of length
-            `n`.
-        3.  If there are distributions, then add a singleton dimension to the constants
-            and draw `n` from the distributions. Combine the expanded constants
-            and draws from the distributions.
-
-        In child classes, this should return a numpy array. In this base class,
-        however, a dictionary is returned that maps from parameter names to draws.
+    def draw(
+        self,
+        n: int,
+        _drawn: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
+    ) -> tuple[npt.NDArray, dict["AbstractModelComponent", npt.NDArray]]:
         """
-        # Separate constants and distributions.
-        constants, dists = {}, {}
-        for name, param in self.parameters.items():
-            if isinstance(param, AbstractParameter):
-                dists[name] = param
+        Recursively draws from the parameter and its parents. The draws for this
+        component are the first object returned. The draws from the recursion are
+        the second object returned.
+        """
+        # Build the _drawn dictionary if it is not already built
+        if calling_level := (_drawn is None):
+            _drawn = {}
+
+        # Loop over the parents and draw from them if we haven't already
+        level_draws: dict[str, npt.NDArray] = {}
+        for paramname, parent in self._parents.items():
+
+            # If the parent has been drawn, use the already drawn value. Otherwise,
+            # draw from the parent.
+            if parent in _drawn:
+                parent_draw = _drawn[parent]
             else:
-                constants[name] = param
+                parent_draw, _ = parent.draw(n, _drawn)
+                _drawn[parent] = parent_draw
 
-        # If there are no distributions, then we copy the constants `n` times.
-        # If there are parent distributions, then add a singleton dimension to the
-        # constants and draw `n` from the parent distributions.
-        if len(dists) == 0:
-            draws = {
-                name: np.broadcast_to(val, (n,) + val.shape)
-                for name, val in constants.items()
-            }
-        else:
-            draws = {name: param.draw(n) for name, param in dists.items()}
-            draws.update({name: val[None] for name, val in constants.items()})
-
-        # Adding that new first dimension might break broadcasting, so we need to
-        # add singleton dimensions after it to bring the total number of dimensions
-        # to the same as the shape of the parameter.
-        finalized_draws = {}
-        for name, val in draws.items():
-            to_add = (self.ndim + 1) - val.ndim  # Add 1 for sample dimension
-            assert to_add >= 0
-            finalized_draws[name] = np.expand_dims(
-                val, axis=tuple(range(1, to_add + 1))
+            # Add the parent draw to the level draws. Expand the number of dimensions
+            # if necessary to account for the addition of "n" draws.
+            dims_to_add = (
+                self.ndim + 1
+            ) - parent_draw.ndim  # Implicit prepended dimensions
+            assert dims_to_add >= 0
+            level_draws[paramname] = np.expand_dims(
+                parent_draw, axis=tuple(range(1, dims_to_add + 1))
             )
 
-        # Check the parameter ranges
-        self._check_parameter_ranges(finalized_draws)
+        # Now draw from the current parameter
+        draws = self._draw(n, level_draws)
 
-        return finalized_draws
+        # Update the _drawn dictionary
+        assert self not in _drawn
+        _drawn[self] = draws
 
-    def record_child(self, child: "AbstractParameter") -> "AbstractParameter":
+        # If the calling level, then move the last dimension to the front
+        if calling_level:
+            draws = np.moveaxis(draws, -1, 0)
+            _drawn = {param: np.moveaxis(draw, -1, 0) for param, draw in _drawn.items()}
+
+        return draws, _drawn
+
+    def walk_tree(
+        self, walk_down: bool = True
+    ) -> list[tuple["AbstractModelComponent", "AbstractModelComponent"]]:
         """
-        Records a child parameter of the current parameter. This is used to keep
-        track of the lineage of the parameter.
+        Walks the tree of parameters, either up or down. "up" means walking from
+        the children to the parents, while "down" means walking from the parents
+        to the children.
 
         Args:
-            child (AbstractParameter): The child parameter to record.
+            walk_down (bool): Whether to walk down the tree (True) or up the tree (False).
 
         Returns:
-            AbstractParameter: Self.
+            list[tuple["AbstractModelComponent", "AbstractModelComponent"]]: The
+            lineage. Each tuple contains the reference parameter in the first position
+            and its relative (child if walking down, parent if walking up) in the
+            second.
         """
+        # Get the variables to loop over
+        relatives = self.children if walk_down else self.parents
 
-        # If the child is already in the list of children, then we don't need to
-        # add it again
-        assert child not in self.children, "Child already recorded"
-
-        # Record the child
-        self.children.append(child)
-
-        return self
-
-    def get_parents(
-        self,
-    ) -> list["dms_components.custom_types.CombinableParameterType"]:
-        """
-        Gathers the parent parameters of the current parameter.
-
-        Returns:
-            list[AbstractParameter]: Parent parameters of the current parameter.
-        """
-        return list(self.parameters.values())
-
-    def get_children(self) -> list["AbstractParameter"]:
-        """
-        Gathers the children parameters of the current parameter.
-
-        Returns:
-            list[AbstractParameter]: Children parameters of the current parameter.
-        """
-        return self.children
-
-    def recurse_parents(
-        self, _current_depth: int = 0
-    ) -> list[tuple[int, "AbstractParameter", "AbstractParameter"]]:
-        """
-        Recursively calls `get_parents` on the current parameter to get the entire
-        lineage of the parameter.
-
-        Returns:
-            list[tuple[int, AbstractParameter, AbstractParameter]]: A list of tuples
-                containing the depth of the parameter in the lineage, the parent
-                parameter, and the current parameter, in that order.
-        """
-        # Get the parents of the current parameter
-        parents = self.get_parents()
-
-        # Call `recurse_parents` on each parent
+        # Recurse
         to_return = []
-        for parent in parents:
+        for relative in relatives:
 
-            # Skip non-parameters
-            if not isinstance(parent, AbstractParameter):
-                continue
+            # Add the current parameter and the relative parameter to the list
+            to_return.append((self, relative))
 
-            # Add the parent to the list of tuples that will be returned
-            to_return.append((_current_depth, parent, self))
+            # Recurse on the relative parameter
+            to_return.extend(relative.walk_tree(walk_down=walk_down))
 
-            # Get the parent's lineage and add it to the list
-            to_return.extend(parent.recurse_parents(_current_depth + 1))
-
-        # Return the list of tuples
         return to_return
 
-    def recurse_children(
-        self, _current_depth: int = 0
-    ) -> list[tuple[int, "AbstractParameter", "AbstractParameter"]]:
-        """
-        Recursively calls `get_children` on the current parameter to get the entire
-        lineage of the parameter.
+    @abstractmethod
+    def _handle_transformation_code(
+        self, param: "AbstractModelComponent", index_opts: tuple[str, ...]
+    ) -> str:
+        """Handles code formatting for a transformed parameter."""
 
-        Returns:
-            list[tuple[int, AbstractParameter, AbstractParameter]]: A list of tuples
-                containing the depth of the parameter in the lineage, the child
-                parameter, and the current parameter, in that order.
-        """
-        # Get the children of the current parameter
-        children = self.get_children()
+    @abstractmethod
+    def format_stan_code(self, **to_format: str) -> str:
+        """Formats the Stan code for the parameter."""
 
-        # Call `recurse_children` on each child
-        to_return = []
-        for child in children:
+    def get_stan_code(self, index_opts: tuple[str, ...]) -> str:
+        """Gets the Stan code for the parameter."""
 
-            # Must be a parameter
-            assert isinstance(child, AbstractParameter)
+        # Recursively gather the transformations until we hit a non-transformed
+        # parameter or a recorded variable
+        to_format: dict[str, str] = {}
+        for name, param in self.parents.items():
 
-            # Add the child to the list of tuples that will be returned
-            to_return.append((_current_depth, child, self))
+            # If the parameter is a constant or another parameter, record
+            if isinstance(param, (dms_components.Constant, dms_components.Parameter)):
+                to_format[name] = param.get_indexed_varname(index_opts)
 
-            # Get the child's lineage and add it to the list
-            to_return.extend(child.recurse_children(_current_depth + 1))
+            # If the parameter is transformed and not named, the computation is
+            # happening in the model. Otherwise, the computation has already happened
+            # in the transformed parameters block.
+            elif isinstance(param, dms_components.TransformedParameter):
+                to_format[name] = self._handle_transformation_code(index_opts)
 
-        return to_return
+            # Otherwise, raise an error
+            else:
+                raise TypeError(f"Unknown model component type {type(param)}")
+
+        # Format the code
+        return self.format_stan_code(to_format)
 
     def __str__(self):
         return f"{self.__class__.__name__}"
@@ -574,19 +357,16 @@ class AbstractParameter(AbstractModelComponent):
         return len(self.shape)
 
     @property
+    def is_named(self) -> bool:
+        """Return whether the parameter has a name assigned by a model"""
+        return self._model_varname != ""
+
+    @property
     def torch_container(self) -> "dms.model.components.pytorch.TorchContainer":
         """Return the Pytorch container for this parameter. Error if not initialized."""
         if self._torch_container is None:
             raise ValueError("Pytorch container not initialized. Run `init_pytorch`.")
         return self._torch_container
-
-    @property
-    def is_root_node(self) -> bool:
-        """Return whether or not the parameter is a root node."""
-        return all(
-            isinstance(param, dms_components.Hyperparameter)
-            for param in self.parameters.values()
-        )
 
     @property
     def stan_bounds(self) -> str:
@@ -646,20 +426,75 @@ class AbstractParameter(AbstractModelComponent):
         return dtype
 
     @property
+    def stan_code_level(self) -> int:
+        """The level at which the code is written. 0 is the highest level."""
+        # Strip off leading 1s. The level is the remaining dimensions.
+        level = 0
+        for dimsize in self.shape:
+            if dimsize == 1:
+                level += 1
+            else:
+                break
+
+        return level
+
+    @property
     def stan_parameter_declaration(self) -> str:
         """Returns the Stan parameter declaration for this parameter."""
         return f"{self.stan_dtype}{self.stan_bounds} {self.model_varname}"
 
     @property
-    def is_named(self) -> bool:
-        """Return whether or not the parameter has a name."""
-        return self._model_varname != ""
+    def model_varname(self) -> str:
+        """Return the DMS Stan variable name for this parameter"""
+        # If the _model_varname variable is set, then we return it
+        if self._model_varname != "":
+            return self._model_varname
+
+        # Otherwise, we automatically create the name. This is the name of the
+        # child components and the name of this component as defined in that child
+        # component separated by underscores.
+        return "_".join(
+            [
+                "_".join(child.model_varname, name)
+                for child, name in self.get_child_paramnames().items()
+            ]
+        )
+
+    @model_varname.setter
+    def model_varname(self, name: str) -> None:
+        """Set the DMS Stan variable name for this parameter"""
+        self._model_varname = name
 
     @property
-    def hyperparameters(self):
-        """Return the hyperparameters of the parameter."""
+    def constants(self):
+        """Return the constants of the component."""
         return {
-            name: param
-            for name, param in self.parameters.items()
-            if isinstance(param, dms_components.Hyperparameter)
+            name: component
+            for name, component in self._parents.items()
+            if isinstance(component, dms_components.Constant)
         }
+
+    @property
+    def draw_shape(self) -> tuple[int, ...]:
+        """Return the shape of the draws for the parameter."""
+        return self._draw_shape
+
+    @property
+    def parents(self) -> list["AbstractModelComponent"]:
+        """
+        Gathers the parent parameters of the current parameter.
+
+        Returns:
+            list[AbstractModelComponent]: Parent parameters of the current parameter.
+        """
+        return list(self._parents.values())
+
+    @property
+    def children(self) -> list["AbstractModelComponent"]:
+        """
+        Gathers the children parameters of the current parameter.
+
+        Returns:
+            list[AbstractModelComponent]: Children parameters of the current parameter.
+        """
+        return self._children.copy()

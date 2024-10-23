@@ -93,26 +93,6 @@ class TorchContainer(ABC):
             else:
                 raise TypeError("Parameter must be a Parameter or Passthrough.")
 
-    def get_child_paramname(self, child_param: AbstractParameter) -> str:
-        """
-        Gets the name of the parameter that the bound parameter defines in the child.
-
-        Args:
-            child_param (AbstractParameter): A child of the bound parameter.
-
-        Returns:
-            str: The name of the parameter in the child that the bound parameter
-                defines.
-        """
-        # Get the name of the parameter in the child that the bound parameter defines
-        name = [
-            paramname
-            for paramname, param in child_param.parameters.items()
-            if param is self.bound_param
-        ]
-        assert len(name) == 1
-        return name[0]
-
     def get_observables(
         self, observed: Optional[torch.Tensor] = None
     ) -> list[torch.Tensor]:

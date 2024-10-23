@@ -10,7 +10,8 @@ import torch.distributions as dist
 import dms_stan as dms
 import dms_stan.model.components as dms_components
 
-from .abstract_classes import AbstractParameter, AbstractPassthrough
+from .abstract_classes import AbstractModelComponent
+from .constants import Constant
 from .pytorch import ParameterContainer
 from .transformed_parameters import (
     AddParameter,
@@ -23,7 +24,7 @@ from .transformed_parameters import (
 )
 
 
-class Parameter(AbstractParameter):
+class Parameter(AbstractModelComponent):
     """Base class for parameters used in DMS Stan"""
 
     _torch_container_class = ParameterContainer
@@ -81,30 +82,24 @@ class Parameter(AbstractParameter):
         self.stan_to_np_transforms = stan_to_np_transforms
         self.stan_to_torch_names = stan_to_torch_names
 
-    def draw(self, n: int) -> npt.NDArray:
+    def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
         """Sample from the distribution that represents the parameter `n` times"""
-        # Get draws from the parent parameters
-        draws = super().draw(n)
-
         # Perform transforms
         for name, transform in self.stan_to_np_transforms.items():
-            draws[name] = transform(draws[name])
+            level_draws[name] = transform(level_draws[name])
 
         # Rename the parameters to the names used by numpy
-        draws = {self.stan_to_np_names[name]: val for name, val in draws.items()}
+        level_draws = {
+            self.stan_to_np_names[name]: val for name, val in level_draws.items()
+        }
 
         # Sample from this distribution using numpy. Alter the shape to account
         # for the new first dimension of length `n`.
-        return self.numpy_dist(**draws, size=(n,) + self.draw_shape)
+        return self.numpy_dist(**level_draws, size=(n,) + self.draw_shape)
 
-    def as_observable(self):
+    def as_observable(self) -> "Parameter":
         """Redefines the parameter as an observable variable (i.e., data)"""
         self.observable = True
-        return self
-
-    def as_unobservable(self):
-        """Redefines the parameter as an unobservable variable (i.e., a parameter)"""
-        self.observable = False
         return self
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
@@ -114,39 +109,13 @@ class Parameter(AbstractParameter):
             + self.get_stan_distribution(index_opts)
         )
 
-    # TODO: We need to handle the set hyperparameter values. How do we populate
-    # them in the distribution?
-    def get_stan_distribution(self, index_opts: tuple[str, ...]) -> str:
-        """Return the Stan distribution for this parameter"""
-
-        # Recursively gather the transformations until we hit a non-transformed
-        # parameter or a recorded variable
-        to_format: dict[str, str] = {}
-        for name, param in self.parameters.items():
-
-            # If the parameter is a constant or another parameter, record
-            if isinstance(param, (AbstractPassthrough, Parameter)):
-                to_format[name] = param.get_indexed_varname(index_opts)
-
-            # If the parameter is transformed and not named, the computation is
-            # happening in the model. Otherwise, the computation has already happened
-            # in the transformed parameters block.
-            elif isinstance(param, TransformedParameter):
-                if param.is_named:
-                    to_format[name] = param.get_stan_transformation(index_opts)
-                else:
-                    to_format[name] = param.get_indexed_varname(index_opts)
-
-            # Otherwise, raise an error
-            else:
-                raise TypeError(f"Unknown model component type {type(param)}")
-
-        # Format the distribution
-        return self.format_stan_distribution(**to_format)
-
-    @abstractmethod
-    def format_stan_distribution(self, **param_vals: str) -> str:
-        """Return the base Stan distribution for this parameter"""
+    def _handle_transformation_code(
+        self, param: AbstractModelComponent, index_opts: tuple[str, ...]
+    ) -> str:
+        if param.is_named:
+            return param.get_stan_code(index_opts)
+        else:
+            return param.get_indexed_varname(index_opts)
 
     @property
     def rng(self) -> np.random.Generator:
@@ -245,7 +214,7 @@ class Normal(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_distribution(  # pylint: disable=arguments-differ
+    def format_stan_code(  # pylint: disable=arguments-differ
         self, mu: str, sigma: str
     ) -> str:
         return f"normal({mu}, {sigma})"
@@ -298,7 +267,7 @@ class LogNormal(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_distribution(  # pylint: disable=arguments-differ
+    def format_stan_code(  # pylint: disable=arguments-differ
         self, mu: str, sigma: str
     ) -> str:
         return f"lognormal({mu}, {sigma})"
@@ -329,7 +298,7 @@ class Beta(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_distribution(  # pylint: disable=arguments-differ
+    def format_stan_code(  # pylint: disable=arguments-differ
         self, alpha: str, beta: str
     ) -> str:
         return f"beta({alpha}, {beta})"
@@ -361,7 +330,7 @@ class Gamma(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_distribution(  # pylint: disable=arguments-differ
+    def format_stan_code(  # pylint: disable=arguments-differ
         self, alpha: str, beta: str
     ) -> str:
         return f"gamma({alpha}, {beta})"
@@ -392,9 +361,7 @@ class Exponential(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_distribution(  # pylint: disable=arguments-differ
-        self, beta: str
-    ) -> str:
+    def format_stan_code(self, beta: str) -> str:  # pylint: disable=arguments-differ
         return f"exponential({beta})"
 
 
@@ -420,9 +387,7 @@ class Dirichlet(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_distribution(  # pylint: disable=arguments-differ
-        self, alpha: str
-    ) -> str:
+    def format_stan_code(self, alpha: str) -> str:  # pylint: disable=arguments-differ
         return f"dirichlet({alpha})"
 
 
@@ -449,7 +414,7 @@ class Binomial(DiscreteDistribution):
             **kwargs,
         )
 
-    def format_stan_distribution(  # pylint: disable=arguments-differ
+    def format_stan_code(  # pylint: disable=arguments-differ
         self, N: str, theta: str  # pylint: disable="invalid-name"
     ) -> str:
         return f"binomial({N}, {theta})"
@@ -476,9 +441,7 @@ class Poisson(DiscreteDistribution):
             **kwargs,
         )
 
-    def format_stan_distribution(  # pylint: disable=arguments-differ
-        self, lambda_: str
-    ) -> str:
+    def format_stan_code(self, lambda_: str) -> str:  # pylint: disable=arguments-differ
         return f"poisson({lambda_})"
 
 
@@ -516,7 +479,7 @@ class Multinomial(DiscreteDistribution):
 
         return super().draw(n)
 
-    def format_stan_distribution(  # pylint: disable=arguments-differ, unused-argument
+    def format_stan_code(  # pylint: disable=arguments-differ, unused-argument
         self, N: str, theta: str
     ) -> str:
         return f"multinomial({theta})"

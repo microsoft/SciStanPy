@@ -10,7 +10,7 @@ import dms_stan.model.components.custom_types
 import dms_stan.model.components.stan
 
 # Import frequently used classes and types
-from dms_stan.model.components.constants import Constant, Hyperparameter
+from dms_stan.model.components.constants import Constant
 from dms_stan.model.components.parameters import (
     Beta,
     Binomial,
@@ -21,10 +21,12 @@ from dms_stan.model.components.parameters import (
     LogNormal,
     Multinomial,
     Normal,
+    Parameter,
     Poisson,
     UnitNormal,
 )
 from dms_stan.model.components.transformed_parameters import (
     LogExponentialGrowth,
     LogSigmoidGrowth,
+    TransformedParameter,
 )

@@ -1,67 +1,45 @@
 """Holds code for working with constant values in a DMS Stan model."""
 
-from typing import Optional, Union
+from typing import Union
 
+import numpy as np
 import numpy.typing as npt
 
 import dms_stan.model.components as dms_components
 
 
-class Constant(dms_components.abstract_classes.AbstractPassthrough):
+class Constant(dms_components.abstract_classes.AbstractModelComponent):
     """
-    This class is used to wrap values that are intended to stay constant in the
-    Stan model. This is effectively a wrapper around the value that forwards all
-    mathematical operations and attribute access to the value. Note that because
-    it is a wrapper, in place operations made to the value will be reflected in
-    the instance of this class.
+    Abstract class for components that pass through the values of their children.
     """
 
-
-class Hyperparameter(dms_components.abstract_classes.AbstractPassthrough):
-    """
-    Identical to the Constant class, but is used to wrap values that are intended
-    as hyperparameters in the Stan model.
-    """
-
-    def __init__(self, value: Union[int, float, npt.NDArray]) -> None:
-        super().__init__(value)
-        self._child: Optional[dms_components.parameters.Parameter] = None
-        self._name: Optional[str] = None
-
-    @property
-    def child(self) -> "dms_components.parameters.Parameter":
+    def __init__(
+        self, *, shape: tuple[int, ...] = (), value: Union[int, float, npt.NDArray]
+    ):
         """
-        Returns the child parameter with which this hyperparameter is associated.
+        Wraps the value in a Constant instance. Any numerical type is legal.
         """
-        return self._child
+        # If the value is a numpy array, get the shape
+        if isinstance(value, np.ndarray):
+            shape = value.shape
 
-    @child.setter
-    def child(self, child: "dms_components.parameters.Parameter") -> None:
-        """
-        Sets the child parameter with which this hyperparameter is associated.
-        """
-        # We cannot have a child if we already have one
-        if self._child is not None:
-            raise ValueError("Child already set for this hyperparameter.")
+        # Otherwise, convert to a numpy array
+        else:
+            value = np.array(value, shape=shape, dtype=type(value))
 
-        # Record the child
-        self._child = child
+        # Initialize the parent class
+        super().__init__(shape=shape, value=value)
 
-    @property
-    def name(self) -> str:
-        """Returns the name of the hyperparameter."""
-        return self._name
+    # Override the _set_parents method to just set an empty dictionary
+    def _set_parents(self):
+        """Set the parents of this component."""
+        self._parents = {}
 
-    @name.setter
-    def name(self, name: str) -> None:
-        """Sets the name of the hyperparameter."""
-        self._name = name
+    # We need a draw method
+    def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
+        """Draw values for this component."""
+        # Level draws should be empty
+        assert not level_draws
 
-    @property
-    def model_varname(self) -> str:
-        """Returns the variable name of the child."""
-        # Name and child must be set
-        if self._name is None or self._child is None:
-            raise ValueError("Name and child must be set before calling model_varname.")
-
-        return "".join([self._child.model_varname, "_autoname_", self._name])
+        # Repeat the value n times
+        return np.repeat(self.value[None], n, axis=0)
