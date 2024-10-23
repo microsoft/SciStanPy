@@ -113,7 +113,8 @@ class Model:
             self._parameters = collections.namedtuple("Parameters", parameters.keys())(
                 **parameters
             )
-            self._hyperparameters = hyperparameters
+            self._hyperparameters = tuple(hyperparameters.values())
+            self._hyperparameter_dict = hyperparameters
             self._observables = collections.namedtuple(
                 "Observables", observables.keys()
             )(**observables)
@@ -302,9 +303,14 @@ class Model:
         return self._parameters._asdict()  # pylint: disable=no-member
 
     @property
+    def hyperparameters(self) -> tuple[Hyperparameter, ...]:
+        """Returns the hyperparameters of the model."""
+        return self._hyperparameters
+
+    @property
     def hyperparameter_dict(self) -> dict[str, Hyperparameter]:
         """Returns the hyperparameters of the model as a dictionary."""
-        return self._hyperparameters
+        return self._hyperparameter_dict
 
     @property
     def observables(self) -> NamedTuple:

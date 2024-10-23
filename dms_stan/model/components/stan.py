@@ -138,13 +138,15 @@ class StanModel(CmdStanModel):
                 "Compilation to Stan currently only supports one observable."
             )
 
-        # Get variable names and parameter declarations for the observables and
-        # constants
+        # Get variable names and parameter declarations for the observables,
+        # constants, and hyperparameters
         param_declarations, varnames = zip(
             *[
                 (obj.stan_parameter_declaration, obj.model_varname)
                 for obj in (
-                    self.dms_stan_model.observables + self.dms_stan_model.constants
+                    self.dms_stan_model.observables
+                    + self.dms_stan_model.constants
+                    + self.dms_stan_model.hyperparameters
                 )
             ]
         )

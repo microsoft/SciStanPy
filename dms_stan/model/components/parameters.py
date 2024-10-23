@@ -10,8 +10,7 @@ import torch.distributions as dist
 import dms_stan as dms
 import dms_stan.model.components as dms_components
 
-from .abstract_classes import AbstractParameter
-from .constants import Constant
+from .abstract_classes import AbstractParameter, AbstractPassthrough
 from .pytorch import ParameterContainer
 from .transformed_parameters import (
     AddParameter,
@@ -126,7 +125,7 @@ class Parameter(AbstractParameter):
         for name, param in self.parameters.items():
 
             # If the parameter is a constant or another parameter, record
-            if isinstance(param, (Constant, Parameter)):
+            if isinstance(param, (AbstractPassthrough, Parameter)):
                 to_format[name] = param.get_indexed_varname(index_opts)
 
             # If the parameter is transformed and not named, the computation is

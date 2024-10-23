@@ -56,6 +56,7 @@ class AbstractModelComponent(ABC):
     def model_varname(self) -> str:
         """Return the DMS Stan variable name for this parameter"""
         if self._model_varname == "":
+            print(type(self))
             raise ValueError(
                 "DMS Stan variable name not set. This is only set when the parameter"
                 "is used in a DMS Stan model."
@@ -311,6 +312,8 @@ class AbstractParameter(AbstractModelComponent):
                 self.parameters[name] = val.record_child(self)
             elif isinstance(val, (int, float, np.ndarray)):
                 self.parameters[name] = dms_components.Hyperparameter(val)
+                self.parameters[name].child = self
+                self.parameters[name].name = name
             elif isinstance(val, dms_components.Constant):
                 self.parameters[name] = val
             else:
