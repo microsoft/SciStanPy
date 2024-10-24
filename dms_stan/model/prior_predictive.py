@@ -1,5 +1,7 @@
 """This module is used for building and displaying prior predictive checks."""
 
+import re
+
 from copy import deepcopy
 from typing import Optional
 
@@ -12,8 +14,11 @@ import panel.widgets as pnw
 
 import dms_stan as dms
 
-from .components.constants import Hyperparameter
+from .components.constants import Constant
 from .dms_stan_model import Model
+
+# We need a regular expression for separating the variable name from its indices
+_INDEX_EXTRACTOR = re.compile(r"([A-Za-z0-9_]+)\[?([0-9, ]*)\]?")
 
 
 class PriorPredictiveCheck:
@@ -36,9 +41,13 @@ class PriorPredictiveCheck:
         Builds the dataframes that will be used for plotting the prior predictive
         check. The dataframes are built from the samples drawn from the model.
         """
+        # Sampling prepends a dimension, so we need to adjust the independent dimension
+        if independent_dim is not None and independent_dim >= 0:
+            independent_dim += 1
+
         # Get the samples from the model and build the dataframe
         return dms.plotting.build_plotting_df(
-            samples=self.model.draw_from(paramname, n_experiments),
+            samples=getattr(self.model, paramname).draw(n_experiments)[0],
             paramname=paramname,
             independent_dim=independent_dim,
             independent_labels=independent_labels,
@@ -51,58 +60,69 @@ class PriorPredictiveCheck:
         independent_labels: Optional[npt.NDArray],
     ) -> tuple[str, list[str]]:
         """Processes the inputs for the display method."""
+        # If independent labels are provided, make sure that the independent dimension
+        # is also provided
+        if independent_labels is not None and independent_dim is None:
+            raise ValueError("Independent labels require an independent dimension")
+
         # Get the list of parameters and observables in the model
-        legal_targets = list(self.model)
+        legal_targets = self.model.parameter_dict.copy()
         error_message = "The model has no parameters or observables"
 
         # If there is an independent dimension provided, filter down to just those
         # parameters that have that dimension
         if independent_dim is not None:
-            legal_targets = list(
-                filter(lambda x: x[1].ndim > independent_dim, legal_targets)
+
+            # Determine the number of dimensions needed for the independent dimension
+            dims_needed = (
+                abs(independent_dim) if independent_dim < 0 else independent_dim + 1
             )
+            legal_targets = {
+                k: v for k, v in legal_targets.items() if v.ndim >= dims_needed
+            }
             error_message += f" with an independent dimension of {independent_dim}"
 
-        # If there are independent labels provided, filter down to just those parameters
-        # that match the length of the independent labels
-        if independent_labels is not None:
-            legal_targets = list(
-                filter(
-                    lambda x: x[1].shape[independent_dim] == len(independent_labels),
-                    legal_targets,
-                )
-            )
-            error_message += f" with a size of {len(independent_labels)}"
+            # If there are independent labels provided, filter down to just those parameters
+            # that match the length of the independent labels
+            if independent_labels is not None:
+                legal_targets = {
+                    k: v
+                    for k, v in legal_targets.items()
+                    if v.shape[independent_dim] == len(independent_labels)
+                }
+                error_message += f" and {len(independent_labels)} independent labels"
 
         # Raise an error if there are no legal parameters
         if not legal_targets:
             raise ValueError(error_message)
 
-        # Legal targets down to just the names
-        legal_targets = [paramname for paramname, _ in legal_targets]
-
         # If the initial dim is provided, make sure that it is a legal parameter
-        # Otherwise, just take the first legal parameter
-        if initial_view is not None:
-            if initial_view not in legal_targets:
-                raise ValueError(
-                    error_message.replace(
-                        "observables", f"observables named {initial_view}"
-                    )
+        # Otherwise, just take the first observable if it exists
+        if initial_view is not None and initial_view not in legal_targets:
+            raise ValueError(
+                error_message.replace(
+                    "observables", f"observables named {initial_view}"
                 )
+            )
         else:
-            initial_view = legal_targets[-1]
+            opts = [
+                observable.model_varname
+                for observable in self.model.observables
+                if observable.model_varname in legal_targets
+            ]
+            initial_view = (
+                opts[0] if len(opts) > 0 else legal_targets[legal_targets.keys()[0]]
+            )
 
-        return initial_view, legal_targets
+        return initial_view, list(legal_targets)
 
     def _init_float_sliders(self) -> dict[str, pnw.EditableFloatSlider]:
         """Gets the float sliders for the togglable parameters in the model."""
         # Each togglable parameter gets its own float slider
         sliders = {}
 
-        # If multiple dimensions on a hyperparameter, we need to create a slider
-        # for each entry
-        for hyperparam_name, hyperparam_val in self.model.hyperparameter_dict.items():
+        # Process all constants in the model
+        for hyperparam_name, hyperparam_val in self.model.constants_dict.items():
             # If no dimensions, just create a slider
             if hyperparam_val.ndim == 0:
                 sliders[hyperparam_name] = pnw.EditableFloatSlider(
@@ -118,7 +138,7 @@ class PriorPredictiveCheck:
             while remaining_elements > 0:
 
                 # Build the slider name
-                name = f"{hyperparam_name}.{'.'.join(map(str, current_index))}"
+                name = f"{hyperparam_name}[{', '.join(map(str, current_index))}]"
 
                 # Get the slider value
                 slider_val = hyperparam_val[tuple(current_index)].item()
@@ -169,72 +189,25 @@ class PriorPredictiveCheck:
         **kwargs: float,
     ):
         """
-        The key of each kwarg gives the name of the parameter to update, and the
-        value is a dictionary that links the constant names within that parameter
-        to the new values for those constants.
+        Updates the model with the new constant values and rebuilds the plotting
+        dataframe. The key of each kwarg gives the name of the parameter to update,
+        and the value is a dictionary that links the constant names within that
+        parameter to the new values for those constants.
         """
-
-        # Define helper functions. This is just for scoping and readability.
-        def process_kwargs() -> dict[str, dict[str, Hyperparameter]]:
-            """
-            Kwargs passed in to the parent function are formatted as `paramname.constantname.indices`
-            mapped to floats. This function processes those kwargs into a dictionary
-            of dictionaries, where the outer dictionary maps parameter names to
-            dictionaries that map constant names to new values. The new values are
-            also converted to hyperparameters.
-            """
-            processed_kwargs = {}
-            for key, val in kwargs.items():
-
-                # Get the parameter name and hyperparameter name
-                paramname, hypername = key.split(".", maxsplit=1)
-
-                # Separate the hyperparameter name from index names
-                hypername, *indices = hypername.split(".")
-
-                # Indices to integers
-                indices = tuple(map(int, indices))
-
-                # Create an entry in the processed_kwargs dictionary if it doesn't
-                # exist
-                if paramname not in processed_kwargs:
-
-                    # Build the entry
-                    processed_kwargs[paramname] = {}
-
-                    # If there are indices, we are working with a numpy array
-                    if indices:
-                        processed_kwargs[paramname][hypername] = Hyperparameter(
-                            np.empty_like(self.model[paramname].parameters[hypername])
-                        )
-
-                # If there are indices, add the value to the hyperparameter
-                if indices:
-                    processed_kwargs[paramname][hypername][indices] = val
-
-                # Otherwise, just add the value to the dictionary
-                else:
-                    processed_kwargs[paramname][hypername] = Hyperparameter(val)
-
-            return processed_kwargs
-
-        def update_model(processed_kwargs: dict[str, dict[str, Hyperparameter]]):
-            """
-            Changes the values of the constants in the model according to the processed
-            kwargs.
-            """
-            for paramname, hyperdict in processed_kwargs.items():
-                assert set(hyperdict) == set(
-                    key
-                    for key, val in self.model[paramname].parameters.items()
-                    if isinstance(val, Hyperparameter)
-                )
-                self.model[paramname].parameters.update(hyperdict)
-
         # Update the model with the new parameters
-        update_model(process_kwargs())
+        for paramname, paramval in kwargs.items():
 
-        # Return the dataframes for plotting
+            # Get the parameter name and the indices
+            paramname, indices = _INDEX_EXTRACTOR.match(paramname).groups()
+            indices = tuple(map(int, indices.split(","))) if indices else ()
+
+            # The parameter must be a constant
+            assert isinstance(self.model[paramname], Constant)
+
+            # Update the value of the constant
+            self.model[paramname].value[indices] = paramval
+
+        # Build the dataframes for plotting
         return self.build_plotting_df(
             paramname=paramname,
             n_experiments=n_experiments,

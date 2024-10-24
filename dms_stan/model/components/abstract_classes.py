@@ -18,9 +18,6 @@ class AbstractModelComponent(ABC):
     NEGATIVE_PARAMS: set[str] = set()
     SIMPLEX_PARAMS: set[str] = set()
 
-    # Define the class that will be used for compiling to PyTorch
-    _torch_container_class: type["dms.model.components.pytorch.TorchContainer"]
-
     # Define the stan data type
     base_stan_dtype: Literal["real", "int", "simplex"] = "real"
     stan_lower_bound: Optional[float | int] = None
@@ -341,7 +338,7 @@ class AbstractModelComponent(ABC):
                 raise TypeError(f"Unknown model component type {type(param)}")
 
         # Format the code
-        return self.format_stan_code(to_format)
+        return self.format_stan_code(**to_format)
 
     def __str__(self):
         return f"{self.__class__.__name__}"
@@ -397,7 +394,7 @@ class AbstractModelComponent(ABC):
         """Return the Stan data type for this parameter"""
 
         # Get the base datatype
-        dtype = self.__class__.base_stan_dtype
+        dtype = self.base_stan_dtype
 
         # Base data type for 0-dimensional parameters. If the parameter is 0-dimensional,
         # then we can only have real or int as the data type.

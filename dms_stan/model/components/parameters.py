@@ -374,7 +374,7 @@ class Dirichlet(ContinuousDistribution):
     def __init__(
         self,
         *,
-        alpha: Union[AbstractParameter, npt.ArrayLike],
+        alpha: Union[AbstractModelComponent, npt.ArrayLike],
         **kwargs,
     ):
 
@@ -453,8 +453,8 @@ class Multinomial(DiscreteDistribution):
     def __init__(
         self,
         *,
-        theta: Union[AbstractParameter, npt.ArrayLike],
-        N: Optional[Union[AbstractParameter, int]] = None,
+        theta: Union[AbstractModelComponent, npt.ArrayLike],
+        N: Optional[Union[AbstractModelComponent, int]] = None,
         **kwargs,
     ):
 

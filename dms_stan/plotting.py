@@ -39,11 +39,9 @@ def aggregate_data(
     # If the independent dimension is provided, first move that dimension to
     # the end (reshape is C-major), then reshape the data to flatten all other dimensions
     else:
-        independent_dim = (
-            independent_dim + 1 if independent_dim >= 0 else independent_dim
+        return np.moveaxis(data, independent_dim, -1).reshape(
+            (-1, data.shape[independent_dim])
         )
-        n_independent = data.shape[independent_dim]
-        return np.moveaxis(data, independent_dim, -1).reshape((-1, n_independent))
 
 
 def allow_interactive(plotting_func: Callable[P, T]) -> Callable[P, T]:

@@ -5,10 +5,10 @@ from typing import Union
 import numpy as np
 import numpy.typing as npt
 
-import dms_stan.model.components as dms_components
+from .abstract_classes import AbstractModelComponent
 
 
-class Constant(dms_components.abstract_classes.AbstractModelComponent):
+class Constant(AbstractModelComponent):
     """
     Abstract class for components that pass through the values of their children.
     """
@@ -21,10 +21,14 @@ class Constant(dms_components.abstract_classes.AbstractModelComponent):
         """
         # If the value is a numpy array, get the shape
         if isinstance(value, np.ndarray):
+            self.base_stan_dtype = (
+                "real" if isinstance(value.dtype, np.floating) else "int"
+            )
             shape = value.shape
 
         # Otherwise, convert to a numpy array
         else:
+            self.base_stan_dtype = "real" if isinstance(value, float) else "int"
             value = np.array(value, shape=shape, dtype=type(value))
 
         # Initialize the parent class
@@ -43,3 +47,17 @@ class Constant(dms_components.abstract_classes.AbstractModelComponent):
 
         # Repeat the value n times
         return np.repeat(self.value[None], n, axis=0)
+
+    def _handle_transformation_code(
+        self, param: AbstractModelComponent, index_opts: tuple[str, ...]
+    ):
+        """
+        Handle the transformation code for this component. This function should
+        never be called.
+        """
+        raise AssertionError("This function should never be called.")
+
+    def format_stan_code(self, **to_format: str) -> str:
+        """There is no transformation code to format."""
+        assert len(to_format) == 0
+        return ""

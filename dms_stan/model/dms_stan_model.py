@@ -1,8 +1,7 @@
 """Contains the Model base class, which is used to define all DMS Stan models."""
 
-import collections
-
-from typing import Generator, NamedTuple, Optional, TypedDict, Union
+from abc import ABC, abstractmethod
+from typing import Literal, Optional, overload, TypedDict, Union
 
 import hvplot.interactive
 import numpy as np
@@ -14,13 +13,13 @@ import dms_stan as dms
 from .components import (
     Binomial,
     Constant,
-    Hyperparameter,
     LogExponentialGrowth,
     LogSigmoidGrowth,
     Normal,
 )
-from .components.abstract_classes import AbstractModelComponent, AbstractParameter
+from .components.abstract_classes import AbstractModelComponent
 from .components.custom_types import CombinableParameterType
+from .components.parameters import Parameter
 from .components.pytorch import check_observable_data, PyTorchModel
 from .components.stan import StanModel
 from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
@@ -35,7 +34,7 @@ class MAPDict(TypedDict):
     losses: npt.NDArray
 
 
-class Model:
+class Model(ABC):
     """
     A metaclass that modifies the __init__ method of a class to register all instance
     variables that are instances of the `Parameter` class and observables in the
@@ -57,127 +56,117 @@ class Model:
             # Run the init method that was defined in the class.
             cls._wrapped_init(self, *init_args, **init_kwargs)
 
-            # If we already have parameters, observables, and constants defined in
-            # the class, update them with the new parameters, observables, and constants.
-            # This situation occurs when a child class is defined that inherits
-            # from a parent class that is also a model.
-            if hasattr(self, "_parameters"):
-                assert hasattr(self, "_observables")
-                assert hasattr(self, "_constants")
-                assert hasattr(self, "_hyperparameters")
-                parameters = self.parameter_dict
-                observables = self.observable_dict
-                constants = self.constant_dict
-                hyperparameters = self.hyperparameter_dict
-            else:
-                assert not hasattr(self, "_observables")
-                assert not hasattr(self, "_constants")
-                assert not hasattr(self, "_hyperparameters")
-                parameters, observables, constants, hyperparameters = {}, {}, {}, {}
+            # If we already have parameters, defined in the class, update them with
+            # the new parameters. This situation occurs when a child class is defined
+            # that inherits from a parent class that is also a model.
+            parameters = (
+                self.parameter_dict.copy() if hasattr(self, "_parameters") else {}
+            )
 
-            # Now we need to find all the parameters, observables, hyperparameters,
-            # and constants that are defined in the class. Skip any attributes defined
-            # in this meta class.
+            # Now we need to find all the parameters that are defined in the class.
             for attr in set(dir(self)) - set(dir(Model)):
+                if isinstance(retrieved := getattr(self, attr), AbstractModelComponent):
+                    retrieved.model_varname = attr  # Set the model variable name
+                    assert attr not in parameters
+                    parameters[attr] = retrieved
 
-                # Get the attribute's value
-                retrieved = getattr(self, attr)
+            # Set the parameters attribute
+            self._parameters = parameters
 
-                # Continue if not a model component
-                if not isinstance(retrieved, AbstractModelComponent):
-                    continue
+            # Make sure there is at least one observable
+            if len(self.observables) == 0:
+                raise ValueError("At least one observable must be defined.")
 
-                # Bin the model component appropriately
-                retrieved.model_varname = attr
-                if isinstance(retrieved, AbstractParameter):
-
-                    # Parameters are either observables or not
-                    if retrieved.observable:
-                        observables[attr] = retrieved
-                    else:
-                        parameters[attr] = retrieved
-
-                    # Check to see if there are any hyperparameters
-                    hyperparameters.update(
-                        {
-                            f"{attr}.{name}": param
-                            for name, param in retrieved.hyperparameters.items()
-                        }
-                    )
-
-                elif isinstance(retrieved, Constant):
-                    constants[attr] = retrieved
-
-            # Convert the parameters, observables, hyperparameters, and constants
-            # to named tuples
-            self._parameters = collections.namedtuple("Parameters", parameters.keys())(
-                **parameters
-            )
-            self._hyperparameters = tuple(hyperparameters.values())
-            self._hyperparameter_dict = hyperparameters
-            self._observables = collections.namedtuple(
-                "Observables", observables.keys()
-            )(**observables)
-            self._constants = collections.namedtuple("Constants", constants.keys())(
-                **constants
-            )
+            # Build the mapping between model variable names and parameter objects
+            self._model_varname_to_object = self._build_model_varname_to_object()
 
         # Add the new __init__ method
         cls._wrapped_init = cls.__init__
         cls.__init__ = __init__
 
-    def get_parameter_depths(self) -> dict[str, int]:
+    def _build_model_varname_to_object(self) -> dict[str, AbstractModelComponent]:
         """
-        Get the depths of all parameters in the model. This will output a dictionary
-        that maps from a parameter name to the depth of that parameter in the model.
+        Builds a mapping between model varnames and objects for easy access. Also
+        makes sure that all Parameter instances are explicitly defined.
         """
-        # Get an inverted dictionary of parameters
-        param_to_name = {param: name for name, param in self.parameter_dict.items()}
-
-        # Starting from observables, walk up the tree of parameters
-        parameter_depths = {}
+        # Start from each observable and walk up the tree to the root
+        unnamed_params: list[str] = []
+        model_varname_to_object: dict[str, AbstractModelComponent] = {}
         for observable in self.observables:
 
-            # Get the parents for this observable and use them to update the parameter
-            # depths
-            for depth, parent, _ in observable.recurse_parents():
+            # Add the observable to the mapping
+            assert observable.model_varname not in model_varname_to_object
+            model_varname_to_object[observable.model_varname] = observable
 
-                # If the parent is in the model, record its depth. If the parameter is
-                # already in the dictionary, we want to take the maximum depth.
-                if name := param_to_name.get(parent):
-                    parameter_depths[name] = max(parameter_depths.get(name, 0), depth)
+            # Add all parents to the mapping and make sure `Parameter` instances
+            # are explicitly defined.
+            for _, parent in observable.walk_tree(walk_down=False):
 
-        return parameter_depths
+                # If the parent is already in the mapping, make sure it is the
+                # same
+                if parent.model_varname in model_varname_to_object:
+                    assert model_varname_to_object[parent.model_varname] == parent
+                else:
+                    model_varname_to_object[parent.model_varname] = parent
 
+                # If the parent is a `Parameter` instance and it is not named, add
+                # it to the list of unnamed parameters.
+                if isinstance(parent, Parameter) and not parent.is_named:
+                    unnamed_params.append(parent.model_varname)
+
+        # Make sure all parameters are explicitly defined
+        if unnamed_params:
+            raise ValueError(
+                "All `Parameter` instances must be explicitly defined. The following "
+                f"are not: {', '.join(unnamed_params)}"
+            )
+
+        # There can be no duplicate values in the mapping
+        assert len(model_varname_to_object) == len(
+            set(model_varname_to_object.values())
+        )
+
+        return model_varname_to_object
+
+    @overload
+    def draw(self, n: int, named_only: Literal[True]) -> dict[str, npt.NDArray]: ...
+
+    @overload
     def draw(
-        self, size: Union[int, tuple[int, ...]], param: Optional[str] = None
-    ) -> dict[str, npt.NDArray]:
+        self, n: int, named_only: Literal[False]
+    ) -> dict[AbstractModelComponent, npt.NDArray]: ...
+
+    def draw(self, n, named_only=True):
         """Draws from the model. By default, this will draw from the observable
         values of the model. If a parameter is specified, then it will draw from
         the distribution of that parameter.
 
         Args:
-            size (Union[int, tuple[int, ...]]): The size of the sample to draw.
-                This is treated as the size parameter for the underlying numpy
-                random number generator.
-            param (Optional[str], optional): The parameter whose values should be
-                returned. Defaults to None, meaning that observable values will
-                be returned.
+            n (int): The number of samples to draw.
 
         Returns:
             dict[str, npt.NDArray]: A dictionary where the keys are the names of
-                the observables or parameters and the values are the samples drawn.
+                the model components and the values are the samples drawn.
         """
-        # If a parameter is specified, draw from that parameter
-        if param is not None:
-            return {param: self.parameter_dict[param].draw(size)}
+        # Draw from all observables
+        draws: dict[AbstractModelComponent, npt.NDArray] = {}
+        for observable in self.observables:
 
-        # Otherwise, return draws from the observables
-        return {name: obs.draw(size) for name, obs in self.observable_dict.items()}
+            # Draw from the observable
+            _, full_draw = observable.draw(n)
 
-    def draw_from(self, paramname: str, size: int) -> npt.NDArray:
-        """Draw from a parameter."""
-        return getattr(self, paramname).draw(size)
+            # Update the draws. We only take draws from named parameters.
+            for model_component, sample in full_draw.items():
+                if model_component in draws:
+                    assert np.array_equal(draws[model_component], sample)
+                else:
+                    draws[model_component] = sample
+
+        # Filter down to just named parameters if requested
+        if named_only:
+            return {k: v for k, v in draws.items() if k.is_named}
+        else:
+            return draws
 
     def to_pytorch(self):
         """
@@ -255,125 +244,85 @@ class Model:
             independent_labels=independent_labels,
         )
 
-    def __iter__(
-        self,
-    ) -> Generator[tuple[str, AbstractParameter], None, None]:
-        """
-        Loops over the parameters and observables in the model. Parameters are
-        emitted first in order of depth from deepest to shallowest. Ties in depth
-        are broken by alphabetical order of the parameter name. Observables are
-        emitted last in alphabetical order.
-        """
-        # Get dictionaries of the parameters and observables
-        parameters, observables = self.parameter_dict, self.observable_dict
-
-        # Get the depths of all parameters
-        parameter_depths = self.get_parameter_depths()
-
-        # Sort all the parameters by depth and then by name
-        sorted_param_names = sorted(parameters, key=lambda x: (-parameter_depths[x], x))
-
-        # Sort the observables by name
-        sorted_obs_names = sorted(observables)
-
-        # Yield the parameters in order
-        for param_name in sorted_param_names:
-            yield param_name, parameters[param_name]
-
-        # Yield the observables in order
-        for obs_name in sorted_obs_names:
-            yield obs_name, observables[obs_name]
-
     def __contains__(self, paramname: str) -> bool:
         """Checks if the model contains a parameter or observable with the given name."""
-        return paramname in self.parameter_dict or paramname in self.observable_dict
+        return paramname in self._model_varname_to_object
 
-    def __getitem__(self, paramname: str) -> AbstractParameter:
+    def __getitem__(self, paramname: str) -> AbstractModelComponent:
         """Returns the parameter or observable with the given name."""
-        return getattr(self, paramname)
+        return self._model_varname_to_object[paramname]
 
     @property
-    def parameters(self) -> NamedTuple:
+    def parameters(self) -> tuple[AbstractModelComponent, ...]:
         """Returns the parameters of the model."""
-        return self._parameters  # pylint: disable=no-member
+        return tuple(
+            sorted(self._parameters.values(), key=lambda x: x.model_varname)
+        )  # pylint: disable=no-member
 
     @property
-    def parameter_dict(self) -> dict[str, AbstractParameter]:
+    def parameter_dict(self) -> dict[str, AbstractModelComponent]:
         """Returns the parameters of the model as a dictionary."""
-        return self._parameters._asdict()  # pylint: disable=no-member
+        return self._parameters.copy()  # pylint: disable=no-member
 
     @property
-    def hyperparameters(self) -> tuple[Hyperparameter, ...]:
-        """Returns the hyperparameters of the model."""
-        return self._hyperparameters
+    def constants(self) -> tuple[Constant, ...]:
+        """
+        Returns the hyperparameters of the model. These are explicitly defined
+        constants and constants implicit to the model based on parameter definitions.
+        """
+        return tuple(sorted(self.constants_dict, key=lambda x: x.model_varname))
 
     @property
-    def hyperparameter_dict(self) -> dict[str, Hyperparameter]:
-        """Returns the hyperparameters of the model as a dictionary."""
-        return self._hyperparameter_dict
+    def constants_dict(self) -> dict[str, Constant]:
+        """
+        Returns the hyperparameters of the model. These are explicitly defined
+        constants and constants implicit to the model based on parameter definitions.
+        """
+        constants_dict: dict[str, Constant] = {}
+        for param in self.parameters:
+
+            # If the parameter is a constant, add it to the dictionary
+            if isinstance(param, Constant):
+                constants_dict[param.model_varname] = param
+
+            # Loop over all parents to the parameter. If any of the parents are
+            # constants, add them to the dictionary as well.
+            for parent in param.parents:
+                if isinstance(parent, Constant):
+                    if parent.model_varname in constants_dict:
+                        assert constants_dict[parent.model_varname] == parent
+                    else:
+                        constants_dict[parent.model_varname] = parent
+
+        return constants_dict
 
     @property
-    def observables(self) -> NamedTuple:
+    def observables(self) -> Parameter:
         """Returns the observables of the model."""
-        return self._observables  # pylint: disable=no-member
+        return tuple(param for param in self.parameters if param.observable)
 
     @property
-    def observable_dict(self) -> dict[str, AbstractParameter]:
+    def observable_dict(self) -> dict[str, Parameter]:
         """Returns the observables of the model as a dictionary."""
-        return self._observables._asdict()  # pylint: disable=no-member
-
-    @property
-    def constants(self) -> NamedTuple:
-        """Returns the constants of the model."""
-        return self._constants  # pylint: disable=no-member
-
-    @property
-    def constant_dict(self) -> dict[str, Constant]:
-        """Returns the constants of the model as a dictionary."""
-        return self._constants._asdict()  # pylint: disable=no-member
-
-    @property
-    def root_nodes(self) -> dict[str, AbstractParameter]:
-        """Returns the parameters that are root nodes in the model."""
-        return {
-            name: param
-            for name, param in self.parameter_dict.items()
-            if param.is_root_node
-        }
+        return {k: v for k, v in self.parameter_dict.items() if v.observable}
 
 
 class BaseGrowthModel(Model):
     """Defines a model of count data over time."""
 
     def __init__(  # pylint: disable=super-init-not-called, unused-argument
-        self, *, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer], **kwargs
+        self,
+        *,
+        t: npt.NDArray[np.floating],
+        counts: npt.NDArray[np.integer],
+        sigma: CombinableParameterType,
+        **kwargs,
     ):
-
-        # Time should be 1D
-        if t.ndim != 1:
-            raise ValueError("`t` should be a 1D array")
-
-        # Counts should be 3D. The first dimension is replicates, the second is
-        # timepoints, and the third is the counts.
-        if counts.ndim != 3:
-            raise ValueError("`counts` should be a 3D array")
-
-        # The second counts dimension should be the same as the length of the time
-        # array.
-        if counts.shape[1] != len(t):
-            raise ValueError(
-                "Mismatch between the length of `t` and the second dimension of `counts`"
-            )
-
-        # Record the timepoints as a constant. Expand the timepoints to the same
-        # dimensionality as the counts.
-        self.t = Constant(t[None, :, None])
-
-    def _finalize_regressor(self, sigma: CombinableParameterType):
-
-        # pylint: disable = no-member, attribute-defined-outside-init
         # Assign the noise parameter
         self.sigma = sigma
+
+        # Define the growth curve
+        self.log_theta_unorm_mean = self._define_growth_curve(t=t, counts=counts)
 
         # Define the regression distribution
         self.log_theta_unorm = Normal(
@@ -390,8 +339,14 @@ class BaseGrowthModel(Model):
         # Transform the log thetas to thetas
         self.theta = dms.operations.exp(self.log_theta)
 
+    @abstractmethod
+    def _define_growth_curve(
+        self, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer]
+    ) -> AbstractModelComponent:
+        """Define the growth curve of the model."""
 
-class ExponentialGrowthMixIn(BaseGrowthModel):
+
+class ExponentialGrowthModel(BaseGrowthModel):
     """Mix in class for exponential growth."""
 
     def __init__(
@@ -404,24 +359,21 @@ class ExponentialGrowthMixIn(BaseGrowthModel):
         sigma: CombinableParameterType,
         **kwargs,
     ):
-        # Call the parent class constructor. This will set up the timepoints as a
-        # constant but do nothing with the counts except check their shape.
-        super().__init__(t=t, counts=counts, **kwargs)
 
         # Assign the growth parameters
         self.log_A = log_A  # pylint: disable=invalid-name
         self.r = r
 
-        # Get the log theta values
-        self.log_theta_unorm_mean = LogExponentialGrowth(
-            t=self.t, log_A=self.log_A, r=self.r, shape=counts.shape
-        )
+        # Call the parent class constructor. This will set up the remaining parameters
+        super().__init__(t=t, counts=counts, sigma=sigma, **kwargs)
 
-        # Build regressor params
-        self._finalize_regressor(sigma=sigma)
+    def _define_growth_curve(
+        self, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer]
+    ) -> AbstractModelComponent:
+        return LogExponentialGrowth(t=t, log_A=self.log_A, r=self.r, shape=counts.shape)
 
 
-class SigmoidGrowthMixIn(BaseGrowthModel):
+class SigmoidGrowthModel(BaseGrowthModel):
     """Mix in class for sigmoid growth."""
 
     def __init__(
@@ -435,45 +387,50 @@ class SigmoidGrowthMixIn(BaseGrowthModel):
         sigma: CombinableParameterType,
         **kwargs,
     ):
-        # Call the parent class constructor. This will set up the timepoints as a
-        # constant but do nothing with the counts except check their shape.
-        super().__init__(t=t, counts=counts, **kwargs)
 
         # Assign the growth parameters
         self.log_A = log_A  # pylint: disable=invalid-name
         self.r = r
         self.c = c
 
-        # Get the log theta values
-        self.log_theta_unorm_mean = LogSigmoidGrowth(
-            t=self.t, log_A=self.log_A, r=self.r, c=self.c, shape=counts.shape
+        # Call the parent class constructor. This will set up the timepoints as a
+        # constant but do nothing with the counts except check their shape.
+        super().__init__(t=t, counts=counts, sigma=sigma, **kwargs)
+
+    def _define_growth_curve(
+        self, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer]
+    ) -> AbstractModelComponent:
+        return LogSigmoidGrowth(
+            t=t, log_A=self.log_A, r=self.r, c=self.c, shape=counts.shape
         )
 
-        # Build regressor params
-        self._finalize_regressor(sigma=sigma)
 
-
-class BaseBinomialGrowthModel(BaseGrowthModel):
+class BinomialGrowthModelMixin:
     """
-    Defines a growth model of count data over time where the counts are modeled
-    as binomially distributed.
+    Helper for defining a growth model of count data over time where the counts
+    are modeled as binomially distributed.
     """
 
     def __init__(
-        self, *, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer], **kwargs
+        self,
+        *,
+        t: npt.NDArray[np.floating],
+        counts: npt.NDArray[np.integer],
+        sigma: CombinableParameterType,
+        **kwargs,
     ):
 
         # Call the parent class constructor
-        super().__init__(t=t, counts=counts, **kwargs)
+        super().__init__(t=t, counts=counts, sigma=sigma, **kwargs)
 
         # Set up the binomial distribution for the counts. "N" is inferred as the
         # sum of the counts at each timepoint.
         self.counts = Binomial(
-            theta=self.theta,  # pylint: disable=no-member
-            N=Constant(counts.sum(axis=2, keepdims=True)),
+            theta=self.theta,
+            N=counts.sum(axis=-1, keepdims=True),
             shape=counts.shape,
         ).as_observable()
 
 
-class ExponentialGrowthBinomialModel(BaseBinomialGrowthModel, ExponentialGrowthMixIn):
+class ExponentialGrowthBinomialModel(ExponentialGrowthModel, BinomialGrowthModelMixin):
     """Defines a model of count data over time with exponential growth."""

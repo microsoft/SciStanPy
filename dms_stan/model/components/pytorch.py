@@ -14,13 +14,13 @@ from tqdm import tqdm
 import dms_stan as dms
 import dms_stan.model.components as dms_components
 
-from .abstract_classes import AbstractParameter, AbstractPassthrough
+from .abstract_classes import AbstractModelComponent
 
 
 def check_observable_data(
     model: "dms.model.Model", observed_data: dict[str, Union[torch.Tensor, npt.NDArray]]
 ):
-    """Makes sure that the correct observables are provided for a givne model."""
+    """Makes sure that the correct observables are provided for a given model."""
     # There must be perfect overlap between the keys of the provided data and the
     # expected observations
     expected_set = set(model.observable_dict.keys())
@@ -57,15 +57,16 @@ class TorchContainer(ABC):
     child class with Pytorch.
     """
 
-    def __init__(self, bound_param: AbstractParameter):
+    def __init__(self, bound_param: AbstractModelComponent):
         """
         Args:
-            bound_param: The dms_stan parameter to which this container is bound.
+            bound_param: The dms_stan model parameter to which this container is
+            bound.
         """
         # Record the bound parameter
         self.bound_param = bound_param
 
-        # Set for parameters that are shared
+        # Set for identifying shared torch parameters
         self._shared_params: set[str] = set()
 
         # Get the PyTorch parameters from the parent parameters

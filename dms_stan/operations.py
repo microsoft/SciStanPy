@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy.special as sp
 
-from dms_stan.model.components.abstract_classes import AbstractParameter
+from dms_stan.model.components.abstract_classes import AbstractModelComponent
 from dms_stan.model.components.transformed_parameters import (
     AbsParameter,
     ExpParameter,
@@ -130,7 +130,7 @@ class UnaryOperation(Operation):
     """Base class for dms_stan unary operations."""
 
     @overload
-    def __call__(self, x: AbstractParameter) -> AbstractParameter: ...
+    def __call__(self, x: AbstractModelComponent) -> AbstractModelComponent: ...
 
     @overload
     def __call__(
@@ -154,7 +154,7 @@ class UnaryOperation(Operation):
             The result of applying the operation to x.
         """
         # If a dms_stan parameter, apply the transformation
-        if isinstance(x, AbstractParameter):
+        if isinstance(x, AbstractModelComponent):
             return self.distclass(x, **kwargs)
 
         # Otherwise, apply the numpy function

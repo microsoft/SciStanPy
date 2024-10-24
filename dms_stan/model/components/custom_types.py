@@ -12,7 +12,7 @@ from .transformed_parameters import TransformedParameter
 
 # Define custom types for this module
 SampleType = Union[int, float, npt.NDArray]
-BaseParameterType = Union[TransformedParameter, Constant, Hyperparameter]
+BaseParameterType = Union[TransformedParameter, Constant]
 ContinuousParameterType = Union[
     BaseParameterType,
     ContinuousDistribution,

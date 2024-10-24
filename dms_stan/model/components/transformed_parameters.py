@@ -31,6 +31,14 @@ from .pytorch import (
 )
 
 
+def _is_elementwise_operation(*params: AbstractModelComponent) -> bool:
+    """
+    If all parameters have more than 0 dimensions and the last dimension is larger
+    than 1, return True. This indicates that the operation is elementwise.
+    """
+    return all(param.ndim > 0 and param.shape[-1] > 1 for param in params)
+
+
 class TransformedParameter(AbstractModelComponent):
     """
     Base class representing a parameter that is the result of combining other
@@ -100,6 +108,11 @@ class BinaryTransformedParameter(TransformedParameter):
     def format_stan_code(  # pylint: disable=arguments-differ
         self, dist1: str, dist2: str
     ) -> str: ...
+
+    @property
+    def is_elementwise_operation(self) -> bool:
+        """Return whether the operation is elementwise or not."""
+        return _is_elementwise_operation(*self.parents)
 
 
 class UnaryTransformedParameter(TransformedParameter):
@@ -174,13 +187,9 @@ class MultiplyParameter(BinaryTransformedParameter):
         return dist1 * dist2
 
     def format_stan_code(self, dist1: str, dist2: str) -> str:
-        # TODO: Figure out elementwise operations
-
-        # Unpack the variable names and determine if this is an elementwise operation
-        dist1, dist2, elementwise = super().format_stan_code(dist1, dist2)
 
         # Get the operator
-        operator = ".*" if elementwise else "*"
+        operator = ".*" if self.is_elementwise_operation else "*"
 
         return f"{dist1} {operator} {dist2}"
 
@@ -198,11 +207,8 @@ class DivideParameter(BinaryTransformedParameter):
         return dist1 / dist2
 
     def format_stan_code(self, dist1: str, dist2: str) -> str:
-        # Unpack the variable names and determine if this is an elementwise operation
-        dist1, dist2, elementwise = super().format_stan_code(dist1, dist2)
-
         # Get the operator
-        operator = "./" if elementwise else "/"
+        operator = "./" if self.is_elementwise_operation else "/"
 
         return f"{dist1} {operator} {dist2}"
 
@@ -220,11 +226,9 @@ class PowerParameter(BinaryTransformedParameter):
         return dist1**dist2
 
     def format_stan_code(self, dist1: str, dist2: str) -> str:
-        # Unpack the variable names and determine if this is an elementwise operation
-        dist1, dist2, elementwise = super().format_stan_code(dist1, dist2)
 
         # Get the operator
-        operator = ".^" if elementwise else "^"
+        operator = ".^" if self.is_elementwise_operation else "^"
 
         return f"{dist1} {operator} {dist2}"
 
@@ -238,7 +242,7 @@ class NegateParameter(UnaryTransformedParameter):
         return -dist1
 
     def format_stan_code(self, dist1: str) -> str:
-        return f"-{dist1[0]}"
+        return f"-{dist1}"
 
 
 class AbsParameter(UnaryTransformedParameter):
@@ -251,7 +255,7 @@ class AbsParameter(UnaryTransformedParameter):
         return np.abs(dist1, **self.operation_kwargs)
 
     def format_stan_code(self, dist1: str) -> str:
-        return f"abs({dist1[0]})"
+        return f"abs({dist1})"
 
 
 class LogParameter(UnaryTransformedParameter):
@@ -267,7 +271,7 @@ class LogParameter(UnaryTransformedParameter):
         return np.log(dist1, **self.operation_kwargs)
 
     def format_stan_code(self, dist1: str) -> str:
-        return f"log({dist1[0]})"
+        return f"log({dist1})"
 
 
 class ExpParameter(UnaryTransformedParameter):
@@ -280,7 +284,7 @@ class ExpParameter(UnaryTransformedParameter):
         return np.exp(dist1, **self.operation_kwargs)
 
     def format_stan_code(self, dist1: str) -> str:
-        return f"exp({dist1[0]})"
+        return f"exp({dist1})"
 
 
 class NormalizeParameter(UnaryTransformedParameter):
@@ -294,7 +298,7 @@ class NormalizeParameter(UnaryTransformedParameter):
         return dist1 / np.sum(dist1, keepdims=True, **self.operation_kwargs)
 
     def format_stan_code(self, dist1: str) -> str:
-        return f"{dist1[0]} / sum({dist1[0]})"
+        return f"{dist1} / sum({dist1})"
 
 
 class NormalizeLogParameter(UnaryTransformedParameter):
@@ -310,7 +314,7 @@ class NormalizeLogParameter(UnaryTransformedParameter):
         return dist1 - sp.logsumexp(dist1, keepdims=True, **self.operation_kwargs)
 
     def format_stan_code(self, dist1: str) -> str:
-        return f"{dist1[0]} - log_sum_exp({dist1[0]})"
+        return f"{dist1} - log_sum_exp({dist1})"
 
 
 class Growth(TransformedParameter):
@@ -379,10 +383,10 @@ class LogExponentialGrowth(Growth):
         return log_A + r * t
 
     def format_stan_code(  # pylint: disable=arguments-differ
-        self, t: tuple[str, bool], log_A: [str, bool], r: [str, bool]
+        self, t: str, log_A: str, r: str
     ) -> str:
         # Decide on operator between r and t
-        operator = ".*" if t[1] and r[1] else "*"
+        operator = ".*" if _is_elementwise_operation(self.t, self.r) else "*"
 
         # Build the transformation
         return f"{log_A[0]} + {r[0]} {operator} {t[0]}"
@@ -443,6 +447,6 @@ class LogSigmoidGrowth(Growth):
         self, t: str, log_A: str, r: str, c: str
     ) -> str:
         # Determine the operator between r and t
-        operator = ".*" if r[1] and t[1] else "*"
+        operator = ".*" if _is_elementwise_operation(self.t, self.r) else "*"
 
         return f"{log_A} - log(1 + exp(-{r} {operator} ({t} - {c})))"
