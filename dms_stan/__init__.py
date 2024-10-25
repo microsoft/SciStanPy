@@ -23,3 +23,8 @@ def manual_seed(seed: Optional[int] = None):
 
 
 manual_seed()  # Set the seed for the global random number generator
+
+# Import the DMS Stan modules, pylint: disable=wrong-import-position
+from dms_stan import defaults, plotting
+from dms_stan import model
+from dms_stan import custom_types, operations

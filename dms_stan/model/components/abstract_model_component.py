@@ -147,7 +147,7 @@ class AbstractModelComponent(ABC):
             # bound parameter defines.
             names = [
                 paramname
-                for paramname, param in child.parameters.items()
+                for paramname, param in child._parents.items()  # pylint: disable=protected-access
                 if param is self
             ]
             assert len(names) == 1
@@ -466,7 +466,10 @@ class AbstractModelComponent(ABC):
 
     def __getattr__(self, key: str) -> "AbstractModelComponent":
         """Get the parent parameter with the given key"""
-        return self._parents[key]
+        try:
+            return self._parents[key]
+        except KeyError as error:
+            raise AttributeError(f"Attribute {key} not found in {self}") from error
 
     @property
     def shape(self) -> tuple[int, ...]:

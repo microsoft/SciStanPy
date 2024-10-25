@@ -32,7 +32,7 @@ class Parameter(AbstractModelComponent):
         stan_to_np_transforms: Optional[
             dict[str, Callable[[npt.NDArray], npt.NDArray]]
         ] = None,
-        shape: Optional[tuple[int, ...]] = None,
+        shape: tuple[int, ...] = (),
         **parameters,
     ):
         """

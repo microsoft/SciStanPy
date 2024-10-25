@@ -181,7 +181,7 @@ class BinaryTransformedParameter(TransformedParameter):
         self,
         dist1: "dms.custom_types.CombinableParameterType",
         dist2: "dms.custom_types.CombinableParameterType",
-        shape: Optional[tuple[int, ...]] = None,
+        shape: tuple[int, ...] = (),
     ):
         super().__init__(dist1=dist1, dist2=dist2, shape=shape)
 
@@ -254,7 +254,7 @@ class UnaryTransformedParameter(TransformedParameter):
     def __init__(
         self,
         dist1: "dms.custom_types.CombinableParameterType",
-        shape: Optional[tuple[int, ...]] = None,
+        shape: tuple[int, ...] = (),
     ):
         super().__init__(dist1=dist1, shape=shape)
 
@@ -529,7 +529,7 @@ class Growth(TransformedParameter):
         self,
         *,
         t: "dms.custom_types.CombinableParameterType",
-        shape: Optional[tuple[int, ...]] = None,
+        shape: tuple[int, ...] = (),
         **params: "dms.custom_types.CombinableParameterType",
     ):
         # Store all parameters as a list by calling the super class
@@ -562,7 +562,7 @@ class LogExponentialGrowth(Growth):
         t: "dms.custom_types.CombinableParameterType",
         log_A: "dms.custom_types.CombinableParameterType",
         r: "dms.custom_types.CombinableParameterType",
-        shape: Optional[tuple[int, ...]] = None,
+        shape: tuple[int, ...] = (),
     ):
         """Initializes the LogExponentialGrowth distribution.
 
@@ -651,7 +651,7 @@ class LogSigmoidGrowth(Growth):
         log_A: "dms.custom_types.CombinableParameterType",
         r: "dms.custom_types.CombinableParameterType",
         c: "dms.custom_types.CombinableParameterType",
-        shape: Optional[tuple[int, ...]] = None,
+        shape: tuple[int, ...] = (),
     ):
         """Initializes the LogSigmoidGrowth distribution.
 

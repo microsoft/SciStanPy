@@ -76,7 +76,7 @@ class Model(ABC):
             for attr in set(dir(self)) - set(dir(Model)):
                 if isinstance(retrieved := getattr(self, attr), AbstractModelComponent):
                     retrieved.model_varname = attr  # Set the model variable name
-                    assert attr not in parameters
+                    assert (attr not in parameters) or (parameters[attr] is retrieved)
                     parameters[attr] = retrieved
 
             # Set the parameters attribute
@@ -395,11 +395,18 @@ class BaseGrowthModel(Model):
 
         # We normalize the thetas to add to 1
         self.log_theta = dms.operations.normalize_log(
-            self.log_theta_unorm, shape=self.log_theta_unorm_mean.shape, axis=-1
+            self.log_theta_unorm, shape=self.log_theta_unorm_mean.shape
         )
 
         # Transform the log thetas to thetas
         self.theta = dms.operations.exp(self.log_theta)
+
+        # Counts are "Binomial" distributed as the base
+        self.counts = Binomial(
+            theta=self.theta,
+            N=counts.sum(axis=-1, keepdims=True),
+            shape=counts.shape,
+        ).as_observable()
 
     @abstractmethod
     def _define_growth_curve(
@@ -408,7 +415,7 @@ class BaseGrowthModel(Model):
         """Define the growth curve of the model."""
 
 
-class ExponentialGrowthModel(BaseGrowthModel):
+class ExponentialGrowthBinomialModel(BaseGrowthModel):
     """Mix in class for exponential growth."""
 
     def __init__(
@@ -435,7 +442,7 @@ class ExponentialGrowthModel(BaseGrowthModel):
         return LogExponentialGrowth(t=t, log_A=self.log_A, r=self.r, shape=counts.shape)
 
 
-class SigmoidGrowthModel(BaseGrowthModel):
+class SigmoidGrowthBinomialModel(BaseGrowthModel):
     """Mix in class for sigmoid growth."""
 
     def __init__(
@@ -465,34 +472,3 @@ class SigmoidGrowthModel(BaseGrowthModel):
         return LogSigmoidGrowth(
             t=t, log_A=self.log_A, r=self.r, c=self.c, shape=counts.shape
         )
-
-
-class BinomialGrowthModelMixin:
-    """
-    Helper for defining a growth model of count data over time where the counts
-    are modeled as binomially distributed.
-    """
-
-    def __init__(
-        self,
-        *,
-        t: npt.NDArray[np.floating],
-        counts: npt.NDArray[np.integer],
-        sigma: CombinableParameterType,
-        **kwargs,
-    ):
-
-        # Call the parent class constructor
-        super().__init__(t=t, counts=counts, sigma=sigma, **kwargs)
-
-        # Set up the binomial distribution for the counts. "N" is inferred as the
-        # sum of the counts at each timepoint.
-        self.counts = Binomial(
-            theta=self.theta,
-            N=counts.sum(axis=-1, keepdims=True),
-            shape=counts.shape,
-        ).as_observable()
-
-
-class ExponentialGrowthBinomialModel(ExponentialGrowthModel, BinomialGrowthModelMixin):
-    """Defines a model of count data over time with exponential growth."""

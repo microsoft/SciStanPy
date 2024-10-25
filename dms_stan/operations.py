@@ -155,7 +155,7 @@ class UnaryOperation(Operation):
         """
         # If a dms_stan parameter, apply the transformation
         if isinstance(x, AbstractModelComponent):
-            return self.distclass(x, **kwargs)
+            return self.distclass(x)
 
         # Otherwise, apply the numpy function
         return self.func(x, **kwargs)
