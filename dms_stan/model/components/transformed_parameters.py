@@ -11,7 +11,7 @@ import torch.nn as nn
 
 import dms_stan.model.components as dms_components
 
-from .abstract_classes import AbstractModelComponent
+from .abstract_model_component import AbstractModelComponent
 
 
 def _is_elementwise_operation(*params: AbstractModelComponent) -> bool:

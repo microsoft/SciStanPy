@@ -5,7 +5,7 @@ from typing import Union
 import numpy as np
 import numpy.typing as npt
 
-from .abstract_classes import AbstractModelComponent
+from .abstract_model_component import AbstractModelComponent
 
 
 class Constant(AbstractModelComponent):

@@ -12,11 +12,6 @@ import numpy as np
 # Set up type checking
 install_import_hook("dms_stan")
 
-# pylint: disable=wrong-import-position
-from dms_stan import defaults, plotting
-from dms_stan import model
-from dms_stan import operations
-
 # Define the global random number generator
 RNG: np.random.Generator
 
@@ -28,3 +23,9 @@ def manual_seed(seed: Optional[int] = None):
 
 
 manual_seed()  # Set the seed for the global random number generator
+
+
+# pylint: disable=wrong-import-position
+from dms_stan import defaults, plotting
+from dms_stan import model
+from dms_stan import operations

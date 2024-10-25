@@ -10,7 +10,7 @@ import torch.distributions as dist
 import dms_stan as dms
 import dms_stan.model.components as dms_components
 
-from .abstract_classes import AbstractModelComponent
+from .abstract_model_component import AbstractModelComponent
 from .transformed_parameters import (
     AddParameter,
     DivideParameter,

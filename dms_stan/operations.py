@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy.special as sp
 
-from dms_stan.model.components.abstract_classes import AbstractModelComponent
+from dms_stan.model.components.abstract_model_component import AbstractModelComponent
 from dms_stan.model.components.transformed_parameters import (
     AbsParameter,
     ExpParameter,
