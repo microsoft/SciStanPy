@@ -7,9 +7,11 @@ import hvplot.interactive
 import numpy as np
 import numpy.typing as npt
 import torch
+import torch.nn as nn
 
 import dms_stan as dms
 
+from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
 from .components import (
     Binomial,
     Constant,
@@ -22,7 +24,6 @@ from .components.custom_types import CombinableParameterType
 from .components.parameters import Parameter
 from .components.pytorch import check_observable_data, PyTorchModel
 from .components.stan import StanModel
-from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
 
 
 # Special type for the MAP estimate
@@ -42,6 +43,13 @@ class Model(ABC):
     attribute.
     """
 
+    @abstractmethod
+    def __init__(self, *args, **kwargs):
+        """This should be overridden by the subclass."""
+        self._parameters: dict[str, AbstractModelComponent]
+        self._model_varname_to_object: dict[str, AbstractModelComponent]
+        self._torch_parameters: list[nn.Parameter]
+
     def __init_subclass__(cls, **kwargs):
         """"""
         # The old __init__ method of the class is renamed to '_wrapped_init'
@@ -51,7 +59,7 @@ class Model(ABC):
             )
 
         # Redefine the __init__ method of the class
-        def __init__(self, *init_args, **init_kwargs):
+        def __init__(self: "Model", *init_args, **init_kwargs):
 
             # Run the init method that was defined in the class.
             cls._wrapped_init(self, *init_args, **init_kwargs)
@@ -71,7 +79,7 @@ class Model(ABC):
                     parameters[attr] = retrieved
 
             # Set the parameters attribute
-            self._parameters = parameters
+            self._parameters: dict[str, AbstractModelComponent] = parameters
 
             # Make sure there is at least one observable
             if len(self.observables) == 0:
@@ -148,11 +156,15 @@ class Model(ABC):
             dict[str, npt.NDArray]: A dictionary where the keys are the names of
                 the model components and the values are the samples drawn.
         """
+        # Make sure that we use the same seed for each draw
+        seed = dms.RNG.integers(0, 2**32 - 1)
+
         # Draw from all observables
         draws: dict[AbstractModelComponent, npt.NDArray] = {}
         for observable in self.observables:
 
-            # Draw from the observable
+            # Draw from the observable, making sure to use the same seed
+            dms.manual_seed(seed)
             _, full_draw = observable.draw(n)
 
             # Update the draws. We only take draws from named parameters.
@@ -172,6 +184,50 @@ class Model(ABC):
         """
         Compiles the model to a trainable PyTorch model.
         """
+        # Dictionary for parents with shared children
+        parent_to_shared_children: dict[
+            AbstractModelComponent, AbstractModelComponent
+        ] = {}
+
+        # New list of torch parameters
+        self._torch_parameters = []
+
+        # Draw from the model to get the initial values
+        draws = self.draw(1, named_only=False)
+
+        # Walk up the tree from each observable to the root nodes and initialize
+        # the pytorch variables
+        for observable in self.observables:
+
+            # Initialize the observable and record its parameters
+            observable.init_pytorch(draws=draws)
+            # pylint: disable=protected-access
+            self._torch_parameters.extend(observable._torch_parameters.values())
+            # pylint: enable=protected-access
+
+            # Process all parents
+            for child, parent in observable.walk_tree(walk_down=False):
+
+                # Is the parent already in the dictionary? If so, the current child
+                # has a sibling
+                if sibling := parent_to_shared_children.get(parent):
+                    # pylint: disable=protected-access
+                    child._link_to_sibling(parent=parent, sibling=sibling)
+                    # pylint: enable=protected-access
+                    continue
+
+                # If the parent is not in the dictionary, add it
+                parent_to_shared_children[parent] = child
+
+                # Initialize the parent and record its parameters. Because this
+                # is a recursive operation, this also initializes the child for
+                # the next iteration. We initialize the observable outside of this
+                # loop because it would be skipped on the first iteration.
+                parent.init_pytorch(draws=draws)
+                # pylint: disable=protected-access
+                self._torch_parameters.extend(parent._torch_parameters.values())
+                # pylint: enable=protected-access
+
         return PyTorchModel(self)
 
     def to_stan(self):
@@ -193,6 +249,13 @@ class Model(ABC):
         sum of `log_pdf` and `log_pmf` for all distributions. The parameter values
         that minimize this loss are then returned.
         """
+        # Observed data to tensors
+        observed_data = {
+            k: torch.tensor(v)
+            for k, v in observed_data.items()
+            if not isinstance(v, torch.Tensor)
+        }
+
         # Check observed data
         check_observable_data(self, observed_data)
 
@@ -255,14 +318,12 @@ class Model(ABC):
     @property
     def parameters(self) -> tuple[AbstractModelComponent, ...]:
         """Returns the parameters of the model."""
-        return tuple(
-            sorted(self._parameters.values(), key=lambda x: x.model_varname)
-        )  # pylint: disable=no-member
+        return tuple(sorted(self._parameters.values(), key=lambda x: x.model_varname))
 
     @property
     def parameter_dict(self) -> dict[str, AbstractModelComponent]:
         """Returns the parameters of the model as a dictionary."""
-        return self._parameters.copy()  # pylint: disable=no-member
+        return self._parameters.copy()
 
     @property
     def constants(self) -> tuple[Constant, ...]:
@@ -297,7 +358,7 @@ class Model(ABC):
         return constants_dict
 
     @property
-    def observables(self) -> Parameter:
+    def observables(self) -> tuple[Parameter, ...]:
         """Returns the observables of the model."""
         return tuple(param for param in self.parameters if param.observable)
 

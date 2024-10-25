@@ -1,12 +1,13 @@
 """Holds the abstract classes for the core components of a DMS Stan model."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Literal, Optional, Union
+from typing import Literal, Optional
 
 import numpy as np
 import numpy.typing as npt
+import torch
+import torch.nn as nn
 
-import dms_stan as dms
 import dms_stan.model.components as dms_components
 
 
@@ -39,9 +40,8 @@ class AbstractModelComponent(ABC):
         self._shape: tuple[int, ...] = shape  # Shape of the parameter
         self._draw_shape: tuple[int, ...]  # Shape of the draws
         self._children: list["AbstractModelComponent"] = []  # Children of the component
-        self._torch_container: Optional[  # For PyTorch operations
-            "dms.model.components.pytorch.TorchContainer"
-        ] = None
+        self._torch_parameters: dict[str, torch.Tensor] = {}  # Pytorch parameters
+        self._shared_parameters: set[str] = set()  # Parents shared with siblings
 
         # Validate incoming parameters
         self._validate_parameters(parameters)
@@ -119,7 +119,7 @@ class AbstractModelComponent(ABC):
         # The shape must be broadcastable to the shapes of the parameters.
         try:
             self._draw_shape = np.broadcast_shapes(
-                self._shape, *[param.shape for param in self.parents.values()]
+                self._shape, *[param.shape for param in self.parents]
             )
         except ValueError as error:
             raise ValueError("Shape is not broadcastable to parent shapes") from error
@@ -187,37 +187,117 @@ class AbstractModelComponent(ABC):
 
         return indexed_varname
 
-    def init_pytorch(self) -> None:
+    def init_pytorch(
+        self,
+        draws: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
+    ) -> None:
         """
         Sets up the parameters needed for training a Pytorch model and defines the
         Pytorch operation that will be performed on the parameter. Operations can
         be either calculation of loss or transformation of the parameter, depending
         on the subclass.
         """
-        # Initialize the Pytorch container
-        self._torch_container = self._torch_container_class(self)
+        # If the draws are not provided, then we draw from the parameter
+        if draws is None:
+            _, draws = self.draw(1)
 
-    def _check_parameter_ranges(self, draws: dict[str, npt.NDArray]) -> None:
-        """Makes sure that the parameters are within the allowed ranges."""
-        # The positive and negative sets must be disjoint
-        if self.POSITIVE_PARAMS & self.NEGATIVE_PARAMS:
-            raise ValueError("Positive and negative parameter sets must be disjoint")
+        # Set up the Pytorch parameters. We parametrize in terms of the parents
+        for paramname, param in self._parents.items():
 
-        # Convert the list of simplex parameters to a set. Anything that is a simplex
-        # is also positive
-        positive_set = self.SIMPLEX_PARAMS | self.POSITIVE_PARAMS
+            # Get the current draw. Squash the first dimension if it exists (this
+            # is the sample dimension).
+            draw = torch.from_numpy(draws[param].squeeze(axis=0))
 
-        # Check the parameter ranges
-        for paramname, paramval in draws.items():
-            if paramname in positive_set and np.any(paramval <= 0):
-                raise ValueError(f"{paramname} must be positive")
-            elif paramname in self.NEGATIVE_PARAMS and np.any(paramval >= 0):
-                raise ValueError(f"{paramname} must be negative")
-            elif paramname in self.SIMPLEX_PARAMS:
-                if not isinstance(paramval, np.ndarray):
-                    raise ValueError(f"{paramname} must be a numpy array")
-                if not np.allclose(np.sum(paramval, axis=-1), 1):
-                    raise ValueError(f"{paramname} must sum to 1 over the last axis")
+            # Transform the parameter if it is bounded
+            if paramname in self.bounded_parameters:
+
+                # Negatives should be transformed to be positive
+                if paramname in self.NEGATIVE_PARAMS:
+                    draw = torch.abs(draw)
+
+                # To log space
+                draw = torch.log(draw)
+
+            # Record the PyTorch parameter. It is only learnable if it belongs to
+            # a `Parameter` object.
+            if isinstance(param, dms_components.Parameter):
+                self._torch_parameters[paramname] = nn.Parameter(draw)
+            else:
+                self._torch_parameters[paramname] = draw
+
+    def get_torch_observables(
+        self, observed: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        """
+        Gets the values of the observables from the perspective of the model component.
+        An "observable" is what would be drawn from this component if it were
+        generating. In practice, this means the values of the PyTorch tensors of
+        the child components of this component.
+
+        Args:
+            observed (Optional[torch.Tensor], optional): The observed value. This
+                only needs to be provided for observed components. Latent components
+                will automatically identify the child components and in turn use
+                that parameter's components as the observed value. Defaults to None.
+
+        Returns:
+            torch.Tensor: The values of the observables from the perspective of
+                the bound component.
+        """
+        # If an observable, then we must have an observed value
+        if self.observable and observed is None:
+            raise ValueError(
+                "Observed value must be provided for observable parameters"
+            )
+
+        # Get the observables from the children
+        observations = [] if observed is None else [observed]
+        for child in self.children:
+
+            # Get the parameter name in the child
+            # pylint: disable=protected-access
+            child_paramname = child._component_to_paramname[self]
+            # pylint: enable=protected-access
+
+            # Get the observed value
+            observations.append(child.torch_parameters[child_paramname])
+
+        # If multiple observables, they must be the same object
+        assert all(obs is observations[0] for obs in observations)
+
+        # Return the observations
+        return observations[0]
+
+    def _link_to_sibling(
+        self, parent: "AbstractModelComponent", sibling: "AbstractModelComponent"
+    ) -> None:
+        """
+        If two components have the same parent, then that parent must always have
+        the same observable value. This function ensures that that is the case by
+        replacing the PyTorch parameter of this component with the equivalent PyTorch
+        parameter of the sibling component.
+
+        Args:
+            parent (AbstractModelComponent): The parent component.
+            sibling (AbstractModelComponent): The sibling component. It shares a
+                parent with this component.
+        """
+        # Get the name of the parent component in both this component and its sibling
+        this_paramname = self._component_to_paramname[parent]
+        # pylint: disable=protected-access
+        sibling_paramname = sibling._component_to_paramname[parent]
+        # pylint: enable=protected-access
+
+        # Replace the PyTorch parameter of this component with the PyTorch parameter
+        # of the sibling component
+        # pylint: disable=protected-access
+        self._torch_parameters[this_paramname] = sibling._torch_parameters[
+            sibling_paramname
+        ]
+        # pylint: enable=protected-access
+
+        # Record the shared parameter
+        self._shared_parameters.add(this_paramname)
 
     @abstractmethod
     def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
@@ -234,7 +314,7 @@ class AbstractModelComponent(ABC):
         the second object returned.
         """
         # Build the _drawn dictionary if it is not already built
-        if calling_level := (_drawn is None):
+        if _drawn is None:
             _drawn = {}
 
         # Loop over the parents and draw from them if we haven't already
@@ -266,10 +346,15 @@ class AbstractModelComponent(ABC):
         assert self not in _drawn
         _drawn[self] = draws
 
-        # If the calling level, then move the last dimension to the front
-        if calling_level:
-            draws = np.moveaxis(draws, -1, 0)
-            _drawn = {param: np.moveaxis(draw, -1, 0) for param, draw in _drawn.items()}
+        # Test the ranges of the draws
+        for paramname, param in self._parents:
+            if paramname in self.POSITIVE_PARAMS:
+                assert np.all(_drawn[param] >= 0)
+            elif paramname in self.NEGATIVE_PARAMS:
+                assert np.all(_drawn[param] <= 0)
+            elif paramname in self.SIMPLEX_PARAMS:
+                assert np.all((_drawn[param] >= 0) & (_drawn[param] <= 1))
+                assert np.allclose(np.sum(_drawn[param], axis=-1), 1)
 
         return draws, _drawn
 
@@ -321,7 +406,7 @@ class AbstractModelComponent(ABC):
         # Recursively gather the transformations until we hit a non-transformed
         # parameter or a recorded variable
         to_format: dict[str, str] = {}
-        for name, param in self.parents.items():
+        for name, param in self._parents.items():
 
             # If the parameter is a constant or another parameter, record
             if isinstance(param, (dms_components.Constant, dms_components.Parameter)):
@@ -331,7 +416,9 @@ class AbstractModelComponent(ABC):
             # happening in the model. Otherwise, the computation has already happened
             # in the transformed parameters block.
             elif isinstance(param, dms_components.TransformedParameter):
-                to_format[name] = self._handle_transformation_code(index_opts)
+                to_format[name] = self._handle_transformation_code(
+                    param=param, index_opts=index_opts
+                )
 
             # Otherwise, raise an error
             else:
@@ -340,8 +427,45 @@ class AbstractModelComponent(ABC):
         # Format the code
         return self.format_stan_code(**to_format)
 
+    def _get_transformed_torch_parameters(self) -> dict[str, torch.Tensor]:
+        """Returns the PyTorch parameters for this component, appropriately transformed."""
+        # Process all parameters
+        processed_parameters = {}
+        for paramname, param in self._torch_parameters.items():
+
+            # If a transformed parameter, return to the original space
+            if paramname in self.bounded_parameters:
+
+                # First exponentiate
+                param = torch.exp(param)
+
+                # Negative parameters should be negated
+                if paramname in self.NEGATIVE_PARAMS:
+                    param = -param
+
+                # If a simplex, normalize
+                if paramname in self.SIMPLEX_PARAMS:
+                    param = param / torch.sum(param, dim=-1)
+
+            # Record the parameter
+            processed_parameters[paramname] = param
+
+        return processed_parameters
+
     def __str__(self):
         return f"{self.__class__.__name__}"
+
+    def __contains__(self, key: str) -> bool:
+        """Check if the parameter has a parent with the given key"""
+        return key in self._parents
+
+    def __getitem__(self, key: str) -> "AbstractModelComponent":
+        """Get the parent parameter with the given key"""
+        return self._parents[key]
+
+    def __getattr__(self, key: str) -> "AbstractModelComponent":
+        """Get the parent parameter with the given key"""
+        return self._parents[key]
 
     @property
     def shape(self) -> tuple[int, ...]:
@@ -357,13 +481,6 @@ class AbstractModelComponent(ABC):
     def is_named(self) -> bool:
         """Return whether the parameter has a name assigned by a model"""
         return self._model_varname != ""
-
-    @property
-    def torch_container(self) -> "dms.model.components.pytorch.TorchContainer":
-        """Return the Pytorch container for this parameter. Error if not initialized."""
-        if self._torch_container is None:
-            raise ValueError("Pytorch container not initialized. Run `init_pytorch`.")
-        return self._torch_container
 
     @property
     def stan_bounds(self) -> str:
@@ -452,7 +569,7 @@ class AbstractModelComponent(ABC):
         # component separated by underscores.
         return "_".join(
             [
-                "_".join(child.model_varname, name)
+                f"{child.model_varname}_{name}"
                 for child, name in self.get_child_paramnames().items()
             ]
         )
@@ -495,3 +612,16 @@ class AbstractModelComponent(ABC):
             list[AbstractModelComponent]: Children parameters of the current parameter.
         """
         return self._children.copy()
+
+    @property
+    def bounded_parameters(self) -> set[str]:
+        """
+        Gets the identities of the parameters that are stored in a different space
+        in PyTorch than in the bound parameter.
+        """
+        return self.POSITIVE_PARAMS | self.NEGATIVE_PARAMS | self.SIMPLEX_PARAMS
+
+    @property
+    def torch_parameters(self) -> dict[str, torch.Tensor]:
+        """Return the PyTorch parameters for this component, appropriately transformed."""
+        return self._get_transformed_torch_parameters()

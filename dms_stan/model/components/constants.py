@@ -29,15 +29,13 @@ class Constant(AbstractModelComponent):
         # Otherwise, convert to a numpy array
         else:
             self.base_stan_dtype = "real" if isinstance(value, float) else "int"
-            value = np.array(value, shape=shape, dtype=type(value))
+            value = np.array(value, dtype=type(value))
+
+        # Set the value
+        self.value = value
 
         # Initialize the parent class
-        super().__init__(shape=shape, value=value)
-
-    # Override the _set_parents method to just set an empty dictionary
-    def _set_parents(self):
-        """Set the parents of this component."""
-        self._parents = {}
+        super().__init__(shape=shape)
 
     # We need a draw method
     def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:

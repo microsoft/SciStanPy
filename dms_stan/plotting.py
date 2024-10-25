@@ -138,9 +138,6 @@ def plot_ecdf_violin(plotting_df, /, paramname):
     return [ecdfplot + violinplot]
 
 
-# TODO: Add ability to slice out specific dimensions
-
-
 @overload
 def plot_relationship(
     plotting_df: pd.DataFrame, /, paramname: str, datashade: bool

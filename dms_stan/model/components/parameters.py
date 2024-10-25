@@ -1,18 +1,16 @@
 """Holds classes that can be used for defining models in DMS Stan models."""
 
-from abc import abstractmethod
 from typing import Callable, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
+import torch
 import torch.distributions as dist
 
 import dms_stan as dms
 import dms_stan.model.components as dms_components
 
 from .abstract_classes import AbstractModelComponent
-from .constants import Constant
-from .pytorch import ParameterContainer
 from .transformed_parameters import (
     AddParameter,
     DivideParameter,
@@ -20,14 +18,11 @@ from .transformed_parameters import (
     NegateParameter,
     PowerParameter,
     SubtractParameter,
-    TransformedParameter,
 )
 
 
 class Parameter(AbstractModelComponent):
     """Base class for parameters used in DMS Stan"""
-
-    _torch_container_class = ParameterContainer
 
     def __init__(
         self,
@@ -38,7 +33,6 @@ class Parameter(AbstractModelComponent):
         stan_to_np_transforms: Optional[
             dict[str, Callable[[npt.NDArray], npt.NDArray]]
         ] = None,
-        seed: Optional[Union[np.random.Generator, int]] = None,
         shape: Optional[tuple[int, ...]] = None,
         **parameters,
     ):
@@ -49,10 +43,9 @@ class Parameter(AbstractModelComponent):
         # Initialize the parameters
         super().__init__(shape=shape, **parameters)
 
-        # Store the seed and distributions
+        # Store the distributions
         self._numpy_dist = numpy_dist
         self._torch_dist = torch_dist
-        self._seed = seed
 
         # Default value for the transforms dictionary is an empty dictionary
         stan_to_np_transforms = stan_to_np_transforms or {}
@@ -104,9 +97,8 @@ class Parameter(AbstractModelComponent):
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan target incrementation for this parameter."""
-        return (
-            f"{self.get_indexed_varname(index_opts)} ~ "
-            + self.get_stan_distribution(index_opts)
+        return f"{self.get_indexed_varname(index_opts)} ~ " + self.get_stan_code(
+            index_opts
         )
 
     def _handle_transformation_code(
@@ -117,14 +109,29 @@ class Parameter(AbstractModelComponent):
         else:
             return param.get_indexed_varname(index_opts)
 
+    def calculate_log_prob(
+        self, observed: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        """Calculates the log probability of the parameters given the observed data.
+
+        Args:
+            observed (Optional[torch.Tensor], optional): The observed value. This
+                only needs to be provided for observed parameters. Latent parameters
+                will automatically identify the child parameters and in turn use
+                that parameter's parameters as the observed value. Defaults to None.
+
+        Returns:
+            torch.Tensor: Log probability of the parameters given the observed data.
+        """
+        # Calculate log probability using the observed data and the distribution
+        return self.torch_dist_instance.log_prob(
+            self.get_torch_observables(observed)
+        ).sum()
+
     @property
     def rng(self) -> np.random.Generator:
         """Return the random number generator"""
-        if self._seed is None:
-            return dms.RNG
-        elif isinstance(self._seed, int):
-            self._seed = np.random.default_rng(self._seed)
-        return self._seed
+        return dms.RNG
 
     @property
     def numpy_dist(self) -> Callable[..., npt.NDArray]:
@@ -132,9 +139,19 @@ class Parameter(AbstractModelComponent):
         return getattr(self.rng, self._numpy_dist)
 
     @property
-    def torch_dist(self):
+    def torch_dist(self) -> type[dist.Distribution]:
         """Returns the torch distribution class"""
         return self._torch_dist
+
+    @property
+    def torch_dist_instance(self) -> dist.Distribution:
+        """Returns an instance of the torch distribution class"""
+        return self.torch_dist(
+            **{
+                self.stan_to_torch_names[name]: param
+                for name, param in self.torch_parameters.items()
+            }
+        )
 
 
 class ContinuousDistribution(Parameter):
@@ -234,8 +251,12 @@ class HalfNormal(Normal):
         super().__init__(mu=0.0, sigma=sigma, **kwargs)
 
     # Overwrite the draw method to ensure that the drawn values are positive
-    def draw(self, n: int) -> npt.NDArray:
-        return np.abs(super().draw(n))
+    def draw(
+        self,
+        n: int,
+        _drawn: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
+    ) -> npt.NDArray:
+        return np.abs(super().draw(n, _drawn=_drawn))
 
 
 class UnitNormal(Normal):
@@ -469,15 +490,19 @@ class Multinomial(DiscreteDistribution):
             **kwargs,
         )
 
-    def draw(self, n: int) -> npt.NDArray:
+    def draw(
+        self,
+        n: int,
+        _drawn: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
+    ) -> npt.NDArray:
         # There must be a value for `N` in the parameters if we are sampling
-        if self.parameters.get("N") is None:
+        if self._parents.get("N") is None:
             raise ValueError(
                 "Sampling from a multinomial distribution is only possible when "
                 "'N' is provided'"
             )
 
-        return super().draw(n)
+        return super().draw(n, _drawn=_drawn)
 
     def format_stan_code(  # pylint: disable=arguments-differ, unused-argument
         self, N: str, theta: str
