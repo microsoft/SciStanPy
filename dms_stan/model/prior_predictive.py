@@ -32,7 +32,7 @@ class PriorPredictiveCheck:
 
     def build_plotting_df(
         self,
-        paramname: str,
+        displayed_param: str,
         n_experiments: int,
         independent_dim: Optional[int] = None,
         independent_labels: Optional[npt.NDArray] = None,
@@ -47,8 +47,8 @@ class PriorPredictiveCheck:
 
         # Get the samples from the model and build the dataframe
         return dms.plotting.build_plotting_df(
-            samples=getattr(self.model, paramname).draw(n_experiments)[0],
-            paramname=paramname,
+            samples=getattr(self.model, displayed_param).draw(n_experiments)[0],
+            paramname=displayed_param,
             independent_dim=independent_dim,
             independent_labels=independent_labels,
         )
@@ -123,10 +123,14 @@ class PriorPredictiveCheck:
 
         # Process all constants in the model
         for hyperparam_name, hyperparam_val in self.model.constants_dict.items():
+            # Skip non-togglable parameters
+            if not hyperparam_val.is_togglable:
+                continue
+
             # If no dimensions, just create a slider
             if hyperparam_val.ndim == 0:
                 sliders[hyperparam_name] = pnw.EditableFloatSlider(
-                    name=hyperparam_name, value=hyperparam_val.item()
+                    name=hyperparam_name, value=hyperparam_val.value.item()
                 )
                 continue
 
@@ -141,7 +145,7 @@ class PriorPredictiveCheck:
                 name = f"{hyperparam_name}[{', '.join(map(str, current_index))}]"
 
                 # Get the slider value
-                slider_val = hyperparam_val[tuple(current_index)].item()
+                slider_val = hyperparam_val.value[tuple(current_index)]
 
                 # Add the slider
                 sliders[name] = pnw.EditableFloatSlider(name=name, value=slider_val)
@@ -182,7 +186,7 @@ class PriorPredictiveCheck:
     # We need a function that updates the model with new parameters
     def _viewer_backend(
         self,
-        paramname: str,
+        displayed_param: str,
         n_experiments: int,
         independent_dim: Optional[int],
         independent_labels: Optional[npt.NDArray],
@@ -209,7 +213,7 @@ class PriorPredictiveCheck:
 
         # Build the dataframes for plotting
         return self.build_plotting_df(
-            paramname=paramname,
+            displayed_param=displayed_param,
             n_experiments=n_experiments,
             independent_dim=independent_dim,
             independent_labels=independent_labels,
@@ -265,7 +269,7 @@ class PriorPredictiveCheck:
         # Bind the widgets to the viewer backend
         plot_df = hvplot.bind(
             self._viewer_backend,
-            paramname=target_dropdown,
+            displayed_param=target_dropdown,
             n_experiments=draw_slider,
             independent_dim=independent_dim,
             independent_labels=independent_labels,

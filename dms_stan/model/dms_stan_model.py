@@ -177,7 +177,7 @@ class Model(ABC):
 
         # Filter down to just named parameters if requested
         if named_only:
-            return {k: v for k, v in draws.items() if k.is_named}
+            return {k.model_varname: v for k, v in draws.items() if k.is_named}
         else:
             return draws
 
@@ -394,9 +394,7 @@ class BaseGrowthModel(Model):
         )
 
         # We normalize the thetas to add to 1
-        self.log_theta = dms.operations.normalize_log(
-            self.log_theta_unorm, shape=self.log_theta_unorm_mean.shape
-        )
+        self.log_theta = dms.operations.normalize_log(self.log_theta_unorm)
 
         # Transform the log thetas to thetas
         self.theta = dms.operations.exp(self.log_theta)

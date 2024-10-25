@@ -252,8 +252,15 @@ class HalfNormal(Normal):
         self,
         n: int,
         _drawn: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
-    ) -> npt.NDArray:
-        return np.abs(super().draw(n, _drawn=_drawn))
+    ) -> tuple[npt.NDArray, dict["AbstractModelComponent", npt.NDArray]]:
+        # Draw from the normal distribution and take the absolute value
+        draws, _drawn = super().draw(n, _drawn=_drawn)
+        draws = np.abs(draws)
+
+        # Update the drawn values
+        _drawn[self] = draws
+
+        return draws, _drawn
 
 
 class UnitNormal(Normal):
@@ -491,7 +498,7 @@ class Multinomial(DiscreteDistribution):
         self,
         n: int,
         _drawn: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
-    ) -> npt.NDArray:
+    ) -> tuple[npt.NDArray, dict["AbstractModelComponent", npt.NDArray]]:
         # There must be a value for `N` in the parameters if we are sampling
         if self._parents.get("N") is None:
             raise ValueError(

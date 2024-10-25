@@ -49,6 +49,9 @@ class TransformedParameter(AbstractModelComponent):
         # We will also need to set a missing parameter
         self._missing_param: str
 
+        # The shape is the same as the draw shape
+        self._shape = self.draw_shape
+
     def _set_missing_param(self):
         """
         Selects the missing parameter from the list of potential missing parameters.
@@ -138,9 +141,7 @@ class TransformedParameter(AbstractModelComponent):
 
         return transformed_params
 
-    def _draw(
-        self, n: int, level_draws: dict[str, npt.NDArray]
-    ) -> tuple[npt.NDArray, dict[AbstractModelComponent, npt.NDArray]]:
+    def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
         """Sample from this parameter's distribution `n` times."""
         # Perform the operation on the draws
         return self.operation(**level_draws)

@@ -34,6 +34,10 @@ class Constant(AbstractModelComponent):
         # Set the value
         self.value = value
 
+        # Set whether the value is togglable. By default, it is for floats and
+        # is not for integers.
+        self.is_togglable = self.base_stan_dtype == "real"
+
         # Initialize the parent class
         super().__init__(shape=shape)
 

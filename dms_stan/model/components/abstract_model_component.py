@@ -335,7 +335,9 @@ class AbstractModelComponent(ABC):
             dims_to_add = (
                 self.ndim + 1
             ) - parent_draw.ndim  # Implicit prepended dimensions
-            assert dims_to_add >= 0
+            assert (
+                dims_to_add >= 0
+            ), f"{self.ndim} {parent_draw.ndim} {self.model_varname} {parent.model_varname}"
             level_draws[paramname] = np.expand_dims(
                 parent_draw, axis=tuple(range(1, dims_to_add + 1))
             )
@@ -348,7 +350,7 @@ class AbstractModelComponent(ABC):
         _drawn[self] = draws
 
         # Test the ranges of the draws
-        for paramname, param in self._parents:
+        for paramname, param in self._parents.items():
             if paramname in self.POSITIVE_PARAMS:
                 assert np.all(_drawn[param] >= 0)
             elif paramname in self.NEGATIVE_PARAMS:
