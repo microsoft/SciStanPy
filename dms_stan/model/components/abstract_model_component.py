@@ -36,12 +36,12 @@ class AbstractModelComponent(ABC):
         # Define placeholder variables
         self._model_varname: str = ""  # DMS Stan Model variable name
         self.observable: bool = False  # Whether the parameter is observable
-        self._parents: dict[str, "dms.custom_types.CombinableParameterType"]
-        self._component_to_paramname: dict["AbstractModelComponent", str]
+        self._parents: dict[str, AbstractModelComponent]
+        self._component_to_paramname: dict[AbstractModelComponent, str]
         self._shape: tuple[int, ...] = shape  # Shape of the parameter
         self._draw_shape: tuple[int, ...]  # Shape of the draws
-        self._children: list["AbstractModelComponent"] = []  # Children of the component
-        self._torch_parameters: dict[str, torch.Tensor] = {}  # Pytorch parameters
+        self._children: list[AbstractModelComponent] = []  # Children of the component
+        self._torch_parameters: dict[str, torch.Tensor]  # Pytorch parameters
         self._shared_parameters: set[str] = set()  # Parents shared with siblings
 
         # Validate incoming parameters
@@ -198,6 +198,9 @@ class AbstractModelComponent(ABC):
         be either calculation of loss or transformation of the parameter, depending
         on the subclass.
         """
+        # Reset torch parameters
+        self._torch_parameters = {}
+
         # If the draws are not provided, then we draw from the parameter
         if draws is None:
             _, draws = self.draw(1)
@@ -209,21 +212,25 @@ class AbstractModelComponent(ABC):
             # is the sample dimension).
             draw = torch.from_numpy(draws[param].squeeze(axis=0))
 
-            # Transform the parameter if it is bounded
-            if paramname in self.bounded_parameters:
+            # Record the PyTorch parameter. Everything is learnable except for
+            # constants.
+            if isinstance(
+                param, (dms_components.Parameter, dms_components.TransformedParameter)
+            ):
+                # Transform the parameter if it is bounded
+                if paramname in self.bounded_parameters:
 
-                # Negatives should be transformed to be positive
-                if paramname in self.NEGATIVE_PARAMS:
-                    draw = torch.abs(draw)
+                    # Negatives should be transformed to be positive
+                    if paramname in self.NEGATIVE_PARAMS:
+                        draw = torch.abs(draw)
 
-                # To log space
-                draw = torch.log(draw)
+                    # To log space
+                    draw = torch.log(draw)
 
-            # Record the PyTorch parameter. It is only learnable if it belongs to
-            # a `Parameter` object.
-            if isinstance(param, dms_components.Parameter):
+                # Record the parameter as a learnable parameter
                 self._torch_parameters[paramname] = nn.Parameter(draw)
             else:
+                assert isinstance(param, dms_components.Constant)
                 self._torch_parameters[paramname] = draw
 
     def get_torch_observables(
@@ -430,30 +437,36 @@ class AbstractModelComponent(ABC):
         # Format the code
         return self.format_stan_code(**to_format)
 
+    def _get_torch_parameter(self, paramname: str) -> torch.Tensor:
+        """Returns the transformed PyTorch parameter for the given parameter name."""
+        # Get the parameter
+        param = self._torch_parameters[paramname]
+
+        # If a transformed parameter, return to the original space
+        if paramname in self.bounded_parameters and isinstance(
+            self._parents[paramname],
+            (dms_components.Parameter, dms_components.TransformedParameter),
+        ):
+
+            # First exponentiate
+            param = torch.exp(param)
+
+            # Negative parameters should be negated
+            if paramname in self.NEGATIVE_PARAMS:
+                param = -param
+
+            # If a simplex, normalize
+            if paramname in self.SIMPLEX_PARAMS:
+                param = param / torch.sum(param, dim=-1)
+
+        return param
+
     def _get_transformed_torch_parameters(self) -> dict[str, torch.Tensor]:
         """Returns the PyTorch parameters for this component, appropriately transformed."""
-        # Process all parameters
-        processed_parameters = {}
-        for paramname, param in self._torch_parameters.items():
-
-            # If a transformed parameter, return to the original space
-            if paramname in self.bounded_parameters:
-
-                # First exponentiate
-                param = torch.exp(param)
-
-                # Negative parameters should be negated
-                if paramname in self.NEGATIVE_PARAMS:
-                    param = -param
-
-                # If a simplex, normalize
-                if paramname in self.SIMPLEX_PARAMS:
-                    param = param / torch.sum(param, dim=-1)
-
-            # Record the parameter
-            processed_parameters[paramname] = param
-
-        return processed_parameters
+        return {
+            paramname: self._get_torch_parameter(paramname)
+            for paramname in self._torch_parameters
+        }
 
     def __str__(self):
         return f"{self.__class__.__name__}"
@@ -469,9 +482,9 @@ class AbstractModelComponent(ABC):
     def __getattr__(self, key: str) -> "AbstractModelComponent":
         """Get the parent parameter with the given key"""
         try:
-            return self._parents[key]
+            return self[key]
         except KeyError as error:
-            raise AttributeError(f"Attribute {key} not found in {self}") from error
+            raise AttributeError(f"Attribute '{key}' not found in {self}") from error
 
     @property
     def shape(self) -> tuple[int, ...]:

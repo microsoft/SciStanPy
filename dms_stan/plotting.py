@@ -282,9 +282,7 @@ def plot_distribution(
 
     # Samples must be a numpy array
     samples = (
-        samples.detach().cpu().numpy()
-        if not isinstance(samples, np.ndarray)
-        else samples
+        samples.detach().cpu().numpy() if isinstance(samples, torch.Tensor) else samples
     )
 
     # Build the plotting dataframe for the distribution

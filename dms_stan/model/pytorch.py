@@ -10,14 +10,14 @@ import torch.nn as nn
 
 from tqdm import tqdm
 
-import dms_stan.model as dms
+import dms_stan.model as dms_model
 
 from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
 from .components import Parameter
 
 
 def check_observable_data(
-    model: "dms.model.Model", observed_data: dict[str, torch.Tensor]
+    model: "dms_model.Model", observed_data: dict[str, torch.Tensor]
 ):
     """Makes sure that the correct observables are provided for a givne model."""
     # There must be perfect overlap between the keys of the provided data and the
@@ -57,7 +57,7 @@ class PyTorchModel(nn.Module):
     `dms_stan.model.Model` instance.
     """
 
-    def __init__(self, model: "dms.model.Model"):
+    def __init__(self, model: "dms_model.Model"):
         """
         Args:
             model: The `dms_stan.model.Model` instance to convert to PyTorch.
@@ -68,7 +68,9 @@ class PyTorchModel(nn.Module):
         self.model = model
 
         # Record learnable parameters such that they can be recognized by PyTorch
-        self.torch_params = nn.ParameterList(self.model._torch_parameters)
+        self.learnable_params = nn.ParameterList(
+            filter(lambda x: isinstance(x, nn.Parameter), self.model._torch_parameters)
+        )
 
     def forward(self, **observed_data: torch.Tensor) -> torch.Tensor:
         """
