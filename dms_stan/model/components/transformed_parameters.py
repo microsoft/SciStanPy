@@ -9,7 +9,7 @@ import scipy.special as sp
 import torch
 import torch.nn as nn
 
-import dms_stan.model.components as dms_components
+import dms_stan as dms
 
 from .abstract_model_component import AbstractModelComponent
 
@@ -34,7 +34,7 @@ class TransformedParameter(AbstractModelComponent):
         self,
         *,
         shape: tuple[int, ...] = (),
-        **parameters: "dms_components.custom_types.CombinableParameterType",
+        **parameters: "dms.custom_types.CombinableParameterType",
     ):
         # Run the parent class method
         super().__init__(shape=shape, **parameters)
@@ -146,9 +146,7 @@ class TransformedParameter(AbstractModelComponent):
         return self.operation(**level_draws)
 
     @abstractmethod
-    def operation(
-        self, **draws: "dms_components.custom_types.SampleType"
-    ) -> npt.NDArray:
+    def operation(self, **draws: "dms.custom_types.SampleType") -> npt.NDArray:
         """Perform the operation on the draws"""
 
     def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
@@ -181,8 +179,8 @@ class BinaryTransformedParameter(TransformedParameter):
 
     def __init__(
         self,
-        dist1: "dms_components.custom_types.CombinableParameterType",
-        dist2: "dms_components.custom_types.CombinableParameterType",
+        dist1: "dms.custom_types.CombinableParameterType",
+        dist2: "dms.custom_types.CombinableParameterType",
         shape: Optional[tuple[int, ...]] = None,
     ):
         super().__init__(dist1=dist1, dist2=dist2, shape=shape)
@@ -199,8 +197,8 @@ class BinaryTransformedParameter(TransformedParameter):
     @abstractmethod
     def operation(  # pylint: disable=arguments-differ
         self,
-        dist1: "dms_components.custom_types.SampleType",
-        dist2: "dms_components.custom_types.SampleType",
+        dist1: "dms.custom_types.SampleType",
+        dist2: "dms.custom_types.SampleType",
     ): ...
 
     @abstractmethod
@@ -255,7 +253,7 @@ class UnaryTransformedParameter(TransformedParameter):
 
     def __init__(
         self,
-        dist1: "dms_components.custom_types.CombinableParameterType",
+        dist1: "dms.custom_types.CombinableParameterType",
         shape: Optional[tuple[int, ...]] = None,
     ):
         super().__init__(dist1=dist1, shape=shape)
@@ -271,7 +269,7 @@ class UnaryTransformedParameter(TransformedParameter):
 
     @abstractmethod
     def operation(  # pylint: disable=arguments-differ
-        self, dist1: "dms_components.custom_types.SampleType"
+        self, dist1: "dms.custom_types.SampleType"
     ) -> npt.NDArray: ...
 
     @abstractmethod
@@ -285,8 +283,8 @@ class AddParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        dist1: "dms_components.custom_types.SampleType",
-        dist2: "dms_components.custom_types.SampleType",
+        dist1: "dms.custom_types.SampleType",
+        dist2: "dms.custom_types.SampleType",
     ) -> npt.NDArray:
         return dist1 + dist2
 
@@ -305,8 +303,8 @@ class SubtractParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        dist1: "dms_components.custom_types.SampleType",
-        dist2: "dms_components.custom_types.SampleType",
+        dist1: "dms.custom_types.SampleType",
+        dist2: "dms.custom_types.SampleType",
     ) -> npt.NDArray:
         return dist1 - dist2
 
@@ -325,8 +323,8 @@ class MultiplyParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        dist1: "dms_components.custom_types.SampleType",
-        dist2: "dms_components.custom_types.SampleType",
+        dist1: "dms.custom_types.SampleType",
+        dist2: "dms.custom_types.SampleType",
     ) -> npt.NDArray:
         return dist1 * dist2
 
@@ -349,8 +347,8 @@ class DivideParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        dist1: "dms_components.custom_types.SampleType",
-        dist2: "dms_components.custom_types.SampleType",
+        dist1: "dms.custom_types.SampleType",
+        dist2: "dms.custom_types.SampleType",
     ) -> npt.NDArray:
         return dist1 / dist2
 
@@ -372,8 +370,8 @@ class PowerParameter(BinaryTransformedParameter):
 
     def operation(
         self,
-        dist1: "dms_components.custom_types.SampleType",
-        dist2: "dms_components.custom_types.SampleType",
+        dist1: "dms.custom_types.SampleType",
+        dist2: "dms.custom_types.SampleType",
     ) -> npt.NDArray:
         return dist1**dist2
 
@@ -394,7 +392,7 @@ class PowerParameter(BinaryTransformedParameter):
 class NegateParameter(UnaryTransformedParameter):
     """Defines a parameter that is the negative of another parameter."""
 
-    def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
+    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
         return -dist1
 
     def format_stan_code(self, dist1: str) -> str:
@@ -418,7 +416,7 @@ class AbsParameter(UnaryTransformedParameter):
         # We have an additional parameter that we need to learn (the sign)
         self._torch_parameters["sign"] = nn.Parameter(torch.rand(self.dist1.shape))
 
-    def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
+    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
         return np.abs(dist1)
 
     def format_stan_code(self, dist1: str) -> str:
@@ -441,7 +439,7 @@ class LogParameter(UnaryTransformedParameter):
 
     stan_lower_bound: float = 0.0
 
-    def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
+    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
         return np.log(dist1)
 
     def format_stan_code(self, dist1: str) -> str:
@@ -456,7 +454,7 @@ class ExpParameter(UnaryTransformedParameter):
 
     stan_lower_bound: float = 0.0
 
-    def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
+    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
         return np.exp(dist1)
 
     def format_stan_code(self, dist1: str) -> str:
@@ -472,7 +470,7 @@ class NormalizeParameter(UnaryTransformedParameter):
     stan_lower_bound: float = 0.0
     stan_upper_bound: float = 1.0
 
-    def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
+    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
         return dist1 / np.sum(dist1, keepdims=True, axis=-1)
 
     def format_stan_code(self, dist1: str) -> str:
@@ -502,7 +500,7 @@ class NormalizeLogParameter(UnaryTransformedParameter):
 
     stan_upper_bound: float = 0.0
 
-    def operation(self, dist1: "dms_components.custom_types.SampleType") -> npt.NDArray:
+    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
         return dist1 - sp.logsumexp(dist1, keepdims=True, axis=-1)
 
     def format_stan_code(self, dist1: str) -> str:
@@ -530,9 +528,9 @@ class Growth(TransformedParameter):
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
-        t: "dms_components.custom_types.CombinableParameterType",
+        t: "dms.custom_types.CombinableParameterType",
         shape: Optional[tuple[int, ...]] = None,
-        **params: "dms_components.custom_types.CombinableParameterType",
+        **params: "dms.custom_types.CombinableParameterType",
     ):
         # Store all parameters as a list by calling the super class
         super().__init__(t=t, shape=shape, **params)
@@ -561,19 +559,19 @@ class LogExponentialGrowth(Growth):
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
-        t: "dms_components.custom_types.CombinableParameterType",
-        log_A: "dms_components.custom_types.CombinableParameterType",
-        r: "dms_components.custom_types.CombinableParameterType",
+        t: "dms.custom_types.CombinableParameterType",
+        log_A: "dms.custom_types.CombinableParameterType",
+        r: "dms.custom_types.CombinableParameterType",
         shape: Optional[tuple[int, ...]] = None,
     ):
         """Initializes the LogExponentialGrowth distribution.
 
         Args:
-            t ("dms_components.custom_types.SampleType"): The time parameter.
+            t ("dms.custom_types.SampleType"): The time parameter.
 
-            log_A ("dms_components.custom_types.SampleType"): The log of the amplitude parameter.
+            log_A ("dms.custom_types.SampleType"): The log of the amplitude parameter.
 
-            r ("dms_components.custom_types.SampleType"): The rate parameter.
+            r ("dms.custom_types.SampleType"): The rate parameter.
 
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
@@ -583,9 +581,9 @@ class LogExponentialGrowth(Growth):
     def operation(  # pylint: disable=arguments-differ
         self,
         *,
-        t: "dms_components.custom_types.SampleType",
-        log_A: "dms_components.custom_types.SampleType",
-        r: "dms_components.custom_types.SampleType",
+        t: "dms.custom_types.SampleType",
+        log_A: "dms.custom_types.SampleType",
+        r: "dms.custom_types.SampleType",
     ) -> npt.NDArray:
         return log_A + r * t
 
@@ -649,22 +647,22 @@ class LogSigmoidGrowth(Growth):
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
-        t: "dms_components.custom_types.CombinableParameterType",
-        log_A: "dms_components.custom_types.CombinableParameterType",
-        r: "dms_components.custom_types.CombinableParameterType",
-        c: "dms_components.custom_types.CombinableParameterType",
+        t: "dms.custom_types.CombinableParameterType",
+        log_A: "dms.custom_types.CombinableParameterType",
+        r: "dms.custom_types.CombinableParameterType",
+        c: "dms.custom_types.CombinableParameterType",
         shape: Optional[tuple[int, ...]] = None,
     ):
         """Initializes the LogSigmoidGrowth distribution.
 
         Args:
-            t ("dms_components.custom_types.SampleType"): The time parameter.
+            t ("dms.custom_types.SampleType"): The time parameter.
 
-            log_A ("dms_components.custom_types.SampleType"): The log of the amplitude parameter.
+            log_A ("dms.custom_types.SampleType"): The log of the amplitude parameter.
 
-            r ("dms_components.custom_types.SampleType"): The rate parameter.
+            r ("dms.custom_types.SampleType"): The rate parameter.
 
-            c ("dms_components.custom_types.SampleType"): The offset parameter.
+            c ("dms.custom_types.SampleType"): The offset parameter.
 
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
@@ -674,10 +672,10 @@ class LogSigmoidGrowth(Growth):
     def operation(  # pylint: disable=arguments-differ
         self,
         *,
-        t: "dms_components.custom_types.SampleType",
-        log_A: "dms_components.custom_types.SampleType",
-        r: "dms_components.custom_types.SampleType",
-        c: "dms_components.custom_types.SampleType",
+        t: "dms.custom_types.SampleType",
+        log_A: "dms.custom_types.SampleType",
+        r: "dms.custom_types.SampleType",
+        c: "dms.custom_types.SampleType",
     ) -> npt.NDArray:
         return log_A - np.log(1 + np.exp(-r * (t - c)))
 

@@ -5,9 +5,12 @@ from typing import Union
 import numpy as np
 import numpy.typing as npt
 
-from .constants import Constant
-from .parameters import ContinuousDistribution, DiscreteDistribution
-from .transformed_parameters import TransformedParameter
+from .model.components import (
+    Constant,
+    ContinuousDistribution,
+    DiscreteDistribution,
+    TransformedParameter,
+)
 
 
 # Define custom types for this module

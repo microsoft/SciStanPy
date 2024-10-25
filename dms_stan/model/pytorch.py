@@ -10,8 +10,10 @@ import torch.nn as nn
 
 from tqdm import tqdm
 
-import dms_stan as dms
-import dms_stan.model.components as dms_components
+import dms_stan.model as dms
+
+from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
+from .components import Parameter
 
 
 def check_observable_data(
@@ -84,7 +86,7 @@ class PyTorchModel(nn.Module):
             # `calculate_log_prob` on a parameter, any transformations needed to
             # calculate the log-probability are handled internally (i.e., the
             # transformed parameters are included)
-            if not isinstance(param, dms_components.Parameter):
+            if not isinstance(param, Parameter):
                 continue
 
             # Calculate the log-probability of the parameter
@@ -94,9 +96,9 @@ class PyTorchModel(nn.Module):
 
     def fit(
         self,
-        epochs: int = dms.defaults.DEFAULT_N_EPOCHS,
-        early_stop: int = dms.defaults.DEFAULT_EARLY_STOP,
-        lr: float = dms.defaults.DEFAULT_LR,
+        epochs: int = DEFAULT_N_EPOCHS,
+        early_stop: int = DEFAULT_EARLY_STOP,
+        lr: float = DEFAULT_LR,
         **observed_data: Union[torch.Tensor, npt.NDArray, float, int],
     ) -> torch.Tensor:
         """Optimizes the parameters of the model."""
@@ -177,7 +179,7 @@ class PyTorchModel(nn.Module):
         return {
             name: param.get_torch_observables()
             for name, param in self.model.parameter_dict.items()
-            if isinstance(param, dms_components.Parameter) and not param.observable
+            if isinstance(param, Parameter) and not param.observable
         }
 
     def export_distributions(self) -> dict[str, torch.distributions.Distribution]:
@@ -188,5 +190,5 @@ class PyTorchModel(nn.Module):
         return {
             name: param.torch_dist_instance
             for name, param in self.model.parameter_dict.items()
-            if isinstance(param, dms_components.Parameter)
+            if isinstance(param, Parameter)
         }

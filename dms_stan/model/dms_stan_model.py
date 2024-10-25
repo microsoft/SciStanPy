@@ -11,19 +11,20 @@ import torch.nn as nn
 
 import dms_stan as dms
 
+from dms_stan.custom_types import CombinableParameterType
 from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
+
 from .components import (
     Binomial,
     Constant,
     LogExponentialGrowth,
     LogSigmoidGrowth,
     Normal,
+    Parameter,
 )
-from .components.abstract_classes import AbstractModelComponent
-from .components.custom_types import CombinableParameterType
-from .components.parameters import Parameter
-from .components.pytorch import check_observable_data, PyTorchModel
-from .components.stan import StanModel
+from .components.abstract_model_component import AbstractModelComponent
+from .pytorch import check_observable_data, PyTorchModel
+from .stan import StanModel
 
 
 # Special type for the MAP estimate

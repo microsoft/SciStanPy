@@ -8,7 +8,6 @@ import torch
 import torch.distributions as dist
 
 import dms_stan as dms
-import dms_stan.model.components as dms_components
 
 from .abstract_model_component import AbstractModelComponent
 from .transformed_parameters import (
@@ -157,36 +156,34 @@ class Parameter(AbstractModelComponent):
 class ContinuousDistribution(Parameter):
     """Base class for parameters represented by continuous distributions."""
 
-    def __add__(self, other: "dms_components.custom_types.CombinableParameterType"):
+    def __add__(self, other: "dms.custom_types.CombinableParameterType"):
         return AddParameter(self, other)
 
-    def __radd__(self, other: "dms_components.custom_types.CombinableParameterType"):
+    def __radd__(self, other: "dms.custom_types.CombinableParameterType"):
         return AddParameter(other, self)
 
-    def __sub__(self, other: "dms_components.custom_types.CombinableParameterType"):
+    def __sub__(self, other: "dms.custom_types.CombinableParameterType"):
         return SubtractParameter(self, other)
 
-    def __rsub__(self, other: "dms_components.custom_types.CombinableParameterType"):
+    def __rsub__(self, other: "dms.custom_types.CombinableParameterType"):
         return SubtractParameter(other, self)
 
-    def __mul__(self, other: "dms_components.custom_types.CombinableParameterType"):
+    def __mul__(self, other: "dms.custom_types.CombinableParameterType"):
         return MultiplyParameter(self, other)
 
-    def __rmul__(self, other: "dms_components.custom_types.CombinableParameterType"):
+    def __rmul__(self, other: "dms.custom_types.CombinableParameterType"):
         return MultiplyParameter(other, self)
 
-    def __truediv__(self, other: "dms_components.custom_types.CombinableParameterType"):
+    def __truediv__(self, other: "dms.custom_types.CombinableParameterType"):
         return DivideParameter(self, other)
 
-    def __rtruediv__(
-        self, other: "dms_components.custom_types.CombinableParameterType"
-    ):
+    def __rtruediv__(self, other: "dms.custom_types.CombinableParameterType"):
         return DivideParameter(other, self)
 
-    def __pow__(self, other: "dms_components.custom_types.CombinableParameterType"):
+    def __pow__(self, other: "dms.custom_types.CombinableParameterType"):
         return PowerParameter(self, other)
 
-    def __rpow__(self, other: "dms_components.custom_types.CombinableParameterType"):
+    def __rpow__(self, other: "dms.custom_types.CombinableParameterType"):
         return PowerParameter(other, self)
 
     def __neg__(self):
@@ -216,8 +213,8 @@ class Normal(ContinuousDistribution):
     def __init__(
         self,
         *,
-        mu: "dms_components.custom_types.ContinuousParameterType",
-        sigma: "dms_components.custom_types.ContinuousParameterType",
+        mu: "dms.custom_types.ContinuousParameterType",
+        sigma: "dms.custom_types.ContinuousParameterType",
         **kwargs,
     ):
 
@@ -245,7 +242,7 @@ class HalfNormal(Normal):
     def __init__(
         self,
         *,
-        sigma: "dms_components.custom_types.ContinuousParameterType",
+        sigma: "dms.custom_types.ContinuousParameterType",
         **kwargs,
     ):
         super().__init__(mu=0.0, sigma=sigma, **kwargs)
@@ -274,8 +271,8 @@ class LogNormal(ContinuousDistribution):
 
     def __init__(
         self,
-        mu: "dms_components.custom_types.ContinuousParameterType",
-        sigma: "dms_components.custom_types.ContinuousParameterType",
+        mu: "dms.custom_types.ContinuousParameterType",
+        sigma: "dms.custom_types.ContinuousParameterType",
         **kwargs,
     ):
         super().__init__(
@@ -304,8 +301,8 @@ class Beta(ContinuousDistribution):
     def __init__(
         self,
         *,
-        alpha: "dms_components.custom_types.ContinuousParameterType",
-        beta: "dms_components.custom_types.ContinuousParameterType",
+        alpha: "dms.custom_types.ContinuousParameterType",
+        beta: "dms.custom_types.ContinuousParameterType",
         **kwargs,
     ):
 
@@ -335,8 +332,8 @@ class Gamma(ContinuousDistribution):
     def __init__(
         self,
         *,
-        alpha: "dms_components.custom_types.ContinuousParameterType",
-        beta: "dms_components.custom_types.ContinuousParameterType",
+        alpha: "dms.custom_types.ContinuousParameterType",
+        beta: "dms.custom_types.ContinuousParameterType",
         **kwargs,
     ):
 
@@ -368,7 +365,7 @@ class Exponential(ContinuousDistribution):
     def __init__(
         self,
         *,
-        beta: "dms_components.custom_types.ContinuousParameterType",
+        beta: "dms.custom_types.ContinuousParameterType",
         **kwargs,
     ):
 
@@ -420,8 +417,8 @@ class Binomial(DiscreteDistribution):
     def __init__(
         self,
         *,
-        theta: "dms_components.custom_types.ContinuousParameterType",
-        N: "dms_components.custom_types.DiscreteParameterType",
+        theta: "dms.custom_types.ContinuousParameterType",
+        N: "dms.custom_types.DiscreteParameterType",
         **kwargs,
     ):
 
@@ -449,7 +446,7 @@ class Poisson(DiscreteDistribution):
     def __init__(
         self,
         *,
-        lambda_: "dms_components.custom_types.ContinuousParameterType",
+        lambda_: "dms.custom_types.ContinuousParameterType",
         **kwargs,
     ):
 

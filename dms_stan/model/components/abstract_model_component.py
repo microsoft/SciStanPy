@@ -8,6 +8,7 @@ import numpy.typing as npt
 import torch
 import torch.nn as nn
 
+import dms_stan as dms
 import dms_stan.model.components as dms_components
 
 
@@ -28,14 +29,14 @@ class AbstractModelComponent(ABC):
         self,
         *,
         shape: tuple[int, ...] = (),
-        **parameters: "dms_components.custom_types.CombinableParameterType",
+        **parameters: "dms.custom_types.CombinableParameterType",
     ):
         """Builds a parameter instance with the given shape."""
 
         # Define placeholder variables
         self._model_varname: str = ""  # DMS Stan Model variable name
         self.observable: bool = False  # Whether the parameter is observable
-        self._parents: dict[str, "dms_components.custom_types.CombinableParameterType"]
+        self._parents: dict[str, "dms.custom_types.CombinableParameterType"]
         self._component_to_paramname: dict["AbstractModelComponent", str]
         self._shape: tuple[int, ...] = shape  # Shape of the parameter
         self._draw_shape: tuple[int, ...]  # Shape of the draws
@@ -58,7 +59,7 @@ class AbstractModelComponent(ABC):
 
     def _validate_parameters(
         self,
-        parameters: dict[str, "dms_components.custom_types.CombinableParameterType"],
+        parameters: dict[str, "dms.custom_types.CombinableParameterType"],
     ) -> None:
         """Checks inputs to the __init__ method for validity."""
         # No incoming parameters can be observables
@@ -79,7 +80,7 @@ class AbstractModelComponent(ABC):
 
     def _set_parents(
         self,
-        parameters: dict[str, "dms_components.custom_types.CombinableParameterType"],
+        parameters: dict[str, "dms.custom_types.CombinableParameterType"],
     ) -> None:
         """Sets the parent parameters of the current parameter."""
 
