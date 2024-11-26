@@ -1,6 +1,6 @@
 """Holds code for working with constant values in a DMS Stan model."""
 
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -14,29 +14,38 @@ class Constant(AbstractModelComponent):
     """
 
     def __init__(
-        self, *, shape: tuple[int, ...] = (), value: Union[int, float, npt.NDArray]
+        self,
+        *,
+        shape: tuple[int, ...] = (),
+        value: Union[int, float, npt.NDArray],
+        stan_lower_bound: Optional[float] = None,
+        stan_upper_bound: Optional[float] = None
     ):
         """
         Wraps the value in a Constant instance. Any numerical type is legal.
         """
         # If the value is a numpy array, get the shape
         if isinstance(value, np.ndarray):
-            self.base_stan_dtype = (
+            self.BASE_STAN_DTYPE = (
                 "real" if isinstance(value.dtype, np.floating) else "int"
             )
             shape = value.shape
 
         # Otherwise, convert to a numpy array
         else:
-            self.base_stan_dtype = "real" if isinstance(value, float) else "int"
+            self.BASE_STAN_DTYPE = "real" if isinstance(value, float) else "int"
             value = np.array(value, dtype=type(value))
+
+        # Set upper and lower bounds
+        self.STAN_LOWER_BOUND = stan_lower_bound
+        self.STAN_UPPER_BOUND = stan_upper_bound
 
         # Set the value
         self.value = value
 
         # Set whether the value is togglable. By default, it is for floats and
         # is not for integers.
-        self.is_togglable = self.base_stan_dtype == "real"
+        self.is_togglable = self.BASE_STAN_DTYPE == "real"
 
         # Initialize the parent class
         super().__init__(shape=shape)

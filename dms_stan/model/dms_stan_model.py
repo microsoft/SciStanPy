@@ -332,7 +332,9 @@ class Model(ABC):
         Returns the hyperparameters of the model. These are explicitly defined
         constants and constants implicit to the model based on parameter definitions.
         """
-        return tuple(sorted(self.constants_dict, key=lambda x: x.model_varname))
+        return tuple(
+            sorted(self.constants_dict.values(), key=lambda x: x.model_varname)
+        )
 
     @property
     def constants_dict(self) -> dict[str, Constant]:

@@ -197,8 +197,8 @@ class DiscreteDistribution(Parameter):
     discrete distributions is to set the observable attribute to True.
     """
 
-    base_stan_dtype: str = "int"
-    stan_lower_bound: int = 0
+    BASE_STAN_DTYPE: str = "int"
+    STAN_LOWER_BOUND: int = 0
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -237,7 +237,7 @@ class Normal(ContinuousDistribution):
 class HalfNormal(Normal):
     """Parameter that is represented by the half-normal distribution."""
 
-    stan_lower_bound: float = 0.0
+    STAN_LOWER_BOUND: float = 0.0
 
     def __init__(
         self,
@@ -274,7 +274,7 @@ class LogNormal(ContinuousDistribution):
     """Parameter that is represented by the log-normal distribution."""
 
     POSITIVE_PARAMS = {"sigma"}
-    stan_lower_bound: float = 0.0
+    STAN_LOWER_BOUND: float = 0.0
 
     def __init__(
         self,
@@ -302,8 +302,8 @@ class Beta(ContinuousDistribution):
     """Defines the beta distribution."""
 
     POSITIVE_PARAMS = {"alpha", "beta"}
-    stan_lower_bound: float = 0.0
-    stan_upper_bound: float = 1.0
+    STAN_LOWER_BOUND: float = 0.0
+    STAN_UPPER_BOUND: float = 1.0
 
     def __init__(
         self,
@@ -334,7 +334,7 @@ class Gamma(ContinuousDistribution):
 
     POSITIVE_PARAMS = {"alpha", "beta"}
 
-    stan_lower_bound: float = 0.0
+    STAN_LOWER_BOUND: float = 0.0
 
     def __init__(
         self,
@@ -367,7 +367,7 @@ class Exponential(ContinuousDistribution):
     POSITIVE_PARAMS = {"beta"}
 
     # Overwrite the stan data type
-    stan_lower_bound: float = 0.0
+    STAN_LOWER_BOUND: float = 0.0
 
     def __init__(
         self,
@@ -394,7 +394,7 @@ class Dirichlet(ContinuousDistribution):
     """Defines the Dirichlet distribution."""
 
     POSITIVE_PARAMS = {"alpha"}
-    base_stan_dtype: str = "simplex"
+    BASE_STAN_DTYPE: str = "simplex"
 
     def __init__(
         self,

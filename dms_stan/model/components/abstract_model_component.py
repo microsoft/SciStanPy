@@ -21,9 +21,9 @@ class AbstractModelComponent(ABC):
     SIMPLEX_PARAMS: set[str] = set()
 
     # Define the stan data type
-    base_stan_dtype: Literal["real", "int", "simplex"] = "real"
-    stan_lower_bound: Optional[float | int] = None
-    stan_upper_bound: Optional[float | int] = None
+    BASE_STAN_DTYPE: Literal["real", "int", "simplex"] = "real"
+    STAN_LOWER_BOUND: Optional[float | int] = None
+    STAN_UPPER_BOUND: Optional[float | int] = None
 
     def __init__(  # pylint: disable=unused-argument
         self,
@@ -84,15 +84,35 @@ class AbstractModelComponent(ABC):
     ) -> None:
         """Sets the parent parameters of the current parameter."""
 
-        # Convert any non-model components to model components
-        self._parents = {
-            name: (
-                dms_components.Constant(value=val)
-                if not isinstance(val, AbstractModelComponent)
-                else val
+        # Convert any non-model components to model components, making sure to
+        # propagate any restrictions on
+        self._parents = {}
+        for name, val in parameters.items():
+
+            # Just the value if an AbstractModelComponent
+            if isinstance(val, AbstractModelComponent):
+                self._parents[name] = val
+                continue
+
+            # Otherwise, convert to a constant model component with the appropriate
+            # bounds
+            if name in self.POSITIVE_PARAMS:
+                stan_lower_bound = 0
+                stan_upper_bound = None
+            elif name in self.NEGATIVE_PARAMS:
+                stan_lower_bound = None
+                stan_upper_bound = 0
+            elif name in self.SIMPLEX_PARAMS:
+                stan_lower_bound = 0
+                stan_upper_bound = 1
+            else:
+                stan_lower_bound = None
+                stan_upper_bound = None
+            self._parents[name] = dms_components.Constant(
+                value=val,
+                stan_lower_bound=stan_lower_bound,
+                stan_upper_bound=stan_upper_bound,
             )
-            for name, val in parameters.items()
-        }
 
         # Map components to param names
         self._component_to_paramname = {v: k for k, v in self._parents.items()}
@@ -506,10 +526,10 @@ class AbstractModelComponent(ABC):
         """Return the Stan bounds for this parameter"""
         # Format the lower and upper bounds
         lower = (
-            "" if self.stan_lower_bound is None else f"lower={self.stan_lower_bound}"
+            "" if self.STAN_LOWER_BOUND is None else f"lower={self.STAN_LOWER_BOUND}"
         )
         upper = (
-            "" if self.stan_upper_bound is None else f"upper={self.stan_upper_bound}"
+            "" if self.STAN_UPPER_BOUND is None else f"upper={self.STAN_UPPER_BOUND}"
         )
 
         # Combine the bounds
@@ -530,7 +550,7 @@ class AbstractModelComponent(ABC):
         """Return the Stan data type for this parameter"""
 
         # Get the base datatype
-        dtype = self.base_stan_dtype
+        dtype = self.BASE_STAN_DTYPE
 
         # Base data type for 0-dimensional parameters. If the parameter is 0-dimensional,
         # then we can only have real or int as the data type.
@@ -580,7 +600,7 @@ class AbstractModelComponent(ABC):
     def model_varname(self) -> str:
         """Return the DMS Stan variable name for this parameter"""
         # If the _model_varname variable is set, then we return it
-        if self._model_varname != "":
+        if self.is_named:
             return self._model_varname
 
         # Otherwise, we automatically create the name. This is the name of the

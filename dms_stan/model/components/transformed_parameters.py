@@ -406,7 +406,7 @@ class NegateParameter(UnaryTransformedParameter):
 class AbsParameter(UnaryTransformedParameter):
     """Defines a parameter that is the absolute value of another."""
 
-    stan_lower_bound: float = 0.0
+    STAN_LOWER_BOUND: float = 0.0
 
     def init_pytorch(
         self, draws: Optional[dict[AbstractModelComponent, npt.NDArray]] = None
@@ -438,7 +438,7 @@ class LogParameter(UnaryTransformedParameter):
     # The distribution must be positive
     POSITIVE_PARAMS = {"dist1"}
 
-    stan_lower_bound: float = 0.0
+    STAN_LOWER_BOUND: float = 0.0
 
     def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
         return np.log(dist1)
@@ -453,7 +453,7 @@ class LogParameter(UnaryTransformedParameter):
 class ExpParameter(UnaryTransformedParameter):
     """Defines a parameter that is the exponential of another."""
 
-    stan_lower_bound: float = 0.0
+    STAN_LOWER_BOUND: float = 0.0
 
     def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
         return np.exp(dist1)
@@ -468,8 +468,8 @@ class ExpParameter(UnaryTransformedParameter):
 class NormalizeParameter(UnaryTransformedParameter):
     """Defines a parameter that is normalized to sum to 1."""
 
-    stan_lower_bound: float = 0.0
-    stan_upper_bound: float = 1.0
+    STAN_LOWER_BOUND: float = 0.0
+    STAN_UPPER_BOUND: float = 1.0
 
     def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
         return dist1 / np.sum(dist1, keepdims=True, axis=-1)
@@ -499,7 +499,7 @@ class NormalizeLogParameter(UnaryTransformedParameter):
     this assumes that the input is log-transformed.
     """
 
-    stan_upper_bound: float = 0.0
+    STAN_UPPER_BOUND: float = 0.0
 
     def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
         return dist1 - sp.logsumexp(dist1, keepdims=True, axis=-1)

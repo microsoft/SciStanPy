@@ -4,13 +4,14 @@ import os.path
 import weakref
 
 from tempfile import TemporaryDirectory
-from typing import Any, Optional, TypedDict
+from typing import Any, Optional, TypedDict, Union
 
 from cmdstanpy import CmdStanModel
 
 import dms_stan as dms
 
-from .components import Parameter, TransformedParameter
+from .components import Constant, Parameter, TransformedParameter
+from .components.abstract_model_component import AbstractModelComponent
 
 
 # We need a specific type for the steps of the Stan model
@@ -38,6 +39,12 @@ class StanModel(CmdStanModel):
         # Set default options
         stanc_options = stanc_options or {}
         cpp_options = cpp_options or {}
+
+        # There can only be one observable
+        if len(model.observables) > 1:
+            raise ValueError(
+                "Compilation to Stan currently only supports one observable."
+            )
 
         # Note the underlying DMSStan model
         self.dms_stan_model = model
@@ -69,7 +76,7 @@ class StanModel(CmdStanModel):
         # to clean up the temporary directory when the model is deleted.
         if output_dir is None:
             tempdir = TemporaryDirectory()
-            weakref.finalize(self, tempdir.cleanup)
+            weakref.finalize(self, TemporaryDirectory.cleanup)
             output_dir = tempdir.name
 
         # Make sure the output directory exists
@@ -79,6 +86,11 @@ class StanModel(CmdStanModel):
         # Set the output directory
         self.output_dir = output_dir
 
+    def _record_data(self, data: Union[Parameter, Constant]):
+        """Record a data object in the steps."""
+        self.steps["data"].append(data.stan_parameter_declaration)
+        self.data_inputs.append(data.model_varname)
+
     def _record_parameter(self, param: Parameter):
         """Record a parameter in the steps."""
         self.steps["parameters"].append(param.stan_parameter_declaration)
@@ -87,84 +99,57 @@ class StanModel(CmdStanModel):
         """Record a transformed parameter in the steps."""
         self.steps["transformed parameters"].append(param.stan_parameter_declaration)
 
-    def _write_parameters(self):
-        """Write the parameters of the model."""
+    def _declare_variables(self):
+        """Write the parameters, transformed parameters, and data of the model."""
 
-        # Loop over the togglable parameters. This takes us from hyperparameters
-        # to observables (top to bottom)
-        for root_node in self.dms_stan_model.root_nodes.values():
+        # We only have one observable
+        assert len(self.dms_stan_model.observables) == 1
+        observable = self.dms_stan_model.observables[0]
 
-            # Make sure this parameter has not been written yet
-            assert root_node not in self.all_varnames
+        # Record the observable in the data block
+        self._record_data(observable)
+        self.all_varnames.add(observable.model_varname)
+        observed_nodes: set[AbstractModelComponent] = {observable}
 
-            # Record the parameter
-            self._record_parameter(root_node)
-            self.all_varnames.add(root_node.model_varname)
+        # Now loop over the parents of the observable and add them to the appropriate
+        # blocks
+        for child, parent in observable.walk_tree(False):
 
-            # Recurse through the children of the togglable parameter and add them
-            # to the steps as well
-            for _, child, _ in root_node.recurse_children():
+            # The parent cannot be an observable
+            assert not parent.observable, "Parent cannot be an observable."
 
-                # If the child has been handled already or is an observable skip it
-                if child.model_varname in self.all_varnames or child.observable:
+            # If the parent has been handled already, skip it.
+            if parent in observed_nodes:
+                continue
+
+            # Check for name collisions
+            if parent.model_varname in self.all_varnames:
+                raise ValueError(f"Name collision for {parent.model_varname}")
+
+            # If the parent is a parameter, add it to the parameters list
+            if isinstance(parent, Parameter):
+                self._record_parameter(parent)
+
+            # If the parent is a constant and the child is a parameter, add it to
+            # the data block
+            elif isinstance(parent, Constant):
+                if isinstance(child, Parameter):
+                    self._record_data(parent)
+                else:
                     continue
 
-                # If the child is a parameter, add it to the parameters list
-                if isinstance(child, Parameter):
-                    self._record_parameter(child)
+            # If it is a transformed parameter, add it to the transformed parameters
+            # list
+            elif isinstance(parent, TransformedParameter):
+                self._record_transformed_parameter(parent)
 
-                # If it is a transformed parameter, add it to the transformed parameters
-                # list
-                elif isinstance(child, TransformedParameter):
-                    self._record_transformed_parameter(child)
+            # Otherwise, raise an error
+            else:
+                raise ValueError(f"Unknown node type {type(parent)}")
 
-                # Otherwise, raise an error
-                else:
-                    raise ValueError(f"Unknown child type {type(child)}")
-
-                # Note that the child has been written
-                self.all_varnames.add(child.model_varname)
-
-    def _write_data(self):
-        """Write the data of the model."""
-        # Define types
-        param_declarations: tuple[str, ...]
-        varnames: tuple[str, ...]
-
-        # There can only be one observable
-        if len(self.dms_stan_model.observables) > 1:
-            raise ValueError(
-                "Compilation to Stan currently only supports one observable."
-            )
-
-        # Get variable names and parameter declarations for the observables,
-        # constants, and hyperparameters
-        param_declarations, varnames = zip(
-            *[
-                (obj.stan_parameter_declaration, obj.model_varname)
-                for obj in (
-                    self.dms_stan_model.observables
-                    + self.dms_stan_model.constants
-                    + self.dms_stan_model.hyperparameters
-                )
-            ]
-        )
-
-        # Add the parameter declarations to the data steps
-        self.steps["data"].extend(param_declarations)
-
-        # Update the data inputs
-        self.data_inputs.extend(varnames)
-
-        # Any data input is also a reserved word. There should be no overlap between
-        # the two sets
-        if (di_set := set(self.data_inputs)).intersection(self.all_varnames):
-            raise AssertionError(
-                "Name collision between data inputs and variable names."
-            )
-
-        # Add the data inputs to the reserved words
-        self.all_varnames.update(di_set)
+            # Note that the child has been written
+            self.all_varnames.add(parent.model_varname)
+            observed_nodes.add(parent)
 
     def _write_model(self):
         """Write the model of the Stan code."""
@@ -186,10 +171,7 @@ class StanModel(CmdStanModel):
     def _build_steps(self):
 
         # Record the parameters first
-        self._write_parameters()
-
-        # Now data
-        self._write_data()
+        self._declare_variables()
 
     def write_stan_code(self) -> str:
         """Get the Stan code for this model."""
