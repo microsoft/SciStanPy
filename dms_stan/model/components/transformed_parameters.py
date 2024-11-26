@@ -595,7 +595,7 @@ class LogExponentialGrowth(Growth):
         operator = ".*" if _is_elementwise_operation(self.t, self.r) else "*"
 
         # Build the transformation
-        return f"{log_A[0]} + {r[0]} {operator} {t[0]}"
+        return f"{log_A} + {r} {operator} {t}"
 
     def calculate_logA(  # pylint: disable=invalid-name
         self, observable: torch.Tensor

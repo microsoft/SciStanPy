@@ -104,9 +104,9 @@ class Parameter(AbstractModelComponent):
         self, param: AbstractModelComponent, index_opts: tuple[str, ...]
     ) -> str:
         if param.is_named:
-            return param.get_stan_code(index_opts)
-        else:
             return param.get_indexed_varname(index_opts)
+        else:
+            return param.get_stan_code(index_opts)
 
     def calculate_log_prob(
         self, observed: Optional[torch.Tensor] = None

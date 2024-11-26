@@ -190,18 +190,24 @@ class AbstractModelComponent(ABC):
             str: The variable name with the appropriate indices (if any).
             bool: Whether the variable is a vector.
         """
-        # Get the number of indices needed
-        n_indices = len(self.shape)
-
         # If there are no indices, then we just return the variable name
-        if n_indices == 0:
-            return self.model_varname, False
+        if self.ndim == 0:
+            return self.model_varname
 
         # Singleton dimensions get a "1" index. All others get the index options.
         indices = [
             "1" if dimsize == 1 else index_opts[i]
             for i, dimsize in enumerate(self.shape)
         ]
+
+        # If the last dimension is vectorized, then we don't need to index it. We
+        # assume that the last dimension is always vectorized.
+        if indices[-1] != "1":
+            indices = indices[:-1]
+
+        # If there are no indices, then we just return the variable name
+        if len(indices) == 0:
+            return self.model_varname
 
         # Build the indexed variable name
         indexed_varname = f"{self.model_varname}[{','.join(indices)}]"
@@ -580,16 +586,13 @@ class AbstractModelComponent(ABC):
 
     @property
     def stan_code_level(self) -> int:
-        """The level at which the code is written. 0 is the highest level."""
-        # Strip off leading 1s. The level is the remaining dimensions.
-        level = 0
-        for dimsize in self.shape:
-            if dimsize == 1:
-                level += 1
-            else:
-                break
-
-        return level
+        """
+        The level (index of the for-loop block) at which the parameter is manipulated
+        in the Stan code. This is the number of dimensions of the parameter minus
+        one, clipped at zero. This is because the last dimension is assumed to always
+        be vectorized.
+        """
+        return max(self.ndim - 1, 0)
 
     @property
     def stan_parameter_declaration(self) -> str:
