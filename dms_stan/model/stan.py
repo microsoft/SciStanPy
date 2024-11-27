@@ -53,6 +53,7 @@ class StanModel(CmdStanModel):
         self,
         model: "dms.model.Model",
         output_dir: Optional[str] = None,
+        force_compile: bool = False,
         stanc_options: Optional[dict[str, Any]] = None,
         cpp_options: Optional[dict[str, Any]] = None,
         user_header: Optional[str] = None,
@@ -94,6 +95,15 @@ class StanModel(CmdStanModel):
 
         # Write the Stan program
         self.write_stan_program()
+
+        # Initialize the CmdStanModel
+        super().__init__(
+            stan_file=self.stan_program_path,
+            force_compile=force_compile,
+            stanc_options=stanc_options,
+            cpp_options=cpp_options,
+            user_header=user_header,
+        )
 
     def _set_output_dir(self, output_dir: Optional[str]) -> None:
         """Set the output directory for the model."""
@@ -333,10 +343,13 @@ class StanModel(CmdStanModel):
         Write the Stan model to the output directory. This will overwrite any model
         in that directory.
         """
-        with open(
-            os.path.join(self.output_dir, "model.stan"), "w", encoding="utf-8"
-        ) as f:
+        with open(self.stan_program_path, "w", encoding="utf-8") as f:
             f.write(self.stan_program)
+
+    @property
+    def stan_program_path(self) -> str:
+        """Get the path to the Stan program for this model."""
+        return os.path.join(self.output_dir, "model.stan")
 
     @property
     def stan_program(self) -> str:
