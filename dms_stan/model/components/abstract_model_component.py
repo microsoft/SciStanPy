@@ -562,19 +562,19 @@ class AbstractModelComponent(ABC):
         # then we can only have real or int as the data type.
         if self.ndim == 0:
             assert dtype in {"real", "int"}
-            return dtype
+            return f"{dtype}{self.stan_bounds}"
 
         # Convert shape to strings
         string_shape = [str(dim) for dim in self.shape]
 
         # Handle different data types for different dimensions
         if dtype == "real":  # Becomes vector or array of vectors
-            dtype = f"vector[{string_shape[-1]}]"
+            dtype = f"vector{self.stan_bounds}[{string_shape[-1]}]"
             if self.ndim > 1:
                 dtype = f"array[{','.join(string_shape[:-1])}] {dtype}"
 
         elif dtype == "int":  # Becomes array
-            dtype = f"array[{','.join(string_shape)}] int"
+            dtype = f"array[{','.join(string_shape)}] int{self.stan_bounds}"
 
         elif dtype == "simplex":  # Becomes array of simplexes
             dtype = f"array[{','.join(string_shape[:-1])}] simplex[{string_shape[-1]}]"
@@ -597,7 +597,7 @@ class AbstractModelComponent(ABC):
     @property
     def stan_parameter_declaration(self) -> str:
         """Returns the Stan parameter declaration for this parameter."""
-        return f"{self.stan_dtype}{self.stan_bounds} {self.model_varname}"
+        return f"{self.stan_dtype} {self.model_varname}"
 
     @property
     def model_varname(self) -> str:

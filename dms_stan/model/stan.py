@@ -14,6 +14,7 @@ import dms_stan as dms
 from .components import Constant, Parameter, TransformedParameter
 from .components.abstract_model_component import AbstractModelComponent
 
+# TODO: We need to employ non-centered parameterization for hierarchical models
 
 # Function for combining a list of Stan code lines
 DEFAULT_INDENTATION = 4
