@@ -137,7 +137,7 @@ class StanModel(CmdStanModel):
 
         # Now loop over the parents of the observable and add them to the appropriate
         # blocks
-        for child, parent in observable.walk_tree(False):
+        for _, parent in observable.walk_tree(False):
 
             # The parent cannot be an observable
             assert not parent.observable, "Parent cannot be an observable."
@@ -154,13 +154,9 @@ class StanModel(CmdStanModel):
             if isinstance(parent, Parameter):
                 self._record_parameter(parent)
 
-            # If the parent is a constant and the child is a parameter, add it to
-            # the data block
+            # If the parent is a constant, add it to the data block
             elif isinstance(parent, Constant):
-                if isinstance(child, Parameter):
-                    self._record_data(parent)
-                else:
-                    continue
+                self._record_data(parent)
 
             # If it is a transformed parameter, add it to the transformed parameters
             # list
