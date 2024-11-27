@@ -15,15 +15,30 @@ from .components import Constant, Parameter, TransformedParameter
 from .components.abstract_model_component import AbstractModelComponent
 
 
+# Function for combining a list of Stan code lines
+DEFAULT_INDENTATION = 4
+
+
+def combine_lines(lines: list[str], indentation: int = DEFAULT_INDENTATION) -> str:
+    """Combine a list of Stan code lines into a single string."""
+
+    # Nothing if no lines
+    if len(lines) == 0:
+        return ""
+
+    # Combine the lines
+    return ";\n".join(f"{' ' * indentation}{el}" for el in lines) + ";"
+
+
 # We need a specific type for the steps of the Stan model
 class StanStepsType(TypedDict):
     """Type for the steps of the Stan model."""
 
-    data: list[str]
-    parameters: list[str]
-    transformed_parameters: list[str]
+    data: Union[str, list[str]]
+    parameters: Union[str, list[str]]
+    transformed_parameters: Union[str, list[str]]
     model: str
-    generated_quantities: list[str]
+    generated_quantities: Union[str, list[str]]
 
 
 class StanModel(CmdStanModel):
@@ -76,13 +91,16 @@ class StanModel(CmdStanModel):
         # Set the output directory
         self._set_output_dir(output_dir)
 
+        # Write the Stan program
+        self.write_stan_program()
+
     def _set_output_dir(self, output_dir: Optional[str]) -> None:
         """Set the output directory for the model."""
         # Make a temporary directory if none is specified. Set up a weak reference
         # to clean up the temporary directory when the model is deleted.
         if output_dir is None:
             tempdir = TemporaryDirectory()
-            weakref.finalize(self, TemporaryDirectory.cleanup)
+            weakref.finalize(self, tempdir.cleanup)
             output_dir = tempdir.name
 
         # Make sure the output directory exists
@@ -157,6 +175,13 @@ class StanModel(CmdStanModel):
             self.all_varnames.add(parent.model_varname)
             observed_nodes.add(parent)
 
+        # Combine lines for the blocks
+        self.steps["parameters"] = combine_lines(self.steps["parameters"])
+        self.steps["data"] = combine_lines(self.steps["data"])
+        self.steps["transformed parameters"] = combine_lines(
+            self.steps["transformed parameters"]
+        )
+
     def _build_code_blocks(self):
         """Builds the 'model' and 'transformed data' blocks of the Stan model."""
         # We need a way to record the level to expected index. This is handled by
@@ -212,8 +237,8 @@ class StanModel(CmdStanModel):
             levels = [level[::-1] for level in levels]
 
             # Now build the nested 'for' loops
-            code_block = ";\n".join(levels[0])
-            indentation = 0
+            code_block = combine_lines(levels[0])
+            indentation = DEFAULT_INDENTATION
             for code_level, level in enumerate(levels[1:], 1):
 
                 # Build the prefix for the 'for' loop
@@ -227,19 +252,15 @@ class StanModel(CmdStanModel):
                 indentation += 4
 
                 # Add the code, making sure to include the appropriate number of spaces
-                code_block += (
-                    for_prefix
-                    + ";\n".join([f"{' ' * indentation}{line}" for line in level])
-                    + ";"
-                )
+                code_block += for_prefix + combine_lines(level, indentation=indentation)
 
             # Now close the 'for' loops
             for _ in range(len(levels) - 1):
                 indentation -= 4
                 code_block += f"\n{' ' * indentation}}}"
-            assert indentation == 0
+            assert indentation == 4
 
-            return code_block.strip()
+            return code_block
 
         # Get the number of for-loop levels. This is given by the dimensionality
         # of the observable. We create lists for each level. Different variables
@@ -247,7 +268,7 @@ class StanModel(CmdStanModel):
         # Note that we assume the last level is vectorized
         n_levels = self.dms_stan_model.observables[0].ndim
         model_levels = [[] for _ in range(n_levels)]
-        transformed_data_levels = copy.deepcopy(model_levels)
+        transformed_param_levels = copy.deepcopy(model_levels)
 
         # Get allowed index variable names for each level
         allowed_index_names = tuple(
@@ -291,7 +312,7 @@ class StanModel(CmdStanModel):
             # If the component is a transformed parameter, add to the transformed
             # data levels
             elif isinstance(parent, TransformedParameter):
-                transformed_data_levels[parent.stan_code_level].append(
+                transformed_param_levels[parent.stan_code_level].append(
                     parent.get_transformation_assignment(allowed_index_names)
                 )
 
@@ -304,12 +325,37 @@ class StanModel(CmdStanModel):
 
         # Format the code blocks
         self.steps["model"] = format_code_block(model_levels)
-        self.steps["transformed data"] = format_code_block(transformed_data_levels)
+        self.steps["transformed parameters"] = (
+            self.steps["transformed parameters"]
+            + "\n"
+            + format_code_block(transformed_param_levels)
+        )
 
-    def _build_steps(self):
+    def write_stan_program(self) -> None:
+        """
+        Write the Stan model to the output directory. This will overwrite any model
+        in that directory.
+        """
+        with open(
+            os.path.join(self.output_dir, "model.stan"), "w", encoding="utf-8"
+        ) as f:
+            f.write(self.stan_program)
 
-        # Record the parameters first
-        self._declare_variables()
+    @property
+    def stan_program(self) -> str:
+        """Get the Stan program for this model."""
 
-    def write_stan_code(self) -> str:
-        """Get the Stan code for this model."""
+        # Return the full program
+        return f"""data {{
+{self.steps["data"]}
+}}
+parameters {{
+{self.steps["parameters"]}
+}}
+transformed parameters {{
+{self.steps["transformed parameters"]}
+}}
+model {{
+{self.steps["model"]}
+}}
+"""
