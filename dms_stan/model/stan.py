@@ -1,5 +1,6 @@
 """Holds code for interfacing with the Stan modeling language."""
 
+import copy
 import os.path
 import weakref
 
@@ -26,6 +27,10 @@ class StanStepsType(TypedDict):
 
 
 class StanModel(CmdStanModel):
+    """
+    Expands the CmdStanModel class to allow for interfacing with the rest of
+    DMSStan.
+    """
 
     # We initialize with a DMSStan model instance
     def __init__(
@@ -64,8 +69,9 @@ class StanModel(CmdStanModel):
         # Required data for the Stan model
         self.data_inputs: list[str] = []
 
-        # Build the steps
-        self._build_steps()
+        # Build the program elements
+        self._declare_variables()
+        self._build_code_blocks()
 
         # Set the output directory
         self._set_output_dir(output_dir)
@@ -151,22 +157,154 @@ class StanModel(CmdStanModel):
             self.all_varnames.add(parent.model_varname)
             observed_nodes.add(parent)
 
-    def _write_model(self):
-        """Write the model of the Stan code."""
-        # We need one less nested for-loops than the number of dimensions in the
-        # observable
-        observable: Parameter = self.dms_stan_model.observables[0]
-        n_for_loops = observable.ndim - 1
+    def _build_code_blocks(self):
+        """Builds the 'model' and 'transformed data' blocks of the Stan model."""
+        # We need a way to record the level to expected index. This is handled by
+        # the child function
+        level_to_size: dict[int, int] = {}
 
-        # We begin the model as a list in the inner loop
-        model = []
+        def check_level_to_size(model_component: AbstractModelComponent) -> None:
 
-        # Add the observable to the model. Note that we assume the last dimension
-        # is vectorized.
-        # TODO: Any 1D arrays, vectors, or scalars can be directly defined in the
-        # model outside of for-loops. We can go top-down to get these.
-        # TODO: Any ND arrays can be defined in the model inside of for-loops. We
-        # can go top-down to get these too.
+            # Do nothing if level 0. We should not need to check these as they
+            # are not indexed
+            if model_component.stan_code_level == 0:
+                return
+
+            # Get the dimension whose size we need to check
+            corresponding_dim = n_levels - model_component.ndim
+            assert corresponding_dim >= 0
+
+            # Get the size of the component at the corresponding dimension and any
+            # recorded size
+            component_size = model_component.shape[corresponding_dim]
+            retrieved_size = level_to_size.get(model_component.stan_code_level)
+
+            # Make sure the recorded size matches the size of the component at the
+            # corresponding dimension. Record the size if it has not been recorded.
+            if retrieved_size is None:
+                level_to_size[model_component.stan_code_level] = component_size
+            elif retrieved_size != component_size:
+
+                # If one of the two sizes is 1, we can ignore the error and set
+                # the size to the larger of the two
+                if retrieved_size == 1 or component_size == 1:
+                    level_to_size[model_component.stan_code_level] = max(
+                        retrieved_size, component_size
+                    )
+
+                # Otherwise, raise an error
+                else:
+                    raise AssertionError(
+                        "Size mismatch at dimensions indexed by same variable: "
+                        + f"{retrieved_size} != {component_size}"
+                    )
+
+        def format_code_block(levels: list[list[str]]) -> str:
+            """
+            Builds a block of code from a list of levels. Each level is a list of
+            strings giving the code for that level. Each element of each list will
+            be joined by a semi-colon and a newline. The first level is the top
+            level while the other levels are nested within the previous level using
+            for loops.
+            """
+            # Invert the contents of each level. The inversion is needed because
+            # we built the levels from the bottom up.
+            levels = [level[::-1] for level in levels]
+
+            # Now build the nested 'for' loops
+            code_block = ";\n".join(levels[0])
+            indentation = 0
+            for code_level, level in enumerate(levels[1:], 1):
+
+                # Build the prefix for the 'for' loop
+                index_var = allowed_index_names[code_level - 1]
+                max_size = level_to_size[code_level]
+                for_prefix = (
+                    f"\n{' ' * indentation}for ({index_var} in 1:{max_size}) " + "{\n"
+                )
+
+                # Update the indentation
+                indentation += 4
+
+                # Add the code, making sure to include the appropriate number of spaces
+                code_block += (
+                    for_prefix
+                    + ";\n".join([f"{' ' * indentation}{line}" for line in level])
+                    + ";"
+                )
+
+            # Now close the 'for' loops
+            for _ in range(len(levels) - 1):
+                indentation -= 4
+                code_block += f"\n{' ' * indentation}}}"
+            assert indentation == 0
+
+            return code_block.strip()
+
+        # Get the number of for-loop levels. This is given by the dimensionality
+        # of the observable. We create lists for each level. Different variables
+        # will be defined and accessed depending on the level to which they belong.
+        # Note that we assume the last level is vectorized
+        n_levels = self.dms_stan_model.observables[0].ndim
+        model_levels = [[] for _ in range(n_levels)]
+        transformed_data_levels = copy.deepcopy(model_levels)
+
+        # Get allowed index variable names for each level
+        allowed_index_names = tuple(
+            char
+            for char in dms.defaults.DEFAULT_INDEX_ORDER
+            if {char, char.upper()}.isdisjoint(self.all_varnames)
+        )
+
+        # There should be enough index names to cover all levels
+        if len(allowed_index_names) < (n_levels - 1):
+            raise ValueError(
+                f"Not enough index names ({len(allowed_index_names)}) to cover {n_levels} levels"
+            )
+
+        # Observable is automatically the last level
+        model_levels[-1].append(
+            self.dms_stan_model.observables[0].get_target_incrementation(
+                allowed_index_names
+            )
+        )
+        check_level_to_size(self.dms_stan_model.observables[0])
+
+        # Walk up the tree from the observable to the top level, adding variables
+        # and transformations to the appropriate level
+        max_level = self.dms_stan_model.observables[0].stan_code_level
+        for _, parent in self.dms_stan_model.observables[0].walk_tree(walk_down=False):
+
+            # We must always be going down a level or staying at the same level
+            if parent.stan_code_level > max_level:
+                raise ValueError(
+                    f"Cannot go up a level from {min_level} to {parent.stan_code_level}"
+                )
+            min_level = parent.stan_code_level
+
+            # If the component is a parameter, add to the model levels
+            if isinstance(parent, Parameter):
+                model_levels[parent.stan_code_level].append(
+                    parent.get_target_incrementation(allowed_index_names)
+                )
+
+            # If the component is a transformed parameter, add to the transformed
+            # data levels
+            elif isinstance(parent, TransformedParameter):
+                transformed_data_levels[parent.stan_code_level].append(
+                    parent.get_transformation_assignment(allowed_index_names)
+                )
+
+            # Otherwise it must be a constant
+            else:
+                assert isinstance(parent, Constant)
+
+            # Check the level to size mapping
+            check_level_to_size(parent)
+
+        # Format the code blocks
+        self.steps["model"] = format_code_block(model_levels)
+        self.steps["transformed data"] = format_code_block(transformed_data_levels)
 
     def _build_steps(self):
 
