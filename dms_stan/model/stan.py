@@ -245,16 +245,16 @@ class StanModel(CmdStanModel):
                 )
 
                 # Update the indentation
-                indentation += 4
+                indentation += DEFAULT_INDENTATION
 
                 # Add the code, making sure to include the appropriate number of spaces
                 code_block += for_prefix + combine_lines(level, indentation=indentation)
 
             # Now close the 'for' loops
             for _ in range(len(levels) - 1):
-                indentation -= 4
+                indentation -= DEFAULT_INDENTATION
                 code_block += f"\n{' ' * indentation}}}"
-            assert indentation == 4
+            assert indentation == DEFAULT_INDENTATION
 
             return code_block
 
