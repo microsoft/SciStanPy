@@ -10,6 +10,7 @@ import torch.distributions as dist
 import dms_stan as dms
 
 from .abstract_model_component import AbstractModelComponent
+from .constants import Constant
 from .transformed_parameters import (
     AddParameter,
     DivideParameter,
@@ -94,6 +95,10 @@ class Parameter(AbstractModelComponent):
         self.observable = True
         return self
 
+    def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
+        """Null opp for parameters by default"""
+        return ""
+
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan target incrementation for this parameter."""
         return f"{self.get_indexed_varname(index_opts)} ~ " + self.get_stan_code(
@@ -151,6 +156,11 @@ class Parameter(AbstractModelComponent):
                 for name, param in self.torch_parameters.items()
             }
         )
+
+    @property
+    def is_hyperparameter(self) -> bool:
+        """Returns `True` if all parents are constants. False otherwise."""
+        return all(isinstance(parent, Constant) for parent in self.parents)
 
 
 class ContinuousDistribution(Parameter):
@@ -232,6 +242,52 @@ class Normal(ContinuousDistribution):
         self, mu: str, sigma: str
     ) -> str:
         return f"normal({mu}, {sigma})"
+
+    def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
+        """
+        If a hierarchical model is used and this is not a hyperparameter (i.e.,
+        its parents are not constants but other parameters), then we want to non-
+        center the parameter. This is done by redefining this parameter as the
+        transformation of a draw from a unit normal distribution.
+        """
+        # If this is a hyperparameter, then we use the parent method
+        if self.is_hyperparameter:
+            return super().get_transformation_assignment(index_opts)
+
+        # Get our formattables
+        mu_declaration = self._get_formattables(self.mu, index_opts)
+        sigma_declaration = self._get_formattables(self.sigma, index_opts)
+
+        # Otherwise, we redefine this parameter as the transformation of a draw
+        # from a unit normal distribution
+        return (
+            f"{self.get_indexed_varname(index_opts)} = {mu_declaration} + {sigma_declaration} "
+            f"* {self.get_indexed_varname(index_opts, _name_override=self.noncentered_varname)}"
+        )
+
+    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
+        """
+        If a hierarchical model is used, then the target variable is incremented
+        by the log probability of the non-centered parameter. Otherwise, we use
+        the parent method.
+        """
+        # If this is a hyperparameter, then we use the parent method
+        if self.is_hyperparameter:
+            return super().get_target_incrementation(index_opts)
+
+        # Otherwise, we increment the target variable by the log probability of
+        # the non-centered parameter
+        return (
+            self.get_indexed_varname(
+                index_opts, _name_override=self.noncentered_varname
+            )
+            + " ~ std_normal()"
+        )
+
+    @property
+    def noncentered_varname(self) -> str:
+        """Return the non-centered variable name"""
+        return f"{self.model_varname}_raw"
 
 
 class HalfNormal(Normal):

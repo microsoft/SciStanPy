@@ -177,7 +177,9 @@ class AbstractModelComponent(ABC):
 
         return child_paramnames
 
-    def get_indexed_varname(self, index_opts: tuple[str, ...]) -> str:
+    def get_indexed_varname(
+        self, index_opts: tuple[str, ...], _name_override: str = ""
+    ) -> str:
         """
         Returns the variable name used by stan with the appropriate indices. Note
         that DMS Stan always assumes that computations on the last dimension can
@@ -190,9 +192,12 @@ class AbstractModelComponent(ABC):
             str: The variable name with the appropriate indices (if any).
             bool: Whether the variable is a vector.
         """
+        # If the name override is provided, then we use that name
+        base_name = _name_override or self.model_varname
+
         # If there are no indices, then we just return the variable name
         if self.ndim == 0:
-            return self.model_varname
+            return base_name
 
         # Singleton dimensions get a "1" index. All others get the index options.
         indices = [
@@ -207,10 +212,10 @@ class AbstractModelComponent(ABC):
 
         # If there are no indices, then we just return the variable name
         if len(indices) == 0:
-            return self.model_varname
+            return base_name
 
         # Build the indexed variable name
-        indexed_varname = f"{self.model_varname}[{','.join(indices)}]"
+        indexed_varname = f"{base_name}[{','.join(indices)}]"
 
         return indexed_varname
 
@@ -427,6 +432,14 @@ class AbstractModelComponent(ABC):
         return to_return
 
     @abstractmethod
+    def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
+        """Gets the transformation assignment operation for the model component."""
+
+    @abstractmethod
+    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
+        """Gets the target incrementation operation for the model component."""
+
+    @abstractmethod
     def _handle_transformation_code(
         self, param: "AbstractModelComponent", index_opts: tuple[str, ...]
     ) -> str:
@@ -436,32 +449,36 @@ class AbstractModelComponent(ABC):
     def format_stan_code(self, **to_format: str) -> str:
         """Formats the Stan code for the parameter."""
 
+    def _get_formattables(
+        self, param: "AbstractModelComponent", index_opts: tuple[str, ...]
+    ) -> str:
+        """Gets the inputs to `format_stan_code` for a parent parameter."""
+        # If the parameter is a constant or another parameter, record
+        if isinstance(param, (dms_components.Constant, dms_components.Parameter)):
+            return param.get_indexed_varname(index_opts)
+
+        # If the parameter is transformed and not named, the computation is
+        # happening in the model. Otherwise, the computation has already happened
+        # in the transformed parameters block. Note that THIS instance handles the
+        # transformation code based on ITS type, not the type of the parameter.
+        elif isinstance(param, dms_components.TransformedParameter):
+            return self._handle_transformation_code(param=param, index_opts=index_opts)
+
+        # Otherwise, raise an error
+        else:
+            raise TypeError(f"Unknown model component type {type(param)}")
+
     def get_stan_code(self, index_opts: tuple[str, ...]) -> str:
         """Gets the Stan code for the parameter."""
 
         # Recursively gather the transformations until we hit a non-transformed
         # parameter or a recorded variable
-        to_format: dict[str, str] = {}
-        for name, param in self._parents.items():
-
-            # If the parameter is a constant or another parameter, record
-            if isinstance(param, (dms_components.Constant, dms_components.Parameter)):
-                to_format[name] = param.get_indexed_varname(index_opts)
-
-            # If the parameter is transformed and not named, the computation is
-            # happening in the model. Otherwise, the computation has already happened
-            # in the transformed parameters block.
-            elif isinstance(param, dms_components.TransformedParameter):
-                to_format[name] = self._handle_transformation_code(
-                    param=param, index_opts=index_opts
-                )
-
-            # Otherwise, raise an error
-            else:
-                raise TypeError(f"Unknown model component type {type(param)}")
-
-        # Format the code
-        return self.format_stan_code(**to_format)
+        return self.format_stan_code(
+            **{
+                name: self._get_formattables(param, index_opts)
+                for name, param in self._parents.items()
+            }
+        )
 
     def _get_torch_parameter(self, paramname: str) -> torch.Tensor:
         """Returns the transformed PyTorch parameter for the given parameter name."""

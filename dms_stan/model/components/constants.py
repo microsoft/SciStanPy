@@ -26,7 +26,7 @@ class Constant(AbstractModelComponent):
         """
         # If the value is a numpy array, get the shape
         if isinstance(value, np.ndarray):
-            self.BASE_STAN_DTYPE = (
+            self.BASE_STAN_DTYPE = (  # pylint: disable=invalid-name
                 "real" if isinstance(value.dtype, np.floating) else "int"
             )
             shape = value.shape
@@ -37,8 +37,8 @@ class Constant(AbstractModelComponent):
             value = np.array(value, dtype=type(value))
 
         # Set upper and lower bounds
-        self.STAN_LOWER_BOUND = stan_lower_bound
-        self.STAN_UPPER_BOUND = stan_upper_bound
+        self.STAN_LOWER_BOUND = stan_lower_bound  # pylint: disable=invalid-name
+        self.STAN_UPPER_BOUND = stan_upper_bound  # pylint: disable=invalid-name
 
         # Set the value
         self.value = value
@@ -71,4 +71,12 @@ class Constant(AbstractModelComponent):
     def format_stan_code(self, **to_format: str) -> str:
         """There is no transformation code to format."""
         assert len(to_format) == 0
+        return ""
+
+    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
+        """Constants cannot increment the target variable."""
+        return ""
+
+    def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
+        """Constants are never transformed."""
         return ""

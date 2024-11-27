@@ -156,6 +156,10 @@ class TransformedParameter(AbstractModelComponent):
             index_opts
         )
 
+    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
+        """Null operation for transformed parameters by default."""
+        return ""
+
     def _handle_transformation_code(
         self, param: AbstractModelComponent, index_opts: tuple[str, ...]
     ) -> str:

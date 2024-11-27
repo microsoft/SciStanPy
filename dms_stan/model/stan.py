@@ -11,10 +11,8 @@ from cmdstanpy import CmdStanModel
 
 import dms_stan as dms
 
-from .components import Constant, Parameter, TransformedParameter
+from .components import Constant, Normal, Parameter, TransformedParameter
 from .components.abstract_model_component import AbstractModelComponent
-
-# TODO: We need to employ non-centered parameterization for hierarchical models
 
 # Function for combining a list of Stan code lines
 DEFAULT_INDENTATION = 4
@@ -126,14 +124,6 @@ class StanModel(CmdStanModel):
         self.steps["data"].append(data.stan_parameter_declaration)
         self.data_inputs.append(data.model_varname)
 
-    def _record_parameter(self, param: Parameter):
-        """Record a parameter in the steps."""
-        self.steps["parameters"].append(param.stan_parameter_declaration)
-
-    def _record_transformed_parameter(self, param: TransformedParameter):
-        """Record a transformed parameter in the steps."""
-        self.steps["transformed parameters"].append(param.stan_parameter_declaration)
-
     def _declare_variables(self):
         """Write the parameters, transformed parameters, and data of the model."""
 
@@ -161,9 +151,20 @@ class StanModel(CmdStanModel):
             if parent.model_varname in self.all_varnames:
                 raise ValueError(f"Name collision for {parent.model_varname}")
 
+            # If the parent is a Normal distribution that is not a hyperparameter,
+            # we will be non-centering. Thus, the true parameter is defined as a
+            # transformed parameter and a dummy parameter is defined as a parameter.
+            if isinstance(parent, Normal) and not parent.is_hyperparameter:
+                self.steps["parameters"].append(
+                    f"{parent.stan_dtype} {parent.noncentered_varname}"
+                )
+                self.steps["transformed parameters"].append(
+                    parent.stan_parameter_declaration
+                )
+
             # If the parent is a parameter, add it to the parameters list
-            if isinstance(parent, Parameter):
-                self._record_parameter(parent)
+            elif isinstance(parent, Parameter):
+                self.steps["parameters"].append(parent.stan_parameter_declaration)
 
             # If the parent is a constant, add it to the data block
             elif isinstance(parent, Constant):
@@ -172,7 +173,9 @@ class StanModel(CmdStanModel):
             # If it is a transformed parameter, add it to the transformed parameters
             # list
             elif isinstance(parent, TransformedParameter):
-                self._record_transformed_parameter(parent)
+                self.steps["transformed parameters"].append(
+                    parent.stan_parameter_declaration
+                )
 
             # Otherwise, raise an error
             else:
@@ -203,7 +206,7 @@ class StanModel(CmdStanModel):
                 return
 
             # Get the dimension whose size we need to check
-            corresponding_dim = n_levels - model_component.ndim
+            corresponding_dim = obs.ndim - model_component.ndim
             assert corresponding_dim >= 0
 
             # Get the size of the component at the corresponding dimension and any
@@ -273,8 +276,8 @@ class StanModel(CmdStanModel):
         # of the observable. We create lists for each level. Different variables
         # will be defined and accessed depending on the level to which they belong.
         # Note that we assume the last level is vectorized
-        n_levels = self.dms_stan_model.observables[0].ndim
-        model_levels = [[] for _ in range(n_levels)]
+        obs = self.dms_stan_model.observables[0]  # Shorthand for the observable
+        model_levels = [[] for _ in range(obs.ndim)]
         transformed_param_levels = copy.deepcopy(model_levels)
 
         # Get allowed index variable names for each level
@@ -285,45 +288,43 @@ class StanModel(CmdStanModel):
         )
 
         # There should be enough index names to cover all levels
-        if len(allowed_index_names) < (n_levels - 1):
+        if len(allowed_index_names) < (obs.ndim - 1):
             raise ValueError(
-                f"Not enough index names ({len(allowed_index_names)}) to cover {n_levels} levels"
+                f"Not enough index names ({len(allowed_index_names)}) to cover {obs.ndim} levels"
             )
 
         # Observable is automatically the last level
-        model_levels[-1].append(
-            self.dms_stan_model.observables[0].get_target_incrementation(
-                allowed_index_names
-            )
-        )
-        check_level_to_size(self.dms_stan_model.observables[0])
+        assert obs.get_transformation_assignment(allowed_index_names) == ""
+        model_levels[-1].append(obs.get_target_incrementation(allowed_index_names))
+        check_level_to_size(obs)
 
         # Walk up the tree from the observable to the top level, adding variables
         # and transformations to the appropriate level
-        max_level = self.dms_stan_model.observables[0].stan_code_level
-        for _, parent in self.dms_stan_model.observables[0].walk_tree(walk_down=False):
+        max_level = obs.stan_code_level
+        for _, parent in obs.walk_tree(walk_down=False):
 
             # We must always be going down a level or staying at the same level
             if parent.stan_code_level > max_level:
                 raise ValueError(
-                    f"Cannot go up a level from {min_level} to {parent.stan_code_level}"
+                    f"Cannot go up a level from {max_level} to {parent.stan_code_level}"
                 )
-            min_level = parent.stan_code_level
+            max_level = parent.stan_code_level
 
-            # If the component is a parameter, add to the model levels
-            if isinstance(parent, Parameter):
-                model_levels[parent.stan_code_level].append(
-                    parent.get_target_incrementation(allowed_index_names)
-                )
+            # If a parameter or transformed parameter, add target incrementation
+            # and any transformations to the appropriate level
+            if isinstance(parent, (Parameter, TransformedParameter)):
+                if target_incrementation := parent.get_target_incrementation(
+                    allowed_index_names
+                ):
+                    model_levels[parent.stan_code_level].append(target_incrementation)
+                if transformation_assignment := parent.get_transformation_assignment(
+                    allowed_index_names
+                ):
+                    transformed_param_levels[parent.stan_code_level].append(
+                        transformation_assignment
+                    )
 
-            # If the component is a transformed parameter, add to the transformed
-            # data levels
-            elif isinstance(parent, TransformedParameter):
-                transformed_param_levels[parent.stan_code_level].append(
-                    parent.get_transformation_assignment(allowed_index_names)
-                )
-
-            # Otherwise it must be a constant
+            # Otherwise the parent must be a constant
             else:
                 assert isinstance(parent, Constant)
 
