@@ -22,7 +22,46 @@ def _is_elementwise_operation(*params: AbstractModelComponent) -> bool:
     return all(param.ndim > 0 and param.shape[-1] > 1 for param in params)
 
 
-class TransformedParameter(AbstractModelComponent):
+class TransformableParameter:
+    """
+    Mixin class for parameters that can be transformed using mathematical operations.
+    """
+
+    def __add__(self, other: "dms.custom_types.CombinableParameterType"):
+        return AddParameter(self, other)
+
+    def __radd__(self, other: "dms.custom_types.CombinableParameterType"):
+        return AddParameter(other, self)
+
+    def __sub__(self, other: "dms.custom_types.CombinableParameterType"):
+        return SubtractParameter(self, other)
+
+    def __rsub__(self, other: "dms.custom_types.CombinableParameterType"):
+        return SubtractParameter(other, self)
+
+    def __mul__(self, other: "dms.custom_types.CombinableParameterType"):
+        return MultiplyParameter(self, other)
+
+    def __rmul__(self, other: "dms.custom_types.CombinableParameterType"):
+        return MultiplyParameter(other, self)
+
+    def __truediv__(self, other: "dms.custom_types.CombinableParameterType"):
+        return DivideParameter(self, other)
+
+    def __rtruediv__(self, other: "dms.custom_types.CombinableParameterType"):
+        return DivideParameter(other, self)
+
+    def __pow__(self, other: "dms.custom_types.CombinableParameterType"):
+        return PowerParameter(self, other)
+
+    def __rpow__(self, other: "dms.custom_types.CombinableParameterType"):
+        return PowerParameter(other, self)
+
+    def __neg__(self):
+        return NegateParameter(self)
+
+
+class TransformedParameter(AbstractModelComponent, TransformableParameter):
     """
     Base class representing a parameter that is the result of combining other
     parameters using mathematical operations.

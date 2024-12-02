@@ -11,14 +11,7 @@ import dms_stan as dms
 
 from .abstract_model_component import AbstractModelComponent
 from .constants import Constant
-from .transformed_parameters import (
-    AddParameter,
-    DivideParameter,
-    MultiplyParameter,
-    NegateParameter,
-    PowerParameter,
-    SubtractParameter,
-)
+from .transformed_parameters import TransformableParameter
 
 
 class Parameter(AbstractModelComponent):
@@ -163,41 +156,8 @@ class Parameter(AbstractModelComponent):
         return all(isinstance(parent, Constant) for parent in self.parents)
 
 
-class ContinuousDistribution(Parameter):
+class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
-
-    def __add__(self, other: "dms.custom_types.CombinableParameterType"):
-        return AddParameter(self, other)
-
-    def __radd__(self, other: "dms.custom_types.CombinableParameterType"):
-        return AddParameter(other, self)
-
-    def __sub__(self, other: "dms.custom_types.CombinableParameterType"):
-        return SubtractParameter(self, other)
-
-    def __rsub__(self, other: "dms.custom_types.CombinableParameterType"):
-        return SubtractParameter(other, self)
-
-    def __mul__(self, other: "dms.custom_types.CombinableParameterType"):
-        return MultiplyParameter(self, other)
-
-    def __rmul__(self, other: "dms.custom_types.CombinableParameterType"):
-        return MultiplyParameter(other, self)
-
-    def __truediv__(self, other: "dms.custom_types.CombinableParameterType"):
-        return DivideParameter(self, other)
-
-    def __rtruediv__(self, other: "dms.custom_types.CombinableParameterType"):
-        return DivideParameter(other, self)
-
-    def __pow__(self, other: "dms.custom_types.CombinableParameterType"):
-        return PowerParameter(self, other)
-
-    def __rpow__(self, other: "dms.custom_types.CombinableParameterType"):
-        return PowerParameter(other, self)
-
-    def __neg__(self):
-        return NegateParameter(self)
 
 
 class DiscreteDistribution(Parameter):
