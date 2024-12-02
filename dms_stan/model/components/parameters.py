@@ -81,7 +81,7 @@ class Parameter(AbstractModelComponent):
 
         # Sample from this distribution using numpy. Alter the shape to account
         # for the new first dimension of length `n`.
-        return self.numpy_dist(**level_draws, size=(n,) + self.draw_shape)
+        return self.numpy_dist(**level_draws, size=(n,) + self.shape)
 
     def as_observable(self) -> "Parameter":
         """Redefines the parameter as an observable variable (i.e., data)"""

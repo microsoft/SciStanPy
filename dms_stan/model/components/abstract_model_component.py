@@ -39,7 +39,6 @@ class AbstractModelComponent(ABC):
         self._parents: dict[str, AbstractModelComponent]
         self._component_to_paramname: dict[AbstractModelComponent, str]
         self._shape: tuple[int, ...] = shape  # Shape of the parameter
-        self._draw_shape: tuple[int, ...]  # Shape of the draws
         self._children: list[AbstractModelComponent] = []  # Children of the component
         self._torch_parameters: dict[str, torch.Tensor]  # Pytorch parameters
         self._shared_parameters: set[str] = set()  # Parents shared with siblings
@@ -54,8 +53,8 @@ class AbstractModelComponent(ABC):
         for val in self._parents.values():
             val._record_child(self)
 
-        # Set the draw shape
-        self._set_draw_shape()
+        # Set the shape
+        self._set_shape()
 
     def _validate_parameters(
         self,
@@ -134,16 +133,25 @@ class AbstractModelComponent(ABC):
         # Record the child
         self._children.append(child)
 
-    def _set_draw_shape(self) -> None:
+    def _set_shape(self) -> None:
         """Sets the shape of the draws for the parameter."""
-
         # The shape must be broadcastable to the shapes of the parameters.
         try:
-            self._draw_shape = np.broadcast_shapes(
+            broadcasted_shape = np.broadcast_shapes(
                 self._shape, *[param.shape for param in self.parents]
             )
         except ValueError as error:
             raise ValueError("Shape is not broadcastable to parent shapes") from error
+
+        # The broadcasted shape must be the same as the shape of the parameter if
+        # it is not 0-dimensional.
+        if broadcasted_shape != self._shape and self._shape != ():
+            raise ValueError(
+                "Provided shape does not match broadcasted shapes if of parents"
+            )
+
+        # Set the shape
+        self._shape = broadcasted_shape
 
     def get_child_paramnames(self) -> dict["AbstractModelComponent", str]:
         """
@@ -370,7 +378,6 @@ class AbstractModelComponent(ABC):
 
             # Add the parent draw to the level draws. Expand the number of dimensions
             # if necessary to account for the addition of "n" draws.
-            print(paramname, parent_draw)
             dims_to_add = (
                 self.ndim + 1
             ) - parent_draw.ndim  # Implicit prepended dimensions
@@ -647,11 +654,6 @@ class AbstractModelComponent(ABC):
             for name, component in self._parents.items()
             if isinstance(component, dms_components.Constant)
         }
-
-    @property
-    def draw_shape(self) -> tuple[int, ...]:
-        """Return the shape of the draws for the parameter."""
-        return self._draw_shape
 
     @property
     def parents(self) -> list["AbstractModelComponent"]:

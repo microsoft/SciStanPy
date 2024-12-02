@@ -88,9 +88,6 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
         # We will also need to set a missing parameter
         self._missing_param: str
 
-        # The shape is the same as the draw shape
-        self._shape = self.draw_shape
-
     def _set_missing_param(self):
         """
         Selects the missing parameter from the list of potential missing parameters.
