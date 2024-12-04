@@ -15,6 +15,11 @@ import dms_stan.model as dms_model
 from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
 from .components import Parameter
 
+# TODO: Simplify MAP estimation by just assigning a learnable parameter to each
+# parameter in the model. Go from hyperparameters to observable rather than observable
+# to hyperparameters as we have it now. Calculate transformed parameters rather than
+# learning something that is self-consistent.
+
 
 def check_observable_data(
     model: "dms_model.Model", observed_data: dict[str, torch.Tensor]

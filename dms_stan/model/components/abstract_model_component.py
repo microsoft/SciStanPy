@@ -306,8 +306,13 @@ class AbstractModelComponent(ABC):
             child_paramname = child._component_to_paramname[self]
             # pylint: enable=protected-access
 
-            # Get the observed value
-            observations.append(child.torch_parameters[child_paramname])
+            # Get the observed value. The observed must be the same shape as the
+            # parameter being tested.
+            observation = child.torch_parameters[child_paramname]
+            assert (
+                observation.shape == self.shape
+            ), f"{child.model_varname} {self.model_varname} {observation.shape} {self.shape}"
+            observations.append(observation)
 
         # If multiple observables, they must be the same object
         assert all(obs is observations[0] for obs in observations)
