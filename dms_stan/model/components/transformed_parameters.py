@@ -67,93 +67,6 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
     parameters using mathematical operations.
     """
 
-    missing_param_order: tuple[str, ...]
-
-    def __init__(
-        self,
-        *,
-        shape: tuple[int, ...] = (),
-        **parameters: "dms.custom_types.CombinableParameterType",
-    ):
-        # Run the parent class method
-        super().__init__(shape=shape, **parameters)
-
-        # Make sure missing param order is set
-        if set(self._parents) != set(self.missing_param_order):
-            raise ValueError("Missing parameter order must be set.")
-
-        # We will need a shallow copy of the torch parameters at some point
-        self._copied_torch_parameters: dict[str, torch.Tensor]
-
-        # We will also need to set a missing parameter
-        self._missing_param: str
-
-    def _set_missing_param(self):
-        """
-        Selects the missing parameter from the list of potential missing parameters.
-        This is the degree of freedom that we solve for in order to calculate the
-        inverse-transformed parameters.
-        """
-        # Set the missing parameter
-        for paramname in self.missing_param_order:
-
-            # The parameter cannot be shared
-            if paramname in self._shared_parameters:
-                continue
-
-            # Take the first learnable parameter
-            if isinstance(self._torch_parameters[paramname], nn.Parameter):
-                self._missing_param = paramname
-                break
-        else:
-            raise ValueError(
-                "All parameters are constants and/or shared already. Cannot backpropagate."
-            )
-
-        # Remove the missing parameter from the dictionary
-        self._torch_parameters = self._copied_torch_parameters.copy()
-        del self._torch_parameters[self._missing_param]
-
-    def init_pytorch(
-        self, draws: dict[AbstractModelComponent, npt.NDArray] | None = None
-    ) -> None:
-
-        # Run the parent class method
-        super().init_pytorch(draws)
-
-        # The parameters must overlap with the missing parameter order
-        assert set(self._torch_parameters.keys()) == set(self.missing_param_order)
-
-        # Copy the torch parameters
-        self._copied_torch_parameters = self._torch_parameters.copy()
-
-        # Choose a missing parameter
-        self._set_missing_param()
-
-    def _link_to_sibling(
-        self, parent: AbstractModelComponent, sibling: AbstractModelComponent
-    ) -> None:
-
-        # Run the parent class method
-        super()._link_to_sibling(parent, sibling)
-
-        # If the missing parameter is now shared, we need to reset it
-        if self._missing_param in self._shared_parameters:
-            self._set_missing_param()
-
-    @abstractmethod
-    def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        """
-        Calculates the missing parameter from the observable. This is necessary
-        for calculating the inverse-transformed parameters.
-
-        Args:
-            observable (torch.Tensor): The observable value.
-
-        Returns:
-            torch.Tensor: The missing parameter.
-        """
-
     def _get_transformed_torch_parameters(self) -> dict[str, torch.Tensor]:
 
         # Run the parent class method
@@ -216,8 +129,6 @@ class BinaryTransformedParameter(TransformedParameter):
     two parameters. In other words, two parameters must be passed to the class.
     """
 
-    missing_param_order = ("dist1", "dist2")
-
     def __init__(
         self,
         dist1: "dms.custom_types.CombinableParameterType",
@@ -243,40 +154,6 @@ class BinaryTransformedParameter(TransformedParameter):
     ): ...
 
     @abstractmethod
-    def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        """
-        Calculates the first distribution from the observable. This is necessary
-        for calculating the missing parameter.
-
-        Args:
-            observable (torch.Tensor): The observable value.
-
-        Returns:
-            torch.Tensor: The first distribution.
-        """
-
-    @abstractmethod
-    def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        """
-        Calculates the second distribution from the observable. This is necessary
-        for calculating the missing parameter.
-
-        Args:
-            observable (torch.Tensor): The observable value.
-
-        Returns:
-            torch.Tensor: The second distribution.
-        """
-
-    def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        if self._missing_param == "dist1":
-            return self.calculate_dist1(observable)
-        elif self._missing_param == "dist2":
-            return self.calculate_dist2(observable)
-        else:
-            raise ValueError("Missing parameter not recognized.")
-
-    @abstractmethod
     def format_stan_code(  # pylint: disable=arguments-differ
         self, dist1: str, dist2: str
     ) -> str: ...
@@ -289,8 +166,6 @@ class BinaryTransformedParameter(TransformedParameter):
 
 class UnaryTransformedParameter(TransformedParameter):
     """Transformed parameter that only requires one parameter."""
-
-    missing_param_order = ("dist1",)  # The one and only parameter
 
     def __init__(
         self,
@@ -332,12 +207,6 @@ class AddParameter(BinaryTransformedParameter):
     def format_stan_code(self, dist1: str, dist2: str) -> str:
         return f"{dist1} + {dist2}"
 
-    def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable - self._get_torch_parameter("dist2")
-
-    def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable - self._get_torch_parameter("dist1")
-
 
 class SubtractParameter(BinaryTransformedParameter):
     """Defines a parameter that is the difference of two other parameters."""
@@ -351,12 +220,6 @@ class SubtractParameter(BinaryTransformedParameter):
 
     def format_stan_code(self, dist1: str, dist2: str) -> str:
         return f"{dist1} - {dist2}"
-
-    def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable + self._get_torch_parameter("dist2")
-
-    def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        return self._get_torch_parameter("dist1") - observable
 
 
 class MultiplyParameter(BinaryTransformedParameter):
@@ -376,12 +239,6 @@ class MultiplyParameter(BinaryTransformedParameter):
 
         return f"{dist1} {operator} {dist2}"
 
-    def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable / self._get_torch_parameter("dist2")
-
-    def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable / self._get_torch_parameter("dist1")
-
 
 class DivideParameter(BinaryTransformedParameter):
     """Defines a parameter that is the quotient of two other parameters."""
@@ -398,12 +255,6 @@ class DivideParameter(BinaryTransformedParameter):
         operator = "./" if self.is_elementwise_operation else "/"
 
         return f"{dist1} {operator} {dist2}"
-
-    def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable * self._get_torch_parameter("dist2")
-
-    def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        return self._get_torch_parameter("dist1") / observable
 
 
 class PowerParameter(BinaryTransformedParameter):
@@ -423,12 +274,6 @@ class PowerParameter(BinaryTransformedParameter):
 
         return f"{dist1} {operator} {dist2}"
 
-    def calculate_dist1(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable ** (1 / self._get_torch_parameter("dist2"))
-
-    def calculate_dist2(self, observable: torch.Tensor) -> torch.Tensor:
-        return torch.log(observable) / torch.log(self._get_torch_parameter("dist1"))
-
 
 class NegateParameter(UnaryTransformedParameter):
     """Defines a parameter that is the negative of another parameter."""
@@ -438,9 +283,6 @@ class NegateParameter(UnaryTransformedParameter):
 
     def format_stan_code(self, dist1: str) -> str:
         return f"-{dist1}"
-
-    def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        return -observable
 
 
 class AbsParameter(UnaryTransformedParameter):
@@ -463,14 +305,6 @@ class AbsParameter(UnaryTransformedParameter):
     def format_stan_code(self, dist1: str) -> str:
         return f"abs({dist1})"
 
-    def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-
-        # Get the sign of the observable
-        sign = torch.sigmoid(self._torch_parameters["sign"]) * 2 - 1
-
-        # Add the sign to the observable
-        return observable * sign
-
 
 class LogParameter(UnaryTransformedParameter):
     """Defines a parameter that is the natural logarithm of another."""
@@ -486,9 +320,6 @@ class LogParameter(UnaryTransformedParameter):
     def format_stan_code(self, dist1: str) -> str:
         return f"log({dist1})"
 
-    def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        return torch.exp(observable)
-
 
 class ExpParameter(UnaryTransformedParameter):
     """Defines a parameter that is the exponential of another."""
@@ -500,9 +331,6 @@ class ExpParameter(UnaryTransformedParameter):
 
     def format_stan_code(self, dist1: str) -> str:
         return f"exp({dist1})"
-
-    def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        return torch.log(observable)
 
 
 class NormalizeParameter(UnaryTransformedParameter):
@@ -528,9 +356,6 @@ class NormalizeParameter(UnaryTransformedParameter):
         self._torch_parameters["scale"] = nn.Parameter(
             torch.ones(self.dist1.shape[:-1] + (1,))
         )
-
-    def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable * self._torch_parameters["scale"]
 
 
 class NormalizeLogParameter(UnaryTransformedParameter):
@@ -558,9 +383,6 @@ class NormalizeLogParameter(UnaryTransformedParameter):
         self._torch_parameters["scale"] = nn.Parameter(
             torch.zeros(self.dist1.shape[:-1] + (1,))
         )
-
-    def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        return observable + self._torch_parameters["scale"]
 
 
 class Growth(TransformedParameter):
@@ -594,8 +416,6 @@ class LogExponentialGrowth(Growth):
     This parametrization is particularly useful for modeling the proportions of
     different populations as is done in DMS Stan, as proportions are always positive.
     """
-
-    missing_param_order = ("log_A", "r", "t")
 
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
@@ -637,40 +457,6 @@ class LogExponentialGrowth(Growth):
         # Build the transformation
         return f"{log_A} + {r} {operator} {t}"
 
-    def calculate_logA(  # pylint: disable=invalid-name
-        self, observable: torch.Tensor
-    ) -> torch.Tensor:
-        """Calculates the log of the amplitude from the observable."""
-        return observable - self._get_torch_parameter("r") * self._get_torch_parameter(
-            "t"
-        )
-
-    def calculate_r(self, observable: torch.Tensor) -> torch.Tensor:
-        """Calculates the growth rate from the observable."""
-        # Calling `self.parameters` multiple times is inefficient. We call the
-        # function wrapped by that property once and store the result.
-        return (
-            observable - self._get_torch_parameter("log_A")
-        ) / self._get_torch_parameter("t")
-
-    def calculate_t(self, observable: torch.Tensor) -> torch.Tensor:
-        """Calculates the time from the observable."""
-        # Calling `self.parameters` multiple times is inefficient. We call the
-        # function wrapped by that property once and store the result.
-        return (
-            observable - self._get_torch_parameter("log_A")
-        ) / self._get_torch_parameter("r")
-
-    def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        if self._missing_param == "log_A":
-            return self.calculate_logA(observable)
-        elif self._missing_param == "r":
-            return self.calculate_r(observable)
-        elif self._missing_param == "t":
-            return self.calculate_t(observable)
-        else:
-            raise ValueError("Missing parameter not recognized.")
-
 
 class LogSigmoidGrowth(Growth):
     r"""
@@ -685,8 +471,6 @@ class LogSigmoidGrowth(Growth):
     As with the `LogExponentialGrowth` distribution, this parametrization guarantees
     that $x > 0$.
     """
-
-    missing_param_order = ("log_A", "r", "c", "t")
 
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
@@ -730,51 +514,3 @@ class LogSigmoidGrowth(Growth):
         operator = ".*" if _is_elementwise_operation(self.t, self.r) else "*"
 
         return f"{log_A} - log(1 + exp(-{r} {operator} ({t} - {c})))"
-
-    def calculate_logA(  # pylint: disable=invalid-name
-        self, observable: torch.Tensor
-    ) -> torch.Tensor:
-        """Calculates the log of the amplitude from the observable."""
-
-        return observable + torch.log(
-            1
-            + torch.exp(
-                self._get_torch_parameter("r")
-                * (self._get_torch_parameter("c") - self._get_torch_parameter("t"))
-            )
-        )
-
-    def calculate_r(self, observable: torch.Tensor) -> torch.Tensor:
-        """Calculates the growth rate from the observable."""
-
-        return torch.log(
-            torch.exp(self._get_torch_parameter("log_A") - observable) - 1
-        ) / (self._get_torch_parameter("c") - self._get_torch_parameter("t"))
-
-    def calculate_c(self, observable: torch.Tensor) -> torch.Tensor:
-        """Calculates the inflection point from the observable."""
-
-        return (
-            torch.log(torch.exp(self._get_torch_parameter("log_A") - observable) - 1)
-            / self._get_torch_parameter("r")
-        ) + self._get_torch_parameter("t")
-
-    def calculate_t(self, observable: torch.Tensor) -> torch.Tensor:
-        """Calculates the time from the observable."""
-
-        return self._get_torch_parameter("c") - (
-            torch.log(torch.exp(self._get_torch_parameter("log_A") - observable) - 1)
-            / self._get_torch_parameter("r")
-        )
-
-    def calculate_missing_param(self, observable: torch.Tensor) -> torch.Tensor:
-        if self._missing_param == "log_A":
-            return self.calculate_logA(observable)
-        elif self._missing_param == "r":
-            return self.calculate_r(observable)
-        elif self._missing_param == "t":
-            return self.calculate_t(observable)
-        elif self._missing_param == "c":
-            return self.calculate_c(observable)
-        else:
-            raise ValueError("Missing parameter not recognized.")

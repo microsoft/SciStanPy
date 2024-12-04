@@ -40,8 +40,7 @@ class AbstractModelComponent(ABC):
         self._component_to_paramname: dict[AbstractModelComponent, str]
         self._shape: tuple[int, ...] = shape  # Shape of the parameter
         self._children: list[AbstractModelComponent] = []  # Children of the component
-        self._torch_parameters: dict[str, torch.Tensor]  # Pytorch parameters
-        self._shared_parameters: set[str] = set()  # Parents shared with siblings
+        self._torch_parametrization: dict[str, torch.Tensor]  # Pytorch parameters
 
         # Validate incoming parameters
         self._validate_parameters(parameters)
@@ -319,37 +318,6 @@ class AbstractModelComponent(ABC):
 
         # Return the observations
         return observations[0]
-
-    def _link_to_sibling(
-        self, parent: "AbstractModelComponent", sibling: "AbstractModelComponent"
-    ) -> None:
-        """
-        If two components have the same parent, then that parent must always have
-        the same observable value. This function ensures that that is the case by
-        replacing the PyTorch parameter of this component with the equivalent PyTorch
-        parameter of the sibling component.
-
-        Args:
-            parent (AbstractModelComponent): The parent component.
-            sibling (AbstractModelComponent): The sibling component. It shares a
-                parent with this component.
-        """
-        # Get the name of the parent component in both this component and its sibling
-        this_paramname = self._component_to_paramname[parent]
-        # pylint: disable=protected-access
-        sibling_paramname = sibling._component_to_paramname[parent]
-        # pylint: enable=protected-access
-
-        # Replace the PyTorch parameter of this component with the PyTorch parameter
-        # of the sibling component
-        # pylint: disable=protected-access
-        self._torch_parameters[this_paramname] = sibling._torch_parameters[
-            sibling_paramname
-        ]
-        # pylint: enable=protected-access
-
-        # Record the shared parameter
-        self._shared_parameters.add(this_paramname)
 
     @abstractmethod
     def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
