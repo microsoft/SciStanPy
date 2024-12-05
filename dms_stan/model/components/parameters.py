@@ -21,7 +21,7 @@ class Parameter(AbstractModelComponent):
     def __init__(
         self,
         numpy_dist: str,
-        torch_dist,
+        torch_dist: dist.distribution.Distribution,
         stan_to_np_names: dict[str, str],
         stan_to_torch_names: dict[str, str],
         stan_to_np_transforms: Optional[
@@ -70,7 +70,7 @@ class Parameter(AbstractModelComponent):
         self.stan_to_torch_names = stan_to_torch_names
 
         # Initialize a parametrization using PyTorch
-        self._torch_parametrization: nn.Parameter
+        self._torch_parametrization: Optional[nn.Parameter] = None
         self.init_pytorch()
 
     def init_pytorch(
@@ -114,7 +114,13 @@ class Parameter(AbstractModelComponent):
 
     def as_observable(self) -> "Parameter":
         """Redefines the parameter as an observable variable (i.e., data)"""
+
+        # Set the observable attribute to True
         self.observable = True
+
+        # We do not have a torch parameterization for observables
+        self._torch_parametrization = None
+
         return self
 
     def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
@@ -135,7 +141,7 @@ class Parameter(AbstractModelComponent):
         else:
             return param.get_stan_code(index_opts)
 
-    def calculate_log_prob(
+    def get_torch_logprob(
         self, observed: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
         """Calculates the log probability of the parameters given the observed data.
@@ -149,9 +155,17 @@ class Parameter(AbstractModelComponent):
         Returns:
             torch.Tensor: Log probability of the parameters given the observed data.
         """
+        # Observed parameters must have an observed value.
+        if self.observable and observed is None:
+            raise ValueError("Observed parameters must have an observed value.")
+
+        # If this is not an observable, then we should not have an observed value
+        if not self.observable and observed is not None:
+            raise ValueError("Latent parameters should not have an observed value.")
+
         # Calculate log probability using the observed data and the distribution
         return self.torch_dist_instance.log_prob(
-            self.get_torch_observables(observed)
+            observed if self.observable else self.torch_parametrization
         ).sum()
 
     @property
@@ -174,8 +188,8 @@ class Parameter(AbstractModelComponent):
         """Returns an instance of the torch distribution class"""
         return self.torch_dist(
             **{
-                self.stan_to_torch_names[name]: param
-                for name, param in self.torch_parameters.items()
+                self.stan_to_torch_names[name]: param.torch_parametrization
+                for name, param in self._parents.items()
             }
         )
 
@@ -186,6 +200,10 @@ class Parameter(AbstractModelComponent):
 
     @property
     def torch_parametrization(self) -> dict[str, torch.Tensor]:
+
+        # If the parameter is an observable, there is no torch parametrization
+        if self.observable:
+            raise ValueError("Observables do not have a torch parametrization")
 
         # Just return the parameter if no bounds
         if (

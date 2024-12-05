@@ -72,10 +72,18 @@ class PyTorchModel(nn.Module):
         # Record the model
         self.model = model
 
+        # Draw from the model to get the initial values
+        draws = self.model.draw(1, named_only=False)
+
+        # Initialize all parameters for pytorch optimization
+        learnable_params = []
+        for param in self._parameters:
+            if isinstance(param, Parameter):
+                param.init_pytorch(init_val=draws[param].squeeze(axis=0))
+                learnable_params.append(param._torch_parametrization)
+
         # Record learnable parameters such that they can be recognized by PyTorch
-        self.learnable_params = nn.ParameterList(
-            filter(lambda x: isinstance(x, nn.Parameter), self.model._torch_parameters)
-        )
+        self.learnable_params = nn.ParameterList(learnable_params)
 
     def forward(self, **observed_data: torch.Tensor) -> torch.Tensor:
         """
@@ -184,7 +192,7 @@ class PyTorchModel(nn.Module):
         as they are implicit in the parameters.
         """
         return {
-            name: param.get_torch_observables()
+            name: param.torch_parametrization
             for name, param in self.model.parameter_dict.items()
             if isinstance(param, Parameter) and not param.observable
         }

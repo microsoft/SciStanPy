@@ -185,50 +185,6 @@ class Model(ABC):
         """
         Compiles the model to a trainable PyTorch model.
         """
-        # Dictionary for parents with shared children
-        parent_to_shared_children: dict[
-            AbstractModelComponent, AbstractModelComponent
-        ] = {}
-
-        # New list of torch parameters
-        self._torch_parameters = []
-
-        # Draw from the model to get the initial values
-        draws = self.draw(1, named_only=False)
-
-        # Walk up the tree from each observable to the root nodes and initialize
-        # the pytorch variables
-        for observable in self.observables:
-
-            # Initialize the observable and record its parameters
-            observable.init_pytorch(draws=draws)
-            # pylint: disable=protected-access
-            self._torch_parameters.extend(observable._torch_parameters.values())
-            # pylint: enable=protected-access
-
-            # Process all parents
-            for child, parent in observable.walk_tree(walk_down=False):
-
-                # Is the parent already in the dictionary? If so, the current child
-                # has a sibling
-                if sibling := parent_to_shared_children.get(parent):
-                    # pylint: disable=protected-access
-                    child._link_to_sibling(parent=parent, sibling=sibling)
-                    # pylint: enable=protected-access
-                    continue
-
-                # If the parent is not in the dictionary, add it
-                parent_to_shared_children[parent] = child
-
-                # Initialize the parent and record its parameters. Because this
-                # is a recursive operation, this also initializes the child for
-                # the next iteration. We initialize the observable outside of this
-                # loop because it would be skipped on the first iteration.
-                parent.init_pytorch(draws=draws)
-                # pylint: disable=protected-access
-                self._torch_parameters.extend(parent._torch_parameters.values())
-                # pylint: enable=protected-access
-
         return PyTorchModel(self)
 
     def to_stan(self):
