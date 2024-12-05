@@ -4,6 +4,7 @@ from typing import Optional, Union
 
 import numpy as np
 import numpy.typing as npt
+import torch
 
 from .abstract_model_component import AbstractModelComponent
 
@@ -18,8 +19,8 @@ class Constant(AbstractModelComponent):
         *,
         shape: tuple[int, ...] = (),
         value: Union[int, float, npt.NDArray],
-        stan_lower_bound: Optional[float] = None,
-        stan_upper_bound: Optional[float] = None
+        lower_bound: Optional[float] = None,
+        upper_bound: Optional[float] = None
     ):
         """
         Wraps the value in a Constant instance. Any numerical type is legal.
@@ -37,11 +38,12 @@ class Constant(AbstractModelComponent):
             value = np.array(value, dtype=type(value))
 
         # Set upper and lower bounds
-        self.STAN_LOWER_BOUND = stan_lower_bound  # pylint: disable=invalid-name
-        self.STAN_UPPER_BOUND = stan_upper_bound  # pylint: disable=invalid-name
+        self.LOWER_BOUND = lower_bound  # pylint: disable=invalid-name
+        self.UPPER_BOUND = upper_bound  # pylint: disable=invalid-name
 
         # Set the value
         self.value = value
+        self._torch_parametrization = torch.from_numpy(value)
 
         # Set whether the value is togglable. By default, it is for floats and
         # is not for integers.
@@ -80,3 +82,7 @@ class Constant(AbstractModelComponent):
     def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
         """Constants are never transformed."""
         return ""
+
+    @property
+    def torch_parametrization(self) -> torch.Tensor:
+        return self._torch_parametrization

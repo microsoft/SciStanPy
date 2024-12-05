@@ -6,6 +6,7 @@ import numpy as np
 import numpy.typing as npt
 import torch
 import torch.distributions as dist
+import torch.nn as nn
 
 import dms_stan as dms
 
@@ -67,6 +68,34 @@ class Parameter(AbstractModelComponent):
         self.stan_to_np_names = stan_to_np_names
         self.stan_to_np_transforms = stan_to_np_transforms
         self.stan_to_torch_names = stan_to_torch_names
+
+        # Initialize a parametrization using PyTorch
+        self._torch_parametrization: nn.Parameter
+        self.init_pytorch()
+
+    def init_pytorch(
+        self, init_val: Optional[Union[npt.NDArray, torch.Tensor]] = None
+    ) -> None:
+        """Sets up the parameters needed for training a Pytorch model."""
+        # If no initialization value is provided, then we draw one
+        if init_val is None:
+            init_val, _ = self.draw(1)
+            init_val = np.squeeze(init_val, axis=0)
+
+        # If the initialization value is a numpy array, convert it to a tensor
+        if isinstance(init_val, npt.NDArray):
+            init_val = torch.from_numpy(init_val)
+
+        # The shape of the initialization value must match the shape of the
+        # parameter being initialized
+        if init_val.shape != self.shape:
+            raise ValueError(
+                f"The shape of the initialization value must match the shape of the "
+                f"parameter. Expected: {self.shape}, provided: {init_val.shape}"
+            )
+
+        # Initialize the parameter
+        self._torch_parametrization = nn.Parameter(init_val)
 
     def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
         """Sample from the distribution that represents the parameter `n` times"""
@@ -155,6 +184,43 @@ class Parameter(AbstractModelComponent):
         """Returns `True` if all parents are constants. False otherwise."""
         return all(isinstance(parent, Constant) for parent in self.parents)
 
+    @property
+    def torch_parametrization(self) -> dict[str, torch.Tensor]:
+
+        # Just return the parameter if no bounds
+        if (
+            self.LOWER_BOUND is None
+            and self.UPPER_BOUND is None
+            and not self.IS_SIMPLEX
+        ):
+            return self._torch_parametrization
+
+        # Address bounds. First is if we have both bounds, then we need to transform
+        # the parameter to be bounded between the two bounds.
+        if self.LOWER_BOUND is not None and self.UPPER_BOUND is not None:
+            return self.LOWER_BOUND + (
+                self.UPPER_BOUND - self.LOWER_BOUND
+            ) * torch.sigmoid(self._torch_parametrization)
+
+        # If not both bounds, then we must have one bound. We assume the parameter
+        # is defined in the log space and exponentiate it to get the positive value.
+        exp_param = torch.exp(self._torch_parametrization)
+
+        # If a simplex, normalize. We assume that the simplex is the last dimension.
+        if self.IS_SIMPLEX:
+            return exp_param / torch.sum(exp_param, dim=-1)
+
+        # Now if we only have a lower bound
+        elif self.LOWER_BOUND is not None:
+            return self.LOWER_BOUND + exp_param
+
+        # If we only have an upper bound
+        elif self.UPPER_BOUND is not None:
+            return self.UPPER_BOUND - exp_param
+
+        # We should never get here
+        raise AssertionError("Invalid bounds")
+
 
 class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
@@ -168,7 +234,7 @@ class DiscreteDistribution(Parameter):
     """
 
     BASE_STAN_DTYPE: str = "int"
-    STAN_LOWER_BOUND: int = 0
+    LOWER_BOUND: int = 0
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -253,7 +319,7 @@ class Normal(ContinuousDistribution):
 class HalfNormal(Normal):
     """Parameter that is represented by the half-normal distribution."""
 
-    STAN_LOWER_BOUND: float = 0.0
+    LOWER_BOUND: float = 0.0
 
     def __init__(
         self,
@@ -290,7 +356,7 @@ class LogNormal(ContinuousDistribution):
     """Parameter that is represented by the log-normal distribution."""
 
     POSITIVE_PARAMS = {"sigma"}
-    STAN_LOWER_BOUND: float = 0.0
+    LOWER_BOUND: float = 0.0
 
     def __init__(
         self,
@@ -318,8 +384,8 @@ class Beta(ContinuousDistribution):
     """Defines the beta distribution."""
 
     POSITIVE_PARAMS = {"alpha", "beta"}
-    STAN_LOWER_BOUND: float = 0.0
-    STAN_UPPER_BOUND: float = 1.0
+    LOWER_BOUND: float = 0.0
+    UPPER_BOUND: float = 1.0
 
     def __init__(
         self,
@@ -350,7 +416,7 @@ class Gamma(ContinuousDistribution):
 
     POSITIVE_PARAMS = {"alpha", "beta"}
 
-    STAN_LOWER_BOUND: float = 0.0
+    LOWER_BOUND: float = 0.0
 
     def __init__(
         self,
@@ -383,7 +449,7 @@ class Exponential(ContinuousDistribution):
     POSITIVE_PARAMS = {"beta"}
 
     # Overwrite the stan data type
-    STAN_LOWER_BOUND: float = 0.0
+    LOWER_BOUND: float = 0.0
 
     def __init__(
         self,

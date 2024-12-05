@@ -1,13 +1,12 @@
 """Holds parameter transformations for DMS Stan models."""
 
 from abc import abstractmethod
-from typing import Optional
+from typing import overload
 
 import numpy as np
 import numpy.typing as npt
 import scipy.special as sp
 import torch
-import torch.nn as nn
 
 import dms_stan as dms
 
@@ -20,6 +19,21 @@ def _is_elementwise_operation(*params: AbstractModelComponent) -> bool:
     than 1, return True. This indicates that the operation is elementwise.
     """
     return all(param.ndim > 0 and param.shape[-1] > 1 for param in params)
+
+
+@overload
+def _choose_module(dist: torch.Tensor) -> torch: ...
+
+
+@overload
+def _choose_module(dist: dms.custom_types.SampleType) -> np: ...
+
+
+def _choose_module(dist):
+    """
+    Choose the module to use for the operation based on the type of the distribution.
+    """
+    return torch if isinstance(dist, torch.Tensor) else np
 
 
 class TransformableParameter:
@@ -67,37 +81,20 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
     parameters using mathematical operations.
     """
 
-    def _get_transformed_torch_parameters(self) -> dict[str, torch.Tensor]:
-
-        # Run the parent class method
-        transformed_params = super()._get_transformed_torch_parameters()
-
-        # Get the observable. This is what we will use to calculate the missing
-        # parameter.
-        observable = self.get_torch_observables()
-
-        # Calculate the missing parameter
-        assert self._missing_param not in transformed_params
-        transformed_params[self._missing_param] = self.calculate_missing_param(
-            observable
-        )
-
-        # Only return named parameters
-        transformed_params = {
-            k: v for k, v in transformed_params.items() if k in self._parents
-        }
-        assert set(transformed_params) == set(self._parents)
-
-        return transformed_params
-
     def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
         """Sample from this parameter's distribution `n` times."""
         # Perform the operation on the draws
         return self.operation(**level_draws)
 
+    @overload
+    def operation(self, **draws: torch.Tensor) -> torch.Tensor: ...
+
+    @overload
+    def operation(self, **draws: "dms.custom_types.SampleType") -> npt.NDArray: ...
+
     @abstractmethod
-    def operation(self, **draws: "dms.custom_types.SampleType") -> npt.NDArray:
-        """Perform the operation on the draws"""
+    def operation(self, **draws):
+        """Perform the operation on the draws or torch parameters."""
 
     def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
         """Return the assignment for the transformation."""
@@ -122,6 +119,16 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
     def __call__(self, *args, **kwargs):
         return self.operation(*args, **kwargs)
 
+    @property
+    def torch_parametrization(self) -> torch.Tensor:
+        # This is just the operation performed on the torch parameters of the parents
+        return self.operation(
+            **{
+                name: param.torch_parametrization
+                for name, param in self._parents.items()
+            }
+        )
+
 
 class BinaryTransformedParameter(TransformedParameter):
     """
@@ -137,21 +144,19 @@ class BinaryTransformedParameter(TransformedParameter):
     ):
         super().__init__(dist1=dist1, dist2=dist2, shape=shape)
 
-    def init_pytorch(
-        self, draws: dict[AbstractModelComponent, npt.NDArray] | None = None
-    ) -> None:
-        # Run the parent class method
-        super().init_pytorch(draws)
+    # pylint: disable=arguments-differ
+    @overload
+    def operation(self, dist1: torch.Tensor, dist2: torch.Tensor) -> torch.Tensor: ...
 
-        # There should be one torch parameter
-        assert len(self._torch_parameters) == 1
+    @overload
+    def operation(
+        self, dist1: "dms.custom_types.SampleType", dist2: "dms.custom_types.SampleType"
+    ) -> npt.NDArray: ...
 
     @abstractmethod
-    def operation(  # pylint: disable=arguments-differ
-        self,
-        dist1: "dms.custom_types.SampleType",
-        dist2: "dms.custom_types.SampleType",
-    ): ...
+    def operation(self, dist1, dist2): ...
+
+    # pylint: enable=arguments-differ
 
     @abstractmethod
     def format_stan_code(  # pylint: disable=arguments-differ
@@ -174,19 +179,17 @@ class UnaryTransformedParameter(TransformedParameter):
     ):
         super().__init__(dist1=dist1, shape=shape)
 
-    def init_pytorch(
-        self, draws: dict[AbstractModelComponent, npt.NDArray] | None = None
-    ) -> None:
-        # Run the parent class method
-        super().init_pytorch(draws)
+    # pylint: disable=arguments-differ
+    @overload
+    def operation(self, dist1: torch.Tensor) -> torch.Tensor: ...
 
-        # There should be no torch parameters
-        assert len(self._torch_parameters) == 0
+    @overload
+    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray: ...
 
     @abstractmethod
-    def operation(  # pylint: disable=arguments-differ
-        self, dist1: "dms.custom_types.SampleType"
-    ) -> npt.NDArray: ...
+    def operation(self, dist1): ...
+
+    # pylint: enable=arguments-differ
 
     @abstractmethod
     def format_stan_code(  # pylint: disable=arguments-differ
@@ -197,11 +200,7 @@ class UnaryTransformedParameter(TransformedParameter):
 class AddParameter(BinaryTransformedParameter):
     """Defines a parameter that is the sum of two other parameters."""
 
-    def operation(
-        self,
-        dist1: "dms.custom_types.SampleType",
-        dist2: "dms.custom_types.SampleType",
-    ) -> npt.NDArray:
+    def operation(self, dist1, dist2):
         return dist1 + dist2
 
     def format_stan_code(self, dist1: str, dist2: str) -> str:
@@ -211,11 +210,7 @@ class AddParameter(BinaryTransformedParameter):
 class SubtractParameter(BinaryTransformedParameter):
     """Defines a parameter that is the difference of two other parameters."""
 
-    def operation(
-        self,
-        dist1: "dms.custom_types.SampleType",
-        dist2: "dms.custom_types.SampleType",
-    ) -> npt.NDArray:
+    def operation(self, dist1, dist2):
         return dist1 - dist2
 
     def format_stan_code(self, dist1: str, dist2: str) -> str:
@@ -225,11 +220,7 @@ class SubtractParameter(BinaryTransformedParameter):
 class MultiplyParameter(BinaryTransformedParameter):
     """Defines a parameter that is the product of two other parameters."""
 
-    def operation(
-        self,
-        dist1: "dms.custom_types.SampleType",
-        dist2: "dms.custom_types.SampleType",
-    ) -> npt.NDArray:
+    def operation(self, dist1, dist2):
         return dist1 * dist2
 
     def format_stan_code(self, dist1: str, dist2: str) -> str:
@@ -243,11 +234,7 @@ class MultiplyParameter(BinaryTransformedParameter):
 class DivideParameter(BinaryTransformedParameter):
     """Defines a parameter that is the quotient of two other parameters."""
 
-    def operation(
-        self,
-        dist1: "dms.custom_types.SampleType",
-        dist2: "dms.custom_types.SampleType",
-    ) -> npt.NDArray:
+    def operation(self, dist1, dist2):
         return dist1 / dist2
 
     def format_stan_code(self, dist1: str, dist2: str) -> str:
@@ -260,11 +247,7 @@ class DivideParameter(BinaryTransformedParameter):
 class PowerParameter(BinaryTransformedParameter):
     """Defines a parameter raised to the power of another parameter."""
 
-    def operation(
-        self,
-        dist1: "dms.custom_types.SampleType",
-        dist2: "dms.custom_types.SampleType",
-    ) -> npt.NDArray:
+    def operation(self, dist1, dist2):
         return dist1**dist2
 
     def format_stan_code(self, dist1: str, dist2: str) -> str:
@@ -278,7 +261,7 @@ class PowerParameter(BinaryTransformedParameter):
 class NegateParameter(UnaryTransformedParameter):
     """Defines a parameter that is the negative of another parameter."""
 
-    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
+    def operation(self, dist1):
         return -dist1
 
     def format_stan_code(self, dist1: str) -> str:
@@ -288,19 +271,10 @@ class NegateParameter(UnaryTransformedParameter):
 class AbsParameter(UnaryTransformedParameter):
     """Defines a parameter that is the absolute value of another."""
 
-    STAN_LOWER_BOUND: float = 0.0
+    LOWER_BOUND: float = 0.0
 
-    def init_pytorch(
-        self, draws: Optional[dict[AbstractModelComponent, npt.NDArray]] = None
-    ) -> None:
-        # Run inherited
-        super().init_pytorch(draws)
-
-        # We have an additional parameter that we need to learn (the sign)
-        self._torch_parameters["sign"] = nn.Parameter(torch.rand(self.dist1.shape))
-
-    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
-        return np.abs(dist1)
+    def operation(self, dist1):
+        return _choose_module(dist1).abs(dist1)
 
     def format_stan_code(self, dist1: str) -> str:
         return f"abs({dist1})"
@@ -312,10 +286,10 @@ class LogParameter(UnaryTransformedParameter):
     # The distribution must be positive
     POSITIVE_PARAMS = {"dist1"}
 
-    STAN_LOWER_BOUND: float = 0.0
+    LOWER_BOUND: float = 0.0
 
-    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
-        return np.log(dist1)
+    def operation(self, dist1):
+        return _choose_module(dist1).log(dist1)
 
     def format_stan_code(self, dist1: str) -> str:
         return f"log({dist1})"
@@ -324,10 +298,11 @@ class LogParameter(UnaryTransformedParameter):
 class ExpParameter(UnaryTransformedParameter):
     """Defines a parameter that is the exponential of another."""
 
-    STAN_LOWER_BOUND: float = 0.0
+    LOWER_BOUND: float = 0.0
 
-    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
-        return np.exp(dist1)
+    def operation(self, dist1):
+
+        return _choose_module(dist1).exp(dist1)
 
     def format_stan_code(self, dist1: str) -> str:
         return f"exp({dist1})"
@@ -336,26 +311,17 @@ class ExpParameter(UnaryTransformedParameter):
 class NormalizeParameter(UnaryTransformedParameter):
     """Defines a parameter that is normalized to sum to 1."""
 
-    STAN_LOWER_BOUND: float = 0.0
-    STAN_UPPER_BOUND: float = 1.0
+    LOWER_BOUND: float = 0.0
+    UPPER_BOUND: float = 1.0
 
-    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
-        return dist1 / np.sum(dist1, keepdims=True, axis=-1)
+    def operation(self, dist1):
+        if isinstance(dist1, torch.Tensor):
+            return dist1 / dist1.sum(dim=-1, keepdim=True)
+        else:
+            return dist1 / np.sum(dist1, keepdims=True, axis=-1)
 
     def format_stan_code(self, dist1: str) -> str:
         return f"{dist1} / sum({dist1})"
-
-    def init_pytorch(
-        self, draws: Optional[dict[AbstractModelComponent, npt.NDArray]] = None
-    ) -> None:
-
-        # Run the parent class method
-        super().init_pytorch(draws)
-
-        # We have an additional parameter to learn (the scale)
-        self._torch_parameters["scale"] = nn.Parameter(
-            torch.ones(self.dist1.shape[:-1] + (1,))
-        )
 
 
 class NormalizeLogParameter(UnaryTransformedParameter):
@@ -364,25 +330,16 @@ class NormalizeLogParameter(UnaryTransformedParameter):
     this assumes that the input is log-transformed.
     """
 
-    STAN_UPPER_BOUND: float = 0.0
+    UPPER_BOUND: float = 0.0
 
-    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray:
-        return dist1 - sp.logsumexp(dist1, keepdims=True, axis=-1)
+    def operation(self, dist1):
+        if isinstance(dist1, torch.Tensor):
+            return dist1 - torch.logsumexp(dist1, keepdims=True, dim=-1)
+        else:
+            return dist1 - sp.logsumexp(dist1, keepdims=True, axis=-1)
 
     def format_stan_code(self, dist1: str) -> str:
         return f"{dist1} - log_sum_exp({dist1})"
-
-    def init_pytorch(
-        self, draws: Optional[dict[AbstractModelComponent, npt.NDArray]] = None
-    ) -> None:
-
-        # Run the parent class method
-        super().init_pytorch(draws)
-
-        # We have an additional parameter to learn (the scale)
-        self._torch_parameters["scale"] = nn.Parameter(
-            torch.zeros(self.dist1.shape[:-1] + (1,))
-        )
 
 
 class Growth(TransformedParameter):
@@ -439,14 +396,27 @@ class LogExponentialGrowth(Growth):
         """
         super().__init__(t=t, log_A=log_A, r=r, shape=shape)
 
-    def operation(  # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ
+    @overload
+    def operation(
+        self, t: torch.Tensor, log_A: torch.Tensor, r: torch.Tensor
+    ) -> torch.Tensor: ...
+
+    @overload
+    def operation(
         self,
-        *,
         t: "dms.custom_types.SampleType",
         log_A: "dms.custom_types.SampleType",
         r: "dms.custom_types.SampleType",
-    ) -> npt.NDArray:
+    ) -> npt.NDArray: ...
+
+    def operation(self, *, t, log_A, r):
+        assert (
+            len({type(t), type(log_A), type(r)}) == 1
+        ), "All inputs must be the same type"
         return log_A + r * t
+
+    # pylint: enable=arguments-differ
 
     def format_stan_code(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str
@@ -497,15 +467,33 @@ class LogSigmoidGrowth(Growth):
         """
         super().__init__(t=t, log_A=log_A, r=r, c=c, shape=shape)
 
-    def operation(  # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ
+    @overload
+    def operation(
+        self, t: torch.Tensor, log_A: torch.Tensor, r: torch.Tensor, c: torch.Tensor
+    ) -> torch.Tensor: ...
+
+    @overload
+    def operation(
         self,
-        *,
         t: "dms.custom_types.SampleType",
         log_A: "dms.custom_types.SampleType",
         r: "dms.custom_types.SampleType",
         c: "dms.custom_types.SampleType",
-    ) -> npt.NDArray:
-        return log_A - np.log(1 + np.exp(-r * (t - c)))
+    ) -> npt.NDArray: ...
+
+    def operation(self, *, t, log_A, r, c):
+
+        # Ensure all inputs are the same type
+        assert (
+            len({type(t), type(log_A), type(r), type(c)}) == 1
+        ), "All inputs must be the same type"
+
+        # Perform the operation
+        module = _choose_module(t)
+        return log_A - module.log(1 + module.exp(-r * (t - c)))
+
+    # pylint: enable=arguments-differ
 
     def format_stan_code(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str, c: str

@@ -6,7 +6,6 @@ from typing import Literal, Optional
 import numpy as np
 import numpy.typing as npt
 import torch
-import torch.nn as nn
 
 import dms_stan as dms
 import dms_stan.model.components as dms_components
@@ -15,15 +14,18 @@ import dms_stan.model.components as dms_components
 class AbstractModelComponent(ABC):
     """Base class for all core components of a DMS Stan model."""
 
-    # Define allowed ranges for the parameters
+    # Define allowed ranges for the parameters used to define this one
     POSITIVE_PARAMS: set[str] = set()
     NEGATIVE_PARAMS: set[str] = set()
     SIMPLEX_PARAMS: set[str] = set()
 
     # Define the stan data type
     BASE_STAN_DTYPE: Literal["real", "int", "simplex"] = "real"
-    STAN_LOWER_BOUND: Optional[float | int] = None
-    STAN_UPPER_BOUND: Optional[float | int] = None
+
+    # Define the bounds for this parameter
+    LOWER_BOUND: Optional[float | int] = None
+    UPPER_BOUND: Optional[float | int] = None
+    IS_SIMPLEX: bool = False
 
     def __init__(  # pylint: disable=unused-argument
         self,
@@ -40,7 +42,6 @@ class AbstractModelComponent(ABC):
         self._component_to_paramname: dict[AbstractModelComponent, str]
         self._shape: tuple[int, ...] = shape  # Shape of the parameter
         self._children: list[AbstractModelComponent] = []  # Children of the component
-        self._torch_parametrization: dict[str, torch.Tensor]  # Pytorch parameters
 
         # Validate incoming parameters
         self._validate_parameters(parameters)
@@ -76,6 +77,22 @@ class AbstractModelComponent(ABC):
                 "from those defined"
             )
 
+        # Lower bounds must be below upper bounds
+        if (
+            self.LOWER_BOUND is not None
+            and self.UPPER_BOUND is not None
+            and self.LOWER_BOUND >= self.UPPER_BOUND
+        ):
+            raise ValueError("Lower bound must be less than upper bound")
+
+        # If THIS parameter is a simplex, then the upper and lower bounds cannot
+        # be set
+        if self.IS_SIMPLEX:
+            if self.LOWER_BOUND is not None or self.LOWER_BOUND != 0.0:
+                raise ValueError("Simplex parameters cannot have lower bounds")
+            if self.UPPER_BOUND is not None or self.UPPER_BOUND != 1.0:
+                raise ValueError("Simplex parameters cannot have upper bounds")
+
     def _set_parents(
         self,
         parameters: dict[str, "dms.custom_types.CombinableParameterType"],
@@ -95,21 +112,21 @@ class AbstractModelComponent(ABC):
             # Otherwise, convert to a constant model component with the appropriate
             # bounds
             if name in self.POSITIVE_PARAMS:
-                stan_lower_bound = 0
-                stan_upper_bound = None
+                lower_bound = 0
+                upper_bound = None
             elif name in self.NEGATIVE_PARAMS:
-                stan_lower_bound = None
-                stan_upper_bound = 0
+                lower_bound = None
+                upper_bound = 0
             elif name in self.SIMPLEX_PARAMS:
-                stan_lower_bound = 0
-                stan_upper_bound = 1
+                lower_bound = 0
+                upper_bound = 1
             else:
-                stan_lower_bound = None
-                stan_upper_bound = None
+                lower_bound = None
+                upper_bound = None
             self._parents[name] = dms_components.Constant(
                 value=val,
-                stan_lower_bound=stan_lower_bound,
-                stan_upper_bound=stan_upper_bound,
+                lower_bound=lower_bound,
+                upper_bound=upper_bound,
             )
 
         # Map components to param names
@@ -226,99 +243,6 @@ class AbstractModelComponent(ABC):
 
         return indexed_varname
 
-    def init_pytorch(
-        self,
-        draws: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
-    ) -> None:
-        """
-        Sets up the parameters needed for training a Pytorch model and defines the
-        Pytorch operation that will be performed on the parameter. Operations can
-        be either calculation of loss or transformation of the parameter, depending
-        on the subclass.
-        """
-        # Reset torch parameters
-        self._torch_parameters = {}
-
-        # If the draws are not provided, then we draw from the parameter
-        if draws is None:
-            _, draws = self.draw(1)
-
-        # Set up the Pytorch parameters. We parametrize in terms of the parents
-        for paramname, param in self._parents.items():
-
-            # Get the current draw. Squash the first dimension if it exists (this
-            # is the sample dimension).
-            draw = torch.from_numpy(draws[param].squeeze(axis=0))
-
-            # Record the PyTorch parameter. Everything is learnable except for
-            # constants.
-            if isinstance(
-                param, (dms_components.Parameter, dms_components.TransformedParameter)
-            ):
-                # Transform the parameter if it is bounded
-                if paramname in self.bounded_parameters:
-
-                    # Negatives should be transformed to be positive
-                    if paramname in self.NEGATIVE_PARAMS:
-                        draw = torch.abs(draw)
-
-                    # To log space
-                    draw = torch.log(draw)
-
-                # Record the parameter as a learnable parameter
-                self._torch_parameters[paramname] = nn.Parameter(draw)
-            else:
-                assert isinstance(param, dms_components.Constant)
-                self._torch_parameters[paramname] = draw
-
-    def get_torch_observables(
-        self, observed: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
-        """
-        Gets the values of the observables from the perspective of the model component.
-        An "observable" is what would be drawn from this component if it were
-        generating. In practice, this means the values of the PyTorch tensors of
-        the child components of this component.
-
-        Args:
-            observed (Optional[torch.Tensor], optional): The observed value. This
-                only needs to be provided for observed components. Latent components
-                will automatically identify the child components and in turn use
-                that parameter's components as the observed value. Defaults to None.
-
-        Returns:
-            torch.Tensor: The values of the observables from the perspective of
-                the bound component.
-        """
-        # If an observable, then we must have an observed value
-        if self.observable and observed is None:
-            raise ValueError(
-                "Observed value must be provided for observable parameters"
-            )
-
-        # Get the observables from the children
-        observations = [] if observed is None else [observed]
-        for child in self.children:
-
-            # Get the parameter name in the child
-            # pylint: disable=protected-access
-            child_paramname = child._component_to_paramname[self]
-            # pylint: enable=protected-access
-
-            # Get the observed value. The observed must be the same shape as the
-            # parameter being tested.
-            observation = child.torch_parameters[child_paramname]
-            assert (
-                observation.shape == self.shape
-            ), f"{child.model_varname} {self.model_varname} {observation.shape} {self.shape}"
-            observations.append(observation)
-
-        # If multiple observables, they must be the same object
-        assert all(obs is observations[0] for obs in observations)
-
-        # Return the observations
-        return observations[0]
-
     @abstractmethod
     def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
         """Sample from the distribution that represents the parameter"""
@@ -361,8 +285,11 @@ class AbstractModelComponent(ABC):
                 parent_draw, axis=tuple(range(1, dims_to_add + 1))
             )
 
-        # Now draw from the current parameter
+        # Now draw from the current parameter and check the bounds
         draws = self._draw(n, level_draws)
+        assert self.LOWER_BOUND is None or np.all(draws) >= self.LOWER_BOUND
+        assert self.UPPER_BOUND is None or np.all(draws) <= self.UPPER_BOUND
+        assert not self.IS_SIMPLEX or np.allclose(np.sum(draws, axis=-1), 1)
 
         # Update the _drawn dictionary
         assert self not in _drawn
@@ -461,37 +388,6 @@ class AbstractModelComponent(ABC):
             }
         )
 
-    def _get_torch_parameter(self, paramname: str) -> torch.Tensor:
-        """Returns the transformed PyTorch parameter for the given parameter name."""
-        # Get the parameter
-        param = self._torch_parameters[paramname]
-
-        # If a transformed parameter, return to the original space
-        if paramname in self.bounded_parameters and isinstance(
-            self._parents[paramname],
-            (dms_components.Parameter, dms_components.TransformedParameter),
-        ):
-
-            # First exponentiate
-            param = torch.exp(param)
-
-            # Negative parameters should be negated
-            if paramname in self.NEGATIVE_PARAMS:
-                param = -param
-
-            # If a simplex, normalize
-            if paramname in self.SIMPLEX_PARAMS:
-                param = param / torch.sum(param, dim=-1)
-
-        return param
-
-    def _get_transformed_torch_parameters(self) -> dict[str, torch.Tensor]:
-        """Returns the PyTorch parameters for this component, appropriately transformed."""
-        return {
-            paramname: self._get_torch_parameter(paramname)
-            for paramname in self._torch_parameters
-        }
-
     def __str__(self):
         return f"{self.__class__.__name__}"
 
@@ -529,12 +425,8 @@ class AbstractModelComponent(ABC):
     def stan_bounds(self) -> str:
         """Return the Stan bounds for this parameter"""
         # Format the lower and upper bounds
-        lower = (
-            "" if self.STAN_LOWER_BOUND is None else f"lower={self.STAN_LOWER_BOUND}"
-        )
-        upper = (
-            "" if self.STAN_UPPER_BOUND is None else f"upper={self.STAN_UPPER_BOUND}"
-        )
+        lower = "" if self.LOWER_BOUND is None else f"lower={self.LOWER_BOUND}"
+        upper = "" if self.UPPER_BOUND is None else f"upper={self.UPPER_BOUND}"
 
         # Combine the bounds
         if lower and upper:
@@ -649,14 +541,6 @@ class AbstractModelComponent(ABC):
         return self._children.copy()
 
     @property
-    def bounded_parameters(self) -> set[str]:
-        """
-        Gets the identities of the parameters that are stored in a different space
-        in PyTorch than in the bound parameter.
-        """
-        return self.POSITIVE_PARAMS | self.NEGATIVE_PARAMS | self.SIMPLEX_PARAMS
-
-    @property
-    def torch_parameters(self) -> dict[str, torch.Tensor]:
+    @abstractmethod
+    def torch_parametrization(self) -> torch.Tensor:
         """Return the PyTorch parameters for this component, appropriately transformed."""
-        return self._get_transformed_torch_parameters()
