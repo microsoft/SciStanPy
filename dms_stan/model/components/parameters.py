@@ -21,7 +21,7 @@ class Parameter(AbstractModelComponent):
     def __init__(
         self,
         numpy_dist: str,
-        torch_dist: dist.distribution.Distribution,
+        torch_dist: type[dist.distribution.Distribution],
         stan_to_np_names: dict[str, str],
         stan_to_torch_names: dict[str, str],
         stan_to_np_transforms: Optional[
@@ -71,19 +71,22 @@ class Parameter(AbstractModelComponent):
 
         # Initialize a parametrization using PyTorch
         self._torch_parametrization: Optional[nn.Parameter] = None
-        self.init_pytorch()
 
     def init_pytorch(
         self, init_val: Optional[Union[npt.NDArray, torch.Tensor]] = None
     ) -> None:
         """Sets up the parameters needed for training a Pytorch model."""
+        # This cannot be called if the parameter is an observable
+        if self.observable:
+            raise ValueError("Observables do not have a torch parametrization")
+
         # If no initialization value is provided, then we draw one
         if init_val is None:
             init_val, _ = self.draw(1)
             init_val = np.squeeze(init_val, axis=0)
 
         # If the initialization value is a numpy array, convert it to a tensor
-        if isinstance(init_val, npt.NDArray):
+        if isinstance(init_val, np.ndarray):
             init_val = torch.from_numpy(init_val)
 
         # The shape of the initialization value must match the shape of the
@@ -199,7 +202,7 @@ class Parameter(AbstractModelComponent):
         return all(isinstance(parent, Constant) for parent in self.parents)
 
     @property
-    def torch_parametrization(self) -> dict[str, torch.Tensor]:
+    def torch_parametrization(self) -> torch.Tensor:
 
         # If the parameter is an observable, there is no torch parametrization
         if self.observable:
@@ -348,19 +351,8 @@ class HalfNormal(Normal):
         super().__init__(mu=0.0, sigma=sigma, **kwargs)
 
     # Overwrite the draw method to ensure that the drawn values are positive
-    def draw(
-        self,
-        n: int,
-        _drawn: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
-    ) -> tuple[npt.NDArray, dict["AbstractModelComponent", npt.NDArray]]:
-        # Draw from the normal distribution and take the absolute value
-        draws, _drawn = super().draw(n, _drawn=_drawn)
-        draws = np.abs(draws)
-
-        # Update the drawn values
-        _drawn[self] = draws
-
-        return draws, _drawn
+    def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
+        return np.abs(super()._draw(n, level_draws))
 
 
 class UnitNormal(Normal):

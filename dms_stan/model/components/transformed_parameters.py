@@ -411,9 +411,6 @@ class LogExponentialGrowth(Growth):
     ) -> npt.NDArray: ...
 
     def operation(self, *, t, log_A, r):
-        assert (
-            len({type(t), type(log_A), type(r)}) == 1
-        ), "All inputs must be the same type"
         return log_A + r * t
 
     # pylint: enable=arguments-differ
@@ -483,13 +480,6 @@ class LogSigmoidGrowth(Growth):
     ) -> npt.NDArray: ...
 
     def operation(self, *, t, log_A, r, c):
-
-        # Ensure all inputs are the same type
-        assert (
-            len({type(t), type(log_A), type(r), type(c)}) == 1
-        ), "All inputs must be the same type"
-
-        # Perform the operation
         module = _choose_module(t)
         return log_A - module.log(1 + module.exp(-r * (t - c)))
 

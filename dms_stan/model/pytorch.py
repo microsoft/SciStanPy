@@ -77,8 +77,8 @@ class PyTorchModel(nn.Module):
 
         # Initialize all parameters for pytorch optimization
         learnable_params = []
-        for param in self._parameters:
-            if isinstance(param, Parameter):
+        for param in self.model._parameters.values():
+            if isinstance(param, Parameter) and not param.observable:
                 param.init_pytorch(init_val=draws[param].squeeze(axis=0))
                 learnable_params.append(param._torch_parametrization)
 
@@ -105,7 +105,7 @@ class PyTorchModel(nn.Module):
                 continue
 
             # Calculate the log-probability of the parameter
-            log_prob += param.calculate_log_prob(observed=observed_data.get(name, None))
+            log_prob += param.get_torch_logprob(observed=observed_data.get(name, None))
 
         return log_prob
 

@@ -287,8 +287,12 @@ class AbstractModelComponent(ABC):
 
         # Now draw from the current parameter and check the bounds
         draws = self._draw(n, level_draws)
-        assert self.LOWER_BOUND is None or np.all(draws) >= self.LOWER_BOUND
-        assert self.UPPER_BOUND is None or np.all(draws) <= self.UPPER_BOUND
+        assert self.LOWER_BOUND is None or np.all(draws >= self.LOWER_BOUND), (
+            draws,
+            type(self),
+            self.LOWER_BOUND,
+        )
+        assert self.UPPER_BOUND is None or np.all(draws <= self.UPPER_BOUND)
         assert not self.IS_SIMPLEX or np.allclose(np.sum(draws, axis=-1), 1)
 
         # Update the _drawn dictionary
