@@ -13,12 +13,6 @@ from tqdm import tqdm
 import dms_stan.model as dms_model
 
 from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
-from .components import Parameter
-
-# TODO: Simplify MAP estimation by just assigning a learnable parameter to each
-# parameter in the model. Go from hyperparameters to observable rather than observable
-# to hyperparameters as we have it now. Calculate transformed parameters rather than
-# learning something that is self-consistent.
 
 
 def check_observable_data(
@@ -77,8 +71,8 @@ class PyTorchModel(nn.Module):
 
         # Initialize all parameters for pytorch optimization
         learnable_params = []
-        for param in self.model._parameters.values():
-            if isinstance(param, Parameter) and not param.observable:
+        for param in self.model.parameters:
+            if not param.observable:
                 param.init_pytorch(init_val=draws[param].squeeze(axis=0))
                 learnable_params.append(param._torch_parametrization)
 
@@ -96,15 +90,6 @@ class PyTorchModel(nn.Module):
         # Sum the log-probs of the observables and parameters
         log_prob = 0.0
         for name, param in self.model.parameter_dict.items():
-
-            # Ignore anything that is not a Parameter instance. When we call
-            # `calculate_log_prob` on a parameter, any transformations needed to
-            # calculate the log-probability are handled internally (i.e., the
-            # transformed parameters are included)
-            if not isinstance(param, Parameter):
-                continue
-
-            # Calculate the log-probability of the parameter
             log_prob += param.get_torch_logprob(observed=observed_data.get(name, None))
 
         return log_prob
@@ -194,7 +179,7 @@ class PyTorchModel(nn.Module):
         return {
             name: param.torch_parametrization
             for name, param in self.model.parameter_dict.items()
-            if isinstance(param, Parameter) and not param.observable
+            if not param.observable
         }
 
     def export_distributions(self) -> dict[str, torch.distributions.Distribution]:
@@ -205,5 +190,4 @@ class PyTorchModel(nn.Module):
         return {
             name: param.torch_dist_instance
             for name, param in self.model.parameter_dict.items()
-            if isinstance(param, Parameter)
         }

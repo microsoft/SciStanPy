@@ -1,7 +1,7 @@
 """Contains the Model base class, which is used to define all DMS Stan models."""
 
 from abc import ABC, abstractmethod
-from typing import Literal, Optional, overload, TypedDict, Union
+from typing import Iterable, Literal, Optional, overload, TypedDict, Union
 
 import hvplot.interactive
 import numpy as np
@@ -21,10 +21,21 @@ from .components import (
     LogSigmoidGrowth,
     Normal,
     Parameter,
+    TransformedParameter,
 )
 from .components.abstract_model_component import AbstractModelComponent
 from .pytorch import check_observable_data, PyTorchModel
 from .stan import StanModel
+
+
+def components_to_dict(
+    components: Iterable[AbstractModelComponent],
+) -> dict[str, AbstractModelComponent]:
+    """
+    Converts a list of components to a dictionary where the keys are the model variable
+    names of the components.
+    """
+    return {comp.model_varname: comp for comp in components}
 
 
 # Special type for the MAP estimate
@@ -47,9 +58,8 @@ class Model(ABC):
     @abstractmethod
     def __init__(self, *args, **kwargs):
         """This should be overridden by the subclass."""
-        self._parameters: dict[str, AbstractModelComponent]
+        self._named_model_components: tuple[AbstractModelComponent, ...]
         self._model_varname_to_object: dict[str, AbstractModelComponent]
-        self._torch_parameters: list[nn.Parameter]
 
     def __init_subclass__(cls, **kwargs):
         """"""
@@ -65,22 +75,30 @@ class Model(ABC):
             # Run the init method that was defined in the class.
             cls._wrapped_init(self, *init_args, **init_kwargs)
 
-            # If we already have parameters, defined in the class, update them with
-            # the new parameters. This situation occurs when a child class is defined
-            # that inherits from a parent class that is also a model.
-            parameters = (
-                self.parameter_dict.copy() if hasattr(self, "_parameters") else {}
+            # If we already have model components, defined in the class, update
+            # them with the new model components. This situation occurs when a child
+            # class is defined that inherits from a parent class that is also a
+            # model.
+            named_model_components = (
+                self.named_model_components_dict
+                if hasattr(self, "_model_components")
+                else {}
             )
 
-            # Now we need to find all the parameters that are defined in the class.
+            # Now we need to find all the model components that are defined in the
+            # class.
             for attr in set(dir(self)) - set(dir(Model)):
                 if isinstance(retrieved := getattr(self, attr), AbstractModelComponent):
                     retrieved.model_varname = attr  # Set the model variable name
-                    assert (attr not in parameters) or (parameters[attr] is retrieved)
-                    parameters[attr] = retrieved
+                    if attr in named_model_components:
+                        assert named_model_components[attr] == retrieved
+                    else:
+                        named_model_components[attr] = retrieved
 
             # Set the parameters attribute
-            self._parameters: dict[str, AbstractModelComponent] = parameters
+            self._named_model_components = tuple(
+                sorted(named_model_components.values(), key=lambda x: x.model_varname)
+            )
 
             # Make sure there is at least one observable
             if len(self.observables) == 0:
@@ -94,12 +112,8 @@ class Model(ABC):
         cls.__init__ = __init__
 
     def _build_model_varname_to_object(self) -> dict[str, AbstractModelComponent]:
-        """
-        Builds a mapping between model varnames and objects for easy access. Also
-        makes sure that all Parameter instances are explicitly defined.
-        """
+        """Builds a mapping between model varnames and objects for easy access."""
         # Start from each observable and walk up the tree to the root
-        unnamed_params: list[str] = []
         model_varname_to_object: dict[str, AbstractModelComponent] = {}
         for observable in self.observables:
 
@@ -117,18 +131,6 @@ class Model(ABC):
                     assert model_varname_to_object[parent.model_varname] == parent
                 else:
                     model_varname_to_object[parent.model_varname] = parent
-
-                # If the parent is a `Parameter` instance and it is not named, add
-                # it to the list of unnamed parameters.
-                if isinstance(parent, Parameter) and not parent.is_named:
-                    unnamed_params.append(parent.model_varname)
-
-        # Make sure all parameters are explicitly defined
-        if unnamed_params:
-            raise ValueError(
-                "All `Parameter` instances must be explicitly defined. The following "
-                f"are not: {', '.join(unnamed_params)}"
-            )
 
         # There can be no duplicate values in the mapping
         assert len(model_varname_to_object) == len(
@@ -157,23 +159,10 @@ class Model(ABC):
             dict[str, npt.NDArray]: A dictionary where the keys are the names of
                 the model components and the values are the samples drawn.
         """
-        # Make sure that we use the same seed for each draw
-        seed = dms.RNG.integers(0, 2**32 - 1)
-
         # Draw from all observables
         draws: dict[AbstractModelComponent, npt.NDArray] = {}
         for observable in self.observables:
-
-            # Draw from the observable, making sure to use the same seed
-            dms.manual_seed(seed)
-            _, full_draw = observable.draw(n)
-
-            # Update the draws. We only take draws from named parameters.
-            for model_component, sample in full_draw.items():
-                if model_component in draws:
-                    assert np.array_equal(draws[model_component], sample)
-                else:
-                    draws[model_component] = sample
+            _, draws = observable.draw(n, _drawn=draws)
 
         # Filter down to just named parameters if requested
         if named_only:
@@ -273,23 +262,61 @@ class Model(ABC):
         return self._model_varname_to_object[paramname]
 
     @property
-    def parameters(self) -> tuple[AbstractModelComponent, ...]:
-        """Returns the parameters of the model."""
-        return tuple(sorted(self._parameters.values(), key=lambda x: x.model_varname))
+    def named_model_components(self) -> tuple[AbstractModelComponent, ...]:
+        """Returns the named model components sorted by the model variable name."""
+        return self._named_model_components
 
     @property
-    def parameter_dict(self) -> dict[str, AbstractModelComponent]:
+    def named_model_components_dict(self) -> dict[str, AbstractModelComponent]:
+        """Returns the named model components as a dictionary."""
+        return components_to_dict(self.named_model_components)
+
+    @property
+    def all_model_components(self) -> tuple[AbstractModelComponent, ...]:
+        """Returns all model components sorted by the model variable name."""
+        return tuple(
+            sorted(
+                self._model_varname_to_object.values(), key=lambda x: x.model_varname
+            )
+        )
+
+    @property
+    def all_model_components_dict(self) -> dict[str, AbstractModelComponent]:
+        """Returns all model components as a dictionary."""
+        return self._model_varname_to_object
+
+    @property
+    def parameters(self) -> tuple[Parameter, ...]:
+        """Returns the parameters of the model."""
+        return tuple(
+            filter(lambda x: isinstance(x, Parameter), self.named_model_components)
+        )
+
+    @property
+    def parameter_dict(self) -> dict[str, Parameter]:
         """Returns the parameters of the model as a dictionary."""
-        return self._parameters.copy()
+        return components_to_dict(self.parameters)
+
+    @property
+    def transformed_parameters(self) -> tuple[TransformedParameter, ...]:
+        """Returns the transformed parameters of the model."""
+        return tuple(
+            filter(
+                lambda x: isinstance(x, TransformedParameter),
+                self.named_model_components,
+            )
+        )
+
+    @property
+    def transformed_parameter_dict(self) -> dict[str, TransformedParameter]:
+        """Returns the transformed parameters of the model as a dictionary."""
+        return components_to_dict(self.transformed_parameters)
 
     @property
     def constants(self) -> tuple[Constant, ...]:
-        """
-        Returns the hyperparameters of the model. These are explicitly defined
-        constants and constants implicit to the model based on parameter definitions.
-        """
+        """Returns named constants of the model"""
         return tuple(
-            sorted(self.constants_dict.values(), key=lambda x: x.model_varname)
+            filter(lambda x: isinstance(x, Constant), self.named_model_components)
         )
 
     @property
@@ -298,33 +325,17 @@ class Model(ABC):
         Returns the hyperparameters of the model. These are explicitly defined
         constants and constants implicit to the model based on parameter definitions.
         """
-        constants_dict: dict[str, Constant] = {}
-        for param in self.parameters:
-
-            # If the parameter is a constant, add it to the dictionary
-            if isinstance(param, Constant):
-                constants_dict[param.model_varname] = param
-
-            # Loop over all parents to the parameter. If any of the parents are
-            # constants, add them to the dictionary as well.
-            for parent in param.parents:
-                if isinstance(parent, Constant):
-                    if parent.model_varname in constants_dict:
-                        assert constants_dict[parent.model_varname] == parent
-                    else:
-                        constants_dict[parent.model_varname] = parent
-
-        return constants_dict
+        return components_to_dict(self.constants)
 
     @property
     def observables(self) -> tuple[Parameter, ...]:
         """Returns the observables of the model."""
-        return tuple(param for param in self.parameters if param.observable)
+        return tuple(filter(lambda x: x.observable, self.parameters))
 
     @property
     def observable_dict(self) -> dict[str, Parameter]:
         """Returns the observables of the model as a dictionary."""
-        return {k: v for k, v in self.parameter_dict.items() if v.observable}
+        return components_to_dict(self.observables)
 
 
 class BaseGrowthModel(Model):

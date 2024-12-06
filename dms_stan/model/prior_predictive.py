@@ -66,7 +66,7 @@ class PriorPredictiveCheck:
             raise ValueError("Independent labels require an independent dimension")
 
         # Get the list of parameters and observables in the model
-        legal_targets = self.model.parameter_dict.copy()
+        legal_targets = self.model.named_model_components_dict
         error_message = "The model has no parameters or observables"
 
         # If there is an independent dimension provided, filter down to just those
@@ -122,9 +122,16 @@ class PriorPredictiveCheck:
         sliders = {}
 
         # Process all constants in the model
-        for hyperparam_name, hyperparam_val in self.model.constants_dict.items():
-            # Skip non-togglable parameters
-            if not hyperparam_val.is_togglable:
+        for (
+            hyperparam_name,
+            hyperparam_val,
+        ) in self.model.all_model_components_dict.items():
+
+            # Skip non-constants and non-togglable parameters
+            if (
+                not isinstance(hyperparam_val, Constant)
+                or not hyperparam_val.is_togglable
+            ):
                 continue
 
             # If no dimensions, just create a slider

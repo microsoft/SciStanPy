@@ -67,7 +67,7 @@ class StanModel(CmdStanModel):
             )
 
         # Note the underlying DMSStan model
-        self.dms_stan_model = model
+        self.model = model
 
         # A dictionary stores the steps of the program
         self.steps: StanStepsType = {
@@ -128,8 +128,8 @@ class StanModel(CmdStanModel):
         """Write the parameters, transformed parameters, and data of the model."""
 
         # We only have one observable
-        assert len(self.dms_stan_model.observables) == 1
-        observable = self.dms_stan_model.observables[0]
+        assert len(self.model.observables) == 1
+        observable = self.model.observables[0]
 
         # Record the observable in the data block
         self._record_data(observable)
@@ -276,7 +276,7 @@ class StanModel(CmdStanModel):
         # of the observable. We create lists for each level. Different variables
         # will be defined and accessed depending on the level to which they belong.
         # Note that we assume the last level is vectorized
-        obs = self.dms_stan_model.observables[0]  # Shorthand for the observable
+        obs = self.model.observables[0]  # Shorthand for the observable
         model_levels = [[] for _ in range(obs.ndim)]
         transformed_param_levels = copy.deepcopy(model_levels)
 
