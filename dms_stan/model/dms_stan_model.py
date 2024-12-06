@@ -1,17 +1,27 @@
 """Contains the Model base class, which is used to define all DMS Stan models."""
 
 from abc import ABC, abstractmethod
-from typing import Iterable, Literal, Optional, overload, TypedDict, Union
+from typing import Any, Iterable, Literal, Optional, overload, TypedDict, Union
 
 import hvplot.interactive
 import numpy as np
 import numpy.typing as npt
 import torch
 
+from cmdstanpy import CmdStanMCMC
+
 import dms_stan as dms
 
 from dms_stan.custom_types import CombinableParameterType
-from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
+from dms_stan.defaults import (
+    DEFAULT_CPP_OPTIONS,
+    DEFAULT_EARLY_STOP,
+    DEFAULT_FORCE_COMPILE,
+    DEFAULT_LR,
+    DEFAULT_N_EPOCHS,
+    DEFAULT_STANC_OPTIONS,
+    DEFAULT_USER_HEADER,
+)
 
 from .components import (
     Binomial,
@@ -44,10 +54,6 @@ class MAPDict(TypedDict):
     MAP: dict[str, npt.NDArray]
     distributions: dict[str, torch.distributions.Distribution]
     losses: npt.NDArray
-
-
-# TODO: Add a 'sample' method to the Model class that will sample from the model
-# and run the appropriate diagnostics.
 
 
 class Model(ABC):
@@ -232,6 +238,38 @@ class Model(ABC):
             "distributions": distributions,
             "losses": loss_trajectory.detach().cpu().numpy(),
         }
+
+    def mcmc(
+        self,
+        output_dir: Optional[str] = None,
+        force_compile: bool = DEFAULT_FORCE_COMPILE,
+        stanc_options: Optional[dict[str, Any]] = DEFAULT_STANC_OPTIONS,
+        cpp_options: Optional[dict[str, Any]] = DEFAULT_CPP_OPTIONS,
+        user_header: Optional[str] = DEFAULT_USER_HEADER,
+        **sample_kwargs,
+    ) -> CmdStanMCMC:
+        """Samples from the model using MCMC. This is a wrapper around the `sample`
+        method of the `StanModel` class.
+        """
+        # Build the Stan model
+        stan_model = self.to_stan(
+            output_dir=output_dir,
+            force_compile=force_compile,
+            stanc_options=stanc_options,
+            cpp_options=cpp_options,
+            user_header=user_header,
+        )
+
+        # Update the output directory in the sample kwargs
+        sample_kwargs["output_dir"] = stan_model.output_dir
+
+        # Sample from the model
+        samples = stan_model.sample(**sample_kwargs)
+
+        # Run diagnostics
+        print(samples.diagnose())
+
+        return samples
 
     def prior_predictive(
         self,

@@ -13,6 +13,13 @@ from cmdstanpy import CmdStanModel
 import dms_stan as dms
 
 from dms_stan.custom_types import SampleType
+from dms_stan.defaults import (
+    DEFAULT_CPP_OPTIONS,
+    DEFAULT_FORCE_COMPILE,
+    DEFAULT_STANC_OPTIONS,
+    DEFAULT_USER_HEADER,
+)
+
 from .components import Constant, Normal, Parameter, TransformedParameter
 from .components.abstract_model_component import AbstractModelComponent
 
@@ -89,10 +96,10 @@ class StanModel(CmdStanModel):
         self,
         model: "dms.model.Model",
         output_dir: Optional[str] = None,
-        force_compile: bool = True,
-        stanc_options: Optional[dict[str, Any]] = None,
-        cpp_options: Optional[dict[str, Any]] = None,
-        user_header: Optional[str] = None,
+        force_compile: bool = DEFAULT_FORCE_COMPILE,
+        stanc_options: Optional[dict[str, Any]] = DEFAULT_STANC_OPTIONS,
+        cpp_options: Optional[dict[str, Any]] = DEFAULT_CPP_OPTIONS,
+        user_header: Optional[str] = DEFAULT_USER_HEADER,
     ):
         # Set default options
         stanc_options = stanc_options or {}

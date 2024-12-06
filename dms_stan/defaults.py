@@ -7,3 +7,9 @@ DEFAULT_LR = 0.001
 
 # Default order for index variable names
 DEFAULT_INDEX_ORDER = ("i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t")
+
+# Defaults for the Stan model
+DEFAULT_FORCE_COMPILE = False
+DEFAULT_STANC_OPTIONS = None
+DEFAULT_CPP_OPTIONS = None
+DEFAULT_USER_HEADER = None
