@@ -28,7 +28,7 @@ class Constant(AbstractModelComponent):
         # If the value is a numpy array, get the shape
         if isinstance(value, np.ndarray):
             self.BASE_STAN_DTYPE = (  # pylint: disable=invalid-name
-                "real" if isinstance(value.dtype, np.floating) else "int"
+                "real" if np.issubdtype(value.dtype, np.floating) else "int"
             )
             shape = value.shape
 

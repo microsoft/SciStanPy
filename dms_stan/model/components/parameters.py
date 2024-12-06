@@ -297,8 +297,8 @@ class Normal(ContinuousDistribution):
         center the parameter. This is done by redefining this parameter as the
         transformation of a draw from a unit normal distribution.
         """
-        # If this is a hyperparameter, then we use the parent method
-        if self.is_hyperparameter:
+        # If this is a hyperparameter or observable, then we use the parent method
+        if self.is_hyperparameter or self.observable:
             return super().get_transformation_assignment(index_opts)
 
         # Get our formattables
@@ -318,8 +318,8 @@ class Normal(ContinuousDistribution):
         by the log probability of the non-centered parameter. Otherwise, we use
         the parent method.
         """
-        # If this is a hyperparameter, then we use the parent method
-        if self.is_hyperparameter:
+        # If this is a hyperparameter or observable, then we use the parent method
+        if self.is_hyperparameter or self.observable:
             return super().get_target_incrementation(index_opts)
 
         # Otherwise, we increment the target variable by the log probability of

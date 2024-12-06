@@ -176,11 +176,11 @@ class Model(ABC):
         """
         return PyTorchModel(self)
 
-    def to_stan(self):
+    def to_stan(self, **kwargs):
         """
         Compiles the model to a Stan model.
         """
-        return StanModel(self)
+        return StanModel(self, **kwargs)
 
     def approximate_map(
         self,

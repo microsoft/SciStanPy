@@ -26,7 +26,7 @@ def combine_lines(lines: list[str], indentation: int = DEFAULT_INDENTATION) -> s
         return ""
 
     # Combine the lines
-    return ";\n".join(f"{' ' * indentation}{el}" for el in lines) + ";"
+    return "\n" + ";\n".join(f"{' ' * indentation}{el}" for el in lines) + ";"
 
 
 # We need a specific type for the steps of the Stan model
@@ -37,7 +37,6 @@ class StanStepsType(TypedDict):
     parameters: Union[str, list[str]]
     transformed_parameters: Union[str, list[str]]
     model: str
-    generated_quantities: Union[str, list[str]]
 
 
 class StanModel(CmdStanModel):
@@ -75,7 +74,6 @@ class StanModel(CmdStanModel):
             "parameters": [],
             "transformed parameters": [],
             "model": "",
-            "generated quantities": [],
         }
 
         # All variable names in the model
@@ -119,22 +117,70 @@ class StanModel(CmdStanModel):
         # Set the output directory
         self.output_dir = output_dir
 
-    def _record_data(self, data: Union[Parameter, Constant]):
-        """Record a data object in the steps."""
-        self.steps["data"].append(data.stan_parameter_declaration)
-        self.data_inputs.append(data.model_varname)
-
     def _declare_variables(self):
         """Write the parameters, transformed parameters, and data of the model."""
+
+        def record_data(data: Union[Parameter, Constant]) -> None:
+            """Record a data object in the steps."""
+            self.steps["data"].append(data.stan_parameter_declaration)
+            self.data_inputs.append(data.model_varname)
+
+        def write_variable_code(variable: AbstractModelComponent) -> None:
+            """Writes the Stan code for a variable."""
+            # Check for name collisions
+            if variable.model_varname in self.all_varnames:
+                raise ValueError(f"Name collision for {variable.model_varname}")
+
+            # Add the variable name to the set of all variable names
+            self.all_varnames.add(variable.model_varname)
+            observed_nodes.add(variable)
+
+            # If an observable, do nothing
+            if variable.observable:
+                return
+
+            # If the variable is a Normal distribution that is not a hyperparameter,
+            # we will be non-centering. Thus, the true parameter is defined as a
+            # transformed parameter and a dummy parameter is defined as a parameter.
+            elif isinstance(variable, Normal) and not variable.is_hyperparameter:
+                self.steps["parameters"].append(
+                    f"{variable.stan_dtype} {variable.noncentered_varname}"
+                )
+                self.steps["transformed parameters"].append(
+                    variable.stan_parameter_declaration
+                )
+
+            # If the variable is a parameter, add it to the parameters list
+            elif isinstance(variable, Parameter):
+                self.steps["parameters"].append(variable.stan_parameter_declaration)
+
+            # If the variable is a constant, add it to the data block
+            elif isinstance(variable, Constant):
+                record_data(variable)
+
+            # If it is a transformed parameter AND named, add it to the transformed
+            # parameters list
+            elif isinstance(variable, TransformedParameter):
+                if variable.is_named:
+                    self.steps["transformed parameters"].append(
+                        variable.stan_parameter_declaration
+                    )
+
+            # Otherwise, raise an error
+            else:
+                raise ValueError(f"Unknown node type {type(variable)}")
 
         # We only have one observable
         assert len(self.model.observables) == 1
         observable = self.model.observables[0]
 
-        # Record the observable in the data block
-        self._record_data(observable)
-        self.all_varnames.add(observable.model_varname)
-        observed_nodes: set[AbstractModelComponent] = {observable}
+        # Define a set for recording observed nodes
+        observed_nodes: set[AbstractModelComponent] = set()
+
+        # Record the observable as a data input and write the variable code for
+        # the observable
+        record_data(observable)
+        write_variable_code(observable)
 
         # Now loop over the parents of the observable and add them to the appropriate
         # blocks
@@ -147,43 +193,8 @@ class StanModel(CmdStanModel):
             if parent in observed_nodes:
                 continue
 
-            # Check for name collisions
-            if parent.model_varname in self.all_varnames:
-                raise ValueError(f"Name collision for {parent.model_varname}")
-
-            # If the parent is a Normal distribution that is not a hyperparameter,
-            # we will be non-centering. Thus, the true parameter is defined as a
-            # transformed parameter and a dummy parameter is defined as a parameter.
-            if isinstance(parent, Normal) and not parent.is_hyperparameter:
-                self.steps["parameters"].append(
-                    f"{parent.stan_dtype} {parent.noncentered_varname}"
-                )
-                self.steps["transformed parameters"].append(
-                    parent.stan_parameter_declaration
-                )
-
-            # If the parent is a parameter, add it to the parameters list
-            elif isinstance(parent, Parameter):
-                self.steps["parameters"].append(parent.stan_parameter_declaration)
-
-            # If the parent is a constant, add it to the data block
-            elif isinstance(parent, Constant):
-                self._record_data(parent)
-
-            # If it is a transformed parameter, add it to the transformed parameters
-            # list
-            elif isinstance(parent, TransformedParameter):
-                self.steps["transformed parameters"].append(
-                    parent.stan_parameter_declaration
-                )
-
-            # Otherwise, raise an error
-            else:
-                raise ValueError(f"Unknown node type {type(parent)}")
-
-            # Note that the child has been written
-            self.all_varnames.add(parent.model_varname)
-            observed_nodes.add(parent)
+            # Write the variable code for the parent
+            write_variable_code(parent)
 
         # Combine lines for the blocks
         self.steps["parameters"] = combine_lines(self.steps["parameters"])
@@ -310,9 +321,11 @@ class StanModel(CmdStanModel):
                 )
             max_level = parent.stan_code_level
 
-            # If a parameter or transformed parameter, add target incrementation
+            # If a parameter or a named transformed parameter, add target incrementation
             # and any transformations to the appropriate level
-            if isinstance(parent, (Parameter, TransformedParameter)):
+            if isinstance(parent, Parameter) or (
+                isinstance(parent, TransformedParameter) and parent.is_named
+            ):
                 if target_incrementation := parent.get_target_incrementation(
                     allowed_index_names
                 ):
@@ -324,9 +337,12 @@ class StanModel(CmdStanModel):
                         transformation_assignment
                     )
 
-            # Otherwise the parent must be a constant
+            # Otherwise the parent must be a constant or an unnamed transformed
+            # parameter
             else:
-                assert isinstance(parent, Constant)
+                assert isinstance(parent, Constant) or (
+                    isinstance(parent, TransformedParameter) and not parent.is_named
+                )
 
             # Check the level to size mapping
             check_level_to_size(parent)
@@ -355,18 +371,25 @@ class StanModel(CmdStanModel):
     @property
     def stan_program(self) -> str:
         """Get the Stan program for this model."""
+        # Join steps that have contents
+        return "\n".join(
+            f"{key} {{{self.steps[key]}\n}}"
+            for key, val in self.steps.items()
+            if len(val.strip()) > 0
+        )
 
-        # Return the full program
-        return f"""data {{
-{self.steps["data"]}
-}}
-parameters {{
-{self.steps["parameters"]}
-}}
-transformed parameters {{
-{self.steps["transformed parameters"]}
-}}
-model {{
-{self.steps["model"]}
-}}
-"""
+
+#         # Return the full program
+#         return f"""data {{
+# {self.steps["data"]}
+# }}
+# parameters {{
+# {self.steps["parameters"]}
+# }}
+# transformed parameters {{
+# {self.steps["transformed parameters"]}
+# }}
+# model {{
+# {self.steps["model"]}
+# }}
+# """
