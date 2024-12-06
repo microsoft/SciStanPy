@@ -1,21 +1,27 @@
 """Holds code for interfacing with the Stan modeling language."""
 
 import copy
+import functools
 import os.path
 import weakref
 
 from tempfile import TemporaryDirectory
-from typing import Any, Optional, TypedDict, Union
+from typing import Any, Callable, Optional, ParamSpec, TypedDict, TypeVar, Union
 
 from cmdstanpy import CmdStanModel
 
 import dms_stan as dms
 
+from dms_stan.custom_types import SampleType
 from .components import Constant, Normal, Parameter, TransformedParameter
 from .components.abstract_model_component import AbstractModelComponent
 
 # Function for combining a list of Stan code lines
 DEFAULT_INDENTATION = 4
+
+# Parameter and return types for decorated functions
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def combine_lines(lines: list[str], indentation: int = DEFAULT_INDENTATION) -> str:
@@ -27,6 +33,39 @@ def combine_lines(lines: list[str], indentation: int = DEFAULT_INDENTATION) -> s
 
     # Combine the lines
     return "\n" + ";\n".join(f"{' ' * indentation}{el}" for el in lines) + ";"
+
+
+def _update_cmdstanpy_func(func: Callable[P, R]) -> Callable[P, R]:
+    """
+    Decorator that modifies CmdStanModel functions requiring data to automatically
+    pull the data from the StanModel. The user must provide values for the observables.
+    """
+
+    @functools.wraps(func)
+    def inner(*args: P.args, **kwargs: P.kwargs) -> R:
+        """Wrapper function for gathering inputs."""
+        # Get the Stan model from the first argument
+        stan_model = args[0]
+        assert isinstance(stan_model, StanModel)
+
+        # Combine args and kwargs into a single dictionary
+        kwargs.update(dict(zip(func.__code__.co_varnames[1:], args[1:])))
+
+        # `data` must be a key in the kwargs
+        if "data" not in kwargs:
+            raise ValueError(
+                f"The 'data' keyword argument must be provided to {func.__name__}"
+            )
+
+        # Gather the inputs for the Stan model. The user should have provided
+        # values for the observables. We will get the rest of the inputs from the
+        # DMS Stan model.
+        kwargs["data"] = stan_model.gather_inputs(**kwargs["data"])
+
+        # Call the wrapped function with the inputs
+        return func(stan_model, **kwargs)
+
+    return inner
 
 
 # We need a specific type for the steps of the Stan model
@@ -50,7 +89,7 @@ class StanModel(CmdStanModel):
         self,
         model: "dms.model.Model",
         output_dir: Optional[str] = None,
-        force_compile: bool = False,
+        force_compile: bool = True,
         stanc_options: Optional[dict[str, Any]] = None,
         cpp_options: Optional[dict[str, Any]] = None,
         user_header: Optional[str] = None,
@@ -79,11 +118,8 @@ class StanModel(CmdStanModel):
         # All variable names in the model
         self.all_varnames: set[str] = set()
 
-        # Required data for the Stan model
-        self.data_inputs: list[str] = []
-
         # Build the program elements
-        self._declare_variables()
+        self.data_inputs = self._declare_variables()
         self._build_code_blocks()
 
         # Set the output directory
@@ -95,6 +131,11 @@ class StanModel(CmdStanModel):
         # Initialize the CmdStanModel
         super().__init__(
             stan_file=self.stan_program_path,
+            exe_file=(
+                self.stan_executable_path
+                if os.path.exists(self.stan_executable_path)
+                else None
+            ),
             force_compile=force_compile,
             stanc_options=stanc_options,
             cpp_options=cpp_options,
@@ -117,13 +158,13 @@ class StanModel(CmdStanModel):
         # Set the output directory
         self.output_dir = output_dir
 
-    def _declare_variables(self):
+    def _declare_variables(self) -> tuple[tuple[str, bool], ...]:
         """Write the parameters, transformed parameters, and data of the model."""
 
         def record_data(data: Union[Parameter, Constant]) -> None:
             """Record a data object in the steps."""
             self.steps["data"].append(data.stan_parameter_declaration)
-            self.data_inputs.append(data.model_varname)
+            data_inputs.append((data.model_varname, data.observable))
 
         def write_variable_code(variable: AbstractModelComponent) -> None:
             """Writes the Stan code for a variable."""
@@ -174,8 +215,10 @@ class StanModel(CmdStanModel):
         assert len(self.model.observables) == 1
         observable = self.model.observables[0]
 
-        # Define a set for recording observed nodes
+        # Define a set for recording observed nodes and a list for recording data
+        # inputs
         observed_nodes: set[AbstractModelComponent] = set()
+        data_inputs: list[tuple[str, bool]] = []
 
         # Record the observable as a data input and write the variable code for
         # the observable
@@ -202,6 +245,8 @@ class StanModel(CmdStanModel):
         self.steps["transformed parameters"] = combine_lines(
             self.steps["transformed parameters"]
         )
+
+        return tuple(data_inputs)
 
     def _build_code_blocks(self):
         """Builds the 'model' and 'transformed data' blocks of the Stan model."""
@@ -363,10 +408,74 @@ class StanModel(CmdStanModel):
         with open(self.stan_program_path, "w", encoding="utf-8") as f:
             f.write(self.stan_program)
 
+    def gather_inputs(self, **observables: SampleType) -> dict[str, SampleType]:
+        """
+        Gathers the inputs for the Stan model. Values for observables must be provided
+        by the user. All other inputs will be drawn from the DMS Stan model itself.
+
+        Returns:
+            dict[str, SampleType]: A dictionary of inputs for the Stan model.
+        """
+        # Split out the observable values from the other inputs
+        required_observables = {
+            name for name, indicator in self.data_inputs if indicator
+        }
+
+        # Make sure we have all the observables in the inputs and report any missing
+        # or extra observables
+        provided_observables = set(observables.keys())
+        if missing := required_observables - provided_observables:
+            raise ValueError(f"Missing observables: {', '.join(missing)}")
+        elif extra := provided_observables - required_observables:
+            raise ValueError(f"Extra observables: {', '.join(extra)}")
+
+        # The shapes of the provided observables must match the shapes of the
+        # observables in the model
+        for name, obs in observables.items():
+            if hasattr(obs, "shape"):
+                if obs.shape != self.model[name].shape:
+                    raise ValueError(
+                        f"Shape mismatch for observable {name}: {obs.shape} != "
+                        f"{self.model[name].shape}"
+                    )
+            elif self.model[name].shape != ():
+                raise ValueError(
+                    f"Shape mismatch for observable {name}: scalar != {self.model[name].shape}"
+                )
+
+        # Pull the hyperparameters from the model and add them to the inputs
+        observables.update(
+            {
+                name: self.model[name].value
+                for name, indicator in self.data_inputs
+                if not indicator
+            }
+        )
+
+        return observables
+
+    def code(self) -> str:
+        """Just an alias for the `stan_program` property."""
+        return self.stan_program
+
+    # Update the CmdStanModel functions that require data
+    generate_quantities = _update_cmdstanpy_func(CmdStanModel.generate_quantities)
+    laplace_sample = _update_cmdstanpy_func(CmdStanModel.laplace_sample)
+    log_prob = _update_cmdstanpy_func(CmdStanModel.log_prob)
+    optimize = _update_cmdstanpy_func(CmdStanModel.optimize)
+    pathfinder = _update_cmdstanpy_func(CmdStanModel.pathfinder)
+    sample = _update_cmdstanpy_func(CmdStanModel.sample)
+    variational = _update_cmdstanpy_func(CmdStanModel.variational)
+
+    @property
+    def stan_executable_path(self) -> str:
+        """Get the path to the executable for this model."""
+        return os.path.join(self.output_dir, "model")
+
     @property
     def stan_program_path(self) -> str:
         """Get the path to the Stan program for this model."""
-        return os.path.join(self.output_dir, "model.stan")
+        return self.stan_executable_path + ".stan"
 
     @property
     def stan_program(self) -> str:
@@ -377,19 +486,3 @@ class StanModel(CmdStanModel):
             for key, val in self.steps.items()
             if len(val.strip()) > 0
         )
-
-
-#         # Return the full program
-#         return f"""data {{
-# {self.steps["data"]}
-# }}
-# parameters {{
-# {self.steps["parameters"]}
-# }}
-# transformed parameters {{
-# {self.steps["transformed parameters"]}
-# }}
-# model {{
-# {self.steps["model"]}
-# }}
-# """

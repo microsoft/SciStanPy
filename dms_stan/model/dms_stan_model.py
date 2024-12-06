@@ -7,7 +7,6 @@ import hvplot.interactive
 import numpy as np
 import numpy.typing as npt
 import torch
-import torch.nn as nn
 
 import dms_stan as dms
 
@@ -45,6 +44,10 @@ class MAPDict(TypedDict):
     MAP: dict[str, npt.NDArray]
     distributions: dict[str, torch.distributions.Distribution]
     losses: npt.NDArray
+
+
+# TODO: Add a 'sample' method to the Model class that will sample from the model
+# and run the appropriate diagnostics.
 
 
 class Model(ABC):
