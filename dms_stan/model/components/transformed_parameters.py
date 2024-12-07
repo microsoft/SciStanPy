@@ -15,10 +15,10 @@ from .abstract_model_component import AbstractModelComponent
 
 def _is_elementwise_operation(*params: AbstractModelComponent) -> bool:
     """
-    If all parameters have more than 0 dimensions and the last dimension is larger
+    If any parameters have more than 0 dimensions and the last dimension is larger
     than 1, return True. This indicates that the operation is elementwise.
     """
-    return all(param.ndim > 0 and param.shape[-1] > 1 for param in params)
+    return any(param.ndim > 0 and param.shape[-1] > 1 for param in params)
 
 
 @overload
