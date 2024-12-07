@@ -75,6 +75,9 @@ def _update_cmdstanpy_func(func: Callable[P, R]) -> Callable[P, R]:
     return inner
 
 
+# TODO: Need generated quantities for observables
+
+
 # We need a specific type for the steps of the Stan model
 class StanStepsType(TypedDict):
     """Type for the steps of the Stan model."""

@@ -239,6 +239,36 @@ class Model(ABC):
             "losses": loss_trajectory.detach().cpu().numpy(),
         }
 
+    # TODO: Init parameters with a random draw from the prior. Make sure each chain
+    # starts with a different random draw.
+
+    # TODO: Plot the posterior distributions for each. Color by chain and drop alpha
+    # to be able to see the overlap (or lack thereof). We can use the prior predictive
+    # code for this with some tweaks.
+
+    # TODO: Extend the above plot to highlight the problematic samples.
+
+    # TODO: Build a parallel coordinates plot for the parameters. Make sure that
+    # problematic samples are highlighted. Add an option to
+
+    # TODO: Plot the posterior predictive distribution for each observable. You can
+    # combine the data from all chains for this assuming that the chain results
+    # have already been checked for convergence.
+
+    # TODO: Add the option to plot the difference of an overlay rather than the
+    # overlay itself.
+
+    # TODO: Make a plot style that can handle vectorized parameters in the posterior
+    # check. One example could be a data-shaded plot where the x-axis is the parameter
+    # identities ranked from least to most variable and the y-axis is the observed
+    # data.
+
+    # TODO: Calculate and record summaries with arviz
+
+    # NOTE: We may need to figure out how to handle larger-than-memory data outputs
+    # from Stan. The obvious solution is to write the data to disk in chunks and
+    # then use dask to load the data in parallel.
+
     def mcmc(
         self,
         output_dir: Optional[str] = None,
