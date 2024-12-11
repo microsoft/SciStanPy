@@ -3,6 +3,7 @@
 import copy
 import functools
 import os.path
+import warnings
 import weakref
 
 from tempfile import TemporaryDirectory
@@ -42,7 +43,7 @@ def combine_lines(lines: list[str], indentation: int = DEFAULT_INDENTATION) -> s
     return "\n" + ";\n".join(f"{' ' * indentation}{el}" for el in lines) + ";"
 
 
-def _update_cmdstanpy_func(func: Callable[P, R]) -> Callable[P, R]:
+def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable[P, R]:
     """
     Decorator that modifies CmdStanModel functions requiring data to automatically
     pull the data from the StanModel. The user must provide values for the observables.
@@ -51,6 +52,13 @@ def _update_cmdstanpy_func(func: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(func)
     def inner(*args: P.args, **kwargs: P.kwargs) -> R:
         """Wrapper function for gathering inputs."""
+        # If warning the user about lack of testing, do so
+        if warn:
+            warnings.warn(
+                f"{func.__name__} is experimental and has not been thoroughly tested"
+                " in the context of DMS Stan models. Use with caution."
+            )
+
         # Get the Stan model from the first argument
         stan_model = args[0]
         assert isinstance(stan_model, StanModel)
@@ -469,13 +477,15 @@ class StanModel(CmdStanModel):
         return self.stan_program
 
     # Update the CmdStanModel functions that require data
-    generate_quantities = _update_cmdstanpy_func(CmdStanModel.generate_quantities)
-    laplace_sample = _update_cmdstanpy_func(CmdStanModel.laplace_sample)
-    log_prob = _update_cmdstanpy_func(CmdStanModel.log_prob)
-    optimize = _update_cmdstanpy_func(CmdStanModel.optimize)
-    pathfinder = _update_cmdstanpy_func(CmdStanModel.pathfinder)
+    generate_quantities = _update_cmdstanpy_func(
+        CmdStanModel.generate_quantities, warn=True
+    )
+    laplace_sample = _update_cmdstanpy_func(CmdStanModel.laplace_sample, warn=True)
+    log_prob = _update_cmdstanpy_func(CmdStanModel.log_prob, warn=True)
+    optimize = _update_cmdstanpy_func(CmdStanModel.optimize, warn=True)
+    pathfinder = _update_cmdstanpy_func(CmdStanModel.pathfinder, warn=True)
     sample = _update_cmdstanpy_func(CmdStanModel.sample)
-    variational = _update_cmdstanpy_func(CmdStanModel.variational)
+    variational = _update_cmdstanpy_func(CmdStanModel.variational, warn=True)
 
     @property
     def stan_executable_path(self) -> str:
