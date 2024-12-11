@@ -53,7 +53,9 @@ class Constant(AbstractModelComponent):
         super().__init__(shape=shape)
 
     # We need a draw method
-    def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
+    def _draw(
+        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+    ) -> npt.NDArray:
         """Draw values for this component."""
         # Level draws should be empty
         assert not level_draws

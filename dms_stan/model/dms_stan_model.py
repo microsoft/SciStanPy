@@ -149,14 +149,16 @@ class Model(ABC):
         return model_varname_to_object
 
     @overload
-    def draw(self, n: int, named_only: Literal[True]) -> dict[str, npt.NDArray]: ...
+    def draw(
+        self, n: int, *, named_only: Literal[True], seed: Optional[int]
+    ) -> dict[str, npt.NDArray]: ...
 
     @overload
     def draw(
-        self, n: int, named_only: Literal[False]
+        self, n: int, *, named_only: Literal[False], seed: Optional[int]
     ) -> dict[AbstractModelComponent, npt.NDArray]: ...
 
-    def draw(self, n, named_only=True):
+    def draw(self, n, *, named_only=True, seed=None):
         """Draws from the model. By default, this will draw from the observable
         values of the model. If a parameter is specified, then it will draw from
         the distribution of that parameter.
@@ -171,7 +173,7 @@ class Model(ABC):
         # Draw from all observables
         draws: dict[AbstractModelComponent, npt.NDArray] = {}
         for observable in self.observables:
-            _, draws = observable.draw(n, _drawn=draws)
+            _, draws = observable.draw(n, _drawn=draws, seed=seed)
 
         # Filter down to just named parameters if requested
         if named_only:
@@ -276,6 +278,7 @@ class Model(ABC):
         stanc_options: Optional[dict[str, Any]] = DEFAULT_STANC_OPTIONS,
         cpp_options: Optional[dict[str, Any]] = DEFAULT_CPP_OPTIONS,
         user_header: Optional[str] = DEFAULT_USER_HEADER,
+        init_from_prior: bool = True,
         **sample_kwargs,
     ) -> CmdStanMCMC:
         """Samples from the model using MCMC. This is a wrapper around the `sample`

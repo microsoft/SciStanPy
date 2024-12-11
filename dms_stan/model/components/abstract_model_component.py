@@ -244,13 +244,17 @@ class AbstractModelComponent(ABC):
         return indexed_varname
 
     @abstractmethod
-    def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
+    def _draw(
+        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+    ) -> npt.NDArray:
         """Sample from the distribution that represents the parameter"""
 
     def draw(
         self,
         n: int,
+        *,
         _drawn: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
+        seed: Optional[int] = None,
     ) -> tuple[npt.NDArray, dict["AbstractModelComponent", npt.NDArray]]:
         """
         Recursively draws from the parameter and its parents. The draws for this
@@ -270,7 +274,7 @@ class AbstractModelComponent(ABC):
             if parent in _drawn:
                 parent_draw = _drawn[parent]
             else:
-                parent_draw, _ = parent.draw(n, _drawn)
+                parent_draw, _ = parent.draw(n, _drawn=_drawn, seed=seed)
                 _drawn[parent] = parent_draw
 
             # Add the parent draw to the level draws. Expand the number of dimensions
@@ -286,7 +290,7 @@ class AbstractModelComponent(ABC):
             )
 
         # Now draw from the current parameter and check the bounds
-        draws = self._draw(n, level_draws)
+        draws = self._draw(n, level_draws, seed=seed)
         assert self.LOWER_BOUND is None or np.all(draws >= self.LOWER_BOUND), (
             draws,
             type(self),

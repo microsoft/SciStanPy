@@ -1,7 +1,7 @@
 """Holds parameter transformations for DMS Stan models."""
 
 from abc import abstractmethod
-from typing import overload
+from typing import Optional, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -75,7 +75,9 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
 
     STAN_OPERATOR: str = ""  # Operator for the operation in Stan
 
-    def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
+    def _draw(
+        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+    ) -> npt.NDArray:
         """Sample from this parameter's distribution `n` times."""
         # Perform the operation on the draws
         return self.operation(**level_draws)

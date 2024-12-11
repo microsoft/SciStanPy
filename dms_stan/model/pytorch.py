@@ -2,7 +2,7 @@
 
 import warnings
 
-from typing import Union
+from typing import Optional, Union
 
 import numpy.typing as npt
 import torch
@@ -56,7 +56,7 @@ class PyTorchModel(nn.Module):
     `dms_stan.model.Model` instance.
     """
 
-    def __init__(self, model: "dms_model.Model"):
+    def __init__(self, model: "dms_model.Model", seed: Optional[int] = None):
         """
         Args:
             model: The `dms_stan.model.Model` instance to convert to PyTorch.
@@ -67,7 +67,7 @@ class PyTorchModel(nn.Module):
         self.model = model
 
         # Draw from the model to get the initial values
-        draws = self.model.draw(1, named_only=False)
+        draws = self.model.draw(1, named_only=False, seed=seed)
 
         # Initialize all parameters for pytorch optimization
         learnable_params = []

@@ -73,7 +73,9 @@ class Parameter(AbstractModelComponent):
         self._torch_parametrization: Optional[nn.Parameter] = None
 
     def init_pytorch(
-        self, init_val: Optional[Union[npt.NDArray, torch.Tensor]] = None
+        self,
+        init_val: Optional[Union[npt.NDArray, torch.Tensor]] = None,
+        seed: Optional[int] = None,
     ) -> None:
         """Sets up the parameters needed for training a Pytorch model."""
         # This cannot be called if the parameter is an observable
@@ -82,7 +84,7 @@ class Parameter(AbstractModelComponent):
 
         # If no initialization value is provided, then we draw one
         if init_val is None:
-            init_val, _ = self.draw(1)
+            init_val, _ = self.draw(1, seed=seed)
             init_val = np.squeeze(init_val, axis=0)
 
         # If the initialization value is a numpy array, convert it to a tensor
@@ -100,7 +102,9 @@ class Parameter(AbstractModelComponent):
         # Initialize the parameter
         self._torch_parametrization = nn.Parameter(init_val)
 
-    def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
+    def _draw(
+        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+    ) -> npt.NDArray:
         """Sample from the distribution that represents the parameter `n` times"""
         # Perform transforms
         for name, transform in self.stan_to_np_transforms.items():
@@ -113,7 +117,7 @@ class Parameter(AbstractModelComponent):
 
         # Sample from this distribution using numpy. Alter the shape to account
         # for the new first dimension of length `n`.
-        return self.numpy_dist(**level_draws, size=(n,) + self.shape)
+        return self.get_numpy_dist(seed=seed)(**level_draws, size=(n,) + self.shape)
 
     def as_observable(self) -> "Parameter":
         """Redefines the parameter as an observable variable (i.e., data)"""
@@ -171,15 +175,17 @@ class Parameter(AbstractModelComponent):
             observed if self.observable else self.torch_parametrization
         ).sum()
 
-    @property
-    def rng(self) -> np.random.Generator:
+    def get_rng(self, seed: Optional[int] = None) -> np.random.Generator:
         """Return the random number generator"""
-        return dms.RNG
+        # Return the global random number generator if no seed is provided. Otherwise,
+        # return a new random number generator with the provided seed.
+        if seed is None:
+            return dms.RNG
+        return np.random.default_rng(seed)
 
-    @property
-    def numpy_dist(self) -> Callable[..., npt.NDArray]:
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """Returns the numpy distribution function"""
-        return getattr(self.rng, self._numpy_dist)
+        return getattr(self.get_rng(seed=seed), self._numpy_dist)
 
     @property
     def torch_dist(self) -> type[dist.Distribution]:
@@ -351,8 +357,10 @@ class HalfNormal(Normal):
         super().__init__(mu=0.0, sigma=sigma, **kwargs)
 
     # Overwrite the draw method to ensure that the drawn values are positive
-    def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
-        return np.abs(super()._draw(n, level_draws))
+    def _draw(
+        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+    ) -> npt.NDArray:
+        return np.abs(super()._draw(n, level_draws, seed=seed))
 
 
 class UnitNormal(Normal):
@@ -589,7 +597,9 @@ class Multinomial(DiscreteDistribution):
     def draw(
         self,
         n: int,
+        *,
         _drawn: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
+        seed: Optional[int] = None,
     ) -> tuple[npt.NDArray, dict["AbstractModelComponent", npt.NDArray]]:
         # There must be a value for `N` in the parameters if we are sampling
         if self._parents.get("N") is None:
@@ -598,7 +608,7 @@ class Multinomial(DiscreteDistribution):
                 "'N' is provided'"
             )
 
-        return super().draw(n, _drawn=_drawn)
+        return super().draw(n, _drawn=_drawn, seed=seed)
 
     def format_stan_code(  # pylint: disable=arguments-differ, unused-argument
         self, N: str, theta: str

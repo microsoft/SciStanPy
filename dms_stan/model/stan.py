@@ -66,6 +66,11 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
         # Combine args and kwargs into a single dictionary
         kwargs.update(dict(zip(func.__code__.co_varnames[1:], args[1:])))
 
+        # If a seed is not provided, use the global random number generator to get
+        # one
+        if kwargs["seed"] is None:
+            kwargs["seed"] = dms.RNG.integers(0, 2**32 - 1)
+
         # `data` must be a key in the kwargs
         if "data" not in kwargs:
             raise ValueError(
