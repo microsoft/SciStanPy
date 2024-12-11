@@ -121,6 +121,8 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
                 "The STAN_OPERATOR must be defined for the class."
             )
 
+        return ""
+
     # Calling this class should return the result of the operation.
     def __call__(self, *args, **kwargs):
         return self.operation(*args, **kwargs)
