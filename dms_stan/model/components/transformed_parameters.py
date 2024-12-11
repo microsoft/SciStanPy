@@ -13,14 +13,6 @@ import dms_stan as dms
 from .abstract_model_component import AbstractModelComponent
 
 
-def _is_elementwise_operation(*params: AbstractModelComponent) -> bool:
-    """
-    If all parameters have more than 0 dimensions and the last dimension is larger
-    than 1, return True. This indicates that the operation is elementwise.
-    """
-    return all(param.ndim > 0 and param.shape[-1] > 1 for param in params)
-
-
 @overload
 def _choose_module(dist: torch.Tensor) -> torch: ...
 
@@ -81,6 +73,8 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
     parameters using mathematical operations.
     """
 
+    STAN_OPERATOR: str = ""  # Operator for the operation in Stan
+
     def _draw(self, n: int, level_draws: dict[str, npt.NDArray]) -> npt.NDArray:
         """Sample from this parameter's distribution `n` times."""
         # Perform the operation on the draws
@@ -114,6 +108,16 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
             return param.get_indexed_varname(index_opts)
         else:
             return f"( {param.get_stan_code(index_opts)} )"
+
+    @abstractmethod
+    def format_stan_code(self, **args: str) -> str:
+        """Format the Stan code for the operation"""
+
+        # Make sure the operator is defined
+        if self.STAN_OPERATOR == "":
+            raise NotImplementedError(
+                "The STAN_OPERATOR must be defined for the class."
+            )
 
     # Calling this class should return the result of the operation.
     def __call__(self, *args, **kwargs):
@@ -156,17 +160,11 @@ class BinaryTransformedParameter(TransformedParameter):
     @abstractmethod
     def operation(self, dist1, dist2): ...
 
+    def format_stan_code(self, dist1: str, dist2: str) -> str:
+        super().format_stan_code()
+        return f"{dist1} {self.STAN_OPERATOR} {dist2}"
+
     # pylint: enable=arguments-differ
-
-    @abstractmethod
-    def format_stan_code(  # pylint: disable=arguments-differ
-        self, dist1: str, dist2: str
-    ) -> str: ...
-
-    @property
-    def is_elementwise_operation(self) -> bool:
-        """Return whether the operation is elementwise or not."""
-        return _is_elementwise_operation(*self.parents)
 
 
 class UnaryTransformedParameter(TransformedParameter):
@@ -189,83 +187,65 @@ class UnaryTransformedParameter(TransformedParameter):
     @abstractmethod
     def operation(self, dist1): ...
 
-    # pylint: enable=arguments-differ
+    def format_stan_code(self, dist1: str) -> str:
+        super().format_stan_code()
+        return f"{self.stan_operator}{dist1}"
 
-    @abstractmethod
-    def format_stan_code(  # pylint: disable=arguments-differ
-        self, dist1: str
-    ) -> str: ...
+    # pylint: enable=arguments-differ
 
 
 class AddParameter(BinaryTransformedParameter):
     """Defines a parameter that is the sum of two other parameters."""
 
+    STAN_OPERATOR: str = "+"
+
     def operation(self, dist1, dist2):
         return dist1 + dist2
-
-    def format_stan_code(self, dist1: str, dist2: str) -> str:
-        return f"{dist1} + {dist2}"
 
 
 class SubtractParameter(BinaryTransformedParameter):
     """Defines a parameter that is the difference of two other parameters."""
 
+    STAN_OPERATOR: str = "-"
+
     def operation(self, dist1, dist2):
         return dist1 - dist2
-
-    def format_stan_code(self, dist1: str, dist2: str) -> str:
-        return f"{dist1} - {dist2}"
 
 
 class MultiplyParameter(BinaryTransformedParameter):
     """Defines a parameter that is the product of two other parameters."""
 
+    STAN_OPERATOR: str = ".*"
+
     def operation(self, dist1, dist2):
         return dist1 * dist2
-
-    def format_stan_code(self, dist1: str, dist2: str) -> str:
-
-        # Get the operator
-        operator = ".*" if self.is_elementwise_operation else "*"
-
-        return f"{dist1} {operator} {dist2}"
 
 
 class DivideParameter(BinaryTransformedParameter):
     """Defines a parameter that is the quotient of two other parameters."""
 
+    STAN_OPERATOR: str = "./"
+
     def operation(self, dist1, dist2):
         return dist1 / dist2
-
-    def format_stan_code(self, dist1: str, dist2: str) -> str:
-        # Get the operator
-        operator = "./" if self.is_elementwise_operation else "/"
-
-        return f"{dist1} {operator} {dist2}"
 
 
 class PowerParameter(BinaryTransformedParameter):
     """Defines a parameter raised to the power of another parameter."""
 
+    STAN_OPERATOR: str = ".^"
+
     def operation(self, dist1, dist2):
         return dist1**dist2
-
-    def format_stan_code(self, dist1: str, dist2: str) -> str:
-
-        # Get the operator
-        operator = ".^" if self.is_elementwise_operation else "^"
-
-        return f"{dist1} {operator} {dist2}"
 
 
 class NegateParameter(UnaryTransformedParameter):
     """Defines a parameter that is the negative of another parameter."""
 
+    STAN_OPERATOR: str = "-"
+
     def operation(self, dist1):
         return -dist1
-
-    def format_stan_code(self, dist1: str) -> str:
-        return f"-{dist1}"
 
 
 class AbsParameter(UnaryTransformedParameter):
@@ -418,11 +398,7 @@ class LogExponentialGrowth(Growth):
     def format_stan_code(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str
     ) -> str:
-        # Decide on operator between r and t
-        operator = ".*" if _is_elementwise_operation(self.t, self.r) else "*"
-
-        # Build the transformation
-        return f"{log_A} + {r} {operator} {t}"
+        return f"{log_A} + {r} .* {t}"
 
 
 class LogSigmoidGrowth(Growth):
@@ -488,7 +464,4 @@ class LogSigmoidGrowth(Growth):
     def format_stan_code(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str, c: str
     ) -> str:
-        # Determine the operator between r and t
-        operator = ".*" if _is_elementwise_operation(self.t, self.r) else "*"
-
-        return f"{log_A} - log(1 + exp(-{r} {operator} ({t} - {c})))"
+        return f"{log_A} - log(1 + exp(-{r} .* ({t} - {c})))"
