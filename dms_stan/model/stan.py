@@ -9,7 +9,10 @@ import weakref
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Optional, ParamSpec, TypedDict, TypeVar, Union
 
-from cmdstanpy import CmdStanModel
+import numpy as np
+import numpy.typing as npt
+
+from cmdstanpy import CmdStanMCMC, CmdStanModel
 
 import dms_stan as dms
 
@@ -68,7 +71,7 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
 
         # If a seed is not provided, use the global random number generator to get
         # one
-        if kwargs["seed"] is None:
+        if kwargs.get("seed") is None:
             kwargs["seed"] = dms.RNG.integers(0, 2**32 - 1)
 
         # `data` must be a key in the kwargs
@@ -138,8 +141,9 @@ class StanModel(CmdStanModel):
             "model": "",
         }
 
-        # All variable names in the model
+        # All variable and parameter names in the model
         self.all_varnames: set[str] = set()
+        self.all_paramnames: set[str] = set()
 
         # Build the program elements
         self.data_inputs = self._declare_variables()
@@ -216,6 +220,7 @@ class StanModel(CmdStanModel):
 
             # If the variable is a parameter, add it to the parameters list
             elif isinstance(variable, Parameter):
+                self.all_paramnames.add(variable.model_varname)
                 self.steps["parameters"].append(variable.stan_parameter_declaration)
 
             # If the variable is a constant, add it to the data block
@@ -481,6 +486,59 @@ class StanModel(CmdStanModel):
         """Just an alias for the `stan_program` property."""
         return self.stan_program
 
+    def _get_sample_init(
+        self, *, chains: int, seed: Optional[int]
+    ) -> list[dict[str, Union[npt.NDArray[np.floating], np.floating]]]:
+        """
+        Draws from the prior distribution of the model to initialize the MCMC sampler.
+
+        Args:
+            chains (int): The number of chains.
+            seed (Optional[int]): The seed for the random number generator.
+
+        Returns:
+            list[dict[str, npt.NDArray]]: A list of dictionaries where each dictionary
+                contains the initial values for the parameters of the model in one
+                chain.
+        """
+        # Draw from the prior distribution of the model, keeping only the draws
+        # for the non-observable parameters
+        draws = {
+            component.model_varname: draw
+            for component, draw in self.model.draw(
+                n=chains, named_only=False, seed=seed
+            ).items()
+            if isinstance(component, Parameter) and not component.observable
+        }
+
+        # The draws should overlap perfectly with the parameters of the model
+        assert set(draws.keys()) == self.all_paramnames
+
+        # Separate the draws into one dictionary per chain
+        return [{name: draw[i] for name, draw in draws.items()} for i in range(chains)]
+
+    def sample(self, *args, **kwargs) -> CmdStanMCMC:
+
+        # Update the sample function from CmdStanModel to automatically pull the
+        # data from the StanModel
+        updated_parent_sample = _update_cmdstanpy_func(CmdStanModel.sample)
+
+        # Combine args and kwargs into a single dictionary
+        kwargs.update(dict(zip(CmdStanModel.sample.__code__.co_varnames[1:], args)))
+
+        # Set the number of chains if not provided
+        if "chains" not in kwargs or kwargs["chains"] is None:
+            kwargs["chains"] = 4
+
+        # If initializing from the prior, we need to draw from the prior
+        if kwargs.get("inits") == "prior":
+            kwargs["inits"] = self._get_sample_init(  # pylint: disable=protected-access
+                chains=kwargs["chains"], seed=kwargs.get("seed")
+            )
+
+        # Call the parent sample function
+        return updated_parent_sample(self, **kwargs)
+
     # Update the CmdStanModel functions that require data
     generate_quantities = _update_cmdstanpy_func(
         CmdStanModel.generate_quantities, warn=True
@@ -489,7 +547,6 @@ class StanModel(CmdStanModel):
     log_prob = _update_cmdstanpy_func(CmdStanModel.log_prob, warn=True)
     optimize = _update_cmdstanpy_func(CmdStanModel.optimize, warn=True)
     pathfinder = _update_cmdstanpy_func(CmdStanModel.pathfinder, warn=True)
-    sample = _update_cmdstanpy_func(CmdStanModel.sample)
     variational = _update_cmdstanpy_func(CmdStanModel.variational, warn=True)
 
     @property

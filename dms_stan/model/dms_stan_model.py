@@ -241,9 +241,6 @@ class Model(ABC):
             "losses": loss_trajectory.detach().cpu().numpy(),
         }
 
-    # TODO: Init parameters with a random draw from the prior. Make sure each chain
-    # starts with a different random draw.
-
     # TODO: Plot the posterior distributions for each. Color by chain and drop alpha
     # to be able to see the overlap (or lack thereof). We can use the prior predictive
     # code for this with some tweaks.
@@ -270,7 +267,6 @@ class Model(ABC):
     # NOTE: We may need to figure out how to handle larger-than-memory data outputs
     # from Stan. The obvious solution is to write the data to disk in chunks and
     # then use dask to load the data in parallel.
-
     def mcmc(
         self,
         output_dir: Optional[str] = None,
@@ -278,7 +274,7 @@ class Model(ABC):
         stanc_options: Optional[dict[str, Any]] = DEFAULT_STANC_OPTIONS,
         cpp_options: Optional[dict[str, Any]] = DEFAULT_CPP_OPTIONS,
         user_header: Optional[str] = DEFAULT_USER_HEADER,
-        init_from_prior: bool = True,
+        inits: Optional[str] = "prior",
         **sample_kwargs,
     ) -> CmdStanMCMC:
         """Samples from the model using MCMC. This is a wrapper around the `sample`
@@ -297,7 +293,7 @@ class Model(ABC):
         sample_kwargs["output_dir"] = stan_model.output_dir
 
         # Sample from the model
-        samples = stan_model.sample(**sample_kwargs)
+        samples = stan_model.sample(inits=inits, **sample_kwargs)
 
         # Run diagnostics
         print(samples.diagnose())
