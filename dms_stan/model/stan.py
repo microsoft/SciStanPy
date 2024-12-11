@@ -159,7 +159,7 @@ class StanModel(CmdStanModel):
             stan_file=self.stan_program_path,
             exe_file=(
                 self.stan_executable_path
-                if os.path.exists(self.stan_executable_path)
+                if os.path.exists(self.stan_executable_path) and not force_compile
                 else None
             ),
             force_compile=force_compile,

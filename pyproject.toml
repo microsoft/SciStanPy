@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dms_stan"
+description = "Package for analyzing deep mutational scanning data using Stan."
+dynamic = ["version"]
+authors = [{name = "Bruce Wittmann", email = "bwittmann@microsoft.com"}]
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "License :: Microsoft License",
+    "Operating System :: OS Independent",
+]

@@ -9,6 +9,9 @@ from typeguard import install_import_hook
 
 import numpy as np
 
+# Define the version
+__version__ = "0.0.0"
+
 # Set up type checking
 install_import_hook("dms_stan")
 
