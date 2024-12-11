@@ -359,7 +359,10 @@ class Model(ABC):
     def parameters(self) -> tuple[Parameter, ...]:
         """Returns the parameters of the model."""
         return tuple(
-            filter(lambda x: isinstance(x, Parameter), self.named_model_components)
+            filter(
+                lambda x: isinstance(x, Parameter) and not x.observable,
+                self.named_model_components,
+            )
         )
 
     @property
@@ -390,7 +393,7 @@ class Model(ABC):
         )
 
     @property
-    def constants_dict(self) -> dict[str, Constant]:
+    def constant_dict(self) -> dict[str, Constant]:
         """
         Returns the hyperparameters of the model. These are explicitly defined
         constants and constants implicit to the model based on parameter definitions.
@@ -400,7 +403,12 @@ class Model(ABC):
     @property
     def observables(self) -> tuple[Parameter, ...]:
         """Returns the observables of the model."""
-        return tuple(filter(lambda x: x.observable, self.parameters))
+        return tuple(
+            filter(
+                lambda x: isinstance(x, Parameter) and x.observable,
+                self.named_model_components,
+            )
+        )
 
     @property
     def observable_dict(self) -> dict[str, Parameter]:

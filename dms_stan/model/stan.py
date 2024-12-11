@@ -102,6 +102,7 @@ class StanStepsType(TypedDict):
     parameters: Union[str, list[str]]
     transformed_parameters: Union[str, list[str]]
     model: str
+    generated_quantities: Union[str, list[str]]
 
 
 class StanModel(CmdStanModel):

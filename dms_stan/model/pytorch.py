@@ -4,6 +4,7 @@ import warnings
 
 from typing import Optional, Union
 
+import itertools
 import numpy.typing as npt
 import torch
 import torch.nn as nn
@@ -72,9 +73,8 @@ class PyTorchModel(nn.Module):
         # Initialize all parameters for pytorch optimization
         learnable_params = []
         for param in self.model.parameters:
-            if not param.observable:
-                param.init_pytorch(init_val=draws[param].squeeze(axis=0))
-                learnable_params.append(param._torch_parametrization)
+            param.init_pytorch(init_val=draws[param].squeeze(axis=0))
+            learnable_params.append(param._torch_parametrization)
 
         # Record learnable parameters such that they can be recognized by PyTorch
         self.learnable_params = nn.ParameterList(learnable_params)
@@ -89,8 +89,10 @@ class PyTorchModel(nn.Module):
         """
         # Sum the log-probs of the observables and parameters
         log_prob = 0.0
-        for name, param in self.model.parameter_dict.items():
-            log_prob += param.get_torch_logprob(observed=observed_data.get(name, None))
+        for name, param in itertools.chain(
+            self.model.parameter_dict.items(), self.model.observable_dict.items()
+        ):
+            log_prob += param.get_torch_logprob(observed=observed_data.get(name))
 
         return log_prob
 
@@ -147,7 +149,7 @@ class PyTorchModel(nn.Module):
 
                 # Update progress bar
                 pbar.update(1)
-                pbar.set_postfix({"loss": f"{log_loss:.2f}"})
+                pbar.set_postfix({"log pdf": f"{log_loss:.2f}"})
 
                 # Check for early stopping
                 if early_stop > 0 and n_without_improvement >= early_stop:
@@ -179,7 +181,6 @@ class PyTorchModel(nn.Module):
         return {
             name: param.torch_parametrization
             for name, param in self.model.parameter_dict.items()
-            if not param.observable
         }
 
     def export_distributions(self) -> dict[str, torch.distributions.Distribution]:
@@ -189,5 +190,7 @@ class PyTorchModel(nn.Module):
         """
         return {
             name: param.torch_dist_instance
-            for name, param in self.model.parameter_dict.items()
+            for name, param in itertools.chain(
+                self.model.parameter_dict.items(), self.model.observable_dict.items()
+            )
         }
