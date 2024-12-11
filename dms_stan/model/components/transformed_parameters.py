@@ -112,16 +112,16 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
             return f"( {param.get_stan_code(index_opts)} )"
 
     @abstractmethod
-    def format_stan_code(self, **args: str) -> str:
-        """Format the Stan code for the operation"""
-
-        # Make sure the operator is defined
+    def _write_operation(self, **to_format: str) -> str:
+        """Write the operation in Stan code."""
+        # The Stan operator must be defined in the child class
         if self.STAN_OPERATOR == "":
-            raise NotImplementedError(
-                "The STAN_OPERATOR must be defined for the class."
-            )
+            raise NotImplementedError("The STAN_OPERATOR must be defined.")
 
         return ""
+
+    def get_stan_code(self, index_opts: tuple[str, ...]) -> str:
+        return self._write_operation(**super().get_stan_code(index_opts))
 
     # Calling this class should return the result of the operation.
     def __call__(self, *args, **kwargs):
@@ -164,8 +164,8 @@ class BinaryTransformedParameter(TransformedParameter):
     @abstractmethod
     def operation(self, dist1, dist2): ...
 
-    def format_stan_code(self, dist1: str, dist2: str) -> str:
-        super().format_stan_code()
+    def _write_operation(self, dist1: str, dist2: str) -> str:
+        super()._write_operation()
         return f"{dist1} {self.STAN_OPERATOR} {dist2}"
 
     # pylint: enable=arguments-differ
@@ -191,9 +191,9 @@ class UnaryTransformedParameter(TransformedParameter):
     @abstractmethod
     def operation(self, dist1): ...
 
-    def format_stan_code(self, dist1: str) -> str:
-        super().format_stan_code()
-        return f"{self.stan_operator}{dist1}"
+    def _write_operation(self, dist1: str) -> str:
+        super()._write_operation()
+        return f"{self.STAN_OPERATOR}{dist1}"
 
     # pylint: enable=arguments-differ
 
@@ -260,7 +260,7 @@ class AbsParameter(UnaryTransformedParameter):
     def operation(self, dist1):
         return _choose_module(dist1).abs(dist1)
 
-    def format_stan_code(self, dist1: str) -> str:
+    def _write_operation(self, dist1: str) -> str:
         return f"abs({dist1})"
 
 
@@ -275,7 +275,7 @@ class LogParameter(UnaryTransformedParameter):
     def operation(self, dist1):
         return _choose_module(dist1).log(dist1)
 
-    def format_stan_code(self, dist1: str) -> str:
+    def _write_operation(self, dist1: str) -> str:
         return f"log({dist1})"
 
 
@@ -288,7 +288,7 @@ class ExpParameter(UnaryTransformedParameter):
 
         return _choose_module(dist1).exp(dist1)
 
-    def format_stan_code(self, dist1: str) -> str:
+    def _write_operation(self, dist1: str) -> str:
         return f"exp({dist1})"
 
 
@@ -304,7 +304,7 @@ class NormalizeParameter(UnaryTransformedParameter):
         else:
             return dist1 / np.sum(dist1, keepdims=True, axis=-1)
 
-    def format_stan_code(self, dist1: str) -> str:
+    def _write_operation(self, dist1: str) -> str:
         return f"{dist1} / sum({dist1})"
 
 
@@ -322,7 +322,7 @@ class NormalizeLogParameter(UnaryTransformedParameter):
         else:
             return dist1 - sp.logsumexp(dist1, keepdims=True, axis=-1)
 
-    def format_stan_code(self, dist1: str) -> str:
+    def _write_operation(self, dist1: str) -> str:
         return f"{dist1} - log_sum_exp({dist1})"
 
 
@@ -399,7 +399,7 @@ class LogExponentialGrowth(Growth):
 
     # pylint: enable=arguments-differ
 
-    def format_stan_code(  # pylint: disable=arguments-differ
+    def _write_operation(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str
     ) -> str:
         return f"{log_A} + {r} .* {t}"
@@ -465,7 +465,7 @@ class LogSigmoidGrowth(Growth):
 
     # pylint: enable=arguments-differ
 
-    def format_stan_code(  # pylint: disable=arguments-differ
+    def _write_operation(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str, c: str
     ) -> str:
         return f"{log_A} - log(1 + exp(-{r} .* ({t} - {c})))"

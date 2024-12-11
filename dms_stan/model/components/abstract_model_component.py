@@ -362,39 +362,34 @@ class AbstractModelComponent(ABC):
         """Handles code formatting for a transformed parameter."""
 
     @abstractmethod
-    def format_stan_code(self, **to_format: str) -> str:
-        """Formats the Stan code for the parameter."""
-
-    def _get_formattables(
-        self, param: "AbstractModelComponent", index_opts: tuple[str, ...]
-    ) -> str:
-        """Gets the inputs to `format_stan_code` for a parent parameter."""
-        # If the parameter is a constant or another parameter, record
-        if isinstance(param, (dms_components.Constant, dms_components.Parameter)):
-            return param.get_indexed_varname(index_opts)
-
-        # If the parameter is transformed and not named, the computation is
-        # happening in the model. Otherwise, the computation has already happened
-        # in the transformed parameters block. Note that THIS instance handles the
-        # transformation code based on ITS type, not the type of the parameter.
-        elif isinstance(param, dms_components.TransformedParameter):
-            return self._handle_transformation_code(param=param, index_opts=index_opts)
-
-        # Otherwise, raise an error
-        else:
-            raise TypeError(f"Unknown model component type {type(param)}")
-
-    def get_stan_code(self, index_opts: tuple[str, ...]) -> str:
+    def get_stan_code(self, index_opts: tuple[str, ...]) -> dict[str, str]:
         """Gets the Stan code for the parameter."""
 
-        # Recursively gather the transformations until we hit a non-transformed
-        # parameter or a recorded variable
-        return self.format_stan_code(
-            **{
-                name: self._get_formattables(param, index_opts)
-                for name, param in self._parents.items()
-            }
-        )
+        def get_formattables(param: "AbstractModelComponent") -> str:
+            """Get the formattables for the parameter."""
+            # If the parameter is a constant or another parameter, record
+            if isinstance(param, (dms_components.Constant, dms_components.Parameter)):
+                return param.get_indexed_varname(index_opts)
+
+            # If the parameter is transformed and not named, the computation is
+            # happening in the model. Otherwise, the computation has already happened
+            # in the transformed parameters block. Note that THIS instance handles the
+            # transformation code based on ITS type, not the type of the parameter.
+            elif isinstance(param, dms_components.TransformedParameter):
+                return self._handle_transformation_code(
+                    param=param, index_opts=index_opts
+                )
+
+            # Otherwise, raise an error
+            else:
+                raise TypeError(f"Unknown model component type {type(param)}")
+
+        # Get the formattables and return
+        return {name: get_formattables(param) for name, param in self._parents.items()}
+
+    def declare_stan_variable(self, varname: str) -> str:
+        """Declares a variable in Stan code."""
+        return f"{self.stan_dtype} {varname}"
 
     def __str__(self):
         return f"{self.__class__.__name__}"
@@ -495,7 +490,7 @@ class AbstractModelComponent(ABC):
     @property
     def stan_parameter_declaration(self) -> str:
         """Returns the Stan parameter declaration for this parameter."""
-        return f"{self.stan_dtype} {self.model_varname}"
+        return self.declare_stan_variable(self.model_varname)
 
     @property
     def model_varname(self) -> str:

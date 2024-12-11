@@ -72,9 +72,8 @@ class Constant(AbstractModelComponent):
         """
         raise AssertionError("This function should never be called.")
 
-    def format_stan_code(self, **to_format: str) -> str:
-        """There is no transformation code to format."""
-        assert len(to_format) == 0
+    def get_stan_code(self, index_opts: tuple[str, ...]) -> str:
+        """Return the Stan code for this component (there is none)."""
         return ""
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:

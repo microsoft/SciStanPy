@@ -1,5 +1,6 @@
 """Holds classes that can be used for defining models in DMS Stan models."""
 
+from abc import abstractmethod
 from typing import Callable, Optional, Union
 
 import numpy as np
@@ -17,6 +18,8 @@ from .transformed_parameters import TransformableParameter
 
 class Parameter(AbstractModelComponent):
     """Base class for parameters used in DMS Stan"""
+
+    STAN_DIST: str = ""  # The Stan distribution name
 
     def __init__(
         self,
@@ -140,6 +143,13 @@ class Parameter(AbstractModelComponent):
             index_opts
         )
 
+    def get_generated_quantities(self, index_opts: tuple[str, ...]) -> str:
+        """Return the Stan code for the generated quantities block."""
+        return (
+            self.get_indexed_varname(index_opts, _name_override=self.generated_varname)
+            + f" = {self.get_stan_code(index_opts, dist_suffix='rng')}"
+        )
+
     def _handle_transformation_code(
         self, param: AbstractModelComponent, index_opts: tuple[str, ...]
     ) -> str:
@@ -186,6 +196,30 @@ class Parameter(AbstractModelComponent):
     def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """Returns the numpy distribution function"""
         return getattr(self.get_rng(seed=seed), self._numpy_dist)
+
+    @abstractmethod
+    def _write_dist_args(self, **to_format: str) -> str:
+        """Writes the distribution arguments in the correct format"""
+
+    def get_stan_code(self, index_opts, dist_suffix: str = "") -> str:
+
+        # Make sure the STAN_DIST class attribute is defined
+        if self.STAN_DIST == "":
+            raise NotImplementedError("The STAN_DIST class attribute must be defined")
+
+        # Get the formattables
+        formattables = super().get_stan_code(index_opts=index_opts)
+
+        # Build the distribution argument and format the Stan code
+        suffix = "" if dist_suffix == "" else f"_{dist_suffix}"
+        code = f"{self.STAN_DIST}{suffix}({self._write_dist_args(**formattables)})"
+
+        # If working with a random number generator, arrays are returned rather
+        # than vectors for floats. We need to convert these to vectors.
+        if dist_suffix == "rng" and "vector" in self.stan_dtype:
+            code = f"to_vector({code})"
+
+        return code
 
     @property
     def torch_dist(self) -> type[dist.Distribution]:
@@ -248,6 +282,20 @@ class Parameter(AbstractModelComponent):
         # We should never get here
         raise AssertionError("Invalid bounds")
 
+    @property
+    def generated_varname(self) -> str:
+        """Return the generated variable name"""
+        # Only available for observables
+        if not self.observable:
+            raise ValueError("Generated variables are only available for observables")
+
+        return f"{self.model_varname}_ppc"
+
+    @property
+    def stan_generated_quantity_declaration(self) -> str:
+        """Returns the Stan generated quantity declaration for this parameter."""
+        return self.declare_stan_variable(self.generated_varname)
+
 
 class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
@@ -272,6 +320,7 @@ class Normal(ContinuousDistribution):
     """Parameter that is represented by the normal distribution."""
 
     POSITIVE_PARAMS = {"sigma"}
+    STAN_DIST = "normal"
 
     def __init__(
         self,
@@ -291,10 +340,10 @@ class Normal(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_code(  # pylint: disable=arguments-differ
+    def _write_dist_args(  # pylint: disable=arguments-differ
         self, mu: str, sigma: str
     ) -> str:
-        return f"normal({mu}, {sigma})"
+        return f"{mu}, {sigma}"
 
     def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
         """
@@ -315,7 +364,7 @@ class Normal(ContinuousDistribution):
         # from a unit normal distribution
         return (
             f"{self.get_indexed_varname(index_opts)} = {mu_declaration} + {sigma_declaration} "
-            f"* {self.get_indexed_varname(index_opts, _name_override=self.noncentered_varname)}"
+            f".* {self.get_indexed_varname(index_opts, _name_override=self.noncentered_varname)}"
         )
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
@@ -375,6 +424,7 @@ class LogNormal(ContinuousDistribution):
 
     POSITIVE_PARAMS = {"sigma"}
     LOWER_BOUND: float = 0.0
+    STAN_DIST = "lognormal"
 
     def __init__(
         self,
@@ -392,10 +442,10 @@ class LogNormal(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_code(  # pylint: disable=arguments-differ
+    def _write_dist_args(  # pylint: disable=arguments-differ
         self, mu: str, sigma: str
     ) -> str:
-        return f"lognormal({mu}, {sigma})"
+        return f"{mu}, {sigma}"
 
 
 class Beta(ContinuousDistribution):
@@ -404,6 +454,7 @@ class Beta(ContinuousDistribution):
     POSITIVE_PARAMS = {"alpha", "beta"}
     LOWER_BOUND: float = 0.0
     UPPER_BOUND: float = 1.0
+    STAN_DIST = "beta"
 
     def __init__(
         self,
@@ -423,18 +474,18 @@ class Beta(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_code(  # pylint: disable=arguments-differ
+    def _write_dist_args(  # pylint: disable=arguments-differ
         self, alpha: str, beta: str
     ) -> str:
-        return f"beta({alpha}, {beta})"
+        return f"{alpha}, {beta}"
 
 
 class Gamma(ContinuousDistribution):
     """Defines the gamma distribution."""
 
     POSITIVE_PARAMS = {"alpha", "beta"}
-
     LOWER_BOUND: float = 0.0
+    STAN_DIST = "gamma"
 
     def __init__(
         self,
@@ -455,19 +506,18 @@ class Gamma(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_code(  # pylint: disable=arguments-differ
+    def _write_dist_args(  # pylint: disable=arguments-differ
         self, alpha: str, beta: str
     ) -> str:
-        return f"gamma({alpha}, {beta})"
+        return f"{alpha}, {beta}"
 
 
 class Exponential(ContinuousDistribution):
     """Defines the exponential distribution."""
 
     POSITIVE_PARAMS = {"beta"}
-
-    # Overwrite the stan data type
     LOWER_BOUND: float = 0.0
+    STAN_DIST = "exponential"
 
     def __init__(
         self,
@@ -486,8 +536,8 @@ class Exponential(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_code(self, beta: str) -> str:  # pylint: disable=arguments-differ
-        return f"exponential({beta})"
+    def _write_dist_args(self, beta: str) -> str:  # pylint: disable=arguments-differ
+        return beta
 
 
 class Dirichlet(ContinuousDistribution):
@@ -495,6 +545,7 @@ class Dirichlet(ContinuousDistribution):
 
     POSITIVE_PARAMS = {"alpha"}
     BASE_STAN_DTYPE: str = "simplex"
+    STAN_DIST = "dirichlet"
 
     def __init__(
         self,
@@ -512,14 +563,15 @@ class Dirichlet(ContinuousDistribution):
             **kwargs,
         )
 
-    def format_stan_code(self, alpha: str) -> str:  # pylint: disable=arguments-differ
-        return f"dirichlet({alpha})"
+    def _write_dist_args(self, alpha: str) -> str:  # pylint: disable=arguments-differ
+        return alpha
 
 
 class Binomial(DiscreteDistribution):
     """Parameter that is represented by the binomial distribution"""
 
     POSITIVE_PARAMS = {"theta", "N"}
+    STAN_DIST = "binomial"
 
     def __init__(
         self,
@@ -539,16 +591,17 @@ class Binomial(DiscreteDistribution):
             **kwargs,
         )
 
-    def format_stan_code(  # pylint: disable=arguments-differ
-        self, N: str, theta: str  # pylint: disable="invalid-name"
+    def _write_dist_args(  # pylint: disable=arguments-differ
+        self, N: str, theta: str
     ) -> str:
-        return f"binomial({N}, {theta})"
+        return f"{N}, {theta}"
 
 
 class Poisson(DiscreteDistribution):
     """Parameter that is represented by the Poisson distribution."""
 
     POSITIVE_PARAMS = {"lambda_"}
+    STAN_DIST = "poisson"
 
     def __init__(
         self,
@@ -566,14 +619,15 @@ class Poisson(DiscreteDistribution):
             **kwargs,
         )
 
-    def format_stan_code(self, lambda_: str) -> str:  # pylint: disable=arguments-differ
-        return f"poisson({lambda_})"
+    def _write_dist_args(self, lambda_: str) -> str:  # pylint: disable=arguments-differ
+        return lambda_
 
 
 class Multinomial(DiscreteDistribution):
     """Defines the multinomial distribution."""
 
     SIMPLEX_PARAMS = {"theta"}
+    STAN_DIST = "multinomial"
 
     def __init__(
         self,
@@ -610,7 +664,5 @@ class Multinomial(DiscreteDistribution):
 
         return super().draw(n, _drawn=_drawn, seed=seed)
 
-    def format_stan_code(  # pylint: disable=arguments-differ, unused-argument
-        self, N: str, theta: str
-    ) -> str:
-        return f"multinomial({theta})"
+    def _write_dist_args(self, theta: str) -> str:  # pylint: disable=arguments-differ
+        return theta

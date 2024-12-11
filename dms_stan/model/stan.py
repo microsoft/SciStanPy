@@ -91,9 +91,6 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
     return inner
 
 
-# TODO: Need generated quantities for observables
-
-
 # We need a specific type for the steps of the Stan model
 class StanStepsType(TypedDict):
     """Type for the steps of the Stan model."""
@@ -140,6 +137,7 @@ class StanModel(CmdStanModel):
             "parameters": [],
             "transformed parameters": [],
             "model": "",
+            "generated quantities": [],
         }
 
         # All variable and parameter names in the model
@@ -194,18 +192,34 @@ class StanModel(CmdStanModel):
             self.steps["data"].append(data.stan_parameter_declaration)
             data_inputs.append((data.model_varname, data.observable))
 
-        def write_variable_code(variable: AbstractModelComponent) -> None:
-            """Writes the Stan code for a variable."""
+        def check_model_varname(name: str) -> None:
+            """
+            Records the variable's model name in the set of all variable names and
+            makes sure it is not already in the set.
+            """
             # Check for name collisions
-            if variable.model_varname in self.all_varnames:
-                raise ValueError(f"Name collision for {variable.model_varname}")
+            if name in self.all_varnames:
+                raise ValueError(f"Name collision for {name}")
 
             # Add the variable name to the set of all variable names
-            self.all_varnames.add(variable.model_varname)
+            self.all_varnames.add(name)
+
+        def write_variable_code(variable: AbstractModelComponent) -> None:
+            """Writes the Stan code for a variable."""
+
+            # Check the model variable name
+            check_model_varname(variable.model_varname)
+
+            # Note that the node has been observed
             observed_nodes.add(variable)
 
-            # If an observable, do nothing
+            # If an observable, we need a data and generated quantity entry only
             if variable.observable:
+                record_data(observable)
+                check_model_varname(variable.stan_generated_quantity_declaration)
+                self.steps["generated quantities"].append(
+                    variable.stan_generated_quantity_declaration
+                )
                 return
 
             # If the variable is a Normal distribution that is not a hyperparameter,
@@ -251,7 +265,6 @@ class StanModel(CmdStanModel):
 
         # Record the observable as a data input and write the variable code for
         # the observable
-        record_data(observable)
         write_variable_code(observable)
 
         # Now loop over the parents of the observable and add them to the appropriate
@@ -273,6 +286,9 @@ class StanModel(CmdStanModel):
         self.steps["data"] = combine_lines(self.steps["data"])
         self.steps["transformed parameters"] = combine_lines(
             self.steps["transformed parameters"]
+        )
+        self.steps["generated quantities"] = combine_lines(
+            self.steps["generated quantities"]
         )
 
         return tuple(data_inputs)
@@ -364,6 +380,7 @@ class StanModel(CmdStanModel):
         obs = self.model.observables[0]  # Shorthand for the observable
         model_levels = [[] for _ in range(obs.ndim)]
         transformed_param_levels = copy.deepcopy(model_levels)
+        generated_quantities_levels = copy.deepcopy(model_levels)
 
         # Get allowed index variable names for each level
         allowed_index_names = tuple(
@@ -378,9 +395,12 @@ class StanModel(CmdStanModel):
                 f"Not enough index names ({len(allowed_index_names)}) to cover {obs.ndim} levels"
             )
 
-        # Observable is automatically the last level
+        # Observable is automatically the last level of the model
         assert obs.get_transformation_assignment(allowed_index_names) == ""
         model_levels[-1].append(obs.get_target_incrementation(allowed_index_names))
+        generated_quantities_levels[-1].append(
+            obs.get_generated_quantities(allowed_index_names)
+        )
         check_level_to_size(obs)
 
         # Walk up the tree from the observable to the top level, adding variables
@@ -427,6 +447,11 @@ class StanModel(CmdStanModel):
             self.steps["transformed parameters"]
             + "\n"
             + format_code_block(transformed_param_levels)
+        )
+        self.steps["generated quantities"] = (
+            self.steps["generated quantities"]
+            + "\n"
+            + format_code_block(generated_quantities_levels)
         )
 
     def write_stan_program(self) -> None:
