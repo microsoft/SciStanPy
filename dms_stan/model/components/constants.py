@@ -16,11 +16,12 @@ class Constant(AbstractModelComponent):
 
     def __init__(
         self,
+        value: Union[int, float, npt.NDArray, np.integer, np.floating],
         *,
         shape: tuple[int, ...] = (),
-        value: Union[int, float, npt.NDArray],
         lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None
+        upper_bound: Optional[float] = None,
+        togglable: Optional[bool] = None,
     ):
         """
         Wraps the value in a Constant instance. Any numerical type is legal.
@@ -47,7 +48,9 @@ class Constant(AbstractModelComponent):
 
         # Set whether the value is togglable. By default, it is for floats and
         # is not for integers.
-        self.is_togglable = self.BASE_STAN_DTYPE == "real"
+        self.is_togglable = (
+            (self.BASE_STAN_DTYPE == "real") if togglable is None else togglable
+        )
 
         # Initialize the parent class
         super().__init__(shape=shape)
