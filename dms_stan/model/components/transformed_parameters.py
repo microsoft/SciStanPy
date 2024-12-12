@@ -350,9 +350,7 @@ class LogExponentialGrowth(Growth):
     log(x) = log_A + rt
     $$
 
-    Note that, with this parametrization, we guarantee that $x > 0$. It is also
-    only defined for $A > 0$ and $r > 0$, assuming that the time parameter $t$ is
-    always positive.
+    Note that, with this parametrization, we guarantee that $x > 0$.
 
     This parametrization is particularly useful for modeling the proportions of
     different populations as is done in DMS Stan, as proportions are always positive.
