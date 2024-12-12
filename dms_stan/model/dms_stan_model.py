@@ -28,6 +28,7 @@ from .components import (
     Constant,
     LogExponentialGrowth,
     LogSigmoidGrowth,
+    Multinomial,
     Normal,
     Parameter,
     TransformedParameter,
@@ -446,13 +447,6 @@ class BaseGrowthModel(Model):
         # Transform the log thetas to thetas
         self.theta = dms.operations.exp(self.log_theta)
 
-        # Counts are "Binomial" distributed as the base
-        self.counts = Binomial(
-            theta=self.theta,
-            N=counts.sum(axis=-1, keepdims=True),
-            shape=counts.shape,
-        ).as_observable()
-
     @abstractmethod
     def _define_growth_curve(
         self, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer]
@@ -460,7 +454,49 @@ class BaseGrowthModel(Model):
         """Define the growth curve of the model."""
 
 
-class ExponentialGrowthBinomialModel(BaseGrowthModel):
+class BaseGrowthBinomialModel(BaseGrowthModel):
+    """Base growth model assuming counts are Binomial distributed."""
+
+    def __init__(
+        self,
+        *,
+        t: npt.NDArray[np.floating],
+        counts: npt.NDArray[np.integer],
+        sigma: CombinableParameterType,
+    ):
+        # Call the parent class constructor. This will set up the remaining parameters
+        super().__init__(t=t, counts=counts, sigma=sigma)
+
+        # Counts are "Binomial" distributed as the base
+        self.counts = Binomial(
+            theta=self.theta,
+            N=counts.sum(axis=-1, keepdims=True),
+            shape=counts.shape,
+        ).as_observable()
+
+
+class BaseGrowthMultinomialModel(BaseGrowthModel):
+    """Models growth with multinomial distributed counts."""
+
+    def __init__(
+        self,
+        *,
+        t: npt.NDArray[np.floating],
+        counts: npt.NDArray[np.integer],
+        sigma: CombinableParameterType,
+    ):
+        # Call the parent class constructor
+        super().__init__(t=t, counts=counts, sigma=sigma)
+
+        # Counts are "Multinomial" distributed as the base
+        self.counts = Multinomial(
+            theta=self.theta,
+            N=counts.sum(axis=-1, keepdims=True),
+            shape=counts.shape,
+        ).as_observable()
+
+
+class ExponentialGrowthMixIn:
     """Mix in class for exponential growth."""
 
     def __init__(
@@ -478,7 +514,8 @@ class ExponentialGrowthBinomialModel(BaseGrowthModel):
         self.log_A = log_A  # pylint: disable=invalid-name
         self.r = r
 
-        # Call the parent class constructor. This will set up the remaining parameters
+        # Call the parent class constructor. This will set up the timepoints as a
+        # constant but do nothing with the counts except check their shape.
         super().__init__(t=t, counts=counts, sigma=sigma, **kwargs)
 
     def _define_growth_curve(
@@ -487,7 +524,7 @@ class ExponentialGrowthBinomialModel(BaseGrowthModel):
         return LogExponentialGrowth(t=t, log_A=self.log_A, r=self.r, shape=counts.shape)
 
 
-class SigmoidGrowthBinomialModel(BaseGrowthModel):
+class SigmoidGrowthMixIn:
     """Mix in class for sigmoid growth."""
 
     def __init__(
@@ -507,8 +544,7 @@ class SigmoidGrowthBinomialModel(BaseGrowthModel):
         self.r = r
         self.c = c
 
-        # Call the parent class constructor. This will set up the timepoints as a
-        # constant but do nothing with the counts except check their shape.
+        # Call the parent class constructor
         super().__init__(t=t, counts=counts, sigma=sigma, **kwargs)
 
     def _define_growth_curve(
@@ -517,3 +553,80 @@ class SigmoidGrowthBinomialModel(BaseGrowthModel):
         return LogSigmoidGrowth(
             t=t, log_A=self.log_A, r=self.r, c=self.c, shape=counts.shape
         )
+
+
+class ExponentialGrowthBinomialModel(BaseGrowthBinomialModel, ExponentialGrowthMixIn):
+    """Models exponential growth with binomial distributed counts."""
+
+
+class SigmoidGrowthBinomialModel(BaseGrowthBinomialModel, SigmoidGrowthMixIn):
+    """Models sigmoid growth with binomial distributed counts."""
+
+
+class ExponentialGrowthMultinomialModel(
+    BaseGrowthMultinomialModel, ExponentialGrowthMixIn
+):
+    """Models exponential growth with multinomial distributed counts."""
+
+
+class SigmoidGrowthMultinomialModel(BaseGrowthMultinomialModel, SigmoidGrowthMixIn):
+    """Models sigmoid growth with multinomial distributed counts."""
+
+
+# class ExponentialGrowthBinomialModel(BaseGrowthModel):
+#     """Mix in class for exponential growth."""
+
+#     def __init__(
+#         self,
+#         *,
+#         t: npt.NDArray[np.floating],
+#         counts: npt.NDArray[np.integer],
+#         log_A: CombinableParameterType,
+#         r: CombinableParameterType,
+#         sigma: CombinableParameterType,
+#         **kwargs,
+#     ):
+
+#         # Assign the growth parameters
+#         self.log_A = log_A  # pylint: disable=invalid-name
+#         self.r = r
+
+#         # Call the parent class constructor. This will set up the remaining parameters
+#         super().__init__(t=t, counts=counts, sigma=sigma, **kwargs)
+
+#     def _define_growth_curve(
+#         self, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer]
+#     ) -> AbstractModelComponent:
+#         return LogExponentialGrowth(t=t, log_A=self.log_A, r=self.r, shape=counts.shape)
+
+
+# class SigmoidGrowthBinomialModel(BaseGrowthModel):
+#     """Mix in class for sigmoid growth."""
+
+#     def __init__(
+#         self,
+#         *,
+#         t: npt.NDArray[np.floating],
+#         counts: npt.NDArray[np.integer],
+#         log_A: CombinableParameterType,
+#         r: CombinableParameterType,
+#         c: CombinableParameterType,
+#         sigma: CombinableParameterType,
+#         **kwargs,
+#     ):
+
+#         # Assign the growth parameters
+#         self.log_A = log_A  # pylint: disable=invalid-name
+#         self.r = r
+#         self.c = c
+
+#         # Call the parent class constructor. This will set up the timepoints as a
+#         # constant but do nothing with the counts except check their shape.
+#         super().__init__(t=t, counts=counts, sigma=sigma, **kwargs)
+
+#     def _define_growth_curve(
+#         self, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer]
+#     ) -> AbstractModelComponent:
+#         return LogSigmoidGrowth(
+#             t=t, log_A=self.log_A, r=self.r, c=self.c, shape=counts.shape
+#         )
