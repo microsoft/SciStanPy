@@ -289,8 +289,14 @@ class AbstractModelComponent(ABC):
                 parent_draw, axis=tuple(range(1, dims_to_add + 1))
             )
 
-        # Now draw from the current parameter and check the bounds
-        draws = self._draw(n, level_draws, seed=seed)
+        # Now draw from the current parameter
+        try:
+            draws = self._draw(n, level_draws, seed=seed)
+        except ValueError as error:
+            raise dms.exceptions.NumpySampleError(
+                f"Error encountered when trying to sample from {self.model_varname}: {error}"
+            ) from error
+
         assert self.LOWER_BOUND is None or np.all(draws >= self.LOWER_BOUND), (
             draws,
             type(self),

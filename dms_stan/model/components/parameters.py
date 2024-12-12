@@ -120,6 +120,7 @@ class Parameter(AbstractModelComponent):
 
         # Sample from this distribution using numpy. Alter the shape to account
         # for the new first dimension of length `n`.
+        print({name: val.shape for name, val in level_draws.items()}, self.shape)
         return self.get_numpy_dist(seed=seed)(**level_draws, size=(n,) + self.shape)
 
     def as_observable(self) -> "Parameter":
@@ -633,7 +634,7 @@ class Multinomial(DiscreteDistribution):
         self,
         *,
         theta: Union[AbstractModelComponent, npt.ArrayLike],
-        N: Optional[Union[AbstractModelComponent, int]] = None,
+        N: Union[AbstractModelComponent, int],
         **kwargs,
     ):
 
@@ -647,22 +648,6 @@ class Multinomial(DiscreteDistribution):
             theta=theta,
             **kwargs,
         )
-
-    def draw(
-        self,
-        n: int,
-        *,
-        _drawn: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
-        seed: Optional[int] = None,
-    ) -> tuple[npt.NDArray, dict["AbstractModelComponent", npt.NDArray]]:
-        # There must be a value for `N` in the parameters if we are sampling
-        if self._parents.get("N") is None:
-            raise ValueError(
-                "Sampling from a multinomial distribution is only possible when "
-                "'N' is provided'"
-            )
-
-        return super().draw(n, _drawn=_drawn, seed=seed)
 
     def _write_dist_args(self, theta: str) -> str:  # pylint: disable=arguments-differ
         return theta
