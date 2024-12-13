@@ -105,22 +105,26 @@ class Parameter(AbstractModelComponent):
         # Initialize the parameter
         self._torch_parametrization = nn.Parameter(init_val)
 
-    def _draw(
-        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
-    ) -> npt.NDArray:
-        """Sample from the distribution that represents the parameter `n` times"""
+    def _transform_and_rename_np(
+        self, level_draws: dict[str, npt.NDArray]
+    ) -> dict[str, npt.NDArray]:
+        """Transforms the numpy level draws to the correct format"""
         # Perform transforms
         for name, transform in self.stan_to_np_transforms.items():
             level_draws[name] = transform(level_draws[name])
 
         # Rename the parameters to the names used by numpy
-        level_draws = {
-            self.stan_to_np_names[name]: val for name, val in level_draws.items()
-        }
+        return {self.stan_to_np_names[name]: val for name, val in level_draws.items()}
+
+    def _draw(
+        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+    ) -> npt.NDArray:
+        """Sample from the distribution that represents the parameter `n` times"""
+        # Perform any necessary transformations and rename the parameters
+        level_draws = self._transform_and_rename_np(level_draws)
 
         # Sample from this distribution using numpy. Alter the shape to account
         # for the new first dimension of length `n`.
-        print({name: val.shape for name, val in level_draws.items()}, self.shape)
         return self.get_numpy_dist(seed=seed)(**level_draws, size=(n,) + self.shape)
 
     def as_observable(self) -> "Parameter":
@@ -647,6 +651,27 @@ class Multinomial(DiscreteDistribution):
             N=N,
             theta=theta,
             **kwargs,
+        )
+
+    def _draw(  # pylint: disable=arguments-differ
+        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+    ) -> npt.NDArray:
+        """
+        The Multinomial distribution in numpy follows slightly different broadcasting
+        rules.
+        """
+        # Perform any necessary transformations and rename the parameters
+        level_draws = self._transform_and_rename_np(level_draws)
+
+        # Strip the last dimension of the "N" parameter. This is because numpy's
+        # multinomial function ignores the last dimension when determining the shape
+        level_draws["n"] = level_draws["n"].squeeze(-1)
+
+        # Sample from this distribution using numpy. Alter the shape to account
+        # for the new first dimension of length `n`. Also trim off the last dimension
+        # of the shape--again, numpy's multinomial function ignores the last dimension
+        return self.get_numpy_dist(seed=seed)(
+            **level_draws, size=(n,) + self.shape[:-1]
         )
 
     def _write_dist_args(self, theta: str) -> str:  # pylint: disable=arguments-differ
