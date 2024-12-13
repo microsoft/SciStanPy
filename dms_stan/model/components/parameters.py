@@ -221,8 +221,8 @@ class Parameter(AbstractModelComponent):
 
         # If working with a random number generator, arrays are returned rather
         # than vectors for floats. We need to convert these to vectors.
-        if dist_suffix == "rng" and "vector" in self.stan_dtype:
-            code = f"to_vector({code})"
+        if dist_suffix == "rng" and "row_vector" in self.stan_dtype:
+            code = f"to_row_vector({code})"
 
         return code
 
