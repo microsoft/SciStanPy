@@ -7,6 +7,7 @@ dependencies:
   - conda-forge::arviz
   - conda-forge::cmdstanpy
   - conda-forge::hvplot
+  - conda-forge::seaborn
   - conda-forge::typeguard
   - dask
   - jupyter
