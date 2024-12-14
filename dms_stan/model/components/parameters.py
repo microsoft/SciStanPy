@@ -13,6 +13,7 @@ import dms_stan as dms
 
 from .abstract_model_component import AbstractModelComponent
 from .constants import Constant
+from .custom_torch_dists import Multinomial as CustomTorchMultinomial
 from .transformed_parameters import TransformableParameter
 
 
@@ -24,7 +25,7 @@ class Parameter(AbstractModelComponent):
     def __init__(
         self,
         numpy_dist: str,
-        torch_dist: type[dist.distribution.Distribution],
+        torch_dist: type[dist.distribution.Distribution] | type[CustomTorchMultinomial],
         stan_to_np_names: dict[str, str],
         stan_to_torch_names: dict[str, str],
         stan_to_np_transforms: Optional[
@@ -227,12 +228,12 @@ class Parameter(AbstractModelComponent):
         return code
 
     @property
-    def torch_dist(self) -> type[dist.Distribution]:
+    def torch_dist(self) -> type[dist.Distribution] | type[CustomTorchMultinomial]:
         """Returns the torch distribution class"""
         return self._torch_dist
 
     @property
-    def torch_dist_instance(self) -> dist.Distribution:
+    def torch_dist_instance(self) -> dist.Distribution | CustomTorchMultinomial:
         """Returns an instance of the torch distribution class"""
         return self.torch_dist(
             **{
@@ -645,7 +646,7 @@ class Multinomial(DiscreteDistribution):
         # Run the parent class's init
         super().__init__(
             numpy_dist="multinomial",
-            torch_dist=dist.multinomial.Multinomial,
+            torch_dist=CustomTorchMultinomial,
             stan_to_np_names={"N": "n", "theta": "pvals"},
             stan_to_torch_names={"N": "total_count", "theta": "probs"},
             N=N,

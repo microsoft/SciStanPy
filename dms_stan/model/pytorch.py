@@ -14,6 +14,7 @@ from tqdm import tqdm
 import dms_stan.model as dms_model
 
 from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
+from dms_stan.model.components import Multinomial
 
 
 def check_observable_data(
@@ -92,7 +93,14 @@ class PyTorchModel(nn.Module):
         for name, param in itertools.chain(
             self.model.parameter_dict.items(), self.model.observable_dict.items()
         ):
-            log_prob += param.get_torch_logprob(observed=observed_data.get(name))
+            # Calculate the log probability of the observed data given the parameters
+            temp_log_prob = param.get_torch_logprob(observed=observed_data.get(name))
+
+            # Log probability should be 0-dimensional if anything but a Multinomial
+            assert temp_log_prob.ndim == 0 or isinstance(param, Multinomial)
+
+            # Add to the total log probability
+            log_prob += temp_log_prob.sum()
 
         return log_prob
 
@@ -149,7 +157,7 @@ class PyTorchModel(nn.Module):
 
                 # Update progress bar
                 pbar.update(1)
-                pbar.set_postfix({"log pdf": f"{log_loss:.2f}"})
+                pbar.set_postfix({"-log pdf/pmf": f"{log_loss:.2f}"})
 
                 # Check for early stopping
                 if early_stop > 0 and n_without_improvement >= early_stop:
