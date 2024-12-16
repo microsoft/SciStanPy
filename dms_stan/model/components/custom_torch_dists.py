@@ -68,13 +68,6 @@ class Multinomial:
             for i, N in enumerate(total_count)
         ]
 
-    def _stack_and_reshape(self, values: Sequence[torch.Tensor]) -> torch.Tensor:
-        """
-        Converts a list of tensors to a single tensor by stacking. Reshapes
-        to the original shape of the inputs.
-        """
-        return torch.stack(values)
-
     def log_prob(self, value: torch.Tensor) -> torch.Tensor:
         """See documentation of torch.distributions.Multinomial.log_prob"""
         # Ensure that the value of our multinomial is the same shape as the batch
@@ -93,13 +86,15 @@ class Multinomial:
         value = value.reshape(-1, value.size(-1))
         assert len(value) == len(self.distributions)
 
-        # Compute the log probability for each distribution
-        return self._stack_and_reshape(
+        return torch.stack(
             [d.log_prob(v) for d, v in zip(self.distributions, value)]
-        )
+        ).reshape(*self._batch_shape)
 
     def sample(self, sample_shape: torch.Size = torch.Size()) -> torch.Tensor:
         """See documentation of torch.distributions.Multinomial.sample"""
-        return self._stack_and_reshape(
-            [d.sample(sample_shape=sample_shape) for d in self.distributions]
-        )
+        # Make the samples. Each sample comes from the batch. We reshape each sample
+        # to match the original shape, stack the samples, then reshape to get the
+        # appropriate sample dimension
+        return torch.stack(
+            [d.sample(sample_shape=sample_shape) for d in self.distributions], dim=-2
+        ).reshape(*sample_shape, *self._batch_shape, self._n_categories)

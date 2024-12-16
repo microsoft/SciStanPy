@@ -1,7 +1,7 @@
 """Contains the Model base class, which is used to define all DMS Stan models."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Literal, Optional, overload, TypedDict, Union
+from typing import Any, Iterable, Literal, Optional, overload, Union
 
 import hvplot.interactive
 import numpy as np
@@ -24,7 +24,6 @@ from dms_stan.defaults import (
 )
 
 from .components import (
-    Binomial,
     Constant,
     LogExponentialGrowth,
     LogSigmoidGrowth,
@@ -34,7 +33,7 @@ from .components import (
     TransformedParameter,
 )
 from .components.abstract_model_component import AbstractModelComponent
-from .map_ import MAP
+from .map import MAP
 from .pytorch import check_observable_data, PyTorchModel
 from .stan import StanModel
 
