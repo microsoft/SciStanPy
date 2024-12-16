@@ -228,16 +228,18 @@ class Parameter(AbstractModelComponent):
         return code
 
     @property
-    def torch_dist(self) -> type[dist.Distribution] | type[CustomTorchMultinomial]:
+    def torch_dist(self) -> type["dms.custom_types.DMSStanDistribution"]:
         """Returns the torch distribution class"""
         return self._torch_dist
 
     @property
-    def torch_dist_instance(self) -> dist.Distribution | CustomTorchMultinomial:
+    def torch_dist_instance(self) -> "dms.custom_types.DMSStanDistribution":
         """Returns an instance of the torch distribution class"""
         return self.torch_dist(
             **{
-                self.stan_to_torch_names[name]: param.torch_parametrization
+                self.stan_to_torch_names[name]: torch.broadcast_to(
+                    param.torch_parametrization, self.shape
+                )
                 for name, param in self._parents.items()
             }
         )
@@ -638,8 +640,8 @@ class Multinomial(DiscreteDistribution):
     def __init__(
         self,
         *,
-        theta: Union[AbstractModelComponent, npt.ArrayLike],
-        N: Union[AbstractModelComponent, int],
+        theta: Union[AbstractModelComponent, npt.NDArray[np.floating]],
+        N: Union[AbstractModelComponent, int, npt.NDArray[np.integer]],
         **kwargs,
     ):
 

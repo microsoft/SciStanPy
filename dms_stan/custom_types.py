@@ -4,6 +4,7 @@ from typing import Union
 
 import numpy as np
 import numpy.typing as npt
+import torch.distributions as dist
 
 from .model.components import (
     Constant,
@@ -11,9 +12,10 @@ from .model.components import (
     DiscreteDistribution,
     TransformedParameter,
 )
+from .model.components.custom_torch_dists import Multinomial
 
 
-# Define custom types for this module
+# Parameter types
 SampleType = Union[int, float, npt.NDArray]
 BaseParameterType = Union[TransformedParameter, Constant]
 ContinuousParameterType = Union[
@@ -29,3 +31,6 @@ DiscreteParameterType = Union[
     npt.NDArray[np.integer],
 ]
 CombinableParameterType = Union[ContinuousParameterType, DiscreteParameterType]
+
+# Distribution types
+DMSStanDistribution = Union[dist.Distribution, Multinomial]

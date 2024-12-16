@@ -133,7 +133,7 @@ class PyTorchModel(nn.Module):
         n_without_improvement = 0  # Epochs without improvement
 
         # Run optimization
-        with tqdm(total=epochs, desc="Epochs", postfix={"loss": "N/A"}) as pbar:
+        with tqdm(total=epochs, desc="Epochs", postfix={"-log pdf/pmf": "N/A"}) as pbar:
             for epoch in range(epochs):
 
                 # Get the loss
