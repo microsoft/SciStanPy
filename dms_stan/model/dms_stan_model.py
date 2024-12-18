@@ -363,6 +363,22 @@ class Model(ABC):
         return components_to_dict(self.parameters)
 
     @property
+    def hyperparameters(self) -> tuple[Parameter, ...]:
+        """
+        Returns the hyperparameters of the model. These are `Parameter` instances
+        whose parents are constants.
+        """
+        return tuple(filter(lambda x: x.is_hyperparameter, self.parameters))
+
+    @property
+    def hyperparameter_dict(self) -> dict[str, Parameter]:
+        """
+        Returns the hyperparameters of the model as a dictionary. These are `Parameter`
+        instances whose parents are constants.
+        """
+        return components_to_dict(self.hyperparameters)
+
+    @property
     def transformed_parameters(self) -> tuple[TransformedParameter, ...]:
         """Returns the transformed parameters of the model."""
         return tuple(

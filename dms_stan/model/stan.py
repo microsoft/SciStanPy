@@ -6,6 +6,7 @@ import os.path
 import warnings
 import weakref
 
+from abc import ABC, abstractmethod
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Optional, ParamSpec, TypedDict, TypeVar, Union
 
@@ -102,6 +103,241 @@ class StanStepsType(TypedDict):
     generated_quantities: Union[str, list[str]]
 
 
+class CodeBlock(ABC):
+    """Used for organizing code blocks in the Stan model."""
+
+    def __init__(self, model: "dms.model.Model"):
+        """
+        Holds code blocks for the Stan model. This will never be directly instantiated.
+        """
+        # Build the block levels
+        self.levels: dict[Parameter : list[list[Parameter]]] = {
+            obs: [[] for _ in range(obs.stan_code_level + 1)]
+            for obs in model.observables
+        }
+
+    def add_component(
+        self, observable: Parameter, component: AbstractModelComponent
+    ) -> None:
+        """Adds a component to the appropriate level of the code block."""
+        self[observable][component.stan_code_level].append(component)
+
+    def finalize_levels(self) -> None:
+        """
+        Removes empty levels from the end of each observable branch and reverse
+        orders the components in each level to account for the fact that we built
+        the levels from the bottom up.
+        """
+        # New levels for each observable
+        new_levels: dict[Parameter, list[list[Parameter]]] = {}
+
+        # Reverse each level for each observable and remove empty levels from the
+        # end
+        for observable, levels in self.levels.items():
+
+            # Reverse the levels
+            reversed_levels = [level[::-1] for level in levels]
+
+            # Remove empty levels from the end
+            while reversed_levels and not reversed_levels[-1]:
+                reversed_levels.pop()
+
+            # Add the reversed levels to the new levels
+            new_levels[observable] = reversed_levels
+
+        # Update the levels
+        self.levels = new_levels
+
+    def build_tree(self) -> dms.custom_types.StanTreeType:
+        """Combines the levels from the observables into a single tree."""
+        # A list giving the full tree
+        tree: dms.custom_types.StanTreeType = []
+
+        # A map for error checking to be sure we don't double-add components
+        observable_to_list: dict[
+            AbstractModelComponent, dms.custom_types.StanTreeType
+        ] = {}
+        # Loop over the different levels
+        for level_ind in range(
+            max(len(level_list) for level_list in self.levels.values())
+        ):
+
+            # Build the mapping from level size to list
+            level_size_to_list: dict[int, dms.custom_types.StanTreeType] = {}
+
+            # Get the dimsize of each branch in the level
+            for observable, branch in self.levels.items():
+
+                # Skip if the level is not in the branch
+                if level_ind >= len(branch):
+                    continue
+
+                # Get level sizes
+                level_sizes = {
+                    0 if len(component.shape) == 0 else component.shape[level_ind]
+                    for component in branch[level_ind]
+                }
+
+                # If on the first level, all sizes are valid, so we assign 0. If
+                # there are no sizes, we assign 0.
+                if level_ind == 0 or len(level_sizes) == 0:
+                    level_size = 0
+
+                # Otherwise, we need to check the sizes. There can only be one size
+                # and it cannot be 1.
+                else:
+                    assert 1 not in level_sizes
+                    assert len(level_sizes) == 1, level_sizes
+                    level_size = level_sizes.pop()
+
+                # If the first level, the reflist is the tree itself
+                if level_ind == 0:
+                    reflist = tree
+
+                # Otherwise, if we have not encountered this level size before,
+                # we have a new branch in the list. Create the list, add it to the
+                # mapping between level size and list, and append it as a new level
+                # to the tree.
+                elif level_size not in level_size_to_list:
+                    reflist = []
+                    level_size_to_list[level_size] = reflist
+                    observable_to_list[observable].append(reflist)
+
+                # If the level size does exist, however, we can just retrieve the
+                # list we have already built
+                else:
+                    reflist = level_size_to_list[level_size]
+
+                # Add the components of the branch to the list if they are not
+                # already there
+                for component in branch[level_ind]:
+                    if component not in reflist:
+                        reflist.append(component)
+
+                # Update the mapping from observable to list
+                observable_to_list[observable] = reflist
+
+        return tree
+
+    def write_tree_code(self, allowed_index_names: tuple[str, ...]) -> str:
+        """Builds Stan code for the tree of observables."""
+
+        # We need a function to recursively build the code for the tree
+        def write_code(tree: dms.custom_types.StanTreeType, level: int) -> str:
+            """Recursively builds the code for the tree."""
+            # Loop over the tree
+            stan_code: list[str] = []
+            sizes: list[int] = []
+            for element in tree:
+
+                # If the element is a list, call the function recursively
+                if isinstance(element, list):
+                    stan_code.append(write_code(element, level + 1))
+
+                # If the element is a component, write the code for the component
+                elif isinstance(element, AbstractModelComponent):
+                    stan_code.append(
+                        self.write_component_code(
+                            component=element, allowed_index_names=allowed_index_names
+                        )
+                    )
+                    sizes.append(0 if element.ndim == 0 else element.shape[level])
+
+                # Otherwise, raise an error
+                else:
+                    raise ValueError(f"Unknown element type {type(element)}")
+
+            # Determine the indendation
+            indentation = DEFAULT_INDENTATION * (level + 1)
+
+            # Combine the lines
+            combined_lines = combine_lines(stan_code, indentation=indentation)
+
+            # Get the size of the level
+            unique_sizes = {size for size in sizes if size != 1}
+
+            # If there are no sizes OR we are at the first level, just return.
+            if level == 0 or len(unique_sizes) == 0:
+                return combined_lines
+
+            # There should only be one size
+            assert len(unique_sizes) == 1
+
+            # Wrap the code in a for loop
+            index_var = allowed_index_names[level - 1]
+            return (
+                f"\n{' ' * indentation}for ({index_var} in 1:{unique_sizes.pop()}) "
+                + "{\n"
+                + combined_lines
+                + f"\n{' ' * indentation}}}"
+            )
+
+        # Build the tree and write the code
+        tree = self.build_tree()
+        return write_code(tree, 0)
+
+    def __getitem__(self, key: Parameter) -> list[list[Parameter]]:
+        """Get the code block for a parameter."""
+        return self.levels[key]
+
+    @abstractmethod
+    def write_component_code(
+        self,
+        component: Union[Parameter, TransformedParameter],
+        allowed_index_names: tuple[str, ...],
+    ) -> str:
+        """Writes a component to the appropriate level of the code block."""
+
+
+class CodeBlockWithObservable(CodeBlock):
+    """
+    Identical to `CodeBlock`, but automatically handles the placement of the observable.
+    """
+
+    def __init__(self, model: "dms.model.Model"):
+
+        # Run the initializer for the parent class
+        super().__init__(model)
+
+        # Populate the observable levels
+        for obs in model.observables:
+            self[obs][-1].append(obs)
+
+
+class ModelCodeBlock(CodeBlockWithObservable):
+    """Used for organizing the 'model' code block in the Stan model."""
+
+    def write_component_code(
+        self,
+        component: Union[Parameter, TransformedParameter],
+        allowed_index_names: tuple[str, ...],
+    ) -> str:
+        """Writes a component to the appropriate level of the code block."""
+        return component.get_target_incrementation(allowed_index_names)
+
+
+class TransformedParametersCodeBlock(CodeBlock):
+    """Used for organizing the 'transformed parameters' code block in the Stan model."""
+
+    def write_component_code(
+        self,
+        component: Union[Parameter, TransformedParameter],
+        allowed_index_names: tuple[str, ...],
+    ) -> str:
+        """Writes a component to the appropriate level of the code block."""
+        return component.get_transformation_assignment(allowed_index_names)
+
+
+class GeneratedQuantitiesCodeBlock(CodeBlockWithObservable):
+    """Used for organizing the 'generated quantities' code block in the Stan model."""
+
+    def write_component_code(
+        self, component: Parameter, allowed_index_names: tuple[str, ...]
+    ) -> str:
+        """Writes a component to the appropriate level of the code block."""
+        return component.get_generated_quantities(allowed_index_names)
+
+
 class StanModel(CmdStanModel):
     """
     Expands the CmdStanModel class to allow for interfacing with the rest of
@@ -122,12 +358,6 @@ class StanModel(CmdStanModel):
         stanc_options = stanc_options or {}
         cpp_options = cpp_options or {}
 
-        # There can only be one observable
-        if len(model.observables) > 1:
-            raise ValueError(
-                "Compilation to Stan currently only supports one observable."
-            )
-
         # Note the underlying DMSStan model
         self.model = model
 
@@ -145,7 +375,7 @@ class StanModel(CmdStanModel):
         self.all_paramnames: set[str] = set()
 
         # Build the program elements
-        self.data_inputs = self._declare_variables()
+        # self.data_inputs = self._declare_variables()
         self._build_code_blocks()
 
         # Set the output directory
@@ -295,45 +525,6 @@ class StanModel(CmdStanModel):
 
     def _build_code_blocks(self):
         """Builds the 'model' and 'transformed data' blocks of the Stan model."""
-        # We need a way to record the level to expected index. This is handled by
-        # the child function
-        level_to_size: dict[int, int] = {}
-
-        def check_level_to_size(model_component: AbstractModelComponent) -> None:
-
-            # Do nothing if level 0. We should not need to check these as they
-            # are not indexed
-            if model_component.stan_code_level == 0:
-                return
-
-            # Get the dimension whose size we need to check
-            corresponding_dim = obs.ndim - model_component.ndim
-            assert corresponding_dim >= 0
-
-            # Get the size of the component at the corresponding dimension and any
-            # recorded size
-            component_size = model_component.shape[corresponding_dim]
-            retrieved_size = level_to_size.get(model_component.stan_code_level)
-
-            # Make sure the recorded size matches the size of the component at the
-            # corresponding dimension. Record the size if it has not been recorded.
-            if retrieved_size is None:
-                level_to_size[model_component.stan_code_level] = component_size
-            elif retrieved_size != component_size:
-
-                # If one of the two sizes is 1, we can ignore the error and set
-                # the size to the larger of the two
-                if retrieved_size == 1 or component_size == 1:
-                    level_to_size[model_component.stan_code_level] = max(
-                        retrieved_size, component_size
-                    )
-
-                # Otherwise, raise an error
-                else:
-                    raise AssertionError(
-                        "Size mismatch at dimensions indexed by same variable: "
-                        + f"{retrieved_size} != {component_size}"
-                    )
 
         def format_code_block(levels: list[list[str]]) -> str:
             """
@@ -373,14 +564,10 @@ class StanModel(CmdStanModel):
 
             return code_block
 
-        # Get the number of for-loop levels. This is given by the dimensionality
-        # of the observable. We create lists for each level. Different variables
-        # will be defined and accessed depending on the level to which they belong.
-        # Note that we assume the last level is vectorized
-        obs = self.model.observables[0]  # Shorthand for the observable
-        model_levels = [[] for _ in range(obs.ndim)]
-        transformed_param_levels = copy.deepcopy(model_levels)
-        generated_quantities_levels = copy.deepcopy(model_levels)
+        # TODO: We need to be able to handle multiple observables. We can do this
+        # by identifying the tree that each observable is part of and then building
+        # different for-loops for each tree.
+        # Items can be in the same for-loop if all parents have the same size!
 
         # Get allowed index variable names for each level
         allowed_index_names = tuple(
@@ -389,70 +576,73 @@ class StanModel(CmdStanModel):
             if {char, char.upper()}.isdisjoint(self.all_varnames)
         )
 
-        # There should be enough index names to cover all levels
-        if len(allowed_index_names) < (obs.ndim - 1):
-            raise ValueError(
-                f"Not enough index names ({len(allowed_index_names)}) to cover {obs.ndim} levels"
-            )
+        # Get the number of for-loop levels. This is given by the dimensionality
+        # of the observables. We create lists for each level. Different variables
+        # will be defined and accessed depending on the level to which they belong.
+        # Note that we assume the last level is vectorized
+        model_code_block = ModelCodeBlock(self.model)
+        transformed_code_block = TransformedParametersCodeBlock(self.model)
+        generated_code_block = GeneratedQuantitiesCodeBlock(self.model)
 
-        # Observable is automatically the last level of the model
-        assert obs.get_transformation_assignment(allowed_index_names) == ""
-        model_levels[-1].append(obs.get_target_incrementation(allowed_index_names))
-        generated_quantities_levels[-1].append(
-            obs.get_generated_quantities(allowed_index_names)
-        )
-        check_level_to_size(obs)
+        # Loop over all observables
+        for observable in self.model.observables:
 
-        # Walk up the tree from the observable to the top level, adding variables
-        # and transformations to the appropriate level
-        max_level = obs.stan_code_level
-        for _, parent in obs.walk_tree(walk_down=False):
-
-            # We must always be going down a level or staying at the same level
-            if parent.stan_code_level > max_level:
+            # There should be enough index names to cover all levels
+            if len(allowed_index_names) < (observable.ndim - 1):
                 raise ValueError(
-                    f"Cannot go up a level from {max_level} to {parent.stan_code_level}"
+                    f"Not enough index names ({len(allowed_index_names)}) to cover "
+                    f"{observable.ndim} levels"
                 )
-            max_level = parent.stan_code_level
 
-            # If a parameter or a named transformed parameter, add target incrementation
-            # and any transformations to the appropriate level
-            if isinstance(parent, Parameter) or (
-                isinstance(parent, TransformedParameter) and parent.is_named
-            ):
-                if target_incrementation := parent.get_target_incrementation(
-                    allowed_index_names
+            # There should never be a transformation for the observable
+            assert observable.get_transformation_assignment(allowed_index_names) == ""
+
+            # Walk up the tree from the observable to the top level
+            for _, parent in observable.walk_tree(walk_down=False):
+
+                # If a parameter or a named transformed parameter, add target incrementation
+                # and any transformations to the appropriate level
+                if isinstance(parent, Parameter) or (
+                    isinstance(parent, TransformedParameter) and parent.is_named
                 ):
-                    model_levels[parent.stan_code_level].append(target_incrementation)
-                if transformation_assignment := parent.get_transformation_assignment(
-                    allowed_index_names
-                ):
-                    transformed_param_levels[parent.stan_code_level].append(
-                        transformation_assignment
+                    if parent.get_target_incrementation(allowed_index_names):
+                        model_code_block.add_component(
+                            observable=observable, component=parent
+                        )
+                    if parent.get_transformation_assignment(allowed_index_names):
+                        transformed_code_block.add_component(
+                            observable=observable, component=parent
+                        )
+
+                # Otherwise the parent must be a constant or an unnamed transformed
+                # parameter
+                else:
+                    assert isinstance(parent, Constant) or (
+                        isinstance(parent, TransformedParameter) and not parent.is_named
                     )
 
-            # Otherwise the parent must be a constant or an unnamed transformed
-            # parameter
-            else:
-                assert isinstance(parent, Constant) or (
-                    isinstance(parent, TransformedParameter) and not parent.is_named
-                )
+        # Format code blocks
+        for code_block in (
+            model_code_block,
+            transformed_code_block,
+            generated_code_block,
+        ):
+            # Finalize levels and write the code
+            code_block.finalize_levels()
+            print(code_block.write_tree_code(allowed_index_names=allowed_index_names))
 
-            # Check the level to size mapping
-            check_level_to_size(parent)
-
-        # Format the code blocks
-        self.steps["model"] = format_code_block(model_levels)
-        self.steps["transformed parameters"] = (
-            self.steps["transformed parameters"]
-            + "\n"
-            + format_code_block(transformed_param_levels)
-        )
-        self.steps["generated quantities"] = (
-            self.steps["generated quantities"]
-            + "\n"
-            + format_code_block(generated_quantities_levels)
-        )
+        # # Format the code blocks
+        # self.steps["model"] = format_code_block(model_levels)
+        # self.steps["transformed parameters"] = (
+        #     self.steps["transformed parameters"]
+        #     + "\n"
+        #     + format_code_block(transformed_param_levels)
+        # )
+        # self.steps["generated quantities"] = (
+        #     self.steps["generated quantities"]
+        #     + "\n"
+        #     + format_code_block(generated_quantities_levels)
+        # )
 
     def write_stan_program(self) -> None:
         """

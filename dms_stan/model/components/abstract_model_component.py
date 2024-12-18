@@ -487,11 +487,22 @@ class AbstractModelComponent(ABC):
     def stan_code_level(self) -> int:
         """
         The level (index of the for-loop block) at which the parameter is manipulated
-        in the Stan code. This is the number of dimensions of the parameter minus
-        one, clipped at zero. This is because the last dimension is assumed to always
-        be vectorized.
+        in the Stan code. This is the number of dimensions, excluding trailing singleton
+        dimensions, of the parameter minus one, clipped at zero. This is because
+        the last dimension is assumed to always be vectorized.
         """
-        return max(self.ndim - 1, 0)
+        # Default is number of dimensions minus one
+        level = self.ndim - 1
+
+        # Subtract off trailing singleton dimensions
+        for dimsize in reversed(self.shape):
+            if dimsize == 1:
+                level -= 1
+            else:
+                break
+
+        # Clip at zero
+        return max(level, 0)
 
     @property
     def stan_parameter_declaration(self) -> str:

@@ -365,8 +365,8 @@ class Normal(ContinuousDistribution):
             return super().get_transformation_assignment(index_opts)
 
         # Get our formattables
-        mu_declaration = self._get_formattables(self.mu, index_opts)
-        sigma_declaration = self._get_formattables(self.sigma, index_opts)
+        formattables = super(Parameter, self).get_stan_code(index_opts)
+        mu_declaration, sigma_declaration = formattables["mu"], formattables["sigma"]
 
         # Otherwise, we redefine this parameter as the transformation of a draw
         # from a unit normal distribution
@@ -677,5 +677,15 @@ class Multinomial(DiscreteDistribution):
             **level_draws, size=(n,) + self.shape[:-1]
         )
 
-    def _write_dist_args(self, theta: str) -> str:  # pylint: disable=arguments-differ
-        return theta
+    def _write_dist_args(  # pylint: disable=arguments-differ
+        self, theta: str, N: str
+    ) -> str:
+        return f"{theta}, {N}"
+
+    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
+
+        # We need to strip the N parameter from the declaration as this is implicit
+        # in the distribution as defined in Stan
+        raw = super().get_target_incrementation(index_opts)
+        assert raw.count(", ") == 1, "Invalid target incrementation: " + raw
+        return raw.split(", ")[0].rstrip() + ")"

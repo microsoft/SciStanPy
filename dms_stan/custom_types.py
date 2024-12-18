@@ -12,6 +12,7 @@ from .model.components import (
     DiscreteDistribution,
     TransformedParameter,
 )
+from .model.components.abstract_model_component import AbstractModelComponent
 from .model.components.custom_torch_dists import Multinomial
 
 
@@ -34,3 +35,6 @@ CombinableParameterType = Union[ContinuousParameterType, DiscreteParameterType]
 
 # Distribution types
 DMSStanDistribution = Union[dist.Distribution, Multinomial]
+
+# For building Stan models
+StanTreeType = list[Union[AbstractModelComponent, "StanTreeType"]]
