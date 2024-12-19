@@ -46,7 +46,16 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def combine_lines(lines: list[str], indentation: int = DEFAULT_INDENTATION) -> str:
+def finalize_line(text: str, code_level: int) -> str:
+    """Indents a block of text by a specified number of spaces and adds semicolons."""
+    # Get the indentation level
+    spaces = DEFAULT_INDENTATION * (code_level + 1)
+
+    # Return the text
+    return f"{' ' * spaces}{text}"
+
+
+def combine_lines(lines: list[str], code_level: int = int) -> str:
     """Combine a list of Stan code lines into a single string."""
 
     # Nothing if no lines
@@ -54,7 +63,7 @@ def combine_lines(lines: list[str], indentation: int = DEFAULT_INDENTATION) -> s
         return ""
 
     # Combine the lines
-    return "\n" + ";\n".join(f"{' ' * indentation}{el}" for el in lines) + ";"
+    return "\n" + ";\n".join(finalize_line(el, code_level) for el in lines) + ";"
 
 
 def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable[P, R]:
@@ -113,17 +122,25 @@ class StanCodeBase(ABC, list):
         # Record the parent loop
         self.parent_loop = parent_loop
 
-        # Descendents are an empty list for now
-        self.descendents: list[StanCodeBase] = []
-
-    def generate_for_loops(self) -> Generator["StanForLoop", None, None]:
+    def recurse_for_loops(self) -> Generator["StanForLoop", None, None]:
         """Generates all for-loops in the program."""
         # Yield this loop
         yield self
 
-        # Loop over all descendants and yield their descendents
-        for descendent in self.descendents:
-            yield from descendent.generate_for_loops()
+        # Loop over all nested loops and yield from them as well
+        for loop in self.nested_loops:
+            yield from loop.recurse_for_loops()
+
+    def recurse_model_components(
+        self,
+    ) -> Generator[AbstractModelComponent, None, None]:
+        """Recursively generates all model components in the program."""
+        for component in self:
+            if isinstance(component, StanForLoop):
+                yield from component.recurse_model_components()
+            else:
+                assert isinstance(component, AbstractModelComponent)
+                yield component
 
     @abstractmethod
     def get_parent_loop(self, n: int) -> "StanCodeBase":
@@ -133,10 +150,67 @@ class StanCodeBase(ABC, list):
         return the progenitor, if n = -1, return this loop).
         """
 
+    def get_target_incrementation(
+        self, _dummy: Optional[tuple[str, ...]] = None
+    ) -> str:
+        """Returns the Stan code for the target incrementation."""
+
+        # Get assignments from ForLoops, Parameters, and TransformedParameters
+        # that are named
+        assignments = []
+        for component in self:
+
+            # Add the incrementation if a Parameter, StanForLoop, or named
+            # TransformedParameter
+            if (
+                isinstance(component, (Parameter, StanForLoop))
+                or (isinstance(component, TransformedParameter) and component.is_named)
+            ) and (
+                inc := component.get_target_incrementation(self.allowed_index_names)
+            ):
+                assignments.append(inc)
+
+        # Null string if no assignments
+        if len(assignments) == 0:
+            return ""
+
+        # Otherwise, combine lines, add a prefix, and finalize the line
+        return (
+            "\n"
+            + self.target_inc_prefix
+            + combine_lines(assignments, self.stan_code_level)
+            + "\n"
+            + finalize_line("}", self.stan_code_level)
+        )
+
+    @property
+    def nested_loops(self):
+        """Returns the nested loops."""
+        return [component for component in self if isinstance(component, StanForLoop)]
+
+    @property
+    def model_components(self) -> list[AbstractModelComponent]:
+        """Returns the model components in the program."""
+        return [
+            component
+            for component in self
+            if isinstance(component, AbstractModelComponent)
+        ]
+
     @property
     @abstractmethod
     def stan_code_level(self) -> int:
         """Returns the code level of the object."""
+
+    @property
+    @abstractmethod
+    def allowed_index_names(self) -> tuple[str, ...]:
+        """Returns the allowed index names for the loop."""
+
+    @property
+    @abstractmethod
+    def target_inc_prefix(self) -> str:
+        """Returns the prefix for the target incrementation."""
 
 
 class StanForLoop(StanCodeBase):
@@ -153,16 +227,16 @@ class StanForLoop(StanCodeBase):
         # Initialize the list
         super().__init__(parent_loop)
 
-        # Record the loop parameters
-        self.end: int = 1
-
-        # Append this loop to the parent loop and its descendents
+        # Append this loop to the parent loop
         self.parent_loop.append(self)
-        self.parent_loop.descendents.append(self)
 
         # Get the ancestry of the loop
         self.ancestry = self._get_ancestry()
-        self._stan_code_level = len(self.ancestry) - 1
+
+        # The shape index is the initial code level of the loop minus 1. In other
+        # words, if the loop is at code level "1", then we are indexing the first
+        # dimension of the model components (index 0).
+        self._shape_index = self.stan_code_level - 1
 
     def _get_ancestry(self) -> list[StanCodeBase]:
         """Retrieves the ancestry of the loop."""
@@ -178,51 +252,97 @@ class StanForLoop(StanCodeBase):
     def get_parent_loop(self, n: int) -> StanCodeBase:
         return (self.ancestry + self)[n]
 
-    def set_end(self) -> None:
-        """Sets the end value of the loop based on the components it contains."""
-        # Get all end values of the components in the loop
-        all_ends = {component.shape[self.stan_code_level] for component in self}
-        n_ends = len(all_ends)
-
-        # If two end values, one must be 1
-        if n_ends == 2:
-            assert 1 in all_ends
-            all_ends.remove(1)
-
-        # Otherwise, we must have only one end value
-        elif n_ends != 1:
-            raise ValueError(f"Invalid end values: {all_ends}")
-
-        # Set the end value
-        self.end = all_ends.pop()
-
     def squash(self) -> None:
         """
         If this is a singleton loop, it is removed from the lineage. This is done
-        by moving the decendant loops to the parent loop and removing this loop.
+        by moving the nested loops to the parent loop and removing this loop.
         """
         # If the end is 1, we are a singleton loop
         if self.end == 1:
             self.parent_loop.remove(self)
-            self.parent_loop.extend(self.descendents)
-            self.descendents = []
             self.parent_loop = None
 
-    @property
-    def shape(self) -> tuple[int, ...]:
-        """Returns the shape of the loop and any parent loops."""
-        # If the parent loop is the program, we are at the top level and there is
-        # no shape to return.
-        if isinstance(self.parent_loop, StanProgram):
-            return (0, self.end)
+    def append(self, component: Union["StanForLoop", AbstractModelComponent]) -> None:
+        """Appends a component to the list."""
+        # If a model component, make sure we are at the appropriate code level
+        if isinstance(component, AbstractModelComponent):
+            assert component.stan_code_level == (self.shape_index + 1)
 
-        # Otherwise, return the shape of the parent loop followed by the shape of
-        # this loop
-        return self.parent_loop.shape + (self.end,)
+        # Append the component
+        super().append(component)
+
+    # @property
+    # def shape(self) -> tuple[int, ...]:
+    #     """Returns the shape of the loop and any parent loops."""
+    #     # If the parent loop is the program, we are at the top level and there is
+    #     # no shape to return.
+    #     if isinstance(self.parent_loop, StanProgram):
+    #         return (0, self.end)
+
+    #     # Otherwise, return the shape of the parent loop followed by the shape of
+    #     # this loop
+    #     return self.parent_loop.shape + (self.end,)
+
+    @property
+    def end(self) -> int:
+        """
+        The end value of the loop. This is the size of all non-loop contents at
+        the index level.
+        """
+        # Get the size of the dimension at the index level for all model components
+        # nested in the loop
+        all_ends = {
+            component.shape[self.shape_index]
+            for component in self.recurse_model_components()
+        }
+
+        # If there are multiple options, remove 1s
+        if len(all_ends) > 1:
+            all_ends.discard(1)
+
+        # If there are still multiple options, raise an error
+        if len(all_ends) > 1:
+            raise ValueError(f"Invalid end values: {all_ends}")
+
+        # The value must be 1 or greater
+        val = all_ends.pop()
+        assert val >= 1
+
+        return val
+
+    @property
+    def program(self) -> "StanProgram":
+        """Returns the program to which this loop belongs"""
+        return self.ancestry[0]
+
+    @property
+    def allowed_index_names(self) -> tuple[str, ...]:
+        """Returns the allowed index names for the loop."""
+        return self.program.allowed_index_names
 
     @property
     def stan_code_level(self) -> int:
-        return self._stan_code_level
+        """Returns the code level of the loop, which is the number of ancestors."""
+        n_ancestors = len(self.ancestry)
+        assert n_ancestors > 0
+        return n_ancestors
+
+    @property
+    def loop_index(self) -> str:
+        """Returns the index of the loop in the program."""
+        return self.program.allowed_index_names[self.shape_index]
+
+    @property
+    def target_inc_prefix(self) -> str:
+        return (
+            finalize_line("", self.stan_code_level)
+            + f" for ({self.loop_index} in 1:{self.end}) {{"
+        )
+
+    @property
+    def shape_index(self) -> int:
+        """Returns the index level of the loop."""
+        return self._shape_index
 
 
 class StanProgram(StanCodeBase):
@@ -245,7 +365,7 @@ class StanProgram(StanCodeBase):
         self.all_varnames, self.all_paramnames = self.get_varnames()
 
         # Get allowed index variable names for each level
-        self.allowed_index_names = tuple(
+        self._allowed_index_names = tuple(
             char
             for char in dms.defaults.DEFAULT_INDEX_ORDER
             if {char, char.upper()}.isdisjoint(self.all_varnames)
@@ -358,29 +478,19 @@ class StanProgram(StanCodeBase):
 
                 # How many for-loops do we need to add? The code level of the current
                 # component must be greater than or equal to the target now
-                n_loops = component.stan_code_level - (
-                    0 if target_loop is self else target_loop.stan_code_level
-                )
-                assert (
-                    n_loops >= 0
-                ), "Current component code level is less than target loop"
+                n_loops = component.stan_code_level - target_loop.stan_code_level
+                assert n_loops >= 0
 
             # Add for-loops if necessary
-            for _ in range(
-                target_loop.stan_code_level, target_loop.stan_code_level + n_loops
-            ):
+            for _ in range(n_loops):
                 target_loop = StanForLoop(parent_loop=target_loop)
 
             # Add the component to the target loop and update the previous component
             target_loop.append(component)
             previous_component = component
 
-        # Set end values for all for-loops
-        for loop in self.generate_for_loops():
-            loop.set_end()
-
         # Squash any singletons
-        for loop in self.generate_for_loops():
+        for loop in self.recurse_for_loops():
             loop.squash()
 
         # Remove all squashed loops
@@ -391,15 +501,54 @@ class StanProgram(StanCodeBase):
             or component.parent_loop is not None
         ]
 
-    def generate_for_loops(self) -> Generator[StanForLoop, None, None]:
-        """Yields from the descendents only."""
-        for descendent in self.descendents:
-            yield from descendent.generate_for_loops()
+    def recurse_for_loops(self) -> Generator[StanForLoop, None, None]:
+        """Yields from the nested loops only."""
+        for loop in self.nested_loops:
+            yield from loop.recurse_for_loops()
+
+    def append(self, component: Union["StanForLoop", AbstractModelComponent]) -> None:
+        """Appends a component to the list."""
+        # If a model component, make sure we are at the appropriate code level
+        if isinstance(component, AbstractModelComponent):
+            assert component.stan_code_level == 0
+
+        # Append the component
+        super().append(component)
 
     @property
     def stan_code_level(self) -> int:
         """Returns the code level of the program, which is always 0."""
         return 0
+
+    @property
+    def data_block(self) -> str:
+        """Returns the Stan code for the data block."""
+
+    @property
+    def parameters_block(self) -> str:
+        """Returns the Stan code for the parameters block."""
+
+    @property
+    def model_block(self) -> str:
+        """Returns the Stan code for the model block."""
+        return self.get_target_incrementation()
+
+    @property
+    def transformed_parameters_block(self) -> str:
+        """Returns the Stan code for the transformed parameters block."""
+
+    @property
+    def generated_quantities_block(self) -> str:
+        """Returns the Stan code for the generated quantities block."""
+
+    @property
+    def allowed_index_names(self) -> tuple[str, ...]:
+        """Returns the allowed index names for the loop."""
+        return self._allowed_index_names
+
+    @property
+    def target_inc_prefix(self) -> str:
+        return "model {"
 
 
 # # We need a specific type for the steps of the Stan model

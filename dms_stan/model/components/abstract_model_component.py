@@ -367,19 +367,15 @@ class AbstractModelComponent(ABC):
         # Define the compatibility level
         compat_level = 0
 
-        # Get the extent to which the shapes of the current and previous components
-        # are compatible.
+        # Get the extent to which the shapes this and the other components are compatible.
         for i, (prev_dimsize, current_dimsize) in enumerate(
             zip(self.shape, other.shape)
         ):
 
-            # If the dimensions are equal, at least one is 1, or at least one is
-            # 0, they are compatible at this level of indentation
-            if zero_check := (prev_dimsize == 0 or current_dimsize == 0):
-                assert i == 0, "Cannot have a 0 dimension after the first dimension"
+            # If the dimensions are equal or at least one is 1, they are compatible
+            # at this level of indentation
             if (
-                zero_check
-                or prev_dimsize == current_dimsize
+                prev_dimsize == current_dimsize
                 or prev_dimsize == 1
                 or current_dimsize == 1
             ):
