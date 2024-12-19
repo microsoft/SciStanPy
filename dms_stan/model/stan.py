@@ -1,6 +1,5 @@
 """Holds code for interfacing with the Stan modeling language."""
 
-import copy
 import functools
 import os.path
 import warnings
@@ -16,7 +15,6 @@ from typing import (
     Literal,
     Optional,
     ParamSpec,
-    TypedDict,
     TypeVar,
     Union,
 )
@@ -469,7 +467,7 @@ class StanProgram(StanCodeBase):
         all_paramnames = {
             node.model_varname
             for node in self.node_to_depth
-            if isinstance(node, Parameter)
+            if isinstance(node, Parameter) and not node.observable
         }
 
         # Get all data inputs
@@ -822,108 +820,99 @@ class StanModel(CmdStanModel):
         # Format the code
         format_stan_file(self.stan_program_path, overwrite_file=True, canonicalize=True)
 
-    # def gather_inputs(self, **observables: SampleType) -> dict[str, SampleType]:
-    #     """
-    #     Gathers the inputs for the Stan model. Values for observables must be provided
-    #     by the user. All other inputs will be drawn from the DMS Stan model itself.
+    def gather_inputs(self, **observables: SampleType) -> dict[str, SampleType]:
+        """
+        Gathers the inputs for the Stan model. Values for observables must be provided
+        by the user. All other inputs will be drawn from the DMS Stan model itself.
 
-    #     Returns:
-    #         dict[str, SampleType]: A dictionary of inputs for the Stan model.
-    #     """
-    #     # Split out the observable values from the other inputs
-    #     required_observables = {
-    #         name for name, indicator in self.data_inputs if indicator
-    #     }
+        Returns:
+            dict[str, SampleType]: A dictionary of inputs for the Stan model.
+        """
+        # Make sure we have all the observables that the user must provide. Report
+        # any missing or extra observables
+        provided_observables = set(observables.keys())
+        if missing := self.program.user_provided_data - provided_observables:
+            raise ValueError(f"Missing observables: {', '.join(missing)}")
+        elif extra := provided_observables - self.program.user_provided_data:
+            raise ValueError(f"Extra observables: {', '.join(extra)}")
 
-    #     # Make sure we have all the observables in the inputs and report any missing
-    #     # or extra observables
-    #     provided_observables = set(observables.keys())
-    #     if missing := required_observables - provided_observables:
-    #         raise ValueError(f"Missing observables: {', '.join(missing)}")
-    #     elif extra := provided_observables - required_observables:
-    #         raise ValueError(f"Extra observables: {', '.join(extra)}")
+        # The shapes of the provided observables must match the shapes of the
+        # observables in the model
+        for name, obs in observables.items():
+            if hasattr(obs, "shape"):
+                if obs.shape != self.model[name].shape:
+                    raise ValueError(
+                        f"Shape mismatch for observable {name}: {obs.shape} != "
+                        f"{self.model[name].shape}"
+                    )
+            elif self.model[name].shape != ():
+                raise ValueError(
+                    f"Shape mismatch for observable {name}: scalar != {self.model[name].shape}"
+                )
 
-    #     # The shapes of the provided observables must match the shapes of the
-    #     # observables in the model
-    #     for name, obs in observables.items():
-    #         if hasattr(obs, "shape"):
-    #             if obs.shape != self.model[name].shape:
-    #                 raise ValueError(
-    #                     f"Shape mismatch for observable {name}: {obs.shape} != "
-    #                     f"{self.model[name].shape}"
-    #                 )
-    #         elif self.model[name].shape != ():
-    #             raise ValueError(
-    #                 f"Shape mismatch for observable {name}: scalar != {self.model[name].shape}"
-    #             )
+        # Pull the hyperparameters from the model and add them to the inputs
+        observables.update(
+            {name: self.model[name].value for name in self.program.autogathered_data}
+        )
 
-    #     # Pull the hyperparameters from the model and add them to the inputs
-    #     observables.update(
-    #         {
-    #             name: self.model[name].value
-    #             for name, indicator in self.data_inputs
-    #             if not indicator
-    #         }
-    #     )
-
-    #     return observables
+        return observables
 
     def code(self) -> str:
         """Returns Stan code for the model."""
         return self.program.code
 
-    # def _get_sample_init(
-    #     self, *, chains: int, seed: Optional[int]
-    # ) -> list[dict[str, Union[npt.NDArray[np.floating], np.floating]]]:
-    #     """
-    #     Draws from the prior distribution of the model to initialize the MCMC sampler.
+    def _get_sample_init(
+        self, *, chains: int, seed: Optional[int]
+    ) -> list[dict[str, Union[npt.NDArray[np.floating], np.floating]]]:
+        """
+        Draws from the prior distribution of the model to initialize the MCMC sampler.
 
-    #     Args:
-    #         chains (int): The number of chains.
-    #         seed (Optional[int]): The seed for the random number generator.
+        Args:
+            chains (int): The number of chains.
+            seed (Optional[int]): The seed for the random number generator.
 
-    #     Returns:
-    #         list[dict[str, npt.NDArray]]: A list of dictionaries where each dictionary
-    #             contains the initial values for the parameters of the model in one
-    #             chain.
-    #     """
-    #     # Draw from the prior distribution of the model, keeping only the draws
-    #     # for the non-observable parameters
-    #     draws = {
-    #         component.model_varname: draw
-    #         for component, draw in self.model.draw(
-    #             n=chains, named_only=False, seed=seed
-    #         ).items()
-    #         if isinstance(component, Parameter) and not component.observable
-    #     }
+        Returns:
+            list[dict[str, npt.NDArray]]: A list of dictionaries where each dictionary
+                contains the initial values for the parameters of the model in one
+                chain.
+        """
+        # Draw from the prior distribution of the model, keeping only the draws
+        # for the non-observable parameters
+        draws = {
+            component.model_varname: draw
+            for component, draw in self.model.draw(
+                n=chains, named_only=False, seed=seed
+            ).items()
+            if isinstance(component, Parameter) and not component.observable
+        }
 
-    #     # The draws should overlap perfectly with the parameters of the model
-    #     assert set(draws.keys()) == self.all_paramnames
+        # The draws should overlap perfectly with the parameters of the model
+        assert set(draws.keys()) == self.program.all_paramnames
 
-    #     # Separate the draws into one dictionary per chain
-    #     return [{name: draw[i] for name, draw in draws.items()} for i in range(chains)]
+        # Separate the draws into one dictionary per chain
+        return [{name: draw[i] for name, draw in draws.items()} for i in range(chains)]
 
-    # def sample(self, *args, **kwargs) -> CmdStanMCMC:
+    def sample(self, *args, **kwargs) -> CmdStanMCMC:
 
-    #     # Update the sample function from CmdStanModel to automatically pull the
-    #     # data from the StanModel
-    #     updated_parent_sample = _update_cmdstanpy_func(CmdStanModel.sample)
+        # Update the sample function from CmdStanModel to automatically pull the
+        # data from the StanModel
+        updated_parent_sample = _update_cmdstanpy_func(CmdStanModel.sample)
 
-    #     # Combine args and kwargs into a single dictionary
-    #     kwargs.update(dict(zip(CmdStanModel.sample.__code__.co_varnames[1:], args)))
+        # Combine args and kwargs into a single dictionary
+        kwargs.update(dict(zip(CmdStanModel.sample.__code__.co_varnames[1:], args)))
 
-    #     # Set the number of chains if not provided
-    #     if "chains" not in kwargs or kwargs["chains"] is None:
-    #         kwargs["chains"] = 4
+        # Set the number of chains if not provided
+        if "chains" not in kwargs or kwargs["chains"] is None:
+            kwargs["chains"] = 4
 
-    #     # If initializing from the prior, we need to draw from the prior
-    #     if kwargs.get("inits") == "prior":
-    #         kwargs["inits"] = self._get_sample_init(  # pylint: disable=protected-access
-    #             chains=kwargs["chains"], seed=kwargs.get("seed")
-    #         )
+        # If initializing from the prior, we need to draw from the prior
+        if kwargs.get("inits") == "prior":
+            kwargs["inits"] = self._get_sample_init(  # pylint: disable=protected-access
+                chains=kwargs["chains"], seed=kwargs.get("seed")
+            )
 
-    #     # Call the parent sample function
-    #     return updated_parent_sample(self, **kwargs)
+        # Call the parent sample function
+        return updated_parent_sample(self, **kwargs)
 
     # Update the CmdStanModel functions that require data
     generate_quantities = _update_cmdstanpy_func(

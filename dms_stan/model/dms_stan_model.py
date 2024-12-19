@@ -261,6 +261,7 @@ class Model(ABC):
     # then use dask to load the data in parallel.
     def mcmc(
         self,
+        *,
         output_dir: Optional[str] = None,
         force_compile: bool = DEFAULT_FORCE_COMPILE,
         stanc_options: Optional[dict[str, Any]] = DEFAULT_STANC_OPTIONS,
