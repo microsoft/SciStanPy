@@ -13,6 +13,7 @@ from typing import (
     Any,
     Callable,
     Generator,
+    Literal,
     Optional,
     ParamSpec,
     TypedDict,
@@ -130,25 +131,68 @@ class StanCodeBase(ABC, list):
         return the progenitor, if n = -1, return this loop).
         """
 
-    def get_target_incrementation(
-        self, _dummy: Optional[tuple[str, ...]] = None
+    def _write_block(
+        self,
+        block_name: Literal["model", "transformed_parameters", "generated_quantities"],
+        declarations: Union[str, tuple[str, ...]] = (),
     ) -> str:
-        """Returns the Stan code for the target incrementation."""
 
-        # Get assignments from ForLoops, Parameters, and TransformedParameters
-        # that are named
-        assignments = []
-        for component in self:
+        def filter_generated_quantities(
+            nested_component: Union[StanCodeBase, AbstractModelComponent]
+        ) -> bool:
+            """
+            Filters hierarchy of loops for the generated quantities block. We take
+            observables.
+            """
+            return (
+                isinstance(nested_component, Parameter) and nested_component.observable
+            ) or isinstance(nested_component, StanForLoop)
 
-            # Add the incrementation if a Parameter, StanForLoop, or named
-            # TransformedParameter
-            if (
-                isinstance(component, (Parameter, StanForLoop))
-                or (isinstance(component, TransformedParameter) and component.is_named)
-            ) and (
-                inc := component.get_target_incrementation(self.allowed_index_names)
-            ):
-                assignments.append(inc)
+        # Functions for filtering the tree
+        def filter_model_transformed_params(
+            nested_component: Union[StanCodeBase, AbstractModelComponent]
+        ) -> bool:
+            """
+            Filters hierarchy of loops for the model and transformed parameters
+            blocks. We take Parameters and named TransformedParameters.
+            """
+            return isinstance(nested_component, (Parameter, StanForLoop)) or (
+                isinstance(nested_component, TransformedParameter)
+                and nested_component.is_named
+            )
+
+        # We need a dictionary that will map from block name to the prefix for the
+        # block we are writing,
+        dispatcher = {
+            "model": {
+                "func": "get_target_incrementation",
+                "prefix": self.target_inc_prefix,
+                "filter": filter_model_transformed_params,
+            },
+            "transformed_parameters": {
+                "func": "get_transformation_assignment",
+                "prefix": self.transformation_assi_prefix,
+                "filter": filter_model_transformed_params,
+            },
+            "generated_quantities": {
+                "func": "get_generated_quantities",
+                "prefix": self.generated_quantities_prefix,
+                "filter": filter_generated_quantities,
+            },
+        }
+
+        # Get the function, prefix, and filter for the block
+        func = dispatcher[block_name]["func"]
+        prefix = dispatcher[block_name]["prefix"]
+        filter_func = dispatcher[block_name]["filter"]
+
+        # Get assignments and incrementations
+        assignments = [
+            addition
+            for component in self
+            if filter_func(component)
+            and (addition := getattr(component, func)(self.allowed_index_names))
+        ]
 
         # Null string if no assignments
         if len(assignments) == 0:
@@ -160,7 +204,8 @@ class StanCodeBase(ABC, list):
         # Otherwise, combine lines, add a prefix, and finalize the line
         return (
             "\n"
-            + self.target_inc_prefix
+            + prefix
+            + ("\n" + declarations + "\n" if isinstance(declarations, str) else "")
             + ("\n" if n_model_components > 0 else "")
             + self.combine_lines(
                 assignments, indentation_level=self.stan_code_level + 1
@@ -168,6 +213,25 @@ class StanCodeBase(ABC, list):
             + "\n"
             + self.finalize_line("}")
         )
+
+    def get_target_incrementation(
+        self, _dummy: Optional[tuple[str, ...]] = None
+    ) -> str:
+        """Returns the Stan code for the target incrementation."""
+        return self._write_block("model")
+
+    def get_transformation_assignment(
+        self, declarations: Union[str, tuple[str, ...]]
+    ) -> str:
+        """Returns the Stan code for the transformation assignment."""
+
+        return self._write_block("transformed_parameters", declarations=declarations)
+
+    def get_generated_quantities(
+        self, declarations: Union[str, tuple[str, ...]]
+    ) -> str:
+        """Returns the Stan code for the generated quantities."""
+        return self._write_block("generated_quantities", declarations=declarations)
 
     def finalize_line(self, text: str, indendation_level: Optional[int] = None) -> str:
         """Indents a block of text by a specified number of spaces and adds semicolons."""
@@ -228,6 +292,16 @@ class StanCodeBase(ABC, list):
     @abstractmethod
     def target_inc_prefix(self) -> str:
         """Returns the prefix for the target incrementation."""
+
+    @property
+    @abstractmethod
+    def transformation_assi_prefix(self) -> str:
+        """Returns the prefix for the transformation assignment."""
+
+    @property
+    @abstractmethod
+    def generated_quantities_prefix(self) -> str:
+        """Returns the prefix for the generated quantities."""
 
 
 class StanForLoop(StanCodeBase):
@@ -290,18 +364,6 @@ class StanForLoop(StanCodeBase):
         # Append the component
         super().append(component)
 
-    # @property
-    # def shape(self) -> tuple[int, ...]:
-    #     """Returns the shape of the loop and any parent loops."""
-    #     # If the parent loop is the program, we are at the top level and there is
-    #     # no shape to return.
-    #     if isinstance(self.parent_loop, StanProgram):
-    #         return (0, self.end)
-
-    #     # Otherwise, return the shape of the parent loop followed by the shape of
-    #     # this loop
-    #     return self.parent_loop.shape + (self.end,)
-
     @property
     def end(self) -> int:
         """
@@ -356,6 +418,14 @@ class StanForLoop(StanCodeBase):
         return self.finalize_line("") + f"for ({self.loop_index} in 1:{self.end}) {{"
 
     @property
+    def transformation_assi_prefix(self) -> str:
+        return self.target_inc_prefix
+
+    @property
+    def generated_quantities_prefix(self) -> str:
+        return self.target_inc_prefix
+
+    @property
     def shape_index(self) -> int:
         """Returns the index level of the loop."""
         return self._shape_index
@@ -398,19 +468,24 @@ class StanProgram(StanCodeBase):
         # We need a mapping from each node to its maximum depth in the tree.
         node_to_depth: dict[AbstractModelComponent, int] = {}
 
-        # Starting from hyperparameters, walk down the tree and record the depth of each
-        # node
-        for hyper in self.model.hyperparameters:
+        # Get all constants, named or otherwise
+        constants = list(
+            filter(lambda x: isinstance(x, Constant), self.model.all_model_components)
+        )
 
-            # Hyperparameters should be at depth 0
-            node_to_depth[hyper] = 0
+        # Starting from constants (which are all root nodes), walk down the tree
+        # and record the depth of each node
+        for root in constants:
 
-            # We should never encounter a node twice for a single hyperparameter
+            # Root nodes are at depth 0
+            node_to_depth[root] = 0
+
+            # We should never encounter a node twice from a single root
             observed_nodes: set[AbstractModelComponent] = set()
 
-            # Walk the tree rooted at this hyperparameter and record the depth of each node
+            # Walk the tree rooted at this root and record the depth of each node
             # if it is higher than the current maximum depth
-            for depth, _, child in hyper.walk_tree():
+            for depth, _, child in root.walk_tree():
 
                 # Make sure we haven't seen this node before
                 assert child not in observed_nodes, "Node encountered twice in tree"
@@ -539,10 +614,43 @@ class StanProgram(StanCodeBase):
     @property
     def data_block(self) -> str:
         """Returns the Stan code for the data block."""
+        # Get the declarations for the data block. This is all observables and all
+        # constants.
+        declarations = [
+            component.stan_parameter_declaration
+            for component in self.recurse_model_components()
+            if (isinstance(component, Parameter) and component.observable)
+            or isinstance(component, Constant)
+        ]
+
+        # Combine declarations and wrap in the data block
+        return (
+            "data {\n" + self.combine_lines(declarations, indentation_level=1) + "\n}"
+        )
 
     @property
     def parameters_block(self) -> str:
         """Returns the Stan code for the parameters block."""
+        # Loop over all components recursively and define the parameters
+        declarations: list[str] = []
+        for component in self.recurse_model_components():
+
+            # Normal distributions are non-centered if they are not hyperparameters
+            if isinstance(component, Normal) and not component.is_hyperparameter:
+                declarations.append(
+                    f"{component.stan_dtype} {component.noncentered_varname}"
+                )
+
+            # Otherwise, add all parameters that are not observables
+            elif isinstance(component, Parameter) and not component.observable:
+                declarations.append(component.stan_parameter_declaration)
+
+        # Combine the lines and enclose in the parameters block
+        return (
+            "parameters {\n"
+            + self.combine_lines(declarations, indentation_level=1)
+            + "\n}"
+        )
 
     @property
     def model_block(self) -> str:
@@ -552,10 +660,41 @@ class StanProgram(StanCodeBase):
     @property
     def transformed_parameters_block(self) -> str:
         """Returns the Stan code for the transformed parameters block."""
+        # Get the declarations for transformed parameters. We take any named transformed
+        # parameters. We also take non-centered normal distributions.
+        declarations = [
+            component.stan_parameter_declaration
+            for component in self.recurse_model_components()
+            if (isinstance(component, TransformedParameter) and component.is_named)
+            or (
+                isinstance(component, Normal)
+                and not component.is_hyperparameter
+                and not component.observable
+            )
+        ]
+
+        # Combine declarations
+        declaration_block = self.combine_lines(declarations, indentation_level=1)
+
+        # Combine declarations and transformations
+        return self.get_transformation_assignment(declarations=declaration_block)
 
     @property
     def generated_quantities_block(self) -> str:
         """Returns the Stan code for the generated quantities block."""
+        # Get declarations for the generated quantities block. This is all observables
+        # in the program.
+        declarations = [
+            component.stan_generated_quantity_declaration
+            for component in self.recurse_model_components()
+            if isinstance(component, Parameter) and component.observable
+        ]
+
+        # Combine declarations
+        declaration_block = self.combine_lines(declarations, indentation_level=1)
+
+        # Combine declarations and transformations
+        return self.get_generated_quantities(declarations=declaration_block)
 
     @property
     def allowed_index_names(self) -> tuple[str, ...]:
@@ -565,6 +704,14 @@ class StanProgram(StanCodeBase):
     @property
     def target_inc_prefix(self) -> str:
         return "model {"
+
+    @property
+    def transformation_assi_prefix(self) -> str:
+        return "transformed parameters {"
+
+    @property
+    def generated_quantities_prefix(self) -> str:
+        return "generated quantities {"
 
 
 # # We need a specific type for the steps of the Stan model
