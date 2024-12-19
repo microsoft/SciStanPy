@@ -124,7 +124,7 @@ class Model(ABC):
 
             # Add all parents to the mapping and make sure `Parameter` instances
             # are explicitly defined.
-            for _, parent in observable.walk_tree(walk_down=False):
+            for *_, parent in observable.walk_tree(walk_down=False):
 
                 # If the parent is already in the mapping, make sure it is the
                 # same

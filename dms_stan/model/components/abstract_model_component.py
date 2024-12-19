@@ -322,8 +322,8 @@ class AbstractModelComponent(ABC):
         return draws, _drawn
 
     def walk_tree(
-        self, walk_down: bool = True
-    ) -> list[tuple["AbstractModelComponent", "AbstractModelComponent"]]:
+        self, walk_down: bool = True, _recursion_depth: int = 1
+    ) -> list[tuple[int, "AbstractModelComponent", "AbstractModelComponent"]]:
         """
         Walks the tree of parameters, either up or down. "up" means walking from
         the children to the parents, while "down" means walking from the parents
@@ -333,10 +333,11 @@ class AbstractModelComponent(ABC):
             walk_down (bool): Whether to walk down the tree (True) or up the tree (False).
 
         Returns:
-            list[tuple["AbstractModelComponent", "AbstractModelComponent"]]: The
-            lineage. Each tuple contains the reference parameter in the first position
-            and its relative (child if walking down, parent if walking up) in the
-            second.
+            list[tuple[int, "AbstractModelComponent", "AbstractModelComponent"]]: The
+            lineage. Each tuple contains the recursion depth relative to the original
+            calling parameter in the first position, the current parameter in the
+            second position, and that parameter's relative (child if walking down,
+            parent if walking up) in the second.
         """
         # Get the variables to loop over
         relatives = self.children if walk_down else self.parents
@@ -346,12 +347,46 @@ class AbstractModelComponent(ABC):
         for relative in relatives:
 
             # Add the current parameter and the relative parameter to the list
-            to_return.append((self, relative))
+            to_return.append((_recursion_depth, self, relative))
 
             # Recurse on the relative parameter
-            to_return.extend(relative.walk_tree(walk_down=walk_down))
+            to_return.extend(
+                relative.walk_tree(
+                    walk_down=walk_down, _recursion_depth=_recursion_depth + 1
+                )
+            )
 
         return to_return
+
+    def get_stan_level_compatibility(self, other: "AbstractModelComponent") -> int:
+        """
+        Determines the extent to which the shapes of this and the other components
+        are compatible. This is the number of shared leading dimensions between
+        the two components' shapes.
+        """
+        # Define the compatibility level
+        compat_level = 0
+
+        # Get the extent to which the shapes of the current and previous components
+        # are compatible.
+        for i, (prev_dimsize, current_dimsize) in enumerate(
+            zip(self.shape, other.shape)
+        ):
+
+            # If the dimensions are equal, at least one is 1, or at least one is
+            # 0, they are compatible at this level of indentation
+            if zero_check := (prev_dimsize == 0 or current_dimsize == 0):
+                assert i == 0, "Cannot have a 0 dimension after the first dimension"
+            if (
+                zero_check
+                or prev_dimsize == current_dimsize
+                or prev_dimsize == 1
+                or current_dimsize == 1
+            ):
+                compat_level = i
+                break
+
+        return compat_level
 
     @abstractmethod
     def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
