@@ -46,26 +46,6 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def finalize_line(text: str, code_level: int) -> str:
-    """Indents a block of text by a specified number of spaces and adds semicolons."""
-    # Get the indentation level
-    spaces = DEFAULT_INDENTATION * (code_level + 1)
-
-    # Return the text
-    return f"{' ' * spaces}{text}"
-
-
-def combine_lines(lines: list[str], code_level: int = int) -> str:
-    """Combine a list of Stan code lines into a single string."""
-
-    # Nothing if no lines
-    if len(lines) == 0:
-        return ""
-
-    # Combine the lines
-    return "\n" + ";\n".join(finalize_line(el, code_level) for el in lines) + ";"
-
-
 def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable[P, R]:
     """
     Decorator that modifies CmdStanModel functions requiring data to automatically
@@ -174,13 +154,50 @@ class StanCodeBase(ABC, list):
         if len(assignments) == 0:
             return ""
 
+        # Get the number of non-for-loops in the program.
+        n_model_components = len(self.model_components)
+
         # Otherwise, combine lines, add a prefix, and finalize the line
         return (
             "\n"
             + self.target_inc_prefix
-            + combine_lines(assignments, self.stan_code_level)
+            + ("\n" if n_model_components > 0 else "")
+            + self.combine_lines(
+                assignments, indentation_level=self.stan_code_level + 1
+            )
             + "\n"
-            + finalize_line("}", self.stan_code_level)
+            + self.finalize_line("}")
+        )
+
+    def finalize_line(self, text: str, indendation_level: Optional[int] = None) -> str:
+        """Indents a block of text by a specified number of spaces and adds semicolons."""
+
+        # Get the indentation level
+        indendation_level = (
+            self.stan_code_level if indendation_level is None else indendation_level
+        )
+
+        # Pad the input text with spaces
+        formatted = f"{' ' * DEFAULT_INDENTATION * indendation_level}{text}"
+
+        # Add a semicolon to the end if not a bracket or blank
+        if text and text[-1] not in {"{", "}", ";"}:
+            formatted += ";"
+
+        return formatted
+
+    def combine_lines(
+        self, lines: list[str], indentation_level: Optional[int] = None
+    ) -> str:
+        """Combine a list of Stan code lines into a single string."""
+
+        # Nothing if no lines
+        if len(lines) == 0:
+            return ""
+
+        # Combine the lines
+        return "\n".join(
+            self.finalize_line(el, indendation_level=indentation_level) for el in lines
         )
 
     @property
@@ -257,8 +274,10 @@ class StanForLoop(StanCodeBase):
         If this is a singleton loop, it is removed from the lineage. This is done
         by moving the nested loops to the parent loop and removing this loop.
         """
-        # If the end is 1, we are a singleton loop
+        # If the end is 1, we are a singleton loop. Move the contents of this loop
+        # to the parent loop and then remove this loop from the parent loop.
         if self.end == 1:
+            self.parent_loop.extend(self)
             self.parent_loop.remove(self)
             self.parent_loop = None
 
@@ -334,10 +353,7 @@ class StanForLoop(StanCodeBase):
 
     @property
     def target_inc_prefix(self) -> str:
-        return (
-            finalize_line("", self.stan_code_level)
-            + f" for ({self.loop_index} in 1:{self.end}) {{"
-        )
+        return self.finalize_line("") + f"for ({self.loop_index} in 1:{self.end}) {{"
 
     @property
     def shape_index(self) -> int:
