@@ -67,8 +67,8 @@ def allow_interactive(plotting_func: Callable[P, T]) -> Callable[P, T]:
                 interactive = interactive + p
             return interactive.cols(1)
 
-        # Otherwise, autorange the y-axis and return
-        return plot.opts(autorange="y")
+        # Otherwise, set the framewise option and return
+        return plot.opts(framewise=True)
 
     return interactive_plotting_func
 
