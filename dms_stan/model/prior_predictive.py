@@ -3,13 +3,14 @@
 import re
 
 from copy import deepcopy
-from typing import Optional
+from typing import Callable, Optional
 
 import hvplot.interactive
 import hvplot.pandas
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+import panel as pn
 import panel.widgets as pnw
 
 import dms_stan as dms
@@ -30,6 +31,15 @@ class PriorPredictiveCheck:
         # values on the model directly.
         self.model = deepcopy(model) if copy_model else model
 
+        # Placeholder for the last plotting dataframe
+        self.last_plotting_df: Optional[pd.DataFrame] = None
+
+        # Variables for all the widgets
+        self.float_sliders: Optional[dict[str, pnw.EditableFloatSlider]] = None
+        self.target_dropdown: Optional[pnw.Select] = None
+        self.update_button: Optional[pnw.Button] = None
+        self.draw_slider: Optional[pnw.EditableIntSlider] = None
+
     def build_plotting_df(
         self,
         displayed_param: str,
@@ -45,13 +55,16 @@ class PriorPredictiveCheck:
         if independent_dim is not None and independent_dim >= 0:
             independent_dim += 1
 
-        # Get the samples from the model and build the dataframe
-        return dms.plotting.build_plotting_df(
+        # Build the plotting dataframe
+        self.last_plotting_df = dms.plotting.build_plotting_df(
             samples=getattr(self.model, displayed_param).draw(n_experiments)[0],
             paramname=displayed_param,
             independent_dim=independent_dim,
             independent_labels=independent_labels,
         )
+
+        # Get the samples from the model and build the dataframe
+        return self.last_plotting_df
 
     def _process_display_inputs(
         self,
@@ -116,7 +129,7 @@ class PriorPredictiveCheck:
 
         return initial_view, list(legal_targets)
 
-    def _init_float_sliders(self) -> dict[str, pnw.EditableFloatSlider]:
+    def _init_float_sliders(self) -> None:
         """Gets the float sliders for the togglable parameters in the model."""
         # Each togglable parameter gets its own float slider
         sliders = {}
@@ -137,7 +150,11 @@ class PriorPredictiveCheck:
             # If no dimensions, just create a slider
             if hyperparam_val.ndim == 0:
                 sliders[hyperparam_name] = pnw.EditableFloatSlider(
-                    name=hyperparam_name, value=hyperparam_val.value.item()
+                    name=hyperparam_name,
+                    value=hyperparam_val.value.item(),
+                    start=hyperparam_val.slider_start,
+                    end=hyperparam_val.slider_end,
+                    step=hyperparam_val.slider_step_size,
                 )
                 continue
 
@@ -155,7 +172,13 @@ class PriorPredictiveCheck:
                 slider_val = hyperparam_val.value[tuple(current_index)]
 
                 # Add the slider
-                sliders[name] = pnw.EditableFloatSlider(name=name, value=slider_val)
+                sliders[name] = pnw.EditableFloatSlider(
+                    name=name,
+                    value=slider_val,
+                    start=hyperparam_val.slider_start,
+                    end=hyperparam_val.slider_end,
+                    step=hyperparam_val.slider_step_size,
+                )
 
                 # Increment the current index. If we have reached the end of the
                 # current dimension, move to the next dimension
@@ -169,35 +192,49 @@ class PriorPredictiveCheck:
                 remaining_elements -= 1
                 current_index[current_dim] += 1
 
-        return sliders
+        # Assign the sliders
+        self.float_sliders = sliders
 
     def _init_target_dropdown(
-        self, initial_view: str, legal_targets: list[str]
-    ) -> pnw.Select:
+        self,
+        initial_view: Optional[str],
+        independent_dim: Optional[int],
+        independent_labels: Optional[npt.NDArray],
+    ) -> list[str]:
         """
         Gets the dropdown for selecting the target parameter. The target parameter
         is any named parameter or observable in the model.
         """
+        # Process the input parameters
+        initial_view, legal_targets = self._process_display_inputs(
+            initial_view=initial_view,
+            independent_dim=independent_dim,
+            independent_labels=independent_labels,
+        )
 
-        # Build the dropdown
-        return pnw.Select(
+        # Build the dropdown and assign it
+        self.target_dropdown = pnw.Select(
             name="Viewed Parameter", options=legal_targets, value=initial_view
         )
 
-    def _init_draw_slider(self) -> pnw.EditableIntSlider:
+        return legal_targets
+
+    def _init_draw_slider(self) -> None:
         """Gets the slider for the number of draws to use in the prior predictive check."""
-        return pnw.EditableIntSlider(
+        self.draw_slider = pnw.EditableIntSlider(
             name="Number of Experiments", value=1, start=1, end=100
         )
+
+    def _init_update_button(self) -> None:
+        """Builds the update button for updating the plot."""
+        self.update_button = pnw.Button(name="Update Model", button_type="primary")
 
     # We need a function that updates the model with new parameters
     def _viewer_backend(
         self,
-        displayed_param: str,
-        n_experiments: int,
         independent_dim: Optional[int],
         independent_labels: Optional[npt.NDArray],
-        **kwargs: float,
+        update: bool,  # pylint: disable=unused-argument
     ):
         """
         Updates the model with the new constant values and rebuilds the plotting
@@ -205,8 +242,11 @@ class PriorPredictiveCheck:
         and the value is a dictionary that links the constant names within that
         parameter to the new values for those constants.
         """
-        # Update the model with the new parameters
-        for paramname, paramval in kwargs.items():
+        # Set button to loading mode
+        self.update_button.loading = True
+
+        # Update the model with the new parameters from the float sliders
+        for paramname, slider in self.float_sliders.items():
 
             # Get the parameter name and the indices
             paramname, indices = _INDEX_EXTRACTOR.match(paramname).groups()
@@ -216,22 +256,27 @@ class PriorPredictiveCheck:
             assert isinstance(self.model[paramname], Constant)
 
             # Update the value of the constant
-            self.model[paramname].value[indices] = paramval
+            self.model[paramname].value[indices] = slider.value
 
-        # Build the dataframes for plotting
-        return self.build_plotting_df(
-            displayed_param=displayed_param,
-            n_experiments=n_experiments,
+        # Update the plotting dataframe
+        backend = self.build_plotting_df(
+            displayed_param=self.target_dropdown.value,
+            n_experiments=self.draw_slider.value,
             independent_dim=independent_dim,
             independent_labels=independent_labels,
         )
+
+        # No more loading
+        self.update_button.loading = False
+
+        return backend
 
     def display(
         self,
         initial_view: Optional[str] = None,
         independent_dim: Optional[int] = None,
         independent_labels: Optional[npt.NDArray] = None,
-    ) -> hvplot.interactive.Interactive:
+    ) -> pn.Row:
         """
         Renders a display of samples drawn from the parameter given by `initial_view`.
 
@@ -259,29 +304,33 @@ class PriorPredictiveCheck:
             independent_dim=independent_dim, independent_labels=independent_labels
         )
 
-        # Process the input parameters
-        initial_view, legal_targets = self._process_display_inputs(
+        # Build widgets for the display
+        self._init_float_sliders()
+        self._init_draw_slider()
+        self._init_update_button()
+        self._init_target_dropdown(
             initial_view=initial_view,
             independent_dim=independent_dim,
             independent_labels=independent_labels,
         )
 
-        # Build widgets for the display
-        float_sliders = self._init_float_sliders()
-        target_dropdown = self._init_target_dropdown(
-            initial_view=initial_view, legal_targets=legal_targets
+        # Organize widgets
+        widgets = pn.WidgetBox(
+            *self.float_sliders.values(),
+            self.draw_slider,
+            self.target_dropdown,
         )
-        draw_slider = self._init_draw_slider()
 
-        # Bind the widgets to the viewer backend
+        # Bind the widgets to the viewer backend and get the interactive dataframe
         plot_df = hvplot.bind(
             self._viewer_backend,
-            displayed_param=target_dropdown,
-            n_experiments=draw_slider,
             independent_dim=independent_dim,
             independent_labels=independent_labels,
-            **float_sliders,
-        ).interactive()
+            update=self.update_button,
+        ).interactive(loc="bottom")
 
-        # Make the plot
-        return plotting_func(plot_df, paramname=target_dropdown)
+        # Update the plot
+        plot = plotting_func(plot_df, paramname=plot_df.columns[0])
+
+        # Organize the display
+        return pn.Row(widgets, plot)

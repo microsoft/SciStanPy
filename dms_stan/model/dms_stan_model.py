@@ -6,6 +6,7 @@ from typing import Any, Iterable, Literal, Optional, overload, Union
 import hvplot.interactive
 import numpy as np
 import numpy.typing as npt
+import panel as pn
 import torch
 
 from cmdstanpy import CmdStanMCMC
@@ -289,6 +290,7 @@ class Model(ABC):
         samples = stan_model.sample(inits=inits, **sample_kwargs)
 
         # Run diagnostics
+        print("Running diagnostics...")
         print(samples.diagnose())
 
         return samples
@@ -300,7 +302,7 @@ class Model(ABC):
         initial_view: Optional[str] = None,
         independent_dim: Optional[int] = None,
         independent_labels: Optional[npt.NDArray] = None,
-    ) -> hvplot.interactive.Interactive:
+    ) -> pn.Row:
         """
         Creates an interactive plot of the prior predictive distribution of the
         model. The plot can be used to update the model's parameters dynamically.

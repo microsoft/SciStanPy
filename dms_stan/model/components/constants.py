@@ -1,6 +1,6 @@
 """Holds code for working with constant values in a DMS Stan model."""
 
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -86,6 +86,57 @@ class Constant(AbstractModelComponent):
     def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
         """Constants are never transformed."""
         return ""
+
+    def _get_lim(self, lim_type: Literal["low", "high"]) -> tuple[float, float]:
+        """Order of magnitude of the value."""
+        # Get the largest absolute value
+        maxval = np.abs(self.value).max()
+
+        # If the value is zero, order of magnitude is 0
+        if maxval == 0:
+            order = 0
+
+        # Otherwise, calculate the order of magnitude
+        else:
+            order = np.log10(maxval)
+            order = np.floor(order) if order < 0 else np.ceil(order)
+
+        # Minimum order is 0
+        order = max(0, order)
+
+        # Add or subtract one order of magnitude to get the limit
+        if lim_type == "high":
+            return maxval + 10**order, order
+        elif lim_type == "low":
+            return maxval - 10**order, order
+        else:
+            raise ValueError("Invalid limit type.")
+
+    @property
+    def slider_start(self) -> float:
+        """Starting values for sliders in prior predictive checks."""
+        # Lower bound if we have one
+        if self.LOWER_BOUND is not None:
+            return self.LOWER_BOUND
+
+        # Otherwise, retrieve lower limit
+        return self._get_lim("low")[0]
+
+    @property
+    def slider_end(self) -> float:
+        """Ending values for sliders in prior predictive checks."""
+        # Upper bound if we have one
+        if self.UPPER_BOUND is not None:
+            return self.UPPER_BOUND
+
+        # Otherwise, retrieve upper limit
+        return self._get_lim("high")[0]
+
+    @property
+    def slider_step_size(self) -> float:
+        """We allow 100 steps between the start and end values"""
+        # Get the order of magnitude of the value. We want to round to 2 orders
+        return (self.slider_end - self.slider_start) / 100
 
     @property
     def torch_parametrization(self) -> torch.Tensor:
