@@ -8,6 +8,7 @@ import numpy as np
 import numpy.typing as npt
 import panel as pn
 import torch
+import xarray as xr
 
 from cmdstanpy import CmdStanMCMC
 
@@ -16,6 +17,7 @@ import dms_stan as dms
 from dms_stan.custom_types import CombinableParameterType
 from dms_stan.defaults import (
     DEFAULT_CPP_OPTIONS,
+    DEFAULT_DIM_NAMES,
     DEFAULT_EARLY_STOP,
     DEFAULT_FORCE_COMPILE,
     DEFAULT_LR,
@@ -143,15 +145,45 @@ class Model(ABC):
 
     @overload
     def draw(
-        self, n: int, *, named_only: Literal[True], seed: Optional[int]
+        self,
+        n: int,
+        *,
+        named_only: Literal[True],
+        as_xarray: Literal[False],
+        seed: Optional[int],
     ) -> dict[str, npt.NDArray]: ...
 
     @overload
     def draw(
-        self, n: int, *, named_only: Literal[False], seed: Optional[int]
+        self,
+        n: int,
+        *,
+        named_only: Literal[False],
+        as_xarray: Literal[False],
+        seed: Optional[int],
     ) -> dict[AbstractModelComponent, npt.NDArray]: ...
 
-    def draw(self, n, *, named_only=True, seed=None):
+    @overload
+    def draw(
+        self,
+        n: int,
+        *,
+        named_only: Literal[True],
+        as_xarray: Literal[True],
+        seed: Optional[int],
+    ) -> xr.Dataset: ...
+
+    @overload
+    def draw(
+        self,
+        n: int,
+        *,
+        named_only: Literal[False],
+        as_xarray: Literal[True],
+        seed: Optional[int],
+    ) -> xr.Dataset: ...
+
+    def draw(self, n, *, named_only=True, as_xarray=False, seed=None):
         """Draws from the model. By default, this will draw from the observable
         values of the model. If a parameter is specified, then it will draw from
         the distribution of that parameter.
@@ -163,16 +195,77 @@ class Model(ABC):
             dict[str, npt.NDArray]: A dictionary where the keys are the names of
                 the model components and the values are the samples drawn.
         """
+
+        def get_dimnames_squeezed_draw(
+            draw: npt.NDArray,
+        ) -> tuple[tuple[str, ...], npt.NDArray]:
+            """
+            For a draw, gets the dimension names and squeezes to remove all singleton
+            axes except for the first one.
+            """
+            # Set up variables
+            singleton_axes: list[str] = []
+            dimnames: list[str] = []
+
+            # Populate the singleton axes and dimnames based on the shape of the
+            # draw
+            for dimind, dimsize in enumerate(draw.shape):
+                if dimsize == 1 and dimind != 0:
+                    singleton_axes.append(dimind)
+                else:
+                    dimnames.append(dims[(dimind, dimsize)])
+
+            # Squeeze the draw
+            draw = np.squeeze(draw, axis=tuple(singleton_axes))
+
+            return tuple(dimnames), draw
+
+        # Set up variables
+        draws: dict[AbstractModelComponent, npt.NDArray] = {}  # The draws
+        dims: dict[tuple[int, int], str] = {(0, n): "n"}  # Dimension names of draws
+
         # Draw from all observables
-        draws: dict[AbstractModelComponent, npt.NDArray] = {}
         for observable in self.observables:
+
+            # Draw from the observable
             _, draws = observable.draw(n, _drawn=draws, seed=seed)
 
+            # Record the dimension names of the draws.
+            for dimkey in enumerate(observable.shape, 1):
+                if dimkey not in dims:
+                    dims[dimkey] = DEFAULT_DIM_NAMES[len(dims) - 1]
+
         # Filter down to just named parameters if requested
+        print(dims)
         if named_only:
-            return {k.model_varname: v for k, v in draws.items() if k.is_named}
-        else:
-            return draws
+            draws = {k: v for k, v in draws.items() if k.is_named}
+
+        # Convert to an xarray dataset if requested
+        if as_xarray:
+
+            # Build the dataset. The data values are the draws and the coordinates
+            # are inputs to transformed parameters that are constants and that have
+            # a shape.
+            return xr.Dataset(
+                data_vars={
+                    component.model_varname: get_dimnames_squeezed_draw(draw)
+                    for component, draw in draws.items()
+                },
+                coords={
+                    parent.model_varname: get_dimnames_squeezed_draw(parent.value)
+                    for component in self.all_model_components
+                    for parent in component.parents
+                    if isinstance(component, TransformedParameter)
+                    and isinstance(parent, Constant)
+                    and parent.ndim > 0
+                },
+            )
+
+        # If we are returning only named parameters, then we need to update the
+        # dictionary keys to be the model variable names.
+        if named_only:
+            return {k.model_varname: v for k, v in draws.items()}
+        return draws
 
     def to_pytorch(self):
         """
