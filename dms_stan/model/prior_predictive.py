@@ -55,26 +55,26 @@ class PriorPredictiveCheck:
 
         # Define reactive components for widgets that update state
         self._plot_options = pn.rx([])  # Plot types possible for target
-        self._previous_plot_type = pn.rx()  # Last-selected plot type
+        self._selected_plot_type = pn.rx()  # Selected plot type
         self._independent_dim_options = pn.rx([])  # Independent dimension options
-        self._previous_independent_dim = pn.rx()  # Last-selected independent dimension
+        self._selected_independent_dim = pn.rx()  # Selected independent dimension
+
+        # Create widgets whose values update dynamically.
+        self.plot_type_dropdown = pnw.Select(
+            name="Plot Type", options=self._plot_options, value=self._selected_plot_type
+        )
+        self.independent_dim_dropdown = pnw.Select(
+            name="Independent Dimension",
+            options=self._independent_dim_options,
+            value=self._selected_independent_dim,
+        )
 
         # Set the initial values for the reactive components
         self.set_plot_options()
         self.set_independent_dim_options()
 
-        # Create widgets whose values update dynamically.
-        self.plot_type_dropdown = pnw.Select(
-            name="Plot Type", options=self._plot_options, value=self._previous_plot_type
-        )
-        self.independent_dim_dropdown = pnw.Select(
-            name="Independent Dimension",
-            options=self._independent_dim_options,
-            value=self._previous_independent_dim,
-        )
-
         # Define callbacks needed for updating reactive components
-        self.plot_type_dropdown.rx.watch(self.set_plot_options)
+        # self.plot_type_dropdown.rx.watch(self.set_plot_options)
         self.independent_dim_dropdown.rx.watch(self.set_independent_dim_options)
 
     def _init_float_sliders(self) -> dict[str, pnw.EditableFloatSlider]:
@@ -181,12 +181,21 @@ class PriorPredictiveCheck:
     def set_plot_options(self) -> None:
         """Sets the plot options based on the selected target."""
         self._plot_options.rx.value[:] = ["KDE", "ECDF", "Violin", "Relational"]
-        self._previous_plot_type.rx.value = "KDE"
+        self._selected_plot_type.rx.value = "KDE"
 
-    def set_independent_dim_options(self) -> None:
+    def set_independent_dim_options(self, dropdown_val: str = "") -> None:
         """Sets the independent dimension options based on the selected target."""
-        self._independent_dim_options.rx.value[:] = ["a"]
-        self._previous_independent_dim.rx.value = "a"
+        # Get the options for the dimensions
+        opts = list(
+            getattr(self.plotting_data.eval(), self.target_dropdown.value).dims[1:]
+        ) + [""]
+
+        # If the previous independent dimension is not in the options, reset it
+        if self._selected_independent_dim.rx.value not in opts:
+            self._selected_independent_dim.rx.value = None
+
+        # Update the dropdown options
+        self._independent_dim_options.rx.value = opts
 
     def display(self) -> pn.WidgetBox:
         """
