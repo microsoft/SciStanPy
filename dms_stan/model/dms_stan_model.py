@@ -205,11 +205,11 @@ class Model(ABC):
             """
             # Set up variables
             singleton_axes: list[str] = []
-            dimnames: list[str] = ["n"]
+            dimnames: list[str] = []
 
             # Populate the singleton axes and dimnames based on the shape of the
             # draw
-            for dimind, dimsize in enumerate(draw.shape[1::-1], 1):
+            for dimind, dimsize in enumerate(draw.shape[-1:0:-1], 1):
                 if dimsize == 1:
                     singleton_axes.append(-dimind)
                 else:
@@ -218,7 +218,10 @@ class Model(ABC):
             # Squeeze the draw
             draw = np.squeeze(draw, axis=tuple(singleton_axes))
 
-            return tuple(dimnames), draw
+            # Finalize dimnames. This means reversing the order (since we went from
+            # the last dimension to the first) and adding the first dimension name,
+            # which is always "n".
+            return tuple(["n"] + dimnames[::-1]), draw
 
         # Set up variables
         draws: dict[AbstractModelComponent, npt.NDArray] = {}  # The draws
@@ -236,7 +239,6 @@ class Model(ABC):
                     dims[dimkey] = DEFAULT_DIM_NAMES[len(dims) - 1]
 
         # Filter down to just named parameters if requested
-        print(dims)
         if named_only:
             draws = {k: v for k, v in draws.items() if k.is_named}
 
@@ -395,7 +397,7 @@ class Model(ABC):
         initial_view: Optional[str] = None,
         independent_dim: Optional[int] = None,
         independent_labels: Optional[npt.NDArray] = None,
-    ) -> pn.Row:
+    ) -> pn.WidgetBox:
         """
         Creates an interactive plot of the prior predictive distribution of the
         model. The plot can be used to update the model's parameters dynamically.
@@ -405,11 +407,7 @@ class Model(ABC):
         pp = dms.model.PriorPredictiveCheck(self, copy_model=copy_model)
 
         # Return the plot
-        return pp.display(
-            initial_view=initial_view,
-            independent_dim=independent_dim,
-            independent_labels=independent_labels,
-        )
+        return pp.display()
 
     def __contains__(self, paramname: str) -> bool:
         """Checks if the model contains a parameter or observable with the given name."""
