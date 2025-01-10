@@ -205,13 +205,13 @@ class Model(ABC):
             """
             # Set up variables
             singleton_axes: list[str] = []
-            dimnames: list[str] = []
+            dimnames: list[str] = ["n"]
 
             # Populate the singleton axes and dimnames based on the shape of the
             # draw
-            for dimind, dimsize in enumerate(draw.shape):
-                if dimsize == 1 and dimind != 0:
-                    singleton_axes.append(dimind)
+            for dimind, dimsize in enumerate(draw.shape[1::-1], 1):
+                if dimsize == 1:
+                    singleton_axes.append(-dimind)
                 else:
                     dimnames.append(dims[(dimind, dimsize)])
 
@@ -231,7 +231,7 @@ class Model(ABC):
             _, draws = observable.draw(n, _drawn=draws, seed=seed)
 
             # Record the dimension names of the draws.
-            for dimkey in enumerate(observable.shape, 1):
+            for dimkey in enumerate(observable.shape[::-1], 1):
                 if dimkey not in dims:
                     dims[dimkey] = DEFAULT_DIM_NAMES[len(dims) - 1]
 
