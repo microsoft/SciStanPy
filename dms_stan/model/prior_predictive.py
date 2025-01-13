@@ -14,6 +14,8 @@ import panel as pn
 import panel.widgets as pnw
 import xarray as xr
 
+from param.parameterized import Event
+
 import dms_stan as dms
 
 from .components.constants import Constant
@@ -32,8 +34,23 @@ class PriorPredictiveCheck:
         # values on the model directly.
         self.model = deepcopy(model) if copy_model else model
 
-        # Initialize widgets used to generate data
+        # Initialize widgets.
         self.float_sliders = self._init_float_sliders()
+        self.target_dropdown = pnw.Select(
+            name="Viewed Parameter",
+            options=list(self.model.named_model_components_dict),
+            value=self.model.observables[0].model_varname,
+        )
+        self.dependent_dim_dropdown = pnw.Select(
+            name="Dependent Dimension", options=[], value=None
+        )
+        self.independent_var_dropdown = pnw.Select(
+            name="Independent Variable", options=[], value=""
+        )
+        self.independent_dim_dropdown = pnw.Select(
+            name="Independent Dimension", options=[], value=""
+        )
+        self.plot_type_dropdown = pnw.Select(name="Plot Type", options=[], value="")
         self.draw_seed_entry = pnw.IntInput(name="Seed", value=1025)
         self.draw_entry = pnw.IntInput(name="Number of Experiments", value=1)
         self.update_button = pnw.Button(name="Update Model", button_type="primary")
@@ -46,36 +63,28 @@ class PriorPredictiveCheck:
             seed=self.draw_seed_entry,
         ).interactive()
 
-        # Set the initial view
-        self.target_dropdown = pnw.Select(
-            name="Viewed Parameter",
-            options=list(self.model.named_model_components_dict),
-            value=self.model.observables[0].model_varname,
+        # Define callbacks needed for updating reactive components. The options
+        # for the independent variable depend on the target selected. The options
+        # for the independent dimension depend on the target and independent variable
+        # selected. The options for the dependent dimension depend on the independent
+        # dimension and independent variable. The options for the plot type depend
+        # on whether there are valid independent and dependent dimensions.
+        self.target_dropdown.param.watch(self.set_dependent_dim_options, "value")
+        self.dependent_dim_dropdown.param.watch(
+            self.set_independent_var_options, ["value", "options"]
+        )
+        self.independent_var_dropdown.param.watch(
+            self.set_independent_dim_options, ["value", "options"]
+        )
+        self.dependent_dim_dropdown.param.watch(
+            self.set_plot_type_options, ["value", "options"]
+        )
+        self.independent_var_dropdown.param.watch(
+            self.set_plot_type_options, ["value", "options"]
         )
 
-        # Define reactive components for widgets that update state
-        self._plot_options = pn.rx([])  # Plot types possible for target
-        self._selected_plot_type = pn.rx()  # Selected plot type
-        self._independent_dim_options = pn.rx([])  # Independent dimension options
-        self._selected_independent_dim = pn.rx()  # Selected independent dimension
-
-        # Create widgets whose values update dynamically.
-        self.plot_type_dropdown = pnw.Select(
-            name="Plot Type", options=self._plot_options, value=self._selected_plot_type
-        )
-        self.independent_dim_dropdown = pnw.Select(
-            name="Independent Dimension",
-            options=self._independent_dim_options,
-            value=self._selected_independent_dim,
-        )
-
-        # Set the initial values for the reactive components
-        self.set_plot_options()
-        self.set_independent_dim_options()
-
-        # Define callbacks needed for updating reactive components
-        # self.plot_type_dropdown.rx.watch(self.set_plot_options)
-        self.independent_dim_dropdown.rx.watch(self.set_independent_dim_options)
+        # Set initial values for reactive components
+        self.target_dropdown.param.trigger("value")
 
     def _init_float_sliders(self) -> dict[str, pnw.EditableFloatSlider]:
         """Gets the float sliders for the togglable parameters in the model."""
@@ -178,24 +187,108 @@ class PriorPredictiveCheck:
 
         return draw
 
-    def set_plot_options(self) -> None:
-        """Sets the plot options based on the selected target."""
-        self._plot_options.rx.value[:] = ["KDE", "ECDF", "Violin", "Relational"]
-        self._selected_plot_type.rx.value = "KDE"
+    def _get_dims(self, component_name: str) -> set[str]:
+        """Gets the dimensions of the component variable."""
+        return set(self.plotting_data.eval()[component_name].dims[1:])
 
-    def set_independent_dim_options(self, dropdown_val: str = "") -> None:
-        """Sets the independent dimension options based on the selected target."""
-        # Get the options for the dimensions
-        opts = list(
-            getattr(self.plotting_data.eval(), self.target_dropdown.value).dims[1:]
-        ) + [""]
+    def set_dependent_dim_options(self, event: Event) -> None:
+        """
+        Sets the dependent dimension options based on the selected target. This
+        is just all dimensions available to the target variable.
+        """
+        # Get the dimensions of the target variable
+        target_dim_opts = [""] + list(self._get_dims(event.new))
 
-        # If the previous independent dimension is not in the options, reset it
-        if self._selected_independent_dim.rx.value not in opts:
-            self._selected_independent_dim.rx.value = None
+        # If the previous dependent dimension is not in the options, reset it
+        if self.dependent_dim_dropdown.value not in target_dim_opts:
+            self.dependent_dim_dropdown.value = target_dim_opts[-1]
 
         # Update the dropdown options
-        self._independent_dim_options.rx.value = opts
+        self.dependent_dim_dropdown.options = target_dim_opts
+
+    def set_independent_var_options(self, event: Event) -> None:
+        """Sets the independent variable options based on the selected target."""
+        # Get the dimensions of the target variable
+        target_dims = self._get_dims(self.target_dropdown.value)
+
+        # Remove the dependent dimension from the target dimensions if it is set
+        target_dims.discard(self.dependent_dim_dropdown.value)
+
+        # The independent variable must be a coordinate with at least one dimension
+        # overlapping with the target variable that is not selected as the current
+        # dependent dimension.
+        independent_var_opts = [""] + [
+            coord
+            for coord, arr in self.plotting_data.coords.eval().items()
+            if len(target_dims.intersection(arr.dims[1:])) >= 1
+        ]
+
+        # If the previous independent variable is not in the options, reset it
+        if self.independent_var_dropdown.value not in independent_var_opts:
+            self.independent_var_dropdown.value = ""
+
+        # Update the dropdown options
+        self.independent_var_dropdown.options = independent_var_opts
+
+    def set_independent_dim_options(self, event: Event) -> None:
+        """
+        Sets the independent dimension options based on the selected independent
+        variable and target. Specifically, the independent dimension must exist
+        in both the selected variable and the target variable.
+        """
+        # Get the dimensions of the target variable
+        target_dims = self._get_dims(self.target_dropdown.value)
+
+        # If the independent variable is not set, there are no options. Otherwise,
+        # it is all dimensions that are in both the target and independent variable
+        # but that are not the dependent dimension.
+        if self.independent_var_dropdown.value == "":
+            independent_dim_opts = [""]
+        else:
+            independent_dim_opts = list(
+                target_dims.intersection(
+                    self._get_dims(self.independent_var_dropdown.value)
+                )
+                - {self.dependent_dim_dropdown.value}
+            )
+            independent_dim_opts = (
+                independent_dim_opts if len(independent_dim_opts) > 0 else [""]
+            )
+
+        # If the previous independent dimension is not in the options, reset it
+        if self.independent_dim_dropdown.value not in independent_dim_opts:
+            self.independent_dim_dropdown.value = independent_dim_opts[-1]
+
+        # Update the dropdown options
+        self.independent_dim_dropdown.options = independent_dim_opts
+
+    def set_plot_type_options(self, event: Event) -> None:
+        """
+        Sets the options for the plot types depending on the selected dimensions.
+        ECDF is always an option, as is KDE. Violin plots are allowed if a dependent
+        dimension is selected. Relationship plots are allowed if both an independent
+        variable and dimension are selected along with a dependent dimension.
+        """
+        # We can always have an ECDF and KDE plot
+        plot_type_opts = ["ECDF", "KDE"]
+        default_plot = "ECDF"
+
+        # If a dependent dimension is set, then we can also have violin plots
+        if self.dependent_dim_dropdown.value != "":
+            plot_type_opts.append("Violin")
+            default_plot = "Violin"
+
+        # If an independent variable and dimension are set, then we can also have
+        # relationship plots
+        if (self.independent_dim_dropdown.value != "") and (
+            self.independent_var_dropdown.value != ""
+        ):
+            plot_type_opts.append("Relationship")
+            default_plot = "Relationship"
+
+        # Update to the default plot type
+        self.plot_type_dropdown.value = default_plot
+        self.plot_type_dropdown.options = plot_type_opts
 
     def display(self) -> pn.WidgetBox:
         """
@@ -223,17 +316,20 @@ class PriorPredictiveCheck:
         # Organize widgets
         widgets = pn.WidgetBox(
             pn.WidgetBox(
-                pn.pane.Markdown(
-                    "**Togglable Parameters**", styles={"font-size": "1.5em"}
-                ),
+                "# Model Hyperparameters",
                 *self.float_sliders.values(),
             ),
-            self.target_dropdown,
-            self.plot_type_dropdown,
-            self.independent_dim_dropdown,
-            self.draw_seed_entry,
-            self.draw_entry,
-            self.update_button,
+            pn.WidgetBox(
+                "# Viewing Options",
+                self.target_dropdown,
+                self.dependent_dim_dropdown,
+                self.independent_var_dropdown,
+                self.independent_dim_dropdown,
+                self.plot_type_dropdown,
+                self.draw_seed_entry,
+                self.draw_entry,
+                self.update_button,
+            ),
         )
 
         # Build the plot
