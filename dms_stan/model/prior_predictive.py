@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 from typing import Optional
 
+import holoviews as hv
 import hvplot.interactive
 import hvplot.xarray
 import numpy as np
@@ -42,7 +43,7 @@ class PriorPredictiveCheck:
             value=self.model.observables[0].model_varname,
         )
         self.dependent_dim_dropdown = pnw.Select(
-            name="Dependent Dimension", options=[], value=None
+            name="Dependent Dimension", options=[], value=""
         )
         self.independent_var_dropdown = pnw.Select(
             name="Independent Variable", options=[], value=""
@@ -53,15 +54,25 @@ class PriorPredictiveCheck:
         self.plot_type_dropdown = pnw.Select(name="Plot Type", options=[], value="")
         self.draw_seed_entry = pnw.IntInput(name="Seed", value=1025)
         self.draw_entry = pnw.IntInput(name="Number of Experiments", value=1)
-        self.update_button = pnw.Button(name="Update Model", button_type="primary")
+        self.update_model_button = pnw.Button(name="Update", button_type="primary")
 
-        # Build the data generation function
-        self.plotting_data = hvplot.bind(
-            self._generate_data,
-            update=self.update_button,
-            n_draws=self.draw_entry,
-            seed=self.draw_seed_entry,
-        ).interactive()
+        # We need additional reactive components for the plotting data
+        self._plot_kwargs = {
+            "kind": pn.rx(""),
+            "x": pn.rx(""),
+            "y": pn.rx(""),
+            "by": pn.rx(""),
+            "datashade": pn.rx(False),
+        }
+
+        # Get an initial draw of data. We need this for setting up the reactive
+        # components.
+        self._xarray_data = self.model.draw(
+            n=self.draw_entry.value,
+            named_only=True,
+            as_xarray=True,
+            seed=self.draw_seed_entry.value,
+        )
 
         # Define callbacks needed for updating reactive components. The options
         # for the independent variable depend on the target selected. The options
@@ -85,6 +96,13 @@ class PriorPredictiveCheck:
 
         # Set initial values for reactive components
         self.target_dropdown.param.trigger("value")
+
+        # Build the plot
+        self.plotting_data = hvplot.bind(
+            self._data_pipeline,
+            update_data=self.update_model_button,
+            update_plot=self.plot_type_dropdown,
+        ).interactive()
 
     def _init_float_sliders(self) -> dict[str, pnw.EditableFloatSlider]:
         """Gets the float sliders for the togglable parameters in the model."""
@@ -165,31 +183,149 @@ class PriorPredictiveCheck:
             # Update the value of the constant
             self.model[paramname].value[indices] = slider.value
 
-    def _generate_data(self, update: bool, n_draws: int, seed: int) -> xr.Dataset:
+    def _process_data(self) -> pd.DataFrame:
+
+        # We need to define aggregation functions for the different plot types
+        def build_ecdfs(group):
+
+            # We need to record the original values of the dependent variable
+            new_df = group[[self.target_dropdown.value]]
+
+            # Rank the target variable
+            new_df["Cumulative Probability"] = group[[self.target_dropdown.value]].rank(
+                method="max", pct=True
+            )
+
+            # Add the independent variable values
+            if self.independent_var_dropdown.value != "":
+                sort_keys = [
+                    self.independent_var_dropdown.value,
+                    "Cumulative Probability",
+                ]
+                new_df[self.independent_var_dropdown.value] = group[
+                    self.independent_var_dropdown.value
+                ]
+            else:
+                sort_keys = ["Cumulative Probability"]
+
+            # Sort and return
+            return new_df.sort_values(by=sort_keys)
+
+        def build_relations(group):
+            # Sort the data by the independent variable and add a NaN row to separate
+            # the data by the appropriate dependent variable
+            return pd.concat(
+                [
+                    group.sort_values(by=self.independent_var_dropdown.value),
+                    pd.DataFrame({self.independent_var_dropdown.value: [np.nan]}),
+                ]
+            )
+
+        # Gather the target data
+        selected_data = self._xarray_data[self.target_dropdown.value]
+
+        # Reshape the data as appropriate and convert the extracted data to a DataFrame
+        df = (
+            selected_data.stack(
+                stacked=[
+                    dim
+                    for dim in selected_data.dims
+                    if dim
+                    not in {
+                        self.dependent_dim_dropdown.value,
+                        self.independent_dim_dropdown.value,
+                    }
+                ],
+                create_index=False,
+            )
+            .to_dataframe()
+            .reset_index()
+        )
+
+        # We are assuming that, at this point, the independent dim and independent variables
+        # can be used interchangeably. This is because the independent variable is used as
+        # a coordinate system that maps to the independent dimension. Check this assumption
+        # here.
+        if self.independent_var_dropdown.value != "":
+            assert (
+                len(df[self.independent_var_dropdown.value].unique())
+                == len(df[self.independent_dim_dropdown.value].unique())
+                == len(
+                    df[
+                        [
+                            self.independent_var_dropdown.value,
+                            self.independent_dim_dropdown.value,
+                        ]
+                    ].drop_duplicates()
+                )
+            )
+
+        # Filter to just the columns needed. These are the dependent and independent variables
+        # and their grouping dimensions, if any.
+        target_cols = [self.target_dropdown.value]
+        if self.dependent_dim_dropdown.value != "":
+            target_cols.append(self.dependent_dim_dropdown.value)
+        if self.independent_dim_dropdown.value != "":
+            target_cols.append(self.independent_dim_dropdown.value)
+        if self.independent_var_dropdown.value != "":
+            target_cols.append(self.independent_var_dropdown.value)
+        print(target_cols)
+        df = df[target_cols]
+
+        # Final processing for certain plots. Get the appropriate kwargs for plotting.
+        if self.plot_type_dropdown.value == "ECDF":
+            if self.independent_var_dropdown.value != "":
+                df = df.groupby(self.independent_dim_dropdown.value).apply(build_ecdfs)
+            else:
+                df = build_ecdfs(df)
+        elif self.plot_type_dropdown.value == "Relationship":
+            df = df.groupby(self.dependent_dim_dropdown.value).apply(build_relations)
+
+        return df
+
+    def _data_pipeline(self, update_data: bool, update_plot: str) -> pd.DataFrame:
         """
         Updates the model with the new constant values and rebuilds the plotting
         dataframe. The key of each kwarg gives the name of the parameter to update,
         and the value is a dictionary that links the constant names within that
         parameter to the new values for those constants.
         """
-        # Set button to loading mode
-        self.update_button.loading = True
+        # Set buttons to loading mode
+        self.update_model_button.loading = True
 
-        # Update the model if the function was triggered by the "update" button
-        if update:
+        # Update the model and redraw data if the general update button is pressed
+        if update_data:
             self._update_model()
 
-        # Redraw the data
-        draw = self.model.draw(n=n_draws, named_only=True, as_xarray=True, seed=seed)
+            # Redraw the data
+            self._xarray_data = self.model.draw(
+                n=self.draw_entry.value,
+                named_only=True,
+                as_xarray=True,
+                seed=self.draw_seed_entry.value,
+            )
+
+        # Format the data
+        plotting_data = self._process_data()
+
+        # Update the plot kwargs
+        plot_kwargs = {
+            "ECDF": self.ecdf_kwargs,
+            "KDE": self.kde_kwargs,
+            "Violin": self.violin_kwargs,
+            "Relationship": self.relationship_kwargs,
+        }[self.plot_type_dropdown.value]
+        for key, value in self._plot_kwargs.items():
+            value.rx.value = plot_kwargs[key]
 
         # No more loading
-        self.update_button.loading = False
+        self.update_model_button.loading = False
 
-        return draw
+        return plotting_data
 
     def _get_dims(self, component_name: str) -> set[str]:
         """Gets the dimensions of the component variable."""
-        return set(self.plotting_data.eval()[component_name].dims[1:])
+        return set(self._xarray_data[component_name].dims[1:])
 
     def set_dependent_dim_options(self, event: Event) -> None:
         """
@@ -219,7 +355,7 @@ class PriorPredictiveCheck:
         # dependent dimension.
         independent_var_opts = [""] + [
             coord
-            for coord, arr in self.plotting_data.coords.eval().items()
+            for coord, arr in self._xarray_data.coords.items()
             if len(target_dims.intersection(arr.dims[1:])) >= 1
         ]
 
@@ -290,7 +426,7 @@ class PriorPredictiveCheck:
         self.plot_type_dropdown.value = default_plot
         self.plot_type_dropdown.options = plot_type_opts
 
-    def display(self) -> pn.WidgetBox:
+    def display(self) -> pn.Row:
         """
         Renders a display of samples drawn from the parameter given by `initial_view`.
 
@@ -313,27 +449,108 @@ class PriorPredictiveCheck:
                 dimension. If not provided, the independent dimension is treated
                 as a simple index.
         """
-        # Organize widgets
-        widgets = pn.WidgetBox(
+        # Organize widgets and plot
+        return pn.Row(
             pn.WidgetBox(
-                "# Model Hyperparameters",
-                *self.float_sliders.values(),
+                pn.WidgetBox(
+                    "# Model Hyperparameters",
+                    *self.float_sliders.values(),
+                ),
+                pn.WidgetBox(
+                    "# Viewing Options",
+                    self.target_dropdown,
+                    self.dependent_dim_dropdown,
+                    self.independent_var_dropdown,
+                    self.independent_dim_dropdown,
+                    self.plot_type_dropdown,
+                    self.draw_seed_entry,
+                    self.draw_entry,
+                    self.update_model_button,
+                ),
             ),
-            pn.WidgetBox(
-                "# Viewing Options",
-                self.target_dropdown,
-                self.dependent_dim_dropdown,
-                self.independent_var_dropdown,
-                self.independent_dim_dropdown,
-                self.plot_type_dropdown,
-                self.draw_seed_entry,
-                self.draw_entry,
-                self.update_button,
-            ),
+            self.plotting_data.hvplot(
+                kind=self._plot_kwargs["kind"],
+                x=self._plot_kwargs["x"],
+                y=self._plot_kwargs["y"],
+                by=self._plot_kwargs["by"],
+                datashade=self._plot_kwargs["datashade"],
+                dynamic=False,
+                aggregator="count",
+                cmap="inferno",
+                responsive=True,
+            )
+            # .dmap()
+            .opts(align="center"),
+            sizing_mode="stretch_height",
         )
 
-        # Build the plot
-        # plot = plotting_func(plot_df, paramname=plot_df.columns[0])
+    @property
+    def kde_kwargs(self) -> dict:
+        """
+        Builds kwargs needed for plotting a kernel density estimate, optionally grouped
+        by the independent variable.
+        """
+        return {
+            "kind": "kde",
+            "x": None,
+            "y": self.target_dropdown.value,
+            "by": (
+                None
+                if self.independent_var_dropdown.value == ""
+                else self.independent_var_dropdown.value
+            ),
+            "datashade": False,
+        }
 
-        # Organize the display
-        return widgets
+    @property
+    def ecdf_kwargs(self) -> dict:
+        """
+        Builds kwargs needed for plotting an empirical cumulative distribution function,
+        optionally grouped by the independent variable.
+        """
+        return {
+            "kind": "line",
+            "x": self.target_dropdown.value,
+            "y": "Cumulative Probability",
+            "by": (
+                None
+                if self.independent_var_dropdown.value == ""
+                else self.independent_var_dropdown.value
+            ),
+            "datashade": False,
+        }
+
+    @property
+    def violin_kwargs(self) -> dict:
+        """
+        Builds kwargs needed for plotting a violin plot, optionally grouped by the
+        independent variable.
+        """
+        return {
+            "kind": "violin",
+            "x": self.dependent_dim_dropdown.value,
+            "y": self.target_dropdown.value,
+            "by": (
+                None
+                if self.independent_var_dropdown.value == ""
+                else self.independent_var_dropdown.value
+            ),
+            "datashade": False,
+        }
+
+    @property
+    def relationship_kwargs(self) -> dict:
+        """
+        Builds kwargs needed for plotting a relationship plot, optionally grouped by
+        the independent variable.
+        """
+        return {
+            "kind": "line",
+            "x": self.independent_var_dropdown.value,
+            "y": self.target_dropdown.value,
+            "by": None,
+            "datashade": True,
+            "dynamic": False,
+            "aggregator": "count",
+            "cmap": "inferno",
+        }
