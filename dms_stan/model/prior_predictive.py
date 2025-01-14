@@ -54,32 +54,35 @@ class PriorPredictiveCheck:
         self.plot_type_dropdown = pnw.Select(name="Plot Type", options=[], value="")
         self.draw_seed_entry = pnw.IntInput(name="Seed", value=1025)
         self.draw_entry = pnw.IntInput(name="Number of Experiments", value=1)
-        self.update_model_button = pnw.Button(name="Update", button_type="primary")
+        self.update_model_button = pnw.Button(
+            name="Update Model", button_type="primary"
+        )
+        self.update_plot_button = pnw.Button(name="Update Plot", button_type="primary")
 
-        # We need additional reactive components for the plotting data
-        self._plot_kwargs = {
-            "kind": pn.rx(""),
-            "x": pn.rx(""),
-            "y": pn.rx(""),
-            "by": pn.rx(""),
-            "datashade": pn.rx(False),
-        }
-
-        # Get an initial draw of data. We need this for setting up the reactive
-        # components.
-        self._xarray_data = self.model.draw(
-            n=self.draw_entry.value,
-            named_only=True,
-            as_xarray=True,
-            seed=self.draw_seed_entry.value,
+        # We need additional components for the plotting data
+        self.fig = pn.pane.HoloViews(
+            hv.Curve([]),
+            name="Plot",
+            align="center",
+            sizing_mode="stretch_both",
         )
 
-        # Define callbacks needed for updating reactive components. The options
-        # for the independent variable depend on the target selected. The options
-        # for the independent dimension depend on the target and independent variable
-        # selected. The options for the dependent dimension depend on the independent
-        # dimension and independent variable. The options for the plot type depend
-        # on whether there are valid independent and dependent dimensions.
+        # The update model button will run the full pipeline, including drawing new
+        # data and updating the plot. The update plot button will only update the
+        # plot, without redrawing the data.
+        self.update_model_button.on_click(self._full_pipeline)
+        self.update_plot_button.on_click(self._update_plot)
+
+        # We need to store the data and the plotting data
+        self._xarray_data: xr.Dataset = xr.Dataset()
+        self._processed_data: pd.DataFrame = pd.DataFrame()
+
+        # Draw initial data. We need this for setting up the remaining reactive
+        # components. This will set the `_xarray_data` attribute.
+        self._draw_data()
+
+        # Create reactive components whose values depend on the data. These components
+        # have no effect on the data that is drawn, only what is shown.
         self.target_dropdown.param.watch(self.set_dependent_dim_options, "value")
         self.dependent_dim_dropdown.param.watch(
             self.set_independent_var_options, ["value", "options"]
@@ -94,15 +97,11 @@ class PriorPredictiveCheck:
             self.set_plot_type_options, ["value", "options"]
         )
 
-        # Set initial values for reactive components
+        # Set initial values for the components relevant to showing data
         self.target_dropdown.param.trigger("value")
 
-        # Build the plot
-        self.plotting_data = hvplot.bind(
-            self._data_pipeline,
-            update_data=self.update_model_button,
-            update_plot=self.plot_type_dropdown,
-        ).interactive()
+        # Run the full pipeline to set up the plotting data
+        self._full_pipeline()
 
     def _init_float_sliders(self) -> dict[str, pnw.EditableFloatSlider]:
         """Gets the float sliders for the togglable parameters in the model."""
@@ -183,7 +182,17 @@ class PriorPredictiveCheck:
             # Update the value of the constant
             self.model[paramname].value[indices] = slider.value
 
-    def _process_data(self) -> pd.DataFrame:
+    def _draw_data(self) -> None:
+        """Draws data from the model and stores it as an xarray Dataset."""
+        self._xarray_data = self.model.draw(
+            n=self.draw_entry.value,
+            named_only=True,
+            as_xarray=True,
+            seed=self.draw_seed_entry.value,
+        )
+
+    def _process_data(self) -> None:
+        """Processes the currently drawn data into a DataFrame for plotting."""
 
         # We need to define aggregation functions for the different plot types
         def build_ecdfs(group):
@@ -269,7 +278,6 @@ class PriorPredictiveCheck:
             target_cols.append(self.independent_dim_dropdown.value)
         if self.independent_var_dropdown.value != "":
             target_cols.append(self.independent_var_dropdown.value)
-        print(target_cols)
         df = df[target_cols]
 
         # Final processing for certain plots. Get the appropriate kwargs for plotting.
@@ -281,32 +289,16 @@ class PriorPredictiveCheck:
         elif self.plot_type_dropdown.value == "Relationship":
             df = df.groupby(self.dependent_dim_dropdown.value).apply(build_relations)
 
-        return df
+        # Store the processed data
+        self._processed_data = df
 
-    def _data_pipeline(self, update_data: bool, update_plot: str) -> pd.DataFrame:
-        """
-        Updates the model with the new constant values and rebuilds the plotting
-        dataframe. The key of each kwarg gives the name of the parameter to update,
-        and the value is a dictionary that links the constant names within that
-        parameter to the new values for those constants.
-        """
-        # Set buttons to loading mode
-        self.update_model_button.loading = True
+    def _update_plot(self, event: Optional[Event] = None) -> None:
+        """Formats the xarray data to a DataFrame and updates the plot."""
+        # Update plot button to loading
+        self.update_plot_button.loading = True
 
-        # Update the model and redraw data if the general update button is pressed
-        if update_data:
-            self._update_model()
-
-            # Redraw the data
-            self._xarray_data = self.model.draw(
-                n=self.draw_entry.value,
-                named_only=True,
-                as_xarray=True,
-                seed=self.draw_seed_entry.value,
-            )
-
-        # Format the data
-        plotting_data = self._process_data()
+        # Reformat the data
+        self._process_data()
 
         # Update the plot kwargs
         plot_kwargs = {
@@ -315,13 +307,31 @@ class PriorPredictiveCheck:
             "Violin": self.violin_kwargs,
             "Relationship": self.relationship_kwargs,
         }[self.plot_type_dropdown.value]
-        for key, value in self._plot_kwargs.items():
-            value.rx.value = plot_kwargs[key]
 
-        # No more loading
+        # Update the plot
+        self.fig.object = self._processed_data.hvplot(**plot_kwargs)
+
+        # Update plot button to not be loading
+        self.update_plot_button.loading = False
+
+    def _full_pipeline(self, event: Optional[Event] = None) -> None:
+        """Updates the model, draws new data, and updates the plot."""
+        # Buttons to loading mode
+        self.update_model_button.loading = True
+        self.update_plot_button.loading = True
+
+        # Update the model
+        self._update_model()
+
+        # Draw new data
+        self._draw_data()
+
+        # Update the plot
+        self._update_plot()
+
+        # Buttons to not be loading
         self.update_model_button.loading = False
-
-        return plotting_data
+        self.update_plot_button.loading = False
 
     def _get_dims(self, component_name: str) -> set[str]:
         """Gets the dimensions of the component variable."""
@@ -455,6 +465,9 @@ class PriorPredictiveCheck:
                 pn.WidgetBox(
                     "# Model Hyperparameters",
                     *self.float_sliders.values(),
+                    self.draw_seed_entry,
+                    self.draw_entry,
+                    self.update_model_button,
                 ),
                 pn.WidgetBox(
                     "# Viewing Options",
@@ -463,25 +476,10 @@ class PriorPredictiveCheck:
                     self.independent_var_dropdown,
                     self.independent_dim_dropdown,
                     self.plot_type_dropdown,
-                    self.draw_seed_entry,
-                    self.draw_entry,
-                    self.update_model_button,
+                    self.update_plot_button,
                 ),
             ),
-            self.plotting_data.hvplot(
-                kind=self._plot_kwargs["kind"],
-                x=self._plot_kwargs["x"],
-                y=self._plot_kwargs["y"],
-                by=self._plot_kwargs["by"],
-                datashade=self._plot_kwargs["datashade"],
-                dynamic=False,
-                aggregator="count",
-                cmap="inferno",
-                responsive=True,
-            )
-            # .dmap()
-            .opts(align="center"),
-            sizing_mode="stretch_height",
+            self.fig,
         )
 
     @property
