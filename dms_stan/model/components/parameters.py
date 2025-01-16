@@ -41,6 +41,10 @@ class Parameter(AbstractModelComponent):
         # Initialize the parameters
         super().__init__(shape=shape, **parameters)
 
+        # Parameters can be manually set as observables, so we need a flag to
+        # track this
+        self._observable = False
+
         # Store the distributions
         self._numpy_dist = numpy_dist
         self._torch_dist = torch_dist
@@ -132,7 +136,7 @@ class Parameter(AbstractModelComponent):
         """Redefines the parameter as an observable variable (i.e., data)"""
 
         # Set the observable attribute to True
-        self.observable = True
+        self._observable = True
 
         # We do not have a torch parameterization for observables
         self._torch_parametrization = None
@@ -304,6 +308,11 @@ class Parameter(AbstractModelComponent):
         """Returns the Stan generated quantity declaration for this parameter."""
         return self.declare_stan_variable(self.generated_varname)
 
+    @property
+    def observable(self) -> bool:
+        """Observable if the parameter has no children or it is set as such."""
+        return self._observable or len(self._children) == 0
+
 
 class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
@@ -321,7 +330,6 @@ class DiscreteDistribution(Parameter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.observable = True
 
 
 class Normal(ContinuousDistribution):

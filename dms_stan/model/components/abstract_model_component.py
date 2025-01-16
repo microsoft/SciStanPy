@@ -37,7 +37,6 @@ class AbstractModelComponent(ABC):
 
         # Define placeholder variables
         self._model_varname: str = ""  # DMS Stan Model variable name
-        self.observable: bool = False  # Whether the parameter is observable
         self._parents: dict[str, AbstractModelComponent]
         self._component_to_paramname: dict[AbstractModelComponent, str]
         self._shape: tuple[int, ...] = shape  # Shape of the parameter
@@ -61,13 +60,6 @@ class AbstractModelComponent(ABC):
         parameters: dict[str, "dms.custom_types.CombinableParameterType"],
     ) -> None:
         """Checks inputs to the __init__ method for validity."""
-        # No incoming parameters can be observables
-        if any(
-            isinstance(param, AbstractModelComponent) and param.observable
-            for param in parameters.values()
-        ):
-            raise ValueError("Parent parameters cannot be observables")
-
         # All bounded parameters must be named in the parameter dictionary
         if missing_names := (
             self.POSITIVE_PARAMS | self.NEGATIVE_PARAMS | self.SIMPLEX_PARAMS
@@ -600,3 +592,11 @@ class AbstractModelComponent(ABC):
     @abstractmethod
     def torch_parametrization(self) -> torch.Tensor:
         """Return the PyTorch parameters for this component, appropriately transformed."""
+
+    @property
+    def observable(self) -> bool:
+        """
+        Return whether the parameter is observable. By default, all parameters are
+        not observable.
+        """
+        return False
