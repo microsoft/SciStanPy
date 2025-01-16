@@ -6,18 +6,14 @@ from copy import deepcopy
 from typing import Optional
 
 import holoviews as hv
-import hvplot.interactive
-import hvplot.xarray
+import hvplot.pandas
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 import panel as pn
 import panel.widgets as pnw
 import xarray as xr
 
 from param.parameterized import Event
-
-import dms_stan as dms
 
 from .components.constants import Constant
 from .dms_stan_model import Model
@@ -432,8 +428,11 @@ class PriorPredictiveCheck:
             plot_type_opts.append("Relationship")
             default_plot = "Relationship"
 
-        # Update to the default plot type
-        self.plot_type_dropdown.value = default_plot
+        # If the previous plot type is not in the options, reset it
+        if self.plot_type_dropdown.value not in plot_type_opts:
+            self.plot_type_dropdown.value = default_plot
+
+        # Update to the plot type options
         self.plot_type_dropdown.options = plot_type_opts
 
     def display(self) -> pn.Row:
