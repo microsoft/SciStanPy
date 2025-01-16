@@ -38,16 +38,11 @@ class PriorPredictiveCheck:
             options=list(self.model.named_model_components_dict),
             value=self.model.observables[0].model_varname,
         )
-        self.dependent_dim_dropdown = pnw.Select(
-            name="Dependent Dimension", options=[], value=""
-        )
+        self.group_dim_dropdown = pnw.Select(name="Group By", options=[], value="")
         self.independent_var_dropdown = pnw.Select(
             name="Independent Variable", options=[], value=""
         )
-        self.independent_dim_dropdown = pnw.Select(
-            name="Independent Dimension", options=[], value=""
-        )
-        self.plot_type_dropdown = pnw.Select(name="Plot Type", options=[], value="")
+        self.plot_type_dropdown = pnw.Select(name="Plot Type", options=[], value="ECDF")
         self.draw_seed_entry = pnw.IntInput(name="Seed", value=1025)
         self.draw_entry = pnw.IntInput(name="Number of Experiments", value=1)
         self.update_model_button = pnw.Button(
@@ -79,19 +74,10 @@ class PriorPredictiveCheck:
 
         # Create reactive components whose values depend on the data. These components
         # have no effect on the data that is drawn, only what is shown.
-        self.target_dropdown.param.watch(self.set_dependent_dim_options, "value")
-        self.dependent_dim_dropdown.param.watch(
-            self.set_independent_var_options, ["value", "options"]
-        )
-        self.independent_var_dropdown.param.watch(
-            self.set_independent_dim_options, ["value", "options"]
-        )
-        self.dependent_dim_dropdown.param.watch(
-            self.set_plot_type_options, ["value", "options"]
-        )
-        self.independent_var_dropdown.param.watch(
-            self.set_plot_type_options, ["value", "options"]
-        )
+        self.target_dropdown.param.watch(self.set_group_dim_options, "value")
+        self.group_dim_dropdown.param.watch(self.set_independent_var_options, "value")
+        self.group_dim_dropdown.param.watch(self.set_plot_type_options, "value")
+        self.independent_var_dropdown.param.watch(self.set_plot_type_options, "value")
 
         # Set initial values for the components relevant to showing data
         self.target_dropdown.param.trigger("value")
@@ -202,16 +188,10 @@ class PriorPredictiveCheck:
             )
 
             # Add the independent variable values
-            if self.independent_var_dropdown.value != "":
-                sort_keys = [
-                    self.independent_var_dropdown.value,
-                    "Cumulative Probability",
-                ]
-                new_df[self.independent_var_dropdown.value] = group[
-                    self.independent_var_dropdown.value
-                ]
-            else:
-                sort_keys = ["Cumulative Probability"]
+            sort_keys = ["Cumulative Probability"]
+            if self._independent_label is not None:
+                sort_keys.insert(0, self._independent_label)
+                new_df[self._independent_label] = group[self._independent_label]
 
             # Sort and return
             return new_df.sort_values(by=sort_keys)
@@ -229,17 +209,14 @@ class PriorPredictiveCheck:
         # Gather the target data
         selected_data = self._xarray_data[self.target_dropdown.value]
 
-        # Reshape the data as appropriate and convert the extracted data to a DataFrame
+        # Reshape the data as appropriate and convert the extracted data to a DataFrame.
+        # We keep the grouping dimension separate from the stacked results.
         df = (
             selected_data.stack(
                 stacked=[
                     dim
                     for dim in selected_data.dims
-                    if dim
-                    not in {
-                        self.dependent_dim_dropdown.value,
-                        self.independent_dim_dropdown.value,
-                    }
+                    if dim != self.group_dim_dropdown.value
                 ],
                 create_index=False,
             )
@@ -247,43 +224,43 @@ class PriorPredictiveCheck:
             .reset_index()
         )
 
-        # We are assuming that, at this point, the independent dim and independent variables
-        # can be used interchangeably. This is because the independent variable is used as
-        # a coordinate system that maps to the independent dimension. Check this assumption
-        # here.
+        # We are assuming that, at this point, the independent variable and grouping
+        # dimension can be used interchangeably. This is because the independent
+        # variable values at this dimension should be coordinates that are indexed
+        # by the grouping variable. Check this assumption here.
         if self.independent_var_dropdown.value != "":
             assert (
                 len(df[self.independent_var_dropdown.value].unique())
-                == len(df[self.independent_dim_dropdown.value].unique())
+                == len(df[self.group_dim_dropdown.value].unique())
                 == len(
                     df[
                         [
                             self.independent_var_dropdown.value,
-                            self.independent_dim_dropdown.value,
+                            self.group_dim_dropdown.value,
                         ]
                     ].drop_duplicates()
                 )
             )
 
-        # Filter to just the columns needed. These are the dependent and independent variables
-        # and their grouping dimensions, if any.
+        # Filter to just the columns needed. These are the grouping dimensions and
+        # independent variables, if any.
         target_cols = [self.target_dropdown.value]
-        if self.dependent_dim_dropdown.value != "":
-            target_cols.append(self.dependent_dim_dropdown.value)
-        if self.independent_dim_dropdown.value != "":
-            target_cols.append(self.independent_dim_dropdown.value)
+        if self.group_dim_dropdown.value != "":
+            target_cols.append(self.group_dim_dropdown.value)
         if self.independent_var_dropdown.value != "":
             target_cols.append(self.independent_var_dropdown.value)
         df = df[target_cols]
 
-        # Final processing for certain plots. Get the appropriate kwargs for plotting.
+        # Final processing for certain plots.
         if self.plot_type_dropdown.value == "ECDF":
-            if self.independent_var_dropdown.value != "":
-                df = df.groupby(self.independent_dim_dropdown.value).apply(build_ecdfs)
+            if self.group_dim_dropdown.value != "":
+                df = df.groupby(self.group_dim_dropdown.value, group_keys=False).apply(
+                    build_ecdfs
+                )
             else:
                 df = build_ecdfs(df)
         elif self.plot_type_dropdown.value == "Relationship":
-            df = df.groupby(self.dependent_dim_dropdown.value).apply(build_relations)
+            df = df.groupby(self.group_dim_dropdown.value).apply(build_relations)
 
         # Store the processed data
         self._processed_data = df
@@ -329,40 +306,40 @@ class PriorPredictiveCheck:
         self.update_model_button.loading = False
         self.update_plot_button.loading = False
 
-    def _get_dims(self, component_name: str) -> set[str]:
-        """Gets the dimensions of the component variable."""
-        return set(self._xarray_data[component_name].dims[1:])
-
-    def set_dependent_dim_options(self, event: Event) -> None:
+    def set_group_dim_options(self, event: Event) -> None:
         """
-        Sets the dependent dimension options based on the selected target. This
-        is just all dimensions available to the target variable.
+        Sets the dimension by which the currently viewed paramter will be grouped
+        for plotting. This is just all dimensions available to the target variable.
         """
         # Get the dimensions of the target variable
-        target_dim_opts = [""] + list(self._get_dims(event.new))
+        partial_opts = list(self._xarray_data[event.new].dims[1:])
+
+        # Grouping can only be performed when we have more than one dimension
+        target_dim_opts = [""]
+        if len(partial_opts) > 1:
+            target_dim_opts += partial_opts
 
         # If the previous dependent dimension is not in the options, reset it
-        if self.dependent_dim_dropdown.value not in target_dim_opts:
-            self.dependent_dim_dropdown.value = target_dim_opts[-1]
+        if self.group_dim_dropdown.value not in target_dim_opts:
+            self.group_dim_dropdown.value = target_dim_opts[-1]
+
+        # Update the description of the grouping dimension
+        description = ", ".join(
+            f"[{dim}: {self._xarray_data.dims[dim]}]" for dim in target_dim_opts[1:]
+        )
+        self.group_dim_dropdown.name = f"Group By ({description})"
 
         # Update the dropdown options
-        self.dependent_dim_dropdown.options = target_dim_opts
+        self.group_dim_dropdown.options = target_dim_opts
 
     def set_independent_var_options(self, event: Event) -> None:
         """Sets the independent variable options based on the selected target."""
-        # Get the dimensions of the target variable
-        target_dims = self._get_dims(self.target_dropdown.value)
-
-        # Remove the dependent dimension from the target dimensions if it is set
-        target_dims.discard(self.dependent_dim_dropdown.value)
-
-        # The independent variable must be a coordinate with at least one dimension
-        # overlapping with the target variable that is not selected as the current
-        # dependent dimension.
+        # The independent variable must be a coordinate that contains the `Group By`
+        # dimension.
         independent_var_opts = [""] + [
             coord
             for coord, arr in self._xarray_data.coords.items()
-            if len(target_dims.intersection(arr.dims[1:])) >= 1
+            if event.new in set(arr.dims[1:])
         ]
 
         # If the previous independent variable is not in the options, reset it
@@ -372,39 +349,9 @@ class PriorPredictiveCheck:
         # Update the dropdown options
         self.independent_var_dropdown.options = independent_var_opts
 
-    def set_independent_dim_options(self, event: Event) -> None:
-        """
-        Sets the independent dimension options based on the selected independent
-        variable and target. Specifically, the independent dimension must exist
-        in both the selected variable and the target variable.
-        """
-        # Get the dimensions of the target variable
-        target_dims = self._get_dims(self.target_dropdown.value)
-
-        # If the independent variable is not set, there are no options. Otherwise,
-        # it is all dimensions that are in both the target and independent variable
-        # but that are not the dependent dimension.
-        if self.independent_var_dropdown.value == "":
-            independent_dim_opts = [""]
-        else:
-            independent_dim_opts = list(
-                target_dims.intersection(
-                    self._get_dims(self.independent_var_dropdown.value)
-                )
-                - {self.dependent_dim_dropdown.value}
-            )
-            independent_dim_opts = (
-                independent_dim_opts if len(independent_dim_opts) > 0 else [""]
-            )
-
-        # If the previous independent dimension is not in the options, reset it
-        if self.independent_dim_dropdown.value not in independent_dim_opts:
-            self.independent_dim_dropdown.value = independent_dim_opts[-1]
-
-        # Update the dropdown options
-        self.independent_dim_dropdown.options = independent_dim_opts
-
-    def set_plot_type_options(self, event: Event) -> None:
+    def set_plot_type_options(  # pylint: disable=unused-argument
+        self, event: Event
+    ) -> None:
         """
         Sets the options for the plot types depending on the selected dimensions.
         ECDF is always an option, as is KDE. Violin plots are allowed if a dependent
@@ -415,16 +362,14 @@ class PriorPredictiveCheck:
         plot_type_opts = ["ECDF", "KDE"]
         default_plot = "ECDF"
 
-        # If a dependent dimension is set, then we can also have violin plots
-        if self.dependent_dim_dropdown.value != "":
+        # If a grouping dimension is set, then we can also have violin plots
+        if self.group_dim_dropdown.value != "":
             plot_type_opts.append("Violin")
             default_plot = "Violin"
 
-        # If an independent variable and dimension are set, then we can also have
-        # relationship plots
-        if (self.independent_dim_dropdown.value != "") and (
-            self.independent_var_dropdown.value != ""
-        ):
+        # If an independent variable is set, then we can also have relationship
+        # plots
+        if self.independent_var_dropdown.value != "":
             plot_type_opts.append("Relationship")
             default_plot = "Relationship"
 
@@ -471,9 +416,8 @@ class PriorPredictiveCheck:
                 pn.WidgetBox(
                     "# Viewing Options",
                     self.target_dropdown,
-                    self.dependent_dim_dropdown,
+                    self.group_dim_dropdown,
                     self.independent_var_dropdown,
-                    self.independent_dim_dropdown,
                     self.plot_type_dropdown,
                     self.update_plot_button,
                 ),
@@ -491,11 +435,7 @@ class PriorPredictiveCheck:
             "kind": "kde",
             "x": None,
             "y": self.target_dropdown.value,
-            "by": (
-                None
-                if self.independent_var_dropdown.value == ""
-                else self.independent_var_dropdown.value
-            ),
+            "by": self._independent_label,
             "datashade": False,
         }
 
@@ -509,11 +449,7 @@ class PriorPredictiveCheck:
             "kind": "line",
             "x": self.target_dropdown.value,
             "y": "Cumulative Probability",
-            "by": (
-                None
-                if self.independent_var_dropdown.value == ""
-                else self.independent_var_dropdown.value
-            ),
+            "by": self._independent_label,
             "datashade": False,
         }
 
@@ -525,13 +461,9 @@ class PriorPredictiveCheck:
         """
         return {
             "kind": "violin",
-            "x": self.dependent_dim_dropdown.value,
+            "x": self.group_dim_dropdown.value,
             "y": self.target_dropdown.value,
-            "by": (
-                None
-                if self.independent_var_dropdown.value == ""
-                else self.independent_var_dropdown.value
-            ),
+            "by": self._independent_label,
             "datashade": False,
         }
 
@@ -551,3 +483,15 @@ class PriorPredictiveCheck:
             "aggregator": "count",
             "cmap": "inferno",
         }
+
+    @property
+    def _independent_label(self) -> Optional[str]:
+        """
+        String representation of the independent variable. This is the independent
+        variable name if it is provided; otherwise, it is the group dimension;
+        otherwise, it is not defined.
+        """
+        if self.independent_var_dropdown.value != "":
+            return self.independent_var_dropdown.value
+        elif self.group_dim_dropdown.value != "":
+            return self.group_dim_dropdown.value
