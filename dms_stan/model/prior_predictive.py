@@ -223,6 +223,7 @@ class PriorPredictiveCheck:
             .to_dataframe()
             .reset_index()
         )
+        self._inter = df
 
         # We are assuming that, at this point, the independent variable and grouping
         # dimension can be used interchangeably. This is because the independent
@@ -248,7 +249,7 @@ class PriorPredictiveCheck:
         if self.group_dim_dropdown.value != "":
             target_cols.append(self.group_dim_dropdown.value)
         if self.independent_var_dropdown.value != "":
-            target_cols.append(self.independent_var_dropdown.value)
+            target_cols.extend([self.independent_var_dropdown.value, "stacked"])
         df = df[target_cols]
 
         # Final processing for certain plots.
@@ -260,7 +261,7 @@ class PriorPredictiveCheck:
             else:
                 df = build_ecdfs(df)
         elif self.plot_type_dropdown.value == "Relationship":
-            df = df.groupby(self.group_dim_dropdown.value).apply(build_relations)
+            df = df.groupby("stacked").apply(build_relations)
 
         # Store the processed data
         self._processed_data = df
