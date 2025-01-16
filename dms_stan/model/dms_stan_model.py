@@ -3,7 +3,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Iterable, Literal, Optional, overload, Union
 
-import hvplot.interactive
 import numpy as np
 import numpy.typing as npt
 import panel as pn

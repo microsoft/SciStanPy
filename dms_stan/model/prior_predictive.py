@@ -6,7 +6,7 @@ from copy import deepcopy
 from typing import Optional
 
 import holoviews as hv
-import hvplot.pandas
+import hvplot.pandas  # pylint: disable=unused-import
 import numpy as np
 import pandas as pd
 import panel as pn
@@ -223,7 +223,6 @@ class PriorPredictiveCheck:
             .to_dataframe()
             .reset_index()
         )
-        self._inter = df
 
         # We are assuming that, at this point, the independent variable and grouping
         # dimension can be used interchangeably. This is because the independent
@@ -266,7 +265,9 @@ class PriorPredictiveCheck:
         # Store the processed data
         self._processed_data = df
 
-    def _update_plot(self, event: Optional[Event] = None) -> None:
+    def _update_plot(  # pylint: disable=unused-argument
+        self, event: Optional[Event] = None
+    ) -> None:
         """Formats the xarray data to a DataFrame and updates the plot."""
         # Update plot button to loading
         self.update_plot_button.loading = True
@@ -288,7 +289,9 @@ class PriorPredictiveCheck:
         # Update plot button to not be loading
         self.update_plot_button.loading = False
 
-    def _full_pipeline(self, event: Optional[Event] = None) -> None:
+    def _full_pipeline(  # pylint: disable=unused-argument
+        self, event: Optional[Event] = None
+    ) -> None:
         """Updates the model, draws new data, and updates the plot."""
         # Buttons to loading mode
         self.update_model_button.loading = True
