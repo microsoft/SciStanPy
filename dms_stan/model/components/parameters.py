@@ -397,7 +397,7 @@ class Normal(ContinuousDistribution):
     @property
     def noncentered_varname(self) -> str:
         """Return the non-centered variable name"""
-        return f"{self.model_varname}_raw"
+        return f"{self.stan_model_varname}_raw"
 
 
 class HalfNormal(Normal):

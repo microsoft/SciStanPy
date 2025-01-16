@@ -217,7 +217,7 @@ class AbstractModelComponent(ABC):
             bool: Whether the variable is a vector.
         """
         # If the name override is provided, then we use that name
-        base_name = _name_override or self.model_varname
+        base_name = _name_override or self.stan_model_varname
 
         # If there are no indices, then we just return the variable name
         if self.ndim == 0:
@@ -538,7 +538,7 @@ class AbstractModelComponent(ABC):
     @property
     def stan_parameter_declaration(self) -> str:
         """Returns the Stan parameter declaration for this parameter."""
-        return self.declare_stan_variable(self.model_varname)
+        return self.declare_stan_variable(self.stan_model_varname)
 
     @property
     def model_varname(self) -> str:
@@ -550,9 +550,9 @@ class AbstractModelComponent(ABC):
         # Otherwise, we automatically create the name. This is the name of the
         # child components and the name of this component as defined in that child
         # component separated by underscores.
-        return "_".join(
+        return ".".join(
             [
-                f"{child.model_varname}_{name}"
+                f"{child.model_varname}.{name}"
                 for child, name in self.get_child_paramnames().items()
             ]
         )
@@ -561,6 +561,11 @@ class AbstractModelComponent(ABC):
     def model_varname(self, name: str) -> None:
         """Set the DMS Stan variable name for this parameter"""
         self._model_varname = name
+
+    @property
+    def stan_model_varname(self) -> str:
+        """Return the Stan variable name for this parameter"""
+        return self.model_varname.replace(".", "__")
 
     @property
     def constants(self):

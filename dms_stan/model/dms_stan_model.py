@@ -92,7 +92,19 @@ class Model(ABC):
             # class.
             for attr in set(dir(self)) - set(dir(Model)):
                 if isinstance(retrieved := getattr(self, attr), AbstractModelComponent):
-                    retrieved.model_varname = attr  # Set the model variable name
+
+                    # Double-underscore attributes are forbidden, as this will clash
+                    # with how we handle unnamed parameters in Stan code.
+                    if "__" in attr:
+                        raise ValueError(
+                            "Model component names cannot include double underscores: "
+                            f"{attr} is invalid."
+                        )
+
+                    # Set the model variable name
+                    retrieved.model_varname = attr
+
+                    # Check if the model component is already defined
                     if attr in named_model_components:
                         assert named_model_components[attr] == retrieved
                     else:
@@ -389,14 +401,7 @@ class Model(ABC):
 
         return samples
 
-    def prior_predictive(
-        self,
-        *,
-        copy_model: bool = False,
-        initial_view: Optional[str] = None,
-        independent_dim: Optional[int] = None,
-        independent_labels: Optional[npt.NDArray] = None,
-    ) -> pn.WidgetBox:
+    def prior_predictive(self, *, copy_model: bool = False) -> pn.WidgetBox:
         """
         Creates an interactive plot of the prior predictive distribution of the
         model. The plot can be used to update the model's parameters dynamically.

@@ -19,7 +19,7 @@ from .components.constants import Constant
 from .dms_stan_model import Model
 
 # We need a regular expression for separating the variable name from its indices
-_INDEX_EXTRACTOR = re.compile(r"([A-Za-z0-9_]+)\[?([0-9, ]*)\]?")
+_INDEX_EXTRACTOR = re.compile(r"([A-Za-z0-9_\.]+)\[?([0-9, ]*)\]?")
 
 
 class PriorPredictiveCheck:
