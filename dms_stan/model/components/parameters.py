@@ -421,6 +421,9 @@ class HalfNormal(Normal):
     ):
         super().__init__(mu=0.0, sigma=sigma, **kwargs)
 
+        # Mu is not togglable
+        self.mu.is_togglable = False
+
     # Overwrite the draw method to ensure that the drawn values are positive
     def _draw(
         self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
@@ -433,6 +436,9 @@ class UnitNormal(Normal):
 
     def __init__(self, **kwargs):
         super().__init__(mu=0.0, sigma=1.0, **kwargs)
+
+        # Sigma is not togglable
+        self.sigma.is_togglable = False
 
 
 class LogNormal(ContinuousDistribution):
