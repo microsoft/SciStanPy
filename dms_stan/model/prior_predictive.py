@@ -81,6 +81,8 @@ class PriorPredictiveCheck:
 
         # Set initial values for the components relevant to showing data
         self.target_dropdown.param.trigger("value")
+        self.group_dim_dropdown.param.trigger("value")
+        self.independent_var_dropdown.param.trigger("value")
 
         # Run the full pipeline to set up the plotting data
         self._full_pipeline()

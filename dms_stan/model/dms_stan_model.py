@@ -208,7 +208,7 @@ class Model(ABC):
         """
 
         def get_dimnames_squeezed_draw(
-            draw: npt.NDArray,
+            draw: Union[npt.NDArray, Constant],
         ) -> tuple[tuple[str, ...], npt.NDArray]:
             """
             For a draw, gets the dimension names and squeezes to remove all singleton
@@ -217,6 +217,13 @@ class Model(ABC):
             # Set up variables
             singleton_axes: list[str] = []
             dimnames: list[str] = []
+
+            # If the draw is a constant, then we use its value as the draw. We also
+            # repeat the draw to match the number of samples.
+            if isinstance(draw, Constant):
+                draw = draw.value
+                if draw.shape[0] == 1:
+                    draw = np.broadcast_to(draw, (n,) + draw.shape[1:])
 
             # Populate the singleton axes and dimnames based on the shape of the
             # draw
@@ -265,7 +272,7 @@ class Model(ABC):
                     for component, draw in draws.items()
                 },
                 coords={
-                    parent.model_varname: get_dimnames_squeezed_draw(parent.value)
+                    parent.model_varname: get_dimnames_squeezed_draw(parent)
                     for component in self.all_model_components
                     for parent in component.parents
                     if isinstance(component, TransformedParameter)
@@ -297,7 +304,7 @@ class Model(ABC):
         epochs: int = DEFAULT_N_EPOCHS,
         early_stop: int = DEFAULT_EARLY_STOP,
         lr: float = DEFAULT_LR,
-        **observed_data: Union[torch.Tensor, npt.NDArray],
+        data: Optional[dict[str, Union[torch.Tensor, npt.NDArray]]] = None,
     ) -> MAP:
         """
         Approximate the maximum a posteriori (MAP) estimate of the model parameters.
@@ -305,15 +312,18 @@ class Model(ABC):
         sum of `log_pdf` and `log_pmf` for all distributions. The parameter values
         that minimize this loss are then returned.
         """
+        # Set the default value for observed data
+        data = data or {}
+
         # Observed data to tensors
-        observed_data = {
+        data = {
             k: torch.tensor(v)
-            for k, v in observed_data.items()
+            for k, v in data.items()
             if not isinstance(v, torch.Tensor)
         }
 
         # Check observed data
-        check_observable_data(self, observed_data)
+        check_observable_data(self, data)
 
         # Fit the model
         pytorch_model = self.to_pytorch()
@@ -321,7 +331,7 @@ class Model(ABC):
             epochs=epochs,
             early_stop=early_stop,
             lr=lr,
-            **observed_data,
+            data=data,
         )
 
         # Get the MAP estimate for all model parameters
@@ -375,11 +385,15 @@ class Model(ABC):
         cpp_options: Optional[dict[str, Any]] = DEFAULT_CPP_OPTIONS,
         user_header: Optional[str] = DEFAULT_USER_HEADER,
         inits: Optional[str] = "prior",
+        data: Optional[dict[str, npt.NDArray]] = None,
         **sample_kwargs,
     ) -> CmdStanMCMC:
         """Samples from the model using MCMC. This is a wrapper around the `sample`
         method of the `StanModel` class.
         """
+        # Get the default observed data
+        data = data or {}
+
         # Build the Stan model
         stan_model = self.to_stan(
             output_dir=output_dir,
@@ -393,7 +407,7 @@ class Model(ABC):
         sample_kwargs["output_dir"] = stan_model.output_dir
 
         # Sample from the model
-        samples = stan_model.sample(inits=inits, **sample_kwargs)
+        samples = stan_model.sample(inits=inits, data=data, **sample_kwargs)
 
         # Run diagnostics
         print("Running diagnostics...")
@@ -401,7 +415,7 @@ class Model(ABC):
 
         return samples
 
-    def prior_predictive(self, *, copy_model: bool = False) -> pn.WidgetBox:
+    def prior_predictive(self, *, copy_model: bool = False) -> pn.Row:
         """
         Creates an interactive plot of the prior predictive distribution of the
         model. The plot can be used to update the model's parameters dynamically.

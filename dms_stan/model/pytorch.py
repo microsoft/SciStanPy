@@ -17,14 +17,12 @@ from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
 from dms_stan.model.components import Multinomial
 
 
-def check_observable_data(
-    model: "dms_model.Model", observed_data: dict[str, torch.Tensor]
-):
+def check_observable_data(model: "dms_model.Model", data: dict[str, torch.Tensor]):
     """Makes sure that the correct observables are provided for a givne model."""
     # There must be perfect overlap between the keys of the provided data and the
     # expected observations
     expected_set = set(model.observable_dict.keys())
-    provided_set = set(observed_data.keys())
+    provided_set = set(data.keys())
     missing = expected_set - provided_set
     extra = provided_set - expected_set
 
@@ -43,11 +41,11 @@ def check_observable_data(
 
     # Shapes must match
     for name, param in model.observable_dict.items():
-        if observed_data[name].shape != param.shape:
+        if data[name].shape != param.shape:
             raise ValueError(
                 f"The shape of the provided data for observable {name} does not match "
                 f"the expected shape. Expected: {param.shape}, provided: "
-                f"{observed_data[name].shape}"
+                f"{data[name].shape}"
             )
 
 
@@ -80,7 +78,7 @@ class PyTorchModel(nn.Module):
         # Record learnable parameters such that they can be recognized by PyTorch
         self.learnable_params = nn.ParameterList(learnable_params)
 
-    def forward(self, **observed_data: torch.Tensor) -> torch.Tensor:
+    def forward(self, **data: torch.Tensor) -> torch.Tensor:
         """
         Each observation is passed in as a keyword argument whose name matches the
         name of the corresponding observable distribution in the `dms_stan.model.Model`
@@ -94,7 +92,7 @@ class PyTorchModel(nn.Module):
             self.model.parameter_dict.items(), self.model.observable_dict.items()
         ):
             # Calculate the log probability of the observed data given the parameters
-            temp_log_prob = param.get_torch_logprob(observed=observed_data.get(name))
+            temp_log_prob = param.get_torch_logprob(observed=data.get(name))
 
             # Log probability should be 0-dimensional if anything but a Multinomial
             assert temp_log_prob.ndim == 0 or isinstance(param, Multinomial)
@@ -106,20 +104,21 @@ class PyTorchModel(nn.Module):
 
     def fit(
         self,
+        *,
         epochs: int = DEFAULT_N_EPOCHS,
         early_stop: int = DEFAULT_EARLY_STOP,
         lr: float = DEFAULT_LR,
-        **observed_data: Union[torch.Tensor, npt.NDArray, float, int],
+        data: dict[str, Union[torch.Tensor, npt.NDArray, float, int]],
     ) -> torch.Tensor:
         """Optimizes the parameters of the model."""
         # Any observed data that is not a tensor is converted to a tensor
-        observed_data = {
+        data = {
             k: torch.tensor(v) if not isinstance(v, torch.Tensor) else v
-            for k, v in observed_data.items()
+            for k, v in data.items()
         }
 
         # Check the observed data
-        check_observable_data(self.model, observed_data)
+        check_observable_data(self.model, data)
 
         # Train mode. This should be a null-op.
         self.train()
@@ -137,7 +136,7 @@ class PyTorchModel(nn.Module):
             for epoch in range(epochs):
 
                 # Get the loss
-                log_loss = -1 * self(**observed_data)
+                log_loss = -1 * self(**data)
 
                 # Step the optimizer
                 optim.zero_grad()
@@ -173,7 +172,7 @@ class PyTorchModel(nn.Module):
 
         # Get a final loss
         with torch.no_grad():
-            loss_trajectory[epoch + 1] = -1 * self(**observed_data).item()
+            loss_trajectory[epoch + 1] = -1 * self(**data).item()
 
         # Trim off the None values of the loss trajectory and convert to a tensor
         return torch.tensor(loss_trajectory[: epoch + 2], dtype=torch.float32)
