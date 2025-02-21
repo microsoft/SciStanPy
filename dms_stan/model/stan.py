@@ -855,7 +855,8 @@ class StanModel(CmdStanModel):
             {name: self.model[name].value for name in self.program.autogathered_data}
         )
 
-        return observables
+        # All dots in the names must be replaced with double underscores
+        return {name.replace(".", "__"): obs for name, obs in observables.items()}
 
     def code(self) -> str:
         """Returns Stan code for the model."""
