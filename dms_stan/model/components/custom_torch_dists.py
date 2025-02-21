@@ -88,7 +88,7 @@ class Multinomial:
 
         return torch.stack(
             [d.log_prob(v) for d, v in zip(self.distributions, value)]
-        ).reshape(*self._batch_shape)
+        ).reshape(self._batch_shape)
 
     def sample(self, sample_shape: torch.Size = torch.Size()) -> torch.Tensor:
         """See documentation of torch.distributions.Multinomial.sample"""
@@ -97,4 +97,4 @@ class Multinomial:
         # appropriate sample dimension
         return torch.stack(
             [d.sample(sample_shape=sample_shape) for d in self.distributions], dim=-2
-        ).reshape(*sample_shape, *self._batch_shape, self._n_categories)
+        ).reshape((*sample_shape, *self._batch_shape, self._n_categories))
