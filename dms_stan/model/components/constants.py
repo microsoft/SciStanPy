@@ -64,7 +64,7 @@ class Constant(AbstractModelComponent):
         assert not level_draws
 
         # Repeat the value n times
-        return np.repeat(self.value[None], n, axis=0)
+        return np.broadcast_to(self.value[None], (n,) + self.value.shape)
 
     def _handle_transformation_code(
         self, param: AbstractModelComponent, index_opts: tuple[str, ...]
