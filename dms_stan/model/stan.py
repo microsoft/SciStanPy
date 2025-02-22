@@ -730,14 +730,10 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
         if kwargs.get("seed") is None:
             kwargs["seed"] = dms.RNG.integers(0, 2**32 - 1)
 
-        # `data` must be a key in the kwargs, as must `detach`
+        # `data` must be a key in the kwargs
         if "data" not in kwargs:
             raise ValueError(
                 f"The 'data' keyword argument must be provided to {func.__name__}"
-            )
-        if "detach" not in kwargs:
-            raise ValueError(
-                f"The 'detach' keyword argument must be provided to {func.__name__}"
             )
 
         # Gather the inputs for the Stan model. The user should have provided
@@ -898,15 +894,7 @@ class StanModel(CmdStanModel):
         # Separate the draws into one dictionary per chain
         return [{name: draw[i] for name, draw in draws.items()} for i in range(chains)]
 
-    @overload
-    def sample(
-        self, *args, detach: Literal[False] = False, **kwargs
-    ) -> CmdStanMCMC: ...
-
-    @overload
-    def sample(self, *args, detach: Literal[True] = False, **kwargs) -> int: ...
-
-    def sample(self, *args, detach=False, **kwargs):
+    def sample(self, *args, **kwargs) -> CmdStanMCMC:
 
         # Update the sample function from CmdStanModel to automatically pull the
         # data from the StanModel
@@ -926,7 +914,7 @@ class StanModel(CmdStanModel):
             )
 
         # Call the parent sample function
-        return updated_parent_sample(self, detach=detach, **kwargs)
+        return updated_parent_sample(self, **kwargs)
 
     # Update the CmdStanModel functions that require data
     generate_quantities = _update_cmdstanpy_func(
