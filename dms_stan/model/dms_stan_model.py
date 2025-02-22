@@ -376,9 +376,9 @@ class Model(ABC):
     # NOTE: We may need to figure out how to handle larger-than-memory data outputs
     # from Stan. The obvious solution is to write the data to disk in chunks and
     # then use dask to load the data in parallel.
+    @overload
     def mcmc(
         self,
-        *,
         output_dir: Optional[str] = None,
         force_compile: bool = DEFAULT_FORCE_COMPILE,
         stanc_options: Optional[dict[str, Any]] = DEFAULT_STANC_OPTIONS,
@@ -386,8 +386,37 @@ class Model(ABC):
         user_header: Optional[str] = DEFAULT_USER_HEADER,
         inits: Optional[str] = "prior",
         data: Optional[dict[str, npt.NDArray]] = None,
+        detach: Literal[False] = False,
         **sample_kwargs,
-    ) -> CmdStanMCMC:
+    ) -> CmdStanMCMC: ...
+
+    @overload
+    def mcmc(
+        self,
+        output_dir: Optional[str] = None,
+        force_compile: bool = DEFAULT_FORCE_COMPILE,
+        stanc_options: Optional[dict[str, Any]] = DEFAULT_STANC_OPTIONS,
+        cpp_options: Optional[dict[str, Any]] = DEFAULT_CPP_OPTIONS,
+        user_header: Optional[str] = DEFAULT_USER_HEADER,
+        inits: Optional[str] = "prior",
+        data: Optional[dict[str, npt.NDArray]] = None,
+        detach: Literal[True] = True,
+        **sample_kwargs,
+    ) -> int: ...
+
+    def mcmc(
+        self,
+        *,
+        output_dir=None,
+        force_compile=DEFAULT_FORCE_COMPILE,
+        stanc_options=DEFAULT_STANC_OPTIONS,
+        cpp_options=DEFAULT_CPP_OPTIONS,
+        user_header=DEFAULT_USER_HEADER,
+        inits="prior",
+        data=None,
+        detach=False,
+        **sample_kwargs,
+    ):
         """Samples from the model using MCMC. This is a wrapper around the `sample`
         method of the `StanModel` class.
         """
@@ -407,13 +436,7 @@ class Model(ABC):
         sample_kwargs["output_dir"] = stan_model.output_dir
 
         # Sample from the model
-        samples = stan_model.sample(inits=inits, data=data, **sample_kwargs)
-
-        # Run diagnostics
-        print("Running diagnostics...")
-        print(samples.diagnose())
-
-        return samples
+        return stan_model.sample(inits=inits, data=data, detach=detach, **sample_kwargs)
 
     def prior_predictive(self, *, copy_model: bool = False) -> pn.Row:
         """

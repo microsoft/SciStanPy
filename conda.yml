@@ -14,6 +14,8 @@ dependencies:
   - pytorch::pytorch-cuda=12.4
   - panel
   - pip
+  - pocl
+  - pocl-cuda
   - python=3.12
   - pytorch::pytorch
   - pytorch::torchvision

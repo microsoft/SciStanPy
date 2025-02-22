@@ -2,6 +2,8 @@
 
 import functools
 import os.path
+import traceback
+import sys
 import warnings
 import weakref
 
@@ -14,6 +16,7 @@ from typing import (
     Generator,
     Literal,
     Optional,
+    overload,
     ParamSpec,
     TypeVar,
     Union,
@@ -729,10 +732,14 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
         if kwargs.get("seed") is None:
             kwargs["seed"] = dms.RNG.integers(0, 2**32 - 1)
 
-        # `data` must be a key in the kwargs
+        # `data` must be a key in the kwargs, as must `detach`
         if "data" not in kwargs:
             raise ValueError(
                 f"The 'data' keyword argument must be provided to {func.__name__}"
+            )
+        if "detach" not in kwargs:
+            raise ValueError(
+                f"The 'detach' keyword argument must be provided to {func.__name__}"
             )
 
         # Gather the inputs for the Stan model. The user should have provided
@@ -740,7 +747,29 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
         # DMS Stan model.
         kwargs["data"] = stan_model.gather_inputs(**kwargs["data"])
 
-        # Call the wrapped function with the inputs
+        # If we are running the function in the background, fork the process
+        if kwargs.pop("detach"):
+            print("Running sampling in the background...")
+            stderr = sys.stderr
+            pid = os.fork()
+            if pid == 0:
+                # # New session to avoid zombie processes
+                # os.setsid()
+
+                # Run the function in the child process
+                try:
+                    func(stan_model, **kwargs)
+                    exitcode = 0
+                except Exception:  # pylint: disable=broad-except
+                    traceback.print_exc(file=stderr)
+                    exitcode = 1
+                finally:
+                    os._exit(exitcode)
+            else:
+                # No need to wait for the child process as we are detaching it
+                return pid
+
+        # Otherwise, run the wrapped function in the main process
         return func(stan_model, **kwargs)
 
     return inner
@@ -893,7 +922,15 @@ class StanModel(CmdStanModel):
         # Separate the draws into one dictionary per chain
         return [{name: draw[i] for name, draw in draws.items()} for i in range(chains)]
 
-    def sample(self, *args, **kwargs) -> CmdStanMCMC:
+    @overload
+    def sample(
+        self, *args, detach: Literal[False] = False, **kwargs
+    ) -> CmdStanMCMC: ...
+
+    @overload
+    def sample(self, *args, detach: Literal[True] = False, **kwargs) -> int: ...
+
+    def sample(self, *args, detach=False, **kwargs):
 
         # Update the sample function from CmdStanModel to automatically pull the
         # data from the StanModel
@@ -913,7 +950,7 @@ class StanModel(CmdStanModel):
             )
 
         # Call the parent sample function
-        return updated_parent_sample(self, **kwargs)
+        return updated_parent_sample(self, detach=detach, **kwargs)
 
     # Update the CmdStanModel functions that require data
     generate_quantities = _update_cmdstanpy_func(
