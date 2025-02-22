@@ -2,8 +2,6 @@
 
 import functools
 import os.path
-import traceback
-import sys
 import warnings
 import weakref
 
@@ -747,29 +745,7 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
         # DMS Stan model.
         kwargs["data"] = stan_model.gather_inputs(**kwargs["data"])
 
-        # If we are running the function in the background, fork the process
-        if kwargs.pop("detach"):
-            print("Running sampling in the background...")
-            stderr = sys.stderr
-            pid = os.fork()
-            if pid == 0:
-                # # New session to avoid zombie processes
-                # os.setsid()
-
-                # Run the function in the child process
-                try:
-                    func(stan_model, **kwargs)
-                    exitcode = 0
-                except Exception:  # pylint: disable=broad-except
-                    traceback.print_exc(file=stderr)
-                    exitcode = 1
-                finally:
-                    os._exit(exitcode)
-            else:
-                # No need to wait for the child process as we are detaching it
-                return pid
-
-        # Otherwise, run the wrapped function in the main process
+        # Run the wrapped function
         return func(stan_model, **kwargs)
 
     return inner
