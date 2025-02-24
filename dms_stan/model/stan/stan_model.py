@@ -14,7 +14,6 @@ from typing import (
     Generator,
     Literal,
     Optional,
-    overload,
     ParamSpec,
     TypeVar,
     Union,
@@ -35,8 +34,8 @@ from dms_stan.defaults import (
     DEFAULT_USER_HEADER,
 )
 
-from .components import Constant, Normal, Parameter, TransformedParameter
-from .components.abstract_model_component import AbstractModelComponent
+from dms_stan.model.components import Constant, Normal, Parameter, TransformedParameter
+from dms_stan.model.components.abstract_model_component import AbstractModelComponent
 
 # Function for combining a list of Stan code lines
 DEFAULT_INDENTATION = 4
@@ -709,7 +708,7 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
     """
 
     @functools.wraps(func)
-    def inner(*args: P.args, **kwargs: P.kwargs) -> R:
+    def inner(*args: P.args, **kwargs: P.kwargs) -> tuple[R, dict[str, npt.NDArray]]:
         """Wrapper function for gathering inputs."""
         # If warning the user about lack of testing, do so
         if warn:
@@ -736,13 +735,16 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
                 f"The 'data' keyword argument must be provided to {func.__name__}"
             )
 
+        # Copy the data dictionary. These are our observed data.
+        observed = kwargs["data"].copy()
+
         # Gather the inputs for the Stan model. The user should have provided
         # values for the observables. We will get the rest of the inputs from the
         # DMS Stan model.
         kwargs["data"] = stan_model.gather_inputs(**kwargs["data"])
 
         # Run the wrapped function
-        return func(stan_model, **kwargs)
+        return func(stan_model, **kwargs), observed
 
     return inner
 
@@ -894,7 +896,7 @@ class StanModel(CmdStanModel):
         # Separate the draws into one dictionary per chain
         return [{name: draw[i] for name, draw in draws.items()} for i in range(chains)]
 
-    def sample(self, *args, **kwargs) -> CmdStanMCMC:
+    def sample(self, *args, **kwargs) -> tuple[CmdStanMCMC, dict[str, npt.NDArray]]:
 
         # Update the sample function from CmdStanModel to automatically pull the
         # data from the StanModel
