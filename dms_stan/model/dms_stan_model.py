@@ -377,6 +377,10 @@ class Model(ABC):
     # from Stan. The obvious solution is to write the data to disk in chunks and
     # then use dask to load the data in parallel.
 
+    # TODO: The results of this should be formatted like the prior predictive xarray
+    # output (or vice versa) so that we can use the same interactive plotting backend
+    # for each
+
     def mcmc(
         self,
         output_dir: Optional[str] = None,
