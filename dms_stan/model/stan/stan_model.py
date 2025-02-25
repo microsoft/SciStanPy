@@ -36,6 +36,7 @@ from dms_stan.defaults import (
 
 from dms_stan.model.components import Constant, Normal, Parameter, TransformedParameter
 from dms_stan.model.components.abstract_model_component import AbstractModelComponent
+from dms_stan.model.stan.stan_results import SampleResults
 
 # Function for combining a list of Stan code lines
 DEFAULT_INDENTATION = 4
@@ -708,7 +709,7 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
     """
 
     @functools.wraps(func)
-    def inner(*args: P.args, **kwargs: P.kwargs) -> tuple[R, dict[str, npt.NDArray]]:
+    def inner(*args: P.args, **kwargs: P.kwargs) -> R:
         """Wrapper function for gathering inputs."""
         # If warning the user about lack of testing, do so
         if warn:
@@ -735,16 +736,17 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
                 f"The 'data' keyword argument must be provided to {func.__name__}"
             )
 
-        # Copy the data dictionary. These are our observed data.
-        observed = kwargs["data"].copy()
-
         # Gather the inputs for the Stan model. The user should have provided
         # values for the observables. We will get the rest of the inputs from the
         # DMS Stan model.
         kwargs["data"] = stan_model.gather_inputs(**kwargs["data"])
 
         # Run the wrapped function
-        return func(stan_model, **kwargs), observed
+        cmdstanmcmc = func(stan_model, **kwargs)
+        assert isinstance(cmdstanmcmc, CmdStanMCMC)  # For type checking
+
+        # Build the results object
+        return SampleResults(fit=cmdstanmcmc, data=kwargs["data"])
 
     return inner
 
@@ -914,6 +916,8 @@ class StanModel(CmdStanModel):
             kwargs["inits"] = self._get_sample_init(  # pylint: disable=protected-access
                 chains=kwargs["chains"], seed=kwargs.get("seed")
             )
+
+        # Get the other arguments needed to build the ArViz object
 
         # Call the parent sample function
         return updated_parent_sample(self, **kwargs)
