@@ -102,7 +102,7 @@ class Model(ABC):
                         )
 
                     # Set the model variable name
-                    retrieved.model_varname = attr
+                    retrieved._model_varname = attr  # pylint: disable=protected-access
 
                     # Check if the model component is already defined
                     if attr in named_model_components:
@@ -153,6 +153,70 @@ class Model(ABC):
         )
 
         return model_varname_to_object
+
+    def get_dimname_map(self) -> dict[tuple[int, int], str]:
+        """
+        Retrieves a dictionary that maps from the level and size of a dimension
+        to the name of that dimension. This is used to build xarray datasets.
+        """
+
+        # Set up variables
+        dims: dict[tuple[int, int], str] = {}
+
+        # Check sizes of all observables and record the dimension names
+        for observable in self.observables:
+            for dimkey in enumerate(observable.shape[::-1]):
+                if dimkey not in dims:
+                    dims[dimkey] = DEFAULT_DIM_NAMES[len(dims)]
+
+        return dims
+
+    def compress_for_xarray(
+        self,
+        *arrays: npt.NDArray,
+        include_sample_dim: bool = False,
+    ) -> list[tuple[tuple[str, ...], npt.NDArray]]:
+        """
+        Retrieves a tuple of dimension names for the given shapes. This is used to
+        build xarray datasets.
+        """
+        # Get a mapping from dimension keys to dimension names
+        dims = self.get_dimname_map()
+
+        # Set our start and end indices for the shape
+        start_ind = int(include_sample_dim)
+
+        # Process each input array
+        results: list[tuple[tuple[str, ...], npt.NDArray]] = []
+        for array_ind, array in enumerate(arrays):
+
+            # Identify singleton dimensions and named dimensions
+            singleton_axes, dimnames = [], []
+            effective_shape = array.shape[start_ind:]
+            for dimind, dimsize in enumerate(effective_shape[::-1]):
+                forward_ind = len(effective_shape) - 1 - dimind + start_ind
+                if dimsize == 1:
+                    singleton_axes.append(forward_ind)
+                else:
+                    try:
+                        dimnames.append(dims[(dimind, dimsize)])
+                    except KeyError as error:
+                        raise ValueError(
+                            f"There is no dimension index of {forward_ind - start_ind} "
+                            f"with size {dimsize} in this model. Error triggered "
+                            f"by array {array_ind}. Options are: {dims}"
+                        ) from error
+
+            # Append "n" to the dimension names if we are including the sample dimension
+            if include_sample_dim:
+                dimnames.append("n")
+
+            # Squeeze the array
+            results.append(
+                (tuple(dimnames[::-1]), np.squeeze(array, axis=tuple(singleton_axes)))
+            )
+
+        return results
 
     @overload
     def draw(
@@ -207,54 +271,49 @@ class Model(ABC):
                 the model components and the values are the samples drawn.
         """
 
-        def get_dimnames_squeezed_draw(
-            draw: Union[npt.NDArray, Constant],
-        ) -> tuple[tuple[str, ...], npt.NDArray]:
+        def build_xarray_kwargs():
             """
-            For a draw, gets the dimension names and squeezes to remove all singleton
-            axes except for the first one.
+            Builds the kwargs for the xarray dataset. The data values are the
+            draws and the coordinates are inputs to transformed parameters that
+            are constants and that have a shape.
             """
-            # Set up variables
-            singleton_axes: list[str] = []
-            dimnames: list[str] = []
+            # Split into components and draws and components and values
+            components, unpacked_draws = zip(*draws.items())
+            parents, values = zip(
+                *[
+                    [parent, parent.value]
+                    for component in self.all_model_components
+                    for parent in component.parents
+                    if isinstance(component, TransformedParameter)
+                    and isinstance(parent, Constant)
+                    and parent.ndim > 0
+                ]
+            )
 
-            # If the draw is a constant, then we use its value as the draw. We also
-            # repeat the draw to match the number of samples.
-            if isinstance(draw, Constant):
-                draw = draw.value
-                if draw.shape[0] == 1:
-                    draw = np.broadcast_to(draw, (n,) + draw.shape[1:])
+            # Process the draws and values for xarray. Note that because constants
+            # have no sample prefix, we do not add the sampling dimension to them
+            # when calling `compress_for_xarray` (i.e., we do not use `_n`).
+            compressed_draws = self.compress_for_xarray(
+                *unpacked_draws, include_sample_dim=True
+            )
+            compressed_values = self.compress_for_xarray(*values)
 
-            # Populate the singleton axes and dimnames based on the shape of the
-            # draw
-            for dimind, dimsize in enumerate(draw.shape[-1:0:-1], 1):
-                if dimsize == 1:
-                    singleton_axes.append(-dimind)
-                else:
-                    dimnames.append(dims[(dimind, dimsize)])
-
-            # Squeeze the draw
-            draw = np.squeeze(draw, axis=tuple(singleton_axes))
-
-            # Finalize dimnames. This means reversing the order (since we went from
-            # the last dimension to the first) and adding the first dimension name,
-            # which is always "n".
-            return tuple(["n"] + dimnames[::-1]), draw
-
-        # Set up variables
-        draws: dict[AbstractModelComponent, npt.NDArray] = {}  # The draws
-        dims: dict[tuple[int, int], str] = {(0, n): "n"}  # Dimension names of draws
+            # Build kwargs
+            return {
+                "data_vars": {
+                    component.model_varname: compressed_draw
+                    for component, compressed_draw in zip(components, compressed_draws)
+                },
+                "coords": {
+                    parent.model_varname: compressed_value
+                    for parent, compressed_value in zip(parents, compressed_values)
+                },
+            }
 
         # Draw from all observables
+        draws: dict[AbstractModelComponent, npt.NDArray] = {}
         for observable in self.observables:
-
-            # Draw from the observable
             _, draws = observable.draw(n, _drawn=draws, seed=seed)
-
-            # Record the dimension names of the draws.
-            for dimkey in enumerate(observable.shape[::-1], 1):
-                if dimkey not in dims:
-                    dims[dimkey] = DEFAULT_DIM_NAMES[len(dims) - 1]
 
         # Filter down to just named parameters if requested
         if named_only:
@@ -262,24 +321,7 @@ class Model(ABC):
 
         # Convert to an xarray dataset if requested
         if as_xarray:
-
-            # Build the dataset. The data values are the draws and the coordinates
-            # are inputs to transformed parameters that are constants and that have
-            # a shape.
-            return xr.Dataset(
-                data_vars={
-                    component.model_varname: get_dimnames_squeezed_draw(draw)
-                    for component, draw in draws.items()
-                },
-                coords={
-                    parent.model_varname: get_dimnames_squeezed_draw(parent)
-                    for component in self.all_model_components
-                    for parent in component.parents
-                    if isinstance(component, TransformedParameter)
-                    and isinstance(parent, Constant)
-                    and parent.ndim > 0
-                },
-            )
+            return xr.Dataset(**build_xarray_kwargs())
 
         # If we are returning only named parameters, then we need to update the
         # dictionary keys to be the model variable names.
