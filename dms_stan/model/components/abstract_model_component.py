@@ -549,11 +549,6 @@ class AbstractModelComponent(ABC):
             ]
         )
 
-    @model_varname.setter
-    def model_varname(self, name: str) -> None:
-        """Set the DMS Stan variable name for this parameter"""
-        self._model_varname = name
-
     @property
     def stan_model_varname(self) -> str:
         """Return the Stan variable name for this parameter"""
