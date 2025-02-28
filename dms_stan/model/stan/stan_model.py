@@ -405,8 +405,8 @@ class StanProgram(StanCodeBase):
         (
             self.all_varnames,
             self.all_paramnames,
-            self.autogathered_data,
-            self.user_provided_data,
+            self.autogathered_varnames,
+            self.user_provided_varnames,
         ) = self.get_varnames()
 
         # Get allowed index variable names for each level
@@ -477,13 +477,13 @@ class StanProgram(StanCodeBase):
             for node in self.node_to_depth
             if isinstance(node, Constant)
         }
-        user_provided_data = {
+        user_provided_varnames = {
             node.model_varname
             for node in self.node_to_depth
             if isinstance(node, Parameter) and node.observable
         }
 
-        return all_varnames, all_paramnames, auto_gathered_data, user_provided_data
+        return all_varnames, all_paramnames, auto_gathered_data, user_provided_varnames
 
     def get_parent_loop(self, n: int) -> StanCodeBase:
         # Can only get self
@@ -742,11 +742,7 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
         kwargs["data"] = stan_model.gather_inputs(**kwargs["data"])
 
         # Run the wrapped function
-        cmdstanmcmc = func(stan_model, **kwargs)
-        assert isinstance(cmdstanmcmc, CmdStanMCMC)  # For type checking
-
-        # Build the results object
-        return SampleResults(fit=cmdstanmcmc, data=kwargs["data"])
+        return func(stan_model, **kwargs)
 
     return inner
 
@@ -836,9 +832,9 @@ class StanModel(CmdStanModel):
         # Make sure we have all the observables that the user must provide. Report
         # any missing or extra observables
         provided_observables = set(observables.keys())
-        if missing := self.program.user_provided_data - provided_observables:
+        if missing := self.program.user_provided_varnames - provided_observables:
             raise ValueError(f"Missing observables: {', '.join(missing)}")
-        elif extra := provided_observables - self.program.user_provided_data:
+        elif extra := provided_observables - self.program.user_provided_varnames:
             raise ValueError(f"Extra observables: {', '.join(extra)}")
 
         # The shapes of the provided observables must match the shapes of the
@@ -856,9 +852,7 @@ class StanModel(CmdStanModel):
                 )
 
         # Pull the hyperparameters from the model and add them to the inputs
-        observables.update(
-            {name: self.model[name].value for name in self.program.autogathered_data}
-        )
+        observables.update(self.autogathered_data)
 
         # All dots in the names must be replaced with double underscores
         return {name.replace(".", "__"): obs for name, obs in observables.items()}
@@ -898,7 +892,26 @@ class StanModel(CmdStanModel):
         # Separate the draws into one dictionary per chain
         return [{name: draw[i] for name, draw in draws.items()} for i in range(chains)]
 
-    def sample(self, *args, **kwargs) -> tuple[CmdStanMCMC, dict[str, npt.NDArray]]:
+    def get_varnames_to_dimnames(self) -> dict[str, list[str]]:
+        """
+        Provides a mapping from variable names to dimension names. This is useful
+        for build ArViz objects.
+        """
+        # Get the mapping from level and size of a dimension to the name of the
+        # dimension
+        name_mapper = self.model.get_dimname_map()
+
+        # Loop over all variables and create a mapping of dimension names
+        return {
+            varname.replace(".", "__"): tuple(
+                reversed(
+                    [name_mapper[k] for k in enumerate(self.model[varname].shape[::-1])]
+                )
+            )
+            for varname in self.program.all_varnames
+        }
+
+    def sample(self, *args, **kwargs) -> SampleResults:
 
         # Update the sample function from CmdStanModel to automatically pull the
         # data from the StanModel
@@ -917,10 +930,19 @@ class StanModel(CmdStanModel):
                 chains=kwargs["chains"], seed=kwargs.get("seed")
             )
 
-        # Get the other arguments needed to build the ArViz object
+        # Get a copy of the data before gathering additional inputs. These are our
+        # observables.
+        data = kwargs["data"].copy()
 
-        # Call the parent sample function
-        return updated_parent_sample(self, **kwargs)
+        # Run the sample function
+        fit = updated_parent_sample(self, **kwargs)
+
+        # Build the results object
+        return SampleResults(
+            stan_model=self,
+            fit=fit,
+            data=data,
+        )
 
     # Update the CmdStanModel functions that require data
     generate_quantities = _update_cmdstanpy_func(
@@ -941,3 +963,16 @@ class StanModel(CmdStanModel):
     def stan_program_path(self) -> str:
         """Get the path to the Stan program for this model."""
         return self.stan_executable_path + ".stan"
+
+    @property
+    def autogathered_data(self) -> dict[str, npt.NDArray]:
+        """Get the auto-gathered data for the model."""
+        return {
+            name.replace(".", "__"): self.model[name].value
+            for name in self.program.autogathered_varnames
+        }
+
+    @property
+    def all_varnames(self) -> set[str]:
+        """Get the names of all variables in the model."""
+        return {name.replace(".", "__") for name in self.program.all_varnames}
