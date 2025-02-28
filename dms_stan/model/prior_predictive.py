@@ -345,7 +345,7 @@ class PriorPredictiveCheck:
         independent_var_opts = [""] + [
             coord
             for coord, arr in self._xarray_data.coords.items()
-            if event.new in set(arr.dims[1:])
+            if event.new in set(arr.dims)
         ]
 
         # If the previous independent variable is not in the options, reset it
