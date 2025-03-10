@@ -57,6 +57,10 @@ class SampleResults:
             dims=dims,
         )
 
+        # Squeeze the dummy dimensions out of the ArviZ object
+        for group, dataset in self.inference_obj.items():
+            setattr(self.inference_obj, group, dataset.squeeze(drop=True))
+
         # Save the arviz object to disk
         self._save()
 
