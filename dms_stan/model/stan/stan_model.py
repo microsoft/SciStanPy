@@ -22,7 +22,7 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from cmdstanpy import CmdStanMCMC, CmdStanModel, format_stan_file
+from cmdstanpy import CmdStanModel, format_stan_file
 
 import dms_stan as dms
 
@@ -92,7 +92,7 @@ class StanCodeBase(ABC, list):
     ) -> str:
 
         def filter_generated_quantities(
-            nested_component: Union[StanCodeBase, AbstractModelComponent]
+            nested_component: Union[StanCodeBase, AbstractModelComponent],
         ) -> bool:
             """
             Filters hierarchy of loops for the generated quantities block. We take
@@ -104,7 +104,7 @@ class StanCodeBase(ABC, list):
 
         # Functions for filtering the tree
         def filter_model_transformed_params(
-            nested_component: Union[StanCodeBase, AbstractModelComponent]
+            nested_component: Union[StanCodeBase, AbstractModelComponent],
         ) -> bool:
             """
             Filters hierarchy of loops for the model and transformed parameters
