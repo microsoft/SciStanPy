@@ -4,7 +4,7 @@ channels:
   - conda-forge
 dependencies:
   - bokeh::jupyter_bokeh
-  - conda-forge::arviz
+  - conda-forge::arviz>=0.21
   - conda-forge::cmdstanpy
   - conda-forge::hvplot
   - conda-forge::seaborn

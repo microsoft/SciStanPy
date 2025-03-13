@@ -4,12 +4,13 @@ import os.path
 import warnings
 
 from glob import glob
-from typing import Union
+from typing import Literal, Optional, Sequence, Union
 
 import arviz as az
 import cmdstanpy
 import numpy as np
 import numpy.typing as npt
+import xarray as xr
 
 import dms_stan.model.stan as stan_module
 
@@ -160,9 +161,227 @@ class SampleResults:
         # Save the ArViZ object to a netcdf file
         self.inference_obj.to_netcdf(prefix + "arviz.nc")
 
-    # Missing attributes are pulled from the CmdStanMCMC object
+    def _update_group(self, attrname: str, new_group: xr.Dataset) -> None:
+        """Either adds or updates a group in the ArviZ object"""
+        if hasattr(self.inference_obj, attrname):
+            getattr(self.inference_obj, attrname).update(new_group)
+        else:
+            self.inference_obj.add_groups({attrname: new_group})
+
+    def calculate_summaries(
+        self,
+        var_names: list[str] | None = None,
+        filter_vars: Literal[None, "like", "regex"] = None,
+        kind: Literal["all", "stats", "diagnostics"] = "all",
+        round_to: int = 2,
+        circ_var_names: list[str] | None = None,
+        stat_focus: str = "mean",
+        stat_funcs: Optional[Union[dict[str, callable], callable]] = None,
+        extend: bool = True,
+        hdi_prob: float = 0.94,
+        skipna: bool = False,
+        diagnostic_varnames: Sequence[str] = (
+            "mcse_mean",
+            "mcse_sd",
+            "ess_bulk",
+            "ess_tail",
+            "r_hat",
+        ),
+    ) -> xr.Dataset:
+        """
+        This is a wrapper around `az.summary`. See that function for details. There
+        is one important difference: This function will two new groups to the ArviZ
+        InferenceData object. The first is 'diagnostic_stats', which contains any
+        metrics that are diagnostic in nature; the second is 'summary_stats', which
+        contains summary statistics for the samples. The `diagnostic_varnames` argument
+        is used to specify which metrics are considered diagnostic.
+
+        Note that a full `xr.DataSet` is returned containing all metrics, including
+        both diagnostics and summary statistics.
+
+        This function will update any existing groups in the ArviZ object with
+        the same name.
+        """
+
+        def update_group(metric_names: list[str], attrname: str) -> None:
+            """
+            Replace the group in the ArviZ object with the new group. This is done
+            by removing the old group and adding the new one.
+            """
+            # Do nothing if the group is empty
+            if not metric_names:
+                return
+
+            # Get the group
+            new_group = summaries.sel(metric=diagnostic_metrics)
+
+            # Add the new group or update the old one
+            self._update_group(attrname, new_group)
+
+        # Get the summary statistics
+        summaries = az.summary(
+            data=self.inference_obj,
+            var_names=var_names,
+            filter_vars=filter_vars,
+            fmt="xarray",
+            kind=kind,
+            round_to=round_to,
+            circ_var_names=circ_var_names,
+            stat_focus=stat_focus,
+            stat_funcs=stat_funcs,
+            extend=extend,
+            hdi_prob=hdi_prob,
+            skipna=skipna,
+        )
+
+        # Identify the diagnostic and summary statistics
+        noted_diagnostics = set(diagnostic_varnames)
+        calculated_metrics = set(summaries.metric.values.tolist())
+
+        diagnostic_metrics = list(noted_diagnostics.union(calculated_metrics))
+        stat_metrics = list(calculated_metrics - noted_diagnostics)
+
+        # Build new or update old groups
+        update_group(diagnostic_metrics, "diagnostic_stats")
+        update_group(stat_metrics, "summary_stats")
+
+        return summaries
+
+    def calculate_diagnostics(self) -> xr.Dataset:
+        """
+        This method performs a few actions:
+
+        1.  It will calculate the diagnostics for the samples. This is done by
+            calling `self.calculate_summaries` with the `kind` argument set to "diagnostics".
+            All side effects of `self.calculate_summaries` are preserved. No default
+            arguments of the `self.calculate_summaries` method can be changed.
+        2.  It will print out a summary of the diagnostic results.
+        3.  It will return the diagnostics as an `xr.Dataset` and the diagnostic
+            summary as a dictionary.
+        """
+        return self.calculate_summaries(kind="diagnostics")
+
+    def evaluate_sample_stats(
+        self, max_tree_depth: int = 10, ebfmi_thresh: float = 0.2
+    ) -> xr.Dataset:
+        """
+        This evaluates the sample statistics for the samples. This is done by
+        checking the following conditions:
+
+            1. The maximum tree depth is less than or equal to `max_tree_depth`
+            2. The E-BFMI is greater than or equal to `ebfmi_thresh`
+            3. The samples did not diverge
+
+        The output dataset contains boolean arrays for each test, where those that
+        fail are `True` and those that pass are `False`. Specifically, tests are
+        considered to fail if the following conditions are met:
+
+            1. Tree Depth == `max_tree_depth`
+            2. E-BFMI < `ebfmi_thresh`
+            3. Samples diverged (i.e., `diverging` of `sample_stats` is `True`)
+
+        After evaluation, the `inference_obj` will have `sample_diagnostic_tests`
+        as a new group containing boolean arrays for each test at the sample level
+        (i.e., each step in each MCMC chain). The dataset of boolean arrays is returned.
+        """
+        # The maximum tree depth should be less than or equal to the `max_tree_depth`
+        # argument. If it isn't, we have an error.
+        # pylint: disable=no-member
+        if (
+            found_max := self.inference_obj.sample_stats.tree_depth.max().item()
+        ) > max_tree_depth:
+            raise ValueError(
+                f"The maximum tree depth found in the sample stats was {found_max},"
+                f"which is greater than the provided `max_tree_depth` of {max_tree_depth}."
+                "Did you run sampling with a non-default value for the tree depth?"
+            )
+
+        # Run all tests and build a dataset
+        sample_tests = xr.concat(
+            [
+                (self.inference_obj.sample_stats.energy < ebfmi_thresh).expand_dims(
+                    metric=["low_ebfmi"]
+                ),
+                (
+                    self.inference_obj.sample_stats.tree_depth == max_tree_depth
+                ).expand_dims(metric=["max_tree_depth_reached"]),
+                self.inference_obj.sample_stats.diverging.expand_dims(
+                    metric=["diverged"]
+                ),
+            ],
+            dim="metric",
+        )
+        # pylint: enable=no-member
+
+        # Add the new group to the ArviZ object
+        self._update_group("sample_diagnostic_tests", sample_tests)
+
+        return sample_tests
+
+    def evaluate_diagnostic_stats(
+        self, r_hat_thresh: float = 1.01, ess_thresh=400
+    ) -> xr.Dataset:
+        """
+        This identifies variables that fail the diagnostic tests. The output dataset
+        contains boolean arrays for each test, where those that fail are `True`
+        and those that pass are `False`. Specifically, tests are considered to fail
+        if the following conditions are met:
+
+            1. R-hat >= `r_hat_thresh`
+            2. Effective Sample Size - Bulk <= `ess_thresh`
+            3. Effective Sample Size - Tail <= `ess_thresh`
+
+        After evaluation, the `inference_obj` will have `variable_diagnostic_tests`
+        as an additional group. This contains boolean arrays for each test at the
+        variable level (i.e., each variable in the model). The dataset of boolean
+        arrays is returned.
+        """
+        # We need to check if the `diagnostic_stats` group exists. If it doesn't,
+        # we need to run `calculate_diagnostics` first.
+        if not hasattr(self.inference_obj, "diagnostic_stats"):
+            raise ValueError(
+                "The `diagnostic_stats` group does not exist. Please run "
+                "`calculate_diagnostics` first."
+            )
+
+        # All metrics should be present in the `diagnostic_stats` group.
+        # pylint: disable=no-member
+        if missing_metrics := (
+            {"r_hat", "ess_bulk", "ess_tail"}
+            - set(self.inference_obj.diagnostic_stats.metric.values.tolist())
+        ):
+            raise ValueError(
+                "The following metrics are missing from the `diagnostic_stats` "
+                f"group: {missing_metrics}."
+            )
+
+        # Run all tests and build a dataset
+        variable_tests = xr.concat(
+            [
+                self.inference_obj.diagnostic_stats.sel(metric="r_hat") >= r_hat_thresh,
+                self.inference_obj.diagnostic_stats.sel(metric="ess_bulk")
+                <= ess_thresh,
+                self.inference_obj.diagnostic_stats.sel(metric="ess_tail")
+                <= ess_thresh,
+            ],
+            dim="metric",
+        )
+        # pylint: enable=no-member
+
+        # Add the new group to the ArviZ object
+        self._update_group("variable_diagnostic_tests", variable_tests)
+
+        return variable_tests
+
+    def generate_diagnostic_report(self) -> str:
+        """
+        Returns the diagnostic report as a string. This can only be run if the
+        `diagnose` method has been called.
+        """
+
+    # Missing attributes are pulled from the ArviZ object
     def __getattr__(self, name):
-        return getattr(self.fit, name)
+        return getattr(self.inference_obj, name)
 
     @classmethod
     def from_disk(
