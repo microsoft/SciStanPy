@@ -14,6 +14,13 @@ import xarray as xr
 
 import dms_stan.model.stan as stan_module
 
+from dms_stan.custom_types import ProcessedTestRes, StrippedTestRes
+from dms_stan.defaults import (
+    DEFAULT_EBFMI_THRESH,
+    DEFAULT_ESS_THRESH,
+    DEFAULT_MAX_TREE_DEPTH,
+    DEFAULT_RHAT_THRESH,
+)
 from dms_stan.model.components import Normal
 
 
@@ -202,7 +209,7 @@ class SampleResults:
         This is a wrapper around `az.summary`. See that function for details. There
         is one important difference: This function will two new groups to the ArviZ
         InferenceData object. The first is 'variable_diagnostic_stats', which contains any
-        metrics that are diagnostic in nature; the second is 'summary_stats', which
+        metrics that are diagnostic in nature; the second is 'variable_summary_stats', which
         contains summary statistics for the samples. The `diagnostic_varnames` argument
         is used to specify which metrics are considered diagnostic.
 
@@ -253,7 +260,7 @@ class SampleResults:
 
         # Build new or update old groups
         update_group(diagnostic_metrics, "variable_diagnostic_stats")
-        update_group(stat_metrics, "summary_stats")
+        update_group(stat_metrics, "variable_summary_stats")
 
         return summaries
 
@@ -272,7 +279,9 @@ class SampleResults:
         return self.calculate_summaries(kind="diagnostics")
 
     def evaluate_sample_stats(
-        self, max_tree_depth: int = 10, ebfmi_thresh: float = 0.2
+        self,
+        max_tree_depth: int = DEFAULT_MAX_TREE_DEPTH,
+        ebfmi_thresh: float = DEFAULT_EBFMI_THRESH,
     ) -> xr.Dataset:
         """
         This evaluates the sample statistics for the samples. This is done by
@@ -323,7 +332,7 @@ class SampleResults:
         return sample_tests
 
     def evaluate_variable_diagnostic_stats(
-        self, r_hat_thresh: float = 1.01, ess_thresh=400
+        self, r_hat_thresh: float = DEFAULT_RHAT_THRESH, ess_thresh=DEFAULT_ESS_THRESH
     ) -> xr.Dataset:
         """
         This identifies variables that fail the diagnostic tests. The output dataset
@@ -378,11 +387,162 @@ class SampleResults:
 
         return variable_tests
 
-    def generate_diagnostic_report(self) -> str:
+    def identify_failed_diagnostics(self, silent: bool = False) -> tuple[
+        StrippedTestRes,
+        dict[str, StrippedTestRes],
+    ]:
         """
-        Returns the diagnostic report as a string. This can only be run if the
-        `diagnose` method has been called.
+        Evaluates diagnostic tests and prints a summary of the results. This method
+        also returns dictionaries that map from test/variable names to numpy arrays
+        of indices at which tests failed. This can only be run if the `calculate_diagnostics`,
+        `evaluate_sample_stats`, and `evaluate_variable_diagnostic_stats` methods
+        have been run first.
         """
+
+        def process_test_results(test_res_dataarray: xr.Dataset) -> ProcessedTestRes:
+            """
+            Process the test results from a DataArray into a dictionary of test results.
+
+            Parameters
+            ----------
+            test_res_dataarray : xr.Dataset
+                The DataArray containing the test results.
+
+            Returns
+            -------
+            ProcessedTestRes
+                A dictionary where the keys are the variable names and the values are tuples
+                containing the indices of the failed tests and the total number of tests.
+            """
+            return {
+                varname: (np.nonzero(tests.values), tests.values.size)
+                for varname, tests in test_res_dataarray.items()
+            }
+
+        def strip_totals(process_test_results: ProcessedTestRes) -> StrippedTestRes:
+            """
+            Strip the totals from the test results.
+
+            Parameters
+            ----------
+            process_test_results : ProcessedTestRes
+                The processed test results from the `process_test_results` function.
+
+            Returns
+            -------
+            StrippedTestRes
+                The processed test results with the totals stripped.
+            """
+            return {k: v[0] for k, v in process_test_results.items()}
+
+        def report_test_summary(
+            processed_test_results: ProcessedTestRes,
+            type_: str,
+            prepend_newline: bool = True,
+        ) -> None:
+            """
+            Report the summary of the test results.
+
+            Parameters
+            ----------
+            processed_test_results : dict[str, tuple[tuple[npt.NDArray, ...], int]]
+                The processed test results from the `process_test_results` function.
+            type_ : str
+                The type of test results (e.g., "sample", "variable").
+            prepend_newline : bool, optional
+                Whether to prepend a newline before the summary, by default True.
+            """
+            if prepend_newline:
+                print()
+            header = f"{type_.capitalize()} diagnostic tests results' summaries:"
+            print(header)
+            print("-" * len(header))
+            for varname, (
+                failed_indices,
+                total_tests,
+            ) in processed_test_results.items():
+                n_failures = len(failed_indices[0])
+                assert all(n_failures == len(failed) for failed in failed_indices[1:])
+                print(
+                    f"{n_failures} of {total_tests} ({n_failures / total_tests:.2%}) {type_}s "
+                    f"{message_map.get(varname, f'tests failed for {varname}')}."
+                )
+
+        # Different messages for different test types
+        message_map = {
+            "low_ebfmi": "had a low energy",
+            "max_tree_depth_reached": "reached the maximum tree depth",
+            "diverged": "diverged",
+        }
+
+        # Get the indices of the sampling tests that failed and the total number of tests
+        # performed
+        # pylint: disable=no-member
+        sample_test_failures = process_test_results(
+            self.inference_obj.sample_diagnostic_tests
+        )
+
+        # Get the indices of the variable diagnostic tests that failed and the total number
+        # of tests performed
+        variable_test_failures = {
+            metric.item(): process_test_results(
+                self.inference_obj.variable_diagnostic_tests.sel(metric=metric.item())
+            )
+            for metric in self.inference_obj.variable_diagnostic_tests.metric
+        }
+        # pylint: enable=no-member
+
+        # Strip the totals from the test results and package as return values
+        res = (
+            strip_totals(sample_test_failures),
+            {
+                metric: strip_totals(failures)
+                for metric, failures in variable_test_failures.items()
+            },
+        )
+
+        # If silent, return the test results now
+        if silent:
+            return res
+
+        # Report sample test failures
+        report_test_summary(sample_test_failures, "sample", prepend_newline=False)
+
+        # Report variable test failures
+        for metric, failures in variable_test_failures.items():
+            report_test_summary(failures, metric)
+
+        return res
+
+    def diagnose(
+        self,
+        max_tree_depth: int = DEFAULT_MAX_TREE_DEPTH,
+        ebfmi_thresh: float = DEFAULT_EBFMI_THRESH,
+        r_hat_thresh: float = DEFAULT_RHAT_THRESH,
+        ess_thresh: float = DEFAULT_ESS_THRESH,
+        silent: bool = False,
+    ) -> tuple[StrippedTestRes, dict[str, StrippedTestRes]]:
+        """
+        Runs the full diagnostics pipeline. Under the hood, this calls, in order:
+
+        1. `calculate_diagnostics`
+        2. `evaluate_sample_stats`
+        3. `evaluate_variable_diagnostic_stats`
+        4. `identify_failed_diagnostics`
+
+        The results of the last step are returned.
+        """
+        # Run the diagnostics
+        self.calculate_diagnostics()
+        self.evaluate_sample_stats(
+            max_tree_depth=max_tree_depth, ebfmi_thresh=ebfmi_thresh
+        )
+        self.evaluate_variable_diagnostic_stats(
+            r_hat_thresh=r_hat_thresh, ess_thresh=ess_thresh
+        )
+
+        # Identify the failed diagnostics
+        return self.identify_failed_diagnostics(silent=silent)
 
     @classmethod
     def from_disk(

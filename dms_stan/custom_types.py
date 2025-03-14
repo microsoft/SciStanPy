@@ -6,14 +6,12 @@ import numpy as np
 import numpy.typing as npt
 import torch.distributions as dist
 
-import dms_stan
 from .model.components import (
     Constant,
     ContinuousDistribution,
     DiscreteDistribution,
     TransformedParameter,
 )
-from .model.components.abstract_model_component import AbstractModelComponent
 from .model.components.custom_torch_dists import Multinomial
 
 # Parameter types
@@ -35,3 +33,7 @@ CombinableParameterType = Union[ContinuousParameterType, DiscreteParameterType]
 
 # Distribution types
 DMSStanDistribution = Union[dist.Distribution, Multinomial]
+
+# Diagnostic output types
+ProcessedTestRes = dict[str, tuple[tuple[npt.NDArray, ...], int]]
+StrippedTestRes = dict[str, tuple[npt.NDArray, ...]]
