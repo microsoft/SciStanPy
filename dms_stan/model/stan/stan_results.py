@@ -63,7 +63,7 @@ class SampleResults:
             setattr(self.inference_obj, group, dataset.squeeze(drop=True))
 
         # Save the arviz object to disk
-        self._save()
+        self.save_netcdf()
 
     def _get_ppc(self, data: dict[str, npt.NDArray]) -> list[str]:
 
@@ -150,13 +150,23 @@ class SampleResults:
 
         return coords, varname_to_named_shape
 
-    def _save(self) -> None:
+    def save_netcdf(self, file_prefix: str | None = None) -> None:
         """
         Saves the ArViz object to a netcdf file. This is performed on initialization
         when not loading from disk
         """
-        # Get the common prefix for the csv files attached to the CmdStanMCMC object
-        prefix = os.path.commonprefix(self.fit.runset.csv_files)
+        # If a file prefix is provided, use it. Otherwise, extract from the csv
+        # files attached to the CmdStanMCMC object
+        if file_prefix is not None:
+            prefix = file_prefix
+        elif self.fit is None:
+            raise ValueError(
+                "No CmdStanMCMC object is attached to this SampleResults object, "
+                "so a file prefix cannot be automatically generated. Please provide "
+                "a file prefix."
+            )
+        else:
+            prefix = os.path.commonprefix(self.fit.runset.csv_files)
 
         # Save the ArViZ object to a netcdf file
         self.inference_obj.to_netcdf(prefix + "arviz.nc")
@@ -191,7 +201,7 @@ class SampleResults:
         """
         This is a wrapper around `az.summary`. See that function for details. There
         is one important difference: This function will two new groups to the ArviZ
-        InferenceData object. The first is 'diagnostic_stats', which contains any
+        InferenceData object. The first is 'variable_diagnostic_stats', which contains any
         metrics that are diagnostic in nature; the second is 'summary_stats', which
         contains summary statistics for the samples. The `diagnostic_varnames` argument
         is used to specify which metrics are considered diagnostic.
@@ -242,7 +252,7 @@ class SampleResults:
         stat_metrics = list(calculated_metrics - noted_diagnostics)
 
         # Build new or update old groups
-        update_group(diagnostic_metrics, "diagnostic_stats")
+        update_group(diagnostic_metrics, "variable_diagnostic_stats")
         update_group(stat_metrics, "summary_stats")
 
         return summaries
@@ -312,7 +322,7 @@ class SampleResults:
 
         return sample_tests
 
-    def evaluate_diagnostic_stats(
+    def evaluate_variable_diagnostic_stats(
         self, r_hat_thresh: float = 1.01, ess_thresh=400
     ) -> xr.Dataset:
         """
@@ -330,32 +340,33 @@ class SampleResults:
         variable level (i.e., each variable in the model). The dataset of boolean
         arrays is returned.
         """
-        # We need to check if the `diagnostic_stats` group exists. If it doesn't,
+        # We need to check if the `variable_diagnostic_stats` group exists. If it doesn't,
         # we need to run `calculate_diagnostics` first.
-        if not hasattr(self.inference_obj, "diagnostic_stats"):
+        if not hasattr(self.inference_obj, "variable_diagnostic_stats"):
             raise ValueError(
-                "The `diagnostic_stats` group does not exist. Please run "
+                "The `variable_diagnostic_stats` group does not exist. Please run "
                 "`calculate_diagnostics` first."
             )
 
-        # All metrics should be present in the `diagnostic_stats` group.
+        # All metrics should be present in the `variable_diagnostic_stats` group.
         # pylint: disable=no-member
         if missing_metrics := (
             {"r_hat", "ess_bulk", "ess_tail"}
-            - set(self.inference_obj.diagnostic_stats.metric.values.tolist())
+            - set(self.inference_obj.variable_diagnostic_stats.metric.values.tolist())
         ):
             raise ValueError(
-                "The following metrics are missing from the `diagnostic_stats` "
+                "The following metrics are missing from the `variable_diagnostic_stats` "
                 f"group: {missing_metrics}."
             )
 
         # Run all tests and build a dataset
         variable_tests = xr.concat(
             [
-                self.inference_obj.diagnostic_stats.sel(metric="r_hat") >= r_hat_thresh,
-                self.inference_obj.diagnostic_stats.sel(metric="ess_bulk")
+                self.inference_obj.variable_diagnostic_stats.sel(metric="r_hat")
+                >= r_hat_thresh,
+                self.inference_obj.variable_diagnostic_stats.sel(metric="ess_bulk")
                 <= ess_thresh,
-                self.inference_obj.diagnostic_stats.sel(metric="ess_tail")
+                self.inference_obj.variable_diagnostic_stats.sel(metric="ess_tail")
                 <= ess_thresh,
             ],
             dim="metric",
@@ -367,15 +378,11 @@ class SampleResults:
 
         return variable_tests
 
-    def run_diagnostic_report(self) -> str:
+    def generate_diagnostic_report(self) -> str:
         """
         Returns the diagnostic report as a string. This can only be run if the
         `diagnose` method has been called.
         """
-
-    # Missing attributes are pulled from the ArviZ object
-    def __getattr__(self, name):
-        return getattr(self.inference_obj, name)
 
     @classmethod
     def from_disk(
