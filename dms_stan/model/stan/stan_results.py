@@ -297,19 +297,13 @@ class SampleResults:
             )
 
         # Run all tests and build a dataset
-        sample_tests = xr.concat(
-            [
-                (self.inference_obj.sample_stats.energy < ebfmi_thresh).expand_dims(
-                    metric=["low_ebfmi"]
-                ),
-                (
-                    self.inference_obj.sample_stats.tree_depth == max_tree_depth
-                ).expand_dims(metric=["max_tree_depth_reached"]),
-                self.inference_obj.sample_stats.diverging.expand_dims(
-                    metric=["diverged"]
-                ),
-            ],
-            dim="metric",
+        sample_tests = xr.Dataset(
+            {
+                "low_ebfmi": self.inference_obj.sample_stats.energy < ebfmi_thresh,
+                "max_tree_depth_reached": self.inference_obj.sample_stats.tree_depth
+                == max_tree_depth,
+                "diverged": self.inference_obj.sample_stats.diverging,
+            }
         )
         # pylint: enable=no-member
 
@@ -373,7 +367,7 @@ class SampleResults:
 
         return variable_tests
 
-    def generate_diagnostic_report(self) -> str:
+    def run_diagnostic_report(self) -> str:
         """
         Returns the diagnostic report as a string. This can only be run if the
         `diagnose` method has been called.
