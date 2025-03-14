@@ -35,6 +35,7 @@ class SampleResults:
         stan_model: Union["stan_module.StanModel", None] = None,
         fit: cmdstanpy.CmdStanMCMC | None = None,
         data: dict[str, npt.NDArray] | None = None,
+        precision: Literal["double", "single", "half"] = "single",
         _from_disk: bool = False,
     ):
         # If loading from disk, skip the rest of the initialization
@@ -51,26 +52,65 @@ class SampleResults:
         # Store the CmdStanMCMC object
         self.fit = fit
 
+        # Build the ArviZ object
+        self.inference_obj = self._build_arviz_object(
+            stan_model=stan_model, data=data, precision=precision
+        )
+
+        # Save the arviz object to disk
+        self.save_netcdf()
+
+    def _build_arviz_object(
+        self,
+        stan_model: "stan_module.StanModel",
+        data: dict[str, npt.NDArray],
+        precision: Literal["double", "single", "half"] = "single",
+    ) -> az.InferenceData:
+
+        # Decide on the precision of the data
+        if precision == "double":
+            float_dtype, int_dtype = np.float64, np.int64
+        elif precision == "single":
+            float_dtype, int_dtype = np.float32, np.int32
+        elif precision == "half":
+            float_dtype, int_dtype = np.float16, np.int16
+        else:
+            raise ValueError("precision must be one of 'double', 'single', or 'half'.")
+
         # Get the additional arguments needed for building the arviz object
         posterior_predictive = self._get_ppc(data)
         coords, dims = self._get_coords_dims(stan_model)
 
         # Build the arviz object
-        self.inference_obj = az.from_cmdstanpy(
-            posterior=fit,
+        inference_obj = az.from_cmdstanpy(
+            posterior=self.fit,
             posterior_predictive=posterior_predictive,
             observed_data=data,
             constant_data=stan_model.autogathered_data,
             coords=coords,
             dims=dims,
+            dtypes=self.fit,
         )
 
-        # Squeeze the dummy dimensions out of the ArviZ object
-        for group, dataset in self.inference_obj.items():
-            setattr(self.inference_obj, group, dataset.squeeze(drop=True))
+        # Squeeze the dummy dimensions out of the ArviZ object and cooerce data
+        # to the precision requested. Ideally, precision would be set during creation
+        # of the original ArviZ object, but there is no option to do this right
+        # now.
+        for group, dataset in inference_obj.items():
+            setattr(
+                inference_obj,
+                group,
+                dataset.squeeze(drop=True)
+                .astype(float_dtype, casting="same_kind")
+                .astype(int_dtype, casting="same_kind"),
+            )
 
-        # Save the arviz object to disk
-        self.save_netcdf()
+        # Rename the posterior predictive variables to not have the "_ppc" suffix
+        inference_obj.posterior_predictive = inference_obj.posterior_predictive.rename(
+            {name: name.removesuffix("_ppc") for name in posterior_predictive}
+        )
+
+        return inference_obj
 
     def _get_ppc(self, data: dict[str, npt.NDArray]) -> list[str]:
 
