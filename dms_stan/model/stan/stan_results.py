@@ -8,8 +8,10 @@ from typing import Literal, Optional, Sequence, Union
 
 import arviz as az
 import cmdstanpy
+import holoviews as hv
 import numpy as np
 import numpy.typing as npt
+import scipy.stats as stats
 import xarray as xr
 
 import dms_stan.model.stan as stan_module
@@ -583,6 +585,116 @@ class SampleResults:
 
         # Identify the failed diagnostics
         return self.identify_failed_diagnostics(silent=silent)
+
+    def check_calibration(self) -> tuple[list[hv.Curve], dict[str, float]]:
+        """
+        This method checks how well the observed data matches the sampled posterior
+        predictive samples. The procedure is as follows:
+
+        1.  Calculate the (exclusive) quantiles of the observed data relative to
+            the posterior predictive samples.
+        2.  Plot an ECDF of the observed quantiles. A perfectly calibrated model
+            will produce a straight line from (0, 0) to (1, 1). This is because
+            the at the xth percentile, x% of samples should be less than the observed
+            value.
+        3.  Calculate the absolute difference in area between the observed ECDF
+            and the idealized ECDF. This is the calibration score. A perfectly calibrated
+            model will have a calibration score of 0. A perfectly miscalibrated
+            model will have a calibration score of 0.5.
+
+        Returns:
+            list[hv.Curve]: A list of hv.Curve objects representing the ECDF of
+                the observed quantiles and the idealized ECDF. There will be one
+                plot for each observed variable.
+            dict[str, float]]: A dictionary mapping from the variable names to the
+                calibration scores.
+        """
+
+        # pylint: disable=line-too-long
+        def calculate_deviance(
+            x: npt.NDArray[np.floating], y: npt.NDArray[np.floating]
+        ) -> float:
+            r"""
+            Calculates the absolute difference in area between the observed ECDF and the
+            ideal ECDF were the model fit perfectly. We can calculate this by subtracting
+            the area under the curve of the ideal ECDF from the area under the curve of
+            the observed ECDF, calculated using the trapezoidal rule. Formally:
+
+            \begin{align}
+            AUC_{obs} = \sum_{i=1}^{n} (x_{i+1} - x_{i}) * (y_{i+1} + y_{i}) / 2
+            AUC_{ideal} = \sum_{i=1}^{n} (x_{i+1} - x_{i}) * (x_{i+1} + x_{i}) / 2
+            AUC_{diff} = \sum_{i=1}^{n} (x_{i+1} - x_{i}) * abs((y_{i+1} + y_{i}) - (x_{i+1} + x_{i})) / 2
+            \end{align}
+
+            where $x$ are the quantiles and $y$ are the cumulative probabilities and we
+            take the absolute value of the difference between the two AUCs at each step
+            to get the absolute difference.
+            """
+            # Get the widths of the intervals
+            dx = np.diff(x)
+
+            # Get the total heights of the trapezoids over intervals for the observed
+            # and ideal ECDFs
+            h_obs = y[1:] + y[:-1]
+            h_ideal = x[1:] + x[:-1]
+
+            # Calculate the absolute difference in areas under the curves
+            return np.sum(dx * np.abs(h_obs - h_ideal) / 2).item()
+
+        # pylint: enable=line-too-long
+
+        # Calculate the quantiles of the observations in the posterior predictive
+        # distribution
+        # pylint: disable=no-member
+        quantiles = (
+            (self.inference_obj.posterior_predictive - self.inference_obj.observed_data)
+            < 0
+        ).mean(dim=["chain", "draw"])
+        # pylint: enable=no-member
+
+        # Build ECDFs for the quantiles. The ideal ECDF would be a straight line
+        plots, deviances = [], {}
+        for data_var, data in quantiles.items():
+
+            # Get the ECDF coordinates of the observed data
+            ecdf = stats.ecdf(data.values.flatten())
+            x, y = ecdf.cdf.quantiles, ecdf.cdf.probabilities
+
+            # Calculate the absolute deviance
+            dev = calculate_deviance(x, y)
+            deviances[data_var] = dev
+
+            # Create the plot
+            plots.append(
+                (
+                    hv.Curve(
+                        (x, y),
+                        kdims=["Quantiles"],
+                        vdims=["Cumulative Probability"],
+                    )
+                    * hv.Curve(
+                        ((0, 1), (0, 1)),
+                        kdims=["Quantiles"],
+                        vdims=["Cumulative Probability"],
+                    ).opts(
+                        line_color="black",
+                        line_dash="dashed",
+                    )
+                    * hv.Text(
+                        0.95,
+                        0.0,
+                        f"Absolute Deviance: {dev:.2f}",
+                        halign="right",
+                        valign="bottom",
+                    )
+                ).opts(
+                    title=f"ECDF of {data_var}",
+                    xlabel="Quantiles",
+                    ylabel="Cumulative Probability",
+                )
+            )
+
+        return plots, deviances
 
     @classmethod
     def from_disk(
