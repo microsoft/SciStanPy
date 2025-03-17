@@ -95,13 +95,20 @@ class TrpBGrowthModel(dms.Model):
         if times[0] != 0.0:
             raise ValueError("Times should start at 0")
 
-        # Now start building the generative model.
-        # Hyperparameters first
-        self.log_A = dms_components.Normal(  # pylint: disable=invalid-name
-            mu=0.5, sigma=0.5, shape=(n_variants,)
-        )
-        self.log_A.mu.is_togglable = False
+        # The starting distributions at t = 0 are the same for all replicates. Because
+        # the relative abundances need to add up to 1, our prior is a Dirichlet
+        # distribution with an alpha value > 1 to enforce the belief that the inputs
+        # are roughly equally abundant.
+        self.theta_t0 = dms_components.Dirichlet(alpha=10.0, shape=(n_variants,))
 
+        # We will be modeling the log of exponential growth, so our starting values
+        # for `log_A` are the log of the starting counts.
+        self.log_A = dms_ops.log(self.theta_t0)  # pylint: disable=invalid-name
+
+        # Now hyperparameters on the growth rate. We assume that the noise in the
+        # growth rate is the same for all variants, so we model a single standard
+        # deviation for all variants. The mean growth rate is allowed to vary between
+        # variants, however.
         self.r_mean = dms_components.Exponential(beta=10.0, shape=(n_variants,))
         self.r_std = dms_components.HalfNormal(sigma=0.25)  # Shared across variants
 
@@ -113,10 +120,7 @@ class TrpBGrowthModel(dms.Model):
             mu=self.r_mean, sigma=self.r_std, shape=(n_replicates, 1, n_variants)
         )
 
-        # Calculate the thetas at t = 0. This is just the log_A values normalized
-        self.theta_t0 = dms_ops.exp(dms_ops.normalize_log(self.log_A))
-
-        # Calculate the thetas a t > 0. This is the result of log exponential growth
+        # Calculate the thetas at t > 0.
         self.theta_tg0 = dms_ops.exp(
             dms_ops.normalize_log(
                 dms_components.LogExponentialGrowth(
