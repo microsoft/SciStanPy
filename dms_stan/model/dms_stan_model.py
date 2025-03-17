@@ -37,7 +37,7 @@ from .components import (
 from .components.abstract_model_component import AbstractModelComponent
 from .map import MAP
 from .pytorch import check_observable_data, PyTorchModel
-from .stan import StanModel
+from .stan import SampleResults, StanModel
 
 
 def components_to_dict(
@@ -433,7 +433,7 @@ class Model(ABC):
         inits: Optional[str] = "prior",
         data: Optional[dict[str, npt.NDArray]] = None,
         **sample_kwargs,
-    ) -> CmdStanMCMC:
+    ) -> SampleResults:
         """Samples from the model using MCMC. This is a wrapper around the `sample`
         method of the `StanModel` class.
         """
