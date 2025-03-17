@@ -594,7 +594,7 @@ class SampleResults:
         # Identify the failed diagnostics
         return self.identify_failed_diagnostics(silent=silent)
 
-    def check_calibration(self) -> tuple[list[hv.Curve], dict[str, float]]:
+    def check_calibration(self) -> tuple[list[hv.Overlay], dict[str, float]]:
         """
         This method checks how well the observed data matches the sampled posterior
         predictive samples. The procedure is as follows:
@@ -701,7 +701,6 @@ class SampleResults:
                     ylabel="Cumulative Probability",
                 )
             )
-
         return plots, deviances
 
     @classmethod
