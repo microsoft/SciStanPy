@@ -80,9 +80,9 @@ class AbstractModelComponent(ABC):
         # If THIS parameter is a simplex, then the upper and lower bounds cannot
         # be set
         if self.IS_SIMPLEX:
-            if self.LOWER_BOUND is not None or self.LOWER_BOUND != 0.0:
+            if self.LOWER_BOUND is not None and self.LOWER_BOUND != 0.0:
                 raise ValueError("Simplex parameters cannot have lower bounds")
-            if self.UPPER_BOUND is not None or self.UPPER_BOUND != 1.0:
+            if self.UPPER_BOUND is not None and self.UPPER_BOUND != 1.0:
                 raise ValueError("Simplex parameters cannot have upper bounds")
 
     def _set_parents(

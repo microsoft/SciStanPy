@@ -566,7 +566,8 @@ class Dirichlet(ContinuousDistribution):
     """Defines the Dirichlet distribution."""
 
     POSITIVE_PARAMS = {"alpha"}
-    BASE_STAN_DTYPE: str = "simplex"
+    BASE_STAN_DTYPE = "simplex"
+    IS_SIMPLEX = True
     STAN_DIST = "dirichlet"
 
     def __init__(
