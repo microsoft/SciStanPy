@@ -279,16 +279,20 @@ class Model(ABC):
             """
             # Split into components and draws and components and values
             components, unpacked_draws = zip(*draws.items())
-            parents, values = zip(
-                *[
-                    [parent, parent.value]
-                    for component in self.all_model_components
-                    for parent in component.parents
-                    if isinstance(component, TransformedParameter)
-                    and isinstance(parent, Constant)
-                    and parent.ndim > 0
-                ]
+            coordinates = list(
+                zip(
+                    *[
+                        [parent, parent.value]
+                        for component in self.all_model_components
+                        for parent in component.parents
+                        if isinstance(parent, Constant) and np.prod(parent.shape) > 1
+                    ]
+                )
             )
+            if len(coordinates) == 0:
+                parents, values = [], []
+            else:
+                parents, values = coordinates
 
             # Process the draws and values for xarray. Note that because constants
             # have no sample prefix, we do not add the sampling dimension to them
