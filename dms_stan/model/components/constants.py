@@ -22,6 +22,7 @@ class Constant(AbstractModelComponent):
         lower_bound: Optional[float] = None,
         upper_bound: Optional[float] = None,
         togglable: Optional[bool] = None,
+        enforce_uniformity: bool = False,
     ):
         """
         Wraps the value in a Constant instance. Any numerical type is legal.
@@ -37,6 +38,11 @@ class Constant(AbstractModelComponent):
         else:
             self.BASE_STAN_DTYPE = "real" if isinstance(value, float) else "int"
             value = np.array(value, dtype=type(value))
+
+        # If enforcing uniformity, there can only be one value. Every time this
+        # attribute is checked, it will be checked that the value is a single value.
+        self._enforce_uniformity = enforce_uniformity
+        self.enforce_uniformity  # Runs check, pylint: disable=pointless-statement
 
         # Set upper and lower bounds
         self.LOWER_BOUND = lower_bound  # pylint: disable=invalid-name
@@ -141,3 +147,27 @@ class Constant(AbstractModelComponent):
     @property
     def torch_parametrization(self) -> torch.Tensor:
         return self._torch_parametrization
+
+    @property
+    def enforce_uniformity(self) -> bool:
+        """
+        Whether to enforce uniformity in the value. If True, makes sure that value
+        is indeed a single value.
+        """
+        if self._enforce_uniformity and np.unique(self.value).size > 1:
+            raise ValueError(
+                "If enforcing uniformity, the value must be a single value."
+            )
+        return self._enforce_uniformity
+
+    @enforce_uniformity.setter
+    def enforce_uniformity(self, value: bool) -> None:
+        """
+        Checks to be sure that the values are uniform, then updates the private
+        attribute `_enforce_uniformity` if they are.
+        """
+        if value and np.unique(self.value).size > 1:
+            raise ValueError(
+                "If enforcing uniformity, the value must be a single value."
+            )
+        self._enforce_uniformity = value

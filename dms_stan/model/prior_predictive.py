@@ -1,5 +1,6 @@
 """This module is used for building and displaying prior predictive checks."""
 
+import itertools
 import re
 
 from copy import deepcopy
@@ -105,11 +106,12 @@ class PriorPredictiveCheck:
             ):
                 continue
 
-            # If no dimensions, just create a slider
-            if hyperparam_val.ndim == 0:
+            # If no dimensions OR if we are forcing uniformity across a multidimensional
+            # array, just create a slider
+            if hyperparam_val.ndim == 0 or hyperparam_val.enforce_uniformity:
                 sliders[hyperparam_name] = pnw.EditableFloatSlider(
                     name=hyperparam_name,
-                    value=hyperparam_val.value.item(),
+                    value=np.unique(hyperparam_val.value).item(),
                     start=hyperparam_val.slider_start,
                     end=hyperparam_val.slider_end,
                     step=hyperparam_val.slider_step_size,
@@ -117,17 +119,13 @@ class PriorPredictiveCheck:
                 continue
 
             # Otherwise, create a slider for each entry
-            target_shape = hyperparam_val.shape
-            remaining_elements = np.prod(target_shape)
-            current_index = [0] * len(target_shape)
-            current_dim = len(target_shape) - 1
-            while remaining_elements > 0:
+            for arr_ind in np.ndindex(hyperparam_val.shape):
 
                 # Build the slider name
-                name = f"{hyperparam_name}[{', '.join(map(str, current_index))}]"
+                name = f"{hyperparam_name}[{', '.join(map(str, arr_ind))}]"
 
                 # Get the slider value
-                slider_val = hyperparam_val.value[tuple(current_index)]
+                slider_val = hyperparam_val.value[arr_ind]
 
                 # Add the slider
                 sliders[name] = pnw.EditableFloatSlider(
@@ -138,18 +136,6 @@ class PriorPredictiveCheck:
                     step=hyperparam_val.slider_step_size,
                 )
 
-                # Increment the current index. If we have reached the end of the
-                # current dimension, move to the next dimension
-                if current_index[current_dim] == target_shape[current_dim] - 1:
-                    current_index[current_dim:] = [0] * (
-                        len(target_shape) - current_dim
-                    )
-                    current_dim -= 1
-
-                # Decrement the remaining elements. Increment the current index
-                remaining_elements -= 1
-                current_index[current_dim] += 1
-
         return sliders
 
     def _update_model(self) -> None:
@@ -158,10 +144,10 @@ class PriorPredictiveCheck:
 
             # Get the parameter name and the indices
             paramname, indices = _INDEX_EXTRACTOR.match(paramname).groups()
-            indices = tuple(map(int, indices.split(","))) if indices else ()
-
-            # The parameter must be a constant
-            assert isinstance(self.model[paramname], Constant)
+            if indices:
+                tuple(map(int, indices.split(",")))
+            else:
+                indices = ...
 
             # Update the value of the constant
             self.model[paramname].value[indices] = slider.value
@@ -331,7 +317,7 @@ class PriorPredictiveCheck:
 
         # Update the description of the grouping dimension
         description = ", ".join(
-            f"[{dim}: {self._xarray_data.dims[dim]}]" for dim in target_dim_opts[1:]
+            f"[{dim}: {self._xarray_data.sizes[dim]}]" for dim in target_dim_opts[1:]
         )
         self.group_dim_dropdown.name = f"Group By ({description})"
 
@@ -340,11 +326,13 @@ class PriorPredictiveCheck:
 
     def set_independent_var_options(self, event: Event) -> None:
         """Sets the independent variable options based on the selected target."""
-        # The independent variable must be a coordinate that contains the `Group By`
-        # dimension.
+        # The independent variable must be a coordinate or data variable that contains
+        # the `Group By` dimension.
         independent_var_opts = [""] + [
-            coord
-            for coord, arr in self._xarray_data.coords.items()
+            varname
+            for varname, arr in itertools.chain(
+                self._xarray_data.coords.items(), self._xarray_data.data_vars.items()
+            )
             if event.new in set(arr.dims)
         ]
 

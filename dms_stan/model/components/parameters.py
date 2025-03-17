@@ -576,6 +576,16 @@ class Dirichlet(ContinuousDistribution):
         **kwargs,
     ):
 
+        # If a float or int is provided, then "shape" must be provided too. We will
+        # create a numpy array filled of that shape filled with the value
+        if enforce_uniformity := isinstance(alpha, (float, int)):
+            if "shape" not in kwargs:
+                raise ValueError(
+                    "If alpha is a float or int, then shape must be provided"
+                )
+            alpha = np.full(kwargs["shape"], float(alpha))
+
+        # Initialize the parent class
         super().__init__(
             numpy_dist="dirichlet",
             torch_dist=dist.dirichlet.Dirichlet,
@@ -583,6 +593,35 @@ class Dirichlet(ContinuousDistribution):
             stan_to_torch_names={"alpha": "concentration"},
             alpha=alpha,
             **kwargs,
+        )
+
+        # Set `enforce_uniformity` appropriately
+        self.alpha.enforce_uniformity = enforce_uniformity
+
+    def _draw(
+        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+    ) -> npt.NDArray:
+        """
+        The Dirichlet distribution in numpy follows slightly different broadcasting
+        rules. Specifically, we can only have a 1-D array of parameters for the
+        Dirichlet distribution. This means that we need to loop over multiple calls
+        to the Dirichlet distribution in numpy.
+        """
+        # Perform any necessary transformations and rename the parameters
+        level_draws = self._transform_and_rename_np(level_draws)
+
+        # Get the distribution itself
+        dirichlet_dist = self.get_numpy_dist(seed=seed)
+
+        # Get the alphas as a 2D array
+        assert level_draws["alpha"].ndim >= 2, "Alpha must be at least 2D"
+        assert level_draws["alpha"].shape[0] == n, "First dimension must be n"
+        alphas = level_draws["alpha"].reshape(-1, level_draws["alpha"].shape[-1])
+
+        # Sample from the Dirichlet distribution and reshape the output to match
+        # the original shape of the alpha parameter
+        return np.stack([dirichlet_dist(alpha) for alpha in alphas], axis=0).reshape(
+            level_draws["alpha"].shape
         )
 
     def _write_dist_args(self, alpha: str) -> str:  # pylint: disable=arguments-differ
