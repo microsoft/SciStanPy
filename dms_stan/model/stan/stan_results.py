@@ -91,7 +91,7 @@ class SampleResults:
             constant_data=stan_model.autogathered_data,
             coords=coords,
             dims=dims,
-            dtypes=self.fit,
+            dtypes=stan_model,
         )
 
         # Squeeze the dummy dimensions out of the ArviZ object and cooerce data
@@ -99,13 +99,21 @@ class SampleResults:
         # of the original ArviZ object, but there is no option to do this right
         # now.
         for group, dataset in inference_obj.items():
-            setattr(
-                inference_obj,
-                group,
-                dataset.squeeze(drop=True)
-                .astype(float_dtype, casting="same_kind")
-                .astype(int_dtype, casting="same_kind"),
-            )
+
+            # Squeeze the dummy dimensions out of the dataset
+            dataset = dataset.squeeze(drop=True)
+
+            # Coerce the data to the requested precision
+            for varname, dataarray in dataset.data_vars.items():
+                if np.issubdtype(dataarray.dtype, np.floating):
+                    dataset[varname] = dataarray.astype(
+                        float_dtype, casting="same_kind"
+                    )
+                elif np.issubdtype(dataarray.dtype, np.integer):
+                    dataset[varname] = dataarray.astype(int_dtype, casting="same_kind")
+
+            # Update the group in the ArviZ object with the modified dataset
+            setattr(inference_obj, group, dataset)
 
         # Rename the posterior predictive variables to not have the "_ppc" suffix
         inference_obj.posterior_predictive = inference_obj.posterior_predictive.rename(
