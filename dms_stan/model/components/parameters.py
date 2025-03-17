@@ -578,12 +578,17 @@ class Dirichlet(ContinuousDistribution):
 
         # If a float or int is provided, then "shape" must be provided too. We will
         # create a numpy array filled of that shape filled with the value
-        if enforce_uniformity := isinstance(alpha, (float, int)):
+        enforce_uniformity = True
+        if isinstance(alpha, (float, int)):
             if "shape" not in kwargs:
                 raise ValueError(
                     "If alpha is a float or int, then shape must be provided"
                 )
             alpha = np.full(kwargs["shape"], float(alpha))
+        elif isinstance(alpha, Constant) and isinstance(alpha.value, (float, int)):
+            alpha.value = np.full(alpha.shape, float(alpha.value))
+        else:
+            enforce_uniformity = False
 
         # Initialize the parent class
         super().__init__(
