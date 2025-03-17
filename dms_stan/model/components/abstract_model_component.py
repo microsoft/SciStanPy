@@ -490,19 +490,21 @@ class AbstractModelComponent(ABC):
         string_shape = [str(dim) for dim in self.shape]
 
         # Handle different data types for different dimensions
+        check_array = False
         if dtype == "real":  # Becomes vector or array of vectors
             dtype = f"vector{self.stan_bounds}[{string_shape[-1]}]"
-            if self.ndim > 1:
-                dtype = f"array[{','.join(string_shape[:-1])}] {dtype}"
-
+            check_array = True
         elif dtype == "int":  # Becomes array
             dtype = f"array[{','.join(string_shape)}] int{self.stan_bounds}"
-
         elif dtype == "simplex":  # Becomes array of simplexes
-            dtype = f"array[{','.join(string_shape[:-1])}] simplex[{string_shape[-1]}]"
-
+            dtype = f"simplex[{string_shape[-1]}]"
+            check_array = True
         else:
             raise AssertionError(f"Unknown data type {dtype}")
+
+        # Convert to an array of vectors or simplexes if necessary
+        if check_array and self.ndim > 1:
+            dtype = f"array[{','.join(string_shape[:-1])}] {dtype}"
 
         return dtype
 
