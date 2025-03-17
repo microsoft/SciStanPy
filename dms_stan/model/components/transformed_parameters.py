@@ -270,8 +270,6 @@ class LogParameter(UnaryTransformedParameter):
     # The distribution must be positive
     POSITIVE_PARAMS = {"dist1"}
 
-    LOWER_BOUND: float = 0.0
-
     def operation(self, dist1):
         return _choose_module(dist1).log(dist1)
 
