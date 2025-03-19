@@ -4,15 +4,18 @@ import os.path
 import warnings
 
 from glob import glob
-from typing import Literal, Optional, Sequence, Union
+from typing import Literal, Optional, overload, Sequence, Union
 
 import arviz as az
 import cmdstanpy
 import holoviews as hv
 import numpy as np
 import numpy.typing as npt
-import scipy.stats as stats
+import pandas as pd
+import panel as pn
 import xarray as xr
+
+from scipy import stats
 
 import dms_stan.model.stan as stan_module
 
@@ -24,6 +27,46 @@ from dms_stan.defaults import (
     DEFAULT_RHAT_THRESH,
 )
 from dms_stan.model.components import Normal
+
+# pylint: disable=too-many-lines
+
+
+def _symmetrize_quantiles(quantiles: Sequence[float]) -> list[float]:
+    """
+    Symmetrizes a list of quantiles by adding the complementary quantiles and the
+    median. For example, if the input is [0.1, 0.2], the output will be
+    [0.1, 0.2, 0.5, 0.8, 0.9].
+    """
+    # Get the quantiles
+    quantiles = sorted(set(quantiles) | {1 - q for q in quantiles} | {0.5})
+
+    # Check that the quantiles are between 0 and 1
+    if not all(0 < q < 1 for q in quantiles):
+        raise ValueError(
+            "Quantiles must be between 0 and 1. Please provide a valid list of "
+            "quantiles."
+        )
+
+    # Check that the quantiles are odd in number and include 0.5
+    assert len(quantiles) % 2 == 1, "Quantiles must be odd in number"
+    median_ind = len(quantiles) // 2
+    assert quantiles[median_ind] == 0.5, "Quantiles must include 0.5"
+
+    return quantiles
+
+
+def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
+    """
+    Identify the minimum value across all arrays. Then, use that single value (i.e.,
+    even if 30 arrays were passed, we find the absolute minimum across all 30 to
+    get a single value) to shift the arrays such that the absolute minimum is 1.
+    Finally, apply log10 to the shifted arrays.
+    """
+    # Get the minimum value across all arrays
+    min_val = min(np.min(arg) for arg in args)
+
+    # Shift the arrays and apply log10
+    return tuple(np.log10(arg - min_val + 1) for arg in args)
 
 
 class SampleResults:
@@ -594,7 +637,50 @@ class SampleResults:
         # Identify the failed diagnostics
         return self.identify_failed_diagnostics(silent=silent)
 
-    def check_calibration(self) -> tuple[list[hv.Overlay], dict[str, float]]:
+    def _get_quantiles(self) -> xr.Dataset:
+        """
+        Calculates the quantiles of the observed data relative to the posterior
+        predictive samples.
+        """
+        # pylint: disable=no-member
+        return (
+            (self.inference_obj.posterior_predictive - self.inference_obj.observed_data)
+            < 0
+        ).mean(dim=["chain", "draw"])
+
+    @overload
+    def check_calibration(
+        self,
+        *,
+        return_deviance: Literal[False],
+        display: Literal[True],
+        width: int,
+        height: int,
+    ) -> hv.Layout: ...
+
+    @overload
+    def check_calibration(
+        self,
+        *,
+        return_deviance: Literal[False],
+        display: Literal[False],
+        width: int,
+        height: int,
+    ) -> dict[str, hv.Overlay]: ...
+
+    @overload
+    def check_calibration(
+        self,
+        *,
+        return_deviance: Literal[True],
+        display: Literal[False],
+        width: int,
+        height: int,
+    ) -> tuple[dict[str, hv.Overlay], dict[str, float]]: ...
+
+    def check_calibration(
+        self, *, return_deviance=False, display=True, width=600, height=600
+    ):
         """
         This method checks how well the observed data matches the sampled posterior
         predictive samples. The procedure is as follows:
@@ -611,11 +697,18 @@ class SampleResults:
             model will have a calibration score of 0.5.
 
         Returns:
-            list[hv.Curve]: A list of hv.Curve objects representing the ECDF of
-                the observed quantiles and the idealized ECDF. There will be one
-                plot for each observed variable.
-            dict[str, float]]: A dictionary mapping from the variable names to the
-                calibration scores.
+            If `display` is `True`, a holoviews.Layout object containing the ECDF
+            plots for each observed variable. The plots will be displayed in a single
+            column.
+
+            If `display` is `False`, a list of holoviews.Overlay objects containing
+            the ECDF plots for each observed variable.
+
+            If `return_deviance` is `True`, a tuple containing the list of
+            holoviews.Overlay objects and a dictionary mapping from the variable
+            names to the calibration scores. The calibration scores are the absolute
+            difference in area between the observed ECDF and the idealized ECDF.
+            Note that `display` cannot be `True` if `return_deviance` is `True`.
         """
 
         # pylint: disable=line-too-long
@@ -651,18 +744,16 @@ class SampleResults:
 
         # pylint: enable=line-too-long
 
-        # Calculate the quantiles of the observations in the posterior predictive
-        # distribution
-        # pylint: disable=no-member
-        quantiles = (
-            (self.inference_obj.posterior_predictive - self.inference_obj.observed_data)
-            < 0
-        ).mean(dim=["chain", "draw"])
-        # pylint: enable=no-member
+        # We cannot have both `display` and `return_deviance` set to True
+        if display and return_deviance:
+            raise ValueError(
+                "Cannot have both `display` and `return_deviance` set to True."
+            )
 
         # Build ECDFs for the quantiles. The ideal ECDF would be a straight line
-        plots, deviances = [], {}
-        for data_var, data in quantiles.items():
+        plots: dict[str, hv.Overlay] = {}
+        deviances: dict[str, float] = {}
+        for varname, data in self._get_quantiles().items():
 
             # Get the ECDF coordinates of the observed data
             ecdf = stats.ecdf(data.values.flatten())
@@ -670,38 +761,426 @@ class SampleResults:
 
             # Calculate the absolute deviance
             dev = calculate_deviance(x, y)
-            deviances[data_var] = dev
+            deviances[varname] = dev
 
             # Create the plot
-            plots.append(
-                (
-                    hv.Curve(
-                        (x, y),
-                        kdims=["Quantiles"],
-                        vdims=["Cumulative Probability"],
-                    )
-                    * hv.Curve(
-                        ((0, 1), (0, 1)),
-                        kdims=["Quantiles"],
-                        vdims=["Cumulative Probability"],
-                    ).opts(
-                        line_color="black",
-                        line_dash="dashed",
-                    )
-                    * hv.Text(
-                        0.95,
-                        0.0,
-                        f"Absolute Deviance: {dev:.2f}",
-                        halign="right",
-                        valign="bottom",
-                    )
-                ).opts(
-                    title=f"ECDF of {data_var}",
-                    xlabel="Quantiles",
-                    ylabel="Cumulative Probability",
+            plots[varname] = (
+                hv.Curve(
+                    (x, y),
+                    kdims=["Quantiles"],
+                    vdims=["Cumulative Probability"],
                 )
+                * hv.Curve(
+                    ((0, 1), (0, 1)),
+                    kdims=["Quantiles"],
+                    vdims=["Cumulative Probability"],
+                ).opts(
+                    line_color="black",
+                    line_dash="dashed",
+                )
+                * hv.Text(
+                    0.95,
+                    0.0,
+                    f"Absolute Deviance: {dev:.2f}",
+                    halign="right",
+                    valign="bottom",
+                )
+            ).opts(
+                title=f"ECDF of Quantiles: {varname}",
+                xlabel="Quantiles",
+                ylabel="Cumulative Probability",
+                width=width,
+                height=height,
             )
-        return plots, deviances
+
+        # If requested, display the plots
+        if display:
+            return hv.Layout(plots.values()).cols(1)
+
+        # If requested, return the plots and the deviance
+        if return_deviance:
+            return plots, deviances
+
+        # Otherwise, just return the plots
+        return plots
+
+    @overload
+    def plot_posterior_predictive_samples(
+        self,
+        *,
+        quantiles: Sequence[float],
+        use_ranks: bool,
+        logy: bool,
+        display: Literal[True],
+        width: int,
+        height: int,
+    ) -> hv.Layout: ...
+
+    @overload
+    def plot_posterior_predictive_samples(
+        self,
+        *,
+        quantiles: Sequence[float],
+        use_ranks: bool,
+        logy: bool,
+        display: Literal[False],
+        width: int,
+        height: int,
+    ) -> dict[str, hv.Overlay]: ...
+
+    def plot_posterior_predictive_samples(
+        self,
+        *,
+        quantiles=(0.025, 0.25, 0.5),
+        use_ranks=True,
+        logy=False,
+        display=True,
+        width=600,
+        height=400,
+    ):
+        """
+        Plots observed data against the corresponding posterior predictive samples.
+        The posterior predictive samples are plotted as a series of confidence intervals.
+
+        Args:
+            quantiles (Sequence[float]): The quantiles defining the plotted confidence
+                intervals. Note that the median will always be included and the
+                quantiles will be symmetrized (e.g., if passing in 0.025 as a quantile,
+                0.975 will be added automatically to the list). Defaults to
+                (0.025, 0.25, 0.5).
+            use_ranks (bool): If `True`, the ranks of the observed values will be
+                plotted on the x-axis instead of their raw values. This is useful
+                when the observed values are not symmetrically distributed. Defaults
+                to `True`.
+            logy (bool): If `True`, the y-axis will be plotted on a logarithmic
+                scale. Note that, due to a bug in the underlying holoviews library,
+                y-values will be shifted to have a minimum of 1 before the log is
+                applied and the log will be applied *before* plotting. This means
+                that, from the perspective of the holoviews library, the y-axis
+                will be plotted on a linear scale. Defaults to `False`.
+
+        Returns:
+            If `display` is `True`, a holoviews.Layout object containing the plots
+            for each observed variable. The plots will be displayed in a single
+            column.
+            If `display` is `False`, a list of holoviews.Overlay objects containing
+            the plots for each observed variable.
+        """
+
+        # Symmetrize the quantiles
+        quantiles = _symmetrize_quantiles(quantiles)
+
+        # Get the confidence intervals for the posterior predictive samples
+        ppc_cis = self.inference_obj.posterior_predictive.apply(
+            lambda x: x.stack(samples=("chain", "draw")).quantile(
+                quantiles, dim="samples"
+            )
+        )
+
+        # Process each observed variable
+        plots: dict[str, hv.Overlay] = {}
+        for varname, y_data_sampled in ppc_cis.data_vars.items():
+
+            # Get the observed data
+            y_data_obs = self.inference_obj.observed_data[  # pylint: disable=no-member
+                varname
+            ]
+            assert y_data_obs.dims == y_data_sampled.dims[1:]
+            assert y_data_sampled.dims[0] == "quantile"
+
+            # Convert data to numpy arrays and reshape
+            y_data_sampled = y_data_sampled.to_numpy().reshape(len(quantiles), -1)
+            y_data_obs = y_data_obs.to_numpy().ravel()
+
+            # If using a log-y axis, shift the y-data
+            if logy:
+                y_data_sampled, y_data_obs = _log10_shift(y_data_sampled, y_data_obs)
+
+            # Get the x-axis data
+            x_data = (
+                stats.rankdata(y_data_obs, method="ordinal")
+                if use_ranks
+                else y_data_obs
+            )
+
+            # Sort data for plotting the areas and lines
+            sorted_inds = np.argsort(x_data)
+            x_data, y_data_obs, y_data_sampled = (
+                x_data[sorted_inds],
+                y_data_obs[sorted_inds],
+                y_data_sampled[:, sorted_inds],
+            )
+
+            # Plot the observed data on top of the posterior predictive samples'
+            # confidence intervals
+            plots[varname] = hv.Overlay(
+                [
+                    hv.Area(
+                        (
+                            x_data,
+                            y_data_sampled[quantile_ind],
+                            y_data_sampled[-quantile_ind - 1],
+                        ),
+                        vdims=["Lower", "Upper"],
+                    ).opts(
+                        color="black",
+                        alpha=0.2,
+                        line_width=1,
+                        line_color="black",
+                        line_alpha=0.3,
+                        show_legend=False,
+                    )
+                    for quantile_ind in range(len(quantiles) // 2)
+                ]
+                + [
+                    hv.Scatter(
+                        (x_data, y_data_obs),
+                        label="Observed Data",
+                    ).opts(color="gold", line_width=0, alpha=0.8, size=1)
+                ]
+            ).opts(
+                xlabel=f"Observed Value {'Rank' if use_ranks else ''}: {varname}",
+                ylabel=f"Value{' log10' if logy else ''}: {varname}",
+                title=f"Posterior Predictive Samples: {varname}",
+                width=width,
+                height=height,
+            )
+
+        # If requested, display the plots
+        if display:
+            return hv.Layout(plots.values()).cols(1).opts(shared_axes=False)
+
+        return plots
+
+    @overload
+    def plot_observed_quantiles(
+        self,
+        *,
+        use_ranks: bool,
+        display: Literal[True],
+        width: int,
+        height: int,
+        windowsize: Optional[int],
+    ) -> hv.Layout: ...
+
+    @overload
+    def plot_observed_quantiles(
+        self,
+        *,
+        use_ranks: bool,
+        display: Literal[False],
+        width: int,
+        height: int,
+        windowsize: Optional[int],
+    ) -> dict[str, hv.Overlay]: ...
+
+    def plot_observed_quantiles(
+        self, *, use_ranks=True, display=True, width=600, height=400, windowsize=None
+    ):
+        """
+        Plots the quantiles of the observed data relative to the posterior predictive
+        samples. The x-axis is either the values of the observed data or their ranks.
+        The y-axis is the quantiles of the observed data relative to the posterior
+        predictive samples. A sliding window is used to calculate a rolling mean
+        of the quantiles.
+
+        Args:
+            use_ranks (bool): If `True`, the ranks of the observed values will be
+                plotted on the x-axis instead of their raw values. This is useful
+                when the observed values are not symmetrically distributed. Defaults
+                to `True`.
+            display (bool): If `True`, the plots will be displayed. Defaults to `True`.
+            width (int): The width of the plots. Defaults to 600.
+            height (int): The height of the plots. Defaults to 400.
+        Returns:
+            If `display` is `True`, a holoviews.Layout object containing the plots
+            for each observed variable. The plots will be displayed in a single
+            column.
+            If `display` is `False`, a list of holoviews.Overlay objects containing
+            the plots for each observed variable.
+        """
+        # Loop over quantiles for different observed variables
+        plots: dict[str, hv.Overlay] = {}
+        for varname, y_data in self._get_quantiles().data_vars.items():
+
+            # Get the observed data. This is the x-axis data.
+            x_data = self.inference_obj.observed_data[  # pylint: disable=no-member
+                varname
+            ]
+            assert y_data.dims == x_data.dims
+
+            # Convert data to numpy arrays
+            x_data = x_data.to_numpy().ravel()
+            y_data = y_data.to_numpy().ravel()
+
+            # Convert x-data to ranks if requested
+            if use_ranks:
+                x_data = stats.rankdata(x_data, method="ordinal")
+
+            # Build the plot
+            plots[varname] = (
+                hv.HexTiles((x_data, y_data)).opts(
+                    cmap="viridis",
+                    colorbar=True,
+                )
+                * hv.Curve(
+                    pd.DataFrame({"x": x_data, "y": y_data})
+                    .sort_values(by="x")
+                    .rolling(
+                        window=max(
+                            1,
+                            (x_data.size // 100 if windowsize is None else windowsize),
+                        )
+                    )
+                    .mean()
+                    .dropna(),
+                    "x",
+                    "y",
+                    label="Rolling Mean",
+                ).opts(color="black", line_width=3)
+            ).opts(
+                xlabel=f"Observed Value {'Rank' if use_ranks else ''}: {varname}",
+                ylabel=f"Observed Quantile: {varname}",
+                title=f"Observed Quantiles: {varname}",
+                width=width,
+                height=height,
+            )
+
+        # If requested, display the plots
+        if display:
+            return hv.Layout(plots.values()).cols(1).opts(shared_axes=False)
+
+        return plots
+
+    @overload
+    def run_ppc(
+        self,
+        *,
+        use_ranks: bool,
+        display: Literal[True],
+        square_ecdf: bool,
+        windowsize: Optional[int],
+        quantiles: Sequence[float],
+        logy_ppc_samples: bool,
+        subplot_width: int,
+        subplot_height: int,
+    ) -> pn.Column: ...
+
+    @overload
+    def run_ppc(
+        self,
+        *,
+        use_ranks: bool,
+        display: Literal[False],
+        square_ecdf: bool,
+        windowsize: Optional[int],
+        quantiles: Sequence[float],
+        logy_ppc_samples: bool,
+        subplot_width: int,
+        subplot_height: int,
+    ) -> list[dict[str, hv.Overlay]]: ...
+
+    def run_ppc(
+        self,
+        *,
+        use_ranks=True,
+        display=True,
+        square_ecdf=True,
+        windowsize=None,
+        quantiles=(0.025, 0.25, 0.5),
+        logy_ppc_samples=False,
+        subplot_width=600,
+        subplot_height=400,
+    ):
+        """
+        Runs all posterior predictive checks. This includes running the following
+        methods:
+
+            1. `plot_posterior_predictive_samples`
+            2. `plot_observed_quantiles`
+            3. `check_calibration`
+
+        Args:
+            use_ranks (bool): If `True`, the ranks of the observed values will be
+                plotted on the x-axis instead of their raw values. This is useful
+                when the observed values are not symmetrically distributed. Defaults
+                to `True`.
+            display (bool): If `True`, the plots will be displayed. Otherwise, a
+                list of outputs from each of the called subfunctions (in the order
+                listed above) will be returned. Defaults to `True`.
+            square_ecdf (bool): If `True`, the ECDF plots will be made square by
+                using the smaller of the width and height for both dimensions. Defaults
+                to `True`.
+            windowsize (int): The size of the rolling window for the ECDF plots.
+                Defaults to None.
+            quantiles (Sequence[float]): The quantiles defining the plotted confidence
+                intervals. Note that the median will always be included and the
+                quantiles will be symmetrized (e.g., if passing in 0.025 as a quantile,
+                0.975 will be added automatically to the list). Defaults to
+                (0.025, 0.25, 0.5).
+            logy_ppc_samples (bool): If `True`, the y-axis of the posterior predictive
+                samples plot will be logarithmic. Defaults to False.
+        """
+        # Get ecdf widths and heights
+        if square_ecdf:
+            ecdf_width = min(subplot_width, subplot_height)
+            ecdf_height = ecdf_width
+        else:
+            ecdf_width = subplot_width
+            ecdf_height = subplot_height
+
+        # Get the different plots
+        plots = [
+            self.plot_posterior_predictive_samples(
+                quantiles=quantiles,
+                use_ranks=use_ranks,
+                logy=logy_ppc_samples,
+                display=False,
+                width=subplot_width,
+                height=subplot_height,
+            ),
+            self.plot_observed_quantiles(
+                use_ranks=use_ranks,
+                display=False,
+                width=subplot_width,
+                height=subplot_height,
+                windowsize=windowsize,
+            ),
+            self.check_calibration(
+                return_deviance=False,
+                display=False,
+                width=ecdf_width,
+                height=ecdf_height,
+            ),
+        ]
+
+        # If not displaying, return the plots
+        if not display:
+            return plots
+
+        # Otherwise, display the plots
+        plots, widget = pn.panel(
+            hv.Layout(
+                [
+                    hv.HoloMap(plots[0], kdims="Variable").opts(
+                        hv.opts.Scatter(framewise=True),
+                        hv.opts.Area(framewise=True),
+                    ),
+                    hv.HoloMap(plots[1], kdims="Variable").opts(
+                        hv.opts.HexTiles(framewise=True, axiswise=True, min_count=0),
+                        hv.opts.Curve(framewise=True, color="darkgray"),
+                    ),
+                    hv.HoloMap(plots[2], kdims="Variable").opts(
+                        hv.opts.Curve(framewise=True),
+                    ),
+                ]
+            )
+            .opts(shared_axes=False)
+            .cols(1)
+        )
+        widget.align = ("start", "start")
+
+        return pn.Column(widget, plots)
 
     @classmethod
     def from_disk(
