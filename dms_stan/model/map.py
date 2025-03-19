@@ -1,5 +1,4 @@
-"""Holds code for the maximum a posteriori (MAP) estimation of the model parameters.
-"""
+"""Holds code for the maximum a posteriori (MAP) estimation of the model parameters."""
 
 from typing import Optional
 
@@ -10,6 +9,9 @@ import pandas as pd
 import torch
 
 import dms_stan as dms
+
+# TODO: Extend the MAP such that we can use it like the SampleResults class. We
+# want to be able to do the same posterior predictive checks.
 
 
 class MAPParam:

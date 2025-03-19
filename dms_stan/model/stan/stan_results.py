@@ -30,6 +30,11 @@ from dms_stan.model.components import Normal
 
 # pylint: disable=too-many-lines
 
+# TODO: Set up parallel coordinate plots that highlight the variables that fail
+# the diagnostic tests
+
+# TODO: Set up a way to visualize trace plots for the problematic samples.
+
 
 def _symmetrize_quantiles(quantiles: Sequence[float]) -> list[float]:
     """
