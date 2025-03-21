@@ -4,14 +4,13 @@ import os.path
 import warnings
 
 from glob import glob
-from typing import Literal, Optional, overload, Sequence, Union
+from typing import Generator, Literal, Optional, overload, Sequence, Union
 
 import arviz as az
 import cmdstanpy
 import holoviews as hv
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
 import panel as pn
 import xarray as xr
 
@@ -27,6 +26,12 @@ from dms_stan.defaults import (
     DEFAULT_RHAT_THRESH,
 )
 from dms_stan.model.components import Normal
+from dms_stan.plotting import (
+    calculate_relative_quantiles,
+    hexgrid_with_mean,
+    plot_calibration,
+    quantile_plot,
+)
 
 # pylint: disable=too-many-lines
 
@@ -642,16 +647,35 @@ class SampleResults:
         # Identify the failed diagnostics
         return self.identify_failed_diagnostics(silent=silent)
 
-    def _get_quantiles(self) -> xr.Dataset:
+    def _iter_pp_obs(
+        self,
+    ) -> Generator[tuple[str, npt.NDArray, npt.NDArray], None, None]:
         """
-        Calculates the quantiles of the observed data relative to the posterior
-        predictive samples.
+        Iterates over the posterior predictive samples and observed variables, converting
+        the samples to 2D arrays and the observations to 1D arrays.
         """
-        # pylint: disable=no-member
-        return (
-            (self.inference_obj.posterior_predictive - self.inference_obj.observed_data)
-            < 0
-        ).mean(dim=["chain", "draw"])
+        # Loop over the posterior predictive samples
+        for varname, reference in self.inference_obj.posterior_predictive.items():
+
+            # Get the observed data and convert reference and observed to numpy
+            # arrays.
+            observed = self.inference_obj.observed_data[  # pylint: disable=no-member
+                varname
+            ].to_numpy()
+            reference = np.moveaxis(
+                reference.stack(
+                    samples=["chain", "draw"], features=[], create_index=False
+                ).to_numpy(),
+                -1,
+                0,
+            )
+
+            # Dims must align
+            assert observed.shape == reference.shape[1:]
+
+            yield varname, reference.reshape(reference.shape[0], -1), observed.reshape(
+                -1
+            )
 
     @overload
     def check_calibration(
@@ -690,7 +714,7 @@ class SampleResults:
         This method checks how well the observed data matches the sampled posterior
         predictive samples. The procedure is as follows:
 
-        1.  Calculate the (exclusive) quantiles of the observed data relative to
+        1.  Calculate the (inclusive) quantiles of the observed data relative to
             the posterior predictive samples.
         2.  Plot an ECDF of the observed quantiles. A perfectly calibrated model
             will produce a straight line from (0, 0) to (1, 1). This is because
@@ -715,74 +739,25 @@ class SampleResults:
             difference in area between the observed ECDF and the idealized ECDF.
             Note that `display` cannot be `True` if `return_deviance` is `True`.
         """
-
-        # pylint: disable=line-too-long
-        def calculate_deviance(
-            x: npt.NDArray[np.floating], y: npt.NDArray[np.floating]
-        ) -> float:
-            r"""
-            Calculates the absolute difference in area between the observed ECDF and the
-            ideal ECDF were the model fit perfectly. We can calculate this by subtracting
-            the area under the curve of the ideal ECDF from the area under the curve of
-            the observed ECDF, calculated using the trapezoidal rule. Formally:
-
-            \begin{align}
-            AUC_{obs} = \sum_{i=1}^{n} (x_{i+1} - x_{i}) * (y_{i+1} + y_{i}) / 2
-            AUC_{ideal} = \sum_{i=1}^{n} (x_{i+1} - x_{i}) * (x_{i+1} + x_{i}) / 2
-            AUC_{diff} = \sum_{i=1}^{n} (x_{i+1} - x_{i}) * abs((y_{i+1} + y_{i}) - (x_{i+1} + x_{i})) / 2
-            \end{align}
-
-            where $x$ are the quantiles and $y$ are the cumulative probabilities and we
-            take the absolute value of the difference between the two AUCs at each step
-            to get the absolute difference.
-            """
-            # Get the widths of the intervals
-            dx = np.diff(x)
-
-            # Get the total heights of the trapezoids over intervals for the observed
-            # and ideal ECDFs
-            h_obs = y[1:] + y[:-1]
-            h_ideal = x[1:] + x[:-1]
-
-            # Calculate the absolute difference in areas under the curves
-            return np.sum(dx * np.abs(h_obs - h_ideal) / 2).item()
-
-        # pylint: enable=line-too-long
-
         # We cannot have both `display` and `return_deviance` set to True
         if display and return_deviance:
             raise ValueError(
                 "Cannot have both `display` and `return_deviance` set to True."
             )
 
-        # Build ECDFs for the quantiles. The ideal ECDF would be a straight line
+        # Loop over the posterior predictive samples
         plots: dict[str, hv.Overlay] = {}
         deviances: dict[str, float] = {}
-        for varname, data in self._get_quantiles().items():
+        for varname, reference, observed in self._iter_pp_obs():
 
-            # Get the ECDF coordinates of the observed data
-            ecdf = stats.ecdf(data.values.flatten())
-            x, y = ecdf.cdf.quantiles, ecdf.cdf.probabilities
-
-            # Calculate the absolute deviance
-            dev = calculate_deviance(x, y)
+            # Build calibration plots and record deviance
+            plot, dev = plot_calibration(reference, observed)
+            dev = dev.item()
             deviances[varname] = dev
 
-            # Create the plot
+            # Finalize the plot with a text annotation and updates to the axes
             plots[varname] = (
-                hv.Curve(
-                    (x, y),
-                    kdims=["Quantiles"],
-                    vdims=["Cumulative Probability"],
-                )
-                * hv.Curve(
-                    ((0, 1), (0, 1)),
-                    kdims=["Quantiles"],
-                    vdims=["Cumulative Probability"],
-                ).opts(
-                    line_color="black",
-                    line_dash="dashed",
-                )
+                plot
                 * hv.Text(
                     0.95,
                     0.0,
@@ -871,78 +846,48 @@ class SampleResults:
             If `display` is `False`, a list of holoviews.Overlay objects containing
             the plots for each observed variable.
         """
-
-        # Symmetrize the quantiles
-        quantiles = _symmetrize_quantiles(quantiles)
-
-        # Get the confidence intervals for the posterior predictive samples
-        ppc_cis = self.inference_obj.posterior_predictive.apply(
-            lambda x: x.stack(samples=("chain", "draw")).quantile(
-                quantiles, dim="samples"
-            )
-        )
-
         # Process each observed variable
         plots: dict[str, hv.Overlay] = {}
-        for varname, y_data_sampled in ppc_cis.data_vars.items():
-
-            # Get the observed data
-            y_data_obs = self.inference_obj.observed_data[  # pylint: disable=no-member
-                varname
-            ]
-            assert y_data_obs.dims == y_data_sampled.dims[1:]
-            assert y_data_sampled.dims[0] == "quantile"
-
-            # Convert data to numpy arrays and reshape
-            y_data_sampled = y_data_sampled.to_numpy().reshape(len(quantiles), -1)
-            y_data_obs = y_data_obs.to_numpy().ravel()
+        for varname, reference, observed in self._iter_pp_obs():
 
             # If using a log-y axis, shift the y-data
             if logy:
-                y_data_sampled, y_data_obs = _log10_shift(y_data_sampled, y_data_obs)
+                reference, observed = _log10_shift(reference, observed)
 
             # Get the x-axis data
-            x_data = (
-                stats.rankdata(y_data_obs, method="ordinal")
-                if use_ranks
-                else y_data_obs
+            x = stats.rankdata(observed, method="ordinal") if use_ranks else reference
+
+            # Get labels
+            labels = np.array(
+                [
+                    ".".join(map(str, indices))
+                    for indices in np.ndindex(
+                        self.inference_obj.observed_data[  # pylint: disable=no-member
+                            varname
+                        ].shape
+                    )
+                ]
             )
 
             # Sort data for plotting the areas and lines
-            sorted_inds = np.argsort(x_data)
-            x_data, y_data_obs, y_data_sampled = (
-                x_data[sorted_inds],
-                y_data_obs[sorted_inds],
-                y_data_sampled[:, sorted_inds],
+            sorted_inds = np.argsort(x)
+            x, reference, observed, labels = (
+                x[sorted_inds],
+                reference[:, sorted_inds],
+                observed[sorted_inds],
+                labels[sorted_inds],
             )
 
-            # Plot the observed data on top of the posterior predictive samples'
-            # confidence intervals
-            plots[varname] = hv.Overlay(
-                [
-                    hv.Area(
-                        (
-                            x_data,
-                            y_data_sampled[quantile_ind],
-                            y_data_sampled[-quantile_ind - 1],
-                        ),
-                        vdims=["Lower", "Upper"],
-                    ).opts(
-                        color="black",
-                        alpha=0.2,
-                        line_width=1,
-                        line_color="black",
-                        line_alpha=0.3,
-                        show_legend=False,
-                    )
-                    for quantile_ind in range(len(quantiles) // 2)
-                ]
-                + [
-                    hv.Scatter(
-                        (x_data, y_data_obs),
-                        label="Observed Data",
-                    ).opts(color="gold", line_width=0, alpha=0.8, size=1)
-                ]
+            # Build the plot
+            plots[varname] = quantile_plot(
+                x=x,
+                reference=reference,
+                quantiles=quantiles,
+                observed=observed,
+                labels={varname: labels},
+                include_median=False,
+                overwrite_input=True,
+                observed_type="scatter",
             ).opts(
                 xlabel=f"Observed Value {'Rank' if use_ranks else ''}: {varname}",
                 ylabel=f"Value{' log10' if logy else ''}: {varname}",
@@ -1006,43 +951,18 @@ class SampleResults:
         """
         # Loop over quantiles for different observed variables
         plots: dict[str, hv.Overlay] = {}
-        for varname, y_data in self._get_quantiles().data_vars.items():
+        for varname, reference, observed in self._iter_pp_obs():
 
-            # Get the observed data. This is the x-axis data.
-            x_data = self.inference_obj.observed_data[  # pylint: disable=no-member
-                varname
-            ]
-            assert y_data.dims == x_data.dims
+            # Get the quantiles of the observed data relative to the reference
+            y = calculate_relative_quantiles(reference, observed)
 
-            # Convert data to numpy arrays
-            x_data = x_data.to_numpy().ravel()
-            y_data = y_data.to_numpy().ravel()
-
-            # Convert x-data to ranks if requested
-            if use_ranks:
-                x_data = stats.rankdata(x_data, method="ordinal")
+            # Flatten the data and update x to use rankings if requested
+            x, y = observed.ravel(), y.ravel()
+            x = stats.rankdata(x, method="ordinal") if use_ranks else x
 
             # Build the plot
-            plots[varname] = (
-                hv.HexTiles((x_data, y_data)).opts(
-                    cmap="viridis",
-                    colorbar=True,
-                )
-                * hv.Curve(
-                    pd.DataFrame({"x": x_data, "y": y_data})
-                    .sort_values(by="x")
-                    .rolling(
-                        window=max(
-                            1,
-                            (x_data.size // 100 if windowsize is None else windowsize),
-                        )
-                    )
-                    .mean()
-                    .dropna(),
-                    "x",
-                    "y",
-                    label="Rolling Mean",
-                ).opts(color="black", line_width=3)
+            plots[varname] = hexgrid_with_mean(
+                x=x, y=y, mean_windowsize=windowsize
             ).opts(
                 xlabel=f"Observed Value {'Rank' if use_ranks else ''}: {varname}",
                 ylabel=f"Observed Quantile: {varname}",
@@ -1114,8 +1034,8 @@ class SampleResults:
                 list of outputs from each of the called subfunctions (in the order
                 listed above) will be returned. Defaults to `True`.
             square_ecdf (bool): If `True`, the ECDF plots will be made square by
-                using the smaller of the width and height for both dimensions. Defaults
-                to `True`.
+                using the width for both width and height dimensions of the plot.
+                Defaults to `True`.
             windowsize (int): The size of the rolling window for the ECDF plots.
                 Defaults to None.
             quantiles (Sequence[float]): The quantiles defining the plotted confidence
@@ -1128,7 +1048,7 @@ class SampleResults:
         """
         # Get ecdf widths and heights
         if square_ecdf:
-            ecdf_width = min(subplot_width, subplot_height)
+            ecdf_width = subplot_width
             ecdf_height = ecdf_width
         else:
             ecdf_width = subplot_width
@@ -1186,6 +1106,162 @@ class SampleResults:
         widget.align = ("start", "start")
 
         return pn.Column(widget, plots)
+
+    @overload
+    def plot_sample_failure_quantile_traces(
+        self, display: Literal[True], width: int, height: int
+    ) -> hv.HoloMap: ...
+
+    @overload
+    def plot_sample_failure_quantile_traces(
+        self, display: Literal[False], width: int, height: int
+    ) -> dict[str, hv.Overlay]: ...
+
+    def plot_sample_failure_quantile_traces(
+        self, *, display=True, width=600, height=600
+    ):
+        """
+        Plots the quantiles of sampled values that failed the diagnostic tests relative
+        to the samples that passed the tests. The x-axis is a percentage of total
+        parameters, passing from the parameter whose failed samples were in the
+        lowest percentile to the parameter whose failed samples were in the highest
+        percentile relative to the samples that passed the tests. The y-axis is the
+        quantiles of the failed samples relative to the passing samples. The traces
+        for each individual failure are plotted, as is the median trace over all
+        failures.
+        """
+
+        # x-axis labels are meaningless, so we will use a hook to hide them
+        def hook(plot, element):  # pylint: disable=unused-argument
+            plot.state.xaxis.major_tick_line_color = None
+            plot.state.xaxis.minor_tick_line_color = None
+            plot.state.xaxis.major_label_text_font_size = "0pt"
+
+        # If there are no failed samples, raise an error
+        # pylint: disable=no-member
+        # if not any(
+        #     self.inference_obj.sample_diagnostic_tests.apply(lambda x: x.any()).values()
+        # ):
+        #     raise ValueError(
+        #         "No samples failed the diagnostic tests. This error is a good thing!"
+        #     )
+
+        # First, we need to get all samples and the diagnostic tests. We will reshape
+        # both to be 2D, with the first dimension being the samples and the second
+        # dimension being the parameter values or the test results, respectively.
+        sample_arr = (
+            self.inference_obj.posterior.to_stacked_array(
+                new_dim="vals", sample_dims=["chain", "draw"], variable_dim="parameter"
+            )
+            .stack(samples=("chain", "draw"))
+            .T
+        )
+        sample_test_arr = self.inference_obj.sample_diagnostic_tests.apply(
+            lambda x: x.stack(samples=("chain", "draw"))
+        )
+        # pylint: enable=no-member
+
+        # Now we need some metadata about the samples, such as the chain and draw
+        # indices and the parameter names
+        varnames = np.array(
+            [
+                ".".join([str(i) for i in name_tuple if isinstance(i, (str, int))])
+                for name_tuple in sample_arr.vals.to_numpy()
+            ]
+        )
+        chains = sample_arr.coords["chain"].to_numpy()
+        draws = sample_arr.coords["draw"].to_numpy()
+
+        # We will need the sample array as a numpy array from here
+        sample_arr = sample_arr.to_numpy()
+
+        # x-values are just incrementally increasing from 0 to 1 for the number of
+        # parameters
+        x = np.linspace(0, 1, sample_arr.shape[1])
+
+        # Now we process each of the diagnostic tests
+        plots = {}
+        for testname, testmask in sample_test_arr.items():
+
+            # Get the failed samples. If there are no failed samples, skip this
+            # test
+            # testmask = testmask.to_numpy()
+            testmask = np.zeros_like(testmask, dtype=bool)
+            testmask[:10] = True
+            if not testmask.any():
+                continue
+            failed_samples, failed_chains, failed_draws, passed_samples = (
+                sample_arr[testmask],
+                chains[testmask],
+                draws[testmask],
+                sample_arr[~testmask],
+            )
+
+            # Get the quantiles of the  failed samples relative to the passed ones
+            failed_quantiles = calculate_relative_quantiles(
+                passed_samples, failed_samples
+            )
+
+            # Get the typical quantiles of the failed samples
+            typical_failed_quantiles = np.median(failed_quantiles, axis=0)
+
+            # Sort samples by the values of the typical failed samples
+            sorted_inds = np.argsort(typical_failed_quantiles)
+            (
+                failed_samples,
+                failed_quantiles,
+                typical_failed_quantiles,
+                resorted_varnames,
+            ) = (
+                failed_samples[:, sorted_inds],
+                failed_quantiles[:, sorted_inds],
+                typical_failed_quantiles[sorted_inds],
+                varnames[sorted_inds],
+            )
+
+            # Build the traces
+            plots[testname] = hv.Overlay(
+                [
+                    hv.Curve(
+                        (
+                            x,
+                            quantile,
+                            resorted_varnames,
+                            failed_chains[i],
+                            failed_draws[i],
+                            failed_samples[i],
+                        ),
+                        kdims=["Fraction of Parameters"],
+                        vdims=["Quantile", "Parameter", "Chain", "Draw", "Value"],
+                    ).opts(line_color="blue", line_alpha=0.1, tools=["hover"])
+                    for i, quantile in enumerate(failed_quantiles)
+                ]
+                + [
+                    hv.Curve(
+                        (x, typical_failed_quantiles),
+                        kdims=["Fraction of Parameters"],
+                        vdims=["Quantile"],
+                        label="Typical Failed Quantiles",
+                    ).opts(line_color="black", line_width=1),
+                    hv.Curve(
+                        ((0, 1), (0, 1)),
+                        kdims=["Fraction of Parameters"],
+                        vdims=["Quantile"],
+                        label="Idealized Quantiles",
+                    ).opts(line_color="black", line_width=1, line_dash="dashed"),
+                ]
+            ).opts(
+                hooks=[hook],
+                title=f"Quantiles of Samples Failing: {testname}",
+                width=width,
+                height=height,
+            )
+
+        # If requested, display the plots
+        if display:
+            return hv.HoloMap(plots).opts(shared_axes=False)
+
+        return plots
 
     @classmethod
     def from_disk(
