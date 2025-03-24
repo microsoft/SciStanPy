@@ -13,7 +13,6 @@ import numpy as np
 import numpy.typing as npt
 import panel as pn
 import xarray as xr
-
 from scipy import stats
 
 import dms_stan.model.stan as stan_module
@@ -37,8 +36,6 @@ from dms_stan.plotting import (
 
 # TODO: Set up parallel coordinate plots that highlight the variables that fail
 # the diagnostic tests
-
-# TODO: Set up a way to visualize trace plots for the problematic samples.
 
 
 def _symmetrize_quantiles(quantiles: Sequence[float]) -> list[float]:
@@ -1139,12 +1136,12 @@ class SampleResults:
 
         # If there are no failed samples, raise an error
         # pylint: disable=no-member
-        # if not any(
-        #     self.inference_obj.sample_diagnostic_tests.apply(lambda x: x.any()).values()
-        # ):
-        #     raise ValueError(
-        #         "No samples failed the diagnostic tests. This error is a good thing!"
-        #     )
+        if not any(
+            self.inference_obj.sample_diagnostic_tests.apply(lambda x: x.any()).values()
+        ):
+            raise ValueError(
+                "No samples failed the diagnostic tests. This error is a good thing!"
+            )
 
         # First, we need to get all samples and the diagnostic tests. We will reshape
         # both to be 2D, with the first dimension being the samples and the second
@@ -1185,9 +1182,7 @@ class SampleResults:
 
             # Get the failed samples. If there are no failed samples, skip this
             # test
-            # testmask = testmask.to_numpy()
-            testmask = np.zeros_like(testmask, dtype=bool)
-            testmask[:10] = True
+            testmask = testmask.to_numpy()
             if not testmask.any():
                 continue
             failed_samples, failed_chains, failed_draws, passed_samples = (
@@ -1259,7 +1254,7 @@ class SampleResults:
 
         # If requested, display the plots
         if display:
-            return hv.HoloMap(plots).opts(shared_axes=False)
+            return hv.Layout(plots.values()).cols(1).opts(shared_axes=False)
 
         return plots
 
