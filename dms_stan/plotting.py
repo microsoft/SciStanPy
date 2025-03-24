@@ -353,24 +353,27 @@ def calculate_relative_quantiles(
     in an equivalent position in the reference that are less than or equal to the
     observed value. This is then returned as a numpy array.
     Args:
-        reference (npt.NDArray): The reference observations. This is expected to
-            be a 2D array with shape (n_samples, n_features).
-        observed (npt.NDArray): The observed values. This is expected to be a either
-            a 1D or 2D array with shape (n_features,) or (n_observations, n_features).
-            If a 2D array, then multiple ECDFs will be plotted.
+        reference (npt.NDArray): The reference observations. This must have shape
+            (n_samples, feat1, feat2, ..., featn). The first dimensions is the number
+            of samples and the rest are the feature dimensions.
+        observed (npt.NDArray): The observed values. This must have the same number
+            of dimensions as the reference. Each dimension must be the same size
+            as the corresponding dimension of the reference except for the first
+            dimension, which gives the number of observations.
+
     Returns:
         npt.NDArray: The quantiles of the observed values relative to the reference.
+            This has shape (n_observations, feat1, feat2, ..., featn).
     """
-    # Check shapes. Add a singleton dimension to the observed if needed.
-    if reference.ndim != 2:
-        raise ValueError("Reference must be a 2D array.")
-    if observed.ndim == 1:
-        observed = observed[None]
-    elif observed.ndim != 2:
-        raise ValueError("Observed must be a 1D or 2D array.")
-    if reference.shape[1] != observed.shape[1]:
+    # Check shapes
+    if reference.ndim < 2:
+        raise ValueError("Reference must be at least 2D.")
+    if observed.ndim < 2:
+        raise ValueError("Observed must be at least 2D.")
+    if reference.shape[1:] != observed.shape[1:]:
         raise ValueError(
-            "The second dimension of the reference and observed must match."
+            "The shape of the reference and observed must match except for the "
+            "first dimension."
         )
 
     # Now we calculate the quantiles that the observations fall into relative to
@@ -410,11 +413,10 @@ def plot_calibration(
     observed value. This is then plotted as a cumulative distribution function.
 
     Args:
-        reference (npt.NDArray): The reference observations. This is expected to
-            be a 2D array with shape (n_samples, n_features).
-        observed (npt.NDArray): The observed values. This is expected to be a either
-            a 1D or 2D array with shape (n_features,) or (n_observations, n_features).
-            If a 2D array, then multiple ECDFs will be plotted.
+        reference (npt.NDArray): The reference observations. See `calculate_relative_quantiles`
+            for details.
+        observed (npt.NDArray): The observed values. See `calculate_relative_quantiles`
+            for details.
         return_deviance (bool): If True, the function will return the deviance
             statistics for each observation, where the deviance is defined as the
             absolute difference between the observed ECDF and the idealized ECDF,

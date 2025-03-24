@@ -34,9 +34,6 @@ from dms_stan.plotting import (
 
 # pylint: disable=too-many-lines
 
-# TODO: Set up parallel coordinate plots that highlight the variables that fail
-# the diagnostic tests
-
 
 def _symmetrize_quantiles(quantiles: Sequence[float]) -> list[float]:
     """
@@ -74,6 +71,265 @@ def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
 
     # Shift the arrays and apply log10
     return tuple(np.log10(arg - min_val + 1) for arg in args)
+
+
+class VariableAnalyzer:
+    """
+    Used for analysis of the variables that fail diagnostic tests during sampling.
+    This should never be instantiated directly. Instead, use the `SampleResults`
+    class to evaluate the traceplots for the variables that failed the tests.
+    """
+
+    # pylint: disable=attribute-defined-outside-init
+
+    def __init__(
+        self,
+        sample_results: "SampleResults",
+        plot_width: int = 800,
+        plot_height: int = 400,
+        plot_quantiles: bool = False,
+    ):
+
+        # Hold a reference to the sample results
+        self.sample_results = sample_results
+        self.plot_quantiles = plot_quantiles
+
+        # Some placeholders for whether or not we both updating the plot
+        self._previous_vals = None
+
+        # Record the number of chains and an array for the steps
+        self.n_chains = sample_results.inference_obj.posterior.sizes["chain"]
+        self.x = np.arange(sample_results.inference_obj.posterior.sizes["draw"])
+
+        # Identify failed variables
+        self.failed_vars = {}
+        self._identify_failed_vars()
+
+        # Set up the holoviews plot
+        self.plot_width = plot_width
+        self.plot_height = plot_height
+        self.fig = pn.pane.HoloViews(
+            hv.Curve([]).opts(width=self.plot_width, height=self.plot_height),
+            name="Plot",
+            align="center",
+        )
+
+        # Set up widgets
+        self.varchoice = pn.widgets.Select(
+            name="Variable", options=list(self.failed_vars.keys())
+        )
+        self.metricchoice = pn.widgets.Select(name="Metric", options=[])
+        self.indexchoice = pn.widgets.Select(name="Index", options=[])
+
+        self.varchoice.param.watch(self._get_var_data, "value")
+        self.varchoice.param.watch(self._update_metric_selector, "value")
+        self.varchoice.param.watch(self._get_metric_data, "value")
+        self.varchoice.param.watch(self._update_index_selector, "value")
+        self.varchoice.param.watch(self._update_plot, "value")
+
+        self.metricchoice.param.watch(self._get_metric_data, "value")
+        self.metricchoice.param.watch(self._update_index_selector, "value")
+        self.metricchoice.param.watch(self._update_plot, "value")
+
+        self.indexchoice.param.watch(self._update_plot, "value")
+
+        # Package widgets and figure into a layout
+        self.layout = pn.Column(
+            self.varchoice,
+            self.metricchoice,
+            self.indexchoice,
+            self.fig,
+        )
+
+        # Trigger the initial data retrieval and plotting
+        self.varchoice.param.trigger("value")
+
+    def _identify_failed_vars(self):
+        """Identify the variables that failed the diagnostic tests"""
+
+        # Identify both the variables that fail and their indices
+        for (
+            varname,
+            vartests,
+        ) in self.sample_results.inference_obj.variable_diagnostic_tests.items():
+
+            # The first variable name is the metric
+            assert vartests.dims[0] == "metric"
+
+            # Process each metric for this variable
+            metric_test_summaries = {}
+            for metric in vartests.metric:
+
+                # Get the test results for the metric
+                metrictests = vartests.sel(metric=metric).to_numpy()
+
+                # Get the indices of the failing tests
+                failing_inds = [
+                    ".".join(map(str, indices))
+                    for indices in zip(*np.nonzero(metrictests))
+                ]
+
+                # Record the failing tests
+                if len(failing_inds) > 0:
+                    metric_test_summaries[metric.item()] = failing_inds
+
+            # If there are any failing tests, add them to the dictionary
+            if len(metric_test_summaries) > 0:
+                self.failed_vars[varname] = (vartests.dims[1:], metric_test_summaries)
+
+    def _update_metric_selector(self, event):  # pylint: disable=unused-argument
+        """Updates the metric options based on the selected variable"""
+
+        # Get the current variable name
+        current_name = self.metricchoice.value
+
+        # Update the metric choice options
+        self.metricchoice.options = list(
+            self.failed_vars[self.varchoice.value][1].keys()
+        )
+
+        # If the currently selected metric is not in the new options, set it to
+        # the first one
+        if current_name not in self.metricchoice.options:
+            self.metricchoice.value = self.metricchoice.options[0]
+
+    def _update_index_selector(self, event):  # pylint: disable=unused-argument
+        """Updates the index options based on the selected variable"""
+
+        # Get the current variable name
+        current_name = self.indexchoice.value
+
+        # Update the index choice options
+        opts = self.failed_vars[self.varchoice.value][1]
+        if len(opts) == 0:
+            self.indexchoice.options = []
+            self.indexchoice.value = None
+            return
+        self.indexchoice.options = opts[self.metricchoice.value]
+
+        # If the currently selected index is not in the new options, set it to
+        # the first one
+        if current_name not in self.indexchoice.options:
+            self.indexchoice.value = self.indexchoice.options[0]
+
+    def _get_var_data(self, event):  # pylint: disable=unused-argument
+        """Gets the data for the currently selected variable"""
+        # Get the samples for the selected variable
+        self._samples = getattr(
+            self.sample_results.inference_obj.posterior, self.varchoice.value
+        )
+
+        # Check the dimensions of the variable
+        assert self._samples.dims[:2] == ("chain", "draw")
+        assert self._samples.dims[2:] == self.failed_vars[self.varchoice.value][0]
+
+        # We also want the samples as a numpy array with the draw and chain dimensions
+        # last
+        self._np_samples = np.moveaxis(self._samples.to_numpy(), [0, 1], [-2, -1])
+
+    def _get_metric_data(self, event):  # pylint: disable=unused-argument
+        """Gets the data for the currently selected metric"""
+        # Get the tests for the selected variable and metric
+        tests = self.sample_results.inference_obj.variable_diagnostic_tests[
+            self.varchoice.value
+        ].sel(metric=self.metricchoice.value)
+
+        # Make sure the dimensions are correct
+        assert tests.dims == self._samples.dims[2:]
+
+        # Tests as numpy array
+        tests = tests.to_numpy()
+
+        # Split into passing and failing tests
+        self._failing_samples, self._passing_samples = (
+            self._np_samples[tests],
+            self._np_samples[~tests],
+        )
+
+        # Map between index name and failing index
+        self._index_map = {
+            ".".join(map(str, indices)): i
+            for i, indices in enumerate(zip(*np.nonzero(tests)))
+        }
+
+    def _update_plot(self, event):  # pylint: disable=unused-argument
+        """Updates the panel plot based on the selected variable, metric, and index"""
+        # Skip the update if the values haven't changed
+        if self._previous_vals == (
+            new_vals := (
+                self.varchoice.value,
+                self.metricchoice.value,
+                self.indexchoice.value,
+            )
+        ):
+            return
+        self._previous_vals = new_vals
+        print("RUNNING")
+
+        # Get the variable name
+        varname = self.varchoice.value
+        if self.indexchoice.value is not None:
+            varname += "." + self.indexchoice.value
+
+        # Calculate the relative quantiles for the selected failing index relative
+        # to the passing samples
+        failing_samples = self._failing_samples[self._index_map[self.indexchoice.value]]
+        n_failing, n_passing = len(self._failing_samples), len(self._passing_samples)
+
+        # We always calculate quantiles. If there are no reference samples, however,
+        # quantiles are undefined. We raise a warning if there are more failing
+        # samples than passing samples and the user is trying to plot quantiles.
+        if n_passing == 0:
+            if self.plot_quantiles:
+                raise ValueError(
+                    f"No passing samples found for {self.varchoice.value}. Cannot "
+                    "calculate quantiles."
+                )
+            failing_quantiles = np.full_like(failing_samples, np.nan)
+        else:
+            if n_failing > n_passing and self.plot_quantiles:
+                warnings.warn(
+                    "There are more failing samples than passing samples for "
+                    f"{self.varchoice.values}. Consider plotting true values instead."
+                )
+            failing_quantiles = calculate_relative_quantiles(
+                reference=self._passing_samples,
+                observed=failing_samples[None],
+            )[0]
+
+        # We should have shape (n_chains, n_draws)
+        assert (
+            failing_samples.shape
+            == failing_quantiles.shape
+            == (self.n_chains, self.x.size)
+        )
+
+        # Build an overlay for the failing quantiles and use it to update the plot
+        overlay_dict = {}
+        for i in range(self.n_chains):
+            if self.plot_quantiles:
+                order = (failing_quantiles[i], failing_samples[i])
+                order_vdim = ["Sample Quantile", "Sample Value"]
+            else:
+                order = (failing_samples[i], failing_quantiles[i])
+                order_vdim = ["Sample Value", "Sample Quantile"]
+            overlay_dict[i] = hv.Curve(
+                (self.x, *order, n_passing),
+                kdims=["Step"],
+                vdims=[*order_vdim, "N Reference Variables"],
+            ).opts(**({"ylim": (0, 1)} if self.plot_quantiles else {}))
+
+        # Create the overlay
+        self.fig.object = hv.NdOverlay(overlay_dict, kdims="Chain").opts(
+            title=f"{self.metricchoice.value}: {varname}",
+            tools=["hover"],
+            width=self.plot_width,
+            height=self.plot_height,
+        )
+
+    def display(self):
+        """Display the panel layout"""
+        return self.layout
 
 
 class SampleResults:
@@ -748,7 +1004,7 @@ class SampleResults:
         for varname, reference, observed in self._iter_pp_obs():
 
             # Build calibration plots and record deviance
-            plot, dev = plot_calibration(reference, observed)
+            plot, dev = plot_calibration(reference, observed[None])
             dev = dev.item()
             deviances[varname] = dev
 
@@ -1257,6 +1513,41 @@ class SampleResults:
             return hv.Layout(plots.values()).cols(1).opts(shared_axes=False)
 
         return plots
+
+    @overload
+    def plot_variable_failure_quantile_traces(
+        self, *, display: Literal[True], width: int, height: int, plot_quantiles: bool
+    ) -> VariableAnalyzer: ...
+
+    @overload
+    def plot_variable_failure_quantile_traces(
+        self, *, display: Literal[False], width: int, height: int, plot_quantiles: bool
+    ) -> pn.pane.HoloViews: ...
+
+    def plot_variable_failure_quantile_traces(
+        self,
+        display=True,
+        width=800,
+        height=400,
+        plot_quantiles=False,
+    ):
+        """
+        Plots the quantiles of variables that failed the diagnostic tests. The x-axis
+        is the step along the sampling process and the y-axis is the quantiles of
+        the failed samples relative to others in the same family that passed the
+        tests.
+        """
+        # Build the analyzer object
+        analyzer = VariableAnalyzer(
+            self, plot_width=width, plot_height=height, plot_quantiles=plot_quantiles
+        )
+
+        # Return the analyzer object if not displaying
+        if not display:
+            return analyzer
+
+        # Otherwise, display the plots
+        return analyzer.display()
 
     @classmethod
     def from_disk(
