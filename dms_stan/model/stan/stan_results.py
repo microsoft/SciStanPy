@@ -264,7 +264,6 @@ class VariableAnalyzer:
         ):
             return
         self._previous_vals = new_vals
-        print("RUNNING")
 
         # Get the variable name
         varname = self.varchoice.value
@@ -317,7 +316,7 @@ class VariableAnalyzer:
                 (self.x, *order, n_passing),
                 kdims=["Step"],
                 vdims=[*order_vdim, "N Reference Variables"],
-            ).opts(**({"ylim": (0, 1)} if self.plot_quantiles else {}))
+            ).opts(line_alpha=0.5, **({"ylim": (0, 1)} if self.plot_quantiles else {}))
 
         # Create the overlay
         self.fig.object = hv.NdOverlay(overlay_dict, kdims="Chain").opts(
