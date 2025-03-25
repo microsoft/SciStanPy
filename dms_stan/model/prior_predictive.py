@@ -195,7 +195,14 @@ class PriorPredictiveCheck:
             )
 
         # Gather the target data
-        selected_data = self._xarray_data[self.target_dropdown.value]
+        selected_data = self._xarray_data[
+            [self.target_dropdown.value]
+            + (
+                []
+                if self.independent_var_dropdown.value == ""
+                else [self.independent_var_dropdown.value]
+            )
+        ]
 
         # Reshape the data as appropriate and convert the extracted data to a DataFrame.
         # We keep the grouping dimension separate from the stacked results.
@@ -212,23 +219,23 @@ class PriorPredictiveCheck:
             .reset_index()
         )
 
-        # We are assuming that, at this point, the independent variable and grouping
-        # dimension can be used interchangeably. This is because the independent
-        # variable values at this dimension should be coordinates that are indexed
-        # by the grouping variable. Check this assumption here.
-        if self.independent_var_dropdown.value != "":
-            assert (
-                len(df[self.independent_var_dropdown.value].unique())
-                == len(df[self.group_dim_dropdown.value].unique())
-                == len(
-                    df[
-                        [
-                            self.independent_var_dropdown.value,
-                            self.group_dim_dropdown.value,
-                        ]
-                    ].drop_duplicates()
-                )
-            )
+        # # We are assuming that, at this point, the independent variable and grouping
+        # # dimension can be used interchangeably. This is because the independent
+        # # variable values at this dimension should be coordinates that are indexed
+        # # by the grouping variable. Check this assumption here.
+        # if self.independent_var_dropdown.value != "":
+        #     assert (
+        #         len(df[self.independent_var_dropdown.value].unique())
+        #         == len(df[self.group_dim_dropdown.value].unique())
+        #         == len(
+        #             df[
+        #                 [
+        #                     self.independent_var_dropdown.value,
+        #                     self.group_dim_dropdown.value,
+        #                 ]
+        #             ].drop_duplicates()
+        #         )
+        #     )
 
         # Filter to just the columns needed. These are the grouping dimensions and
         # independent variables, if any.
@@ -265,14 +272,19 @@ class PriorPredictiveCheck:
 
         # Update the plot kwargs
         plot_kwargs = {
-            "ECDF": self.ecdf_kwargs,
-            "KDE": self.kde_kwargs,
-            "Violin": self.violin_kwargs,
-            "Relationship": self.relationship_kwargs,
-        }[self.plot_type_dropdown.value]
+            "ECDF": self.get_ecdf_kwargs,
+            "KDE": self.get_kde_kwargs,
+            "Violin": self.get_violin_kwargs,
+            "Relationship": self.get_relationship_kwargs,
+        }[self.plot_type_dropdown.value]()
 
         # Update the plot
-        self.fig.object = self._processed_data.hvplot(**plot_kwargs)
+        if self.plot_type_dropdown.value == "Violin":
+            self.fig.object = hv.Violin(plot_kwargs.pop("args"), **plot_kwargs).opts(
+                show_legend=False
+            )
+        else:
+            self.fig.object = self._processed_data.hvplot(**plot_kwargs)
 
         # Update plot button to not be loading
         self.update_plot_button.loading = False
@@ -333,7 +345,7 @@ class PriorPredictiveCheck:
             for varname, arr in itertools.chain(
                 self._xarray_data.coords.items(), self._xarray_data.data_vars.items()
             )
-            if event.new in set(arr.dims)
+            if arr.sizes.get(event.new, 0) > 1
         ]
 
         # If the previous independent variable is not in the options, reset it
@@ -419,8 +431,7 @@ class PriorPredictiveCheck:
             self.fig,
         )
 
-    @property
-    def kde_kwargs(self) -> dict:
+    def get_kde_kwargs(self) -> dict:
         """
         Builds kwargs needed for plotting a kernel density estimate, optionally grouped
         by the independent variable.
@@ -433,8 +444,7 @@ class PriorPredictiveCheck:
             "datashade": False,
         }
 
-    @property
-    def ecdf_kwargs(self) -> dict:
+    def get_ecdf_kwargs(self) -> dict:
         """
         Builds kwargs needed for plotting an empirical cumulative distribution function,
         optionally grouped by the independent variable.
@@ -447,22 +457,49 @@ class PriorPredictiveCheck:
             "datashade": False,
         }
 
-    @property
-    def violin_kwargs(self) -> dict:
+    def get_violin_kwargs(self) -> dict:
         """
         Builds kwargs needed for plotting a violin plot, optionally grouped by the
         independent variable.
         """
+        # This is only an option if we have a grouping dimension
+        group_indices = self._processed_data[self.group_dim_dropdown.value].to_numpy()
+
+        # If the independent label is provided, then it is the grouping variable
+        # and the group index is the category variable IF there are more unique
+        # combinations of indices and independent labels than there are group indices
+        if self.independent_var_dropdown.value != "":
+            independent_labels = self._processed_data[
+                self.independent_var_dropdown.value
+            ].to_numpy()
+            if len(np.unique(group_indices)) < len(
+                self._processed_data[
+                    [self.group_dim_dropdown.value, self.independent_var_dropdown.value]
+                ].drop_duplicates()
+            ):
+                groups = [group_indices, independent_labels]
+                kdims = [
+                    self.independent_var_dropdown.value,
+                    self.group_dim_dropdown.value,
+                ]
+            else:
+                groups = [independent_labels]
+                kdims = [self.independent_var_dropdown.value]
+
+        # Otherwise, we just have the group indices
+        else:
+            groups = [group_indices]
+            kdims = [self.group_dim_dropdown.value]
+
         return {
-            "kind": "violin",
-            "x": self.group_dim_dropdown.value,
-            "y": self.target_dropdown.value,
-            "by": self._independent_label,
-            "datashade": False,
+            "args": tuple(
+                groups + [self._processed_data[self.target_dropdown.value].to_numpy()]
+            ),
+            "kdims": kdims,
+            "vdims": self.target_dropdown.value,
         }
 
-    @property
-    def relationship_kwargs(self) -> dict:
+    def get_relationship_kwargs(self) -> dict:
         """
         Builds kwargs needed for plotting a relationship plot, optionally grouped by
         the independent variable.
