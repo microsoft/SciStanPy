@@ -33,7 +33,7 @@ from .components import (
     TransformedParameter,
 )
 from .components.abstract_model_component import AbstractModelComponent
-from .map import MAP
+from .pytorch.map import MAP
 from .pytorch import check_observable_data, PyTorchModel
 from .stan import SampleResults, StanModel
 
