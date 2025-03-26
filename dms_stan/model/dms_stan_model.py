@@ -169,7 +169,7 @@ class Model(ABC):
 
         return dims
 
-    def compress_for_xarray(
+    def _compress_for_xarray(
         self,
         *arrays: npt.NDArray,
         include_sample_dim: bool = False,
@@ -215,6 +215,51 @@ class Model(ABC):
             )
 
         return results
+
+    def _dict_to_xarray(
+        self, draws: dict[AbstractModelComponent, npt.NDArray]
+    ) -> xr.Dataset:
+        """
+        Builds the kwargs for the xarray dataset. The data values are the
+        draws and the coordinates are inputs to transformed parameters that
+        are constants and that have a shape.
+        """
+        # Split into components and draws and components and values
+        components, unpacked_draws = zip(*draws.items())
+        coordinates = list(
+            zip(
+                *[
+                    [parent, parent.value]
+                    for component in self.all_model_components
+                    for parent in component.parents
+                    if isinstance(parent, Constant) and np.prod(parent.shape) > 1
+                ]
+            )
+        )
+        if len(coordinates) == 0:
+            parents, values = [], []
+        else:
+            parents, values = coordinates
+
+        # Process the draws and values for xarray. Note that because constants
+        # have no sample prefix, we do not add the sampling dimension to them
+        # when calling `compress_for_xarray` (i.e., we do not use `_n`).
+        compressed_draws = self._compress_for_xarray(
+            *unpacked_draws, include_sample_dim=True
+        )
+        compressed_values = self._compress_for_xarray(*values)
+
+        # Build kwargs
+        return xr.Dataset(
+            data_vars={
+                component.model_varname: compressed_draw
+                for component, compressed_draw in zip(components, compressed_draws)
+            },
+            coords={
+                parent.model_varname: compressed_value
+                for parent, compressed_value in zip(parents, compressed_values)
+            },
+        )
 
     @overload
     def draw(
@@ -268,50 +313,6 @@ class Model(ABC):
             dict[str, npt.NDArray]: A dictionary where the keys are the names of
                 the model components and the values are the samples drawn.
         """
-
-        def build_xarray_kwargs():
-            """
-            Builds the kwargs for the xarray dataset. The data values are the
-            draws and the coordinates are inputs to transformed parameters that
-            are constants and that have a shape.
-            """
-            # Split into components and draws and components and values
-            components, unpacked_draws = zip(*draws.items())
-            coordinates = list(
-                zip(
-                    *[
-                        [parent, parent.value]
-                        for component in self.all_model_components
-                        for parent in component.parents
-                        if isinstance(parent, Constant) and np.prod(parent.shape) > 1
-                    ]
-                )
-            )
-            if len(coordinates) == 0:
-                parents, values = [], []
-            else:
-                parents, values = coordinates
-
-            # Process the draws and values for xarray. Note that because constants
-            # have no sample prefix, we do not add the sampling dimension to them
-            # when calling `compress_for_xarray` (i.e., we do not use `_n`).
-            compressed_draws = self.compress_for_xarray(
-                *unpacked_draws, include_sample_dim=True
-            )
-            compressed_values = self.compress_for_xarray(*values)
-
-            # Build kwargs
-            return {
-                "data_vars": {
-                    component.model_varname: compressed_draw
-                    for component, compressed_draw in zip(components, compressed_draws)
-                },
-                "coords": {
-                    parent.model_varname: compressed_value
-                    for parent, compressed_value in zip(parents, compressed_values)
-                },
-            }
-
         # Draw from all observables
         draws: dict[AbstractModelComponent, npt.NDArray] = {}
         for observable in self.observables:
@@ -323,7 +324,7 @@ class Model(ABC):
 
         # Convert to an xarray dataset if requested
         if as_xarray:
-            return xr.Dataset(**build_xarray_kwargs())
+            return self._dict_to_xarray(draws)
 
         # If we are returning only named parameters, then we need to update the
         # dictionary keys to be the model variable names.
@@ -389,9 +390,11 @@ class Model(ABC):
 
         # Return the MAP estimate, the distributions, and the loss trajectory
         return MAP(
+            model=self,
             map_estimate=map_,
             distributions=distributions,
             losses=loss_trajectory.detach().cpu().numpy(),
+            data={k: v.detach().cpu().numpy() for k, v in data.items()},
         )
 
     def mcmc(
