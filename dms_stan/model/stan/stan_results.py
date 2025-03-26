@@ -1206,7 +1206,9 @@ class SampleResults:
         for varname, reference, observed in self._iter_pp_obs():
 
             # Get the quantiles of the observed data relative to the reference
-            y = calculate_relative_quantiles(reference, observed)
+            y = calculate_relative_quantiles(
+                reference, observed[None] if observed.ndim == 1 else observed
+            )
 
             # Flatten the data and update x to use rankings if requested
             x, y = observed.ravel(), y.ravel()
