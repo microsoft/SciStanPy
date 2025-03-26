@@ -175,9 +175,21 @@ class MAP:
 
             # Otherwise, we also are going to want to attach the observed data
             # to the InferenceData object. First, rename the "n" dimension to "sample"
+            draws = draws.rename_dims({"n": "sample"})
+
+            # Now separate out the observables from the latent variables. Build
+            # the initial inference data object with the latent variables
             inference_data = az.convert_to_inference_data(
-                draws.rename_dims({"n": "sample"})
+                draws[
+                    [
+                        p
+                        for p in self.parameters
+                        if not getattr(self.model, p).observable
+                    ]
+                ]
             )
+
+            # Add the observables and the observed data to the inference data object
             inference_data.add_groups(
                 observed_data=xr.Dataset(
                     data_vars={
@@ -185,6 +197,9 @@ class MAP:
                         for k, v in self.data.items()
                     }
                 ),
+                posterior_predictive=draws[
+                    [p for p in self.parameters if getattr(self.model, p).observable]
+                ],
             )
             return inference_data
 
