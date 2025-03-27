@@ -1,5 +1,8 @@
 """Contains the Model base class, which is used to define all DMS Stan models."""
 
+import os.path
+import pickle
+
 from abc import ABC, abstractmethod
 from typing import Any, Iterable, Literal, Optional, overload, Union
 
@@ -46,6 +49,27 @@ def components_to_dict(
     names of the components.
     """
     return {comp.model_varname: comp for comp in components}
+
+
+def run_delayed_mcmc(filepath: str) -> SampleResults:
+    """
+    Runs a delayed MCMC run created by calling `Model.mcmc()` with `delay_run=True`.
+    The filepath should be the path to the pickled object that resulted from this
+    function call.
+    """
+    # Load the pickled object
+    with open(filepath, "rb") as f:
+        obj = pickle.load(f)
+
+    # We will be printing to the console
+    obj["sample_kwargs"]["show_console"] = True
+
+    # Run sampling and return the results
+    return obj["stan_model"].sample(
+        inits=obj["inits"],
+        data=obj["data"],
+        **obj["sample_kwargs"],
+    )
 
 
 class Model(ABC):
@@ -401,8 +425,24 @@ class Model(ABC):
             data={k: v.detach().cpu().numpy() for k, v in data.items()},
         )
 
+    @overload
     def mcmc(
         self,
+        *,
+        output_dir: Optional[str],
+        force_compile: bool,
+        stanc_options: Optional[dict[str, Any]],
+        cpp_options: Optional[dict[str, Any]],
+        user_header: Optional[str],
+        inits: Optional[str],
+        data: Optional[dict[str, npt.NDArray]],
+        delay_run: Literal[False],
+        **sample_kwargs,
+    ) -> SampleResults: ...
+    @overload
+    def mcmc(
+        self,
+        *,
         output_dir: Optional[str] = None,
         force_compile: bool = DEFAULT_FORCE_COMPILE,
         stanc_options: Optional[dict[str, Any]] = DEFAULT_STANC_OPTIONS,
@@ -410,6 +450,21 @@ class Model(ABC):
         user_header: Optional[str] = DEFAULT_USER_HEADER,
         inits: Optional[str] = "prior",
         data: Optional[dict[str, npt.NDArray]] = None,
+        delay_run: Literal[True] | str,
+        **sample_kwargs,
+    ) -> None: ...
+
+    def mcmc(
+        self,
+        *,
+        output_dir=None,
+        force_compile=DEFAULT_FORCE_COMPILE,
+        stanc_options=DEFAULT_STANC_OPTIONS,
+        cpp_options=DEFAULT_CPP_OPTIONS,
+        user_header=DEFAULT_USER_HEADER,
+        inits="prior",
+        data=None,
+        delay_run=False,
         **sample_kwargs,
     ) -> SampleResults:
         """Samples from the model using MCMC. This is a wrapper around the `sample`
@@ -428,7 +483,27 @@ class Model(ABC):
         )
 
         # Update the output directory in the sample kwargs
-        sample_kwargs["output_dir"] = stan_model.output_dir
+        sample_kwargs["output_dir"] = os.path.abspath(stan_model.output_dir)
+
+        # If delaying, then we save the data needed for sampling and return
+        if delay_run:
+            with open(
+                os.path.join(
+                    sample_kwargs["output_dir"],
+                    delay_run if isinstance(delay_run, str) else "mcmc_delayed.pkl",
+                ),
+                "wb",
+            ) as f:
+                pickle.dump(
+                    {
+                        "stan_model": stan_model,
+                        "sample_kwargs": sample_kwargs,
+                        "data": data,
+                        "inits": inits,
+                    },
+                    f,
+                )
+            return
 
         # Sample from the model
         return stan_model.sample(inits=inits, data=data, **sample_kwargs)

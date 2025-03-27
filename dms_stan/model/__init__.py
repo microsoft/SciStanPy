@@ -5,5 +5,5 @@
 import dms_stan.model.components
 
 # Import frequently used classes
-from dms_stan.model.dms_stan_model import ExponentialGrowthBinomialModel, Model
+from dms_stan.model.dms_stan_model import Model, run_delayed_mcmc
 from dms_stan.model.prior_predictive import PriorPredictiveCheck
