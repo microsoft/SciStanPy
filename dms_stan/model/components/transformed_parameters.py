@@ -338,6 +338,63 @@ class Growth(TransformedParameter):
         super().__init__(t=t, shape=shape, **params)
 
 
+class ExponentialGrowth(Growth):
+    r"""
+    A transformed parameter that models exponential growth. Specifically, parameters
+    `t`, `A`, and `r` are used to calculate the exponential growth model as follows:
+
+    $$
+    x = A\textrm{e}^{rt)
+    $$
+    """
+
+    def __init__(  # pylint: disable=useless-parent-delegation
+        self,
+        *,
+        t: "dms.custom_types.CombinableParameterType",
+        A: "dms.custom_types.CombinableParameterType",
+        r: "dms.custom_types.CombinableParameterType",
+        shape: tuple[int, ...] = (),
+    ):
+        """Initializes the LogExponentialGrowth distribution.
+
+        Args:
+            t ("dms.custom_types.SampleType"): The time parameter.
+
+            A ("dms.custom_types.SampleType"): The amplitude parameter.
+
+            r ("dms.custom_types.SampleType"): The rate parameter.
+
+            shape (tuple[int, ...], optional): The shape of the distribution. In
+                most cases, this can be ignored as it will be calculated automatically.
+        """
+        super().__init__(t=t, A=A, r=r, shape=shape)
+
+    # pylint: disable=arguments-differ
+    @overload
+    def operation(
+        self, t: torch.Tensor, log_A: torch.Tensor, r: torch.Tensor
+    ) -> torch.Tensor: ...
+
+    @overload
+    def operation(
+        self,
+        t: "dms.custom_types.SampleType",
+        log_A: "dms.custom_types.SampleType",
+        r: "dms.custom_types.SampleType",
+    ) -> npt.NDArray: ...
+
+    def operation(self, *, t, A, r):
+        return A * _choose_module(t).exp(r * t)
+
+    # pylint: enable=arguments-differ
+
+    def _write_operation(  # pylint: disable=arguments-differ
+        self, t: str, A: str, r: str
+    ) -> str:
+        return f"{A} .* exp({r} .* {t})"
+
+
 class LogExponentialGrowth(Growth):
     """
     A distribution that models the natural log of the `ExponentialGrowth` distribution.
@@ -399,6 +456,69 @@ class LogExponentialGrowth(Growth):
         self, t: str, log_A: str, r: str
     ) -> str:
         return f"{log_A} + {r} .* {t}"
+
+
+class SigmoidGrowth(Growth):
+    r"""
+    A transformed parameter that models sigmoid growth. Specifically, parameters
+    `t`, `A`, `r`, and `c` are used to calculate the sigmoid growth model as follows:
+
+    $$
+    x = \frac{A}{1 + \textrm{e}^{r(c - t)}}
+    $$
+    """
+
+    def __init__(  # pylint: disable=useless-parent-delegation
+        self,
+        *,
+        t: "dms.custom_types.CombinableParameterType",
+        A: "dms.custom_types.CombinableParameterType",
+        r: "dms.custom_types.CombinableParameterType",
+        c: "dms.custom_types.CombinableParameterType",
+        shape: tuple[int, ...] = (),
+    ):
+        """Initializes the LogSigmoidGrowth distribution.
+
+        Args:
+            t ("dms.custom_types.SampleType"): The time parameter.
+
+            A ("dms.custom_types.SampleType"): The amplitude parameter. Specifically,
+                this is the maximum value of the sigmoid function.
+
+            r ("dms.custom_types.SampleType"): The rate parameter.
+
+            c ("dms.custom_types.SampleType"): The offset parameter. This is the
+                inflection point of the sigmoid function.
+
+            shape (tuple[int, ...], optional): The shape of the distribution. In
+                most cases, this can be ignored as it will be calculated automatically.
+        """
+        super().__init__(t=t, A=A, r=r, c=c, shape=shape)
+
+    # pylint: disable=arguments-differ
+    @overload
+    def operation(
+        self, t: torch.Tensor, log_A: torch.Tensor, r: torch.Tensor, c: torch.Tensor
+    ) -> torch.Tensor: ...
+
+    @overload
+    def operation(
+        self,
+        t: "dms.custom_types.SampleType",
+        log_A: "dms.custom_types.SampleType",
+        r: "dms.custom_types.SampleType",
+        c: "dms.custom_types.SampleType",
+    ) -> npt.NDArray: ...
+
+    def operation(self, *, t, A, r, c):
+        return A / (1 + _choose_module(t).exp(r * (c - t)))
+
+    # pylint: enable=arguments-differ
+
+    def _write_operation(  # pylint: disable=arguments-differ
+        self, t: str, A: str, r: str, c: str
+    ) -> str:
+        return f"{A} ./ (1 + exp({r} .* ({c} - {t})))"
 
 
 class LogSigmoidGrowth(Growth):

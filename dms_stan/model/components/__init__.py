@@ -21,12 +21,14 @@ from dms_stan.model.components.parameters import (
 from dms_stan.model.components.transformed_parameters import (
     AbsParameter,
     BinaryTransformedParameter,
+    ExponentialGrowth,
     ExpParameter,
     LogExponentialGrowth,
     LogParameter,
     LogSigmoidGrowth,
     NormalizeLogParameter,
     NormalizeParameter,
+    SigmoidGrowth,
     TransformedParameter,
     UnaryTransformedParameter,
 )

@@ -50,18 +50,17 @@ def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray]:
     }
 
 
-class TrpBGrowthModel(dms.Model):
-    """
-    Models the TrpB count data from Johnston et al. using an exponential growth
-    function to model the time-dependent increase in counts and a multinomial distribution
-    to model the counts at each timepoint.
-    """
+class TrpBBaseGrowthModel(dms.Model):
+    """Base class for all TrpB growth models."""
 
     def __init__(
         self,
         times: npt.NDArray[np.floating],
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
+        r_mean_beta: float = 1.0,
+        r_std_sigma: float = 0.5,
+        A_alpha: float = 1.0,
     ):
 
         # Check shapes. Times and starting counts should be 1D arrays. Timepoint
@@ -74,17 +73,17 @@ class TrpBGrowthModel(dms.Model):
             raise ValueError("Timepoint counts should be a 3D array")
 
         # Get the number of timepoints, replicates, and variants
-        n_timepoints = len(times)
-        n_replicates = timepoint_counts.shape[0]
-        n_variants = timepoint_counts.shape[2]
+        self._n_timepoints = len(times)
+        self._n_replicates = timepoint_counts.shape[0]
+        self._n_variants = timepoint_counts.shape[2]
 
         # Check that the shapes of the arrays are consistent
-        if n_timepoints != timepoint_counts.shape[1] + 1:
+        if self.n_timepoints != timepoint_counts.shape[1] + 1:
             raise ValueError(
                 "Timepoint counts should have one fewer timepoint than the number "
                 "of times"
             )
-        if starting_counts.shape[0] != n_variants:
+        if starting_counts.shape[0] != self.n_variants:
             raise ValueError(
                 "Starting counts and timepoint counts should have the same number "
                 "of replicates"
@@ -95,61 +94,45 @@ class TrpBGrowthModel(dms.Model):
         if times[0] != 0.0:
             raise ValueError("Times should start at 0")
 
-        # The starting distributions at t = 0 are the same for all replicates. Because
-        # the relative abundances need to add up to 1, our prior is a Dirichlet
-        # distribution with an alpha value > 1 to enforce the belief that the inputs
-        # are roughly equally abundant.
-        self.theta_t0 = dms_components.Dirichlet(alpha=10.0, shape=(n_variants,))
-
-        # We will be modeling the log of exponential growth, so our starting values
-        # for `log_A` are the log of the starting counts.
-        self.log_A = dms_ops.log(self.theta_t0)  # pylint: disable=invalid-name
-
-        # Now hyperparameters on the growth rate. We assume that the noise in the
-        # growth rate is the same for all variants, so we model a single standard
-        # deviation for all variants. The mean growth rate is allowed to vary between
-        # variants, however.
-        self.r_mean = dms_components.Exponential(beta=10.0, shape=(n_variants,))
-        self.r_std = dms_components.HalfNormal(sigma=0.25)  # Shared across variants
-
-        # Now the next layer of the model. Both technical replicates start from
-        # the same culture, so the starting counts (and hence log_A) are the same.
-        # The growth rate might vary between replicates, however, so we model a
-        # separate one for each replicate.
-        self.r = dms_components.Normal(
-            mu=self.r_mean, sigma=self.r_std, shape=(n_replicates, 1, n_variants)
-        )
-
-        # Calculate the thetas at t > 0.
-        self.theta_tg0 = dms_ops.exp(
-            dms_ops.normalize_log(
-                dms_components.LogExponentialGrowth(
-                    log_A=self.log_A,
-                    r=self.r,
-                    t=dms_components.Constant(times[None, 1:, None], togglable=False),
-                    shape=(n_replicates, n_timepoints - 1, n_variants),
-                )
-            )
-        )
-
-        # Model the counts data.
-        self.starting_counts = dms_components.Multinomial(
-            theta=self.theta_t0,
-            N=dms_components.Constant(starting_counts.sum(), togglable=False),
-            shape=(n_variants,),
-        )
-        self.timepoint_counts = dms_components.Multinomial(
-            theta=self.theta_tg0,
-            N=dms_components.Constant(
-                timepoint_counts.sum(axis=-1, keepdims=True), togglable=False
-            ),
-            shape=timepoint_counts.shape,
-        )
-
         # Record the data
         self.times = times
         self.starting_counts_data = starting_counts
         self.timepoint_counts_data = timepoint_counts
+
+        # Total number of counts is always the same
+        self.starting_counts_total = (
+            dms_components.Constant(starting_counts.sum(), togglable=False),
+        )
+        self.timepoint_counts_total = dms_components.Constant(
+            timepoint_counts.sum(axis=-1, keepdims=True), togglable=False
+        )
+
+        # Also define time as a constant
+        self.t = dms_components.Constant(times[None, 1:, None], togglable=False)
+
+        # Every model has a "rate" parameter, which gives the growth rate of each
+        # variant in each replicate. Each variant gets its own `r`` which we model
+        # as being drawn from a normal distribution with mean `r_mean` and standard
+        # deviation `r_std`. The mean is different for each variant, but the standard
+        # deviation is assumed to be the same.
+        self.r_mean = dms_components.Exponential(
+            beta=r_mean_beta, shape=(self.n_variants,)
+        )
+        self.r_std = dms_components.HalfNormal(sigma=r_std_sigma)
+        self.r = dms_components.Normal(
+            mu=self.r_mean,
+            sigma=self.r_std,
+            shape=(self.n_replicates, 1, self.n_variants),
+        )
+
+        # Every model has an amplitude (`A`) parameter. In the exponential growth
+        # case it defines the STARTING proportions. In the sigmoid growth case it
+        # defines the proportions at INFINITE t. In both cases, we assume that the
+        # possible values `A` are a fundamental property of the variant; hence,
+        # we define one `A` per variant.
+        self.A = dms_components.Dirichlet(  # pylint: disable=invalid-name
+            alpha=A_alpha, shape=(self.n_variants,)
+        )
 
     def approximate_map(self, *args, **kwargs):
         """Approximates the MAP estimate of the model."""
@@ -174,8 +157,155 @@ class TrpBGrowthModel(dms.Model):
         )
 
     @classmethod
-    def from_data_file(cls, filepath: str):
+    def from_data_file(cls, filepath: str, **kwargs):
         """
         Load a TrpB dataset from Johnston et al. and create a model from it.
         """
-        return cls(**load_trpb_dataset(filepath))
+        return cls(**load_trpb_dataset(filepath), **kwargs)
+
+    @property
+    def n_timepoints(self) -> int:
+        """Number of timepoints in the dataset."""
+        return self._n_timepoints
+
+    @property
+    def n_replicates(self) -> int:
+        """Number of replicates in the dataset."""
+        return self._n_replicates
+
+    @property
+    def n_variants(self) -> int:
+        """Number of variants in the dataset."""
+        return self._n_variants
+
+
+class TrpBExponentialGrowthModel(TrpBBaseGrowthModel):
+    """
+    Models the TrpB count data from Johnston et al. using an exponential growth
+    function to model the time-dependent increase in counts and a multinomial distribution
+    to model the counts at each timepoint.
+    """
+
+    def __init__(
+        self,
+        times: npt.NDArray[np.floating],
+        starting_counts: npt.NDArray[np.integer],
+        timepoint_counts: npt.NDArray[np.integer],
+        r_mean_beta: float = 1.0,
+        r_std_sigma: float = 0.5,
+        A_alpha: float = 1.0,
+    ):
+        # Run inherited init
+        super().__init__(
+            times=times,
+            starting_counts=starting_counts,
+            timepoint_counts=timepoint_counts,
+            r_mean_beta=r_mean_beta,
+            r_std_sigma=r_std_sigma,
+            A_alpha=A_alpha,
+        )
+
+        # What are our proportions at t > 0?
+        self.theta_tg0 = dms_ops.normalize(
+            dms_components.ExponentialGrowth(
+                A=self.A,
+                r=self.r,
+                t=self.t,
+                shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
+            )
+        )
+
+        # Model the counts data.
+        self.starting_counts = dms_components.Multinomial(
+            theta=self.A,
+            N=self.starting_counts_total,
+            shape=(self.n_variants,),
+        )
+        self.timepoint_counts = dms_components.Multinomial(
+            theta=self.theta_tg0,
+            N=self.timepoint_counts_total,
+            shape=timepoint_counts.shape,
+        )
+
+
+class TrpBSigmoidGrowthModel(TrpBBaseGrowthModel):
+    """
+    Models the TrpB count data from Johnston et al. using a sigmoid growth
+    function to model the time-dependent increase in counts and a multinomial distribution
+    to model the counts at each timepoint.
+    """
+
+    def __init__(
+        self,
+        times: npt.NDArray[np.floating],
+        starting_counts: npt.NDArray[np.integer],
+        timepoint_counts: npt.NDArray[np.integer],
+        r_mean_beta: float = 1.0,
+        r_std_sigma: float = 0.5,
+        A_alpha: float = 1.0,
+        c_mean_alpha: float = 2.0,
+        c_mean_beta: float = 1.0,
+        c_std_sigma: float = 0.5,
+    ):
+        # Run inherited init
+        super().__init__(
+            times=times,
+            starting_counts=starting_counts,
+            timepoint_counts=timepoint_counts,
+            r_mean_beta=r_mean_beta,
+            r_std_sigma=r_std_sigma,
+            A_alpha=A_alpha,
+        )
+
+        # We have an additional parameter for the sigmoid growth model, `c`, which
+        # defines the time at which the growth rate is half of its maximum value.
+        # We know that this has to be greater than 0, but is unlikely to be close
+        # to 0. Also, we're going to assume that differences in growth conditions
+        # could allow for differences in the time at which the maximum growth rate
+        # is reached, so we will model different values of `c` for each replicate
+        # using the Gamma distribution.
+        self.c_mean = dms_components.Gamma(alpha=c_mean_alpha, beta=c_mean_beta)
+        self.c_std = dms_components.HalfNormal(sigma=c_std_sigma)
+        self.c = dms_components.Normal(
+            mu=self.c_mean,
+            sigma=self.c_std,
+            shape=(self.n_replicates, 1, 1),
+        )
+
+        # What are the proportions at t = 0? Everything starts from the same culture
+        # at t = 0, so the proportions should be the same regardless of replicate.
+        # We will thus backcalculate to the proportions at t = 0 using the MEAN
+        # rate and MEAN c rather than the replicate-specific values.
+        self.theta_t0 = dms_ops.normalize(
+            dms_components.SigmoidGrowth(
+                A=self.A,
+                r=self.r_mean,
+                t=self.t,
+                c=self.c_mean,
+                shape=(self.n_variants,),
+            )
+        )
+
+        # For t > 0, we can have values of `c` that are different for each replicate.
+        # and `r` that are different for each variant. We will use the replicate-specific
+        self.theta_tg0 = dms_ops.normalize(
+            dms_components.SigmoidGrowth(
+                A=self.A,
+                r=self.r,
+                t=self.t,
+                c=self.c,
+                shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
+            )
+        )
+
+        # Model the counts data.
+        self.starting_counts = dms_components.Multinomial(
+            theta=self.theta_t0,
+            N=self.starting_counts_total,
+            shape=(self.n_variants,),
+        )
+        self.timepoint_counts = dms_components.Multinomial(
+            theta=self.theta_tg0,
+            N=self.timepoint_counts_total,
+            shape=timepoint_counts.shape,
+        )
