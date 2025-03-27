@@ -332,13 +332,13 @@ class Model(ABC):
             return {k.model_varname: v for k, v in draws.items()}
         return draws
 
-    def to_pytorch(self):
+    def to_pytorch(self) -> PyTorchModel:
         """
         Compiles the model to a trainable PyTorch model.
         """
         return PyTorchModel(self)
 
-    def to_stan(self, **kwargs):
+    def to_stan(self, **kwargs) -> StanModel:
         """
         Compiles the model to a Stan model.
         """
@@ -350,6 +350,7 @@ class Model(ABC):
         early_stop: int = DEFAULT_EARLY_STOP,
         lr: float = DEFAULT_LR,
         data: Optional[dict[str, Union[torch.Tensor, npt.NDArray]]] = None,
+        device: int | str = "cpu",
     ) -> MAP:
         """
         Approximate the maximum a posteriori (MAP) estimate of the model parameters.
@@ -360,18 +361,21 @@ class Model(ABC):
         # Set the default value for observed data
         data = data or {}
 
-        # Observed data to tensors
+        # Observed data to tensors and the appropriate device
         data = {
-            k: torch.tensor(v)
+            k: (
+                v.to(device=device)
+                if isinstance(v, torch.Tensor)
+                else torch.tensor(v).to(device=device)
+            )
             for k, v in data.items()
-            if not isinstance(v, torch.Tensor)
         }
 
         # Check observed data
         check_observable_data(self, data)
 
         # Fit the model
-        pytorch_model = self.to_pytorch()
+        pytorch_model = self.to_pytorch().to(device=device)
         loss_trajectory = pytorch_model.fit(
             epochs=epochs,
             early_stop=early_stop,

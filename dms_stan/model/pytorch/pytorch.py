@@ -14,7 +14,7 @@ from tqdm import tqdm
 import dms_stan.model as dms_model
 
 from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
-from dms_stan.model.components import Multinomial
+from dms_stan.model.components import Constant, Multinomial
 
 
 def check_observable_data(model: "dms_model.Model", data: dict[str, torch.Tensor]):
@@ -201,3 +201,35 @@ class PyTorchModel(nn.Module):
                 self.model.parameter_dict.items(), self.model.observable_dict.items()
             )
         }
+
+    def _move_model(self, funcname: str, *args, **kwargs):
+        """
+        Eliminates the need for repeating the same code for `cuda`, `to`, and
+        `cpu`.
+        """
+        # Apply to the model
+        getattr(super(), funcname)(*args, **kwargs)
+
+        # Apply to additional torch tensors in the model (i.e., the ones that are
+        # constants and not parameters)
+        # pylint: disable=protected-access
+        for constant in filter(
+            lambda x: isinstance(x, Constant), self.model.all_model_components
+        ):
+            constant._torch_parametrization = getattr(
+                constant._torch_parametrization, funcname
+            )(*args, **kwargs)
+
+        return self
+
+    def cuda(self, *args, **kwargs):
+        """See `torch.nn.Module.cuda`."""
+        return self._move_model("cuda", *args, **kwargs)
+
+    def cpu(self, *args, **kwargs):
+        """See `torch.nn.Module.cpu`."""
+        return self._move_model("cpu", *args, **kwargs)
+
+    def to(self, *args, **kwargs):
+        """See `torch.nn.Module.to`."""
+        return self._move_model("to", *args, **kwargs)
