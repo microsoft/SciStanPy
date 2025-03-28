@@ -353,12 +353,12 @@ class MAPInferenceRes:
         plots: dict[str, hv.Overlay] = {}
         for varname, reference, observed in self._iter_pp_obs():
 
+            # Get the x-axis data
+            x = stats.rankdata(observed, method="ordinal") if use_ranks else observed
+
             # If using a log-y axis, shift the y-data
             if logy:
                 reference, observed = _log10_shift(reference, observed)
-
-            # Get the x-axis data
-            x = stats.rankdata(observed, method="ordinal") if use_ranks else reference
 
             # Get labels
             labels = np.array(
