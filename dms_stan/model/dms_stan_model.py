@@ -249,7 +249,13 @@ class Model(ABC):
         are constants and that have a shape.
         """
         # Split into components and draws and components and values
-        components, unpacked_draws = zip(*draws.items())
+        components, unpacked_draws = zip(
+            *[
+                [comp, draw]
+                for comp, draw in draws.items()
+                if not isinstance(comp, Constant)
+            ]
+        )
         coordinates = list(
             zip(
                 *[
@@ -472,6 +478,12 @@ class Model(ABC):
         """
         # Get the default observed data
         data = data or {}
+
+        # An output directory must be provided if we are delaying the run
+        if delay_run and output_dir is None:
+            raise ValueError(
+                "An output directory must be provided if `delay_run` is True."
+            )
 
         # Build the Stan model
         stan_model = self.to_stan(
