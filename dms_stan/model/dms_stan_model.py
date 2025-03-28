@@ -362,11 +362,11 @@ class Model(ABC):
             return {k.model_varname: v for k, v in draws.items()}
         return draws
 
-    def to_pytorch(self) -> PyTorchModel:
+    def to_pytorch(self, seed: Optional[int] = None) -> PyTorchModel:
         """
         Compiles the model to a trainable PyTorch model.
         """
-        return PyTorchModel(self)
+        return PyTorchModel(self, seed=seed)
 
     def to_stan(self, **kwargs) -> StanModel:
         """
@@ -381,6 +381,7 @@ class Model(ABC):
         lr: float = DEFAULT_LR,
         data: Optional[dict[str, Union[torch.Tensor, npt.NDArray]]] = None,
         device: int | str = "cpu",
+        seed: Optional[int] = None,
     ) -> MAP:
         """
         Approximate the maximum a posteriori (MAP) estimate of the model parameters.
@@ -405,7 +406,7 @@ class Model(ABC):
         check_observable_data(self, data)
 
         # Fit the model
-        pytorch_model = self.to_pytorch().to(device=device)
+        pytorch_model = self.to_pytorch(seed=seed).to(device=device)
         loss_trajectory = pytorch_model.fit(
             epochs=epochs,
             early_stop=early_stop,
@@ -472,7 +473,7 @@ class Model(ABC):
         data=None,
         delay_run=False,
         **sample_kwargs,
-    ) -> SampleResults:
+    ):
         """Samples from the model using MCMC. This is a wrapper around the `sample`
         method of the `StanModel` class.
         """
