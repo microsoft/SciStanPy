@@ -155,7 +155,8 @@ class AbstractModelComponent(ABC):
         # it is not 0-dimensional.
         if broadcasted_shape != self._shape and self._shape != ():
             raise ValueError(
-                "Provided shape does not match broadcasted shapes if of parents"
+                "Provided shape does not match broadcasted shapes of parents: "
+                f"{self._shape} != {broadcasted_shape}"
             )
 
         # Set the shape
