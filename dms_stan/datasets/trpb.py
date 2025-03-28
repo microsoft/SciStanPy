@@ -100,15 +100,15 @@ class TrpBBaseGrowthModel(dms.Model):
         self.timepoint_counts_data = timepoint_counts
 
         # Total number of counts is always the same
-        self.starting_counts_total = (
-            dms_components.Constant(starting_counts.sum(), togglable=False),
+        self.starting_counts_total = dms_components.Constant(
+            starting_counts.sum(), togglable=False
         )
         self.timepoint_counts_total = dms_components.Constant(
             timepoint_counts.sum(axis=-1, keepdims=True), togglable=False
         )
 
         # Also define time as a constant
-        self.t = dms_components.Constant(times[None, 1:, None], togglable=False)
+        self.tg0 = dms_components.Constant(times[None, 1:, None], togglable=False)
 
         # Every model has a "rate" parameter, which gives the growth rate of each
         # variant in each replicate. Each variant gets its own `r`` which we model
@@ -210,7 +210,7 @@ class TrpBExponentialGrowthModel(TrpBBaseGrowthModel):
             dms_components.ExponentialGrowth(
                 A=self.A,
                 r=self.r,
-                t=self.t,
+                t=self.tg0,
                 shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
             )
         )
@@ -242,10 +242,10 @@ class TrpBSigmoidGrowthModel(TrpBBaseGrowthModel):
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
         r_std_sigma: float = 0.5,
-        A_alpha: float = 1.0,
-        c_mean_alpha: float = 2.0,
-        c_mean_beta: float = 1.0,
-        c_std_sigma: float = 0.5,
+        A_alpha: float = 0.5,
+        c_mean_alpha: float = 1.5,
+        c_mean_beta: float = 2.0,
+        c_std_sigma: float = 0.25,
     ):
         # Run inherited init
         super().__init__(
@@ -280,7 +280,7 @@ class TrpBSigmoidGrowthModel(TrpBBaseGrowthModel):
             dms_components.SigmoidGrowth(
                 A=self.A,
                 r=self.r_mean,
-                t=self.t,
+                t=0.0,
                 c=self.c_mean,
                 shape=(self.n_variants,),
             )
@@ -292,7 +292,7 @@ class TrpBSigmoidGrowthModel(TrpBBaseGrowthModel):
             dms_components.SigmoidGrowth(
                 A=self.A,
                 r=self.r,
-                t=self.t,
+                t=self.tg0,
                 c=self.c,
                 shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
             )
