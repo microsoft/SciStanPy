@@ -36,7 +36,11 @@ class PriorPredictiveCheck:
         self.float_sliders = self._init_float_sliders()
         self.target_dropdown = pnw.Select(
             name="Viewed Parameter",
-            options=list(self.model.named_model_components_dict),
+            options=[
+                k
+                for k, v in self.model.named_model_components_dict.items()
+                if not isinstance(v, Constant)
+            ],
             value=self.model.observables[0].model_varname,
         )
         self.group_dim_dropdown = pnw.Select(name="Group By", options=[], value="")
