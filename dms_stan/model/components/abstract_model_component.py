@@ -434,6 +434,12 @@ class AbstractModelComponent(ABC):
 
     def __getattr__(self, key: str) -> "AbstractModelComponent":
         """Get the parent parameter with the given key"""
+        # Make sure we don't have a circular reference between `__getattr__` and
+        # `__getitem__`
+        if key == "_parents":
+            raise AttributeError("No attribute '_parents' in this object")
+
+        # If the key is not in the parents, then we raise an error
         try:
             return self[key]
         except KeyError as error:
@@ -517,15 +523,16 @@ class AbstractModelComponent(ABC):
         dimensions, of the parameter minus one, clipped at zero. This is because
         the last dimension is assumed to always be vectorized.
         """
-        # Default is number of dimensions minus one
+        # Default is number of dimensions minus one. We subtract one because the
+        # last dimension is always vectorized.
         level = self.ndim - 1
 
-        # Subtract off trailing singleton dimensions
-        for dimsize in reversed(self.shape):
-            if dimsize == 1:
-                level -= 1
-            else:
+        # Subtract off trailing singleton dimensions ignoring the last dimension
+        # (again, always vectorized)
+        for dimsize in reversed(self.shape[:-1]):
+            if dimsize > 1:
                 break
+            level -= 1
 
         # Clip at zero
         return max(level, 0)
