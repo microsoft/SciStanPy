@@ -17,6 +17,14 @@ from .custom_torch_dists import Multinomial as CustomTorchMultinomial
 from .transformed_parameters import TransformableParameter
 
 
+def _inverse_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
+    """
+    Simple inverse transformation function. Defined at top-level rather than as
+    a lambda function to avoid pickling issues.
+    """
+    return 1 / x
+
+
 class Parameter(AbstractModelComponent):
     """Base class for parameters used in DMS Stan"""
 
@@ -522,7 +530,7 @@ class Gamma(ContinuousDistribution):
             torch_dist=dist.gamma.Gamma,
             stan_to_np_names={"alpha": "shape", "beta": "scale"},
             stan_to_torch_names={"alpha": "concentration", "beta": "rate"},
-            stan_to_np_transforms={"beta": lambda x: 1 / x},
+            stan_to_np_transforms={"beta": _inverse_transform},
             alpha=alpha,
             beta=beta,
             **kwargs,
@@ -553,7 +561,7 @@ class Exponential(ContinuousDistribution):
             torch_dist=dist.exponential.Exponential,
             stan_to_np_names={"beta": "scale"},
             stan_to_torch_names={"beta": "rate"},
-            stan_to_np_transforms={"beta": lambda x: 1 / x},
+            stan_to_np_transforms={"beta": _inverse_transform},
             beta=beta,
             **kwargs,
         )
