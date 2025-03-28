@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy.special as sp
 import torch
+import torch.nn.functional as F
 
 import dms_stan as dms
 
@@ -324,21 +325,56 @@ class NormalizeLogParameter(UnaryTransformedParameter):
         return f"{dist1} - log_sum_exp({dist1})"
 
 
-class Growth(TransformedParameter):
-    """Base class for growth models."""
+class SigmoidParameter(UnaryTransformedParameter):
+    """Defines a parameter that is the sigmoid of another."""
 
-    def __init__(  # pylint: disable=useless-parent-delegation
-        self,
-        *,
-        t: "dms.custom_types.CombinableParameterType",
-        shape: tuple[int, ...] = (),
-        **params: "dms.custom_types.CombinableParameterType",
-    ):
-        # Store all parameters as a list by calling the super class
-        super().__init__(t=t, shape=shape, **params)
+    UPPER_BOUND: float = 1.0
+    LOWER_BOUND: float = 0.0
+
+    def operation(self, dist1):
+        """
+        Calculates the inverse logit (sigmoid) function in a numerically stable
+        way.
+        """
+        # If using torch, use the sigmoid function directly.
+        if isinstance(dist1, torch.Tensor):
+            return torch.sigmoid(dist1)
+
+        # If using numpy, we manually calculate the sigmoid function using a more
+        # numerically stable approach.
+        elif isinstance(dist1, np.ndarray):
+            return dms.utils.stable_sigmoid(dist1)
+
+        # If using a different type, raise an error.
+        else:
+            raise TypeError(
+                "Unsupported type for dist1. Expected torch.Tensor or np.ndarray."
+            )
+
+    def _write_operation(self, dist1: str) -> str:
+        return f"inv_logit({dist1})"
 
 
-class ExponentialGrowth(Growth):
+class LogSigmoidParameter(UnaryTransformedParameter):
+    """Defines a parameter that is the log of the sigmoid of another."""
+
+    UPPER_BOUND: float = 0.0
+
+    def operation(self, dist1):
+        if isinstance(dist1, torch.Tensor):
+            return F.logsigmoid(dist1)  # pylint: disable=not-callable
+        elif isinstance(dist1, np.ndarray):
+            return np.log(dms.utils.stable_sigmoid(dist1))
+        else:
+            raise TypeError(
+                "Unsupported type for dist1. Expected torch.Tensor or np.ndarray."
+            )
+
+    def _write_operation(self, dist1: str) -> str:
+        return f"log_inv_logit({dist1})"
+
+
+class ExponentialGrowth(ExpParameter):
     r"""
     A transformed parameter that models exponential growth. Specifically, parameters
     `t`, `A`, and `r` are used to calculate the exponential growth model as follows:
@@ -368,34 +404,35 @@ class ExponentialGrowth(Growth):
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
         """
-        super().__init__(t=t, A=A, r=r, shape=shape)
+        super(UnaryTransformedParameter, self).__init__(t=t, A=A, r=r, shape=shape)
 
     # pylint: disable=arguments-differ
     @overload
     def operation(
-        self, t: torch.Tensor, log_A: torch.Tensor, r: torch.Tensor
+        self, t: torch.Tensor, A: torch.Tensor, r: torch.Tensor
     ) -> torch.Tensor: ...
 
     @overload
     def operation(
         self,
         t: "dms.custom_types.SampleType",
-        log_A: "dms.custom_types.SampleType",
+        A: "dms.custom_types.SampleType",
         r: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
 
     def operation(self, *, t, A, r):
-        return A * _choose_module(t).exp(r * t)
+        return A * super().operation(r * t)
 
     # pylint: enable=arguments-differ
 
     def _write_operation(  # pylint: disable=arguments-differ
         self, t: str, A: str, r: str
     ) -> str:
-        return f"{A} .* exp({r} .* {t})"
+        par_string = super()._write_operation(f"{r} .* {t}")
+        return f"{A} .* {par_string}"
 
 
-class LogExponentialGrowth(Growth):
+class LogExponentialGrowth(TransformedParameter):
     """
     A distribution that models the natural log of the `ExponentialGrowth` distribution.
     Specifically, parameters `t`, `log_A`, and `r` are used to calculate the log
@@ -458,15 +495,18 @@ class LogExponentialGrowth(Growth):
         return f"{log_A} + {r} .* {t}"
 
 
-class SigmoidGrowth(Growth):
+class SigmoidGrowth(SigmoidParameter):
     r"""
     A transformed parameter that models sigmoid growth. Specifically, parameters
     `t`, `A`, `r`, and `c` are used to calculate the sigmoid growth model as follows:
 
     $$
-    x = \frac{A}{1 + \textrm{e}^{r(c - t)}}
+    x = \frac{A}{1 + \textrm{e}^{-r(t - c)}}
     $$
     """
+
+    LOWER_BOUND: float = 0.0
+    UPPER_BOUND: None = None
 
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
@@ -493,39 +533,40 @@ class SigmoidGrowth(Growth):
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
         """
-        super().__init__(t=t, A=A, r=r, c=c, shape=shape)
+        super(UnaryTransformedParameter, self).__init__(t=t, A=A, r=r, c=c, shape=shape)
 
     # pylint: disable=arguments-differ
     @overload
     def operation(
-        self, t: torch.Tensor, log_A: torch.Tensor, r: torch.Tensor, c: torch.Tensor
+        self, t: torch.Tensor, A: torch.Tensor, r: torch.Tensor, c: torch.Tensor
     ) -> torch.Tensor: ...
 
     @overload
     def operation(
         self,
         t: "dms.custom_types.SampleType",
-        log_A: "dms.custom_types.SampleType",
+        A: "dms.custom_types.SampleType",
         r: "dms.custom_types.SampleType",
         c: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
 
     def operation(self, *, t, A, r, c):
-        return A / (1 + _choose_module(t).exp(r * (c - t)))
+        return A * super().operation(r * (t - c))
 
     # pylint: enable=arguments-differ
 
     def _write_operation(  # pylint: disable=arguments-differ
         self, t: str, A: str, r: str, c: str
     ) -> str:
-        return f"{A} ./ (1 + exp({r} .* ({c} - {t})))"
+        par_string = super()._write_operation(f"{r} .* ({t} - {c})")
+        return f"{A} .* {par_string}"
 
 
-class LogSigmoidGrowth(Growth):
+class LogSigmoidGrowth(LogSigmoidParameter):
     r"""
     A distribution that models the natural log of the `SigmoidGrowth` distribution.
-    Specifically, parameters `t`, `log_A`, `r`, and `c` are used to calculate the
-    log of the sigmoid growth model as follows:
+    Specifically, parameters `t`, `log_A`, `r`, and `c` are used to calculate
+    the log of the sigmoid growth model as follows:
 
     $$
     log(x) = log_A - log(1 + \textrm{e}^{-r(t - c)})
@@ -534,6 +575,9 @@ class LogSigmoidGrowth(Growth):
     As with the `LogExponentialGrowth` distribution, this parametrization guarantees
     that $x > 0$.
     """
+
+    LOWER_BOUND: None = None
+    UPPER_BOUND: None = None
 
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
@@ -547,7 +591,7 @@ class LogSigmoidGrowth(Growth):
         """Initializes the LogSigmoidGrowth distribution.
 
         Args:
-            t ("dms.custom_types.SampleType"): The time parameter.
+            exp_t ("dms.custom_types.SampleType"): The exponentiated time parameter.
 
             log_A ("dms.custom_types.SampleType"): The log of the amplitude parameter.
 
@@ -558,7 +602,9 @@ class LogSigmoidGrowth(Growth):
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
         """
-        super().__init__(t=t, log_A=log_A, r=r, c=c, shape=shape)
+        super(UnaryTransformedParameter, self).__init__(
+            t=t, log_A=log_A, r=r, c=c, shape=shape
+        )
 
     # pylint: disable=arguments-differ
     @overload
@@ -576,12 +622,12 @@ class LogSigmoidGrowth(Growth):
     ) -> npt.NDArray: ...
 
     def operation(self, *, t, log_A, r, c):
-        module = _choose_module(t)
-        return log_A - module.log(1 + module.exp(-r * (t - c)))
+        return log_A + super().operation(r * (t - c))
 
     # pylint: enable=arguments-differ
 
     def _write_operation(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str, c: str
     ) -> str:
-        return f"{log_A} - log(1 + exp(-{r} .* ({t} - {c})))"
+        par_string = super()._write_operation(f"{r} .* ({t} - {c})")
+        return f"{log_A} + {par_string}"

@@ -13,9 +13,11 @@ from dms_stan.model.components import (
     LogParameter,
     NormalizeLogParameter,
     NormalizeParameter,
+    SigmoidParameter,
     UnaryTransformedParameter,
 )
 from dms_stan.model.components.abstract_model_component import AbstractModelComponent
+from dms_stan.utils import stable_sigmoid
 
 
 def _normalize_parameter(
@@ -188,3 +190,4 @@ normalize = _unary_transformation_factory(NormalizeParameter, _normalize_paramet
 normalize_log = _unary_transformation_factory(
     NormalizeLogParameter, _normalize_log_parameter
 )
+sigmoid = _unary_transformation_factory(SigmoidParameter, stable_sigmoid)
