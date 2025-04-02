@@ -1,6 +1,7 @@
 """Holds classes that can be used for defining models in DMS Stan models."""
 
 from abc import abstractmethod
+from functools import partial
 from typing import Callable, Optional, Union
 
 import numpy as np
@@ -9,11 +10,14 @@ import torch
 import torch.distributions as dist
 import torch.nn as nn
 
+from scipy import special
+
 import dms_stan as dms
 
+from dms_stan.model.components import custom_torch_dists
 from .abstract_model_component import AbstractModelComponent
 from .constants import Constant
-from .custom_torch_dists import Multinomial as CustomTorchMultinomial
+
 from .transformed_parameters import TransformableParameter
 
 
@@ -33,7 +37,10 @@ class Parameter(AbstractModelComponent):
     def __init__(
         self,
         numpy_dist: str,
-        torch_dist: type[dist.distribution.Distribution] | type[CustomTorchMultinomial],
+        torch_dist: (
+            type[dist.distribution.Distribution]
+            | type[custom_torch_dists.CustomDistribution]
+        ),
         stan_to_np_names: dict[str, str],
         stan_to_torch_names: dict[str, str],
         stan_to_np_transforms: Optional[
@@ -432,11 +439,14 @@ class HalfNormal(Normal):
         # Mu is not togglable
         self.mu.is_togglable = False
 
-    # Overwrite the draw method to ensure that the drawn values are positive
-    def _draw(
-        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
-    ) -> npt.NDArray:
-        return np.abs(super()._draw(n, level_draws, seed=seed))
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+        """Returns the absolute value of the numpy distribution function"""
+        base_dist = super().get_numpy_dist(seed=seed)
+
+        def half_normal(*args, **kwargs):
+            return np.abs(base_dist(*args, **kwargs))
+
+        return half_normal
 
 
 class UnitNormal(Normal):
@@ -570,21 +580,21 @@ class Exponential(ContinuousDistribution):
         return beta
 
 
-class Dirichlet(ContinuousDistribution):
-    """Defines the Dirichlet distribution."""
+class _DirichletBase(ContinuousDistribution):
+    """
+    Base class for Dirichlet and DirichletLogit distributions. This is used to
+    share code between the two classes.
+    """
 
     POSITIVE_PARAMS = {"alpha"}
-    BASE_STAN_DTYPE = "simplex"
-    IS_SIMPLEX = True
-    STAN_DIST = "dirichlet"
 
     def __init__(
         self,
         *,
+        torch_dist: type[dist.distribution.Distribution],
         alpha: Union[AbstractModelComponent, npt.ArrayLike],
         **kwargs,
     ):
-
         # If a float or int is provided, then "shape" must be provided too. We will
         # create a numpy array filled of that shape filled with the value
         enforce_uniformity = True
@@ -599,10 +609,10 @@ class Dirichlet(ContinuousDistribution):
         else:
             enforce_uniformity = False
 
-        # Initialize the parent class
+        # Run the parent class's init
         super().__init__(
             numpy_dist="dirichlet",
-            torch_dist=dist.dirichlet.Dirichlet,
+            torch_dist=torch_dist,
             stan_to_np_names={"alpha": "alpha"},
             stan_to_torch_names={"alpha": "concentration"},
             alpha=alpha,
@@ -612,34 +622,104 @@ class Dirichlet(ContinuousDistribution):
         # Set `enforce_uniformity` appropriately
         self.alpha.enforce_uniformity = enforce_uniformity
 
-    def _draw(
-        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
-    ) -> npt.NDArray:
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """
-        The Dirichlet distribution in numpy follows slightly different broadcasting
-        rules. Specifically, we can only have a 1-D array of parameters for the
-        Dirichlet distribution. This means that we need to loop over multiple calls
-        to the Dirichlet distribution in numpy.
+        The dirichlet distribution in numpy cannot be batched. This is a wrapper
+        around that distribution to allow for batching.
         """
-        # Perform any necessary transformations and rename the parameters
-        level_draws = self._transform_and_rename_np(level_draws)
+        # Get the base distribution
+        np_dist = super().get_numpy_dist(seed=seed)
 
-        # Get the distribution itself
-        dirichlet_dist = self.get_numpy_dist(seed=seed)
+        def dirichlet_dist(
+            alpha: npt.NDArray, size: int | tuple[int, ...] | None = None
+        ) -> npt.NDArray:
 
-        # Get the alphas as a 2D array
-        assert level_draws["alpha"].ndim >= 2, "Alpha must be at least 2D"
-        assert level_draws["alpha"].shape[0] == n, "First dimension must be n"
-        alphas = level_draws["alpha"].reshape(-1, level_draws["alpha"].shape[-1])
+            # Set the size
+            if size is None:
+                size = alpha.shape
+            elif isinstance(size, int):
+                size = (size, *alpha.shape)
+            else:
+                size = tuple(size)
 
-        # Sample from the Dirichlet distribution and reshape the output to match
-        # the original shape of the alpha parameter
-        return np.stack([dirichlet_dist(alpha) for alpha in alphas], axis=0).reshape(
-            level_draws["alpha"].shape
-        )
+            # The trailing dimensions of the size must match the shape of the alphas
+            # The last dimension is the number of categories. All others are the
+            # batch dimensions
+            batch_dims, trailing_dims = size[: -(alpha.ndim)], size[-(alpha.ndim) :]
+            if trailing_dims != alpha.shape:
+                raise ValueError(
+                    f"Trailing dimensions of the size ({size}) do not match the "
+                    f"shape of the alphas ({alpha.shape})"
+                )
+
+            # Reshape the alphas to be 2D. The last dimension is the number of
+            # categories. All others are the batch dimensions.
+            alphas = alpha.reshape(-1, alpha.shape[-1])
+
+            # Sample from the Dirichlet distribution according to the batch dims
+            return np.stack(
+                [np_dist(alpha, size=batch_dims) for alpha in alphas],
+                axis=len(batch_dims),
+            ).reshape(size)
+
+        return dirichlet_dist
 
     def _write_dist_args(self, alpha: str) -> str:  # pylint: disable=arguments-differ
         return alpha
+
+
+class Dirichlet(_DirichletBase):
+    """Defines the Dirichlet distribution."""
+
+    BASE_STAN_DTYPE = "simplex"
+    IS_SIMPLEX = True
+    STAN_DIST = "dirichlet"
+
+    def __init__(
+        self,
+        *,
+        alpha: Union[AbstractModelComponent, npt.ArrayLike],
+        **kwargs,
+    ):
+
+        # Initialize the parent class
+        super().__init__(torch_dist=dist.dirichlet.Dirichlet, alpha=alpha, **kwargs)
+
+
+class DirichletLogit(_DirichletBase):
+    """
+    Defines the Dirchlet distribution for modeling logit-transformed simplex
+    parameters. In other words, this is the Dirichlet distribution parametrized
+    by `ln(theta)` rather than `theta`. This is useful for modeling extremely
+    high-dimensional Dirichlet distributions where the simplex parameterization
+    is numerically unstable.
+    """
+
+    UPPER_BOUND = 0.0
+    STAN_DIST = "dirichlet_logit"  # TODO: Define stan file
+
+    def __init__(
+        self, *, alpha: Union[AbstractModelComponent, npt.ArrayLike], **kwargs
+    ):
+        # Initialize the parent class
+        super().__init__(
+            torch_dist=custom_torch_dists.DirichletLogit, alpha=alpha, **kwargs
+        )
+
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+        """
+        Override the numpy distribution of the Dirichlet distribution to apply the
+        log transformation.
+        """
+
+        # The new function applies the log transformation to the output of the
+        # Dirichlet distribution
+        base_dist = super().get_numpy_dist(seed=seed)
+
+        def log_dirichlet(*args, **kwargs):
+            return np.log(base_dist(*args, **kwargs))
+
+        return log_dirichlet
 
 
 class Binomial(DiscreteDistribution):
@@ -698,16 +778,15 @@ class Poisson(DiscreteDistribution):
         return lambda_
 
 
-class Multinomial(DiscreteDistribution):
-    """Defines the multinomial distribution."""
-
-    SIMPLEX_PARAMS = {"theta"}
-    STAN_DIST = "multinomial"
+class _MultinomialBase(DiscreteDistribution):
+    """Defines the base multinomial distribution."""
 
     def __init__(
         self,
         *,
-        theta: Union[AbstractModelComponent, npt.NDArray[np.floating]],
+        torch_dist: type[custom_torch_dists.CustomDistribution],
+        stan_to_np_names: dict[str, str],
+        stan_to_torch_names: dict[str, str],
         N: Union[AbstractModelComponent, int, npt.NDArray[np.integer]],
         **kwargs,
     ):
@@ -715,39 +794,51 @@ class Multinomial(DiscreteDistribution):
         # Run the parent class's init
         super().__init__(
             numpy_dist="multinomial",
-            torch_dist=CustomTorchMultinomial,
-            stan_to_np_names={"N": "n", "theta": "pvals"},
-            stan_to_torch_names={"N": "total_count", "theta": "probs"},
+            torch_dist=torch_dist,
+            stan_to_np_names=stan_to_np_names,
+            stan_to_torch_names=stan_to_torch_names,
+            stan_to_np_transforms={"N": partial(np.squeeze, axis=-1)},
             N=N,
-            theta=theta,
             **kwargs,
         )
 
-    def _draw(  # pylint: disable=arguments-differ
-        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
-    ) -> npt.NDArray:
-        """
-        The Multinomial distribution in numpy follows slightly different broadcasting
-        rules.
-        """
-        # Perform any necessary transformations and rename the parameters
-        level_draws = self._transform_and_rename_np(level_draws)
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+        """Returns the multinomial distribution function"""
+        # Get the base distribution
+        np_dist = super().get_numpy_dist(seed=seed)
 
-        # Strip the last dimension of the "N" parameter. This is because numpy's
-        # multinomial function ignores the last dimension when determining the shape
-        level_draws["n"] = level_draws["n"].squeeze(-1)
+        # The last dimension is ignored in the multinomial distribution by default
+        def multinomial_dist(
+            n: int | npt.NDArray[np.integer],
+            pvals: npt.NDArray[np.floating],
+            size: int | tuple[int, ...] | None = None,
+        ) -> npt.NDArray[np.integer]:
+            # The dimensions of `n` must equal the leading dimensions of `pvals`
+            if isinstance(n, np.ndarray) and n.shape != pvals.shape[:-1]:
+                raise ValueError(
+                    f"Dimensions of `n` ({n.shape}) must equal the leading dimensions "
+                    f"of `pvals` ({pvals.shape[:-1]})"
+                )
 
-        # Sample from this distribution using numpy. Alter the shape to account
-        # for the new first dimension of length `n`. Also trim off the last dimension
-        # of the shape--again, numpy's multinomial function ignores the last dimension
-        return self.get_numpy_dist(seed=seed)(
-            **level_draws, size=(n,) + self.shape[:-1]
-        )
+            # Set the size
+            if size is None:
+                size = pvals.shape
+            elif isinstance(size, int):
+                size = (size, *pvals.shape)
+            else:
+                size = tuple(size)
 
-    def _write_dist_args(  # pylint: disable=arguments-differ
-        self, theta: str, N: str
-    ) -> str:
-        return f"{theta}, {N}"
+            # The last dimension of the size must match the shape of the pvals
+            if size[-1] != pvals.shape[-1]:
+                raise ValueError(
+                    f"Last dimension of the size ({size}) must match the shape of "
+                    f"the pvals ({pvals.shape[-1]})"
+                )
+
+            # Run the base distribution, ignoring the last dimension
+            return np_dist(n=n, pvals=pvals, size=size[:-1])
+
+        return multinomial_dist
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
 
@@ -756,3 +847,84 @@ class Multinomial(DiscreteDistribution):
         raw = super().get_target_incrementation(index_opts)
         assert raw.count(", ") == 1, "Invalid target incrementation: " + raw
         return raw.split(", ")[0].rstrip() + ")"
+
+
+class Multinomial(_MultinomialBase):
+    """Defines the multinomial distribution."""
+
+    SIMPLEX_PARAMS = {"theta"}
+    STAN_DIST = "multinomial"
+
+    def __init__(
+        self,
+        *,
+        theta: "dms.custom_types.ContinuousParameterType",
+        N: "dms.custom_types.DiscreteParameterType",
+        **kwargs,
+    ):
+        super().__init__(
+            torch_dist=custom_torch_dists.Multinomial,
+            stan_to_np_names={"N": "n", "theta": "pvals"},
+            stan_to_torch_names={"N": "total_count", "theta": "probs"},
+            theta=theta,
+            N=N,
+            **kwargs,
+        )
+
+    def _write_dist_args(  # pylint: disable=arguments-differ
+        self, theta: str, N: str
+    ) -> str:
+        return f"{theta}, {N}"
+
+
+class MultinomialLogit(_MultinomialBase):
+    """
+    Defines the multinomial distribution for modeling logit-transformed simplex
+    parameters. In other words, this is the multinomial distribution parametrized
+    by `ln(theta)` rather than `theta`. This is useful for modeling extremely
+    high-dimensional multinomial distributions where the simplex parameterization
+    is numerically unstable.
+    """
+
+    STAN_DIST = "multinomial_logit"
+
+    def __init__(
+        self,
+        *,
+        gamma: "dms.custom_types.ContinuousParameterType",
+        N: "dms.custom_types.DiscreteParameterType",
+        **kwargs,
+    ):
+        super().__init__(
+            torch_dist=custom_torch_dists.MultinomialLogit,
+            stan_to_np_names={"N": "n", "gamma": "logits"},
+            stan_to_torch_names={"N": "total_count", "gamma": "logits"},
+            gamma=gamma,
+            N=N,
+            **kwargs,
+        )
+
+    def _write_dist_args(  # pylint: disable=arguments-differ
+        self, gamma: str, N: str
+    ) -> str:
+        return f"{gamma}, {N}"
+
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+        """
+        Override the numpy distribution of the multinomial distribution to apply the
+        log transformation.
+        """
+
+        # The new function applies the softmax transformation to the output of the
+        # multinomial distribution (over the last dimension)
+        base_dist = super().get_numpy_dist(seed=seed)
+
+        def multinomial_logit(
+            n: int | npt.NDArray[np.integer],
+            logits: npt.NDArray[np.floating],
+            size: int | tuple[int, ...] | None = None,
+        ):
+            # Run the base distribution with the logits softmaxed
+            return base_dist(n=n, pvals=special.softmax(logits, axis=-1), size=size)
+
+        return multinomial_logit

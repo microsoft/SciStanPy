@@ -1,6 +1,6 @@
 """Holds custom torch distributions used by DMS Stan"""
 
-from typing import Optional, ParamSpec, Sequence
+from typing import Optional, ParamSpec
 
 import torch
 import torch.distributions as dist
@@ -9,7 +9,51 @@ import torch.distributions as dist
 P = ParamSpec("P")
 
 
-class Multinomial:
+class CustomDistribution:
+    """Doesn't do anything. Just useful for type hinting."""
+
+
+class DirichletLogit(dist.TransformedDistribution, CustomDistribution):
+    """
+    Extension of torch.distributions.Dirichlet that outputs logits rather than
+    probabilities. In other words, it models `ln(theta)` rather than `theta`.
+    This is useful for cases where we are applying the Dirichlet distribution
+    to high-dimensional data.
+    """
+
+    def __init__(
+        self,
+        concentration: torch.Tensor,
+        validate_args: Optional[bool] = None,
+    ):
+        """See documentation for torch.distributions.Dirichlet"""
+        # Run construction using the parent class
+        super().__init__(
+            dist.Dirichlet(concentration=concentration, validate_args=validate_args),
+            transforms=[dist.transforms.ExpTransform().inv],
+            validate_args=validate_args,
+        )
+
+    def entropy(self) -> torch.Tensor:
+        raise NotImplementedError
+
+    def enumerate_support(self, expand: bool = True) -> torch.Tensor:
+        raise NotImplementedError
+
+    @property
+    def mean(self):
+        raise NotImplementedError
+
+    @property
+    def mode(self):
+        raise NotImplementedError
+
+    @property
+    def variance(self):
+        raise NotImplementedError
+
+
+class Multinomial(CustomDistribution):
     """
     Extension of torch.distributions.Multinomial that allows inhomogeneous values
     of `total_count`. This assumes that the first dimension of input parameters
@@ -98,3 +142,41 @@ class Multinomial:
         return torch.stack(
             [d.sample(sample_shape=sample_shape) for d in self.distributions], dim=-2
         ).reshape((*sample_shape, *self._batch_shape, self._n_categories))
+
+
+class MultinomialProb(Multinomial, CustomDistribution):
+    """
+    See documentation for `Multinomial`. This is identical to `Multinomial` but
+    assumes that the input values are probabilities rather than logits.
+    """
+
+    def __init__(
+        self,
+        total_count: int | torch.Tensor = 1,
+        probs: Optional[torch.Tensor] = None,
+        validate_args: Optional[bool] = None,
+    ) -> None:
+        """See documentation for torch.distributions.Multinomial"""
+        # Call the parent class with probs
+        super().__init__(
+            total_count=total_count, probs=probs, validate_args=validate_args
+        )
+
+
+class MultinomialLogit(Multinomial, CustomDistribution):
+    """
+    See documentation for `Multinomial`. This is identical to `Multinomial` but
+    assumes that the input values are logits rather than probabilities.
+    """
+
+    def __init__(
+        self,
+        total_count: int | torch.Tensor = 1,
+        logits: Optional[torch.Tensor] = None,
+        validate_args: Optional[bool] = None,
+    ) -> None:
+        """See documentation for torch.distributions.Multinomial"""
+        # Call the parent class with logits
+        super().__init__(
+            total_count=total_count, logits=logits, validate_args=validate_args
+        )
