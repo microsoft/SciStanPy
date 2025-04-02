@@ -134,10 +134,6 @@ class TrpBBaseGrowthModel(dms.Model):
             alpha=A_alpha, shape=(self.n_variants,)
         )
 
-        # We will be using log-forms of the growth models for numerical stability.
-        # This means we also need a transformed "log_A" parameter.
-        self.log_A = dms_ops.log(self.A)  # pylint: disable=invalid-name
-
     def approximate_map(self, *args, **kwargs):
         """Approximates the MAP estimate of the model."""
         return super().approximate_map(
@@ -197,7 +193,7 @@ class TrpBExponentialGrowthModel(TrpBBaseGrowthModel):
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
         r_std_sigma: float = 0.5,
-        A_alpha: float = 1.0,
+        A_alpha: float = 10.0,
     ):
         # Run inherited init
         super().__init__(
@@ -210,13 +206,13 @@ class TrpBExponentialGrowthModel(TrpBBaseGrowthModel):
         )
 
         # What are our proportions at t > 0?
-        self.log_raw_abundances = dms_components.LogExponentialGrowth(
-            log_A=self.log_A,
+        self.raw_abundances = dms_components.ExponentialGrowth(
+            A=self.A,
             r=self.r,
             t=self.tg0,
             shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
         )
-        self.theta_tg0 = dms_ops.exp(dms_ops.normalize_log(self.log_raw_abundances))
+        self.theta_tg0 = dms_ops.normalize(self.raw_abundances)
 
         # Model the counts data.
         self.starting_counts = dms_components.Multinomial(
@@ -245,7 +241,7 @@ class TrpBSigmoidGrowthModel(TrpBBaseGrowthModel):
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
         r_std_sigma: float = 0.5,
-        A_alpha: float = 1.0,
+        A_alpha: float = 0.1,
         c_mean_alpha: float = 1.5,
         c_mean_beta: float = 2.0,
         c_std_sigma: float = 0.25,
@@ -279,25 +275,25 @@ class TrpBSigmoidGrowthModel(TrpBBaseGrowthModel):
         # at t = 0, so the proportions should be the same regardless of replicate.
         # We will thus backcalculate to the proportions at t = 0 using the MEAN
         # rate and MEAN c rather than the replicate-specific values.
-        self.log_raw_abundances_t0 = dms_components.LogSigmoidGrowth(
-            log_A=self.log_A,
+        self.raw_abundances_t0 = dms_components.SigmoidGrowth(
+            A=self.A,
             r=self.r_mean,
             t=0.0,
             c=self.c_mean,
             shape=(self.n_variants,),
         )
-        self.theta_t0 = dms_ops.exp(dms_ops.normalize_log(self.log_raw_abundances_t0))
+        self.theta_t0 = dms_ops.normalize(self.raw_abundances_t0)
 
         # For t > 0, we can have values of `c` that are different for each replicate.
         # and `r` that are different for each variant. We will use the replicate-specific
-        self.log_raw_abundances_tg0 = dms_components.LogSigmoidGrowth(
-            log_A=self.log_A,
+        self.raw_abundances_tg0 = dms_components.SigmoidGrowth(
+            A=self.A,
             r=self.r,
             t=self.tg0,
             c=self.c,
             shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
         )
-        self.theta_tg0 = dms_ops.exp(dms_ops.normalize_log(self.log_raw_abundances_tg0))
+        self.theta_tg0 = dms_ops.normalize(self.raw_abundances_tg0)
 
         # Model the counts data.
         self.starting_counts = dms_components.Multinomial(
