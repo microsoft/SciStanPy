@@ -1,0 +1,20 @@
+real dirichlet_logit_lpdf(vector gamma, vector alpha) {
+  // Unnormalized log probability density function for the Dirichlet distribution
+  // parametrized in the logit space (i.e., rather than \theta, we use
+  // \gamma = ln(\theta)). The assumption is that sum()
+
+  // The sum of the exponents of `gamma` must be equal to 1 (plus a small value)
+  if (abs(sum(exp(gamma)) - 1.0) > 1e-6) {
+    reject("The sum of the exponents of `gamma` must be equal to 1");
+  }
+
+  // The `alpha` parameter must be positive
+  for (a in alpha) {
+    if (a <= 0) {
+      reject("The `alpha` parameter must be positive");
+    }
+  }
+
+  // Calculate the log probability density function
+  return sum((alpha - 1.0) .* gamma);
+}
