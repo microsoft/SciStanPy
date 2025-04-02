@@ -8,6 +8,7 @@ import weakref
 from abc import ABC, abstractmethod
 from collections import Counter
 from tempfile import TemporaryDirectory
+from time import strftime
 from typing import (
     Any,
     Callable,
@@ -776,6 +777,12 @@ class StanModel(CmdStanModel):
         # Set the output directory
         self._set_output_dir(output_dir)
 
+        # Get the model name. We create a unique date-time string to avoid accidental
+        # overwriting of files.
+        self.stan_executable_path = os.path.join(
+            self.output_dir, f"model-{strftime('%Y%m%d%H%M%S')}"
+        )
+
         # Write the Stan program
         self.write_stan_program()
 
@@ -953,11 +960,6 @@ class StanModel(CmdStanModel):
     optimize = _update_cmdstanpy_func(CmdStanModel.optimize, warn=True)
     pathfinder = _update_cmdstanpy_func(CmdStanModel.pathfinder, warn=True)
     variational = _update_cmdstanpy_func(CmdStanModel.variational, warn=True)
-
-    @property
-    def stan_executable_path(self) -> str:
-        """Get the path to the executable for this model."""
-        return os.path.join(self.output_dir, "model")
 
     @property
     def stan_program_path(self) -> str:

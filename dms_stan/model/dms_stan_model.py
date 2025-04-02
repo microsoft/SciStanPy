@@ -450,13 +450,13 @@ class Model(ABC):
     def mcmc(
         self,
         *,
-        output_dir: Optional[str] = None,
-        force_compile: bool = DEFAULT_FORCE_COMPILE,
-        stanc_options: Optional[dict[str, Any]] = DEFAULT_STANC_OPTIONS,
-        cpp_options: Optional[dict[str, Any]] = DEFAULT_CPP_OPTIONS,
-        user_header: Optional[str] = DEFAULT_USER_HEADER,
-        inits: Optional[str] = "prior",
-        data: Optional[dict[str, npt.NDArray]] = None,
+        output_dir: Optional[str],
+        force_compile: bool,
+        stanc_options: Optional[dict[str, Any]],
+        cpp_options: Optional[dict[str, Any]],
+        user_header: Optional[str],
+        inits: Optional[str],
+        data: Optional[dict[str, npt.NDArray]],
         delay_run: Literal[True] | str,
         **sample_kwargs,
     ) -> None: ...
@@ -501,9 +501,10 @@ class Model(ABC):
         # If delaying, then we save the data needed for sampling and return
         if delay_run:
             with open(
-                os.path.join(
-                    sample_kwargs["output_dir"],
-                    delay_run if isinstance(delay_run, str) else "mcmc_delayed.pkl",
+                (
+                    delay_run
+                    if isinstance(delay_run, str)
+                    else f"{stan_model.stan_executable_path}-delay.pkl"
                 ),
                 "wb",
             ) as f:
