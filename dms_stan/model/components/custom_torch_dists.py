@@ -13,46 +13,6 @@ class CustomDistribution:
     """Doesn't do anything. Just useful for type hinting."""
 
 
-class DirichletLogit(dist.TransformedDistribution, CustomDistribution):
-    """
-    Extension of torch.distributions.Dirichlet that outputs logits rather than
-    probabilities. In other words, it models `ln(theta)` rather than `theta`.
-    This is useful for cases where we are applying the Dirichlet distribution
-    to high-dimensional data.
-    """
-
-    def __init__(
-        self,
-        concentration: torch.Tensor,
-        validate_args: Optional[bool] = None,
-    ):
-        """See documentation for torch.distributions.Dirichlet"""
-        # Run construction using the parent class
-        super().__init__(
-            dist.Dirichlet(concentration=concentration, validate_args=validate_args),
-            transforms=[dist.transforms.ExpTransform().inv],
-            validate_args=validate_args,
-        )
-
-    def entropy(self) -> torch.Tensor:
-        raise NotImplementedError
-
-    def enumerate_support(self, expand: bool = True) -> torch.Tensor:
-        raise NotImplementedError
-
-    @property
-    def mean(self):
-        raise NotImplementedError
-
-    @property
-    def mode(self):
-        raise NotImplementedError
-
-    @property
-    def variance(self):
-        raise NotImplementedError
-
-
 class Multinomial(CustomDistribution):
     """
     Extension of torch.distributions.Multinomial that allows inhomogeneous values

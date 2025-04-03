@@ -631,3 +631,84 @@ class LogSigmoidGrowth(LogSigmoidParameter):
     ) -> str:
         par_string = super()._write_operation(f"{r} .* ({t} - {c})")
         return f"{log_A} + {par_string}"
+
+
+class SigmoidGrowthInitParametrization(SigmoidParameter):
+    r"""
+    An alternative parametrization of the sigmoid growth function that parametrizes
+    in terms of starting abundances and rate. This parametrization parallels the
+    parametrization used by `ExponentialGrowth`. Specifically, we calculate the
+    abundance `x` at time `t` for a population with initial abundance `x0` growing
+    with rate `r` as:
+
+    \begin{align}
+    x(t) = \frac{x0\exp{rt}}{1 + x0(\exp(rt) - 1)}
+    \end{align}.
+
+    Note that we define this function such that the carrying capacity of the system
+    is "1". This parametrization enforces that x0 obeys the following equality,
+    which is simply the standard sigmoid growth curve evaluated at `t = 0`:
+
+    \begin{align}
+    x0 = (1 + \exp(rc))^{-1}
+    \end{align},
+
+    where `c` is the offset parameter described in `SigmoidGrowth`. This means that
+    `x0` is implicity capturing the shift parameter, allowing it to be ignored.
+    Indeed, by rearranging the above equality for `x0` to solve for `c`, then plugging
+    c into the the standard logistic growth equation, we arrive at the initial-abundance
+    form of the equation:
+
+    \begin{align}
+    x0 &= (1 + \exp(rc))^{-1}
+    x0^{-1} - 1 &= \exp(rc)
+    \frac{1}{r}\ln{(x0^{-1} - 1)} &= c
+
+    x(t) &= \frac{1}{1 + \exp{-r(t - c)}}
+    &= \frac{1}{1 + \exp{-rt + rc}}
+    &= \frac{1}{1 + \exp{-rt}\exp{r(\frac{1}{r}\ln{(x0^{-1} - 1)})}}
+    &= \frac{1}{1 + \exp{-rt}\exp{\ln{(x0^{-1} - 1)}}}
+    &= \frac{1}{1 + (x0^{-1} - 1)\exp{-rt}}
+    &= \frac{1}{x0 + (1 - x0)\exp{-rt}}
+    &= \frac{\exp{rt}}{x0\exp{rt} + (1 - x0)}
+    \end{align}
+    """
+
+    def __init__(
+        self,
+        *,
+        t: "dms.custom_types.CombinableParameterType",
+        x0: "dms.custom_types.CombinableParameterType",
+        r: "dms.custom_types.CombinableParameterType",
+        shape: tuple[int, ...] = (),
+    ):
+        """Initializes the SigmoidGrowthInitParametrization distribution.
+
+        Args:
+            t (dms.custom_types.CombinableParameterType): The time parameter.
+            x0 (dms.custom_types.CombinableParameterType): Initial abundances.
+            r (dms.custom_types.CombinableParameterType): Growth rate.
+            shape (tuple[int, ...], optional): The shape of the distribution. Defaults
+            to ().
+        """
+        super().__init__(t=t, x0=x0, r=r, shape=shape)
+
+    @overload
+    def operation(
+        self, t: torch.Tensor, x0: torch.Tensor, r: torch.Tensor
+    ) -> torch.Tensor: ...
+
+    @overload
+    def operation(
+        self,
+        t: "dms.custom_types.SampleType",
+        x0: "dms.custom_types.SampleType",
+        r: "dms.custom_types.SampleType",
+    ) -> npt.NDArray: ...
+
+    def operation(self, t, x0, r):
+        return dms.utils.stable_x0_sigmoid_growth(t=t, x0=x0, r=r)
+
+    def _write_operation(self, t: str, x0: str, r: str):
+        """We need a custom stan function for this"""
+        return f"sigmoid_growth_init_param({t}, {x0}, {r})"

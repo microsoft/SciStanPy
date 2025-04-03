@@ -580,12 +580,12 @@ class Exponential(ContinuousDistribution):
         return beta
 
 
-class _DirichletBase(ContinuousDistribution):
-    """
-    Base class for Dirichlet and DirichletLogit distributions. This is used to
-    share code between the two classes.
-    """
+class Dirichlet(ContinuousDistribution):
+    """ """
 
+    BASE_STAN_DTYPE = "simplex"
+    IS_SIMPLEX = True
+    STAN_DIST = "dirichlet"
     POSITIVE_PARAMS = {"alpha"}
 
     def __init__(
@@ -612,7 +612,7 @@ class _DirichletBase(ContinuousDistribution):
         # Run the parent class's init
         super().__init__(
             numpy_dist="dirichlet",
-            torch_dist=torch_dist,
+            torch_dist=dist.dirichlet.Dirichlet,
             stan_to_np_names={"alpha": "alpha"},
             stan_to_torch_names={"alpha": "concentration"},
             alpha=alpha,
@@ -666,60 +666,6 @@ class _DirichletBase(ContinuousDistribution):
 
     def _write_dist_args(self, alpha: str) -> str:  # pylint: disable=arguments-differ
         return alpha
-
-
-class Dirichlet(_DirichletBase):
-    """Defines the Dirichlet distribution."""
-
-    BASE_STAN_DTYPE = "simplex"
-    IS_SIMPLEX = True
-    STAN_DIST = "dirichlet"
-
-    def __init__(
-        self,
-        *,
-        alpha: Union[AbstractModelComponent, npt.ArrayLike],
-        **kwargs,
-    ):
-
-        # Initialize the parent class
-        super().__init__(torch_dist=dist.dirichlet.Dirichlet, alpha=alpha, **kwargs)
-
-
-class DirichletLogit(_DirichletBase):
-    """
-    Defines the Dirchlet distribution for modeling logit-transformed simplex
-    parameters. In other words, this is the Dirichlet distribution parametrized
-    by `ln(theta)` rather than `theta`. This is useful for modeling extremely
-    high-dimensional Dirichlet distributions where the simplex parameterization
-    is numerically unstable.
-    """
-
-    UPPER_BOUND = 0.0
-    STAN_DIST = "dirichlet_logit"  # TODO: Define stan file
-
-    def __init__(
-        self, *, alpha: Union[AbstractModelComponent, npt.ArrayLike], **kwargs
-    ):
-        # Initialize the parent class
-        super().__init__(
-            torch_dist=custom_torch_dists.DirichletLogit, alpha=alpha, **kwargs
-        )
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        """
-        Override the numpy distribution of the Dirichlet distribution to apply the
-        log transformation.
-        """
-
-        # The new function applies the log transformation to the output of the
-        # Dirichlet distribution
-        base_dist = super().get_numpy_dist(seed=seed)
-
-        def log_dirichlet(*args, **kwargs):
-            return np.log(base_dist(*args, **kwargs))
-
-        return log_dirichlet
 
 
 class Binomial(DiscreteDistribution):

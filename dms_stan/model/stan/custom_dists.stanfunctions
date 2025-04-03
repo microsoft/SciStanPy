@@ -1,3 +1,37 @@
+vector[N] sigmoid_growth_init_param(vector[N] t, vector[N] x0, vector[N] r) {
+  // Calculates the initial abundance parametrization of the sigmoid growth function.
+  // We calculate in such a way that should be more numerically stable
+
+  // Define placeholder variables.
+  real exponent;
+  real exponentiation;
+  vector[N] res;
+
+  // Error if any x values are greater than or equal to 1
+  if (max(x0) >= 1.0) {
+    reject("All 'x0' must be less than 1");
+  }
+  if (min(x0) <= 0.0) {
+    reject("All 'x0' must be greater than 0");
+  }
+
+  // Process all values
+  for (n in 1:N) {
+
+    // Calculate the exponent
+    exponent = t[n] * r[n];
+
+    // If the exponent is positive, we go one route. Negative, otherwise.
+    if (exponent >= 0.0) {
+      exponentiation = x0[n] * exp(exponent);
+      res[n] = exponentiation / (exponentiation + 1.0 - x0[n]);
+    } else {
+      res[n] = x0[n] / ((1 - x0[n]) * exp(-exponent) + x0[n]);
+    }
+  }
+  return res
+}
+
 real dirichlet_logit_lpdf(vector gamma, vector alpha) {
   // Unnormalized log probability density function for the Dirichlet distribution
   // parametrized in the logit space (i.e., rather than \theta, we use
