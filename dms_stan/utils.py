@@ -55,7 +55,7 @@ def stable_x0_sigmoid_growth(t, x0, r):
         x0_m = x0[mask]
 
         # Get the exponentiation multiplied by x0
-        eponentiation = x0_m * getattr(module, "exp")(exponent[mask])
+        exponentiation = x0_m * getattr(module, "exp")(exponent[mask])
 
         # Finish calculation
         return exponentiation / (exponentiation + 1 - x0_m)
@@ -63,19 +63,18 @@ def stable_x0_sigmoid_growth(t, x0, r):
     def negative_path():
 
         # Select relevant components
-        inv_mask = ~mask
         x0_m = x0[inv_mask]
 
         # Calculate
-        return x0_m / ((1 - x0_m) * getattr(module, "exp")(-exponent[mask]) + x0_m)
+        return x0_m / ((1 - x0_m) * getattr(module, "exp")(-exponent[inv_mask]) + x0_m)
 
     # Get the module
-    module = torch if isinstance(x, torch.Tensor) else np
+    module = torch if isinstance(x0, torch.Tensor) else np
 
     # We are assuming that all x0 are between 0 and 1. The lower bound is because
     # we cannot have negative abundance. The upper bound is because we have set
     # the carrying capacity to be 1 to eliminate a parameter.
-    min_x0, max_x0 = min(x0), max(x0)
+    min_x0, max_x0 = getattr(module, "min")(x0), getattr(module, "max")(x0)
     if min_x0 == 0:
         raise ValueError("Minimum x0 is '0'. Growth is not possible from nothing.")
     elif min_x0 < 0:
@@ -91,19 +90,29 @@ def stable_x0_sigmoid_growth(t, x0, r):
             "a carrying capacity of '1'."
         )
 
-    # Get the product of t and r. Depending on whether this is positive or negative,
-    # we use different forms of the equation.
-    exponent = r * t
-    mask = exponent >= 0
-
     # The output array is the shape of the three elements broadcast together
     outshape = np.broadcast_shapes(
         *[tuple(getattr(arr, "shape", ())) for arr in (t, x0, r)]
     )
-    output = getattr(module, "empty")(outshape)
+
+    # Broadcast the inputs to the output shape
+    broadcaster = getattr(module, "broadcast_to")
+    t = broadcaster(t, outshape)
+    x0 = broadcaster(x0, outshape)
+    r = broadcaster(r, outshape)
+
+    # Get the product of t and r. Depending on whether this is positive or negative,
+    # we use different forms of the equation.
+    exponent = r * t
+    mask = exponent >= 0
+    inv_mask = ~mask
 
     # Compute both paths
-    output[mask] = positive_path()
-    output[mask] = negative_path()
+    positives, negatives = positive_path(), negative_path()
+
+    # Build the output array
+    output = getattr(module, "empty_like")(x0, dtype=positives.dtype)
+    output[mask] = positives
+    output[inv_mask] = negatives
 
     return output
