@@ -581,7 +581,7 @@ class Exponential(ContinuousDistribution):
 
 
 class Dirichlet(ContinuousDistribution):
-    """ """
+    """Defines the Dirichlet distribution."""
 
     BASE_STAN_DTYPE = "simplex"
     IS_SIMPLEX = True
@@ -591,7 +591,6 @@ class Dirichlet(ContinuousDistribution):
     def __init__(
         self,
         *,
-        torch_dist: type[dist.distribution.Distribution],
         alpha: Union[AbstractModelComponent, npt.ArrayLike],
         **kwargs,
     ):
