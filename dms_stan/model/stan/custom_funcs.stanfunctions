@@ -1,54 +1,79 @@
-vector[N] sigmoid_growth_init_param(vector[N] t, vector[N] x0, vector[N] r) {
+real stable_sigmoid_growth_init_param(real t, real x0, real r) {
   // Calculates the initial abundance parametrization of the sigmoid growth function.
   // We calculate in such a way that should be more numerically stable
 
   // Define placeholder variables.
   real exponent;
   real exponentiation;
-  vector[N] res;
+  real res;
 
   // Error if any x values are greater than or equal to 1
-  if (max(x0) >= 1.0) {
+  if (x0 >= 1.0) {
     reject("All 'x0' must be less than 1");
   }
-  if (min(x0) <= 0.0) {
+  if (x0 <= 0.0) {
     reject("All 'x0' must be greater than 0");
   }
 
-  // Process all values
-  for (n in 1:N) {
+  // Calculate the exponent
+  exponent = t * r;
 
-    // Calculate the exponent
-    exponent = t[n] * r[n];
-
-    // If the exponent is positive, we go one route. Negative, otherwise.
-    if (exponent >= 0.0) {
-      exponentiation = x0[n] * exp(exponent);
-      res[n] = exponentiation / (exponentiation + 1.0 - x0[n]);
-    } else {
-      res[n] = x0[n] / ((1 - x0[n]) * exp(-exponent) + x0[n]);
-    }
+  // If the exponent is positive, we go one route. Negative, otherwise.
+  if (exponent >= 0.0) {
+    exponentiation = x0 * exp(exponent);
+    res = exponentiation / (exponentiation + 1.0 - x0);
+  } else {
+    res = x0 / ((1 - x0) * exp(-exponent) + x0);
   }
-  return res
+  return res;
 }
 
-real dirichlet_logit_lpdf(vector gamma, vector alpha) {
-  // Unnormalized log probability density function for the Dirichlet distribution
-  // parametrized in the logit space (i.e., rather than \theta, we use
-  // \gamma = ln(\theta)). The assumption is that sum()
+real sigmoid_growth_init_param(real t, real x0, real r) {
+  // Just an alias for the `stable_sigmoid_growth_init_param` function
+  return stable_sigmoid_growth_init_param(t, x0, r);
+}
 
-  // The sum of the exponents of `gamma` must be equal to 1 (plus a small value)
-  if (abs(sum(exp(gamma)) - 1.0) > 1e-6) {
-    reject("The sum of the exponents of `gamma` must be equal to 1");
+vector sigmoid_growth_init_param(real t, vector x0, real r) {
+  // Calculation when x0 is a vector
+  int N = size(x0);
+  vector[N] res;
+  for (n in 1:N) {
+    res[n] = stable_sigmoid_growth_init_param(t, x0[n], r);
+  }
+  return res;
+}
+
+vector sigmoid_growth_init_param(real t, vector x0, vector r) {
+  // Calculation when x0 and r are vectors
+  int N = size(x0);
+  vector[N] res;
+
+  // r must be the same size as x0
+  if (size(r) != N) {
+    reject("The size of `r` must be the same as the size of `x0`");
+  }
+  for (n in 1:N) {
+    res[n] = stable_sigmoid_growth_init_param(t, x0[n], r[n]);
+  }
+  return res;
+}
+
+vector sigmoid_growth_init_param(vector t, vector x0, vector r) {
+  // Calculation when t, x0, and r are vectors
+  int N = size(x0);
+  vector[N] res;
+
+  // r must be the same size as x0
+  if (size(r) != N) {
+    reject("The size of `r` must be the same as the size of `x0`");
   }
 
-  // The `alpha` parameter must be positive
-  for (a in alpha) {
-    if (a <= 0) {
-      reject("The `alpha` parameter must be positive");
-    }
+  // t must be the same size as x0
+  if (size(t) != N) {
+    reject("The size of `t` must be the same as the size of `x0`");
   }
-
-  // Calculate the log probability density function
-  return sum((alpha - 1.0) .* gamma);
+  for (n in 1:N) {
+    res[n] = stable_sigmoid_growth_init_param(t[n], x0[n], r[n]);
+  }
+  return res;
 }

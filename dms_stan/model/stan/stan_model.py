@@ -7,6 +7,7 @@ import weakref
 
 from abc import ABC, abstractmethod
 from collections import Counter
+from glob import glob
 from tempfile import TemporaryDirectory
 from time import strftime
 from typing import (
@@ -200,7 +201,7 @@ class StanCodeBase(ABC, list):
         formatted = f"{' ' * DEFAULT_INDENTATION * indendation_level}{text}"
 
         # Add a semicolon to the end if not a bracket or blank
-        if text and text[-1] not in {"{", "}", ";"}:
+        if text and text[-1] not in {"{", "}", ";"} and not text.startswith("#"):
             formatted += ";"
 
         return formatted
@@ -584,6 +585,23 @@ class StanProgram(StanCodeBase):
         return 0
 
     @property
+    def functions_block(self) -> str:
+        """
+        Returns the Stan code for the functions block. This is just a bunch of
+        #include statements.
+        """
+        includes = [
+            f"#include {os.path.basename(file)}"
+            for folder in dms.model.stan.STAN_INCLUDE_PATHS
+            for file in glob(os.path.join(folder, "*.stanfunctions"))
+        ]
+
+        # Get the names of the stan functions in the include dir
+        return (
+            "functions {\n" + self.combine_lines(includes, indentation_level=1) + "\n}"
+        )
+
+    @property
     def data_block(self) -> str:
         """Returns the Stan code for the data block."""
         # Get the declarations for the data block. This is all observables and all
@@ -693,6 +711,7 @@ class StanProgram(StanCodeBase):
         return "\n".join(
             val
             for val in (
+                self.functions_block,
                 self.data_block,
                 self.parameters_block,
                 self.transformed_parameters_block,
@@ -765,8 +784,14 @@ class StanModel(CmdStanModel):
         user_header: Optional[str] = DEFAULT_USER_HEADER,
     ):
         # Set default options
-        stanc_options = stanc_options or {}
+        self._stanc_options = stanc_options or {}
         cpp_options = cpp_options or {}
+
+        # Add the "include_paths" kwarg
+        self._stanc_options["include-paths"] = (
+            self._stanc_options.get("include-paths", [])
+            + dms.model.stan.STAN_INCLUDE_PATHS
+        )
 
         # Note the underlying DMSStan model
         self.model = model
@@ -795,7 +820,7 @@ class StanModel(CmdStanModel):
                 else None
             ),
             force_compile=force_compile,
-            stanc_options=stanc_options,
+            stanc_options=self._stanc_options,
             cpp_options=cpp_options,
             user_header=user_header,
         )
@@ -826,7 +851,12 @@ class StanModel(CmdStanModel):
             f.write(self.code())
 
         # Format the code
-        format_stan_file(self.stan_program_path, overwrite_file=True, canonicalize=True)
+        format_stan_file(
+            self.stan_program_path,
+            overwrite_file=True,
+            canonicalize=True,
+            stanc_options=self._stanc_options,
+        )
 
     def gather_inputs(self, **observables: SampleType) -> dict[str, SampleType]:
         """
