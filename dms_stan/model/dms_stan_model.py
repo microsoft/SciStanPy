@@ -542,6 +542,23 @@ class Model(ABC):
         """Returns the parameter or observable with the given name."""
         return self._model_varname_to_object[paramname]
 
+    def __setattr__(self, name: str, value: Any) -> None:
+        """
+        Sets the attribute of the model. We cannot set attributes that are model
+        components, as this will break the model
+        """
+        # We cannot set attributes that are model components
+        if (
+            hasattr(self, "_model_varname_to_object")
+            and name in self._model_varname_to_object
+        ):
+            raise AttributeError(
+                "Model components can only be set during initialization."
+            )
+
+        # Otherwise, set the attribute
+        super().__setattr__(name, value)
+
     @property
     def named_model_components(self) -> tuple[AbstractModelComponent, ...]:
         """Returns the named model components sorted by the model variable name."""
@@ -572,7 +589,7 @@ class Model(ABC):
         return tuple(
             filter(
                 lambda x: isinstance(x, Parameter) and not x.observable,
-                self.named_model_components,
+                self.all_model_components,
             )
         )
 
