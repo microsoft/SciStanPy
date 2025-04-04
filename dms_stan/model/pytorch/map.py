@@ -750,7 +750,7 @@ class MAP:
 
         # Draw samples
         draws = {
-            getattr(self.model, param): getattr(self, param).draw(
+            self.model.all_model_components_dict[param]: getattr(self, param).draw(
                 n, batch_size=batch_size
             )
             for param in self.parameters
@@ -786,7 +786,13 @@ class MAP:
         # Now separate out the observables from the latent variables. Build
         # the initial inference data object with the latent variables
         inference_data = az.convert_to_inference_data(
-            draws[[p for p in self.parameters if not getattr(self.model, p).observable]]
+            draws[
+                [
+                    p
+                    for p in self.parameters
+                    if not self.model.all_model_components_dict[p].observable
+                ]
+            ]
         )
 
         # Add the observables and the observed data to the inference data object
@@ -799,7 +805,11 @@ class MAP:
                 }
             ),
             posterior_predictive=draws[
-                [p for p in self.parameters if getattr(self.model, p).observable]
+                [
+                    p
+                    for p in self.parameters
+                    if self.model.all_model_components_dict[p].observable
+                ]
             ],
         )
         return MAPInferenceRes(inference_data)
