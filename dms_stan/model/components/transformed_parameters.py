@@ -633,7 +633,7 @@ class LogSigmoidGrowth(LogSigmoidParameter):
         return f"{log_A} + {par_string}"
 
 
-class SigmoidGrowthInitParametrization(SigmoidParameter):
+class SigmoidGrowthInitParametrization(TransformedParameter):
     r"""
     An alternative parametrization of the sigmoid growth function that parametrizes
     in terms of starting abundances and rate. This parametrization parallels the
@@ -674,7 +674,7 @@ class SigmoidGrowthInitParametrization(SigmoidParameter):
     \end{align}
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
         t: "dms.custom_types.CombinableParameterType",
@@ -693,6 +693,7 @@ class SigmoidGrowthInitParametrization(SigmoidParameter):
         """
         super().__init__(t=t, x0=x0, r=r, shape=shape)
 
+    # pylint: disable=arguments-differ
     @overload
     def operation(
         self, t: torch.Tensor, x0: torch.Tensor, r: torch.Tensor
@@ -712,3 +713,5 @@ class SigmoidGrowthInitParametrization(SigmoidParameter):
     def _write_operation(self, t: str, x0: str, r: str):
         """We need a custom stan function for this"""
         return f"sigmoid_growth_init_param({t}, {x0}, {r})"
+
+    # pylint: enable=arguments-differ
