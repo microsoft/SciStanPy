@@ -459,6 +459,7 @@ class PriorPredictiveCheck:
             "y": "Cumulative Probability",
             "by": self._independent_label,
             "datashade": False,
+            "hover": "hline",
         }
 
     def get_violin_kwargs(self) -> dict:
