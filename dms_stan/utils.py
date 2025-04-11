@@ -32,18 +32,22 @@ def stable_sigmoid(dist1: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
 @overload
 def stable_x0_sigmoid_growth(
     t: npt.NDArray[np.floating],
-    x0: npt.NDArray[np.floating],
+    A: npt.NDArray[np.floating],  # pylint: disable=invalid-name
     r: npt.NDArray[np.floating],
+    x0: npt.NDArray[np.floating],
 ) -> npt.NDArray[np.floating]: ...
 
 
 @overload
 def stable_x0_sigmoid_growth(
-    t: torch.Tensor, x0: torch.Tensor, r: torch.Tensor
+    t: torch.Tensor,
+    A: torch.Tensor,  # pylint: disable=invalid-name
+    r: torch.Tensor,
+    x0: torch.Tensor,
 ) -> torch.Tensor: ...
 
 
-def stable_x0_sigmoid_growth(t, x0, r):
+def stable_x0_sigmoid_growth(t, A, r, x0):  # pylint: disable=invalid-name
     """
     Calculates the sigmoid growth function parametrized from starting amount
     `x0`. Note that all members of x0 must be positive.
@@ -51,44 +55,21 @@ def stable_x0_sigmoid_growth(t, x0, r):
 
     def positive_path():
 
-        # Select relevant components
-        x0_m = x0[mask]
-
         # Get the exponentiation multiplied by x0
-        exponentiation = x0_m * getattr(module, "exp")(exponent[mask])
+        exponentiation = getattr(module, "exp")(exponent[mask])
 
         # Finish calculation
-        return exponentiation / (exponentiation + 1 - x0_m)
+        return exponentiation / (exponentiation + rel_change[mask])
 
     def negative_path():
 
-        # Select relevant components
-        x0_m = x0[inv_mask]
-
         # Calculate
-        return x0_m / ((1 - x0_m) * getattr(module, "exp")(-exponent[inv_mask]) + x0_m)
+        return 1 / (
+            1 + (rel_change[inv_mask] * getattr(module, "exp")(-exponent[inv_mask]))
+        )
 
     # Get the module
     module = torch if isinstance(x0, torch.Tensor) else np
-
-    # We are assuming that all x0 are between 0 and 1. The lower bound is because
-    # we cannot have negative abundance. The upper bound is because we have set
-    # the carrying capacity to be 1 to eliminate a parameter.
-    min_x0, max_x0 = getattr(module, "min")(x0), getattr(module, "max")(x0)
-    if min_x0 == 0:
-        raise ValueError("Minimum x0 is '0'. Growth is not possible from nothing.")
-    elif min_x0 < 0:
-        raise ValueError(
-            f"Minimum x0 is {min_x0}, but x0 must be positive. Negative abundance "
-            "is nonsensical."
-        )
-    if max_x0 == 1:
-        raise ValueError("Maximum x0 is '1'. No more growth possible.")
-    elif max_x0 > 1:
-        raise ValueError(
-            f"Maximum x0 is {max_x0}, but x0 must be <1. This i because we assume "
-            "a carrying capacity of '1'."
-        )
 
     # The output array is the shape of the three elements broadcast together
     outshape = np.broadcast_shapes(
@@ -100,12 +81,16 @@ def stable_x0_sigmoid_growth(t, x0, r):
     t = broadcaster(t, outshape)
     x0 = broadcaster(x0, outshape)
     r = broadcaster(r, outshape)
+    A = broadcaster(A, outshape)
 
     # Get the product of t and r. Depending on whether this is positive or negative,
     # we use different forms of the equation.
     exponent = r * t
     mask = exponent >= 0
     inv_mask = ~mask
+
+    # What's the relative change of the abundance?
+    rel_change = (A - x0) / x0
 
     # Compute both paths
     positives, negatives = positive_path(), negative_path()
@@ -114,5 +99,8 @@ def stable_x0_sigmoid_growth(t, x0, r):
     output = getattr(module, "empty_like")(x0, dtype=positives.dtype)
     output[mask] = positives
     output[inv_mask] = negatives
+
+    # Scale the output by A
+    output = output * A
 
     return output
