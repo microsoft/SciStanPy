@@ -66,13 +66,10 @@ class PyTorchModel(nn.Module):
         # Record the model
         self.model = model
 
-        # Draw from the model to get the initial values
-        draws = self.model.draw(1, named_only=False, seed=seed)
-
         # Initialize all parameters for pytorch optimization
         learnable_params = []
-        for param in self.model.parameters:
-            param.init_pytorch(init_val=draws[param].squeeze(axis=0))
+        for param_num, param in enumerate(self.model.parameters):
+            param.init_pytorch(seed=seed + param_num)
             learnable_params.append(param._torch_parametrization)
 
         # Record learnable parameters such that they can be recognized by PyTorch
