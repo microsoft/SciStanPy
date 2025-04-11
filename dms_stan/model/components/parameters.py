@@ -105,10 +105,15 @@ class Parameter(AbstractModelComponent):
         if self.observable:
             raise ValueError("Observables do not have a torch parametrization")
 
-        # If no initialization value is provided, then we draw one
+        # If no initialization value is provided, then we create one on the range
+        # of -1 to 1. This is done by drawing from the distribution.
         if init_val is None:
-            init_val, _ = self.draw(1, seed=seed)
-            init_val = np.squeeze(init_val, axis=0)
+            init_val = np.squeeze(
+                self.get_rng(seed=seed).uniform(
+                    low=-1.0, high=1.0, size=(1,) + self.shape
+                ),
+                axis=0,
+            )
 
         # If the initialization value is a numpy array, convert it to a tensor
         if isinstance(init_val, np.ndarray):
@@ -358,9 +363,10 @@ class Normal(ContinuousDistribution):
         *,
         mu: "dms.custom_types.ContinuousParameterType",
         sigma: "dms.custom_types.ContinuousParameterType",
+        noncentered: bool = True,
         **kwargs,
     ):
-
+        # Build the instance
         super().__init__(
             numpy_dist="normal",
             torch_dist=dist.normal.Normal,
@@ -370,6 +376,9 @@ class Normal(ContinuousDistribution):
             sigma=sigma,
             **kwargs,
         )
+
+        # Are we using non-centered parameterization?
+        self._noncentered = noncentered
 
     def _write_dist_args(  # pylint: disable=arguments-differ
         self, mu: str, sigma: str
@@ -383,19 +392,23 @@ class Normal(ContinuousDistribution):
         center the parameter. This is done by redefining this parameter as the
         transformation of a draw from a unit normal distribution.
         """
-        # If this is a hyperparameter or observable, then we use the parent method
-        if self.is_hyperparameter or self.observable:
+        # If this is centered, then we use the parent method
+        if not self.is_noncentered:
             return super().get_transformation_assignment(index_opts)
 
         # Get our formattables
         formattables = super(Parameter, self).get_stan_code(index_opts)
         mu_declaration, sigma_declaration = formattables["mu"], formattables["sigma"]
+        raw_declaration = self.sigma.get_indexed_varname(
+            index_opts, _name_override=self.noncentered_varname
+        )
 
         # Otherwise, we redefine this parameter as the transformation of a draw
         # from a unit normal distribution
+
         return (
             f"{self.get_indexed_varname(index_opts)} = {mu_declaration} + {sigma_declaration} "
-            f".* {self.get_indexed_varname(index_opts, _name_override=self.noncentered_varname)}"
+            f".* {raw_declaration}"
         )
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
@@ -404,23 +417,31 @@ class Normal(ContinuousDistribution):
         by the log probability of the non-centered parameter. Otherwise, we use
         the parent method.
         """
-        # If this is a hyperparameter or observable, then we use the parent method
-        if self.is_hyperparameter or self.observable:
-            return super().get_target_incrementation(index_opts)
-
-        # Otherwise, we increment the target variable by the log probability of
-        # the non-centered parameter
-        return (
-            self.get_indexed_varname(
-                index_opts, _name_override=self.noncentered_varname
+        # If noncentered, then we need to increment the target variable by the log
+        # probability of the non-centered parameter. Otherwise, we use the parent
+        # method.
+        if self.is_noncentered:
+            return (
+                self.sigma.get_indexed_varname(
+                    index_opts, _name_override=self.noncentered_varname
+                )
+                + " ~ std_normal()"
             )
-            + " ~ std_normal()"
-        )
+
+        return super().get_target_incrementation(index_opts)
 
     @property
     def noncentered_varname(self) -> str:
         """Return the non-centered variable name"""
         return f"{self.stan_model_varname}_raw"
+
+    @property
+    def is_noncentered(self) -> bool:
+        """
+        Can only be noncentered if the parameter is not a hyperparameter, observable,
+        and we did not set `noncentered` to False at initialization.
+        """
+        return self._noncentered and not self.is_hyperparameter and not self.observable
 
 
 class HalfNormal(Normal):
@@ -434,7 +455,7 @@ class HalfNormal(Normal):
         sigma: "dms.custom_types.ContinuousParameterType",
         **kwargs,
     ):
-        super().__init__(mu=0.0, sigma=sigma, **kwargs)
+        super().__init__(mu=0.0, sigma=sigma, noncentered=False, **kwargs)
 
         # Mu is not togglable
         self.mu.is_togglable = False
@@ -453,7 +474,7 @@ class UnitNormal(Normal):
     """Parameter that is represented by the unit normal distribution."""
 
     def __init__(self, **kwargs):
-        super().__init__(mu=0.0, sigma=1.0, **kwargs)
+        super().__init__(mu=0.0, sigma=1.0, noncentered=False, **kwargs)
 
         # Sigma is not togglable
         self.sigma.is_togglable = False
@@ -545,6 +566,48 @@ class Gamma(ContinuousDistribution):
             beta=beta,
             **kwargs,
         )
+
+    def _write_dist_args(  # pylint: disable=arguments-differ
+        self, alpha: str, beta: str
+    ) -> str:
+        return f"{alpha}, {beta}"
+
+
+class InverseGamma(ContinuousDistribution):
+    """Defines the inverse gamma distribution."""
+
+    POSITIVE_PARAMS = {"alpha", "beta"}
+    LOWER_BOUND: float = 0.0
+    STAN_DIST = "inv_gamma"
+
+    def __init__(
+        self,
+        *,
+        alpha: "dms.custom_types.ContinuousParameterType",
+        beta: "dms.custom_types.ContinuousParameterType",
+        **kwargs,
+    ):
+
+        super().__init__(
+            numpy_dist="gamma",
+            torch_dist=dist.inverse_gamma.InverseGamma,
+            stan_to_np_names={"alpha": "shape", "beta": "scale"},
+            stan_to_torch_names={"alpha": "concentration", "beta": "rate"},
+            stan_to_np_transforms={"beta": _inverse_transform},
+            alpha=alpha,
+            beta=beta,
+            **kwargs,
+        )
+
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+        """Builds the numpy distribution function"""
+        # Get the base distribution
+        np_dist = super().get_numpy_dist(seed=seed)
+
+        def inverse_gamma_dist(*args, **kwargs) -> npt.NDArray[np.floating]:
+            return 1 / np_dist(*args, **kwargs)
+
+        return inverse_gamma_dist
 
     def _write_dist_args(  # pylint: disable=arguments-differ
         self, alpha: str, beta: str
