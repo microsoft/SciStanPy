@@ -185,11 +185,18 @@ class Model(ABC):
         # Set up variables
         dims: dict[tuple[int, int], str] = {}
 
+        # The list of dimension options cannot overlap with variable names
+        allowed_dim_names = [
+            name
+            for name in DEFAULT_DIM_NAMES
+            if name not in self.named_model_components_dict
+        ]
+
         # Check sizes of all observables and record the dimension names
         for observable in self.observables:
             for dimkey in enumerate(observable.shape[::-1]):
                 if dimkey not in dims:
-                    dims[dimkey] = DEFAULT_DIM_NAMES[len(dims)]
+                    dims[dimkey] = allowed_dim_names[len(dims)]
 
         return dims
 
