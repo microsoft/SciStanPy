@@ -678,8 +678,9 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
         self,
         *,
         t: "dms.custom_types.CombinableParameterType",
-        x0: "dms.custom_types.CombinableParameterType",
+        A: "dms.custom_types.CombinableParameterType",  # pylint: disable=invalid-name
         r: "dms.custom_types.CombinableParameterType",
+        x0: "dms.custom_types.CombinableParameterType",
         shape: tuple[int, ...] = (),
     ):
         """Initializes the SigmoidGrowthInitParametrization distribution.
@@ -691,27 +692,30 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
             shape (tuple[int, ...], optional): The shape of the distribution. Defaults
             to ().
         """
-        super().__init__(t=t, x0=x0, r=r, shape=shape)
+        super().__init__(t=t, A=A, r=r, x0=x0, shape=shape)
 
     # pylint: disable=arguments-differ
     @overload
     def operation(
-        self, t: torch.Tensor, x0: torch.Tensor, r: torch.Tensor
+        self, t: torch.Tensor, A: torch.Tensor, r: torch.Tensor, x0: torch.Tensor
     ) -> torch.Tensor: ...
 
     @overload
     def operation(
         self,
         t: "dms.custom_types.SampleType",
-        x0: "dms.custom_types.SampleType",
+        A: "dms.custom_types.SampleType",  # pylint: disable=invalid-name
         r: "dms.custom_types.SampleType",
+        x0: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
 
-    def operation(self, t, x0, r):
-        return dms.utils.stable_x0_sigmoid_growth(t=t, x0=x0, r=r)
+    def operation(self, t, A, r, x0):
+        return dms.utils.stable_x0_sigmoid_growth(t=t, A=A, r=r, x0=x0)
 
-    def _write_operation(self, t: str, x0: str, r: str):
+    def _write_operation(
+        self, t: str, A: str, r: str, x0: str  # pylint: disable=invalid-name
+    ) -> str:
         """We need a custom stan function for this"""
-        return f"sigmoid_growth_init_param({t}, {x0}, {r})"
+        return f"sigmoid_growth_init_param({t}, {A}, {r}, {x0})"
 
     # pylint: enable=arguments-differ

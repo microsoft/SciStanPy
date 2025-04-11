@@ -1,4 +1,4 @@
-real stable_sigmoid_growth_init_param(real t, real x0, real r) {
+real stable_sigmoid_growth_init_param(real t, real A, real r, real x0) {
   // Calculates the initial abundance parametrization of the sigmoid growth function.
   // We calculate in such a way that should be more numerically stable
 
@@ -6,60 +6,75 @@ real stable_sigmoid_growth_init_param(real t, real x0, real r) {
   real exponent;
   real exponentiation;
   real res;
+  real abundance_change;
 
-  // Error if any x values are greater than or equal to 1
-  if (x0 >= 1.0) {
-    reject("All 'x0' must be less than 1");
+  // x0 must be positive and A must be greater than or equal to x0
+  if (x0 <= 0) {
+    reject("`x0` must be positive");
   }
-  if (x0 <= 0.0) {
-    reject("All 'x0' must be greater than 0");
+  if (A < 0) {
+    reject("`A` must be positive");
   }
 
-  // Calculate the exponent
+
+  // Calculate the exponent and relative change in abundance
   exponent = t * r;
+  abundance_change = (A - x0) / x0;
 
   // If the exponent is positive, we go one route. Negative, otherwise.
   if (exponent >= 0.0) {
-    exponentiation = x0 * exp(exponent);
-    res = exponentiation / (exponentiation + 1.0 - x0);
+    exponentiation = exp(exponent);
+    res = exponentiation / (exponentiation + abundance_change);
   } else {
-    res = x0 / ((1 - x0) * exp(-exponent) + x0);
+    res = 1 / (1 + exp(exponent) * abundance_change);
   }
-  return res;
+
+  // Multiply by the final abundance
+  return res * A;
 }
 
-real sigmoid_growth_init_param(real t, real x0, real r) {
+real sigmoid_growth_init_param(real t, real A, real r, real x0) {
   // Just an alias for the `stable_sigmoid_growth_init_param` function
-  return stable_sigmoid_growth_init_param(t, x0, r);
+  return stable_sigmoid_growth_init_param(t, A, r, x0);
 }
 
-vector sigmoid_growth_init_param(real t, vector x0, real r) {
-  // Calculation when x0 is a vector
+vector sigmoid_growth_init_param(real t, vector A, real r, vector x0) {
+  // Calculation when x0 and A are vectors
   int N = size(x0);
   vector[N] res;
+
+  // A must be the same size as x0
+  if (size(A) != N) {
+    reject("The size of `A` must be the same as the size of `x0`");
+  }
+
   for (n in 1:N) {
-    res[n] = stable_sigmoid_growth_init_param(t, x0[n], r);
+    res[n] = stable_sigmoid_growth_init_param(t, A[n], r, x0[n]);
   }
   return res;
 }
 
-vector sigmoid_growth_init_param(real t, vector x0, vector r) {
-  // Calculation when x0 and r are vectors
+vector sigmoid_growth_init_param(real t, vector A, vector r, vector x0) {
+  // Calculation when x0, A, and r are vectors
   int N = size(x0);
   vector[N] res;
 
-  // r must be the same size as x0
+  // r must be the same size as x0 and A
   if (size(r) != N) {
     reject("The size of `r` must be the same as the size of `x0`");
   }
+  if (size(A) != N) {
+    reject("The size of `A` must be the same as the size of `x0`");
+  }
+
   for (n in 1:N) {
-    res[n] = stable_sigmoid_growth_init_param(t, x0[n], r[n]);
+    res[n] = stable_sigmoid_growth_init_param(t, A[n], r[n], x0[n]);
   }
   return res;
 }
 
-vector sigmoid_growth_init_param(vector t, vector x0, vector r) {
-  // Calculation when t, x0, and r are vectors
+vector sigmoid_growth_init_param(vector t, vector A, vector r, vector x0) {
+  // Calculation when t, x0, A, and r are vectors
   int N = size(x0);
   vector[N] res;
 
@@ -72,8 +87,14 @@ vector sigmoid_growth_init_param(vector t, vector x0, vector r) {
   if (size(t) != N) {
     reject("The size of `t` must be the same as the size of `x0`");
   }
+
+  // A must be the same size as x0
+  if (size(A) != N) {
+    reject("The size of `A` must be the same as the size of `x0`");
+  }
+
   for (n in 1:N) {
-    res[n] = stable_sigmoid_growth_init_param(t[n], x0[n], r[n]);
+    res[n] = stable_sigmoid_growth_init_param(t[n], A[n], r[n], x0[n]);
   }
   return res;
 }
