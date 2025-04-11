@@ -441,16 +441,9 @@ class StanProgram(StanCodeBase):
             # Root nodes are at depth 0
             node_to_depth[root] = 0
 
-            # We should never encounter a node twice from a single root
-            observed_nodes: set[AbstractModelComponent] = set()
-
             # Walk the tree rooted at this root and record the depth of each node
             # if it is higher than the current maximum depth
             for depth, _, child in root.walk_tree():
-
-                # Make sure we haven't seen this node before
-                assert child not in observed_nodes, "Node encountered twice in tree"
-                observed_nodes.add(child)
 
                 # Record the maximum depth of this node
                 node_to_depth[child] = max(depth, node_to_depth.get(child, 0))
@@ -625,10 +618,10 @@ class StanProgram(StanCodeBase):
         declarations: list[str] = []
         for component in self.recurse_model_components():
 
-            # Normal distributions are non-centered if they are not hyperparameters
-            if isinstance(component, Normal) and not component.is_hyperparameter:
+            # Special case for non-centered normal distributions.
+            if isinstance(component, Normal) and component.is_noncentered:
                 declarations.append(
-                    f"{component.stan_dtype} {component.noncentered_varname}"
+                    f"{component.sigma.stan_dtype} {component.noncentered_varname}"
                 )
 
             # Otherwise, add all parameters that are not observables
@@ -657,11 +650,7 @@ class StanProgram(StanCodeBase):
             component.stan_parameter_declaration
             for component in self.recurse_model_components()
             if (isinstance(component, TransformedParameter) and component.is_named)
-            or (
-                isinstance(component, Normal)
-                and not component.is_hyperparameter
-                and not component.observable
-            )
+            or (isinstance(component, Normal) and component.is_noncentered)
         ]
 
         # Combine declarations
