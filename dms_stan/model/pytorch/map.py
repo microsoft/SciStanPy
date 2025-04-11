@@ -679,14 +679,10 @@ class MAP:
 
         # Store inputs. Each key in the map estimate will be mapped to an instance
         # variable
-        self.parameters: str = []
-        for key, value in distributions.items():
-            self.parameters.append(key)
-            setattr(
-                self,
-                key,
-                MAPParam(name=key, value=map_estimate.get(key), distribution=value),
-            )
+        self.model_varname_to_map: dict[str, MAPParam] = {
+            key: MAPParam(name=key, value=map_estimate.get(key), distribution=value)
+            for key, value in distributions.items()
+        }
 
         # Record the loss trajectory as a pandas dataframe
         self.losses = pd.DataFrame(
@@ -750,10 +746,8 @@ class MAP:
 
         # Draw samples
         draws = {
-            self.model.all_model_components_dict[param]: getattr(self, param).draw(
-                n, batch_size=batch_size
-            )
-            for param in self.parameters
+            self.model.all_model_components_dict[k]: v.draw(n, batch_size=batch_size)
+            for k, v in self.model_varname_to_map.items()
         }
 
         # If returning as an xarray or InferenceData object, convert the draws to
@@ -788,9 +782,9 @@ class MAP:
         inference_data = az.convert_to_inference_data(
             draws[
                 [
-                    p
-                    for p in self.parameters
-                    if not self.model.all_model_components_dict[p].observable
+                    varname
+                    for varname, map_param in self.model_varname_to_map.items()
+                    if not self.model.all_model_components_dict[varname].observable
                 ]
             ]
         )
@@ -806,9 +800,9 @@ class MAP:
             ),
             posterior_predictive=draws[
                 [
-                    p
-                    for p in self.parameters
-                    if self.model.all_model_components_dict[p].observable
+                    varname
+                    for varname, map_param in self.model_varname_to_map.items()
+                    if self.model.all_model_components_dict[varname].observable
                 ]
             ],
         )
