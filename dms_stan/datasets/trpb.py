@@ -59,7 +59,7 @@ class TrpBBaseGrowthModel(dms.Model):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
-        r_std_sigma: float = 0.5,
+        r_std_sigma: float = 0.05,
     ):
 
         # Check shapes. Times and starting counts should be 1D arrays. Timepoint
@@ -169,18 +169,16 @@ class TrpBBaseGrowthModel(dms.Model):
 
 
 class _TrpBInitParam(TrpBBaseGrowthModel):
-    """Base class for models that use the initial proportions as a parameter."""
-
     def __init__(
         self,
         times: npt.NDArray[np.floating],
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
-        r_std_sigma: float = 0.5,
+        r_std_sigma: float = 0.05,
         alpha: float = 2.0,
     ):
-        # Initialize the base class
+        # Run inherited init
         super().__init__(
             times=times,
             starting_counts=starting_counts,
@@ -215,7 +213,7 @@ class TrpBExponentialGrowth(_TrpBInitParam):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
-        r_std_sigma: float = 0.5,
+        r_std_sigma: float = 0.05,
         alpha: float = 2.0,
     ):
         # Run inherited init
@@ -260,8 +258,9 @@ class TrpBSigmoidGrowthInitParam(_TrpBInitParam):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
-        r_std_sigma: float = 0.5,
+        r_std_sigma: float = 0.05,
         alpha: float = 2.0,
+        foldchange_beta: float = 0.1,
     ):
         # Run inherited init
         super().__init__(
@@ -273,15 +272,25 @@ class TrpBSigmoidGrowthInitParam(_TrpBInitParam):
             alpha=alpha,
         )
 
-        # We will use the sigmoid growth function parametrized to use the starting
-        # proportions rather than the offset parameter `c`.
-        self.raw_abundances_tg0 = dms_components.SigmoidGrowthInitParametrization(
+        # We model the maximum foldchange in growth of the culture as an inverse
+        # gamma distribution plus 1.
+        self.max_foldchange = dms_components.Exponential(
+            beta=foldchange_beta
+        ) + dms_components.Constant(1.0, togglable=False)
+
+        # Get the final abundances. The final abundances are the initial abundances
+        # scaled by the maximum foldchange for that variant.
+        self.A = self.theta_t0 * self.max_foldchange  # pylint: disable=invalid-name
+
+        # What are our proportions at t > 0?
+        self.abundances_tg0 = dms_components.SigmoidGrowthInitParametrization(
             t=self.tg0,
-            x0=self.theta_t0,
+            A=self.A,
             r=self.r,
+            x0=self.theta_t0,
             shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
         )
-        self.theta_tg0 = dms_ops.normalize(self.raw_abundances_tg0)
+        self.theta_tg0 = dms_ops.normalize(self.abundances_tg0)
 
         # Model the counts data.
         self.timepoint_counts = dms_components.Multinomial(
@@ -305,11 +314,10 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
-        r_std_sigma: float = 0.5,
-        c_mean_alpha: float = 2.0,
-        c_mean_beta: float = 2.0,
-        c_std_sigma: float = 0.25,
-        A_alpha: float = 0.5,  # pylint: disable=invalid-name
+        r_std_sigma: float = 0.05,
+        c_mean_alpha: float = 4.0,
+        c_mean_beta: float = 8.0,
+        A_alpha: float = 0.25,  # pylint: disable=invalid-name
     ):
         # Run inherited init
         super().__init__(
@@ -326,13 +334,7 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
         # could allow for differences in the time at which the maximum growth rate
         # is reached, so we will model different values of `c` for each replicate
         # using the Gamma distribution.
-        self.c_mean = dms_components.Gamma(alpha=c_mean_alpha, beta=c_mean_beta)
-        self.c_std = dms_components.HalfNormal(sigma=c_std_sigma)
-        self.c = dms_components.Normal(
-            mu=self.c_mean,
-            sigma=self.c_std,
-            shape=(self.n_replicates, 1, 1),
-        )
+        self.c = dms_components.Gamma(alpha=c_mean_alpha, beta=c_mean_beta)
 
         # Get the A values values from the dirichlet distribution. We scale the
         # values by the total number of variants for numerical stability.
@@ -349,7 +351,7 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
             A=self.A,
             r=self.r_mean,
             t=dms_components.Constant(0.0, togglable=False),
-            c=self.c_mean,
+            c=self.c,
             shape=(self.n_variants,),
         )
         self.theta_t0 = dms_ops.normalize(self.raw_abundances_t0)
