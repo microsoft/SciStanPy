@@ -341,8 +341,9 @@ class SampleResults(MAPInferenceRes):
             ),
         )
 
-        # Save the arviz object to disk
-        self.save_netcdf()
+        # Save the arviz object to disk if it was not loaded from disk
+        if inference_obj is None:
+            self.save_netcdf()
 
     def _build_arviz_object(
         self,
