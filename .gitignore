@@ -1,6 +1,7 @@
 # Data
 raw_data
 temp
+flip3
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
