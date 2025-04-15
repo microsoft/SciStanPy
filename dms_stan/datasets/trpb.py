@@ -111,12 +111,13 @@ class TrpBBaseGrowthModel(dms.Model):
         # Every model has a "rate" parameter, which gives the growth rate of each
         # variant in each replicate. Each variant gets its own `r`` which we model
         # as being drawn from a normal distribution with mean `r_mean` and standard
-        # deviation `r_std`. The mean is different for each variant, but the standard
-        # deviation is assumed to be the same.
+        # deviation `r_std`. The mean and standard deviation are different by variant,
         self.r_mean = dms_components.Exponential(
             beta=r_mean_beta, shape=(self.n_variants,)
         )
-        self.r_std = dms_components.HalfNormal(sigma=r_std_sigma)
+        self.r_std = dms_components.HalfNormal(
+            sigma=r_std_sigma, shape=(self.n_variants,)
+        )
         self.r = dms_components.Normal(
             mu=self.r_mean,
             sigma=self.r_std,
@@ -275,7 +276,7 @@ class TrpBSigmoidGrowthInitParam(_TrpBInitParam):
         # We model the maximum foldchange in growth of the culture as an inverse
         # gamma distribution plus 1.
         self.max_foldchange = dms_components.Exponential(
-            beta=foldchange_beta
+            beta=foldchange_beta, shape=(self.n_variants,)
         ) + dms_components.Constant(1.0, togglable=False)
 
         # Get the final abundances. The final abundances are the initial abundances
@@ -318,6 +319,7 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
         c_mean_alpha: float = 4.0,
         c_mean_beta: float = 8.0,
         A_alpha: float = 0.25,  # pylint: disable=invalid-name
+        c_std_sigma: float = 0.05,
     ):
         # Run inherited init
         super().__init__(
@@ -334,7 +336,13 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
         # could allow for differences in the time at which the maximum growth rate
         # is reached, so we will model different values of `c` for each replicate
         # using the Gamma distribution.
-        self.c = dms_components.Gamma(alpha=c_mean_alpha, beta=c_mean_beta)
+        self.c_mean = dms_components.Gamma(alpha=c_mean_alpha, beta=c_mean_beta)
+        self.c_std = dms_components.HalfNormal(sigma=c_std_sigma)
+        self.c = dms_components.Normal(
+            mu=self.c_mean,
+            sigma=self.c_std,
+            shape=(self.n_replicates, 1, 1),
+        )
 
         # Get the A values values from the dirichlet distribution. We scale the
         # values by the total number of variants for numerical stability.
@@ -351,7 +359,7 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
             A=self.A,
             r=self.r_mean,
             t=dms_components.Constant(0.0, togglable=False),
-            c=self.c,
+            c=self.c_mean,
             shape=(self.n_variants,),
         )
         self.theta_t0 = dms_ops.normalize(self.raw_abundances_t0)
