@@ -318,6 +318,8 @@ class SampleResults(MAPInferenceRes):
     be instantiated directly. Instead, use the `from_disk` method to load the object.
     """
 
+    # TODO: Set a flag for excluding transformed parameters. This should be True
+    # by default. They can be exlucded because they can be recalculated easily.
     def __init__(
         self,
         stan_model: Union["stan_module.StanModel", None] = None,
