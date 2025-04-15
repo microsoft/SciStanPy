@@ -399,13 +399,12 @@ class Normal(ContinuousDistribution):
         # Get our formattables
         formattables = super(Parameter, self).get_stan_code(index_opts)
         mu_declaration, sigma_declaration = formattables["mu"], formattables["sigma"]
-        raw_declaration = self.sigma.get_indexed_varname(
+        raw_declaration = self.get_indexed_varname(
             index_opts, _name_override=self.noncentered_varname
         )
 
         # Otherwise, we redefine this parameter as the transformation of a draw
         # from a unit normal distribution
-
         return (
             f"{self.get_indexed_varname(index_opts)} = {mu_declaration} + {sigma_declaration} "
             f".* {raw_declaration}"
@@ -422,7 +421,7 @@ class Normal(ContinuousDistribution):
         # method.
         if self.is_noncentered:
             return (
-                self.sigma.get_indexed_varname(
+                self.get_indexed_varname(
                     index_opts, _name_override=self.noncentered_varname
                 )
                 + " ~ std_normal()"

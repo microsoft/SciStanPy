@@ -621,7 +621,7 @@ class StanProgram(StanCodeBase):
             # Special case for non-centered normal distributions.
             if isinstance(component, Normal) and component.is_noncentered:
                 declarations.append(
-                    f"{component.sigma.stan_dtype} {component.noncentered_varname}"
+                    f"{component.stan_dtype} {component.noncentered_varname}"
                 )
 
             # Otherwise, add all parameters that are not observables

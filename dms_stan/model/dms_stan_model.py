@@ -40,6 +40,14 @@ from .pytorch.map import MAP
 from .pytorch import check_observable_data, PyTorchModel
 from .stan import SampleResults, StanModel
 
+# TODO: We need to add an ability to run MCMC on simulated data. This will be useful
+# for testing the model. We can do this by adding a `simulate` method to the model
+# that draws from the prior, then runs MCMC on that draw. The model should return
+# the simulated parameters and fit the simulated data well.
+
+# TODO: Set up representation method for the model. This should be a sumary of all
+# variables, their shapes, and how they are distributed/related to one another.
+
 
 def components_to_dict(
     components: Iterable[AbstractModelComponent],
