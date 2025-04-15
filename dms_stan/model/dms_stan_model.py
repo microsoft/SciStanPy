@@ -132,7 +132,7 @@ class Model(ABC):
                         )
 
                     # Set the model variable name
-                    retrieved._model_varname = attr  # pylint: disable=protected-access
+                    retrieved.model_varname = attr
 
                     # Check if the model component is already defined
                     if attr in named_model_components:

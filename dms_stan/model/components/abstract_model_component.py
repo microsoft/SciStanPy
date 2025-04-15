@@ -559,6 +559,15 @@ class AbstractModelComponent(ABC):
             ]
         )
 
+    @model_varname.setter
+    def model_varname(self, name: str) -> None:
+        """Set the DMS Stan variable name for this parameter"""
+        # If the name is not set, then we set it
+        if self._model_varname == "":
+            self._model_varname = name
+        else:
+            raise ValueError("Cannot set model variable name more than once")
+
     @property
     def stan_model_varname(self) -> str:
         """Return the Stan variable name for this parameter"""
