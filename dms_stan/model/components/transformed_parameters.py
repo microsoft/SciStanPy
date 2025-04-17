@@ -99,10 +99,6 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
             index_opts
         )
 
-    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
-        """Null operation for transformed parameters by default."""
-        return ""
-
     @abstractmethod
     def _write_operation(self, **to_format: str) -> str:
         """Write the operation in Stan code."""

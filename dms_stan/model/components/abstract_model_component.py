@@ -377,13 +377,38 @@ class AbstractModelComponent(ABC):
 
         return compat_level
 
-    @abstractmethod
-    def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
-        """Gets the transformation assignment operation for the model component."""
+    def get_supporting_functions(self) -> list[str]:
+        """
+        Gets the set of functions that need to be defined in the Stan model to support
+        the model component. A common use-case, for example, is to define the partial
+        sum function that is used in concert with Stan's `reduce_sum` to parallelize
+        the computation of the log-likelihood.
 
-    @abstractmethod
-    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
-        """Gets the target incrementation operation for the model component."""
+        Each element of the list is a string that contains the function definition
+        in Stan code.
+        """
+        # The default is no supporting functions
+        return []
+
+    def get_transformation_assignment(
+        self, index_opts: tuple[str, ...]  # pylint: disable=unused-argument
+    ) -> str:
+        """
+        Gets the transformation assignment operation for the model component. The
+        default is to return an empty string, which means that the parameter has
+        no transformation assignment.
+        """
+        return ""
+
+    def get_target_incrementation(
+        self, index_opts: tuple[str, ...]  # pylint: disable=unused-argument
+    ) -> str:
+        """
+        Gets the target incrementation operation for the model component. The default
+        is to return an empty string, which means that the target variable is not
+        incremented by this component.
+        """
+        return ""
 
     @abstractmethod
     def get_right_side(self, index_opts: tuple[str, ...]) -> dict[str, str]:
@@ -627,12 +652,3 @@ class AbstractModelComponent(ABC):
         not observable.
         """
         return False
-
-    @property
-    def partial_sum_function(self) -> str:
-        """
-        Defines the function used to compute the partial sum of the component when
-        used in a reduce-sum operation. By default, this is an empty string, meaning
-        that the component is not compatible with any reduce-sum operations.
-        """
-        return ""

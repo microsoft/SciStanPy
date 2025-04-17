@@ -76,14 +76,6 @@ class Constant(AbstractModelComponent):
         """Return the Stan code for this component (there is none)."""
         return ""
 
-    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
-        """Constants cannot increment the target variable."""
-        return ""
-
-    def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
-        """Constants are never transformed."""
-        return ""
-
     def _get_lim(self, lim_type: Literal["low", "high"]) -> tuple[float, float]:
         """Order of magnitude of the value."""
         # Get the largest absolute value

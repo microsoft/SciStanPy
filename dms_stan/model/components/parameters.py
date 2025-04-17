@@ -163,10 +163,6 @@ class Parameter(AbstractModelComponent):
 
         return self
 
-    def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
-        """Null opp for parameters by default"""
-        return ""
-
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan target incrementation for this parameter."""
         return f"{self.get_indexed_varname(index_opts)} ~ " + self.get_right_side(
@@ -324,14 +320,6 @@ class Parameter(AbstractModelComponent):
     def observable(self) -> bool:
         """Observable if the parameter has no children or it is set as such."""
         return self._observable or len(self._children) == 0
-
-    @property
-    def partial_sum_function(self) -> str:
-        """
-        Returns the partial sum function used for calculating the log probability
-        of the parameter.
-        """
-        return """"""
 
 
 # TODO: Function execution will require a 'to_array' function applied to vectors
