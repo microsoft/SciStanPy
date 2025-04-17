@@ -33,6 +33,9 @@ class Parameter(AbstractModelComponent):
     """Base class for parameters used in DMS Stan"""
 
     STAN_DIST: str = ""  # The Stan distribution name
+    UNNORMALIZED_LOG_PROB_SUFFIX: str = (
+        ""  # Will be 'lupmf' for discrete, 'lupdf' for continuous
+    )
 
     def __init__(
         self,
@@ -55,6 +58,16 @@ class Parameter(AbstractModelComponent):
         """
         # Initialize the parameters
         super().__init__(shape=shape, **parameters)
+
+        # Make sure the STAN_DIST class attribute is defined
+        if self.STAN_DIST == "":
+            raise NotImplementedError("The STAN_DIST class attribute must be defined")
+
+        # We must have defined the `UNNORMALIZED_LOG_PROB_SUFFIX` class attribute
+        if self.UNNORMALIZED_LOG_PROB_SUFFIX == "":
+            raise NotImplementedError(
+                "The UNNORMALIZED_LOG_PROB_SUFFIX class attribute must be defined"
+            )
 
         # Parameters can be manually set as observables, so we need a flag to
         # track this
@@ -165,6 +178,7 @@ class Parameter(AbstractModelComponent):
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan target incrementation for this parameter."""
+        # TODO: We need to update this to handle the reduce_sum case
         return f"{self.get_indexed_varname(index_opts)} ~ " + self.get_right_side(
             index_opts
         )
@@ -219,11 +233,9 @@ class Parameter(AbstractModelComponent):
     def _write_dist_args(self, **to_format: str) -> str:
         """Writes the distribution arguments in the correct format"""
 
-    def get_right_side(self, index_opts, dist_suffix: str = "") -> str:
-
-        # Make sure the STAN_DIST class attribute is defined
-        if self.STAN_DIST == "":
-            raise NotImplementedError("The STAN_DIST class attribute must be defined")
+    def get_right_side(
+        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
+    ) -> str:
 
         # Get the formattables
         formattables = super().get_right_side(index_opts=index_opts)
@@ -238,6 +250,47 @@ class Parameter(AbstractModelComponent):
             code = f"to_row_vector({code})"
 
         return code
+
+    def get_plp_declaration(self) -> str:
+        """
+        Returns the Stan code for the partial log probability function that is used
+        with Stan's `reduce_sum` function. This is used for parallelizing the log
+        probability calculation across multiple cores.
+        """
+
+        # No declaration if the function is not defined
+        if self.plp_function_name == "":
+            return ""
+
+        # Get the arguments shared across all shards. These are all the variables
+        # that show up on the right-hand-side of the target incrementation
+        right_components = self.get_right_side_components()
+
+        # Get the datatype for the slice of this parameter used in the function
+        slice_dtype = f"array[] {'int' if self.BASE_STAN_DTYPE == 'int' else 'real'}"
+
+        # Get the argument specification for the function.
+        argspec = ", ".join(
+            [
+                f"{slice_dtype} {self.stan_model_varname}_slice",
+                "int start",
+                "int end",
+                *[component.plp_argspec_vardec for component in right_components],
+            ]
+        )
+
+        # Now get the function body. This will be the log probability calculated
+        # using the UNNORMALIZED log probability function directly.
+        right_side_sliced = self._write_dist_args(
+            **super().get_right_side(index_opts=None)
+        )
+        body = (
+            f"return {self.STAN_DIST}_{self.UNNORMALIZED_LOG_PROB_SUFFIX}("
+            f"{self.stan_model_varname}_slice | {right_side_sliced})"
+        )
+
+        # Complete the function declaration
+        return f"real {self.plp_function_name}({argspec}) {{" + "\n" + body + ";\n}"
 
     @property
     def torch_dist(self) -> type["dms.custom_types.DMSStanDistribution"]:
@@ -321,6 +374,21 @@ class Parameter(AbstractModelComponent):
         """Observable if the parameter has no children or it is set as such."""
         return self._observable or len(self._children) == 0
 
+    @property
+    def plp_function_name(self) -> str:
+        """
+        Returns the name of the partial log probability function that is used with
+        Stan's `reduce_sum` function. This is used for parallelizing the log probability
+        calculation across multiple cores.
+        """
+        # We can only use `reduce_sum` if this parameter is not a scalar and has
+        # more than one element in its final dimension
+        if self.ndim == 0 or self.shape[-1] == 1:
+            return ""
+
+        # Otherwise, the partial function is defined
+        return f"{self.stan_model_varname}_plp"
+
 
 # TODO: Function execution will require a 'to_array' function applied to vectors
 # TODO: For scalar types, the partial sum function will be undefined, so return ""
@@ -328,6 +396,8 @@ class Parameter(AbstractModelComponent):
 
 class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
+
+    UNNORMALIZED_LOG_PROB_SUFFIX: str = "lupdf"
 
 
 class DiscreteDistribution(Parameter):
@@ -339,6 +409,7 @@ class DiscreteDistribution(Parameter):
 
     BASE_STAN_DTYPE: str = "int"
     LOWER_BOUND: int = 0
+    UNNORMALIZED_LOG_PROB_SUFFIX: str = "lupmf"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

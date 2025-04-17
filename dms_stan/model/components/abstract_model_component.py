@@ -411,10 +411,14 @@ class AbstractModelComponent(ABC):
         return ""
 
     @abstractmethod
-    def get_right_side(self, index_opts: tuple[str, ...]) -> dict[str, str]:
+    def get_right_side(self, index_opts: tuple[str, ...] | None) -> dict[str, str]:
         """
         Gets the right side of any statement (i.e., Stan code to the right of an
-        assignment or distribution statement) for the parameter.
+        assignment or distribution statement) for the parameter. Note that if index
+        options are provided, then the right side will be indexed by those options.
+        If index options are not provided, then we assume that this is the right-hand
+        side in a partial summation function and that we will be operating over
+        a slice of the final dimension.
 
         Note that the abstract method is not called directly, but defines the first
         few steps. The abstract method will return a dictionary that gives the Stan
@@ -435,13 +439,15 @@ class AbstractModelComponent(ABC):
 
             # If the parameter is a constant or another parameter OR it is a named
             # transformed parameter, we get its indexed variable name
-            if isinstance(
-                param, (dms_components.Constant, dms_components.Parameter)
-            ) or (
-                isinstance(param, dms_components.TransformedParameter)
-                and param.is_named
+            if (
+                isinstance(param, (dms_components.Constant, dms_components.Parameter))
+                or param.is_named
             ):
-                components[name] = param.get_indexed_varname(index_opts)
+                components[name] = (
+                    param.plp_function_body_varname
+                    if index_opts is None
+                    else param.get_indexed_varname(index_opts)
+                )
 
             # Otherwise, we need to get the thread of operations that make up the
             # transformation for the parameter. This is equivalent to calling the
@@ -452,6 +458,32 @@ class AbstractModelComponent(ABC):
             # Otherwise, raise an error
             else:
                 raise TypeError(f"Unknown model component type {type(param)}")
+
+        return components
+
+    def get_right_side_components(self) -> list["AbstractModelComponent"]:
+        """
+        Gets the components (i.e., Python objects) that make up the right-hand-side
+        of this component's statement.
+        """
+        # Recurse over the parents up until we reach a named one or the top of the
+        # tree
+        components = []
+        for component in self._parents.values():
+            # If named, a parameter, or a constant, we can just add it to the list
+            if (
+                isinstance(
+                    component, (dms_components.Constant, dms_components.Parameter)
+                )
+                or component.is_named
+            ):
+                components.append(component)
+                continue
+
+            # Otherwise, this must be a transformed parameter that is not named
+            # and we need to recurse up to the first named parameter
+            assert isinstance(component, dms_components.TransformedParameter)
+            components.extend(component.get_right_side_components())
 
         return components
 
@@ -554,6 +586,48 @@ class AbstractModelComponent(ABC):
         return dtype
 
     @property
+    def plp_argspec_dtype(self) -> str:
+        """
+        Returns the datatype used in the argument specification for this parameter
+        when used in the partial log probability function used alongside Stan's
+        `reduce_sum` function.
+        """
+        # Get the datatype. We use the base datatype for scalars and elements
+        # whose last dimension is a singleton.
+        if self.ndim == 0 or self.shape[-1] == 1:
+            return "int" if self.BASE_STAN_DTYPE == "int" else "real"
+
+        # For everything else, we use the relevant multi-dimensional datatype
+        elif self.BASE_STAN_DTYPE in {"real", "simplex"}:
+            return "vector"
+        elif self.BASE_STAN_DTYPE == "int":
+            return "array[] int"
+
+        # If we get here, then we have an unknown base datatype
+        raise AssertionError(f"Unknown base datatype: {self.BASE_STAN_DTYPE}")
+
+    @property
+    def plp_argspec_vardec(self) -> str:
+        """
+        Returns the variable declaration for this parameter when used in the
+        argument specification for the partial log probability function used
+        alongside Stan's `reduce_sum` function.
+        """
+        return f"{self.plp_argspec_dtype}{self.stan_bounds} {self.stan_model_varname}"
+
+    @property
+    def plp_function_body_varname(self) -> str:
+        """
+        Returns the variable name used in the body of the partial log probability
+        function for this parameter. This will be identical to the `stan_model_varname`
+        if the parameter is a scalar or its last dimension is a singleton. Otherwise,
+        it will be the sliced version of the `stan_model_varname`.
+        """
+        if self.plp_argspec_dtype in {"int", "real"}:
+            return self.stan_model_varname
+        return f"{self.stan_model_varname}[start:end]"
+
+    @property
     def stan_code_level(self) -> int:
         """
         The level (index of the for-loop block) at which the parameter is manipulated
@@ -604,7 +678,10 @@ class AbstractModelComponent(ABC):
         if self._model_varname == "":
             self._model_varname = name
         else:
-            raise ValueError("Cannot set model variable name more than once")
+            raise ValueError(
+                "Cannot set model variable name more than once. Trying to rename "
+                f"{self._model_varname} to {name}"
+            )
 
     @property
     def stan_model_varname(self) -> str:

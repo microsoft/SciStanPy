@@ -108,7 +108,7 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
 
         return ""
 
-    def get_right_side(self, index_opts: tuple[str, ...]) -> str:
+    def get_right_side(self, index_opts: tuple[str, ...] | None) -> str:
         """Gets the right-hand-side of the assignment operation for this parameter."""
         # Call the inherited method to get a dictionary mapping parent names to
         # either their indexed variable names (if they are named) or the thread
