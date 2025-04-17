@@ -386,36 +386,49 @@ class AbstractModelComponent(ABC):
         """Gets the target incrementation operation for the model component."""
 
     @abstractmethod
-    def _handle_transformation_code(
-        self, param: "AbstractModelComponent", index_opts: tuple[str, ...]
-    ) -> str:
-        """Handles code formatting for a transformed parameter."""
+    def get_right_side(self, index_opts: tuple[str, ...]) -> dict[str, str]:
+        """
+        Gets the right side of any statement (i.e., Stan code to the right of an
+        assignment or distribution statement) for the parameter.
 
-    @abstractmethod
-    def get_stan_code(self, index_opts: tuple[str, ...]) -> dict[str, str]:
-        """Gets the Stan code for the parameter."""
+        Note that the abstract method is not called directly, but defines the first
+        few steps. The abstract method will return a dictionary that gives the Stan
+        string representations for the model components that make up the right-hand-
+        side of the statement (the parent parameters of this parameter). The keys
+        of the dictionary are the names of the parent parameters and the values are
+        the component name appropriately indexed if named, a constant, or a parameter,
+        or the thread of operations that make up the appropriate transformation
+        for an unnamed transformed parameter.
 
-        def get_formattables(param: "AbstractModelComponent") -> str:
-            """Get the formattables for the parameter."""
-            # If the parameter is a constant or another parameter, record
-            if isinstance(param, (dms_components.Constant, dms_components.Parameter)):
-                return param.get_indexed_varname(index_opts)
+        The dictionary is then used to format the Stan code for the right-hand-side
+        of the statement in the get_right_side method of the child class.
+        """
+        # Get variables that make up the right side of the statement. These will
+        # be the parent parameters of the current parameter.
+        components: dict[str, str] = {}
+        for name, param in self._parents.items():
 
-            # If the parameter is transformed and not named, the computation is
-            # happening in the model. Otherwise, the computation has already happened
-            # in the transformed parameters block. Note that THIS instance handles the
-            # transformation code based on ITS type, not the type of the parameter.
+            # If the parameter is a constant or another parameter OR it is a named
+            # transformed parameter, we get its indexed variable name
+            if isinstance(
+                param, (dms_components.Constant, dms_components.Parameter)
+            ) or (
+                isinstance(param, dms_components.TransformedParameter)
+                and param.is_named
+            ):
+                components[name] = param.get_indexed_varname(index_opts)
+
+            # Otherwise, we need to get the thread of operations that make up the
+            # transformation for the parameter. This is equivalent to calling the
+            # get_right_side method of the parameter.
             elif isinstance(param, dms_components.TransformedParameter):
-                return self._handle_transformation_code(
-                    param=param, index_opts=index_opts
-                )
+                components[name] = param.get_right_side(index_opts)
 
             # Otherwise, raise an error
             else:
                 raise TypeError(f"Unknown model component type {type(param)}")
 
-        # Get the formattables and return
-        return {name: get_formattables(param) for name, param in self._parents.items()}
+        return components
 
     def declare_stan_variable(self, varname: str) -> str:
         """Declares a variable in Stan code."""
@@ -614,3 +627,12 @@ class AbstractModelComponent(ABC):
         not observable.
         """
         return False
+
+    @property
+    def partial_sum_function(self) -> str:
+        """
+        Defines the function used to compute the partial sum of the component when
+        used in a reduce-sum operation. By default, this is an empty string, meaning
+        that the component is not compatible with any reduce-sum operations.
+        """
+        return ""

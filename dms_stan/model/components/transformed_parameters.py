@@ -95,22 +95,13 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
 
     def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
         """Return the assignment for the transformation."""
-        return f"{self.get_indexed_varname(index_opts)} = " + self.get_stan_code(
+        return f"{self.get_indexed_varname(index_opts)} = " + self.get_right_side(
             index_opts
         )
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         """Null operation for transformed parameters by default."""
         return ""
-
-    def _handle_transformation_code(
-        self, param: AbstractModelComponent, index_opts: tuple[str, ...]
-    ) -> str:
-        """Works with the `get_stan_code` method from the parent class"""
-        if param.is_named:
-            return param.get_indexed_varname(index_opts)
-        else:
-            return f"( {param.get_stan_code(index_opts)} )"
 
     @abstractmethod
     def _write_operation(self, **to_format: str) -> str:
@@ -121,8 +112,23 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
 
         return ""
 
-    def get_stan_code(self, index_opts: tuple[str, ...]) -> str:
-        return self._write_operation(**super().get_stan_code(index_opts))
+    def get_right_side(self, index_opts: tuple[str, ...]) -> str:
+        """Gets the right-hand-side of the assignment operation for this parameter."""
+        # Call the inherited method to get a dictionary mapping parent names to
+        # either their indexed variable names (if they are named) or the thread
+        # of operations that define them (if they are not named).
+        components = super().get_right_side(index_opts)
+
+        # Wrap the declaration for any unnamed parents in parentheses. This is to
+        # ensure that the order of operations is correct in Stan.
+        components = {
+            name: (value if self._parents[name] else f"( {value} )")
+            for name, value in components.items()
+        }
+
+        # Format the right-hand side of the operation. Exactly how formatting is
+        # done depends on the child class.
+        return self._write_operation(**components)
 
     # Calling this class should return the result of the operation.
     def __call__(self, *args, **kwargs):

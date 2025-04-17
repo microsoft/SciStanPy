@@ -169,7 +169,7 @@ class Parameter(AbstractModelComponent):
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan target incrementation for this parameter."""
-        return f"{self.get_indexed_varname(index_opts)} ~ " + self.get_stan_code(
+        return f"{self.get_indexed_varname(index_opts)} ~ " + self.get_right_side(
             index_opts
         )
 
@@ -177,16 +177,8 @@ class Parameter(AbstractModelComponent):
         """Return the Stan code for the generated quantities block."""
         return (
             self.get_indexed_varname(index_opts, _name_override=self.generated_varname)
-            + f" = {self.get_stan_code(index_opts, dist_suffix='rng')}"
+            + f" = {self.get_right_side(index_opts, dist_suffix='rng')}"
         )
-
-    def _handle_transformation_code(
-        self, param: AbstractModelComponent, index_opts: tuple[str, ...]
-    ) -> str:
-        if param.is_named:
-            return param.get_indexed_varname(index_opts)
-        else:
-            return param.get_stan_code(index_opts)
 
     def get_torch_logprob(
         self, observed: Optional[torch.Tensor] = None
@@ -231,14 +223,14 @@ class Parameter(AbstractModelComponent):
     def _write_dist_args(self, **to_format: str) -> str:
         """Writes the distribution arguments in the correct format"""
 
-    def get_stan_code(self, index_opts, dist_suffix: str = "") -> str:
+    def get_right_side(self, index_opts, dist_suffix: str = "") -> str:
 
         # Make sure the STAN_DIST class attribute is defined
         if self.STAN_DIST == "":
             raise NotImplementedError("The STAN_DIST class attribute must be defined")
 
         # Get the formattables
-        formattables = super().get_stan_code(index_opts=index_opts)
+        formattables = super().get_right_side(index_opts=index_opts)
 
         # Build the distribution argument and format the Stan code
         suffix = "" if dist_suffix == "" else f"_{dist_suffix}"
@@ -333,6 +325,18 @@ class Parameter(AbstractModelComponent):
         """Observable if the parameter has no children or it is set as such."""
         return self._observable or len(self._children) == 0
 
+    @property
+    def partial_sum_function(self) -> str:
+        """
+        Returns the partial sum function used for calculating the log probability
+        of the parameter.
+        """
+        return """"""
+
+
+# TODO: Function execution will require a 'to_array' function applied to vectors
+# TODO: For scalar types, the partial sum function will be undefined, so return ""
+
 
 class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
@@ -397,7 +401,7 @@ class Normal(ContinuousDistribution):
             return super().get_transformation_assignment(index_opts)
 
         # Get our formattables
-        formattables = super(Parameter, self).get_stan_code(index_opts)
+        formattables = super(Parameter, self).get_right_side(index_opts)
         mu_declaration, sigma_declaration = formattables["mu"], formattables["sigma"]
         raw_declaration = self.get_indexed_varname(
             index_opts, _name_override=self.noncentered_varname

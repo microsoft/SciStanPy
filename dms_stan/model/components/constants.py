@@ -72,16 +72,7 @@ class Constant(AbstractModelComponent):
         # Repeat the value n times
         return np.broadcast_to(self.value[None], (n,) + self.value.shape)
 
-    def _handle_transformation_code(
-        self, param: AbstractModelComponent, index_opts: tuple[str, ...]
-    ):
-        """
-        Handle the transformation code for this component. This function should
-        never be called.
-        """
-        raise AssertionError("This function should never be called.")
-
-    def get_stan_code(self, index_opts: tuple[str, ...]) -> str:
+    def get_right_side(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan code for this component (there is none)."""
         return ""
 
