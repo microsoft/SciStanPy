@@ -114,7 +114,7 @@ class Model(ABC):
             # model.
             named_model_components = (
                 self.named_model_components_dict
-                if hasattr(self, "_model_components")
+                if hasattr(self, "_named_model_components")
                 else {}
             )
 
@@ -122,6 +122,13 @@ class Model(ABC):
             # class.
             for attr in set(dir(self)) - set(dir(Model)):
                 if isinstance(retrieved := getattr(self, attr), AbstractModelComponent):
+
+                    # If the model component is already defined, then we make sure
+                    # that it points to the same object. If it passes, the check,
+                    # we can continue
+                    if attr in named_model_components:
+                        assert named_model_components[attr] == retrieved
+                        continue
 
                     # Double-underscore attributes are forbidden, as this will clash
                     # with how we handle unnamed parameters in Stan code.
@@ -131,26 +138,17 @@ class Model(ABC):
                             f"{attr} is invalid."
                         )
 
-                    # Set the model variable name
+                    # Set the model variable name and record the model component
                     retrieved.model_varname = attr
+                    named_model_components[attr] = retrieved
 
-                    # Check if the model component is already defined
-                    if attr in named_model_components:
-                        assert named_model_components[attr] == retrieved
-                    else:
-                        named_model_components[attr] = retrieved
-
-            # Set the parameters attribute
-            self._named_model_components = tuple(
-                sorted(named_model_components.values(), key=lambda x: x.model_varname)
-            )
-
-            # Make sure there is at least one observable
-            if len(self.observables) == 0:
-                raise ValueError("At least one observable must be defined.")
+            # Set the named parameters attribute
+            self._named_model_components = tuple(named_model_components.values())
 
             # Build the mapping between model variable names and parameter objects
-            self._model_varname_to_object = self._build_model_varname_to_object()
+            # if this is the last subclass to be initialized.
+            if cls.__name__ == self.__class__.__name__:
+                self._model_varname_to_object = self._build_model_varname_to_object()
 
         # Add the new __init__ method
         cls._wrapped_init = cls.__init__
