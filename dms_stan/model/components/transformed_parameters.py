@@ -315,7 +315,7 @@ class NormalizeParameter(UnaryTransformedParameter):
 
         # Define the partial sum function that can be used in the sum operation
         return [
-            "real partial_sum(array[] real x_slice, int start int end) {\n\t\t"
+            "real partial_sum(array[] real x_slice, int start, int end) {\n\t\t"
             "return sum(x_slice);\n}"
         ]
 
