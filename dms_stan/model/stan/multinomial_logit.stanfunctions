@@ -1,0 +1,7 @@
+#include multinomial.stanfunctions
+
+real parallelized_multinomial_logit_lpmf(array[] int y, vector gamma) {
+    // Calculates the log probability mass function for the multinomial logit distribution
+    // using parallelized operations.
+    return parallelized_multinomial_lupmf(y | softmax(gamma));
+}

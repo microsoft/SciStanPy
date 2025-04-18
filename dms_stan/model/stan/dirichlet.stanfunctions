@@ -1,0 +1,27 @@
+real partial_sum_of_logs(array[] real x_slice, int start, int end) {
+    // Calculate the sum of logs of a slice of the parameter vector x.
+    // This is used in the context of a `reduce_sum` operation in Stan.
+    return sum(log(to_vector(x_slice)));
+}
+
+real dirichlet_partial_lpdf(array[] real theta_slice, int start, int end, vector alpha) {
+    // Calculate the log probability density function of the Dirichlet distribution
+    // for a slice of the parameter vector theta. This is used in the context of
+    // a `reduce_sum` operation in Stan.
+    return (alpha[start:end] - 1)' * log(to_vector(theta_slice));
+}
+
+real dirichlet_uniform_alpha_lpdf(array[] real theta, real alpha) {
+    // Calculate the log probability density function of the Dirichlet distribution
+    // for a slice of the parameter vector theta with uniform alpha. This is used
+    // IN PLACE OF a `reduce_sum` operation in Stan for performance reasons.
+
+    // If alpha is 0, we return 0
+    if (alpha == 0) {
+        return 0;
+    }
+
+    // Otherwise we want the sum of log-thetas multiplied by the number of elements
+    // in theta and the alpha value
+    return num_elements(theta) .* alpha .* reduce_sum(partial_sum_of_logs, theta, 1);
+}
