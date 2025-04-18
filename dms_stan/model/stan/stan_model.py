@@ -583,15 +583,20 @@ class StanProgram(StanCodeBase):
         Returns the Stan code for the functions block. This is just a bunch of
         #include statements.
         """
-        includes = [
-            f"#include {os.path.basename(file)}"
-            for folder in dms.model.stan.STAN_INCLUDE_PATHS
-            for file in glob(os.path.join(folder, "*.stanfunctions"))
-        ]
+        # Get all supporting functions
+        supporting_functions = []
+        for component in self.recurse_model_components():
+            supporting_functions.extend(component.get_supporting_functions())
 
-        # Get the names of the stan functions in the include dir
+        # There is no need to include a functions block if there are no functions
+        if len(supporting_functions) == 0:
+            return ""
+
+        # Otherwise, we need to combine the lines and add a functions block
         return (
-            "functions {\n" + self.combine_lines(includes, indentation_level=1) + "\n}"
+            "functions {\n"
+            + self.combine_lines(supporting_functions, indentation_level=1)
+            + "\n}"
         )
 
     @property

@@ -615,7 +615,7 @@ class AbstractModelComponent(ABC):
         argument specification for the partial log probability function used
         alongside Stan's `reduce_sum` function.
         """
-        return f"{self.plp_argspec_dtype}{self.stan_bounds} {self.stan_model_varname}"
+        return f"{self.plp_argspec_dtype} {self.stan_model_varname}"
 
     @property
     def plp_function_body_varname(self) -> str:

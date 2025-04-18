@@ -255,15 +255,17 @@ class Parameter(AbstractModelComponent):
     ) -> str:
         # If parallelized, the right side is a call to the `reduce_sum` function.
         if self.parallelized and dist_suffix == "":
+            component_names = [
+                component.get_indexed_varname(index_opts)
+                for component in self.get_right_side_components()
+            ]
             return (
                 "reduce_sum("
                 + f"{self.plp_function_name}, "
                 + f"{self.get_indexed_varname(index_opts)}, "
-                + "1, "  # Automatic grainsize
-                + ", ".join(
-                    component.get_indexed_varname(index_opts)
-                    for component in self.get_right_side_components()
-                )
+                + "1"  # Automatic grainsize
+                + (", " if len(component_names) > 0 else "")
+                + ", ".join(component_names)
                 + ")"
             )
 
@@ -315,7 +317,12 @@ class Parameter(AbstractModelComponent):
         )
 
         # Complete the function declaration
-        return f"real {self.plp_function_name}({argspec}) {{" + "\n" + body + ";\n}"
+        return f"real {self.plp_function_name}({argspec}) {{" + "\n\t\t" + body + ";\n}"
+
+    def get_supporting_functions(self) -> list[str]:
+        if self.plp_function_name == "":
+            return []
+        return [self.get_plp_declaration()]
 
     @property
     def torch_dist(self) -> type["dms.custom_types.DMSStanDistribution"]:
@@ -412,7 +419,10 @@ class Parameter(AbstractModelComponent):
             return ""
 
         # Otherwise, the partial function is defined
-        return f"{self.stan_model_varname}_plp"
+        return (
+            f"{self.stan_model_varname}_"
+            + self.UNNORMALIZED_LOG_PROB_SUFFIX.replace("lup", "lp")
+        )
 
     # Updated parallelization property in this class
     parallelized = property(
@@ -552,7 +562,7 @@ class Normal(ContinuousDistribution):
         # Otherwise, declare the function
         argspec = f"array[] real {self.noncentered_varname}_slice, int start, int end"
         body = f"std_normal_lupdf({self.noncentered_varname}_slice)"
-        return f"real {self.plp_function_name}({argspec}) {{" + "\n" + body + ";\n}"
+        return f"real {self.plp_function_name}({argspec}) {{" + "\n\t\t" + body + ";\n}"
 
     @property
     def noncentered_varname(self) -> str:
