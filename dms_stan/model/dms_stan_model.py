@@ -103,7 +103,9 @@ class Model(ABC):
             )
 
         # Redefine the __init__ method of the class
-        def __init__(self: "Model", *init_args, **init_kwargs):
+        def __init__(
+            self: "Model", *init_args, parallelize: Optional[bool] = True, **init_kwargs
+        ):
 
             # Run the init method that was defined in the class.
             cls._wrapped_init(self, *init_args, **init_kwargs)
@@ -145,10 +147,17 @@ class Model(ABC):
             # Set the named parameters attribute
             self._named_model_components = tuple(named_model_components.values())
 
-            # Build the mapping between model variable names and parameter objects
-            # if this is the last subclass to be initialized.
+            # Some steps are only performed on the last subclass to be initialized
             if cls.__name__ == self.__class__.__name__:
+
+                # Build the mapping between model variable names and parameter objects
                 self._model_varname_to_object = self._build_model_varname_to_object()
+
+                # Handle parallelization
+                if parallelize is None:
+                    return
+                for component in self.all_model_components:
+                    component.parallelized = parallelize
 
         # Add the new __init__ method
         cls._wrapped_init = cls.__init__

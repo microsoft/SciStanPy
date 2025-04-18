@@ -31,12 +31,14 @@ class AbstractModelComponent(ABC):
         self,
         *,
         shape: tuple[int, ...] = (),
+        parallelize: bool = True,
         **parameters: "dms.custom_types.CombinableParameterType",
     ):
         """Builds a parameter instance with the given shape."""
 
         # Define placeholder variables
         self._model_varname: str = ""  # DMS Stan Model variable name
+        self._allow_parallelization: bool = parallelize  # Intra-chain parallelization
         self._parents: dict[str, AbstractModelComponent]
         self._component_to_paramname: dict[AbstractModelComponent, str]
         self._shape: tuple[int, ...] = shape  # Shape of the parameter
@@ -729,3 +731,21 @@ class AbstractModelComponent(ABC):
         not observable.
         """
         return False
+
+    @property
+    def parallelized(self) -> bool:
+        """
+        Returns True if the parameter is capable of being parallelized using `reduce_sum`.
+        This occurs when the parameter is not a scalar and has more than one element
+        in its final dimension. It must also be defined within the context of a
+        parallelized model.
+        """
+        return self._allow_parallelization
+
+    @parallelized.setter
+    def parallelized(self, value: bool) -> None:
+        """
+        Sets the parallelization flag for this parameter. This is used to determine
+        whether the parameter can be parallelized using `reduce_sum`.
+        """
+        self._allow_parallelization = value

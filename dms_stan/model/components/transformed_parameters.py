@@ -151,9 +151,9 @@ class BinaryTransformedParameter(TransformedParameter):
         self,
         dist1: "dms.custom_types.CombinableParameterType",
         dist2: "dms.custom_types.CombinableParameterType",
-        shape: tuple[int, ...] = (),
+        **kwargs,
     ):
-        super().__init__(dist1=dist1, dist2=dist2, shape=shape)
+        super().__init__(dist1=dist1, dist2=dist2, **kwargs)
 
     # pylint: disable=arguments-differ
     @overload
@@ -177,12 +177,8 @@ class BinaryTransformedParameter(TransformedParameter):
 class UnaryTransformedParameter(TransformedParameter):
     """Transformed parameter that only requires one parameter."""
 
-    def __init__(
-        self,
-        dist1: "dms.custom_types.CombinableParameterType",
-        shape: tuple[int, ...] = (),
-    ):
-        super().__init__(dist1=dist1, shape=shape)
+    def __init__(self, dist1: "dms.custom_types.CombinableParameterType", **kwargs):
+        super().__init__(dist1=dist1, **kwargs)
 
     # pylint: disable=arguments-differ
     @overload
@@ -306,6 +302,7 @@ class NormalizeParameter(UnaryTransformedParameter):
             return dist1 / np.sum(dist1, keepdims=True, axis=-1)
 
     def _write_operation(self, dist1: str) -> str:
+        # TODO: We can use `reduce_sum` in Stan to do this more efficiently
         return f"{dist1} / sum({dist1})"
 
 
@@ -392,7 +389,7 @@ class ExponentialGrowth(ExpParameter):
         t: "dms.custom_types.CombinableParameterType",
         A: "dms.custom_types.CombinableParameterType",
         r: "dms.custom_types.CombinableParameterType",
-        shape: tuple[int, ...] = (),
+        **kwargs,
     ):
         """Initializes the LogExponentialGrowth distribution.
 
@@ -406,7 +403,7 @@ class ExponentialGrowth(ExpParameter):
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
         """
-        super(UnaryTransformedParameter, self).__init__(t=t, A=A, r=r, shape=shape)
+        super(UnaryTransformedParameter, self).__init__(t=t, A=A, r=r, **kwargs)
 
     # pylint: disable=arguments-differ
     @overload
@@ -456,7 +453,7 @@ class LogExponentialGrowth(TransformedParameter):
         t: "dms.custom_types.CombinableParameterType",
         log_A: "dms.custom_types.CombinableParameterType",
         r: "dms.custom_types.CombinableParameterType",
-        shape: tuple[int, ...] = (),
+        **kwargs,
     ):
         """Initializes the LogExponentialGrowth distribution.
 
@@ -470,7 +467,7 @@ class LogExponentialGrowth(TransformedParameter):
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
         """
-        super().__init__(t=t, log_A=log_A, r=r, shape=shape)
+        super().__init__(t=t, log_A=log_A, r=r, **kwargs)
 
     # pylint: disable=arguments-differ
     @overload
@@ -517,7 +514,7 @@ class SigmoidGrowth(SigmoidParameter):
         A: "dms.custom_types.CombinableParameterType",
         r: "dms.custom_types.CombinableParameterType",
         c: "dms.custom_types.CombinableParameterType",
-        shape: tuple[int, ...] = (),
+        **kwargs,
     ):
         """Initializes the LogSigmoidGrowth distribution.
 
@@ -535,7 +532,7 @@ class SigmoidGrowth(SigmoidParameter):
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
         """
-        super(UnaryTransformedParameter, self).__init__(t=t, A=A, r=r, c=c, shape=shape)
+        super(UnaryTransformedParameter, self).__init__(t=t, A=A, r=r, c=c, **kwargs)
 
     # pylint: disable=arguments-differ
     @overload
@@ -588,7 +585,7 @@ class LogSigmoidGrowth(LogSigmoidParameter):
         log_A: "dms.custom_types.CombinableParameterType",
         r: "dms.custom_types.CombinableParameterType",
         c: "dms.custom_types.CombinableParameterType",
-        shape: tuple[int, ...] = (),
+        **kwargs,
     ):
         """Initializes the LogSigmoidGrowth distribution.
 
@@ -605,7 +602,7 @@ class LogSigmoidGrowth(LogSigmoidParameter):
                 most cases, this can be ignored as it will be calculated automatically.
         """
         super(UnaryTransformedParameter, self).__init__(
-            t=t, log_A=log_A, r=r, c=c, shape=shape
+            t=t, log_A=log_A, r=r, c=c, **kwargs
         )
 
     # pylint: disable=arguments-differ
@@ -683,7 +680,7 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
         A: "dms.custom_types.CombinableParameterType",  # pylint: disable=invalid-name
         r: "dms.custom_types.CombinableParameterType",
         x0: "dms.custom_types.CombinableParameterType",
-        shape: tuple[int, ...] = (),
+        **kwargs,
     ):
         """Initializes the SigmoidGrowthInitParametrization distribution.
 
@@ -694,7 +691,7 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
             shape (tuple[int, ...], optional): The shape of the distribution. Defaults
             to ().
         """
-        super().__init__(t=t, A=A, r=r, x0=x0, shape=shape)
+        super().__init__(t=t, A=A, r=r, x0=x0, **kwargs)
 
     # pylint: disable=arguments-differ
     @overload

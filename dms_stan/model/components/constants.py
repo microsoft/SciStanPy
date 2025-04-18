@@ -18,11 +18,11 @@ class Constant(AbstractModelComponent):
         self,
         value: Union[int, float, npt.NDArray, np.integer, np.floating],
         *,
-        shape: tuple[int, ...] = (),
         lower_bound: Optional[float] = None,
         upper_bound: Optional[float] = None,
         togglable: Optional[bool] = None,
         enforce_uniformity: bool = False,
+        **kwargs,
     ):
         """
         Wraps the value in a Constant instance. Any numerical type is legal.
@@ -32,7 +32,7 @@ class Constant(AbstractModelComponent):
             self.BASE_STAN_DTYPE = (  # pylint: disable=invalid-name
                 "real" if np.issubdtype(value.dtype, np.floating) else "int"
             )
-            shape = value.shape
+            kwargs["shape"] = value.shape
 
         # Otherwise, convert to a numpy array
         else:
@@ -59,7 +59,7 @@ class Constant(AbstractModelComponent):
         )
 
         # Initialize the parent class
-        super().__init__(shape=shape)
+        super().__init__(**kwargs)
 
     # We need a draw method
     def _draw(

@@ -1,5 +1,7 @@
 """Holds classes that can be used for defining models in DMS Stan models."""
 
+import inspect
+
 from abc import abstractmethod
 from functools import partial
 from typing import Callable, Optional, Union
@@ -49,15 +51,14 @@ class Parameter(AbstractModelComponent):
         stan_to_np_transforms: Optional[
             dict[str, Callable[[npt.NDArray], npt.NDArray]]
         ] = None,
-        shape: tuple[int, ...] = (),
-        **parameters,
+        **kwargs,
     ):
         """
         Sets up random number generation and handles all parameters on which this
         parameter depends.
         """
         # Initialize the parameters
-        super().__init__(shape=shape, **parameters)
+        super().__init__(**kwargs)
 
         # Make sure the STAN_DIST class attribute is defined
         if self.STAN_DIST == "":
@@ -79,6 +80,14 @@ class Parameter(AbstractModelComponent):
 
         # Default value for the transforms dictionary is an empty dictionary
         stan_to_np_transforms = stan_to_np_transforms or {}
+
+        # Identify the parameters. This is anything that is not defined as an argument
+        # in the AbstractModelComponent __init__ method.
+        parameters = {
+            k: v
+            for k, v in kwargs.items()
+            if k not in inspect.signature(AbstractModelComponent.__init__).parameters
+        }
 
         # All parameter names must be in the stan_to_np_names dictionary
         if missing_names := set(parameters.keys()) - set(stan_to_np_names.keys()):
@@ -178,10 +187,18 @@ class Parameter(AbstractModelComponent):
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan target incrementation for this parameter."""
-        # TODO: We need to update this to handle the reduce_sum case
-        return f"{self.get_indexed_varname(index_opts)} ~ " + self.get_right_side(
-            index_opts
+        # Get the right-hand-side of the incrementation
+        right_side = self.get_right_side(index_opts)
+
+        # Determine the left side and operator
+        left_side = (
+            "target += "
+            if self.parallelized
+            else f"{self.get_indexed_varname(index_opts)} ~ "
         )
+
+        # Put it all together
+        return left_side + right_side
 
     def get_generated_quantities(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan code for the generated quantities block."""
@@ -236,6 +253,19 @@ class Parameter(AbstractModelComponent):
     def get_right_side(
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
     ) -> str:
+        # If parallelized, the right side is a call to the `reduce_sum` function.
+        if self.parallelized and dist_suffix == "":
+            return (
+                "reduce_sum("
+                + f"{self.plp_function_name}, "
+                + f"{self.get_indexed_varname(index_opts)}, "
+                + "1, "  # Automatic grainsize
+                + ", ".join(
+                    component.get_indexed_varname(index_opts)
+                    for component in self.get_right_side_components()
+                )
+                + ")"
+            )
 
         # Get the formattables
         formattables = super().get_right_side(index_opts=index_opts)
@@ -243,11 +273,6 @@ class Parameter(AbstractModelComponent):
         # Build the distribution argument and format the Stan code
         suffix = "" if dist_suffix == "" else f"_{dist_suffix}"
         code = f"{self.STAN_DIST}{suffix}({self._write_dist_args(**formattables)})"
-
-        # If working with a random number generator, arrays are returned rather
-        # than vectors for floats. We need to convert these to vectors.
-        if dist_suffix == "rng" and "row_vector" in self.stan_dtype:
-            code = f"to_row_vector({code})"
 
         return code
 
@@ -389,9 +414,14 @@ class Parameter(AbstractModelComponent):
         # Otherwise, the partial function is defined
         return f"{self.stan_model_varname}_plp"
 
-
-# TODO: Function execution will require a 'to_array' function applied to vectors
-# TODO: For scalar types, the partial sum function will be undefined, so return ""
+    # Updated parallelization property in this class
+    parallelized = property(
+        fget=lambda self: (
+            AbstractModelComponent.parallelized.fget and self._allow_parallelization
+        ),
+        fset=AbstractModelComponent.parallelized.fset,
+        fdel=AbstractModelComponent.parallelized.fdel,
+    )
 
 
 class ContinuousDistribution(Parameter, TransformableParameter):
@@ -473,24 +503,56 @@ class Normal(ContinuousDistribution):
             f".* {raw_declaration}"
         )
 
-    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
-        """
-        If a hierarchical model is used, then the target variable is incremented
-        by the log probability of the non-centered parameter. Otherwise, we use
-        the parent method.
-        """
-        # If noncentered, then we need to increment the target variable by the log
-        # probability of the non-centered parameter. Otherwise, we use the parent
-        # method.
+    def get_right_side_components(self) -> list[AbstractModelComponent]:
+        # If noncentered, then there aren't any right-hand-side components
         if self.is_noncentered:
+            return []
+
+        # Otherwise, we use the parent method
+        return super().get_right_side_components()
+
+    def get_right_side(
+        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
+    ) -> str:
+        # If not noncentered, run the parent method
+        if not self.is_noncentered:
+            return super().get_right_side(index_opts, dist_suffix=dist_suffix)
+
+        # Otherwise, we cannot have the suffix set
+        assert (
+            dist_suffix == ""
+        ), "Non-centered parameters should not have a distribution suffix"
+
+        # Run the parent method if parallelized, replacing the indexed variable name
+        # with the non-centered variable name
+        if self.parallelized:
             return (
-                self.get_indexed_varname(
-                    index_opts, _name_override=self.noncentered_varname
+                super()
+                .get_right_side(index_opts, dist_suffix=dist_suffix)
+                .replace(
+                    self.get_indexed_varname(index_opts),
+                    self.get_indexed_varname(
+                        index_opts, _name_override=self.noncentered_varname
+                    ),
                 )
-                + " ~ std_normal()"
             )
 
-        return super().get_target_incrementation(index_opts)
+        # Otherwise, the right hand side is just the standard normal
+        return "std_normal()"
+
+    def get_plp_declaration(self) -> str:
+        # Parent method if not noncentered
+        if not self.is_noncentered:
+            return super().get_plp_declaration()
+
+        # Nothing if no function name
+        if self.plp_function_name == "":
+            return ""
+
+        # Otherwise, declare the function
+        argspec = f"array[] real {self.noncentered_varname}_slice, int start, int end"
+        body = f"std_normal_lupdf({self.noncentered_varname}_slice)"
+        return f"real {self.plp_function_name}({argspec}) {{" + "\n" + body + ";\n}"
 
     @property
     def noncentered_varname(self) -> str:
@@ -911,12 +973,19 @@ class _MultinomialBase(DiscreteDistribution):
         return multinomial_dist
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
-
         # We need to strip the N parameter from the declaration as this is implicit
         # in the distribution as defined in Stan
         raw = super().get_target_incrementation(index_opts)
+
+        # Just return raw if we are parallelized
+        if self.parallelized:
+            return raw
+
+        # If not parallelized, remove the N parameter
         assert raw.count(", ") == 1, "Invalid target incrementation: " + raw
-        return raw.split(", ")[0].rstrip() + ")"
+        raw, remainder = raw.split(", ")
+        assert remainder == "N)", "Invalid target incrementation: " + raw
+        return raw + ")"
 
 
 class Multinomial(_MultinomialBase):
