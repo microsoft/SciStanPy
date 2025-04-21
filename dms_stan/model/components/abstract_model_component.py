@@ -32,6 +32,7 @@ class AbstractModelComponent(ABC):
         *,
         shape: tuple[int, ...] = (),
         parallelize: bool = True,
+        _override_shape_check: bool = False,
         **parameters: "dms.custom_types.CombinableParameterType",
     ):
         """Builds a parameter instance with the given shape."""
@@ -55,7 +56,7 @@ class AbstractModelComponent(ABC):
             val._record_child(self)
 
         # Set the shape
-        self._set_shape()
+        self._set_shape(_override_shape_check)
 
     def _validate_parameters(
         self,
@@ -143,7 +144,7 @@ class AbstractModelComponent(ABC):
         # Record the child
         self._children.append(child)
 
-    def _set_shape(self) -> None:
+    def _set_shape(self, override_shape_check: bool) -> None:
         """Sets the shape of the draws for the parameter."""
         # The shape must be broadcastable to the shapes of the parameters.
         try:
@@ -152,6 +153,10 @@ class AbstractModelComponent(ABC):
             )
         except ValueError as error:
             raise ValueError("Shape is not broadcastable to parent shapes") from error
+
+        # If overriding the shape check, do not broadcast the shape
+        if override_shape_check:
+            return
 
         # The broadcasted shape must be the same as the shape of the parameter if
         # it is not 0-dimensional.
@@ -670,6 +675,7 @@ class AbstractModelComponent(ABC):
             [
                 f"{child.model_varname}.{name}"
                 for child, name in self.get_child_paramnames().items()
+                if not isinstance(child, dms_components.TransformedData)
             ]
         )
 

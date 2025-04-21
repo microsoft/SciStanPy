@@ -33,6 +33,7 @@ from .components import (
     Multinomial,
     Normal,
     Parameter,
+    TransformedData,
     TransformedParameter,
 )
 from .components.abstract_model_component import AbstractModelComponent
@@ -183,6 +184,13 @@ class Model(ABC):
                     assert model_varname_to_object[parent.model_varname] == parent
                 else:
                     model_varname_to_object[parent.model_varname] = parent
+
+        # Add all TransformedData instances to the mapping
+        for component in list(model_varname_to_object.values()):
+            for child in component._children:
+                if isinstance(child, TransformedData):
+                    assert child.model_varname not in model_varname_to_object
+                    model_varname_to_object[child.model_varname] = child
 
         # There can be no duplicate values in the mapping
         assert len(model_varname_to_object) == len(

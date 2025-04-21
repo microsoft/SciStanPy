@@ -68,33 +68,14 @@ class TransformableParameter:
         return NegateParameter(self)
 
 
-class TransformedParameter(AbstractModelComponent, TransformableParameter):
+class Transformation(AbstractModelComponent):
     """
-    Base class representing a parameter that is the result of combining other
-    parameters using mathematical operations.
+    Base class for transformations, including `transformed parameters` and
+    `transformed data`.
     """
 
-    STAN_OPERATOR: str = ""  # Operator for the operation in Stan
-
-    def _draw(
-        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
-    ) -> npt.NDArray:
-        """Sample from this parameter's distribution `n` times."""
-        # Perform the operation on the draws
-        return self.operation(**level_draws)
-
-    @overload
-    def operation(self, **draws: torch.Tensor) -> torch.Tensor: ...
-
-    @overload
-    def operation(self, **draws: "dms.custom_types.SampleType") -> npt.NDArray: ...
-
-    @abstractmethod
-    def operation(self, **draws):
-        """Perform the operation on the draws or torch parameters."""
-
-    def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
-        """Return the assignment for the transformation."""
+    def _transformation(self, index_opts: tuple[str, ...]) -> str:
+        """Return the transformation for the parameter."""
         return f"{self.get_indexed_varname(index_opts)} = " + self.get_right_side(
             index_opts
         )
@@ -102,11 +83,6 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
     @abstractmethod
     def _write_operation(self, **to_format: str) -> str:
         """Write the operation in Stan code."""
-        # The Stan operator must be defined in the child class
-        if self.STAN_OPERATOR == "":
-            raise NotImplementedError("The STAN_OPERATOR must be defined.")
-
-        return ""
 
     def get_right_side(self, index_opts: tuple[str, ...] | None) -> str:
         """Gets the right-hand-side of the assignment operation for this parameter."""
@@ -125,6 +101,44 @@ class TransformedParameter(AbstractModelComponent, TransformableParameter):
         # Format the right-hand side of the operation. Exactly how formatting is
         # done depends on the child class.
         return self._write_operation(**components)
+
+
+class TransformedParameter(Transformation, TransformableParameter):
+    """
+    Base class representing a parameter that is the result of combining other
+    parameters using mathematical operations.
+    """
+
+    STAN_OPERATOR: str = ""  # Operator for the operation in Stan
+
+    # The transformation is renamed to be more specific in the child classes
+    get_transformation_assignment = Transformation._transformation
+
+    def _draw(
+        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+    ) -> npt.NDArray:
+        """Sample from this parameter's distribution `n` times."""
+        # Perform the operation on the draws
+        return self.operation(**level_draws)
+
+    @overload
+    def operation(self, **draws: torch.Tensor) -> torch.Tensor: ...
+
+    @overload
+    def operation(self, **draws: "dms.custom_types.SampleType") -> npt.NDArray: ...
+
+    @abstractmethod
+    def operation(self, **draws):
+        """Perform the operation on the draws or torch parameters."""
+
+    @abstractmethod
+    def _write_operation(self, **to_format: str) -> str:
+        """Write the operation in Stan code."""
+        # The Stan operator must be defined in the child class
+        if self.STAN_OPERATOR == "":
+            raise NotImplementedError("The STAN_OPERATOR must be defined.")
+
+        return ""
 
     # Calling this class should return the result of the operation.
     def __call__(self, *args, **kwargs):

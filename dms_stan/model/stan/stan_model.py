@@ -7,7 +7,6 @@ import weakref
 
 from abc import ABC, abstractmethod
 from collections import Counter
-from glob import glob
 from tempfile import TemporaryDirectory
 from time import strftime
 from typing import (
@@ -42,6 +41,7 @@ from dms_stan.model.components import (
     MultinomialLogit,
     Normal,
     Parameter,
+    TransformedData,
     TransformedParameter,
 )
 from dms_stan.model.components.abstract_model_component import AbstractModelComponent
@@ -96,7 +96,12 @@ class StanCodeBase(ABC, list):
 
     def _write_block(
         self,
-        block_name: Literal["model", "transformed_parameters", "generated_quantities"],
+        block_name: Literal[
+            "model",
+            "transformed_parameters",
+            "generated_quantities",
+            "transformed_data",
+        ],
         declarations: Union[str, tuple[str, ...]] = (),
     ) -> str:
 
@@ -124,6 +129,15 @@ class StanCodeBase(ABC, list):
                 and nested_component.is_named
             )
 
+        def filter_transformed_data(
+            nested_component: Union[StanCodeBase, AbstractModelComponent],
+        ) -> bool:
+            """
+            Filters hierarchy of loops for the transformed data block. We take
+            TransformedData only.
+            """
+            return isinstance(nested_component, (TransformedData, StanForLoop))
+
         # We need a dictionary that will map from block name to the prefix for the
         # block we are writing,
         dispatcher = {
@@ -141,6 +155,11 @@ class StanCodeBase(ABC, list):
                 "func": "get_generated_quantities",
                 "prefix": self.generated_quantities_prefix,
                 "filter": filter_generated_quantities,
+            },
+            "transformed_data": {
+                "func": "get_transformed_data_assignment",
+                "prefix": self.transformed_data_prefix,
+                "filter": filter_transformed_data,
             },
         }
 
@@ -195,6 +214,12 @@ class StanCodeBase(ABC, list):
     ) -> str:
         """Returns the Stan code for the generated quantities."""
         return self._write_block("generated_quantities", declarations=declarations)
+
+    def get_transformed_data_assignment(
+        self, declarations: Union[str, tuple[str, ...]]
+    ) -> str:
+        """Returns the Stan code for the transformed data assignment."""
+        return self._write_block("transformed_data", declarations=declarations)
 
     def finalize_line(self, text: str, indendation_level: Optional[int] = None) -> str:
         """Indents a block of text by a specified number of spaces and adds semicolons."""
@@ -265,6 +290,11 @@ class StanCodeBase(ABC, list):
     @abstractmethod
     def generated_quantities_prefix(self) -> str:
         """Returns the prefix for the generated quantities."""
+
+    @property
+    @abstractmethod
+    def transformed_data_prefix(self) -> str:
+        """Returns the prefix for the transformed data."""
 
 
 class StanForLoop(StanCodeBase):
@@ -386,6 +416,10 @@ class StanForLoop(StanCodeBase):
 
     @property
     def generated_quantities_prefix(self) -> str:
+        return self.target_inc_prefix
+
+    @property
+    def transformed_data_prefix(self) -> str:
         return self.target_inc_prefix
 
     @property
@@ -591,7 +625,7 @@ class StanProgram(StanCodeBase):
         #include statements.
         """
         # Get all model components.
-        model_components = list(self.recurse_model_components())
+        model_components = list(self.model.all_model_components)
 
         # If there is a MultinomialLogit component, remove all Multinomial components.
         # This is because the MultinomialLogit component will include the Multinomial
@@ -634,7 +668,7 @@ class StanProgram(StanCodeBase):
         # constants.
         declarations = [
             component.stan_parameter_declaration
-            for component in self.recurse_model_components()
+            for component in self.model.all_model_components
             if (isinstance(component, Parameter) and component.observable)
             or isinstance(component, Constant)
         ]
@@ -645,11 +679,31 @@ class StanProgram(StanCodeBase):
         )
 
     @property
+    def transformed_data_block(self) -> str:
+        """Returns the Stan code for the transformed data block."""
+        # Check parameters for any transformed data.
+        declarations = [
+            component.stan_parameter_declaration
+            for component in self.model.all_model_components
+            if isinstance(component, TransformedData)
+        ]
+
+        # No transformed data if no declarations
+        if len(declarations) == 0:
+            return ""
+
+        # Combine declarations
+        declaration_block = self.combine_lines(declarations, indentation_level=1)
+
+        # Combine declarations and transformations
+        return self.get_transformed_data_assignment(declarations=declaration_block)
+
+    @property
     def parameters_block(self) -> str:
         """Returns the Stan code for the parameters block."""
         # Loop over all components recursively and define the parameters
         declarations: list[str] = []
-        for component in self.recurse_model_components():
+        for component in self.model.all_model_components:
 
             # Special case for non-centered normal distributions.
             if isinstance(component, Normal) and component.is_noncentered:
@@ -727,6 +781,10 @@ class StanProgram(StanCodeBase):
         return "generated quantities {"
 
     @property
+    def transformed_data_prefix(self) -> str:
+        return "transformed data {"
+
+    @property
     def code(self) -> str:
         """Get the program code for this model."""
         # Join steps that have contents
@@ -735,6 +793,7 @@ class StanProgram(StanCodeBase):
             for val in (
                 self.functions_block,
                 self.data_block,
+                self.transformed_data_block,
                 self.parameters_block,
                 self.transformed_parameters_block,
                 self.model_block,

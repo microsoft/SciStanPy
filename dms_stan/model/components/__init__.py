@@ -20,6 +20,7 @@ from dms_stan.model.components.parameters import (
     Poisson,
     UnitNormal,
 )
+from dms_stan.model.components.transformed_data import TransformedData
 from dms_stan.model.components.transformed_parameters import (
     AbsParameter,
     BinaryTransformedParameter,

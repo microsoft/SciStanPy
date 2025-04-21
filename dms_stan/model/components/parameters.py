@@ -19,7 +19,11 @@ import dms_stan as dms
 from dms_stan.model.components import custom_torch_dists
 from .abstract_model_component import AbstractModelComponent
 from .constants import Constant
-
+from .transformed_data import (
+    MultinomialCoefficient,
+    SharedAlphaDirichlet,
+    TransformedData,
+)
 from .transformed_parameters import TransformableParameter
 
 
@@ -321,6 +325,11 @@ class Parameter(AbstractModelComponent):
             f"real {self.plp_function_name}({argspec}) {{" + "\n\t\t" + body + ";\n}"
         ]
 
+    def get_transformed_data_declaration(self) -> str:
+        """Returns the Stan code for the transformed data block if there is any"""
+        # None by default
+        return ""
+
     @property
     def torch_dist(self) -> type["dms.custom_types.DMSStanDistribution"]:
         """Returns the torch distribution class"""
@@ -401,7 +410,9 @@ class Parameter(AbstractModelComponent):
     @property
     def observable(self) -> bool:
         """Observable if the parameter has no children or it is set as such."""
-        return self._observable or len(self._children) == 0
+        return self._observable or all(
+            isinstance(child, TransformedData) for child in self._children
+        )
 
     @property
     def plp_function_name(self) -> str:
@@ -825,6 +836,15 @@ class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
         # Set `enforce_uniformity` appropriately
         self.alpha.enforce_uniformity = enforce_uniformity
 
+        # If we are enforcing uniformity, then we can improve compute efficiency
+        # by storing the sum of the alphas
+        if enforce_uniformity:
+            SharedAlphaDirichlet(
+                alpha=self.alpha,
+                shape=self.shape[:-1] + (1,),
+                parallelize=kwargs.get("parallelize", True),
+            )
+
     def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """
         The dirichlet distribution in numpy cannot be batched. This is a wrapper
@@ -955,6 +975,31 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
             N=N,
             **kwargs,
         )
+
+        # When initialized, multinomial distributions assume that we are modeling
+        # an observable. This lets us precalculate the multinomial coefficient.
+        # If we add a child parameter, however, then we cannot precalculate the
+        # multinomial coefficient and we must remove the transformed data attribute.
+        self._multinomial_coefficient = MultinomialCoefficient(
+            self,
+            shape=self.shape[:-1] + (1,),
+            parallelize=kwargs.get("parallelize", True),
+        )
+
+    def _record_child(self, child: AbstractModelComponent) -> None:
+        # Run the inherited method
+        super()._record_child(child)
+
+        # If recording the multinomial coefficient, we are done
+        if isinstance(child, MultinomialCoefficient):
+            assert not hasattr(self, "_multinomial_coefficient")
+            return
+
+        # If we have any other child, then we cannot precalculate the multinomial
+        # coefficient and so we need to remove the transformed data attribute
+        if hasattr(self, "_multinomial_coefficient"):
+            self._children.remove(self._multinomial_coefficient)
+            del self._multinomial_coefficient
 
     def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """Returns the multinomial distribution function"""
