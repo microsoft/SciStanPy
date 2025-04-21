@@ -1,5 +1,11 @@
 #include multinomial.stanfunctions
 
+real multinomial_logit_nonfactorial_component_lpmf(array[] int y, vector gamma) {
+    // Calculates the log probability mass function for the non-factorial component
+    // of the multinomial logit distribution (i.e., y_1 * log(theta_1) + y_2 * log(theta_2) + ...).
+    return multinomial_nonfactorial_component_lpmf(y | softmax(gamma));
+}
+
 real parallelized_multinomial_logit_lpmf(array[] int y, vector gamma) {
     // Calculates the log probability mass function for the multinomial logit distribution
     // using parallelized operations.

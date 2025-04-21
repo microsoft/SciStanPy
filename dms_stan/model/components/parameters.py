@@ -262,7 +262,7 @@ class Parameter(AbstractModelComponent):
             return (
                 "reduce_sum("
                 + f"{self.plp_function_name}, "
-                + f"{self.get_indexed_varname(index_opts)}, "
+                + f"to_array_1d({self.get_indexed_varname(index_opts)}), "
                 + "1"  # Automatic grainsize
                 + (", " if len(component_names) > 0 else "")
                 + ", ".join(component_names)
@@ -870,6 +870,11 @@ class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
     def _write_dist_args(self, alpha: str) -> str:  # pylint: disable=arguments-differ
         return alpha
 
+    @property
+    def plp_function_name(self) -> str:
+        """The function name is hardcoded in the Stan file"""
+        return "dirichlet_partial_lpdf"
+
 
 class Binomial(DiscreteDistribution):
     """Parameter that is represented by the binomial distribution"""
@@ -1004,6 +1009,21 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
         assert remainder == "N)", "Invalid target incrementation: " + raw
         return raw + ")"
 
+    def get_right_side(
+        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
+    ) -> str:
+        # If parallelized, the right side is a call to the `parallelized` version
+        # of the function.
+        if self.parallelized and dist_suffix == "":
+            return (
+                f"parallelized_{self.STAN_DIST}_lpmf(to_array_1d("
+                f"{self.get_indexed_varname(index_opts)}) | "
+                f"{self.theta.get_indexed_varname(index_opts)})"
+            )
+
+        # Otherwise, the parent method is called
+        return super().get_right_side(index_opts, dist_suffix=dist_suffix)
+
 
 class Multinomial(_MultinomialBase):
     """Defines the multinomial distribution."""
@@ -1031,6 +1051,11 @@ class Multinomial(_MultinomialBase):
         self, theta: str, N: str
     ) -> str:
         return f"{theta}, {N}"
+
+    @property
+    def plp_function_name(self) -> str:
+        """There is no partial log probability function for the multinomial distribution"""
+        return ""
 
 
 class MultinomialLogit(_MultinomialBase):

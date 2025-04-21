@@ -16,8 +16,8 @@ real dirichlet_uniform_alpha_lpdf(array[] real theta, real alpha) {
     // for a slice of the parameter vector theta with uniform alpha. This is used
     // IN PLACE OF a `reduce_sum` operation in Stan for performance reasons.
 
-    // If alpha is 0, we return 0
-    if (alpha == 0) {
+    // If alpha is 1, we return 0
+    if (alpha == 1) {
         return 0;
     }
 

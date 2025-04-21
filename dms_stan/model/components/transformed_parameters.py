@@ -304,7 +304,7 @@ class NormalizeParameter(UnaryTransformedParameter):
     def _write_operation(self, dist1: str) -> str:
         # Determine the denominator
         denom = (
-            f"reduce_sum(partial_sum, {dist1}, 1)"
+            f"reduce_sum(partial_sum, to_array_1d({dist1}), 1)"
             if self.parallelized
             else f"sum({dist1})"
         )
