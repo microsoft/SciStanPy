@@ -740,7 +740,7 @@ class AbstractModelComponent(ABC):
         in its final dimension. It must also be defined within the context of a
         parallelized model.
         """
-        return self._allow_parallelization
+        return self._allow_parallelization and self.ndim > 0 and self.shape[-1] > 1
 
     @parallelized.setter
     def parallelized(self, value: bool) -> None:
