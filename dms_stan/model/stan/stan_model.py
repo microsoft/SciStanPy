@@ -36,7 +36,14 @@ from dms_stan.defaults import (
     DEFAULT_USER_HEADER,
 )
 
-from dms_stan.model.components import Constant, Normal, Parameter, TransformedParameter
+from dms_stan.model.components import (
+    Constant,
+    Multinomial,
+    MultinomialLogit,
+    Normal,
+    Parameter,
+    TransformedParameter,
+)
 from dms_stan.model.components.abstract_model_component import AbstractModelComponent
 from dms_stan.model.stan.stan_results import SampleResults
 
@@ -583,14 +590,35 @@ class StanProgram(StanCodeBase):
         Returns the Stan code for the functions block. This is just a bunch of
         #include statements.
         """
+        # Get all model components.
+        model_components = list(self.recurse_model_components())
+
+        # If there is a MultinomialLogit component, remove all Multinomial components.
+        # This is because the MultinomialLogit component will include the Multinomial
+        # functions, so we don't need to include them again.
+        if any(
+            isinstance(component, MultinomialLogit) for component in model_components
+        ):
+            model_components = [
+                component
+                for component in model_components
+                if not isinstance(component, Multinomial)
+            ]
+
         # Get all supporting functions
         supporting_functions = []
-        for component in self.recurse_model_components():
+        for component in model_components:
             supporting_functions.extend(component.get_supporting_functions())
 
         # There is no need to include a functions block if there are no functions
         if len(supporting_functions) == 0:
             return ""
+
+        # No duplicates. Include statements first. Alphabetical after that.
+        supporting_functions = sorted(
+            set(supporting_functions),
+            key=lambda x: (x, x.startswith("#include")),
+        )
 
         # Otherwise, we need to combine the lines and add a functions block
         return (

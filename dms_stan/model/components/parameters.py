@@ -278,7 +278,7 @@ class Parameter(AbstractModelComponent):
 
         return code
 
-    def get_plp_declaration(self) -> str:
+    def get_supporting_functions(self) -> list[str]:
         """
         Returns the Stan code for the partial log probability function that is used
         with Stan's `reduce_sum` function. This is used for parallelizing the log
@@ -287,7 +287,7 @@ class Parameter(AbstractModelComponent):
 
         # No declaration if the function is not defined
         if self.plp_function_name == "":
-            return ""
+            return []
 
         # Get the arguments shared across all shards. These are all the variables
         # that show up on the right-hand-side of the target incrementation
@@ -317,12 +317,9 @@ class Parameter(AbstractModelComponent):
         )
 
         # Complete the function declaration
-        return f"real {self.plp_function_name}({argspec}) {{" + "\n\t\t" + body + ";\n}"
-
-    def get_supporting_functions(self) -> list[str]:
-        if self.plp_function_name == "":
-            return []
-        return [self.get_plp_declaration()]
+        return [
+            f"real {self.plp_function_name}({argspec}) {{" + "\n\t\t" + body + ";\n}"
+        ]
 
     @property
     def torch_dist(self) -> type["dms.custom_types.DMSStanDistribution"]:
@@ -415,7 +412,7 @@ class Parameter(AbstractModelComponent):
         """
         # We can only use `reduce_sum` if this parameter is not a scalar and has
         # more than one element in its final dimension
-        if self.ndim == 0 or self.shape[-1] == 1:
+        if not self.parallelized:
             return ""
 
         # Otherwise, the partial function is defined
@@ -550,19 +547,17 @@ class Normal(ContinuousDistribution):
         # Otherwise, the right hand side is just the standard normal
         return "std_normal()"
 
-    def get_plp_declaration(self) -> str:
-        # Parent method if not noncentered
-        if not self.is_noncentered:
-            return super().get_plp_declaration()
-
-        # Nothing if no function name
-        if self.plp_function_name == "":
-            return ""
+    def get_supporting_functions(self) -> list[str]:
+        # Parent method if not noncentered or if we are not parallelized
+        if not self.is_noncentered or not self.parallelized:
+            return super().get_supporting_functions()
 
         # Otherwise, declare the function
         argspec = f"array[] real {self.noncentered_varname}_slice, int start, int end"
-        body = f"std_normal_lupdf({self.noncentered_varname}_slice)"
-        return f"real {self.plp_function_name}({argspec}) {{" + "\n\t\t" + body + ";\n}"
+        body = f"return std_normal_lupdf({self.noncentered_varname}_slice)"
+        return [
+            f"real {self.plp_function_name}({argspec}) {{" + "\n\t\t" + body + ";\n}"
+        ]
 
     @property
     def noncentered_varname(self) -> str:
@@ -777,7 +772,19 @@ class Exponential(ContinuousDistribution):
         return beta
 
 
-class Dirichlet(ContinuousDistribution):
+class _CustomStanFunctionMixIn:
+    """
+    Some distributions have custom Stan functions. This is a mixin to handle
+    that.
+    """
+
+    def get_supporting_functions(self) -> list[str]:
+        """Builds the appropriate #include statement for the custom Stan functions"""
+        # pylint: disable=no-member
+        return [f"#include {self.STAN_DIST}.stanfunctions"] if self.parallelized else []
+
+
+class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
     """Defines the Dirichlet distribution."""
 
     BASE_STAN_DTYPE = "simplex"
@@ -920,7 +927,7 @@ class Poisson(DiscreteDistribution):
         return lambda_
 
 
-class _MultinomialBase(DiscreteDistribution):
+class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
     """Defines the base multinomial distribution."""
 
     def __init__(
