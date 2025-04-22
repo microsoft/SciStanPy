@@ -839,7 +839,7 @@ class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
         # If we are enforcing uniformity, then we can improve compute efficiency
         # by storing the sum of the alphas
         if enforce_uniformity:
-            SharedAlphaDirichlet(
+            self._shared_alpha = SharedAlphaDirichlet(
                 alpha=self.alpha,
                 shape=self.shape[:-1] + (1,),
                 parallelize=kwargs.get("parallelize", True),
@@ -890,10 +890,28 @@ class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
     def _write_dist_args(self, alpha: str) -> str:  # pylint: disable=arguments-differ
         return alpha
 
+    def get_right_side(
+        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
+    ) -> str:
+        # Parent method if provided a suffix
+        if dist_suffix != "":
+            return super().get_right_side(index_opts, dist_suffix=dist_suffix)
+
+        # If we are enforcing uniformity, then we need to use the shared alpha.
+        par_prefix = ("" if self.parallelized else "un") + "parallelized_"
+        thetas = f"to_array_1d({self.get_indexed_varname(index_opts)})"
+        if self.alpha.enforce_uniformity:
+            coeff = self._shared_alpha.get_indexed_varname(index_opts)
+            return f"{par_prefix}dirichlet_uniform_alpha_lpdf({thetas} | {coeff})"
+
+        # Otherwise, we calculate the full log probability
+        alphas = self.alpha.get_indexed_varname(index_opts)
+        return f"{par_prefix}dirichlet_lpdf({thetas} | {alphas})"
+
     @property
     def plp_function_name(self) -> str:
-        """The function name is hardcoded in the Stan file"""
-        return "dirichlet_partial_lpdf"
+        """There is no partial log probability function for the Dirichlet distribution"""
+        return ""
 
 
 class Binomial(DiscreteDistribution):
@@ -1057,36 +1075,38 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
     def get_right_side(
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
     ) -> str:
+        # Parent method if provided a suffix
+        if dist_suffix != "":
+            return super().get_right_side(index_opts, dist_suffix=dist_suffix)
+
         # Get the indexed names for the loss calculations
         ys = self.get_indexed_varname(index_opts)
         probs = self.get_stan_probs_indexed_varname(index_opts)
 
-        # If we are incrementing the target, we have a different path
-        if dist_suffix == "":
-            # If we have a multinomial coefficient predefined, get it. Otherwise,
-            # we need to calculate it each time.
-            par_prefix = ("" if self.parallelized else "un") + "parallelized_"
-            if hasattr(self, "_multinomial_coefficient"):
-                coeff = self._multinomial_coefficient.get_indexed_varname(index_opts)
+        # If we have a multinomial coefficient predefined, get it. Otherwise,
+        # we need to calculate it each time.
+        par_prefix = ("" if self.parallelized else "un") + "parallelized_"
+        if hasattr(self, "_multinomial_coefficient"):
+            coeff = self._multinomial_coefficient.get_indexed_varname(index_opts)
 
-            # Otherwise, we need to calculate the multinomial coefficient each time
-            else:
-                coeff = f"{par_prefix}multinomial_factorial_component_lpmf({ys})"
+        # Otherwise, we need to calculate the multinomial coefficient each time
+        else:
+            coeff = f"{par_prefix}multinomial_factorial_component_lpmf({ys})"
 
-            # We always need to calculate the log probability each time.
-            logprob = (
-                f"{par_prefix}multinomial_nonfactorial_component_lpmf({ys} | {probs})"
-            )
+        # We always need to calculate the log probability each time.
+        logprob = f"{par_prefix}multinomial_nonfactorial_component_lpmf({ys} | {probs})"
 
-            # Overall log-loss is the coefficient + the log probability
-            return f"{coeff} + {logprob}"
-
-        # Otherwise, the parent method is called
-        return super().get_right_side(index_opts, dist_suffix=dist_suffix)
+        # Overall log-loss is the coefficient + the log probability
+        return f"{coeff} + {logprob}"
 
     @abstractmethod
     def get_stan_probs_indexed_varname(self, index_opts: tuple[str, ...] | None) -> str:
         """Returns Stan code that will yield the probabilities of the distribution"""
+
+    @property
+    def plp_function_name(self) -> str:
+        """There is no partial log probability function for the multinomial distribution"""
+        return ""
 
 
 class Multinomial(_MultinomialBase):
@@ -1115,11 +1135,6 @@ class Multinomial(_MultinomialBase):
         self, theta: str, N: str
     ) -> str:
         return f"{theta}, {N}"
-
-    @property
-    def plp_function_name(self) -> str:
-        """There is no partial log probability function for the multinomial distribution"""
-        return ""
 
     def get_stan_probs_indexed_varname(self, index_opts: tuple[str, ...] | None) -> str:
         return self.theta.get_indexed_varname(index_opts)

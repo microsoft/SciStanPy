@@ -66,11 +66,11 @@ class SharedAlphaDirichlet(TransformedData):
     def _write_operation(self, alpha: str) -> str:  # pylint: disable=arguments-differ
         """Writes the Stan code for the transformed alpha parameter."""
         # We just want the sum of alphas
-        return f"sum({alpha})"
+        return f"get_uniform_alpha_coefficient({alpha})"
 
     @property
     def model_varname(self) -> str:
-        return f"{self.alpha.model_varname}.sum"
+        return f"{self.alpha.model_varname}.coeff"
 
     @property
     def parallelized(self) -> bool:

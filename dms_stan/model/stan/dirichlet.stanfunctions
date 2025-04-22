@@ -5,23 +5,41 @@ real dirichlet_partial_lpdf(array[] real theta_slice, int start, int end, vector
     return (alpha[start:end] - 1)' * log(to_vector(theta_slice));
 }
 
+real unparallelized_dirichlet_lpdf(array[] real theta, vector alpha) {
+    return dirichlet_partial_lpdf(theta | 1, num_elements(theta), alpha);
+}
+
+real parallelized_dirichlet_lpdf(array[] real theta, vector alpha) {
+    return reduce_sum(dirichlet_partial_lpdf, theta, 1, alpha);
+}
+
+real get_uniform_alpha_coefficient(vector alpha) {
+    // Calculate the coefficient for the Dirichlet distribution when all dimensions
+    // share the same alpha.
+    return sum(alpha - 1);
+}
+
 real partial_sum_of_logs(array[] real x_slice, int start, int end) {
     // Calculate the sum of logs of a slice of the parameter vector x.
     // This is used in the context of a `reduce_sum` operation in Stan.
     return sum(log(to_vector(x_slice)));
 }
 
-real dirichlet_uniform_alpha_lpdf(array[] real theta, real alpha) {
-    // Calculate the log probability density function of the Dirichlet distribution
-    // for a slice of the parameter vector theta with uniform alpha. This is used
-    // IN PLACE OF a `reduce_sum` operation in Stan for performance reasons.
-
-    // If alpha is 1, we return 0
-    if (alpha == 1) {
+real unparallelized_dirichlet_uniform_alpha_lpdf(array[] real theta, real coeff) {
+    // Easy case: if coeff is 0, return 0
+    if (coeff == 0) {
         return 0;
     }
 
-    // Otherwise we want the sum of log-thetas multiplied by the number of elements
-    // in theta and the alpha value
-    return num_elements(theta) .* alpha .* reduce_sum(partial_sum_of_logs, theta, 1);
+    // Calculate the sum of logs of the elements of theta and multiply by coeff.
+    return coeff * partial_sum_of_logs(theta, 1, num_elements(theta));
+}
+
+real parallelized_dirichlet_uniform_alpha_lpdf(array[] real theta, real coeff) {
+    // Easy case: if coeff is 0, return 0
+    if (coeff == 0) {
+        return 0;
+    }
+    // Calculate the sum of logs of the elements of theta and multiply by coeff.
+    return reduce_sum(partial_sum_of_logs, theta, 1) * coeff;
 }
