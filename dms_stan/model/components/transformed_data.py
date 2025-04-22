@@ -72,6 +72,11 @@ class SharedAlphaDirichlet(TransformedData):
     def model_varname(self) -> str:
         return f"{self.alpha.model_varname}.sum"
 
+    @property
+    def parallelized(self) -> bool:
+        """Returns whether the operation is parallelized."""
+        return self.alpha.parallelized
+
 
 class MultinomialCoefficient(TransformedData):
     """
@@ -108,13 +113,15 @@ class MultinomialCoefficient(TransformedData):
             counts (str): String representation of the counts parameter.
         """
         # If parallelized, use that version
-        if self.parallelized:
-            return f"multinomial_factorial_component_lpmf({counts})"
-
-        # Otherwise, use the non-parallelized version
-        return f"partial_sum_of_logints({counts}, 1, num_elements({counts}))"
+        prefix = "" if self.parallelized else "un"
+        return f"{prefix}parallelized_multinomial_factorial_component_lpmf({counts})"
 
     @property
     def model_varname(self) -> str:
         """Returns the model variable name for the multinomial coefficient."""
         return f"{self.counts.model_varname}.multinomial_coefficient"
+
+    @property
+    def parallelized(self) -> bool:
+        """Returns whether the operation is parallelized."""
+        return self.counts.parallelized

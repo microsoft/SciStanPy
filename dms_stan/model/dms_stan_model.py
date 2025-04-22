@@ -158,6 +158,8 @@ class Model(ABC):
                 if parallelize is None:
                     return
                 for component in self.all_model_components:
+                    if isinstance(component, TransformedData):
+                        continue
                     component.parallelized = parallelize
 
         # Add the new __init__ method
