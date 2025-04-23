@@ -26,6 +26,8 @@ from .transformed_data import (
 )
 from .transformed_parameters import TransformableParameter
 
+# pylint: disable=too-many-lines
+
 
 def _inverse_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
     """

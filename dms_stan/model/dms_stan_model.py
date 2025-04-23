@@ -189,7 +189,7 @@ class Model(ABC):
 
         # Add all TransformedData instances to the mapping
         for component in list(model_varname_to_object.values()):
-            for child in component._children:
+            for child in component._children:  # pylint: disable=protected-access
                 if isinstance(child, TransformedData):
                     assert child.model_varname not in model_varname_to_object
                     model_varname_to_object[child.model_varname] = child
@@ -499,7 +499,7 @@ class Model(ABC):
         output_dir=None,
         force_compile=DEFAULT_FORCE_COMPILE,
         stanc_options=DEFAULT_STANC_OPTIONS,
-        cpp_options=DEFAULT_CPP_OPTIONS,
+        cpp_options=None,
         user_header=DEFAULT_USER_HEADER,
         inits="prior",
         data=None,
@@ -509,8 +509,15 @@ class Model(ABC):
         """Samples from the model using MCMC. This is a wrapper around the `sample`
         method of the `StanModel` class.
         """
-        # Get the default observed data
+        # Get the default observed data and cpp options
         data = data or {}
+        cpp_options = cpp_options or DEFAULT_CPP_OPTIONS
+
+        # Get the number of parallel threads per chain
+        if "STAN_THREADS" in cpp_options and "threads_per_chain" not in sample_kwargs:
+            sample_kwargs["threads_per_chain"] = os.cpu_count() // sample_kwargs.get(
+                "chains", 4
+            )
 
         # An output directory must be provided if we are delaying the run
         if delay_run and output_dir is None:
