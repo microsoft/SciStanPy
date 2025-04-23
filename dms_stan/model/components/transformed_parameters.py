@@ -745,4 +745,10 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
         """We need a custom stan function for this"""
         return f"sigmoid_growth_init_param({t}, {A}, {r}, {x0})"
 
+    def get_supporting_functions(self) -> list[str]:
+        """Returns the supporting functions for the Stan model."""
+        return super().get_supporting_functions() + [
+            "#include sigmoid_init_param.stanfunctions"
+        ]
+
     # pylint: enable=arguments-differ
