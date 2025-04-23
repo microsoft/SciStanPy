@@ -59,7 +59,7 @@ class TrpBBaseGrowthModel(dms.Model):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
-        r_std_sigma: float = 0.05,
+        r_scale_sigma: float = 0.05,
     ):
 
         # Check shapes. Times and starting counts should be 1D arrays. Timepoint
@@ -108,21 +108,25 @@ class TrpBBaseGrowthModel(dms.Model):
         # Also define time as a constant
         self.tg0 = dms_components.Constant(times[None, 1:, None], togglable=False)
 
-        # Every model has a "rate" parameter, which gives the growth rate of each
-        # variant in each replicate. Each variant gets its own `r`` which we model
-        # as being drawn from a normal distribution with mean `r_mean` and standard
-        # deviation `r_std`. The mean and standard deviation are different by variant,
+        # Every variant has a fundamental "rate" which will be the same across
+        # experiments (we don't expect one variant to be faster than another between
+        # experiments, for example). Differences in conditions could lead to different
+        # relative rates between experiments, however, so we adjust the rate of
+        # growth for each variant by a multiplicative factor
         self.r_mean = dms_components.Exponential(
-            beta=r_mean_beta, shape=(self.n_variants,)
+            beta=r_mean_beta,
+            shape=(
+                1,
+                1,
+                self.n_variants,
+            ),
         )
-        self.r_std = dms_components.HalfNormal(
-            sigma=r_std_sigma, shape=(self.n_variants,)
+        self.r_scaling = dms_components.LogNormal(
+            mu=dms_components.Constant(0.0, togglable=False),
+            sigma=r_scale_sigma,
+            shape=(self.n_replicates, 1, 1),
         )
-        self.r = dms_components.Normal(
-            mu=self.r_mean,
-            sigma=self.r_std,
-            shape=(self.n_replicates, 1, self.n_variants),
-        )
+        self.r = self.r_mean * self.r_scaling
 
     def approximate_map(self, *args, **kwargs):
         """Approximates the MAP estimate of the model."""
@@ -176,7 +180,7 @@ class _TrpBInitParam(TrpBBaseGrowthModel):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
-        r_std_sigma: float = 0.05,
+        r_scale_sigma: float = 0.05,
         alpha: float = 2.0,
     ):
         # Run inherited init
@@ -185,7 +189,7 @@ class _TrpBInitParam(TrpBBaseGrowthModel):
             starting_counts=starting_counts,
             timepoint_counts=timepoint_counts,
             r_mean_beta=r_mean_beta,
-            r_std_sigma=r_std_sigma,
+            r_scale_sigma=r_scale_sigma,
         )
 
         # Every model has a theta_t0 parameter, which gives the starting proportions
@@ -214,7 +218,7 @@ class TrpBExponentialGrowth(_TrpBInitParam):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
-        r_std_sigma: float = 0.05,
+        r_scale_sigma: float = 0.05,
         alpha: float = 2.0,
     ):
         # Run inherited init
@@ -223,7 +227,7 @@ class TrpBExponentialGrowth(_TrpBInitParam):
             starting_counts=starting_counts,
             timepoint_counts=timepoint_counts,
             r_mean_beta=r_mean_beta,
-            r_std_sigma=r_std_sigma,
+            r_scale_sigma=r_scale_sigma,
             alpha=alpha,
         )
 
@@ -259,7 +263,7 @@ class TrpBSigmoidGrowthInitParam(_TrpBInitParam):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
-        r_std_sigma: float = 0.05,
+        r_scale_sigma: float = 0.05,
         alpha: float = 2.0,
         foldchange_beta: float = 0.1,
     ):
@@ -269,7 +273,7 @@ class TrpBSigmoidGrowthInitParam(_TrpBInitParam):
             starting_counts=starting_counts,
             timepoint_counts=timepoint_counts,
             r_mean_beta=r_mean_beta,
-            r_std_sigma=r_std_sigma,
+            r_scale_sigma=r_scale_sigma,
             alpha=alpha,
         )
 
@@ -315,7 +319,7 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         r_mean_beta: float = 1.0,
-        r_std_sigma: float = 0.05,
+        r_scale_sigma: float = 0.05,
         c_mean_alpha: float = 4.0,
         c_mean_beta: float = 8.0,
         A_alpha: float = 0.25,  # pylint: disable=invalid-name
@@ -327,8 +331,12 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
             starting_counts=starting_counts,
             timepoint_counts=timepoint_counts,
             r_mean_beta=r_mean_beta,
-            r_std_sigma=r_std_sigma,
+            r_scale_sigma=r_scale_sigma,
         )
+
+        # Prepend dimensions to the starting counts
+        self.starting_counts_data = self.starting_counts_data[None, None, :]
+
         # We have an additional parameter for the sigmoid growth model, `c`, which
         # defines the time at which the growth rate is half of its maximum value.
         # We know that this has to be greater than 0, but is unlikely to be close
@@ -360,7 +368,11 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
             r=self.r_mean,
             t=dms_components.Constant(0.0, togglable=False),
             c=self.c_mean,
-            shape=(self.n_variants,),
+            shape=(
+                1,
+                1,
+                self.n_variants,
+            ),
         )
         self.theta_t0 = dms_ops.normalize(self.raw_abundances_t0)
 
@@ -379,7 +391,11 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
         self.starting_counts = dms_components.Multinomial(
             theta=self.theta_t0,
             N=self.starting_counts_total,
-            shape=(self.n_variants,),
+            shape=(
+                1,
+                1,
+                self.n_variants,
+            ),
         )
         self.timepoint_counts = dms_components.Multinomial(
             theta=self.theta_tg0,
