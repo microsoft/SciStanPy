@@ -432,15 +432,6 @@ class Parameter(AbstractModelComponent):
             + self.UNNORMALIZED_LOG_PROB_SUFFIX.replace("lup", "lp")
         )
 
-    # Updated parallelization property in this class
-    parallelized = property(
-        fget=lambda self: (
-            AbstractModelComponent.parallelized.fget and self._allow_parallelization
-        ),
-        fset=AbstractModelComponent.parallelized.fset,
-        fdel=AbstractModelComponent.parallelized.fdel,
-    )
-
 
 class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
