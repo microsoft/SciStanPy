@@ -15,8 +15,8 @@ DEFAULT_DIM_NAMES = tuple(l for l in string.ascii_lowercase if l != "n")
 
 # Defaults for the Stan model
 DEFAULT_FORCE_COMPILE = False
-DEFAULT_STANC_OPTIONS = {"warn-pedantic": True, "O1": True, "use-opencl": True}
-DEFAULT_CPP_OPTIONS = {"STAN_THREADS": True, "STAN_OPENCL": True}
+DEFAULT_STANC_OPTIONS = {"warn-pedantic": True, "O1": True}
+DEFAULT_CPP_OPTIONS = {"STAN_THREADS": True}
 DEFAULT_USER_HEADER = None
 
 # Defaults for Stan diagnostics
