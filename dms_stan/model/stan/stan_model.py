@@ -30,6 +30,7 @@ from dms_stan.custom_types import SampleType
 from dms_stan.defaults import (
     DEFAULT_CPP_OPTIONS,
     DEFAULT_FORCE_COMPILE,
+    DEFAULT_MODEL_NAME,
     DEFAULT_STANC_OPTIONS,
     DEFAULT_USER_HEADER,
 )
@@ -864,7 +865,7 @@ class StanModel(CmdStanModel):
         stanc_options: Optional[dict[str, Any]] = None,
         cpp_options: Optional[dict[str, Any]] = None,
         user_header: Optional[str] = DEFAULT_USER_HEADER,
-        model_name: str = "model",
+        model_name: str = DEFAULT_MODEL_NAME,
     ):
         # Set default options
         self._stanc_options = stanc_options or DEFAULT_STANC_OPTIONS
