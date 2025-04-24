@@ -69,7 +69,7 @@ class PyTorchModel(nn.Module):
         # Initialize all parameters for pytorch optimization
         learnable_params = []
         for param_num, param in enumerate(self.model.parameters):
-            param.init_pytorch(seed=seed + param_num)
+            param.init_pytorch(seed=None if seed is None else seed + param_num)
             learnable_params.append(param._torch_parametrization)
 
         # Record learnable parameters such that they can be recognized by PyTorch
