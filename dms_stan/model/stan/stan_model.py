@@ -8,7 +8,6 @@ import weakref
 from abc import ABC, abstractmethod
 from collections import Counter
 from tempfile import TemporaryDirectory
-from time import strftime
 from typing import (
     Any,
     Callable,
@@ -46,6 +45,8 @@ from dms_stan.model.components import (
 )
 from dms_stan.model.components.abstract_model_component import AbstractModelComponent
 from dms_stan.model.stan.stan_results import SampleResults
+
+# pylint: disable=too-many-lines
 
 # Function for combining a list of Stan code lines
 DEFAULT_INDENTATION = 4
@@ -863,6 +864,7 @@ class StanModel(CmdStanModel):
         stanc_options: Optional[dict[str, Any]] = None,
         cpp_options: Optional[dict[str, Any]] = None,
         user_header: Optional[str] = DEFAULT_USER_HEADER,
+        model_name: str = "model",
     ):
         # Set default options
         self._stanc_options = stanc_options or DEFAULT_STANC_OPTIONS
@@ -883,11 +885,8 @@ class StanModel(CmdStanModel):
         # Set the output directory
         self._set_output_dir(output_dir)
 
-        # Get the model name. We create a unique date-time string to avoid accidental
-        # overwriting of files.
-        self.stan_executable_path = os.path.join(
-            self.output_dir, f"model-{strftime('%Y%m%d%H%M%S')}"
-        )
+        # Get the model name
+        self.stan_executable_path = os.path.join(self.output_dir, model_name)
 
         # Write the Stan program
         self.write_stan_program()
