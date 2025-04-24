@@ -105,7 +105,10 @@ class Model(ABC):
 
         # Redefine the __init__ method of the class
         def __init__(
-            self: "Model", *init_args, parallelize: Optional[bool] = True, **init_kwargs
+            self: "Model",
+            *init_args,
+            parallelize: Optional[bool] = None,
+            **init_kwargs,
         ):
 
             # Run the init method that was defined in the class.
@@ -512,12 +515,6 @@ class Model(ABC):
         # Get the default observed data and cpp options
         data = data or {}
         cpp_options = cpp_options or DEFAULT_CPP_OPTIONS
-
-        # Get the number of parallel threads per chain
-        if "STAN_THREADS" in cpp_options and "threads_per_chain" not in sample_kwargs:
-            sample_kwargs["threads_per_chain"] = os.cpu_count() // sample_kwargs.get(
-                "chains", 4
-            )
 
         # An output directory must be provided if we are delaying the run
         if delay_run and output_dir is None:
