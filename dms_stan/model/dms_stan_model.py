@@ -21,6 +21,7 @@ from dms_stan.defaults import (
     DEFAULT_EARLY_STOP,
     DEFAULT_FORCE_COMPILE,
     DEFAULT_LR,
+    DEFAULT_MODEL_NAME,
     DEFAULT_N_EPOCHS,
     DEFAULT_STANC_OPTIONS,
     DEFAULT_USER_HEADER,
@@ -40,11 +41,6 @@ from .components.abstract_model_component import AbstractModelComponent
 from .pytorch.map import MAP
 from .pytorch import check_observable_data, PyTorchModel
 from .stan import SampleResults, StanModel
-
-# TODO: We need to add an ability to run MCMC on simulated data. This will be useful
-# for testing the model. We can do this by adding a `simulate` method to the model
-# that draws from the prior, then runs MCMC on that draw. The model should return
-# the simulated parameters and fit the simulated data well.
 
 
 def components_to_dict(
@@ -87,8 +83,30 @@ class Model(ABC):
     """
 
     @abstractmethod
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        *args,
+        parallelize: Optional[bool] = None,
+        default_data: dict[str, npt.NDArray] | None = None,
+        **kwargs,
+    ):
         """This should be overridden by the subclass."""
+        # The class should have no attributes at this point. This forces any calls
+        # to `super().__init__` to be made at the top of a child class's init method.
+        if len(self.__dict__) > 0:
+            raise ValueError(
+                "The `__init__` method of the `Model` class must be called before "
+                "any attributes are set. This is to ensure that model components "
+                "are registered correctly. If you are seeing this error, it is likely "
+                "that you are calling `super().__init__` in the wrong place (i.e., "
+                "not at the top of the `__init__` method of your model subclass). "
+                f"Found extra attributes: {', '.join(self.__dict__.keys())}"
+            )
+
+        # Set the default values for the model
+        self._init_complete: bool = False
+        self._default_parallelize: Optional[bool] = parallelize
+        self._default_data: dict[str, npt.NDArray] | None = default_data
         self._named_model_components: tuple[AbstractModelComponent, ...]
         self._model_varname_to_object: dict[str, AbstractModelComponent]
 
@@ -107,7 +125,6 @@ class Model(ABC):
             parallelize: Optional[bool] = None,
             **init_kwargs,
         ):
-
             # Run the init method that was defined in the class.
             cls._wrapped_init(self, *init_args, **init_kwargs)
 
@@ -149,18 +166,26 @@ class Model(ABC):
             self._named_model_components = tuple(named_model_components.values())
 
             # Some steps are only performed on the last subclass to be initialized
-            if cls.__name__ == self.__class__.__name__:
+            if cls is self.__class__:
 
                 # Build the mapping between model variable names and parameter objects
                 self._model_varname_to_object = self._build_model_varname_to_object()
 
                 # Handle parallelization
-                if parallelize is None:
-                    return
-                for component in self.all_model_components:
-                    if isinstance(component, TransformedData):
-                        continue
-                    component.parallelized = parallelize
+                if parallelize is None and self._default_parallelize is not None:
+                    parallelize = self._default_parallelize
+                if parallelize is not None:
+                    for component in self.all_model_components:
+                        if isinstance(component, TransformedData):
+                            continue
+                        component.parallelized = parallelize
+
+                # We have completed initialization
+                self._init_complete = True
+
+                # Set default data as itself. This will trigger the setter method
+                # and will check that the data is valid.
+                self.default_data = self.default_data
 
         # Add the new __init__ method
         cls._wrapped_init = cls.__init__
@@ -422,7 +447,7 @@ class Model(ABC):
         that minimize this loss are then returned.
         """
         # Set the default value for observed data
-        data = data or {}
+        data = self.default_data if data is None else data
 
         # Observed data to tensors and the appropriate device
         data = {
@@ -464,6 +489,36 @@ class Model(ABC):
             data={k: v.detach().cpu().numpy() for k, v in data.items()},
         )
 
+    def _get_simulation_data(self, seed: Optional[int]) -> dict[str, npt.NDArray]:
+        """Draws observable data from the model prior."""
+        data = self.draw(1, named_only=True, as_xarray=False, seed=seed)
+        return {
+            observable.model_varname: data[observable.model_varname][0]
+            for observable in self.observables
+        }
+
+    def simulate_map_approximation(
+        self, **kwargs
+    ) -> tuple[dict[str, npt.NDArray], MAP]:
+        """
+        Samples data from the model prior, then fits a PyTorch model to this sampled
+        data. This is useful for debugging, mainly for checking that any peculiarities
+        observed during MAP approximation are not due to the data.
+        Args:
+            **kwargs: Keyword arguments to pass to the `approximate_map` method,
+                excepting `data`.
+
+        Returns:
+            dict[str, npt.NDArray]: A dictionary where the keys are the names of
+                the observable parameters and the values are the samples drawn.
+            MAP: The MAP object resulting from the fit to the simulated data.
+        """
+        # Get the data
+        kwargs["data"] = self._get_simulation_data(seed=kwargs.get("seed"))
+
+        # Fit the model
+        return kwargs["data"], self.approximate_map(**kwargs)
+
     @overload
     def mcmc(
         self,
@@ -473,6 +528,7 @@ class Model(ABC):
         stanc_options: Optional[dict[str, Any]],
         cpp_options: Optional[dict[str, Any]],
         user_header: Optional[str],
+        model_name: Optional[str],
         inits: Optional[str],
         data: Optional[dict[str, npt.NDArray]],
         delay_run: Literal[False],
@@ -486,6 +542,7 @@ class Model(ABC):
         force_compile: bool,
         stanc_options: Optional[dict[str, Any]],
         cpp_options: Optional[dict[str, Any]],
+        model_name: Optional[str],
         user_header: Optional[str],
         inits: Optional[str],
         data: Optional[dict[str, npt.NDArray]],
@@ -501,6 +558,7 @@ class Model(ABC):
         stanc_options=None,
         cpp_options=None,
         user_header=DEFAULT_USER_HEADER,
+        model_name=DEFAULT_MODEL_NAME,
         inits="prior",
         data=None,
         delay_run=False,
@@ -510,7 +568,7 @@ class Model(ABC):
         method of the `StanModel` class.
         """
         # Get the default observed data and cpp options
-        data = data or {}
+        data = self.default_data if data is None else data
         stanc_options = stanc_options or DEFAULT_STANC_OPTIONS
         cpp_options = cpp_options or DEFAULT_CPP_OPTIONS
 
@@ -527,6 +585,7 @@ class Model(ABC):
             stanc_options=stanc_options,
             cpp_options=cpp_options,
             user_header=user_header,
+            model_name=model_name,
         )
 
         # Update the output directory in the sample kwargs
@@ -555,6 +614,29 @@ class Model(ABC):
 
         # Sample from the model
         return stan_model.sample(inits=inits, data=data, **sample_kwargs)
+
+    @overload
+    def simulate_mcmc(
+        self, delay_run: Literal[False], **kwargs
+    ) -> tuple[dict[str, npt.NDArray], SampleResults]: ...
+    @overload
+    def simulate_mcmc(self, delay_run: Literal[True], **kwargs) -> None: ...
+
+    def simulate_mcmc(self, delay_run=False, **kwargs):
+        """
+        Simulates data from the model and then runs MCMC on that data. This is useful
+        for debugging, mainly for checking that any peculiarities observed during
+        MCMC are not due to the data.
+        """
+        # Update the model name
+        if kwargs.get("model_name") == DEFAULT_MODEL_NAME:
+            kwargs["model_name"] = f"{DEFAULT_MODEL_NAME}-simulated"
+
+        # Get the data
+        kwargs["data"] = self._get_simulation_data(seed=kwargs.get("seed"))
+
+        # Run MCMC
+        return kwargs["data"], self.mcmc(delay_run=delay_run, **kwargs)
 
     def prior_predictive(self, *, copy_model: bool = False) -> pn.Row:
         """
@@ -611,6 +693,44 @@ class Model(ABC):
 
         # Otherwise, set the attribute
         super().__setattr__(name, value)
+
+    @property
+    def default_data(self) -> dict[str, npt.NDArray] | None:
+        """Returns the default data for the model. Errors if it is not set."""
+        return self._default_data
+
+    @default_data.setter
+    def default_data(self, data: dict[str, npt.NDArray] | None) -> None:
+        """
+        Sets the default data for the model. The dictionary must contain data for
+        all observables in the model.
+        """
+        # We cannot set the default data if the model is not initialized
+        if not self._init_complete:
+            raise RuntimeError(
+                "Cannot set default data before the model is initialized. The model "
+                "must know what your observables are."
+            )
+
+        # Reset the default data if `None` is passed
+        if data is None:
+            self._default_data = None
+            return
+
+        # Otherwise, the data must be a dictionary and we must have all the appropriate
+        # keys
+        expected_keys = {comp.model_varname for comp in self.observables}
+        if missing_keys := expected_keys - data.keys():
+            raise ValueError(
+                f"The following keys are missing from the default data: {missing_keys}"
+            )
+        if extra_keys := data.keys() - expected_keys:
+            raise ValueError(
+                f"The following keys are not expected in the data: {extra_keys}"
+            )
+
+        # Set the default data
+        self._default_data = data
 
     @property
     def named_model_components(self) -> tuple[AbstractModelComponent, ...]:

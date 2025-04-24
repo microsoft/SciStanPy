@@ -62,6 +62,14 @@ class TrpBBaseGrowthModel(dms.Model):
         r_scale_sigma: float = 0.05,
     ):
 
+        # Set the default data
+        super().__init__(
+            default_data={
+                "starting_counts": starting_counts,
+                "timepoint_counts": timepoint_counts,
+            }
+        )
+
         # Check shapes. Times and starting counts should be 1D arrays. Timepoint
         # counts should be a 3D array with shape (n_replicates, n_timepoints - 1, n_variants)
         if times.ndim != 1:
@@ -93,10 +101,6 @@ class TrpBBaseGrowthModel(dms.Model):
         if times[0] != 0.0:
             raise ValueError("Times should start at 0")
 
-        # Record the data
-        self.starting_counts_data = starting_counts
-        self.timepoint_counts_data = timepoint_counts
-
         # Total number of counts is always the same
         self.starting_counts_total = dms_components.Constant(
             starting_counts.sum(), togglable=False
@@ -127,28 +131,6 @@ class TrpBBaseGrowthModel(dms.Model):
             shape=(self.n_replicates, 1, 1),
         )
         self.r = self.r_mean * self.r_scaling
-
-    def approximate_map(self, *args, **kwargs):
-        """Approximates the MAP estimate of the model."""
-        return super().approximate_map(
-            *args,
-            data={
-                "starting_counts": self.starting_counts_data,
-                "timepoint_counts": self.timepoint_counts_data,
-            },
-            **kwargs,
-        )
-
-    def mcmc(self, *args, **kwargs):
-        """Runs MCMC on the model."""
-        return super().mcmc(
-            *args,
-            data={
-                "starting_counts": self.starting_counts_data,
-                "timepoint_counts": self.timepoint_counts_data,
-            },
-            **kwargs,
-        )
 
     @classmethod
     def from_data_file(cls, filepath: str, **kwargs):
@@ -334,8 +316,11 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
             r_scale_sigma=r_scale_sigma,
         )
 
-        # Prepend dimensions to the starting counts
-        self.starting_counts_data = self.starting_counts_data[None, None, :]
+        # Update the default data
+        self.default_data = {
+            "starting_counts": self.default_data["starting_counts"][None, None, :],
+            "timepoint_counts": self.default_data["timepoint_counts"],
+        }
 
         # We have an additional parameter for the sigmoid growth model, `c`, which
         # defines the time at which the growth rate is half of its maximum value.
