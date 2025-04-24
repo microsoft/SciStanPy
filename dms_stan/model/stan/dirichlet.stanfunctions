@@ -5,10 +5,6 @@ real dirichlet_partial_lpdf(array[] real theta_slice, int start, int end, vector
     return (alpha[start:end] - 1)' * log(to_vector(theta_slice));
 }
 
-real unparallelized_dirichlet_lpdf(array[] real theta, vector alpha) {
-    return dirichlet_partial_lpdf(theta | 1, num_elements(theta), alpha);
-}
-
 real parallelized_dirichlet_lpdf(array[] real theta, vector alpha) {
     return reduce_sum(dirichlet_partial_lpdf, theta, 1, alpha);
 }
@@ -23,16 +19,6 @@ real partial_sum_of_logs(array[] real x_slice, int start, int end) {
     // Calculate the sum of logs of a slice of the parameter vector x.
     // This is used in the context of a `reduce_sum` operation in Stan.
     return sum(log(to_vector(x_slice)));
-}
-
-real unparallelized_dirichlet_uniform_alpha_lpdf(array[] real theta, real coeff) {
-    // Easy case: if coeff is 0, return 0
-    if (coeff == 0) {
-        return 0;
-    }
-
-    // Calculate the sum of logs of the elements of theta and multiply by coeff.
-    return coeff * partial_sum_of_logs(theta, 1, num_elements(theta));
 }
 
 real parallelized_dirichlet_uniform_alpha_lpdf(array[] real theta, real coeff) {

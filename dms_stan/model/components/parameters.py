@@ -829,9 +829,9 @@ class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
         # Set `enforce_uniformity` appropriately
         self.alpha.enforce_uniformity = enforce_uniformity
 
-        # If we are enforcing uniformity, then we can improve compute efficiency
-        # by storing the sum of the alphas
-        if enforce_uniformity:
+        # If we are enforcing uniformity and we are parallelized, then we can
+        # improve compute efficiency by storing the sum of the alphas
+        if enforce_uniformity and self.parallelized:
             self._shared_alpha = SharedAlphaDirichlet(
                 alpha=self.alpha,
                 shape=self.shape[:-1] + (1,),
@@ -886,20 +886,19 @@ class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
     def get_right_side(
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
     ) -> str:
-        # Parent method if provided a suffix
-        if dist_suffix != "":
+        # Parent method if provided a suffix or we are not parallelized
+        if dist_suffix != "" or not self.parallelized:
             return super().get_right_side(index_opts, dist_suffix=dist_suffix)
 
         # If we are enforcing uniformity, then we need to use the shared alpha.
-        par_prefix = ("" if self.parallelized else "un") + "parallelized_"
         thetas = f"to_array_1d({self.get_indexed_varname(index_opts)})"
         if self.alpha.enforce_uniformity:
             coeff = self._shared_alpha.get_indexed_varname(index_opts)
-            return f"{par_prefix}dirichlet_uniform_alpha_lpdf({thetas} | {coeff})"
+            return f"parallelized_dirichlet_uniform_alpha_lpdf({thetas} | {coeff})"
 
         # Otherwise, we calculate the full log probability
         alphas = self.alpha.get_indexed_varname(index_opts)
-        return f"{par_prefix}dirichlet_lpdf({thetas} | {alphas})"
+        return f"parallelized_dirichlet_lpdf({thetas} | {alphas})"
 
     @property
     def plp_function_name(self) -> str:
@@ -991,11 +990,13 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
         # an observable. This lets us precalculate the multinomial coefficient.
         # If we add a child parameter, however, then we cannot precalculate the
         # multinomial coefficient and we must remove the transformed data attribute.
-        self._multinomial_coefficient = MultinomialCoefficient(
-            self,
-            shape=self.shape[:-1] + (1,),
-            parallelize=self.parallelized,
-        )
+        # This only happens if we are parallelized.
+        if self.parallelized:
+            self._multinomial_coefficient = MultinomialCoefficient(
+                self,
+                shape=self.shape[:-1] + (1,),
+                parallelize=True,
+            )
 
     def _record_child(self, child: AbstractModelComponent) -> None:
         # Run the inherited method
@@ -1062,15 +1063,14 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
 
         # If not parallelized, remove the N parameter
         assert raw.count(", ") == 1, "Invalid target incrementation: " + raw
-        raw, remainder = raw.split(", ")
-        assert remainder == "N)", "Invalid target incrementation: " + raw
+        raw, _ = raw.split(", ")
         return raw + ")"
 
     def get_right_side(
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
     ) -> str:
-        # Parent method if provided a suffix
-        if dist_suffix != "":
+        # Parent method if provided a suffix or we are not parallelized
+        if dist_suffix != "" or not self.parallelized:
             return super().get_right_side(index_opts, dist_suffix=dist_suffix)
 
         # Get the indexed names for the loss calculations
@@ -1079,16 +1079,17 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
 
         # If we have a multinomial coefficient predefined, get it. Otherwise,
         # we need to calculate it each time.
-        par_prefix = ("" if self.parallelized else "un") + "parallelized_"
         if hasattr(self, "_multinomial_coefficient"):
             coeff = self._multinomial_coefficient.get_indexed_varname(index_opts)
 
         # Otherwise, we need to calculate the multinomial coefficient each time
         else:
-            coeff = f"{par_prefix}multinomial_factorial_component_lpmf({ys})"
+            coeff = f"parallelized_multinomial_factorial_component_lpmf({ys})"
 
         # We always need to calculate the log probability each time.
-        logprob = f"{par_prefix}multinomial_nonfactorial_component_lpmf({ys} | {probs})"
+        logprob = (
+            f"parallelized_multinomial_nonfactorial_component_lpmf({ys} | {probs})"
+        )
 
         # Overall log-loss is the coefficient + the log probability
         return f"{coeff} + {logprob}"

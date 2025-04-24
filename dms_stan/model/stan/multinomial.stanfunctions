@@ -26,10 +26,6 @@ array[] real get_count_coefficient(array[] int y) {
     return to_array_1d(count_of_counts);
 }
 
-real unparallelized_multinomial_factorial_component_lpmf(array[] int y) {
-    return partial_sum_of_logints(get_count_coefficient(y), 1, num_elements(get_count_coefficient(y)));
-}
-
 real parallelized_multinomial_factorial_component_lpmf(array[] int y) {
     // Now we can calculate the sum of the logs of each integer 1 to N multiplied
     // by the number of times it shows up in the log factorial.
@@ -39,10 +35,6 @@ real parallelized_multinomial_factorial_component_lpmf(array[] int y) {
 real multinomial_partial_scaled_sum_of_logs(array[] int y, int start, int end, vector theta) {
     // Calculates the partial sum of y_i * log(theta_i) for the multinomial distribution
     return sum(to_vector(y) .* log(theta[start:end]));
-}
-
-real unparallelized_multinomial_nonfactorial_component_lpmf(array[] int y, vector theta) {
-    return multinomial_partial_scaled_sum_of_logs(y, 1, num_elements(y), theta);
 }
 
 real parallelized_multinomial_nonfactorial_component_lpmf(array[] int y, vector theta) {
