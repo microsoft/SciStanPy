@@ -327,6 +327,10 @@ class NormalizeParameter(UnaryTransformedParameter):
 
     def get_supporting_functions(self) -> list[str]:
 
+        # None if the function is not parallelized
+        if not self.parallelized:
+            return []
+
         # Define the partial sum function that can be used in the sum operation
         return [
             "real partial_sum(array[] real x_slice, int start, int end) {\n\t\t"
