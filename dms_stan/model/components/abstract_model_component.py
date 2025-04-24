@@ -31,7 +31,7 @@ class AbstractModelComponent(ABC):
         self,
         *,
         shape: tuple[int, ...] = (),
-        parallelize: bool = True,
+        parallelize: bool = False,
         _override_shape_check: bool = False,
         **parameters: "dms.custom_types.CombinableParameterType",
     ):

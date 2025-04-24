@@ -835,7 +835,7 @@ class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
             self._shared_alpha = SharedAlphaDirichlet(
                 alpha=self.alpha,
                 shape=self.shape[:-1] + (1,),
-                parallelize=kwargs.get("parallelize", True),
+                parallelize=True,
             )
 
     def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
@@ -994,7 +994,7 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
         self._multinomial_coefficient = MultinomialCoefficient(
             self,
             shape=self.shape[:-1] + (1,),
-            parallelize=kwargs.get("parallelize", True),
+            parallelize=self.parallelized,
         )
 
     def _record_child(self, child: AbstractModelComponent) -> None:
@@ -1055,8 +1055,9 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
         # in the distribution as defined in Stan
         raw = super().get_target_incrementation(index_opts)
 
-        # Just return raw if we are parallelized
-        if self.parallelized:
+        # Just return raw if we are parallelized or if we are precalculating the
+        # multinomial coefficient
+        if self.parallelized or hasattr(self, "_multinomial_coefficient"):
             return raw
 
         # If not parallelized, remove the N parameter
