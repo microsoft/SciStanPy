@@ -18,6 +18,7 @@ DEFAULT_FORCE_COMPILE = False
 DEFAULT_STANC_OPTIONS = {"warn-pedantic": True, "O1": True}
 DEFAULT_CPP_OPTIONS = {"STAN_THREADS": True}
 DEFAULT_USER_HEADER = None
+DEFAULT_MODEL_NAME = "model"
 
 # Defaults for Stan diagnostics
 DEFAULT_EBFMI_THRESH = 0.2
