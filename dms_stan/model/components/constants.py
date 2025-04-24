@@ -101,6 +101,9 @@ class Constant(AbstractModelComponent):
         else:
             raise ValueError("Invalid limit type.")
 
+    def __str__(self) -> str:
+        return f"{self.model_varname} = {self.value}"
+
     @property
     def slider_start(self) -> float:
         """Starting values for sliders in prior predictive checks."""

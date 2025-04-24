@@ -102,6 +102,12 @@ class Transformation(AbstractModelComponent):
         # done depends on the child class.
         return self._write_operation(**components)
 
+    def __str__(self) -> str:
+        right_side = (
+            self.get_right_side(None).replace("[start:end]", "").replace("__", ".")
+        )
+        return f"{self.model_varname} = {right_side}"
+
 
 class TransformedParameter(Transformation, TransformableParameter):
     """

@@ -498,8 +498,9 @@ class AbstractModelComponent(ABC):
         """Declares a variable in Stan code."""
         return f"{self.stan_dtype} {varname}"
 
-    def __str__(self):
-        return f"{self.__class__.__name__}"
+    @abstractmethod
+    def __str__(self) -> str:
+        """Return a string representation of the component. This must be defined."""
 
     def __contains__(self, key: str) -> bool:
         """Check if the parameter has a parent with the given key"""

@@ -46,9 +46,6 @@ from .stan import SampleResults, StanModel
 # that draws from the prior, then runs MCMC on that draw. The model should return
 # the simulated parameters and fit the simulated data well.
 
-# TODO: Set up representation method for the model. This should be a sumary of all
-# variables, their shapes, and how they are distributed/related to one another.
-
 
 def components_to_dict(
     components: Iterable[AbstractModelComponent],
@@ -570,6 +567,25 @@ class Model(ABC):
 
         # Return the plot
         return pp.display()
+
+    def __str__(self) -> str:
+        """Returns a string representation of the model."""
+        # Get all model components
+        components = {
+            "Constants": [
+                el for el in self.all_model_components if isinstance(el, Constant)
+            ],
+            "Transformed Parameters": self.transformed_parameters,
+            "Parameters": self.parameters,
+            "Observables": self.observables,
+        }
+
+        # Combine representations from all model components
+        return "\n\n".join(
+            key + "\n" + "=" * len(key) + "\n" + "\n".join(str(el) for el in complist)
+            for key, complist in components.items()
+            if len(complist) > 0
+        )
 
     def __contains__(self, paramname: str) -> bool:
         """Checks if the model contains a parameter or observable with the given name."""

@@ -332,6 +332,15 @@ class Parameter(AbstractModelComponent):
         # None by default
         return ""
 
+    def __str__(self) -> str:
+        right_side = (
+            self.get_right_side(None)
+            .replace("[start:end]", "")
+            .replace("__", ".")
+            .capitalize()
+        )
+        return f"{self.model_varname} ~ {right_side}"
+
     @property
     def torch_dist(self) -> type["dms.custom_types.DMSStanDistribution"]:
         """Returns the torch distribution class"""
