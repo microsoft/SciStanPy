@@ -860,13 +860,13 @@ class StanModel(CmdStanModel):
         model: "dms.model.Model",
         output_dir: Optional[str] = None,
         force_compile: bool = DEFAULT_FORCE_COMPILE,
-        stanc_options: Optional[dict[str, Any]] = DEFAULT_STANC_OPTIONS,
-        cpp_options: Optional[dict[str, Any]] = DEFAULT_CPP_OPTIONS,
+        stanc_options: Optional[dict[str, Any]] = None,
+        cpp_options: Optional[dict[str, Any]] = None,
         user_header: Optional[str] = DEFAULT_USER_HEADER,
     ):
         # Set default options
-        self._stanc_options = stanc_options or {}
-        cpp_options = cpp_options or {}
+        self._stanc_options = stanc_options or DEFAULT_STANC_OPTIONS
+        cpp_options = cpp_options or DEFAULT_CPP_OPTIONS
 
         # Add the "include_paths" kwarg
         self._stanc_options["include-paths"] = (

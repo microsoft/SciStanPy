@@ -501,7 +501,7 @@ class Model(ABC):
         *,
         output_dir=None,
         force_compile=DEFAULT_FORCE_COMPILE,
-        stanc_options=DEFAULT_STANC_OPTIONS,
+        stanc_options=None,
         cpp_options=None,
         user_header=DEFAULT_USER_HEADER,
         inits="prior",
@@ -514,6 +514,7 @@ class Model(ABC):
         """
         # Get the default observed data and cpp options
         data = data or {}
+        stanc_options = stanc_options or DEFAULT_STANC_OPTIONS
         cpp_options = cpp_options or DEFAULT_CPP_OPTIONS
 
         # An output directory must be provided if we are delaying the run
