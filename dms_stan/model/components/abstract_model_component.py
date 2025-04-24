@@ -502,6 +502,10 @@ class AbstractModelComponent(ABC):
     def __str__(self) -> str:
         """Return a string representation of the component. This must be defined."""
 
+    def __repr__(self) -> str:
+        """This is identical to the string representation of the component."""
+        return str(self)
+
     def __contains__(self, key: str) -> bool:
         """Check if the parameter has a parent with the given key"""
         return key in self._parents
