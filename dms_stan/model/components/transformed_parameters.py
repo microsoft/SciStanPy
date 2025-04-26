@@ -469,6 +469,54 @@ class ExponentialGrowth(ExpParameter):
         return f"{A} .* {par_string}"
 
 
+class BinaryExponentialGrowth(ExpParameter):
+    """
+    Special case of `ExponentialGrowth` used for modeling when only two timepoints
+    are available. In this case, we assume that t0 = 0 and t1 = 1, reducing the
+    operation to:
+
+    $$
+    x = A\textrm{e}^{r}
+    $$
+
+    """
+
+    def __init__(
+        self,
+        A: "dms.custom_types.CombinableParameterType",
+        r: "dms.custom_types.CombinableParameterType",
+        **kwargs,
+    ):
+        """Initializes the BinaryExponentialGrowth distribution.
+
+        Args:
+            A ("dms.custom_types.SampleType"): The amplitude parameter.
+
+            r ("dms.custom_types.SampleType"): The rate parameter.
+
+            shape (tuple[int, ...], optional): The shape of the distribution. In
+                most cases, this can be ignored as it will be calculated automatically.
+        """
+        super(UnaryTransformedParameter, self).__init__(A=A, r=r, **kwargs)
+
+    # pylint: disable=arguments-differ
+    @overload
+    def operation(self, A: torch.Tensor, r: torch.Tensor) -> torch.Tensor: ...
+    @overload
+    def operation(
+        self,
+        A: "dms.custom_types.SampleType",
+        r: "dms.custom_types.SampleType",
+    ) -> npt.NDArray: ...
+    def operation(self, *, A, r):
+        return A * super().operation(r)
+
+    def _write_operation(self, A: str, r: str) -> str:
+        return f"{A} .* {super()._write_operation(r)}"
+
+    # pylint: enable=arguments-differ
+
+
 class LogExponentialGrowth(TransformedParameter):
     """
     A distribution that models the natural log of the `ExponentialGrowth` distribution.
