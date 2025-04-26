@@ -1,5 +1,7 @@
 """Holds code for the maximum a posteriori (MAP) estimation of the model parameters."""
 
+import warnings
+
 from typing import Generator, Literal, Optional, overload, Sequence, Union
 
 import arviz as az
@@ -686,21 +688,31 @@ class MAP:
 
         # Record the loss trajectory as a pandas dataframe
         self.losses = pd.DataFrame(
-            {"-log pdf/pmf": losses, "iteration": np.arange(len(losses))}
+            {
+                "-log pdf/pmf": losses,
+                "iteration": np.arange(len(losses)),
+                "shifted log(-log pdf/pmf)": losses - losses.min() + 1,
+            },
         )
 
     def plot_loss_curve(self, logy: bool = True):
         """Plots the loss curve of the MAP estimation."""
         # Get y-label and title
+        y = "-log pdf/pmf"
         if logy:
-            ylabel = "log(-log pdf/pmf)"
+            if self.losses["-log pdf/pmf"].min() <= 0:
+                warnings.warn("Negative values in loss curve. Using shifted log10.")
+                y = "shifted log(-log pdf/pmf)"
+                ylabel = y
+            else:
+                ylabel = "log(-log pdf/pmf)"
             title = "Log Loss Curve"
         else:
             ylabel = "-log pdf/pmf"
             title = "Loss Curve"
 
         return self.losses.hvplot.line(
-            x="iteration", y="-log pdf/pmf", title=title, logy=logy, ylabel=ylabel
+            x="iteration", y=y, title=title, logy=logy, ylabel=ylabel
         )
 
     @overload
