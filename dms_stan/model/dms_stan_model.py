@@ -86,29 +86,20 @@ class Model(ABC):
     def __init__(
         self,
         *args,
-        parallelize: Optional[bool] = None,
+        default_parallelize: Optional[bool] = None,
         default_data: dict[str, npt.NDArray] | None = None,
         **kwargs,
     ):
         """This should be overridden by the subclass."""
-        # The class should have no attributes at this point. This forces any calls
-        # to `super().__init__` to be made at the top of a child class's init method.
-        if len(self.__dict__) > 0:
-            raise ValueError(
-                "The `__init__` method of the `Model` class must be called before "
-                "any attributes are set. This is to ensure that model components "
-                "are registered correctly. If you are seeing this error, it is likely "
-                "that you are calling `super().__init__` in the wrong place (i.e., "
-                "not at the top of the `__init__` method of your model subclass). "
-                f"Found extra attributes: {', '.join(self.__dict__.keys())}"
-            )
-
         # Set the default values for the model
-        self._init_complete: bool = False
-        self._default_parallelize: Optional[bool] = parallelize
+        self._default_parallelize: Optional[bool] = default_parallelize
         self._default_data: dict[str, npt.NDArray] | None = default_data
-        self._named_model_components: tuple[AbstractModelComponent, ...]
-        self._model_varname_to_object: dict[str, AbstractModelComponent]
+        self._named_model_components: tuple[AbstractModelComponent, ...] = getattr(
+            self, "_named_model_components", ()
+        )
+        self._model_varname_to_object: dict[str, AbstractModelComponent] = getattr(
+            self, "_model_varname_to_object", {}
+        )
 
     def __init_subclass__(cls, **kwargs):
         """"""
@@ -128,64 +119,54 @@ class Model(ABC):
             # Run the init method that was defined in the class.
             cls._wrapped_init(self, *init_args, **init_kwargs)
 
+            # That's it if we are not the last subclass to be initialized
+            if cls is not self.__class__:
+                return
+
             # If we already have model components, defined in the class, update
             # them with the new model components. This situation occurs when a child
             # class is defined that inherits from a parent class that is also a
             # model.
-            named_model_components = (
-                self.named_model_components_dict
-                if hasattr(self, "_named_model_components")
-                else {}
-            )
+            named_model_components = {}
 
             # Now we need to find all the model components that are defined in the
             # class.
-            for attr in set(dir(self)) - set(dir(Model)):
-                if isinstance(retrieved := getattr(self, attr), AbstractModelComponent):
+            for attr in vars(self).keys():
+                if not isinstance(
+                    retrieved := getattr(self, attr), AbstractModelComponent
+                ):
+                    continue
 
-                    # If the model component is already defined, then we make sure
-                    # that it points to the same object. If it passes, the check,
-                    # we can continue
-                    if attr in named_model_components:
-                        assert named_model_components[attr] == retrieved
-                        continue
+                # Double-underscore attributes are forbidden, as this will clash
+                # with how we handle unnamed parameters in Stan code.
+                if "__" in attr:
+                    raise ValueError(
+                        "Model component names cannot include double underscores: "
+                        f"{attr} is invalid."
+                    )
 
-                    # Double-underscore attributes are forbidden, as this will clash
-                    # with how we handle unnamed parameters in Stan code.
-                    if "__" in attr:
-                        raise ValueError(
-                            "Model component names cannot include double underscores: "
-                            f"{attr} is invalid."
-                        )
-
-                    # Set the model variable name and record the model component
-                    retrieved.model_varname = attr
-                    named_model_components[attr] = retrieved
+                # Set the model variable name and record the model component
+                retrieved.model_varname = attr
+                named_model_components[attr] = retrieved
 
             # Set the named parameters attribute
             self._named_model_components = tuple(named_model_components.values())
 
-            # Some steps are only performed on the last subclass to be initialized
-            if cls is self.__class__:
+            # Build the mapping between model variable names and parameter objects
+            self._model_varname_to_object = self._build_model_varname_to_object()
 
-                # Build the mapping between model variable names and parameter objects
-                self._model_varname_to_object = self._build_model_varname_to_object()
+            # Handle parallelization
+            if parallelize is None and self._default_parallelize is not None:
+                parallelize = self._default_parallelize
+            if parallelize is not None:
+                for component in self.all_model_components:
+                    if isinstance(component, TransformedData):
+                        continue
+                    component.parallelized = parallelize
 
-                # Handle parallelization
-                if parallelize is None and self._default_parallelize is not None:
-                    parallelize = self._default_parallelize
-                if parallelize is not None:
-                    for component in self.all_model_components:
-                        if isinstance(component, TransformedData):
-                            continue
-                        component.parallelized = parallelize
-
-                # We have completed initialization
-                self._init_complete = True
-
-                # Set default data as itself. This will trigger the setter method
-                # and will check that the data is valid.
-                self.default_data = self.default_data
+            # Set default data as itself. This will trigger the setter method
+            # and will check that the data is valid.
+            self.default_data = self.default_data
 
         # Add the new __init__ method
         cls._wrapped_init = cls.__init__
@@ -705,13 +686,6 @@ class Model(ABC):
         Sets the default data for the model. The dictionary must contain data for
         all observables in the model.
         """
-        # We cannot set the default data if the model is not initialized
-        if not self._init_complete:
-            raise RuntimeError(
-                "Cannot set default data before the model is initialized. The model "
-                "must know what your observables are."
-            )
-
         # Reset the default data if `None` is passed
         if data is None:
             self._default_data = None
