@@ -391,7 +391,7 @@ class Parameter(AbstractModelComponent):
 
         # If a simplex, normalize. We assume that the simplex is the last dimension.
         if self.IS_SIMPLEX:
-            return exp_param / torch.sum(exp_param, dim=-1)
+            return exp_param / torch.sum(exp_param, dim=-1, keepdim=True)
 
         # Now if we only have a lower bound
         elif self.LOWER_BOUND is not None:
