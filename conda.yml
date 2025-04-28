@@ -1,10 +1,10 @@
 name: dms_stan
 channels:
-  - defaults
   - conda-forge
 dependencies:
   - bokeh::jupyter_bokeh
   - conda-forge::arviz>=0.21
+  - conda-forge::cmdstan
   - conda-forge::cmdstanpy
   - conda-forge::hvplot
   - conda-forge::seaborn
