@@ -100,6 +100,7 @@ class Model(ABC):
         self._model_varname_to_object: dict[str, AbstractModelComponent] = getattr(
             self, "_model_varname_to_object", {}
         )
+        self._init_complete: bool = getattr(self, "_init_complete", False)
 
     def __init_subclass__(cls, **kwargs):
         """"""
@@ -116,6 +117,9 @@ class Model(ABC):
             parallelize: Optional[bool] = None,
             **init_kwargs,
         ):
+            # Initialization is incomplete at this stage
+            self._init_complete = False
+
             # Run the init method that was defined in the class.
             cls._wrapped_init(self, *init_args, **init_kwargs)
 
@@ -163,6 +167,9 @@ class Model(ABC):
                     if isinstance(component, TransformedData):
                         continue
                     component.parallelized = parallelize
+
+            # Initialization is complete
+            self._init_complete = True
 
             # Set default data as itself. This will trigger the setter method
             # and will check that the data is valid.
@@ -678,6 +685,11 @@ class Model(ABC):
     @property
     def default_data(self) -> dict[str, npt.NDArray] | None:
         """Returns the default data for the model. Errors if it is not set."""
+        if self._default_data is None:
+            raise ValueError(
+                "Default data is not set. Please set the default data using "
+                "`model.default_data = data`."
+            )
         return self._default_data
 
     @default_data.setter
@@ -691,17 +703,19 @@ class Model(ABC):
             self._default_data = None
             return
 
-        # Otherwise, the data must be a dictionary and we must have all the appropriate
-        # keys
-        expected_keys = {comp.model_varname for comp in self.observables}
-        if missing_keys := expected_keys - data.keys():
-            raise ValueError(
-                f"The following keys are missing from the default data: {missing_keys}"
-            )
-        if extra_keys := data.keys() - expected_keys:
-            raise ValueError(
-                f"The following keys are not expected in the data: {extra_keys}"
-            )
+        # If initialization is complete, the data must be a dictionary and we must
+        # have all the appropriate keys. We skip this check if the model is not
+        # initialized yet, as we do not know the model variable names yet.
+        if self._init_complete:
+            expected_keys = {comp.model_varname for comp in self.observables}
+            if missing_keys := expected_keys - data.keys():
+                raise ValueError(
+                    f"The following keys are missing from the default data: {missing_keys}"
+                )
+            if extra_keys := data.keys() - expected_keys:
+                raise ValueError(
+                    f"The following keys are not expected in the data: {extra_keys}"
+                )
 
         # Set the default data
         self._default_data = data
