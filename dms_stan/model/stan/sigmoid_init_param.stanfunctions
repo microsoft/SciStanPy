@@ -38,6 +38,23 @@ real sigmoid_growth_init_param(real t, real A, real r, real x0) {
   return stable_sigmoid_growth_init_param(t, A, r, x0);
 }
 
+vector sigmoid_growth_init_param(real t, real A, vector r, vector x0) {
+  // Calculation when r and x0 are vectors
+  int N = size(x0);
+  vector[N] res;
+
+  // r must be the same size as x0
+  if (size(r) != N) {
+    reject("The size of `r` must be the same as the size of `x0`");
+  }
+
+  // Run the calculation for each element
+  for (n in 1:N) {
+    res[n] = stable_sigmoid_growth_init_param(t, A, r[n], x0[n]);
+  }
+  return res;
+}
+
 vector sigmoid_growth_init_param(real t, vector A, real r, vector x0) {
   // Calculation when x0 and A are vectors
   int N = size(x0);
