@@ -37,6 +37,12 @@ def _inverse_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
     return 1 / x
 
 
+# TODO: Make sure samples from torch distributions obey the same bounds as noted
+# in the classes.
+# TODO: Make sure samples from Stan distributions obey the same bounds as noted
+# in the classes.
+
+
 class Parameter(AbstractModelComponent):
     """Base class for parameters used in DMS Stan"""
 
@@ -586,10 +592,11 @@ class Normal(ContinuousDistribution):
         return self._noncentered and not self.is_hyperparameter and not self.observable
 
 
-class HalfNormal(Normal):
+class HalfNormal(ContinuousDistribution):
     """Parameter that is represented by the half-normal distribution."""
 
     LOWER_BOUND: float = 0.0
+    STAN_DIST = "normal"
 
     def __init__(
         self,
@@ -597,19 +604,26 @@ class HalfNormal(Normal):
         sigma: "dms.custom_types.ContinuousParameterType",
         **kwargs,
     ):
-        super().__init__(mu=0.0, sigma=sigma, noncentered=False, **kwargs)
-
-        # Mu is not togglable
-        self.mu.is_togglable = False
+        super().__init__(
+            numpy_dist="normal",
+            torch_dist=dist.half_normal.HalfNormal,
+            stan_to_np_names={"sigma": "scale"},
+            stan_to_torch_names={"sigma": "scale"},
+            sigma=sigma,
+            **kwargs,
+        )
 
     def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """Returns the absolute value of the numpy distribution function"""
         base_dist = super().get_numpy_dist(seed=seed)
 
-        def half_normal(*args, **kwargs):
-            return np.abs(base_dist(*args, **kwargs))
+        def half_normal(**kwargs):
+            return np.abs(base_dist(loc=0.0, **kwargs))
 
         return half_normal
+
+    def _write_dist_args(self, sigma: str) -> str:  # pylint: disable=arguments-differ
+        return f"0, {sigma}"
 
 
 class UnitNormal(Normal):
@@ -631,6 +645,7 @@ class LogNormal(ContinuousDistribution):
 
     def __init__(
         self,
+        *,
         mu: "dms.custom_types.ContinuousParameterType",
         sigma: "dms.custom_types.ContinuousParameterType",
         **kwargs,
