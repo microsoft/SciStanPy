@@ -298,9 +298,8 @@ class AbstractModelComponent(ABC):
             ) from error
 
         assert self.LOWER_BOUND is None or np.all(draws >= self.LOWER_BOUND), (
-            draws,
-            type(self),
-            self.LOWER_BOUND,
+            f"Draw from `{self}` must be greater than or equal to {self.LOWER_BOUND} "
+            f"but got {draws.min()}"
         )
         assert self.UPPER_BOUND is None or np.all(draws <= self.UPPER_BOUND)
         assert not self.IS_SIMPLEX or np.allclose(np.sum(draws, axis=-1), 1)
