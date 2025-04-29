@@ -68,8 +68,8 @@ class PDZ3Base(dms.Model):
         self,
         starting_counts: npt.NDArray[np.int64],
         ending_counts: npt.NDArray[np.int64],
-        r_mean_beta: float = 1.0,
-        r_sigma: float = 0.05,
+        inv_r_alpha: float = 2.5,
+        inv_r_beta: float = 0.5,
         **transform_kwargs
     ):
         """Initializes the PDZ3 model with starting and ending counts.
@@ -101,16 +101,20 @@ class PDZ3Base(dms.Model):
             ending_counts.sum(axis=-1, keepdims=True), togglable=False
         )
 
-        # Every variant has a fundamental growth rate which is the same across replicates.
-        # There might be experimental conditions that cause growth rates to vary
-        # between replicates, however, so we will also apply a global scaling factor
-        # to the growth rate for each replicate
-        self.r_mean = dms_components.Exponential(
-            beta=r_mean_beta, shape=(1, self.n_variants)
+        # Every variant has a fundamental "rate" which will be the same across
+        # experiments. This rate is modeled by the Gamma distribution and is the
+        # inverse of the growth rate (so that we can use it as the exponential rate
+        # parameter).
+        self.inv_r_mean = dms_components.Gamma(
+            alpha=inv_r_alpha,
+            beta=inv_r_beta,
+            shape=(self.n_variants,),
         )
-        self.r = dms_components.LogNormal(
-            mu=dms_ops.log(self.r_mean),
-            sigma=r_sigma,
+
+        # The inverse rate is the beta parameter for the exponential distributions
+        # describing the growth rates in each experiment.
+        self.r = dms_components.Exponential(
+            beta=self.inv_r_mean,
             shape=(self.n_replicates, self.n_variants),
         )
 
@@ -159,8 +163,8 @@ class PDZ3Exponential(PDZ3Base):
         self,
         starting_counts: npt.NDArray[np.int64],
         ending_counts: npt.NDArray[np.int64],
-        r_mean_beta: float = 1.0,
-        r_sigma: float = 0.05,
+        inv_r_alpha: float = 7.0,
+        inv_r_beta: float = 1.0,
         alpha: float = 2.0,
     ):
         """
@@ -174,8 +178,8 @@ class PDZ3Exponential(PDZ3Base):
         super().__init__(
             starting_counts=starting_counts,
             ending_counts=ending_counts,
-            r_mean_beta=r_mean_beta,
-            r_sigma=r_sigma,
+            inv_r_alpha=inv_r_alpha,
+            inv_r_beta=inv_r_beta,
             alpha=alpha,
         )
 
@@ -203,11 +207,11 @@ class PDZ3Sigmoid(PDZ3Base):
         self,
         starting_counts: npt.NDArray[np.int64],
         ending_counts: npt.NDArray[np.int64],
-        r_mean_beta: float = 1.0,
-        r_sigma: float = 0.05,
-        alpha: float = 0.5,
-        c_alpha: float = 4.0,
-        c_beta: float = 8.0,
+        inv_r_alpha: float = 2.5,
+        inv_r_beta: float = 0.5,
+        alpha: float = 0.25,
+        c_mean_alpha: float = 4.0,
+        c_mean_beta: float = 8.0,
     ):
         """
         Models the change in counts for the dataset resulting from sigmoid growth.
@@ -216,20 +220,18 @@ class PDZ3Sigmoid(PDZ3Base):
             starting_counts (npt.NDArray[np.int64]): Starting counts for the PDZ3 dataset.
             ending_counts (npt.NDArray[np.int64]): Ending counts for the PDZ3 dataset.
         """
-        # Define 'c'. We assume that all parameters hit their inflection point at
-        # the same time, so we can use a single shared 'c' parameter for all variants.
-        # There might be variability from experiment to experiment, however, so we
-        # also allow for some noise.
+        # Define 'c'. We assume that there might be variability in the inflection
+        # point timing for different replicates.
         self.c = dms_components.Gamma(
-            alpha=c_alpha, beta=c_beta, shape=(starting_counts.shape[0], 1)
+            alpha=c_mean_alpha, beta=c_mean_beta, shape=(starting_counts.shape[0], 1)
         )
 
         # Initialize the base class
         super().__init__(
             starting_counts=starting_counts,
             ending_counts=ending_counts,
-            r_mean_beta=r_mean_beta,
-            r_sigma=r_sigma,
+            inv_r_alpha=inv_r_alpha,
+            inv_r_beta=inv_r_beta,
             alpha=alpha,
         )
 
