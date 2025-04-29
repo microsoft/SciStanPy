@@ -501,6 +501,8 @@ class Model(ABC):
                 the observable parameters and the values are the samples drawn.
             MAP: The MAP object resulting from the fit to the simulated data.
         """
+        # TODO: This and the other simulate method should include non-observables
+        # in the returned MAP as well.
         # Get the data
         kwargs["data"] = self._get_simulation_data(seed=kwargs.get("seed"))
 
