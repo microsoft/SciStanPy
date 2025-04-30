@@ -149,6 +149,14 @@ class Model(ABC):
                         f"{attr} is invalid."
                     )
 
+                # Check if the variable name starts with an underscore. This is
+                # forbidden in Stan code.
+                if attr.startswith("_"):
+                    raise ValueError(
+                        "Model variable names cannot start with an underscore: "
+                        f"{attr} is invalid."
+                    )
+
                 # Set the model variable name and record the model component
                 retrieved.model_varname = attr
                 named_model_components[attr] = retrieved
