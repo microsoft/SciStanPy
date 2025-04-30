@@ -68,9 +68,9 @@ class PDZ3Base(dms.Model):
         self,
         starting_counts: npt.NDArray[np.int64],
         ending_counts: npt.NDArray[np.int64],
+        alpha: float = 0.75,
         inv_r_alpha: float = 2.5,
         inv_r_beta: float = 0.5,
-        **transform_kwargs
     ):
         """Initializes the PDZ3 model with starting and ending counts.
 
@@ -118,10 +118,14 @@ class PDZ3Base(dms.Model):
             shape=(self.n_replicates, self.n_variants),
         )
 
-        # Define our transformation. This will be overridden in the child classes
-        # to define how we go from starting to ending counts. This defines theta_t0
-        # and theta_t1, which are the starting and ending abundances respectively.
-        self._init_transformation(**transform_kwargs)
+        # Starting proportions are Dirichlet distributed
+        self.theta_t0 = dms_components.Dirichlet(
+            alpha=alpha, shape=(self.n_replicates, self.n_variants)
+        )
+
+        # Calculate ending proportions
+        self.raw_abundances_t1 = self._define_growth_function()
+        self.theta_t1 = dms_ops.normalize(self.raw_abundances_t1)
 
         # The counts are modeled as multinomial distributions
         self.starting_counts = dms_components.Multinomial(
@@ -132,15 +136,12 @@ class PDZ3Base(dms.Model):
         )
 
     @abstractmethod
-    def _init_transformation(self, **kwargs) -> None:
+    def _define_growth_function(self) -> dms_components.TransformedParameter:
         """
         Defines the transformation for the model. This must be overridden in
         child classes and is used to define the transformation between starting
         and ending abundances.
         """
-        self.theta_t0 = None
-        self.theta_t1 = None
-        raise NotImplementedError("This method must be overridden in child classes.")
 
     @classmethod
     def from_data_file(cls, filepath: str, **kwargs) -> "PDZ3Base":
@@ -163,9 +164,9 @@ class PDZ3Exponential(PDZ3Base):
         self,
         starting_counts: npt.NDArray[np.int64],
         ending_counts: npt.NDArray[np.int64],
+        alpha: float = 0.75,
         inv_r_alpha: float = 7.0,
         inv_r_beta: float = 1.0,
-        alpha: float = 2.0,
     ):
         """
         Models the change in counts for the dataset resulting from exponential growth.
@@ -178,26 +179,15 @@ class PDZ3Exponential(PDZ3Base):
         super().__init__(
             starting_counts=starting_counts,
             ending_counts=ending_counts,
+            alpha=alpha,
             inv_r_alpha=inv_r_alpha,
             inv_r_beta=inv_r_beta,
-            alpha=alpha,
         )
 
-    def _init_transformation(  # pylint: disable=arguments-differ
-        self, alpha: float
-    ) -> None:
-
-        # Alpha describes the distribution of the starting abundances. These are
-        # modeled as a Dirichlet distribution with a shared value for `alpha`
-        self.theta_t0 = dms_components.Dirichlet(
-            alpha=alpha, shape=(self.n_replicates, self.n_variants)
+    def _define_growth_function(self) -> dms_components.BinaryExponentialGrowth:
+        return dms_components.BinaryExponentialGrowth(
+            A=self.theta_t0, r=self.r, shape=(self.n_replicates, self.n_variants)
         )
-
-        # Get the ending abundances.
-        self.raw_abundances = dms_components.BinaryExponentialGrowth(
-            A=self.theta_t0, r=self.r
-        )
-        self.theta_t1 = dms_ops.normalize(self.raw_abundances)
 
 
 class PDZ3Sigmoid(PDZ3Base):
@@ -207,11 +197,12 @@ class PDZ3Sigmoid(PDZ3Base):
         self,
         starting_counts: npt.NDArray[np.int64],
         ending_counts: npt.NDArray[np.int64],
+        alpha: float = 0.75,
         inv_r_alpha: float = 2.5,
         inv_r_beta: float = 0.5,
-        alpha: float = 0.25,
         c_mean_alpha: float = 4.0,
         c_mean_beta: float = 8.0,
+        c_sigma_sigma: float = 0.05,
     ):
         """
         Models the change in counts for the dataset resulting from sigmoid growth.
@@ -222,39 +213,30 @@ class PDZ3Sigmoid(PDZ3Base):
         """
         # Define 'c'. We assume that there might be variability in the inflection
         # point timing for different replicates.
-        self.c = dms_components.Gamma(
-            alpha=c_mean_alpha, beta=c_mean_beta, shape=(starting_counts.shape[0], 1)
+        self.c_mean = dms_components.Gamma(alpha=c_mean_alpha, beta=c_mean_beta)
+        self.c_sigma = dms_components.HalfNormal(sigma=c_sigma_sigma)
+        self.c = dms_components.Normal(
+            mu=self.c_mean, sigma=self.c_sigma, shape=(starting_counts.shape[0], 1)
         )
 
         # Initialize the base class
         super().__init__(
             starting_counts=starting_counts,
             ending_counts=ending_counts,
+            alpha=alpha,
             inv_r_alpha=inv_r_alpha,
             inv_r_beta=inv_r_beta,
-            alpha=alpha,
         )
 
-    def _init_transformation(  # pylint: disable=arguments-differ
-        self, alpha: float
-    ) -> None:
-        # Alpha is used to model proportions at t -> infinity. This is again modeled
-        # as a Dirichlet distribution. We scale the draw from this distribution by
-        # the number of variants for numerical stability.
-        self.A = (  # pylint: disable=invalid-name
-            dms_components.Dirichlet(
-                alpha=alpha, shape=(self.n_replicates, self.n_variants)
-            )
-            * self.n_variants
-        )
+    def _define_growth_function(
+        self,
+    ) -> dms_components.SigmoidGrowthInitParametrization:
 
-        # Get the starting and ending abundances
-        self.raw_abundances_t0 = dms_components.SigmoidGrowth(
-            A=self.A, r=self.r, c=self.c, t=0
+        # Get the ending abundances
+        return dms_components.SigmoidGrowthInitParametrization(
+            t=dms_components.Constant(1.0, togglable=False),
+            x0=self.theta_t0,
+            r=self.r,
+            c=self.c,
+            shape=(self.n_replicates, self.n_variants),
         )
-        self.raw_abundances_t1 = dms_components.SigmoidGrowth(
-            A=self.A, r=self.r, c=self.c, t=1
-        )
-
-        self.theta_t0 = dms_ops.normalize(self.raw_abundances_t0)
-        self.theta_t1 = dms_ops.normalize(self.raw_abundances_t1)

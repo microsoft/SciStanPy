@@ -721,51 +721,19 @@ class LogSigmoidGrowth(LogSigmoidParameter):
 class SigmoidGrowthInitParametrization(TransformedParameter):
     r"""
     An alternative parametrization of the sigmoid growth function that parametrizes
-    in terms of starting abundances and rate. This parametrization parallels the
-    parametrization used by `ExponentialGrowth`. Specifically, we calculate the
-    abundance `x` at time `t` for a population with initial abundance `x0` growing
-    with rate `r` as:
-
-    \begin{align}
-    x(t) = \frac{x0\exp{rt}}{1 + x0(\exp(rt) - 1)}
-    \end{align}.
-
-    Note that we define this function such that the carrying capacity of the system
-    is "1". This parametrization enforces that x0 obeys the following equality,
-    which is simply the standard sigmoid growth curve evaluated at `t = 0`:
-
-    \begin{align}
-    x0 = (1 + \exp(rc))^{-1}
-    \end{align},
-
-    where `c` is the offset parameter described in `SigmoidGrowth`. This means that
-    `x0` is implicity capturing the shift parameter, allowing it to be ignored.
-    Indeed, by rearranging the above equality for `x0` to solve for `c`, then plugging
-    c into the the standard logistic growth equation, we arrive at the initial-abundance
-    form of the equation:
-
-    \begin{align}
-    x0 &= (1 + \exp(rc))^{-1}
-    x0^{-1} - 1 &= \exp(rc)
-    \frac{1}{r}\ln{(x0^{-1} - 1)} &= c
-
-    x(t) &= \frac{1}{1 + \exp{-r(t - c)}}
-    &= \frac{1}{1 + \exp{-rt + rc}}
-    &= \frac{1}{1 + \exp{-rt}\exp{r(\frac{1}{r}\ln{(x0^{-1} - 1)})}}
-    &= \frac{1}{1 + \exp{-rt}\exp{\ln{(x0^{-1} - 1)}}}
-    &= \frac{1}{1 + (x0^{-1} - 1)\exp{-rt}}
-    &= \frac{1}{x0 + (1 - x0)\exp{-rt}}
-    &= \frac{\exp{rt}}{x0\exp{rt} + (1 - x0)}
-    \end{align}
+    in terms of starting abundances rather than the maximum abundances.
     """
+
+    LOWER_BOUND: float = 0.0
+    UPPER_BOUND: None = None
 
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
         t: "dms.custom_types.CombinableParameterType",
-        A: "dms.custom_types.CombinableParameterType",  # pylint: disable=invalid-name
+        x0: "dms.custom_types.CombinableParameterType",  # pylint: disable=invalid-name
         r: "dms.custom_types.CombinableParameterType",
-        x0: "dms.custom_types.CombinableParameterType",
+        c: "dms.custom_types.CombinableParameterType",
         **kwargs,
     ):
         """Initializes the SigmoidGrowthInitParametrization distribution.
@@ -774,39 +742,47 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
             t (dms.custom_types.CombinableParameterType): The time parameter.
             x0 (dms.custom_types.CombinableParameterType): Initial abundances.
             r (dms.custom_types.CombinableParameterType): Growth rate.
+            c (dms.custom_types.CombinableParameterType): Offset parameter.
             shape (tuple[int, ...], optional): The shape of the distribution. Defaults
             to ().
         """
-        super().__init__(t=t, A=A, r=r, x0=x0, **kwargs)
+        # Initialize using the base transformed parameter class
+        super().__init__(t=t, x0=x0, r=r, c=c, **kwargs)
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-renamed, arguments-differ
     @overload
     def operation(
-        self, t: torch.Tensor, A: torch.Tensor, r: torch.Tensor, x0: torch.Tensor
+        self, t: torch.Tensor, x0: torch.Tensor, r: torch.Tensor, c: torch.Tensor
     ) -> torch.Tensor: ...
 
     @overload
     def operation(
         self,
         t: "dms.custom_types.SampleType",
-        A: "dms.custom_types.SampleType",  # pylint: disable=invalid-name
+        x0: "dms.custom_types.SampleType",  # pylint: disable=invalid-name
         r: "dms.custom_types.SampleType",
-        x0: "dms.custom_types.SampleType",
+        c: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
 
-    def operation(self, t, A, r, x0):
-        return dms.utils.stable_x0_sigmoid_growth(t=t, A=A, r=r, x0=x0)
+    def operation(self, t, x0, r, c):
+        """We use a log-add-exp trick to calculate in a numerically stable way."""
+        # Get the module
+        mod = _choose_module(x0)
+
+        # Get the fold-change. We use the log-add-exp function to calculate this
+        # in a more numerically stable way
+        zero = 0.0 if mod is np else torch.tensor(0.0, device=x0.device)
+        foldchange = mod.exp(
+            mod.logaddexp(zero, r * c) - mod.logaddexp(zero, r * (c - t))
+        )
+
+        # Calculate the abundance
+        return x0 * foldchange
 
     def _write_operation(
-        self, t: str, A: str, r: str, x0: str  # pylint: disable=invalid-name
+        self, t: str, x0: str, r: str, c: str  # pylint: disable=invalid-name
     ) -> str:
-        """We need a custom stan function for this"""
-        return f"sigmoid_growth_init_param({t}, {A}, {r}, {x0})"
+        """Calculate using Stan's log1p_exp function."""
+        return f"{x0} .* exp(log1p_exp({r} .* {c}) - log1p_exp({r} .* ({c} - {t})))"
 
-    def get_supporting_functions(self) -> list[str]:
-        """Returns the supporting functions for the Stan model."""
-        return super().get_supporting_functions() + [
-            "#include sigmoid_init_param.stanfunctions"
-        ]
-
-    # pylint: enable=arguments-differ
+    # pylint: enable=arguments-renamed, arguments-differ

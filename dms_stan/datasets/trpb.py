@@ -1,5 +1,7 @@
 """Holds code relevant for the TrpB datasets."""
 
+from abc import abstractmethod
+
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -58,6 +60,7 @@ class TrpBBaseGrowthModel(dms.Model):
         times: npt.NDArray[np.floating],
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
+        alpha: float = 0.75,
         inv_r_alpha: float = 2.5,
         inv_r_beta: float = 0.5,
     ):
@@ -129,6 +132,34 @@ class TrpBBaseGrowthModel(dms.Model):
             shape=(self.n_replicates, 1, self.n_variants),
         )
 
+        # Every model has a theta_t0 parameter, which gives the starting proportions
+        # at the beginning of the experiment. We assume that its possible values
+        # are a fundamental property of the variant; hence, we define one per variant.
+        self.theta_t0 = dms_components.Dirichlet(alpha=alpha, shape=(self.n_variants,))
+
+        # Define the growth function
+        self.raw_abundances = self._define_growth_function()
+        self.theta_tg0 = dms_ops.normalize(self.raw_abundances)
+
+        # The counts are modeled as multinomial distributions
+        self.starting_counts = dms_components.Multinomial(
+            theta=self.theta_t0,
+            N=self.starting_counts_total,
+            shape=(self.n_variants,),
+        )
+        self.timepoint_counts = dms_components.Multinomial(
+            theta=self.theta_tg0,
+            N=self.timepoint_counts_total,
+            shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
+        )
+
+    @abstractmethod
+    def _define_growth_function(self) -> dms_components.TransformedParameter:
+        """
+        Define the growth function for the model. This should return a
+        TransformedParameter object that defines the growth function.
+        """
+
     @classmethod
     def from_data_file(cls, filepath: str, **kwargs):
         """
@@ -152,39 +183,7 @@ class TrpBBaseGrowthModel(dms.Model):
         return self._n_variants
 
 
-class _TrpBInitParam(TrpBBaseGrowthModel):
-    def __init__(
-        self,
-        times: npt.NDArray[np.floating],
-        starting_counts: npt.NDArray[np.integer],
-        timepoint_counts: npt.NDArray[np.integer],
-        inv_r_alpha: float = 2.5,
-        inv_r_beta: float = 0.5,
-        alpha: float = 2.0,
-    ):
-        # Run inherited init
-        super().__init__(
-            times=times,
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            inv_r_alpha=inv_r_alpha,
-            inv_r_beta=inv_r_beta,
-        )
-
-        # Every model has a theta_t0 parameter, which gives the starting proportions
-        # at the beginning of the experiment. We assume that its possible values
-        # are a fundamental property of the variant; hence, we define one per variant.
-        self.theta_t0 = dms_components.Dirichlet(alpha=alpha, shape=(self.n_variants,))
-
-        # The starting counts are modeled as a multinomial distribution
-        self.starting_counts = dms_components.Multinomial(
-            theta=self.theta_t0,
-            N=self.starting_counts_total,
-            shape=(self.n_variants,),
-        )
-
-
-class TrpBExponentialGrowth(_TrpBInitParam):
+class TrpBExponentialGrowth(TrpBBaseGrowthModel):
     """
     Models the TrpB count data from Johnston et al. using an exponential growth
     function to model the time-dependent increase in counts and a multinomial distribution
@@ -196,38 +195,34 @@ class TrpBExponentialGrowth(_TrpBInitParam):
         times: npt.NDArray[np.floating],
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
+        alpha: float = 0.75,
         inv_r_alpha: float = 7.0,
         inv_r_beta: float = 1.0,
-        alpha: float = 2.0,
     ):
         # Run inherited init
         super().__init__(
             times=times,
             starting_counts=starting_counts,
             timepoint_counts=timepoint_counts,
+            alpha=alpha,
             inv_r_alpha=inv_r_alpha,
             inv_r_beta=inv_r_beta,
-            alpha=alpha,
         )
 
-        # What are our proportions at t > 0?
-        self.raw_abundances = dms_components.ExponentialGrowth(
+    def _define_growth_function(self) -> dms_components.ExponentialGrowth:
+        """
+        Defines the growth function for the model. This should return a
+        TransformedParameter object that defines the growth function.
+        """
+        return dms_components.ExponentialGrowth(
+            t=self.tg0,
             A=self.theta_t0,
             r=self.r,
-            t=self.tg0,
             shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
         )
-        self.theta_tg0 = dms_ops.normalize(self.raw_abundances)
-
-        # Model the counts data after growth
-        self.timepoint_counts = dms_components.Multinomial(
-            theta=self.theta_tg0,
-            N=self.timepoint_counts_total,
-            shape=timepoint_counts.shape,
-        )
 
 
-class TrpBSigmoidGrowthInitParam(_TrpBInitParam):
+class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
     """
     Models the TrpB count data from Johnston et al. using a sigmoid growth
     function to model the time-dependent increase in counts and a multinomial distribution
@@ -241,80 +236,13 @@ class TrpBSigmoidGrowthInitParam(_TrpBInitParam):
         times: npt.NDArray[np.floating],
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
-        inv_r_alpha: float = 6.0,
-        inv_r_beta: float = 1.0,
-        alpha: float = 2.0,
-        cc_alpha: float = 1.5,
-        cc_beta: float = 10.0,
-    ):
-        # Run inherited init
-        super().__init__(
-            times=times,
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            inv_r_alpha=inv_r_alpha,
-            inv_r_beta=inv_r_beta,
-            alpha=alpha,
-        )
-
-        # We assume that all variants have the same maximum carrying capacity. This
-        # is assumed because carrying capacity is a function of the growth environment
-        # and all variants are grown in the same environment. The carrying capacity
-        # must be at least 1, as that's the sum of the starting proportions (and
-        # we know that the environment can support at least that many cells). We
-        # don't have a good sense of what the maximum carrying capacity is, so we
-        # will use an uninformative prior
-        self.capacity = dms_components.InverseGamma(
-            alpha=cc_alpha, beta=cc_beta
-        ) + dms_components.Constant(1.0, togglable=False)
-
-        # What are our proportions at t > 0?
-        self.abundances_tg0 = dms_components.SigmoidGrowthInitParametrization(
-            t=self.tg0,
-            A=self.capacity,
-            r=self.r,
-            x0=self.theta_t0,
-            shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
-        )
-        self.theta_tg0 = dms_ops.normalize(self.abundances_tg0)
-
-        # Model the counts data.
-        self.timepoint_counts = dms_components.Multinomial(
-            theta=self.theta_tg0,
-            N=self.timepoint_counts_total,
-            shape=timepoint_counts.shape,
-        )
-
-
-class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
-    """
-    Identical to `TrpBSigmoidGrowthUniformA`, but with the `A` parameter modeled
-    as a Dirichlet distribution. This allows the maximum carrying capacity to be
-    different for each variant, but still assumes that the maximum carrying
-    capacity is the same across replicates.
-    """
-
-    def __init__(
-        self,
-        times: npt.NDArray[np.floating],
-        starting_counts: npt.NDArray[np.integer],
-        timepoint_counts: npt.NDArray[np.integer],
+        alpha: float = 0.75,
         inv_r_alpha: float = 2.5,
-        inv_r_beta: float = 1.0,
+        inv_r_beta: float = 0.5,
         c_mean_alpha: float = 4.0,
         c_mean_beta: float = 8.0,
-        A_alpha: float = 0.25,  # pylint: disable=invalid-name
-        c_std_sigma: float = 0.05,
+        c_sigma_sigma: float = 0.05,
     ):
-        # Run inherited init
-        super().__init__(
-            times=times,
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            inv_r_alpha=inv_r_alpha,
-            inv_r_beta=inv_r_beta,
-        )
-
         # We have an additional parameter for the sigmoid growth model, `c`, which
         # defines the time at which the growth rate is half of its maximum value.
         # We know that this has to be greater than 0, but is unlikely to be close
@@ -323,62 +251,30 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
         # is reached, so we will model different values of `c` for each replicate
         # using the Gamma distribution.
         self.c_mean = dms_components.Gamma(alpha=c_mean_alpha, beta=c_mean_beta)
-        self.c_std = dms_components.HalfNormal(sigma=c_std_sigma)
+        self.c_std = dms_components.HalfNormal(sigma=c_sigma_sigma)
         self.c = dms_components.Normal(
             mu=self.c_mean,
             sigma=self.c_std,
-            shape=(self.n_replicates, 1, 1),
+            shape=(timepoint_counts.shape[0], 1, 1),
         )
 
-        # Get the A values values from the dirichlet distribution. We scale the
-        # values by the total number of variants for numerical stability.
-        self.capacity = (
-            dms_components.Dirichlet(alpha=A_alpha, shape=(self.n_variants,))
-            * self.n_variants
+        # Run inherited init
+        super().__init__(
+            times=times,
+            starting_counts=starting_counts,
+            timepoint_counts=timepoint_counts,
+            alpha=alpha,
+            inv_r_alpha=inv_r_alpha,
+            inv_r_beta=inv_r_beta,
         )
 
-        # What are the proportions at t = 0? Everything starts from the same culture
-        # at t = 0, so the proportions should be the same regardless of replicate.
-        # We will thus backcalculate to the proportions at t = 0 using the MEAN
-        # rate and MEAN c rather than the replicate-specific values.
-        self.raw_abundances_t0 = dms_components.SigmoidGrowth(
-            A=self.capacity,
-            r=(1 / self.inv_r_mean),
-            t=dms_components.Constant(0.0, togglable=False),
-            c=self.c_mean,
-            shape=(self.n_variants,),
-        )
-        self.theta_t0 = dms_ops.normalize(self.raw_abundances_t0)
-
-        # For t > 0, we can have values of `c` that are different for each replicate.
-        # and `r` that are different for each variant. We will use the replicate-specific
-        self.raw_abundances_tg0 = dms_components.SigmoidGrowth(
-            A=self.capacity,
-            r=self.r,
+    def _define_growth_function(
+        self,
+    ) -> dms_components.SigmoidGrowthInitParametrization:
+        return dms_components.SigmoidGrowthInitParametrization(
             t=self.tg0,
+            x0=self.theta_t0,
+            r=self.r,
             c=self.c,
             shape=(self.n_replicates, self.n_timepoints - 1, self.n_variants),
         )
-        self.theta_tg0 = dms_ops.normalize(self.raw_abundances_tg0)
-
-        # Model the counts data.
-        self.starting_counts = dms_components.Multinomial(
-            theta=self.theta_t0,
-            N=self.starting_counts_total,
-            shape=(
-                1,
-                1,
-                self.n_variants,
-            ),
-        )
-        self.timepoint_counts = dms_components.Multinomial(
-            theta=self.theta_tg0,
-            N=self.timepoint_counts_total,
-            shape=timepoint_counts.shape,
-        )
-
-        # Update the default data
-        self.default_data = {
-            "starting_counts": self.default_data["starting_counts"][None, None, :],
-            "timepoint_counts": self.default_data["timepoint_counts"],
-        }
