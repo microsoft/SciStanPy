@@ -165,16 +165,9 @@ class Model(ABC):
             self._named_model_components = tuple(named_model_components.values())
 
             # Build the mapping between model variable names and parameter objects
-            self._model_varname_to_object = self._build_model_varname_to_object()
-
-            # Handle parallelization
-            if parallelize is None and self._default_parallelize is not None:
-                parallelize = self._default_parallelize
-            if parallelize is not None:
-                for component in self.all_model_components:
-                    if isinstance(component, TransformedData):
-                        continue
-                    component.parallelized = parallelize
+            self._model_varname_to_object = self._build_model_varname_to_object(
+                parallelize=parallelize
+            )
 
             # Initialization is complete
             self._init_complete = True
@@ -187,33 +180,69 @@ class Model(ABC):
         cls._wrapped_init = cls.__init__
         cls.__init__ = __init__
 
-    def _build_model_varname_to_object(self) -> dict[str, AbstractModelComponent]:
+    def _build_model_varname_to_object(
+        self, parallelize: bool | None
+    ) -> dict[str, AbstractModelComponent]:
         """Builds a mapping between model varnames and objects for easy access."""
-        # Start from each observable and walk up the tree to the root
-        model_varname_to_object: dict[str, AbstractModelComponent] = {}
-        for observable in self.observables:
 
-            # Add the observable to the mapping
-            assert observable.model_varname not in model_varname_to_object
-            model_varname_to_object[observable.model_varname] = observable
+        def build_initial_mapping() -> dict[str, AbstractModelComponent]:
+            """Builds an initial mapping of model varnames to objects."""
 
-            # Add all parents to the mapping and make sure `Parameter` instances
-            # are explicitly defined.
-            for *_, parent in observable.walk_tree(walk_down=False):
+            # Start from each observable and walk up the tree to the root
+            model_varname_to_object: dict[str, AbstractModelComponent] = {}
+            for observable in self.observables:
 
-                # If the parent is already in the mapping, make sure it is the
-                # same
-                if parent.model_varname in model_varname_to_object:
-                    assert model_varname_to_object[parent.model_varname] == parent
-                else:
-                    model_varname_to_object[parent.model_varname] = parent
+                # Add the observable to the mapping
+                assert observable.model_varname not in model_varname_to_object
+                model_varname_to_object[observable.model_varname] = observable
 
-        # Add all TransformedData instances to the mapping
-        for component in list(model_varname_to_object.values()):
-            for child in component._children:  # pylint: disable=protected-access
-                if isinstance(child, TransformedData):
-                    assert child.model_varname not in model_varname_to_object
-                    model_varname_to_object[child.model_varname] = child
+                # Add all parents to the mapping and make sure `Parameter` instances
+                # are explicitly defined.
+                for *_, parent in observable.walk_tree(walk_down=False):
+
+                    # If the parent is already in the mapping, make sure it is the
+                    # same
+                    if parent.model_varname in model_varname_to_object:
+                        assert model_varname_to_object[parent.model_varname] == parent
+                    else:
+                        model_varname_to_object[parent.model_varname] = parent
+
+            return model_varname_to_object
+
+        def update_parallelization(parallelize_local: bool | None) -> None:
+            """
+            For all components identified in `build_initial_mapping`, set the
+            parallelization attribute. This is done in `_build_model_varname_to_object`
+            because the act of setting parallelization may add new child components
+            to some of the components. These child components handle transformed
+            data.
+            """
+            # Handle parallelization. This might add some child components that handle
+            # transformed data
+            if parallelize_local is None and self._default_parallelize is not None:
+                parallelize_local = self._default_parallelize
+            if parallelize_local is not None:
+                for component in model_varname_to_object.values():
+                    if isinstance(component, TransformedData):
+                        continue
+                    component._parallelized = (  # pylint: disable=protected-access
+                        parallelize_local
+                    )
+
+        def record_transformed_data() -> None:
+            """Updates the mapping with all transformed data components."""
+
+            # Add all TransformedData instances to the mapping
+            for component in list(model_varname_to_object.values()):
+                for child in component._children:  # pylint: disable=protected-access
+                    if isinstance(child, TransformedData):
+                        assert child.model_varname not in model_varname_to_object
+                        model_varname_to_object[child.model_varname] = child
+
+        # Run the steps
+        model_varname_to_object = build_initial_mapping()
+        update_parallelization(parallelize)
+        record_transformed_data()
 
         # There can be no duplicate values in the mapping
         assert len(model_varname_to_object) == len(
