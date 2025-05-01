@@ -205,7 +205,7 @@ class Parameter(AbstractModelComponent):
         # Determine the left side and operator
         left_side = (
             "target += "
-            if self.parallelized
+            if self._parallelized
             else f"{self.get_indexed_varname(index_opts)} ~ "
         )
 
@@ -266,7 +266,7 @@ class Parameter(AbstractModelComponent):
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
     ) -> str:
         # If parallelized, the right side is a call to the `reduce_sum` function.
-        if self.parallelized and dist_suffix == "":
+        if self._parallelized and dist_suffix == "":
             component_names = [
                 component.get_indexed_varname(index_opts)
                 for component in self.get_right_side_components()
@@ -440,7 +440,7 @@ class Parameter(AbstractModelComponent):
         """
         # We can only use `reduce_sum` if this parameter is not a scalar and has
         # more than one element in its final dimension
-        if not self.parallelized:
+        if not self._parallelized:
             return ""
 
         # Otherwise, the partial function is defined
@@ -551,7 +551,7 @@ class Normal(ContinuousDistribution):
 
         # Run the parent method if parallelized, replacing the indexed variable name
         # with the non-centered variable name
-        if self.parallelized:
+        if self._parallelized:
             return (
                 super()
                 .get_right_side(index_opts, dist_suffix=dist_suffix)
@@ -568,7 +568,7 @@ class Normal(ContinuousDistribution):
 
     def get_supporting_functions(self) -> list[str]:
         # Parent method if not noncentered or if we are not parallelized
-        if not self.is_noncentered or not self.parallelized:
+        if not self.is_noncentered or not self._parallelized:
             return super().get_supporting_functions()
 
         # Otherwise, declare the function
@@ -809,7 +809,9 @@ class _CustomStanFunctionMixIn:
     def get_supporting_functions(self) -> list[str]:
         """Builds the appropriate #include statement for the custom Stan functions"""
         # pylint: disable=no-member
-        return [f"#include {self.STAN_DIST}.stanfunctions"] if self.parallelized else []
+        return (
+            [f"#include {self.STAN_DIST}.stanfunctions"] if self._parallelized else []
+        )
 
 
 class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
@@ -853,14 +855,13 @@ class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
         # Set `enforce_uniformity` appropriately
         self.alpha.enforce_uniformity = enforce_uniformity
 
-        # If we are enforcing uniformity and we are parallelized, then we can
-        # improve compute efficiency by storing the sum of the alphas
-        if enforce_uniformity and self.parallelized:
-            self._shared_alpha = SharedAlphaDirichlet(
-                alpha=self.alpha,
-                shape=self.shape[:-1] + (1,),
-                parallelize=True,
-            )
+        # Trigger the parallelization setter. This will build transformed data
+        # declarations if needed
+        self._parallelized = self._parallelized
+
+        # Placeholder for the shared alpha if we have not set it
+        if not hasattr(self, "_shared_alpha"):
+            self._shared_alpha: SharedAlphaDirichlet | None = None
 
     def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """
@@ -911,7 +912,7 @@ class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
     ) -> str:
         # Parent method if provided a suffix or we are not parallelized
-        if dist_suffix != "" or not self.parallelized:
+        if dist_suffix != "" or not self._parallelized:
             return super().get_right_side(index_opts, dist_suffix=dist_suffix)
 
         # If we are enforcing uniformity, then we need to use the shared alpha.
@@ -928,6 +929,22 @@ class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
     def plp_function_name(self) -> str:
         """There is no partial log probability function for the Dirichlet distribution"""
         return ""
+
+    # Update the parallelized setter to add a shared alpha if relevant
+    @Parameter._parallelized.setter  # pylint: disable=protected-access
+    def _parallelized(self, value: bool) -> None:
+
+        # Set the parallelized attribute
+        super(Dirichlet, self.__class__)._parallelized.fset(self, value)
+
+        # If we are parallelized and enforcing uniformity, then we need to set
+        # the shared alpha
+        if value and self.alpha.enforce_uniformity:
+            self._shared_alpha = SharedAlphaDirichlet(
+                alpha=self.alpha,
+                shape=self.shape[:-1] + (1,),
+                parallelize=True,
+            )
 
 
 class Binomial(DiscreteDistribution):
@@ -1010,17 +1027,13 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
             **kwargs,
         )
 
-        # When initialized, multinomial distributions assume that we are modeling
-        # an observable. This lets us precalculate the multinomial coefficient.
-        # If we add a child parameter, however, then we cannot precalculate the
-        # multinomial coefficient and we must remove the transformed data attribute.
-        # This only happens if we are parallelized.
-        if self.parallelized:
-            self._multinomial_coefficient = MultinomialCoefficient(
-                self,
-                shape=self.shape[:-1] + (1,),
-                parallelize=True,
-            )
+        # Trigger the parallelization setter. This will build transformed data
+        # declarations if needed
+        self._parallelized = self._parallelized
+
+        # If we do not have a multinomial coefficient, then we need to set it
+        if not hasattr(self, "_multinomial_coefficient"):
+            self._multinomial_coefficient: MultinomialCoefficient | None = None
 
     def _record_child(self, child: AbstractModelComponent) -> None:
         # Run the inherited method
@@ -1028,14 +1041,11 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
 
         # If recording the multinomial coefficient, we are done
         if isinstance(child, MultinomialCoefficient):
-            assert not hasattr(self, "_multinomial_coefficient")
             return
 
         # If we have any other child, then we cannot precalculate the multinomial
         # coefficient and so we need to remove the transformed data attribute
-        if hasattr(self, "_multinomial_coefficient"):
-            self._children.remove(self._multinomial_coefficient)
-            del self._multinomial_coefficient
+        self._multinomial_coefficient = None
 
     def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """Returns the multinomial distribution function"""
@@ -1082,7 +1092,7 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
 
         # Just return raw if we are parallelized or if we are precalculating the
         # multinomial coefficient
-        if self.parallelized or hasattr(self, "_multinomial_coefficient"):
+        if self._parallelized or self._multinomial_coefficient is not None:
             return raw
 
         # If not parallelized, remove the N parameter
@@ -1094,7 +1104,7 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
     ) -> str:
         # Parent method if provided a suffix or we are not parallelized
-        if dist_suffix != "" or not self.parallelized:
+        if dist_suffix != "" or not self._parallelized:
             return super().get_right_side(index_opts, dist_suffix=dist_suffix)
 
         # Get the indexed names for the loss calculations
@@ -1103,17 +1113,21 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
 
         # If we have a multinomial coefficient predefined, get it. Otherwise,
         # we need to calculate it each time.
-        if hasattr(self, "_multinomial_coefficient"):
+        if self._multinomial_coefficient is not None:
             coeff = self._multinomial_coefficient.get_indexed_varname(index_opts)
 
         # Otherwise, we need to calculate the multinomial coefficient each time
         else:
             coeff = f"parallelized_multinomial_factorial_component_lpmf({ys})"
 
-        # We always need to calculate the log probability each time.
-        logprob = (
-            f"parallelized_multinomial_nonfactorial_component_lpmf({ys} | {probs})"
-        )
+        # We always need to calculate the log probability each time. We slice over
+        # theta instead of y if this is an observable to avoid copying gradients
+        if self.observable:
+            probs = f"to_array_1d({probs})"
+            midfunc = "thetaslice_"
+        else:
+            midfunc = ""
+        logprob = f"parallelized_multinomial_factorial_component_{midfunc}lpmf({ys} | {probs})"
 
         # Overall log-loss is the coefficient + the log probability
         return f"{coeff} + {logprob}"
@@ -1126,6 +1140,22 @@ class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
     def plp_function_name(self) -> str:
         """There is no partial log probability function for the multinomial distribution"""
         return ""
+
+    # Redefine the parallelized property setter to set the multinomial coefficient
+    @Parameter._parallelized.setter  # pylint: disable=protected-access
+    def _parallelized(self, value: bool) -> None:
+
+        # Run the parent setter
+        super(_MultinomialBase, self.__class__)._parallelized.fset(self, value)
+
+        # If we are parallelized and have no children, then we will want a precalculated
+        # multinomial coefficient
+        if value and len(self._children) == 0:
+            self._multinomial_coefficient = MultinomialCoefficient(
+                self,
+                shape=self.shape[:-1] + (1,),
+                parallelize=True,
+            )
 
 
 class Multinomial(_MultinomialBase):
