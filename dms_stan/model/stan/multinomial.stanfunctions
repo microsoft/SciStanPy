@@ -32,13 +32,25 @@ real parallelized_multinomial_factorial_component_lpmf(array[] int y) {
     return reduce_sum(partial_sum_of_logints, get_count_coefficient(y), 1);
 }
 
-real multinomial_partial_scaled_sum_of_logs(array[] int y, int start, int end, vector theta) {
+real mn_nonfactor_partial_sum(array[] int y, int start, int end, vector theta) {
     // Calculates the partial sum of y_i * log(theta_i) for the multinomial distribution
-    return sum(to_vector(y) .* log(theta[start:end]));
+    return to_row_vector(y) * log(theta[start:end]);
+}
+
+real mn_nonfactor_partial_sum_theta_slice(array[] real theta, int start, int end, array[] int y) {
+    // Calculates the partial sum of y_i * log(theta_i) for the multinomial distribution
+    // with a slice over theta rather than y.
+    return to_row_vector(y[start:end]) * log(to_vector(theta));
 }
 
 real parallelized_multinomial_nonfactorial_component_lpmf(array[] int y, vector theta) {
     // Calculates the log probability mass function for the non-factorial component
     // of the multinomial distribution (i.e., y_1 * log(theta_1) + y_2 * log(theta_2) + ...).
-    return reduce_sum(multinomial_partial_scaled_sum_of_logs, y, 1, theta);
+    return reduce_sum(mn_nonfactor_partial_sum, y, 1, theta);
+}
+
+real parallelized_multinomial_factorial_component_thetaslice_lpmf(array[] int y, array[] real theta) {
+    // Calculates the log probability mass function for the non-factorial component
+    // of the multinomial distribution (i.e., y_1 * log(theta_1) + y_2 * log(theta_2) + ...).
+    return reduce_sum(mn_nonfactor_partial_sum_theta_slice, theta, 1, y);
 }

@@ -18,7 +18,7 @@ real get_uniform_alpha_coefficient(vector alpha) {
 real partial_sum_of_logs(array[] real x_slice, int start, int end) {
     // Calculate the sum of logs of a slice of the parameter vector x.
     // This is used in the context of a `reduce_sum` operation in Stan.
-    return sum(log(to_vector(x_slice)));
+    return sum(log(x_slice));
 }
 
 real parallelized_dirichlet_uniform_alpha_lpdf(array[] real theta, real coeff) {
