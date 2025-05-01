@@ -120,7 +120,7 @@ class PDZ3Base(dms.Model):
 
         # Starting proportions are Dirichlet distributed
         self.theta_t0 = dms_components.Dirichlet(
-            alpha=alpha, shape=(self.n_replicates, self.n_variants)
+            alpha=alpha, shape=(self.n_replicates, self.n_variants), parallelize=True
         )
 
         # Calculate ending proportions
@@ -129,10 +129,10 @@ class PDZ3Base(dms.Model):
 
         # The counts are modeled as multinomial distributions
         self.starting_counts = dms_components.Multinomial(
-            theta=self.theta_t0, N=self.total_starting_counts
+            theta=self.theta_t0, N=self.total_starting_counts, parallelize=True
         )
         self.ending_counts = dms_components.Multinomial(
-            theta=self.theta_t1, N=self.total_ending_counts
+            theta=self.theta_t1, N=self.total_ending_counts, parallelize=True
         )
 
     @abstractmethod
