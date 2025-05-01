@@ -11,7 +11,7 @@ import dms_stan.model.components as dms_components
 import dms_stan.operations as dms_ops
 
 
-def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray]:
+def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray | list[str]]:
     """
     Load a TrpB dataset from Johnston et al.
     """
@@ -49,6 +49,7 @@ def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray]:
         "times": np.concatenate([[0], times]),
         "starting_counts": t0_counts,
         "timepoint_counts": tg0_counts,
+        "variants": combo_order,
     }
 
 
@@ -165,7 +166,12 @@ class TrpBBaseGrowthModel(dms.Model):
         """
         Load a TrpB dataset from Johnston et al. and create a model from it.
         """
-        return cls(**load_trpb_dataset(filepath), **kwargs)
+        # Load the dataset and remove the 'variants'
+        dataset = load_trpb_dataset(filepath)
+        dataset.pop("variants")
+
+        # Build the model
+        return cls(**dataset, **kwargs)
 
     @property
     def n_timepoints(self) -> int:
