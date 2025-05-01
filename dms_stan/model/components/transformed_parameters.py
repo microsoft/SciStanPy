@@ -325,7 +325,7 @@ class NormalizeParameter(UnaryTransformedParameter):
         # Determine the denominator
         denom = (
             f"reduce_sum(partial_sum, to_array_1d({dist1}), 1)"
-            if self.parallelized
+            if self._parallelized
             else f"sum({dist1})"
         )
 
@@ -334,7 +334,7 @@ class NormalizeParameter(UnaryTransformedParameter):
     def get_supporting_functions(self) -> list[str]:
 
         # None if the function is not parallelized
-        if not self.parallelized:
+        if not self._parallelized:
             return []
 
         # Define the partial sum function that can be used in the sum operation

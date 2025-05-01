@@ -73,9 +73,9 @@ class SharedAlphaDirichlet(TransformedData):
         return f"{self.alpha.model_varname}.coeff"
 
     @property
-    def parallelized(self) -> bool:
+    def _parallelized(self) -> bool:
         """Returns whether the operation is parallelized."""
-        return self.alpha.parallelized
+        return self.alpha._parallelized  # pylint: disable=protected-access
 
 
 class MultinomialCoefficient(TransformedData):
@@ -113,7 +113,7 @@ class MultinomialCoefficient(TransformedData):
             counts (str): String representation of the counts parameter.
         """
         # If parallelized, use that version
-        prefix = "" if self.parallelized else "un"
+        prefix = "" if self._parallelized else "un"
         return f"{prefix}parallelized_multinomial_factorial_component_lpmf({counts})"
 
     @property
@@ -122,6 +122,6 @@ class MultinomialCoefficient(TransformedData):
         return f"{self.counts.model_varname}.multinomial_coefficient"
 
     @property
-    def parallelized(self) -> bool:
+    def _parallelized(self) -> bool:
         """Returns whether the operation is parallelized."""
-        return self.counts.parallelized
+        return self.counts._parallelized  # pylint: disable=protected-access
