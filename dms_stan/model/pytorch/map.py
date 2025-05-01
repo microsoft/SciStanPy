@@ -686,6 +686,14 @@ class MAP:
             for key, value in distributions.items()
         }
 
+        # Set an attribute for all MAP parameters
+        for k, v in self.model_varname_to_map.items():
+            if hasattr(self, k):
+                raise ValueError(
+                    f"MAP parameter {k} already exists in the model. Please rename it."
+                )
+            setattr(self, k, v)
+
         # Record the loss trajectory as a pandas dataframe
         self.losses = pd.DataFrame(
             {
