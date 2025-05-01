@@ -524,7 +524,13 @@ class AbstractModelComponent(ABC):
         try:
             return self[key]
         except KeyError as error:
-            raise AttributeError(f"Attribute '{key}' not found in {self}") from error
+            try:
+                string_repr = repr(self)
+            except Exception:  # pylint: disable=broad-except
+                string_repr = super().__repr__()
+            raise AttributeError(
+                f"Attribute '{key}' not found in {string_repr}"
+            ) from error
 
     @property
     def shape(self) -> tuple[int, ...]:
@@ -743,7 +749,7 @@ class AbstractModelComponent(ABC):
         return False
 
     @property
-    def parallelized(self) -> bool:
+    def _parallelized(self) -> bool:
         """
         Returns True if the parameter is capable of being parallelized using `reduce_sum`.
         This occurs when the parameter is not a scalar and has more than one element
@@ -752,8 +758,8 @@ class AbstractModelComponent(ABC):
         """
         return self._allow_parallelization and self.ndim > 0 and self.shape[-1] > 1
 
-    @parallelized.setter
-    def parallelized(self, value: bool) -> None:
+    @_parallelized.setter
+    def _parallelized(self, value: bool) -> None:
         """
         Sets the parallelization flag for this parameter. This is used to determine
         whether the parameter can be parallelized using `reduce_sum`.
