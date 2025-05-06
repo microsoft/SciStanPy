@@ -23,7 +23,7 @@ from dms_stan.defaults import (
     DEFAULT_MAX_TREE_DEPTH,
     DEFAULT_RHAT_THRESH,
 )
-from dms_stan.model.components import Normal
+from dms_stan.model.components import Normal, TransformedParameter
 from dms_stan.model.pytorch.map import MAPInferenceRes
 from dms_stan.plotting import calculate_relative_quantiles
 
@@ -379,10 +379,17 @@ class SampleResults(MAPInferenceRes):
             dtypes=stan_model,
         )
 
+        # Identify the names of transformed and non-transformed parameters
+        transformed_params = set(
+            k.model_varname
+            for k, v in stan_model.model.all_model_components.items()
+            if isinstance(v, TransformedParameter)
+        )
+
         # Squeeze the dummy dimensions out of the ArviZ object and cooerce data
         # to the precision requested. Ideally, precision would be set during creation
         # of the original ArviZ object, but there is no option to do this right
-        # now.
+        # now. Also assign the type of parameter as an attribute.
         for group, dataset in inference_obj.items():
 
             # Squeeze the dummy dimensions out of the dataset
@@ -396,6 +403,9 @@ class SampleResults(MAPInferenceRes):
                     )
                 elif np.issubdtype(dataarray.dtype, np.integer):
                     dataset[varname] = dataarray.astype(int_dtype, casting="same_kind")
+
+            # Add the transformed parameters as an attribute
+            dataset = dataset.assign_attrs(transformed_params=transformed_params)
 
             # Update the group in the ArviZ object with the modified dataset
             setattr(inference_obj, group, dataset)
@@ -731,17 +741,17 @@ class SampleResults(MAPInferenceRes):
                 containing the indices of the failed tests and the total number of tests.
             """
             return {
-                varname: (np.nonzero(tests.values), tests.values.size)
+                varname: (np.atleast_1d(tests.values).nonzero(), tests.values.size)
                 for varname, tests in test_res_dataarray.items()
             }
 
-        def strip_totals(process_test_results: ProcessedTestRes) -> StrippedTestRes:
+        def strip_totals(processed_test_results: ProcessedTestRes) -> StrippedTestRes:
             """
             Strip the totals from the test results.
 
             Parameters
             ----------
-            process_test_results : ProcessedTestRes
+            processed_test_results : ProcessedTestRes
                 The processed test results from the `process_test_results` function.
 
             Returns
@@ -749,7 +759,7 @@ class SampleResults(MAPInferenceRes):
             StrippedTestRes
                 The processed test results with the totals stripped.
             """
-            return {k: v[0] for k, v in process_test_results.items()}
+            return {k: v[0] for k, v in processed_test_results.items()}
 
         def report_test_summary(
             processed_test_results: ProcessedTestRes,
