@@ -529,6 +529,27 @@ class Normal(ContinuousDistribution):
             f".* {raw_declaration}"
         )
 
+    def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
+        # Run the parent method
+        parent_incrementation = super().get_target_incrementation(index_opts)
+
+        # If not noncentered, we are done
+        if not self.is_noncentered:
+            return parent_incrementation
+
+        # Otherwise, replace the default variable name with the non-centered variable
+        # name
+        default_name = self.get_indexed_varname(index_opts)
+        new_name = self.get_indexed_varname(
+            index_opts, _name_override=self.noncentered_varname
+        )
+        if self._parallelized:
+            return parent_incrementation.replace(
+                f"to_array_1d({default_name})",
+                f"to_array_1d({new_name})",
+            )
+        return parent_incrementation.replace(f"{default_name} ~", f"{new_name} ~")
+
     def get_right_side_components(self) -> list[AbstractModelComponent]:
         # If noncentered, then there aren't any right-hand-side components
         if self.is_noncentered:
@@ -590,6 +611,21 @@ class Normal(ContinuousDistribution):
         and we did not set `noncentered` to False at initialization.
         """
         return self._noncentered and not self.is_hyperparameter and not self.observable
+
+    @property
+    def plp_function_name(self) -> str:
+
+        # Run the parent method
+        # pylint: disable=assignment-from-no-return
+        name = super(Normal, self.__class__).plp_function_name.fget(self)
+        # pylint: enable=assignment-from-no-return
+
+        # If there is no name or we are not noncentered, return
+        if name == "" or not self.is_noncentered:
+            return name
+
+        # If we are noncentered, prepend 'std'
+        return f"std_{name}"
 
 
 class HalfNormal(ContinuousDistribution):
