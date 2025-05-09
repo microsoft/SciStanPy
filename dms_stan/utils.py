@@ -1,17 +1,11 @@
 """Utility functions for the DMS Stan package."""
 
-import glob
-import os.path
+from typing import Collection, Literal, overload
 
-from typing import Any, overload
-
+import dask.config
 import numpy as np
 import numpy.typing as npt
 import torch
-
-from cmdstanpy.cmdstan_args import CmdStanArgs, SamplerArgs
-from cmdstanpy.stanfit import CmdStanMCMC, RunSet
-from cmdstanpy.utils import check_sampler_csv, scan_config
 
 
 @overload
@@ -62,125 +56,94 @@ def stable_sigmoid(exponent):
     return sigma_exponent
 
 
-def from_csv_noload(path: str | list[str] | os.PathLike) -> CmdStanMCMC:
+def get_chunk_shape(
+    array_shape: tuple[int, ...],
+    array_precision: Literal["double", "single", "half"],
+    mib_per_chunk: int | None = None,
+    frozen_dims: Collection[int] = (),
+) -> tuple[int, ...]:
     """
-    Parses the output files from Stan. This is derived from `cmdstanpy.from_csv`,
-    and performs the same function, but stops short of loading the data into memory.
-    This is useful for large datasets that need to be processed in chunks.
+    Get the shape of chunks for a dask array based on the shape of the array and
+    the desired chunk size in MB.
+
+    Parameters
+    ----------
+    array_shape (tuple[int, ...]): Shape of the array that will be chunked.
+    array_precision (Literal["double", "single", "half"]): Precision of the array
+        that will be chunked.
+    mib_per_chunk (int): Desired chunk size in MiB. Default is to use the default
+        chunk size of Dask.
+    frozen_dims (tuple[int, ...]): Dimensions that should not be chunked. Note that
+        the target chunk size may be exceeded if the frozen dimensions are large.
+
+    Returns
+    -------
+    tuple[int, ...]: Shape of the chunks.
     """
+    mib_per_chunk = mib_per_chunk or int(
+        dask.config.get("array.chunk-size").removesuffix("MiB")
+    )
+    if mib_per_chunk < 0:
+        raise ValueError("`mib_per_chunk` must be a positive integer or `None`.")
 
-    def identify_files() -> list[str]:
-        """Identifies CSV files from the given path."""
-        csvfiles = []
-        if isinstance(path, list):
-            csvfiles = path
-        elif isinstance(path, str) and "*" in path:
-            splits = os.path.split(path)
-            if splits[0] is not None:
-                if not (os.path.exists(splits[0]) and os.path.isdir(splits[0])):
-                    raise ValueError(
-                        f"Invalid path specification, {path} unknown directory: {splits[0]}"
-                    )
-            csvfiles = glob.glob(path)
-        elif isinstance(path, (str, os.PathLike)):
-            if os.path.exists(path) and os.path.isdir(path):
-                for file in os.listdir(path):
-                    if os.path.splitext(file)[1] == ".csv":
-                        csvfiles.append(os.path.join(path, file))
-            elif os.path.exists(path):
-                csvfiles.append(str(path))
-            else:
-                raise ValueError(f"Invalid path specification: {path}")
-        else:
-            raise ValueError(f"Invalid path specification: {path}")
+    # Set up frozen dimensions: Negatives to positive equivalent, the whole thing
+    # to a set
+    frozen_dims = {
+        len(array_shape) + dimind if dimind < 0 else dimind for dimind in frozen_dims
+    }
+    if len(frozen_dims) != 0 and (
+        min(frozen_dims) < 0 or max(frozen_dims) >= len(array_shape)
+    ):
+        raise IndexError("Dimensions out of range for array shape.")
 
-        if len(csvfiles) == 0:
-            raise ValueError(f"No CSV files found in directory {path}")
-        for file in csvfiles:
-            if not (os.path.exists(file) and os.path.splitext(file)[1] == ".csv"):
-                raise ValueError(
-                    f"Bad CSV file path spec, includes non-csv file: {file}"
-                )
+    # Get the number of bytes per entry
+    mib_per_entry = {
+        "double": 8,
+        "single": 4,
+        "half": 2,
+    }[array_precision] / 1024**2
 
-        return csvfiles
+    # The base chunk shape is a list of ones, except for the frozen dimensions,
+    # which are set to the size of the dimension.
+    chunk_shape = [
+        dimsize if dimind in frozen_dims else 1
+        for dimind, dimsize in enumerate(array_shape)
+    ]
 
-    def get_config_dict() -> dict[str, Any]:
-        """Reads the first CSV file and returns the configuration dictionary."""
-        config_dict: dict[str, Any] = {}
-        try:
-            with open(csvfiles[0], "r", encoding="utf-8") as fd:
-                scan_config(fd, config_dict, 0)
-        except (IOError, OSError, PermissionError) as e:
-            raise ValueError(f"Cannot read CSV file: {csvfiles[0]}") from e
-        if "model" not in config_dict or "method" not in config_dict:
-            raise ValueError(f"File {csvfiles[0]} is not a Stan CSV file.")
-        if config_dict["method"] != "sample":
-            raise ValueError(
-                "Expecting Stan CSV output files from method sample, "
-                f" found outputs from method {config_dict["method"]}"
-            )
+    # We have a base volume that depends on the frozen dimensions. If this volume
+    # is larger than the MiB limit, we are already done.
+    volume = np.prod(chunk_shape) * mib_per_entry
+    if volume >= mib_per_chunk:
+        return tuple(chunk_shape)
 
-        return config_dict
+    # Otherwise, we loop over the dimensions from last to first and determine the
+    # chunk size. We start with the last dimension and go backwards until we hit
+    # the MiB limit.
+    for dimind in range(len(array_shape) - 1, -1, -1):
 
-    def build_sampler_args() -> SamplerArgs:
-        """Builds the sampler arguments"""
-        sampler_args = SamplerArgs(
-            iter_sampling=config_dict["num_samples"],
-            iter_warmup=config_dict["num_warmup"],
-            thin=config_dict["thin"],
-            save_warmup=config_dict["save_warmup"],
-        )
-        # bugfix 425, check for fixed_params output
-        try:
-            check_sampler_csv(
-                csvfiles[0],
-                iter_sampling=config_dict["num_samples"],
-                iter_warmup=config_dict["num_warmup"],
-                thin=config_dict["thin"],
-                save_warmup=config_dict["save_warmup"],
-            )
-        except ValueError:
-            try:
-                check_sampler_csv(
-                    csvfiles[0],
-                    is_fixed_param=True,
-                    iter_sampling=config_dict["num_samples"],
-                    iter_warmup=config_dict["num_warmup"],
-                    thin=config_dict["thin"],
-                    save_warmup=config_dict["save_warmup"],
-                )
-                sampler_args = SamplerArgs(
-                    iter_sampling=config_dict["num_samples"],
-                    iter_warmup=config_dict["num_warmup"],
-                    thin=config_dict["thin"],
-                    save_warmup=config_dict["save_warmup"],
-                    fixed_param=True,
-                )
-            except ValueError as e:
-                raise ValueError("Invalid or corrupt Stan CSV output file, ") from e
+        # Skip frozen dimensions. We have already accounted for these.
+        if dimind in frozen_dims:
+            continue
 
-        return sampler_args
+        # Record the size of this dimension
+        dimsize = array_shape[dimind]
 
-    def build_fit() -> CmdStanMCMC:
-        """Builds the CmdStanMCMC object"""
-        chains = len(csvfiles)
-        cmdstan_args = CmdStanArgs(
-            model_name=config_dict["model"],
-            model_exe=config_dict["model"],
-            chain_ids=[x + 1 for x in range(chains)],
-            method_args=sampler_args,
-        )
-        runset = RunSet(args=cmdstan_args, chains=chains)
-        # pylint: disable=protected-access
-        runset._csv_files = csvfiles
-        for i in range(len(runset._retcodes)):
-            runset._set_retcode(i, 0)
-        # pylint: enable=protected-access
-        fit = CmdStanMCMC(runset)
-        return fit
+        # How many elements on this dimension do we need?
+        num_elements = mib_per_chunk // volume
+        assert num_elements > 0, "Chunk size is too small."
 
-    # Run the functions to parse the CSV files
-    csvfiles = identify_files()
-    config_dict = get_config_dict()
-    sampler_args = build_sampler_args()
-    return build_fit()
+        # If the number of elements is larger than the size of the dimension, we
+        # set the chunk size to the size of the dimension, update the volume, and
+        # continue.
+        if num_elements > dimsize:
+            chunk_shape[dimind] = dimsize
+            volume *= dimsize
+            continue
+
+        # Otherwise, we set the chunk size to the number of elements. We are done.
+        chunk_shape[dimind] = int(num_elements.item())
+        return tuple(chunk_shape)
+
+    # Should we reach the end of the loop, we have not exceeded the MiB limit. We
+    # can set the chunk size to the size of the array.
+    return array_shape

@@ -1,20 +1,28 @@
 """Handles results from a `dms_stan.model.stan.StanModel` object."""
 
+import itertools
 import os.path
+import re
 import warnings
 
 from glob import glob
-from typing import Literal, Optional, overload, Sequence, Union
+from typing import Any, Generator, Literal, Optional, overload, Sequence, Union
 
 import arviz as az
 import cmdstanpy
 import holoviews as hv
+import h5py
 import numpy as np
 import numpy.typing as npt
 import panel as pn
 import xarray as xr
 
-import dms_stan.model.stan as stan_module
+from cmdstanpy.cmdstan_args import CmdStanArgs, SamplerArgs
+from cmdstanpy.stanfit import CmdStanMCMC, RunSet
+from cmdstanpy.utils import check_sampler_csv, scan_config
+from tqdm import tqdm
+
+import dms_stan.model  # pylint: disable=unused-import
 
 from dms_stan.custom_types import ProcessedTestRes, StrippedTestRes
 from dms_stan.defaults import (
@@ -23,11 +31,24 @@ from dms_stan.defaults import (
     DEFAULT_MAX_TREE_DEPTH,
     DEFAULT_RHAT_THRESH,
 )
-from dms_stan.model.components import Normal, TransformedParameter
+from dms_stan.model.components import (
+    DiscreteDistribution,
+    Normal,
+    Parameter,
+    TransformedParameter,
+)
 from dms_stan.model.pytorch.map import MAPInferenceRes
 from dms_stan.plotting import calculate_relative_quantiles
+from dms_stan.utils import get_chunk_shape
 
 # pylint: disable=too-many-lines
+
+# Maps between the precision of the data and the numpy types
+_NP_TYPE_MAP = {
+    "double": {"float": np.float64, "int": np.int64, "bool": np.bool_},
+    "single": {"float": np.float32, "int": np.int32, "bool": np.bool_},
+    "half": {"float": np.float16, "int": np.int16, "bool": np.bool_},
+}
 
 
 def _symmetrize_quantiles(quantiles: Sequence[float]) -> list[float]:
@@ -322,7 +343,7 @@ class SampleResults(MAPInferenceRes):
     # by default. They can be exlucded because they can be recalculated easily.
     def __init__(
         self,
-        stan_model: Union["stan_module.StanModel", None] = None,
+        stan_model: Union["dms_stan.model.stan.StanModel", None] = None,
         fit: cmdstanpy.CmdStanMCMC | None = None,
         data: dict[str, npt.NDArray] | None = None,
         precision: Literal["double", "single", "half"] = "single",
@@ -349,7 +370,7 @@ class SampleResults(MAPInferenceRes):
 
     def _build_arviz_object(
         self,
-        stan_model: "stan_module.StanModel",
+        stan_model: "dms_stan.model.stan.StanModel",
         data: dict[str, npt.NDArray],
         precision: Literal["double", "single", "half"] = "single",
     ) -> az.InferenceData:
@@ -381,9 +402,9 @@ class SampleResults(MAPInferenceRes):
 
         # Identify the names of transformed and non-transformed parameters
         transformed_params = set(
-            k.model_varname
-            for k, v in stan_model.model.all_model_components.items()
-            if isinstance(v, TransformedParameter)
+            component.model_varname
+            for component in stan_model.model.all_model_components
+            if isinstance(component, TransformedParameter)
         )
 
         # Squeeze the dummy dimensions out of the ArviZ object and cooerce data
@@ -440,7 +461,7 @@ class SampleResults(MAPInferenceRes):
         return list(expected_observations)
 
     def _get_coords_dims(
-        self, stan_model: "stan_module.StanModel"
+        self, stan_model: "dms_stan.model.stan.StanModel"
     ) -> tuple[dict[str, npt.NDArray[np.int64]], dict[str, list[str]]]:
         """Get the coordinates and dimensions for the ArviZ object"""
         # Set up variables for recording
@@ -1100,3 +1121,406 @@ class SampleResults(MAPInferenceRes):
             data=None,
             inference_obj=az.from_netcdf(path),
         )
+
+
+def fit_from_csv_noload(path: str | list[str] | os.PathLike) -> CmdStanMCMC:
+    """
+    Parses the output files from Stan. This is derived from `cmdstanpy.from_csv`,
+    and performs the same function, but stops short of loading the data into memory.
+    This is useful for large datasets that need to be processed in chunks.
+    """
+
+    def identify_files() -> list[str]:
+        """Identifies CSV files from the given path."""
+        csvfiles = []
+        if isinstance(path, list):
+            csvfiles = path
+        elif isinstance(path, str) and "*" in path:
+            splits = os.path.split(path)
+            if splits[0] is not None:
+                if not (os.path.exists(splits[0]) and os.path.isdir(splits[0])):
+                    raise ValueError(
+                        f"Invalid path specification, {path} unknown directory: {splits[0]}"
+                    )
+            csvfiles = glob(path)
+        elif isinstance(path, (str, os.PathLike)):
+            if os.path.exists(path) and os.path.isdir(path):
+                for file in os.listdir(path):
+                    if os.path.splitext(file)[1] == ".csv":
+                        csvfiles.append(os.path.join(path, file))
+            elif os.path.exists(path):
+                csvfiles.append(str(path))
+            else:
+                raise ValueError(f"Invalid path specification: {path}")
+        else:
+            raise ValueError(f"Invalid path specification: {path}")
+
+        if len(csvfiles) == 0:
+            raise ValueError(f"No CSV files found in directory {path}")
+        for file in csvfiles:
+            if not (os.path.exists(file) and os.path.splitext(file)[1] == ".csv"):
+                raise ValueError(
+                    f"Bad CSV file path spec, includes non-csv file: {file}"
+                )
+
+        return csvfiles
+
+    def get_config_dict() -> dict[str, Any]:
+        """Reads the first CSV file and returns the configuration dictionary."""
+        config_dict: dict[str, Any] = {}
+        try:
+            with open(csvfiles[0], "r", encoding="utf-8") as fd:
+                scan_config(fd, config_dict, 0)
+        except (IOError, OSError, PermissionError) as e:
+            raise ValueError(f"Cannot read CSV file: {csvfiles[0]}") from e
+        if "model" not in config_dict or "method" not in config_dict:
+            raise ValueError(f"File {csvfiles[0]} is not a Stan CSV file.")
+        if config_dict["method"] != "sample":
+            raise ValueError(
+                "Expecting Stan CSV output files from method sample, "
+                f" found outputs from method {config_dict["method"]}"
+            )
+
+        return config_dict
+
+    def build_sampler_args() -> SamplerArgs:
+        """Builds the sampler arguments"""
+        sampler_args = SamplerArgs(
+            iter_sampling=config_dict["num_samples"],
+            iter_warmup=config_dict["num_warmup"],
+            thin=config_dict["thin"],
+            save_warmup=config_dict["save_warmup"],
+        )
+        # bugfix 425, check for fixed_params output
+        try:
+            check_sampler_csv(
+                csvfiles[0],
+                iter_sampling=config_dict["num_samples"],
+                iter_warmup=config_dict["num_warmup"],
+                thin=config_dict["thin"],
+                save_warmup=config_dict["save_warmup"],
+            )
+        except ValueError:
+            try:
+                check_sampler_csv(
+                    csvfiles[0],
+                    is_fixed_param=True,
+                    iter_sampling=config_dict["num_samples"],
+                    iter_warmup=config_dict["num_warmup"],
+                    thin=config_dict["thin"],
+                    save_warmup=config_dict["save_warmup"],
+                )
+                sampler_args = SamplerArgs(
+                    iter_sampling=config_dict["num_samples"],
+                    iter_warmup=config_dict["num_warmup"],
+                    thin=config_dict["thin"],
+                    save_warmup=config_dict["save_warmup"],
+                    fixed_param=True,
+                )
+            except ValueError as e:
+                raise ValueError("Invalid or corrupt Stan CSV output file, ") from e
+
+        return sampler_args
+
+    def build_fit() -> CmdStanMCMC:
+        """Builds the CmdStanMCMC object"""
+        chains = len(csvfiles)
+        cmdstan_args = CmdStanArgs(
+            model_name=config_dict["model"],
+            model_exe=config_dict["model"],
+            chain_ids=[x + 1 for x in range(chains)],
+            method_args=sampler_args,
+        )
+        runset = RunSet(args=cmdstan_args, chains=chains)
+        # pylint: disable=protected-access
+        runset._csv_files = csvfiles
+        for i in range(len(runset._retcodes)):
+            runset._set_retcode(i, 0)
+        # pylint: enable=protected-access
+        fit = CmdStanMCMC(runset)
+        return fit
+
+    # Run the functions to parse the CSV files
+    csvfiles = identify_files()
+    config_dict = get_config_dict()
+    sampler_args = build_sampler_args()
+    return build_fit()
+
+
+class CmdStanMCMCToHDF5Converter:
+    """
+    This class is used within `cmdstanmcmc_to_hdf5` to convert a set of cmdstan
+    csv files to a single hdf5 file.
+    """
+
+    def __init__(self, fit: CmdStanMCMC | str, model: "dms_stan.model.Model"):
+        """
+        Initialization involves collecting information about the different variables
+        in the fit object. This includes the names of the variables, their shapes,
+        and their types. This information is used to create the HDF5 file.
+        """
+        # If `fit` is a string, we assume we need to load it from disk
+        if isinstance(fit, str):
+            fit = fit_from_csv_noload(fit)
+
+        # The fit and model are stored as attributes
+        self.fit = fit
+        self.model = model
+
+        # Record the config object
+        self.config = fit.metadata.cmdstan_config
+
+        # How many samples are we expecting?
+        self.num_draws = self.config["num_samples"] + (
+            self.config["num_warmup"] if self.config["save_warmup"] else 0
+        )
+
+        # Argsort the columns for each variable such that the columns are in row-major
+        # order. This is important for efficiently saving to the HDF5 file.
+        self.varname_to_column_order = self._get_c_order()
+
+    def _get_c_order(self) -> dict[str, npt.NDArray[np.int64]]:
+        """
+        This function argsorts the columns such that they are in row-major order.
+        """
+        # We need a regular expression for parsing indices out of variable names
+        ind_re = re.compile(r"\[([0-9,]+)\]")
+
+        # Get the indices of each column in the csv files. If there is no match,
+        # then there are no indices and we return an empty tuple.
+        column_indices = [
+            (
+                tuple(int(ind) - 1 for ind in match_obj.group(1).split(","))
+                if (match_obj := ind_re.search(col))
+                else ()
+            )
+            for col in self.fit.column_names
+        ]
+
+        # Now we assign the row-major argsort of indices to each variable
+        varname_to_column_order = {}
+        for varname, var in itertools.chain(
+            self.fit.metadata.method_vars.items(), self.fit.metadata.stan_vars.items()
+        ):
+
+            # Slice out the indices for this variable
+            var_inds = column_indices[var.start_idx : var.end_idx]
+
+            # All indices must be unique
+            assert len(set(var_inds)) == len(var_inds)
+
+            # All indices should have the appropriate number of dimensions
+            assert all(len(ind) == len(var.dimensions) for ind in var_inds)
+
+            # All indices should fit within the dimensions of the variable
+            for dimind, dimsize in enumerate(var.dimensions):
+                assert all(ind[dimind] < dimsize for ind in var_inds)
+
+            # Argsort the indices
+            varname_to_column_order[varname] = np.array(
+                sorted(range(len(var_inds)), key=var_inds.__getitem__)
+            )
+
+        return varname_to_column_order
+
+    def write_hdf5(
+        self,
+        filename: str,
+        precision: Literal["double", "single", "half"] = "single",
+        mib_per_chunk: int | None = None,
+    ) -> None:
+        """
+        Write the HDF5 file to disk.
+        """
+        # Get the data types for the method and stan variables
+        method_var_dtypes = {
+            "lp__": _NP_TYPE_MAP[precision]["float"],
+            "accept_stat__": _NP_TYPE_MAP[precision]["float"],
+            "stepsize__": _NP_TYPE_MAP[precision]["float"],
+            "treedepth__": _NP_TYPE_MAP[precision]["int"],
+            "n_leapfrog__": _NP_TYPE_MAP[precision]["int"],
+            "divergent__": _NP_TYPE_MAP[precision]["bool"],
+            "energy__": _NP_TYPE_MAP[precision]["float"],
+        }
+        stan_var_dtypes = self._get_stan_var_dtypes(precision)
+        assert not set(stan_var_dtypes.keys()).intersection(
+            set(method_var_dtypes.keys())
+        ), "Stan variable names should not overlap with method variable names."
+
+        # Create the HDF5 file
+        with h5py.File(filename, "w") as hdf5_file:
+
+            # We need a group for metadata, samples, and posterior predictive checks
+            metadata_group = hdf5_file.create_group("metadata")
+            sample_group = hdf5_file.create_group("samples")
+            ppc_group = hdf5_file.create_group("ppc")
+
+            # Create datasets for each of the method variables. Build a mapping
+            # from the variable name to the dataset object
+            varname_to_dset = {
+                varname: metadata_group.create_dataset(
+                    name=varname,
+                    shape=(self.config["num_chains"], self.num_draws),
+                    dtype=method_var_dtypes[varname],
+                    chunks=(  # Always 1 chunk
+                        self.config["num_chains"],
+                        self.num_draws,
+                    ),
+                )
+                for varname in self.fit.metadata.method_vars.keys()
+            }
+
+            # Now we can create a dataset for each stan variable. We update the
+            # mapping from the variable name to the dataset object
+            for varname, stan_dtype in stan_var_dtypes.items():
+
+                # Determine the group target
+                group = ppc_group if varname.endswith("_ppc") else sample_group
+
+                # Determine the shape of the array that will be stored
+                shape = (
+                    self.config["num_chains"],
+                    self.num_draws,
+                    *self.fit.metadata.stan_vars[varname].dimensions,
+                )
+
+                # Calculate the chunk shape. We always hold the first two dimensions
+                # frozen. This is because the first two dimensions are what we
+                # are typically performing operations over.
+                chunk_shape = get_chunk_shape(
+                    array_shape=shape,
+                    array_precision=precision,
+                    mib_per_chunk=mib_per_chunk,
+                    frozen_dims=(0, 1),
+                )
+
+                # Build the group
+                varname_to_dset[varname] = group.create_dataset(
+                    name=varname,
+                    shape=shape,
+                    dtype=stan_dtype,
+                    chunks=chunk_shape,
+                )
+
+            # Now we populate the datasets with the data from the csv files
+            for chain_ind, csv_file in enumerate(
+                tqdm(sorted(self.fit.runset.csv_files), desc="Converting CSV to HDF5")
+            ):
+                for draw_ind, draw in enumerate(
+                    tqdm(
+                        self._parse_csv(
+                            filename=csv_file,
+                            method_var_dtypes=method_var_dtypes,
+                            stan_var_dtypes=stan_var_dtypes,
+                        ),
+                        total=self.num_draws,
+                        desc=f"Processing chain {chain_ind + 1}",
+                        leave=False,
+                        position=1,
+                    )
+                ):
+                    for varname, varvals in draw.items():
+                        varname_to_dset[varname][chain_ind, draw_ind] = varvals
+
+                # We must have all the draws for this chain
+                assert draw_ind == self.num_draws - 1  # pylint: disable=W0631
+
+    def _get_stan_var_dtypes(
+        self, precision: Literal["double", "single", "half"]
+    ) -> dict[str, Union[type[np.floating], type[np.integer]]]:
+        """Retrieves the datatypes for the stan variables."""
+
+        # Datatypes for the stan variables
+        stan_var_dtypes = {}
+        for varname, component in self.model.named_model_components_dict.items():
+
+            # We only take parameters and transformed parameters
+            if not isinstance(component, (Parameter, TransformedParameter)):
+                continue
+
+            # Get the datatype
+            dtype = _NP_TYPE_MAP[precision][
+                "int" if isinstance(component, DiscreteDistribution) else "float"
+            ]
+
+            # Update the varname if needed
+            if isinstance(component, Parameter) and component.observable:
+                varname = f"{varname}_ppc"
+
+            # Record the datatype
+            stan_var_dtypes[varname] = dtype
+
+        return stan_var_dtypes
+
+    def _parse_csv(
+        self,
+        filename: str,
+        method_var_dtypes: dict[
+            str, Union[type[np.floating], type[np.integer], type[np.bool_]]
+        ],
+        stan_var_dtypes: dict[str, Union[type[np.floating], type[np.integer]]],
+    ) -> Generator[dict[str, npt.NDArray], None, None]:
+        """
+        Parses a csv file and returns a generator of dictionaries. Each dictionary
+        contains a numpy array with the correct shape and datatype for each variable
+        in the model associated with this instance of the class.
+        """
+        # Start parsing the file line by line
+        with open(filename, "r", encoding="utf-8") as csv_file:
+            for line in csv_file:
+
+                # Skip the header information. This was parsed by the fit object.
+                if line.startswith("#") or line.startswith("lp__"):
+                    continue
+
+                # Split the components of the line
+                vals = line.strip().split(",")
+
+                # Build the arrays for each variable
+                processed_vals = {}
+                for varname, dtype in itertools.chain(
+                    method_var_dtypes.items(), stan_var_dtypes.items()
+                ):
+
+                    # Get the variable object from the metadata
+                    var = getattr(
+                        self.fit.metadata,
+                        "stan_vars" if varname in stan_var_dtypes else "method_vars",
+                    )[varname]
+
+                    # Using that variable object, slice out the data, convert to
+                    # an appropriately typed numpy array, reorder it such that it
+                    # is a flattened row-major array, then reshape it to the final
+                    # shape
+                    processed_val = np.array(
+                        vals[var.start_idx : var.end_idx], dtype=dtype, order="C"
+                    )[self.varname_to_column_order[varname]].reshape(var.dimensions)
+
+                    # Confirm that the array is c-contiguous and record
+                    assert processed_val.flags["C_CONTIGUOUS"]
+                    processed_vals[varname] = processed_val
+
+                # Yield the processed values for this line
+                yield processed_vals
+
+
+def cmdstan_csv_to_hdf5(
+    input_path: str | list[str] | os.PathLike,
+    output_filename: str,
+    model: "dms_stan.model.Model",
+    precision: Literal["double", "single", "half"] = "single",
+    mib_per_chunk: int | None = None,
+) -> None:
+    """
+    Converts a set of cmdstan csv files to a single hdf5 file. This is particularly
+    useful for large datasets that need to be processed in chunks with Dask.
+    """
+    # Build the converter
+    converter = CmdStanMCMCToHDF5Converter(fit=input_path, model=model)
+
+    # Run conversion
+    return converter.write_hdf5(
+        filename=output_filename,
+        precision=precision,
+        mib_per_chunk=mib_per_chunk,
+    )
