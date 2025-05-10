@@ -1029,7 +1029,14 @@ class StanModel(CmdStanModel):
             for varname in self.program.all_varnames
         }
 
-    def sample(self, *args, **kwargs) -> SampleResults:
+    def sample(  # pylint: disable=arguments-differ
+        self,
+        *args,
+        precision: Literal["double", "single", "half"],
+        mib_per_chunk: int | None = None,
+        use_dask: bool = False,
+        **kwargs,
+    ) -> SampleResults:
 
         # Update the sample function from CmdStanModel to automatically pull the
         # data from the StanModel
@@ -1048,18 +1055,16 @@ class StanModel(CmdStanModel):
                 chains=kwargs["chains"], seed=kwargs.get("seed")
             )
 
-        # Get a copy of the data before gathering additional inputs. These are our
-        # observables.
-        data = kwargs["data"].copy()
-
         # Run the sample function
         fit = updated_parent_sample(self, **kwargs)
 
         # Build the results object
         return SampleResults(
-            stan_model=self,
+            model=self.model,
             fit=fit,
-            data=data,
+            precision=precision,
+            mib_per_chunk=mib_per_chunk,
+            use_dask=use_dask,
         )
 
     # Update the CmdStanModel functions that require data

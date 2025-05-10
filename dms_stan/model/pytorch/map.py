@@ -40,6 +40,9 @@ def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
     return tuple(np.log10(arg - min_val + 1) for arg in args)
 
 
+# def dask_enabled_summary_stats(inference_obj: az.InferenceData) ->
+
+
 class MAPInferenceRes:
     """
     Holds results from a CmdStanMCMC object and an ArviZ object. This should never
@@ -67,8 +70,7 @@ class MAPInferenceRes:
         # The arviz object must have a posterior, a posterior_predictive, and
         # an observed_data group
         if missing_groups := (
-            {"posterior", "posterior_predictive", "observed_data"}
-            - set(self.inference_obj.groups())
+            {"posterior", "posterior_predictive"} - set(self.inference_obj.groups())
         ):
             raise ValueError(
                 f"ArviZ object is missing the following groups: {', '.join(missing_groups)}"

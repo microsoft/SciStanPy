@@ -7,6 +7,8 @@ import numpy as np
 import numpy.typing as npt
 import torch
 
+from arviz.utils import Dask
+
 
 @overload
 def _get_module(exponent: npt.NDArray[np.floating]) -> np: ...
@@ -147,3 +149,25 @@ def get_chunk_shape(
     # Should we reach the end of the loop, we have not exceeded the MiB limit. We
     # can set the chunk size to the size of the array.
     return array_shape
+
+
+class az_dask:  # pylint: disable=invalid-name
+    """Context manager to enable Dask with ArviZ."""
+
+    def __init__(
+        self, dask_type: str = "parallelized", output_dtypes: list[object] | None = None
+    ):
+
+        # Record the dask type and output dtypes
+        self.dask_type = dask_type
+        self.output_dtypes = output_dtypes or [float]
+
+    def __enter__(self):
+        """Enable Dask with ArviZ."""
+        Dask.enable_dask(
+            dask_kwargs={"dask": self.dask_type, "output_dtypes": self.output_dtypes}
+        )
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        Dask.disable_dask()
