@@ -29,7 +29,6 @@ from dms_stan.custom_types import ProcessedTestRes, StrippedTestRes
 from dms_stan.defaults import (
     DEFAULT_EBFMI_THRESH,
     DEFAULT_ESS_THRESH,
-    DEFAULT_MAX_TREE_DEPTH,
     DEFAULT_RHAT_THRESH,
 )
 from dms_stan.model.components import (
@@ -448,6 +447,28 @@ class CmdStanMCMCToNetCDFConverter:
         # Create the HDF5 file
         with h5netcdf.File(filename, "w") as netcdf_file:
 
+            # Write attributes to the file
+            for attr in (
+                "stan_version_major",
+                "stan_version_minor",
+                "stan_version_patch",
+                "model",
+                "start_datetime",
+                "method",
+                "num_samples",
+                "num_warmup",
+                "save_warmup",
+                "max_depth",
+                "num_chains",
+                "data_file",
+                "diagnostic_file",
+                "seed",
+                "sig_figs",
+                "num_threads",
+                "stanc_version",
+            ):
+                netcdf_file.attrs[attr] = self.fit.metadata.cmdstan_config[attr]
+
             # Set dimensions
             netcdf_file.dimensions = {
                 "chain": self.config["num_chains"],
@@ -791,7 +812,7 @@ class SampleResults(MAPInferenceRes):
             "mcse_sd",
             "ess_bulk",
             "ess_tail",
-            "r_hat",
+            "rhat",
         ),
     ) -> xr.Dataset:
         """
@@ -872,7 +893,7 @@ class SampleResults(MAPInferenceRes):
 
     def evaluate_sample_stats(
         self,
-        max_tree_depth: int = DEFAULT_MAX_TREE_DEPTH,
+        max_tree_depth: int | None = None,
         ebfmi_thresh: float = DEFAULT_EBFMI_THRESH,
     ) -> xr.Dataset:
         """
@@ -895,25 +916,17 @@ class SampleResults(MAPInferenceRes):
         as a new group containing boolean arrays for each test at the sample level
         (i.e., each step in each MCMC chain). The dataset of boolean arrays is returned.
         """
-        # The maximum tree depth should be less than or equal to the `max_tree_depth`
-        # argument. If it isn't, we have an error.
-        # pylint: disable=no-member
-        if (
-            found_max := self.inference_obj.sample_stats.tree_depth.max().item()
-        ) > max_tree_depth:
-            raise ValueError(
-                f"The maximum tree depth found in the sample stats was {found_max},"
-                f"which is greater than the provided `max_tree_depth` of {max_tree_depth}."
-                "Did you run sampling with a non-default value for the tree depth?"
-            )
+        # If not provided, extract the maximum tree depth from the attributes
+        if max_tree_depth is None:
+            max_tree_depth = self.inference_obj.attrs["max_depth"].item()
 
         # Run all tests and build a dataset
         sample_tests = xr.Dataset(
             {
-                "low_ebfmi": self.inference_obj.sample_stats.energy < ebfmi_thresh,
-                "max_tree_depth_reached": self.inference_obj.sample_stats.tree_depth
+                "low_ebfmi": self.inference_obj.sample_stats.energy__ < ebfmi_thresh,
+                "max_tree_depth_reached": self.inference_obj.sample_stats.treedepth__
                 == max_tree_depth,
-                "diverged": self.inference_obj.sample_stats.diverging,
+                "diverged": self.inference_obj.sample_stats.divergent__ == 1,
             }
         )
         # pylint: enable=no-member
@@ -924,7 +937,7 @@ class SampleResults(MAPInferenceRes):
         return sample_tests
 
     def evaluate_variable_diagnostic_stats(
-        self, r_hat_thresh: float = DEFAULT_RHAT_THRESH, ess_thresh=DEFAULT_ESS_THRESH
+        self, rhat_thresh: float = DEFAULT_RHAT_THRESH, ess_thresh=DEFAULT_ESS_THRESH
     ) -> xr.Dataset:
         """
         This identifies variables that fail the diagnostic tests. The output dataset
@@ -932,7 +945,7 @@ class SampleResults(MAPInferenceRes):
         and those that pass are `False`. Specifically, tests are considered to fail
         if the following conditions are met:
 
-            1. R-hat >= `r_hat_thresh`
+            1. R-hat >= `rhat_thresh`
             2. Effective Sample Size - Bulk <= `ess_thresh`
             3. Effective Sample Size - Tail <= `ess_thresh`
 
@@ -952,7 +965,7 @@ class SampleResults(MAPInferenceRes):
         # All metrics should be present in the `variable_diagnostic_stats` group.
         # pylint: disable=no-member
         if missing_metrics := (
-            {"r_hat", "ess_bulk", "ess_tail"}
+            {"rhat", "ess_bulk", "ess_tail"}
             - set(self.inference_obj.variable_diagnostic_stats.metric.values.tolist())
         ):
             raise ValueError(
@@ -963,8 +976,8 @@ class SampleResults(MAPInferenceRes):
         # Run all tests and build a dataset
         variable_tests = xr.concat(
             [
-                self.inference_obj.variable_diagnostic_stats.sel(metric="r_hat")
-                >= r_hat_thresh,
+                self.inference_obj.variable_diagnostic_stats.sel(metric="rhat")
+                >= rhat_thresh,
                 self.inference_obj.variable_diagnostic_stats.sel(metric="ess_bulk")
                 <= ess_thresh,
                 self.inference_obj.variable_diagnostic_stats.sel(metric="ess_tail")
@@ -1108,9 +1121,9 @@ class SampleResults(MAPInferenceRes):
 
     def diagnose(
         self,
-        max_tree_depth: int = DEFAULT_MAX_TREE_DEPTH,
+        max_tree_depth: int | None = None,
         ebfmi_thresh: float = DEFAULT_EBFMI_THRESH,
-        r_hat_thresh: float = DEFAULT_RHAT_THRESH,
+        rhat_thresh: float = DEFAULT_RHAT_THRESH,
         ess_thresh: float = DEFAULT_ESS_THRESH,
         silent: bool = False,
     ) -> tuple[StrippedTestRes, dict[str, StrippedTestRes]]:
@@ -1130,7 +1143,7 @@ class SampleResults(MAPInferenceRes):
             max_tree_depth=max_tree_depth, ebfmi_thresh=ebfmi_thresh
         )
         self.evaluate_variable_diagnostic_stats(
-            r_hat_thresh=r_hat_thresh, ess_thresh=ess_thresh
+            rhat_thresh=rhat_thresh, ess_thresh=ess_thresh
         )
 
         # Identify the failed diagnostics
