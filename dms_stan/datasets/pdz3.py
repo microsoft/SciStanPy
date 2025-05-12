@@ -16,8 +16,7 @@ import dms_stan.operations as dms_ops
 
 def load_pdz3_dataset(filepath: str) -> dict[str, npt.NDArray[np.int64]]:
     """Loads a given PDZ3 dataset file and returns the starting and ending counts.
-    This function is appropriate for any file whose name ends with 'norm_for_mochi.tsv'
-    in the Zenodo folder.
+    This function is appropriate for the files sent by Taraneh Zarin.
 
     Args:
         filepath (str): Path to the file to load.
@@ -27,37 +26,48 @@ def load_pdz3_dataset(filepath: str) -> dict[str, npt.NDArray[np.int64]]:
             'starting_counts' and 'ending_counts', each containing a numpy array of
             the respective counts.
     """
-    # Make sure we are loading a file from the Zenodo folder
-    if not filepath.endswith("norm_for_mochi.tsv"):
-        raise ValueError("File must end with 'norm_for_mochi.tsv'")
-
-    # Load the file and fill missing values
-    df = pd.read_csv(
-        filepath,
-        sep="\t",
-        usecols={
-            "aa_seq",
-            "count_e1_s0",
-            "count_e2_s0",
-            "count_e3_s0",
-            "count_e1_s1",
-            "count_e2_s1",
-            "count_e3_s1",
-        },
+    # Load the data. We are grouping all data belonging to unique amino acid sequences
+    # together by summing the counts
+    df = (
+        pd.read_csv(
+            filepath,
+            sep="\t",
+            usecols=(
+                "aa_seq",
+                "input1_e1_s0_bNA_count",
+                "input2_e2_s0_bNA_count",
+                "input3_e3_s0_bNA_count",
+                "output1A_e1_s1_b1_count",
+                "output2A_e2_s1_b1_count",
+                "output3A_e3_s1_b1_count",
+            ),
+        )
+        .groupby("aa_seq")
+        .sum()
+        .reset_index()
     )
 
-    # No duplicate AA sequences should be present
-    assert (df.aa_seq.value_counts() == 1).all()
-
-    # Drop the aa column and fill missing counts with 0s.
-    df = df.drop(columns=["aa_seq"]).fillna(0).astype(int)
-
-    # Get two numpy arrays, one for the starting counts and one for the ending counts
+    # Get numpy arrays for the starting and ending counts
     return {
-        "starting_counts": df[["count_e1_s0", "count_e2_s0", "count_e3_s0"]]
+        "starting_counts": df[
+            [
+                "input1_e1_s0_bNA_count",
+                "input2_e2_s0_bNA_count",
+                "input3_e3_s0_bNA_count",
+            ]
+        ]
         .to_numpy()
         .T,
-        "ending_counts": df[["count_e1_s1", "count_e2_s1", "count_e3_s1"]].to_numpy().T,
+        "ending_counts": df[
+            [
+                "output1A_e1_s1_b1_count",
+                "output2A_e2_s1_b1_count",
+                "output3A_e3_s1_b1_count",
+            ]
+        ]
+        .to_numpy()
+        .T,
+        "variants": df["aa_seq"].to_list(),
     }
 
 
@@ -120,7 +130,7 @@ class PDZ3Base(dms.Model):
 
         # Starting proportions are Dirichlet distributed
         self.theta_t0 = dms_components.Dirichlet(
-            alpha=alpha, shape=(self.n_replicates, self.n_variants), parallelize=True
+            alpha=alpha, shape=(self.n_replicates, self.n_variants)
         )
 
         # Calculate ending proportions
@@ -129,10 +139,10 @@ class PDZ3Base(dms.Model):
 
         # The counts are modeled as multinomial distributions
         self.starting_counts = dms_components.Multinomial(
-            theta=self.theta_t0, N=self.total_starting_counts, parallelize=True
+            theta=self.theta_t0, N=self.total_starting_counts
         )
         self.ending_counts = dms_components.Multinomial(
-            theta=self.theta_t1, N=self.total_ending_counts, parallelize=True
+            theta=self.theta_t1, N=self.total_ending_counts
         )
 
     @abstractmethod
@@ -154,7 +164,11 @@ class PDZ3Base(dms.Model):
         Returns:
             PDZ3Base: An instance of the PDZ3Base model.
         """
-        return cls(**load_pdz3_dataset(filepath), **kwargs)
+        # Load data and remove variants
+        data = load_pdz3_dataset(filepath)
+        data.pop("variants")
+
+        return cls(**data, **kwargs)  # pylint: disable=unexpected-keyword-arg
 
 
 class PDZ3Exponential(PDZ3Base):
@@ -200,9 +214,8 @@ class PDZ3Sigmoid(PDZ3Base):
         alpha: float = 0.75,
         inv_r_alpha: float = 2.5,
         inv_r_beta: float = 0.5,
-        c_mean_alpha: float = 4.0,
-        c_mean_beta: float = 8.0,
-        c_sigma_sigma: float = 0.05,
+        c_alpha: float = 4.0,
+        c_beta: float = 8.0,
     ):
         """
         Models the change in counts for the dataset resulting from sigmoid growth.
@@ -213,10 +226,8 @@ class PDZ3Sigmoid(PDZ3Base):
         """
         # Define 'c'. We assume that there might be variability in the inflection
         # point timing for different replicates.
-        self.c_mean = dms_components.Gamma(alpha=c_mean_alpha, beta=c_mean_beta)
-        self.c_sigma = dms_components.HalfNormal(sigma=c_sigma_sigma)
-        self.c = dms_components.Normal(
-            mu=self.c_mean, sigma=self.c_sigma, shape=(starting_counts.shape[0], 1)
+        self.c = dms_components.Gamma(
+            alpha=c_alpha, beta=c_beta, shape=(starting_counts.shape[0], 1)
         )
 
         # Initialize the base class
