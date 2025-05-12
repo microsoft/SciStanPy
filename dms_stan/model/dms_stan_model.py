@@ -760,6 +760,11 @@ class Model(ABC):
         self._default_data = data
 
     @property
+    def has_default_data(self) -> bool:
+        """Returns True if the model has default data."""
+        return self._default_data is not None
+
+    @property
     def named_model_components(self) -> tuple[AbstractModelComponent, ...]:
         """Returns the named model components sorted by the model variable name."""
         return self._named_model_components

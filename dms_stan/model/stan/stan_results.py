@@ -342,6 +342,7 @@ class CmdStanMCMCToNetCDFConverter:
         self,
         fit: CmdStanMCMC | str | list[str] | os.PathLike,
         model: "dms_stan.model.Model",
+        data: dict[str, Any] | None = None,
     ):
         """
         Initialization involves collecting information about the different variables
@@ -355,6 +356,7 @@ class CmdStanMCMCToNetCDFConverter:
         # The fit and model are stored as attributes
         self.fit = fit
         self.model = model
+        self.data = data
 
         # Record the config object
         self.config = fit.metadata.cmdstan_config
@@ -480,10 +482,12 @@ class CmdStanMCMCToNetCDFConverter:
                 },
             }
 
-            # We need a group for metadata, samples, and posterior predictive checks
+            # We need a group for metadata, samples, posterior predictive checks,
+            # and observations
             metadata_group = netcdf_file.create_group("sample_stats")
             sample_group = netcdf_file.create_group("posterior")
             ppc_group = netcdf_file.create_group("posterior_predictive")
+            observed_group = netcdf_file.create_group("observed_data")
 
             # Create variables for each of the method variables. Build a mapping
             # from the variable name to the dataset object. We store all of the
@@ -502,9 +506,6 @@ class CmdStanMCMCToNetCDFConverter:
             # mapping from the variable name to the dataset object
             for varname, stan_dtype in stan_var_dtypes.items():
 
-                # Determine the group target
-                group = ppc_group if varname.endswith("_ppc") else sample_group
-
                 # Calculate the chunk shape. We always hold the first two dimensions
                 # frozen. This is because the first two dimensions are what we
                 # are typically performing operations over.
@@ -520,13 +521,28 @@ class CmdStanMCMCToNetCDFConverter:
                     frozen_dims=(0, 1),
                 )
 
+                # We record without the '_ppc' suffix
+                recorded_varname = varname.removesuffix("_ppc")
+
                 # Build the group
+                group = ppc_group if varname.endswith("_ppc") else sample_group
                 varname_to_dset[varname] = group.create_variable(
-                    name=varname,
+                    name=recorded_varname,
                     dimensions=("chain", "draw", *named_shape),
                     dtype=stan_dtype,
                     chunks=chunk_shape,
                 )
+
+                # If an observable, also create a dataset in the observed group
+                # and populate it with the data
+                if varname.endswith("_ppc") and self.data is not None:
+                    observed_group.create_variable(
+                        name=recorded_varname,
+                        data=self.data[recorded_varname].squeeze(),
+                        dimensions=named_shape,
+                        dtype=stan_dtype,
+                        chunks=chunk_shape[2:],
+                    )
 
             # Now we populate the datasets with the data from the csv files
             for chain_ind, csv_file in enumerate(
@@ -546,12 +562,9 @@ class CmdStanMCMCToNetCDFConverter:
                     )
                 ):
                     for varname, varvals in draw.items():
-                        varname_to_dset[varname][chain_ind, draw_ind] = varvals[
-                            tuple(  # Ignoring singleton dimensions in values
-                                slice(None) if dimsize != 1 else 0
-                                for dimsize in varvals.shape
-                            )
-                        ]
+                        varname_to_dset[varname][
+                            chain_ind, draw_ind
+                        ] = varvals.squeeze()
 
                 # We must have all the draws for this chain
                 assert draw_ind == self.num_draws - 1  # pylint: disable=W0631
@@ -668,6 +681,7 @@ class CmdStanMCMCToNetCDFConverter:
 def cmdstan_csv_to_netcdf(
     path: str | list[str] | os.PathLike | CmdStanMCMC,
     model: "dms_stan.model.Model",
+    data: dict[str, Any] | None = None,
     output_filename: str | None = None,
     precision: Literal["double", "single", "half"] = "single",
     mib_per_chunk: int | None = None,
@@ -676,8 +690,13 @@ def cmdstan_csv_to_netcdf(
     Converts a set of cmdstan csv files to a single hdf5 file. This is particularly
     useful for large datasets that need to be processed in chunks with Dask.
     """
+    # If no data, check for default data in the model. Otherwise, data provided
+    # takes priority
+    if data is None and model.has_default_data:
+        data = model.default_data
+
     # Build the converter
-    converter = CmdStanMCMCToNetCDFConverter(fit=path, model=model)
+    converter = CmdStanMCMCToNetCDFConverter(fit=path, model=model, data=data)
 
     # Run conversion
     return converter.write_netcdf(
@@ -749,6 +768,7 @@ class SampleResults(MAPInferenceRes):
         self,
         model: Union["dms_stan.model.Model", None] = None,
         fit: cmdstanpy.CmdStanMCMC | None = None,
+        data: dict[str, npt.NDArray] | None = None,
         precision: Literal["double", "single", "half"] = "single",
         inference_obj: Optional[az.InferenceData | str] = None,
         mib_per_chunk: int | None = None,
@@ -768,6 +788,7 @@ class SampleResults(MAPInferenceRes):
             inference_obj = cmdstan_csv_to_netcdf(
                 path=fit,
                 model=model,
+                data=data,
                 precision=precision,
                 mib_per_chunk=mib_per_chunk,
             )
