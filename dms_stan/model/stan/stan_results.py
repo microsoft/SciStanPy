@@ -18,7 +18,6 @@ import numpy.typing as npt
 import panel as pn
 import xarray as xr
 
-from arviz.utils import Dask
 from cmdstanpy.cmdstan_args import CmdStanArgs, SamplerArgs
 from cmdstanpy.stanfit import CmdStanMCMC, RunSet
 from cmdstanpy.utils import check_sampler_csv, scan_config
@@ -485,18 +484,16 @@ class CmdStanMCMCToNetCDFConverter:
                 # Determine the group target
                 group = ppc_group if varname.endswith("_ppc") else sample_group
 
-                # Determine the shape of the array that will be stored
-                shape = (
-                    self.config["num_chains"],
-                    self.num_draws,
-                    *self.fit.metadata.stan_vars[varname].dimensions,
-                )
-
                 # Calculate the chunk shape. We always hold the first two dimensions
                 # frozen. This is because the first two dimensions are what we
                 # are typically performing operations over.
+                named_shape, true_shape = zip(*stan_var_dimnames[varname])
                 chunk_shape = get_chunk_shape(
-                    array_shape=shape,
+                    array_shape=(
+                        self.config["num_chains"],
+                        self.num_draws,
+                        *true_shape,
+                    ),
                     array_precision=precision,
                     mib_per_chunk=mib_per_chunk,
                     frozen_dims=(0, 1),
@@ -505,11 +502,7 @@ class CmdStanMCMCToNetCDFConverter:
                 # Build the group
                 varname_to_dset[varname] = group.create_variable(
                     name=varname,
-                    dimensions=(
-                        "chain",
-                        "draw",
-                        *[diminfo[0] for diminfo in stan_var_dimnames[varname]],
-                    ),
+                    dimensions=("chain", "draw", *named_shape),
                     dtype=stan_dtype,
                     chunks=chunk_shape,
                 )
@@ -532,7 +525,12 @@ class CmdStanMCMCToNetCDFConverter:
                     )
                 ):
                     for varname, varvals in draw.items():
-                        varname_to_dset[varname][chain_ind, draw_ind] = varvals
+                        varname_to_dset[varname][chain_ind, draw_ind] = varvals[
+                            tuple(  # Ignoring singleton dimensions in values
+                                slice(None) if dimsize != 1 else 0
+                                for dimsize in varvals.shape
+                            )
+                        ]
 
                 # We must have all the draws for this chain
                 assert draw_ind == self.num_draws - 1  # pylint: disable=W0631
@@ -550,30 +548,20 @@ class CmdStanMCMCToNetCDFConverter:
         def get_dimname() -> tuple[tuple[str, int], ...]:
             """Retrieves the dimension names for the current component."""
             # Get the name of the dimensions
-            named_shape = [None] * component.ndim
+            named_shape = []
             for dimind, dimsize in enumerate(component.shape[::-1]):
 
                 # See if we can get the name of the dimension. If we cannot, this must
                 # be a singleton dimension
                 if (dimname := dim_map.get((dimind, dimsize))) is None:
                     assert dimsize == 1
-                    dimname = f"dummy_{dimind}"
-                named_shape[dimind] = (dimname, dimsize)
+                    continue
 
-            # Scalars are a special case
-            if component.ndim == 0:
-                named_shape = ["dummy_0"]
-
-            # Update the set of dummies
-            dummies.update(
-                diminfo[0] for diminfo in named_shape if diminfo[0].startswith("dummy_")
-            )
+                # If we have a name, record
+                named_shape.append((dimname, dimsize))
 
             # We have our named shape
             return tuple(named_shape[::-1])
-
-        # We will need to create some dummy dimensions
-        dummies: set[str] = set()
 
         # We will need the map from dimension depth and size to dimension name
         dim_map = self.model.get_dimname_map()
@@ -781,20 +769,6 @@ class SampleResults(MAPInferenceRes):
                         k: {"chunks": "auto" if use_dask else None}
                         for k in ("posterior", "posterior_predictive", "sample_stats")
                     },
-                )
-
-            # Drop the dummy dimensions
-            for groupname, group in inference_obj.items():
-                setattr(
-                    inference_obj,
-                    groupname,
-                    group.squeeze(
-                        [
-                            dimname
-                            for dimname in group.dims
-                            if dimname.startswith("dummy")
-                        ]
-                    ),
                 )
 
         # Initialize the parent class
