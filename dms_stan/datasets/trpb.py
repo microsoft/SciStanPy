@@ -171,7 +171,7 @@ class TrpBBaseGrowthModel(dms.Model):
         dataset.pop("variants")
 
         # Build the model
-        return cls(**dataset, **kwargs)
+        return cls(**dataset, **kwargs)  # pylint: disable=unexpected-keyword-arg
 
     @property
     def n_timepoints(self) -> int:
@@ -245,9 +245,8 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
         alpha: float = 0.75,
         inv_r_alpha: float = 2.5,
         inv_r_beta: float = 0.5,
-        c_mean_alpha: float = 4.0,
-        c_mean_beta: float = 8.0,
-        c_sigma_sigma: float = 0.05,
+        c_alpha: float = 4.0,
+        c_beta: float = 8.0,
     ):
         # We have an additional parameter for the sigmoid growth model, `c`, which
         # defines the time at which the growth rate is half of its maximum value.
@@ -256,11 +255,9 @@ class TrpBSigmoidGrowth(TrpBBaseGrowthModel):
         # could allow for differences in the time at which the maximum growth rate
         # is reached, so we will model different values of `c` for each replicate
         # using the Gamma distribution.
-        self.c_mean = dms_components.Gamma(alpha=c_mean_alpha, beta=c_mean_beta)
-        self.c_std = dms_components.HalfNormal(sigma=c_sigma_sigma)
-        self.c = dms_components.Normal(
-            mu=self.c_mean,
-            sigma=self.c_std,
+        self.c = dms_components.Gamma(
+            alpha=c_alpha,
+            beta=c_beta,
             shape=(timepoint_counts.shape[0], 1, 1),
         )
 
