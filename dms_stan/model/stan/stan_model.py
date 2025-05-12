@@ -1032,7 +1032,7 @@ class StanModel(CmdStanModel):
     def sample(  # pylint: disable=arguments-differ
         self,
         *args,
-        precision: Literal["double", "single", "half"],
+        precision: Literal["double", "single", "half"] = "single",
         mib_per_chunk: int | None = None,
         use_dask: bool = False,
         **kwargs,
