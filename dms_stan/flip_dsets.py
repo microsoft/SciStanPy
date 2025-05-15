@@ -9,20 +9,36 @@ def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray | list[str]]:
     """
     Load a TrpB dataset from Johnston et al.
     """
+
+    def get_cols(coltype: str) -> list[str]:
+        """Get the columns of a given type."""
+        return sorted(
+            (col for col in data.columns if col.startswith(coltype)),
+            key=lambda x: int(x.split("_")[1]),
+        )
+
     # Load in the data
     data = pd.read_csv(filepath)
 
-    # Get the output columns
-    output_cols = sorted(
-        (col for col in data.columns if col.startswith("OutputCount")),
-        key=lambda x: int(x.split("_")[1]),
-    )
+    # Get the input and output columns
+    input_cols, output_cols = get_cols("InputCount"), get_cols("OutputCount")
 
-    # Get unique combo to input counts
-    t0_data = data[["AAs", "InputCount_1"]].drop_duplicates()
+    # Get the input count data. The input counts should be repeated across all
+    # timepoints. We assert that this is the case.
+    t0_data = data[["AAs"] + input_cols].drop_duplicates()
     assert (t0_data.AAs.value_counts() == 1).all()
+
+    # Get the input counts and the unique combinations
+    t0_counts = t0_data[input_cols].to_numpy(dtype=int).T
     combo_order = t0_data.AAs.tolist()
-    t0_counts = t0_data.InputCount_1.to_numpy(dtype=int)
+
+    # If the first dimension of the input counts is '1', we can remove it. This
+    # means that there were no replicates of the input counts. Otherwise, we need
+    # to insert a new axis to handle the timepoint dimension.
+    if t0_counts.shape[0] == 1:
+        t0_counts = t0_counts[0]
+    else:
+        t0_counts = t0_counts[:, None]
 
     # Get the timepoint counts
     times = data["Time (h)"].unique().astype(float)
@@ -40,7 +56,7 @@ def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray | list[str]]:
         tg0_counts[:, timeind, :] = time_data[output_cols].to_numpy(dtype=int).T
 
     return {
-        "times": np.concatenate([[0], times]),
+        "times": times,
         "starting_counts": t0_counts,
         "timepoint_counts": tg0_counts,
         "variants": combo_order,

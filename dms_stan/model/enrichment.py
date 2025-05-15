@@ -11,6 +11,7 @@ import dms_stan.operations as dms_ops
 
 
 class BaseEnrichmentModel(dms.Model):
+    """Base class for all enrichment models."""
 
     def __init__(
         self,
@@ -62,6 +63,10 @@ class BaseEnrichmentModel(dms.Model):
 
         # Record no times if not provided
         else:
+            if timepoint_counts.ndim != 2:
+                raise ValueError(
+                    "If times are not provided, the timepoint counts should be 2D."
+                )
             self.times = None
 
         # Set the total number of starting and ending counts by replicate
@@ -74,7 +79,7 @@ class BaseEnrichmentModel(dms.Model):
 
         # Starting proportions are Dirichlet distributed
         self.theta_t0 = dms_components.Dirichlet(
-            alpha=alpha, shape=timepoint_counts.shape
+            alpha=alpha, shape=starting_counts.shape
         )
 
         # Define non-base parameters
@@ -116,12 +121,21 @@ class BaseEnrichmentModel(dms.Model):
 class ExponentialMixIn:
     """Mixin class for exponential growth models."""
 
-    def _define_growth_function(self) -> dms_components.BinaryExponentialGrowth:
+    def _define_growth_function(
+        self,
+    ) -> dms_components.BinaryExponentialGrowth | dms_components.ExponentialGrowth:
         # pylint: disable=no-member
-        return dms_components.BinaryExponentialGrowth(
+        if self.times is None:
+            return dms_components.BinaryExponentialGrowth(
+                A=self.theta_t0,
+                r=self.r,
+                shape=self.default_data["timepoint_counts"].shape,
+            )
+        return dms_components.ExponentialGrowth(
+            t=self.times,
             A=self.theta_t0,
             r=self.r,
-            shape=self.timepoint_counts.shape,
+            shape=self.default_data["timepoint_counts"].shape,
         )
 
 
@@ -170,7 +184,7 @@ class SigmoidMixIn:
             x0=self.theta_t0,
             r=self.r,
             c=self.c,
-            shape=self.timepoint_counts.shape,
+            shape=self.default_data["timepoint_counts"].shape,
         )
 
 
@@ -209,14 +223,20 @@ class BaseGammaInvRate(BaseEnrichmentModel):
         self.inv_r_mean = dms_components.Gamma(
             alpha=inv_r_alpha,
             beta=inv_r_beta,
-            shape=(self.timepoint_counts.shape[-1],),
+            shape=(self.default_data["timepoint_counts"].shape[-1],),
         )
+
+        # Get the shape of r. We need to account for possible additional dimensions
+        # needed because of the times parameter.
+        r_shape = list(self.default_data["timepoint_counts"].shape)
+        if self.times is None:
+            r_shape[1] = 1
 
         # The inverse rate is the beta parameter for the exponential distributions
         # describing the growth rates in each experiment.
         self.r = dms_components.Exponential(
             beta=self.inv_r_mean,
-            shape=self.timepoint_counts.shape,
+            shape=tuple(r_shape),
         )
 
 
@@ -266,7 +286,7 @@ class BaseFoldChangeRate(BaseEnrichmentModel):
         )
 
         # The shape of the fold-change depends on whether we are including times
-        shape = list(self.timepoint_counts.shape)
+        shape = list(self.default_data["timepoint_counts"].shape)
         if self.times is None:
             shape[1] = 1
 
@@ -314,7 +334,7 @@ class BaseExponentialRate(BaseFoldChangeRate):
     ):
         # The mean growth rate is modeled as an exponential distribution
         return dms_components.Exponential(
-            beta=beta, shape=(self.timepoint_counts.shape[-1],)
+            beta=beta, shape=(self.default_data["timepoint_counts"].shape[-1],)
         )
 
 
@@ -351,7 +371,9 @@ class BaseLomaxRate(BaseFoldChangeRate):
         self, lambda_: float, lomax_alpha: float
     ):
         return dms_components.Lomax(
-            lambda_=lambda_, alpha=lomax_alpha, shape=(self.timepoint_counts.shape[-1],)
+            lambda_=lambda_,
+            alpha=lomax_alpha,
+            shape=(self.default_data["timepoint_counts"].shape[-1],),
         )
 
 
@@ -370,7 +392,7 @@ class GammaInvRateSigmoidGrowth(SigmoidMixIn, BaseGammaInvRate):
     def __init__(  # Updating default values
         self,
         starting_counts: npt.NDArray[np.int64],
-        ending_counts: npt.NDArray[np.int64],
+        timepoint_counts: npt.NDArray[np.int64],
         times: npt.NDArray[np.floating] | None = None,
         alpha: float = 0.75,
         inv_r_alpha: float = 2.5,
@@ -378,7 +400,7 @@ class GammaInvRateSigmoidGrowth(SigmoidMixIn, BaseGammaInvRate):
     ):
         super().__init__(
             starting_counts=starting_counts,
-            timepoint_counts=ending_counts,
+            timepoint_counts=timepoint_counts,
             times=times,
             alpha=alpha,
             inv_r_alpha=inv_r_alpha,
