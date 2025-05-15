@@ -174,7 +174,8 @@ class Model(ABC):
 
             # Set default data as itself. This will trigger the setter method
             # and will check that the data is valid.
-            self.default_data = self.default_data
+            if self.has_default_data:
+                self.default_data = self.default_data
 
         # Add the new __init__ method
         cls._wrapped_init = cls.__init__
@@ -219,7 +220,10 @@ class Model(ABC):
             """
             # Handle parallelization. This might add some child components that handle
             # transformed data
-            if parallelize_local is None and self._default_parallelize is not None:
+            if (
+                parallelize_local is None
+                and getattr(self, "_default_parallelize", None) is not None
+            ):
                 parallelize_local = self._default_parallelize
             if parallelize_local is not None:
                 for component in model_varname_to_object.values():
@@ -724,7 +728,7 @@ class Model(ABC):
     @property
     def default_data(self) -> dict[str, npt.NDArray] | None:
         """Returns the default data for the model. Errors if it is not set."""
-        if self._default_data is None:
+        if getattr(self, "_default_data", None) is None:
             raise ValueError(
                 "Default data is not set. Please set the default data using "
                 "`model.default_data = data`."
@@ -762,7 +766,7 @@ class Model(ABC):
     @property
     def has_default_data(self) -> bool:
         """Returns True if the model has default data."""
-        return self._default_data is not None
+        return getattr(self, "_default_data", None) is not None
 
     @property
     def named_model_components(self) -> tuple[AbstractModelComponent, ...]:
