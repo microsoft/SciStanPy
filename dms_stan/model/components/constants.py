@@ -39,6 +39,16 @@ class Constant(AbstractModelComponent):
             self.BASE_STAN_DTYPE = "real" if isinstance(value, float) else "int"
             value = np.array(value, dtype=type(value))
 
+        # Check bounds if provided
+        if lower_bound is not None and (minimum := value.min()) < lower_bound:
+            raise ValueError(
+                f"Value {minimum.item()} is less than lower bound {lower_bound}."
+            )
+        if upper_bound is not None and (maximum := value.max()) > upper_bound:
+            raise ValueError(
+                f"Value {maximum.item()} is greater than upper bound {upper_bound}."
+            )
+
         # If enforcing uniformity, there can only be one value. Every time this
         # attribute is checked, it will be checked that the value is a single value.
         self._enforce_uniformity = enforce_uniformity
