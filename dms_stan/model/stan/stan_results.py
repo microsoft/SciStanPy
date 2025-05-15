@@ -751,7 +751,7 @@ def dask_enabled_diagnostics(inference_obj: az.InferenceData) -> xr.Dataset:
         [
             dset.assign_coords(metric=[metric])
             for metric, dset in zip(
-                ["mcse_mean", "mcse_sd", "ess_bulk", "ess_tail", "rhat"], diagnostics
+                ["mcse_mean", "mcse_sd", "ess_bulk", "ess_tail", "r_hat"], diagnostics
             )
         ],
         dim="metric",
@@ -833,7 +833,7 @@ class SampleResults(MAPInferenceRes):
             "mcse_sd",
             "ess_bulk",
             "ess_tail",
-            "rhat",
+            "r_hat",
         ),
     ) -> xr.Dataset:
         """
@@ -958,7 +958,7 @@ class SampleResults(MAPInferenceRes):
         return sample_tests
 
     def evaluate_variable_diagnostic_stats(
-        self, rhat_thresh: float = DEFAULT_RHAT_THRESH, ess_thresh=DEFAULT_ESS_THRESH
+        self, r_hat_thresh: float = DEFAULT_RHAT_THRESH, ess_thresh=DEFAULT_ESS_THRESH
     ) -> xr.Dataset:
         """
         This identifies variables that fail the diagnostic tests. The output dataset
@@ -966,7 +966,7 @@ class SampleResults(MAPInferenceRes):
         and those that pass are `False`. Specifically, tests are considered to fail
         if the following conditions are met:
 
-            1. R-hat >= `rhat_thresh`
+            1. R-hat >= `r_hat_thresh`
             2. Effective Sample Size - Bulk <= `ess_thresh`
             3. Effective Sample Size - Tail <= `ess_thresh`
 
@@ -986,7 +986,7 @@ class SampleResults(MAPInferenceRes):
         # All metrics should be present in the `variable_diagnostic_stats` group.
         # pylint: disable=no-member
         if missing_metrics := (
-            {"rhat", "ess_bulk", "ess_tail"}
+            {"r_hat", "ess_bulk", "ess_tail"}
             - set(self.inference_obj.variable_diagnostic_stats.metric.values.tolist())
         ):
             raise ValueError(
@@ -997,8 +997,8 @@ class SampleResults(MAPInferenceRes):
         # Run all tests and build a dataset
         variable_tests = xr.concat(
             [
-                self.inference_obj.variable_diagnostic_stats.sel(metric="rhat")
-                >= rhat_thresh,
+                self.inference_obj.variable_diagnostic_stats.sel(metric="r_hat")
+                >= r_hat_thresh,
                 self.inference_obj.variable_diagnostic_stats.sel(metric="ess_bulk")
                 <= ess_thresh,
                 self.inference_obj.variable_diagnostic_stats.sel(metric="ess_tail")
@@ -1144,7 +1144,7 @@ class SampleResults(MAPInferenceRes):
         self,
         max_tree_depth: int | None = None,
         ebfmi_thresh: float = DEFAULT_EBFMI_THRESH,
-        rhat_thresh: float = DEFAULT_RHAT_THRESH,
+        r_hat_thresh: float = DEFAULT_RHAT_THRESH,
         ess_thresh: float = DEFAULT_ESS_THRESH,
         silent: bool = False,
     ) -> tuple[StrippedTestRes, dict[str, StrippedTestRes]]:
@@ -1164,7 +1164,7 @@ class SampleResults(MAPInferenceRes):
             max_tree_depth=max_tree_depth, ebfmi_thresh=ebfmi_thresh
         )
         self.evaluate_variable_diagnostic_stats(
-            rhat_thresh=rhat_thresh, ess_thresh=ess_thresh
+            r_hat_thresh=r_hat_thresh, ess_thresh=ess_thresh
         )
 
         # Identify the failed diagnostics
