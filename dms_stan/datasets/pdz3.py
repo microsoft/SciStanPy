@@ -14,63 +14,6 @@ import dms_stan.model.components as dms_components
 import dms_stan.operations as dms_ops
 
 
-def load_pdz3_dataset(filepath: str) -> dict[str, npt.NDArray[np.int64]]:
-    """Loads a given PDZ3 dataset file and returns the starting and ending counts.
-    This function is appropriate for the files sent by Taraneh Zarin.
-
-    Args:
-        filepath (str): Path to the file to load.
-
-    Returns:
-        dict[str, npt.NDArray[np.int64]]: A dictionary with two keys:
-            'starting_counts' and 'ending_counts', each containing a numpy array of
-            the respective counts.
-    """
-    # Load the data. We are grouping all data belonging to unique amino acid sequences
-    # together by summing the counts
-    df = (
-        pd.read_csv(
-            filepath,
-            sep="\t",
-            usecols=(
-                "aa_seq",
-                "input1_e1_s0_bNA_count",
-                "input2_e2_s0_bNA_count",
-                "input3_e3_s0_bNA_count",
-                "output1A_e1_s1_b1_count",
-                "output2A_e2_s1_b1_count",
-                "output3A_e3_s1_b1_count",
-            ),
-        )
-        .groupby("aa_seq")
-        .sum()
-        .reset_index()
-    )
-
-    # Get numpy arrays for the starting and ending counts
-    return {
-        "starting_counts": df[
-            [
-                "input1_e1_s0_bNA_count",
-                "input2_e2_s0_bNA_count",
-                "input3_e3_s0_bNA_count",
-            ]
-        ]
-        .to_numpy()
-        .T,
-        "ending_counts": df[
-            [
-                "output1A_e1_s1_b1_count",
-                "output2A_e2_s1_b1_count",
-                "output3A_e3_s1_b1_count",
-            ]
-        ]
-        .to_numpy()
-        .T,
-        "variants": df["aa_seq"].to_list(),
-    }
-
-
 class PDZ3Base(dms.Model):
     """Base class for the PDZ3 dataset models."""
 
