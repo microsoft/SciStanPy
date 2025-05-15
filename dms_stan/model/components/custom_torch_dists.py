@@ -140,3 +140,24 @@ class MultinomialLogit(Multinomial, CustomDistribution):
         super().__init__(
             total_count=total_count, logits=logits, validate_args=validate_args
         )
+
+
+# pylint: disable=abstract-method
+class Lomax(dist.transformed_distribution.TransformedDistribution, CustomDistribution):
+    """Implementation of the Lomax distribution (shifted Pareto distribution)."""
+
+    def __init__(self, lambda_: torch.Tensor, alpha: torch.Tensor, *args, **kwargs):
+        """
+        Args:
+            lambda_ (torch.Tensor): Scale parameter.
+            alpha (torch.Tensor): Shape parameter.
+            *args: Additional arguments for the base distribution.
+            **kwargs: Additional keyword arguments for the base distribution.
+        """
+        # Build the base distribution and the transforms (just a shift in the output)
+        base_dist = dist.Pareto(scale=lambda_, alpha=alpha)
+        transforms = [dist.transforms.AffineTransform(loc=-lambda_, scale=1)]
+        super().__init__(base_dist, transforms, *args, **kwargs)
+
+
+# pylint: enable=abstract-method

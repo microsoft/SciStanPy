@@ -836,6 +836,65 @@ class Exponential(ContinuousDistribution):
         return beta
 
 
+class Lomax(ContinuousDistribution):
+    """
+    Defines the Pareto Type II distribution with the values for mu set to 0 (the
+    Lomax distribution).
+    """
+
+    LOWER_BOUND: float = 0.0
+    POSITIVE_PARAMS = {"lambda_", "alpha"}
+    STAN_DIST = "pareto_type_2"
+
+    def __init__(
+        self,
+        *,
+        lambda_: "dms.custom_types.ContinuousParameterType",
+        alpha: "dms.custom_types.ContinuousParameterType",
+        **kwargs,
+    ):
+
+        super().__init__(
+            numpy_dist="pareto",
+            torch_dist=custom_torch_dists.Lomax,
+            stan_to_np_names={
+                "lambda_": "lambda_",
+                "alpha": "a",
+            },  # lambda_ is not used
+            stan_to_torch_names={"lambda_": "lambda_", "alpha": "alpha"},
+            lambda_=lambda_,
+            alpha=alpha,
+            **kwargs,
+        )
+
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+
+        # Get the base distribution
+        np_dist = super().get_numpy_dist(seed=seed)
+
+        # Wrap the numpy distribution to handle the lambda_ parameter
+        def lomax_dist(
+            lambda_: npt.NDArray,
+            a: npt.NDArray,
+            size: int | tuple[int, ...] | None = None,
+        ) -> npt.NDArray:
+
+            # Call the base distribution with the 'a' parameter. This is because
+            # the numpy inbuilt assumes that lambda_ = 1.
+            base_draw = np_dist(a=a, size=size)
+
+            # Now we need to scale the draw appropriately to account for different
+            # values of lambda_
+            return base_draw * lambda_
+
+        return lomax_dist
+
+    def _write_dist_args(  # pylint: disable=arguments-differ
+        self, lambda_: str, alpha: str
+    ) -> str:
+        return f"0, {lambda_}, {alpha}"
+
+
 class _CustomStanFunctionMixIn:
     """
     Some distributions have custom Stan functions. This is a mixin to handle

@@ -14,6 +14,7 @@ from dms_stan.model.components.parameters import (
     HalfNormal,
     InverseGamma,
     LogNormal,
+    Lomax,
     Multinomial,
     MultinomialLogit,
     Normal,
