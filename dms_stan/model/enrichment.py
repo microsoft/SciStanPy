@@ -229,7 +229,7 @@ class BaseGammaInvRate(BaseEnrichmentModel):
         # Get the shape of r. We need to account for possible additional dimensions
         # needed because of the times parameter.
         r_shape = list(self.default_data["timepoint_counts"].shape)
-        if self.times is None:
+        if self.times is not None:
             r_shape[1] = 1
 
         # The inverse rate is the beta parameter for the exponential distributions
@@ -287,7 +287,7 @@ class BaseFoldChangeRate(BaseEnrichmentModel):
 
         # The shape of the fold-change depends on whether we are including times
         shape = list(self.default_data["timepoint_counts"].shape)
-        if self.times is None:
+        if self.times is not None:
             shape[1] = 1
 
         # The fold-change is modeled as a log-normal distribution (i.e., the log

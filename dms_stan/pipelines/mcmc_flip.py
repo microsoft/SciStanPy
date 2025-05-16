@@ -1,34 +1,69 @@
 """Runs Hamiltonian Monte Carlo (HMC) for FLIP datasets."""
 
 import argparse
+import os.path
 
-# Define valid combinations of dataset and subset
+from dms_stan.flip_dsets import load_trpb_dataset
+from dms_stan.model import Model
+from dms_stan.model.enrichment import (
+    ExponRateExponGrowth,
+    ExponRateSigmoidGrowth,
+    GammaInvRateExponGrowth,
+    GammaInvRateSigmoidGrowth,
+    LomaxRateExponGrowth,
+    LomaxRateSigmoidGrowth,
+)
+
+# Define valid combinations of dataset and subset. Map subset to the function needed
+# to load the data.
 VALID_COMBINATIONS = {
     "trpb": {
-        "LibA",
-        "LibB",
-        "LibC",
-        "LibD",
-        "LibE",
-        "LibF",
-        "LibG",
-        "LibH",
-        "LibI",
-        "four-site",
-    }
+        subset: load_trpb_dataset
+        for subset in (
+            "libA",
+            "libB",
+            "libC",
+            "libD",
+            "libE",
+            "libF",
+            "libG",
+            "libH",
+            "libI",
+            "four-site",
+        )
+    },
 }
 
+# Map rate and growth function to the appropriate models
+MODEL_MAP = {
+    "trpb": {
+        "exponential": {
+            "exponential": ExponRateExponGrowth,
+            "logistic": ExponRateSigmoidGrowth,
+        },
+        "gamma": {
+            "exponential": GammaInvRateExponGrowth,
+            "logistic": GammaInvRateSigmoidGrowth,
+        },
+        "lomax": {
+            "exponential": LomaxRateExponGrowth,
+            "logistic": LomaxRateSigmoidGrowth,
+        },
+    }
+}
+MODEL_MAP["pdz3"] = MODEL_MAP["trpb"]  # Same models for pdz3
 
-def parse_args():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description="Run HMC for FLIP datasets.")
+
+def define_base_parser() -> argparse.ArgumentParser:
+    """Defines the base parser shared by all pipelines."""
+    # Build the base parser
+    parser = argparse.ArgumentParser(add_help=False)
 
     # A few required arguments
     parser.add_argument(
         "--dataset",
         type=str,
-        action="choose",
-        options=["trpb", "pdz3"],
+        choices=["trpb", "pdz3"],
         required=True,
         help="Datset on which to run HMC.",
     )
@@ -42,16 +77,14 @@ def parse_args():
     parser.add_argument(
         "--rate_dist",
         type=str,
-        action="choose",
-        options=["exponential", "gamma", "lomax"],
+        choices=["exponential", "gamma", "lomax"],
         required=True,
         help="Distribution that defines the mean rate of the model.",
     )
     parser.add_argument(
         "--growth_func",
         type=str,
-        action="choose",
-        options=["exponential", "logistic"],
+        choices=["exponential", "logistic"],
         required=True,
         help="Growth function to use.",
     )
@@ -75,23 +108,36 @@ def parse_args():
         default=1025,
         help="Random seed for reproducibility.",
     )
+
+    return parser
+
+
+def parse_args():
+    """Parse command line arguments."""
+    # Build the parser specifically for this pipeline
+    parser = argparse.ArgumentParser(
+        description="Run HMC for FLIP datasets.",
+        parents=[define_base_parser()],
+    )
+
+    # Add arguments specific to this pipeline
     parser.add_argument(
         "--n_chains",
         type=int,
         default=4,
-        help="Number of chains to run.",
+        help="Number of chains to run. Default = 4.",
     )
     parser.add_argument(
         "--n_warmup",
         type=int,
         default=3000,
-        help="Number of warmup iterations.",
+        help="Number of warmup iterations. Default = 3000.",
     )
     parser.add_argument(
         "--n_samples",
         type=int,
         default=1000,
-        help="Number of samples to draw after warmup.",
+        help="Number of samples to draw after warmup. Default = 1000.",
     )
     parser.add_argument(
         "--force_compile",
@@ -100,3 +146,106 @@ def parse_args():
     )
 
     return parser.parse_args()
+
+
+def check_base_args(args: argparse.Namespace) -> None:
+    """Checks command line arguments shared by all pipelines"""
+    # Check if the dataset and subset are valid
+    if args.dataset not in VALID_COMBINATIONS:
+        raise ValueError(f"Invalid dataset: {args.dataset}.")
+    if args.subset not in VALID_COMBINATIONS[args.dataset]:
+        raise ValueError(f"Invalid subset for {args.dataset}: {args.subset}.")
+
+    # Flip data dir must exist
+    if not os.path.exists(args.flip_data):
+        raise ValueError(f"Flip data directory does not exist: {args.flip_data}.")
+
+    # Output dir must exist
+    if not os.path.exists(args.output_dir):
+        raise ValueError(f"Output directory does not exist: {args.output_dir}.")
+
+    # Check if the rate distribution and growth function are valid
+    if args.rate_dist not in MODEL_MAP[args.dataset]:
+        raise ValueError(f"Invalid rate distribution: {args.rate_dist}.")
+    if args.growth_func not in MODEL_MAP[args.dataset][args.rate_dist]:
+        raise ValueError(f"Invalid growth function: {args.growth_func}.")
+
+    # Seed must be a positive integer
+    if args.seed <= 0:
+        raise ValueError("Seed must be a positive integer.")
+
+
+def check_args(args: argparse.Namespace) -> None:
+    """Checks command line arguments for validity."""
+    # Check base arguments
+    check_base_args(args)
+
+    # Chains, warmup, and samples must be positive integers
+    for arg in ("n_chains", "n_warmup", "n_samples"):
+        if getattr(args, arg) <= 0:
+            raise ValueError(f"{arg} must be a positive integer.")
+
+
+def prep_run(args: argparse.Namespace) -> Model:
+    """
+    Preps for the run by checking arguments, loading the data, and instantiating
+    the model.
+    """
+    # Check arguments
+    check_args(args)
+
+    # Finalize the output path. This is the provided output location with additional
+    # folders for the dataset and subset added on.
+    args.output_dir = os.path.join(args.output_dir, args.dataset, args.subset)
+    os.makedirs(args.output_dir, exist_ok=True)
+
+    # Load the dataset and remove information about the variants present
+    data = VALID_COMBINATIONS[args.dataset][args.subset](
+        os.path.join(args.flip_data, args.dataset, f"{args.subset}.csv")
+    )
+    data.pop("variants")
+
+    # Build an instance of the model
+    return MODEL_MAP[args.dataset][args.rate_dist][args.growth_func](**data)
+
+
+def run_hmc(args: argparse.Namespace) -> None:
+    """Run HMC for the specified dataset and model."""
+    # Prepare the run
+    model = prep_run(args)
+
+    # Run HMC
+    model_name = f"{args.dataset}_{args.subset}_{args.rate_dist}_{args.growth_func}"
+    res = model.mcmc(
+        output_dir=args.output_dir,
+        force_compile=args.force_compile,
+        model_name=model_name,
+        chains=args.n_chains,
+        seed=args.seed,
+        iter_warmup=args.n_warmup,
+        iter_sampling=args.n_samples,
+        show_console=True,
+        refresh=1,
+    )
+
+    # Run diagnostics on the results
+    _ = res.diagnose()
+
+    # Save the inference object with diagnostics completed
+    res.save_netcf(os.path.join(args.output_dir, f"{model_name}_diagnosed.nc"))
+
+
+def main():
+    """Main function to run HMC for FLIP datasets."""
+    # Parse command line arguments
+    args = parse_args()
+
+    # Check arguments
+    check_args(args)
+
+    # Run HMC
+    run_hmc(args)
+
+
+if __name__ == "__main__":
+    main()
