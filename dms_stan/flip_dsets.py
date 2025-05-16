@@ -4,6 +4,8 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
+from Bio.Seq import Seq
+
 
 def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray | list[str]]:
     """
@@ -63,7 +65,7 @@ def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray | list[str]]:
     }
 
 
-def load_pdz3_dataset(filepath: str) -> dict[str, npt.NDArray[np.int64]]:
+def load_pdz_dataset(filepath: str) -> dict[str, npt.NDArray[np.int64]]:
     """Loads a given PDZ3 dataset file and returns the starting and ending counts.
     This function is appropriate for the files sent by Taraneh Zarin.
 
@@ -118,3 +120,39 @@ def load_pdz3_dataset(filepath: str) -> dict[str, npt.NDArray[np.int64]]:
         .T,
         "variants": df["aa_seq"].to_list(),
     }
+
+
+def reformat_pdz_zenodo_dset(infile: str, outfile: str) -> None:
+    """
+    Converts the trans dataset files found on Zenodo into the format sent by Taraneh
+    for the other libraries.
+    """
+    # Input data is a tab-separated file
+    raw_data = pd.read_csv(infile, sep="\t")
+
+    # We have to translate the nucleotide sequences into amino acid sequences
+    assert (
+        raw_data.nt_seq.str.len() % 3 == 0
+    ).all(), "Nucleotide sequences are not divisible by 3"
+    raw_data["aa_seq"] = raw_data.nt_seq.apply(lambda x: str(Seq(x).translate()))
+
+    # Now rename the columns to match the other datasets. Save the data to a new
+    # file
+    raw_data.rename(
+        columns={
+            **{
+                col: f"{col}_e{col.removeprefix('input')}_s0_bNA_count"
+                for col in raw_data.columns
+                if col.startswith("input")
+            },
+            **{
+                col: f"{col}A_e{col.removeprefix('output')}_s0_bNA_count"
+                for col in raw_data.columns
+                if col.startswith("output")
+            },
+        }
+    ).to_csv(
+        outfile,
+        sep="\t",
+        index=False,
+    )
