@@ -3,7 +3,7 @@
 import argparse
 import os.path
 
-from dms_stan.flip_dsets import load_trpb_dataset
+from dms_stan.flip_dsets import load_pdz_dataset, load_trpb_dataset
 from dms_stan.model import Model
 from dms_stan.model.enrichment import (
     ExponRateExponGrowth,
@@ -14,24 +14,27 @@ from dms_stan.model.enrichment import (
     LomaxRateSigmoidGrowth,
 )
 
-# Define valid combinations of dataset and subset. Map subset to the function needed
-# to load the data.
+# Define valid combinations of dataset and subset.
 VALID_COMBINATIONS = {
     "trpb": {
-        subset: load_trpb_dataset
-        for subset in (
-            "libA",
-            "libB",
-            "libC",
-            "libD",
-            "libE",
-            "libF",
-            "libG",
-            "libH",
-            "libI",
-            "four-site",
-        )
+        "libA",
+        "libB",
+        "libC",
+        "libD",
+        "libE",
+        "libF",
+        "libG",
+        "libH",
+        "libI",
+        "four-site",
     },
+    "pdz": {"cript-c", "cript-n", "cis", "trans-1", "trans-2"},
+}
+
+# Map dataset names to their loading functions
+LOAD_DATASET_MAP = {
+    "trpb": load_trpb_dataset,
+    "pdz": load_pdz_dataset,
 }
 
 # Map rate and growth function to the appropriate models
@@ -51,7 +54,7 @@ MODEL_MAP = {
         },
     }
 }
-MODEL_MAP["pdz3"] = MODEL_MAP["trpb"]  # Same models for pdz3
+MODEL_MAP["pdz"] = MODEL_MAP["trpb"]  # Same models for pdz
 
 
 def define_base_parser() -> argparse.ArgumentParser:
@@ -63,7 +66,7 @@ def define_base_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=["trpb", "pdz3"],
+        choices=["trpb", "pdz"],
         required=True,
         help="Datset on which to run HMC.",
     )
@@ -140,6 +143,11 @@ def parse_args():
         help="Number of samples to draw after warmup. Default = 1000.",
     )
     parser.add_argument(
+        "--use_dask",
+        action="store_true",
+        help="Use Dask when diagnosing the model.",
+    )
+    parser.add_argument(
         "--force_compile",
         action="store_true",
         help="Force compilation of the model even if it is already compiled.",
@@ -200,7 +208,7 @@ def prep_run(args: argparse.Namespace) -> Model:
     os.makedirs(args.output_dir, exist_ok=True)
 
     # Load the dataset and remove information about the variants present
-    data = VALID_COMBINATIONS[args.dataset][args.subset](
+    data = LOAD_DATASET_MAP[args.dataset](
         os.path.join(args.flip_data, args.dataset, f"{args.subset}.csv")
     )
     data.pop("variants")
@@ -225,7 +233,8 @@ def run_hmc(args: argparse.Namespace) -> None:
         iter_warmup=args.n_warmup,
         iter_sampling=args.n_samples,
         show_console=True,
-        refresh=1,
+        refresh=10,
+        use_dask=args.use_dask,
     )
 
     # Run diagnostics on the results

@@ -3,6 +3,7 @@
 import argparse
 import os.path
 
+import numpy as np
 import torch
 
 from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
@@ -22,13 +23,19 @@ def parse_args() -> argparse.Namespace:
         "--n_epochs",
         type=int,
         default=DEFAULT_N_EPOCHS,
-        help=f"Maximum number of passes over the data during optimization. Default = {DEFAULT_N_EPOCHS}.",
+        help=(
+            "Maximum number of passes over the data during optimization. "
+            f"Default = {DEFAULT_N_EPOCHS}."
+        ),
     )
     parser.add_argument(
         "--early_stopping",
         type=int,
         default=DEFAULT_EARLY_STOP,
-        help=f"Number of epochs to wait before stopping if the loss does not improve. Default = {DEFAULT_EARLY_STOP}.",
+        help=(
+            "Number of epochs to wait before stopping if the loss does not improve. "
+            f"Default = {DEFAULT_EARLY_STOP}."
+        ),
     )
     parser.add_argument(
         "--lr",
@@ -47,6 +54,12 @@ def parse_args() -> argparse.Namespace:
             else []
         ),
         help="Device to run the model on. Default = 0 if CUDA is available, otherwise 'cpu'.",
+    )
+    parser.add_argument(
+        "--sample_batch_size",
+        type=int,
+        default=1,
+        help="Batch size for sampling. Default = 1.",
     )
 
     return parser.parse_args()
@@ -77,13 +90,22 @@ def run_approximate_map(args: argparse.Namespace) -> None:
         seed=args.seed,
     )
 
+    # Save the loss curve
+    base_outfile = f"{args.dataset}_{args.subset}_{args.rate_dist}_{args.growth_func}"
+    map_.losses.to_csv(
+        os.path.join(args.output_dir, f"{base_outfile}_loss-curve.csv"), index=False
+    )
+
+    # Save the MAP values
+    np.savez(
+        os.path.join(args.output_dir, f"{base_outfile}_map.npz"),
+        **{k: v.map for k, v in map_.model_varname_to_map.items()},
+    )
+
     # Draw samples from the MAP and save them
-    samples = map_.get_inference_obj(seed=args.seed, batch_size=1)
+    samples = map_.get_inference_obj(seed=args.seed, batch_size=args.sample_batch_size)
     samples.save_netcdf(
-        os.path.join(
-            args.output_dir,
-            f"{args.dataset}_{args.subset}_{args.rate_dist}_{args.growth_func}_map.nc",
-        )
+        os.path.join(args.output_dir, f"{base_outfile}_samples.nc"), overwrite=True
     )
 
 
