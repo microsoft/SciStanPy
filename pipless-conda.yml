@@ -14,13 +14,11 @@ dependencies:
   - jupyter
   - pytorch::pytorch-cuda=12.4
   - panel
-  - pip
   - pocl
+  - pip
   - python=3.12
   - pytorch::pytorch
   - pytorch::torchvision
   - pytorch::torchaudio
   - pyviz::datashader
   - watchfiles
-  - pip:
-    - -e .
