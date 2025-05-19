@@ -109,7 +109,7 @@ def load_pdz_dataset(filepath: str) -> dict[str, npt.NDArray[np.int64]]:
         ]
         .to_numpy()
         .T,
-        "ending_counts": df[
+        "timepoint_counts": df[
             [
                 "output1A_e1_s1_b1_count",
                 "output2A_e2_s1_b1_count",
