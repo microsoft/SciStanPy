@@ -1,4 +1,4 @@
-description: Runs HMC for the pdz landscapes.
+description: Runs HMC for the FLIPv3 landscapes.
 
 target:
   service: sing
