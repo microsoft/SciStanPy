@@ -53,7 +53,10 @@ def parse_args() -> argparse.Namespace:
             if torch.cuda.is_available()
             else []
         ),
-        help="Device to run the model on. Default = 0 if CUDA is available, otherwise 'cpu'.",
+        help=(
+            "Device to run the model on. Default = "
+            f"{'0' if torch.cuda.is_available() else 'cpu'}."
+        ),
     )
     parser.add_argument(
         "--sample_batch_size",
@@ -78,6 +81,9 @@ def check_args(args: argparse.Namespace) -> None:
 
 def run_approximate_map(args: argparse.Namespace) -> None:
     """Run the approximate MAP pipeline."""
+    # Check arguments
+    check_args(args)
+
     # Prepare the run
     model = prep_run(args)
 
@@ -104,9 +110,7 @@ def run_approximate_map(args: argparse.Namespace) -> None:
 
     # Draw samples from the MAP and save them
     samples = map_.get_inference_obj(seed=args.seed, batch_size=args.sample_batch_size)
-    samples.save_netcdf(
-        os.path.join(args.output_dir, f"{base_outfile}_samples.nc"), overwrite=True
-    )
+    samples.save_netcdf(os.path.join(args.output_dir, f"{base_outfile}_samples.nc"))
 
 
 def main():

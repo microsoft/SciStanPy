@@ -31,10 +31,10 @@ VALID_COMBINATIONS = {
     "pdz": {"cript-c", "cript-n", "cis", "trans-1", "trans-2"},
 }
 
-# Map dataset names to their loading functions
+# Map dataset names to their loading functions and file extensions
 LOAD_DATASET_MAP = {
-    "trpb": load_trpb_dataset,
-    "pdz": load_pdz_dataset,
+    "trpb": (load_trpb_dataset, ".csv"),
+    "pdz": (load_pdz_dataset, ".tsv"),
 }
 
 # Map rate and growth function to the appropriate models
@@ -162,7 +162,10 @@ def check_base_args(args: argparse.Namespace) -> None:
     if args.dataset not in VALID_COMBINATIONS:
         raise ValueError(f"Invalid dataset: {args.dataset}.")
     if args.subset not in VALID_COMBINATIONS[args.dataset]:
-        raise ValueError(f"Invalid subset for {args.dataset}: {args.subset}.")
+        raise ValueError(
+            f"Invalid subset for {args.dataset}: {args.subset}. Options are: "
+            f"{', '.join(VALID_COMBINATIONS[args.dataset])}."
+        )
 
     # Flip data dir must exist
     if not os.path.exists(args.flip_data):
@@ -199,17 +202,15 @@ def prep_run(args: argparse.Namespace) -> Model:
     Preps for the run by checking arguments, loading the data, and instantiating
     the model.
     """
-    # Check arguments
-    check_args(args)
-
     # Finalize the output path. This is the provided output location with additional
     # folders for the dataset and subset added on.
     args.output_dir = os.path.join(args.output_dir, args.dataset, args.subset)
     os.makedirs(args.output_dir, exist_ok=True)
 
     # Load the dataset and remove information about the variants present
-    data = LOAD_DATASET_MAP[args.dataset](
-        os.path.join(args.flip_data, args.dataset, f"{args.subset}.csv")
+    load_func, file_ext = LOAD_DATASET_MAP[args.dataset]
+    data = load_func(
+        os.path.join(args.flip_data, args.dataset, f"{args.subset}{file_ext}"),
     )
     data.pop("variants")
 
@@ -219,6 +220,9 @@ def prep_run(args: argparse.Namespace) -> Model:
 
 def run_hmc(args: argparse.Namespace) -> None:
     """Run HMC for the specified dataset and model."""
+    # Check arguments
+    check_args(args)
+
     # Prepare the run
     model = prep_run(args)
 
@@ -238,10 +242,12 @@ def run_hmc(args: argparse.Namespace) -> None:
     )
 
     # Run diagnostics on the results
+    print("Running diagnostics...")
     _ = res.diagnose()
 
     # Save the inference object with diagnostics completed
-    res.save_netcf(os.path.join(args.output_dir, f"{model_name}_diagnosed.nc"))
+    print("Saving updated results...")
+    res.save_netcdf(os.path.join(args.output_dir, f"{model_name}_diagnosed.nc"))
 
 
 def main():
