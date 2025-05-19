@@ -12,15 +12,12 @@ dependencies:
   - conda-forge::typeguard
   - dask
   - jupyter
-  - pytorch::pytorch-cuda=12.4
   - panel
   - pip
   - pocl
   - python=3.12
-  - pytorch::pytorch
-  - pytorch::torchvision
-  - pytorch::torchaudio
   - pyviz::datashader
   - watchfiles
   - pip:
+    - torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
     - -e .
