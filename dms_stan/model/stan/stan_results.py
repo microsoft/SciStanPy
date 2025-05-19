@@ -477,7 +477,9 @@ class CmdStanMCMCToNetCDFConverter:
                 "draw": self.num_draws,
                 **{
                     dimname: dimsize
-                    for _, varinfo in stan_var_dimnames.items()
+                    for varinfo in filter(
+                        lambda x: len(x) > 0, stan_var_dimnames.values()
+                    )
                     for dimname, dimsize in varinfo
                 },
             }
@@ -506,10 +508,15 @@ class CmdStanMCMCToNetCDFConverter:
             # mapping from the variable name to the dataset object
             for varname, stan_dtype in stan_var_dtypes.items():
 
+                # Get the shape of the variable
+                if len(shape_info := stan_var_dimnames[varname]) == 0:
+                    named_shape, true_shape = (), ()
+                else:
+                    named_shape, true_shape = zip(*shape_info)
+
                 # Calculate the chunk shape. We always hold the first two dimensions
                 # frozen. This is because the first two dimensions are what we
                 # are typically performing operations over.
-                named_shape, true_shape = zip(*stan_var_dimnames[varname])
                 chunk_shape = get_chunk_shape(
                     array_shape=(
                         self.config["num_chains"],
@@ -579,7 +586,7 @@ class CmdStanMCMCToNetCDFConverter:
     ]:
         """Retrieves the datatypes and dimension names for the stan variables."""
 
-        def get_dimname() -> tuple[tuple[str, int], ...]:
+        def get_dimname() -> tuple[tuple[str, int], ...] | tuple[()]:
             """Retrieves the dimension names for the current component."""
             # Get the name of the dimensions
             named_shape = []
@@ -593,6 +600,10 @@ class CmdStanMCMCToNetCDFConverter:
 
                 # If we have a name, record
                 named_shape.append((dimname, dimsize))
+
+            # If we have no dimensions, we return an empty tuple
+            if len(named_shape) == 0:
+                return ()
 
             # We have our named shape
             return tuple(named_shape[::-1])
