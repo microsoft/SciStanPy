@@ -6,7 +6,7 @@ target:
   name: msrresrchvc
 
 environment:
-  image: dms_stan:latest
+  image: dms_stan:0.0.0
   registry: bjwamltcr.azurecr.io
 
 data:
@@ -16,8 +16,8 @@ code:
   local_dir: $CONFIG_DIR
 
 search:
-  max_trials: 1
-  parallel_trials: 16
+  max_trials: 750
+  parallel_trials: 375
   job_template:
     name: "{experiment_name:s}_{job_ind:s}_{rate_dist:s}_{growth_func:s}"
     sku: 8C7
