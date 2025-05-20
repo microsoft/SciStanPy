@@ -52,6 +52,10 @@ RUN python3 -m pip install --no-cache-dir \
     torchaudio \
     --index-url https://download.pytorch.org/whl/cu128
 
+# Give full permissions to the cmdstan conda directory
+# hadolint ignore=DL3059
+RUN chmod -R 777 /opt/conda/bin/cmdstan
+
 # Install dms_stan
 COPY pyproject.toml setup.py /opt/DMSStan/
 COPY dms_stan/ /opt/DMSStan/dms_stan/
