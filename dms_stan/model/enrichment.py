@@ -158,7 +158,8 @@ class SigmoidMixIn:
         self.c = dms_components.Gamma(
             alpha=c_alpha,
             beta=c_beta,
-            shape=(self.n_replicates,) + (1,) * (self.timepoint_counts.ndim - 1),
+            shape=(self.default_data["timepoint_counts"].shape[0],)
+            + (1,) * (self.default_data["timepoint_counts"].ndim - 1),
         )
 
         # Initialize the base class
