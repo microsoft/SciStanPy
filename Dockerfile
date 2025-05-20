@@ -1,23 +1,26 @@
 FROM mcr.microsoft.com/mirror/nvcr/nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04
 
 # Use bash
-SHELL ["/bin/bash", "-c"]
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install the necessary packages
 # hadolint ignore=DL3008
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
         build-essential \
-        curl \
+        wget \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Micromamba package manager.
-RUN "${SHELL}" <(curl -L micro.mamba.pm/install.sh) && mv ~/.local/bin/micromamba /usr/bin
+RUN wget -q -P /tmp \
+    "https://github.com/conda-forge/miniforge/releases/download/23.3.1-0/Miniforge3-Linux-x86_64.sh" \
+    && bash /tmp/Miniforge3-Linux-x86_64.sh -b -p /opt/conda \
+    && rm /tmp/Miniforge3-Linux-x86_64.sh
+ENV PATH="/opt/conda/bin:$PATH"
 
-# Install micromamba packages.
-RUN micromamba config set channel_priority flexible \
-    && micromamba install -y -c conda-forge \
+# Install mamba packages.
+RUN mamba install -y -c conda-forge \
         bokeh::jupyter_bokeh \
         conda-forge::arviz>=0.21 \
         conda-forge::biopython \
@@ -34,14 +37,12 @@ RUN micromamba config set channel_priority flexible \
         python=3.12 \
         pyviz::datashader \
         watchfiles \
-    && micromamba clean --all --force-pkgs-dirs --yes
+    && mamba clean --all --force-pkgs-dirs --yes
 
-# Image breaks with the default micromamba install. Move to /usr/local
-RUN mv /root/micromamba /usr/local/
-
-# Set the environment variables for micromamba
-ENV PATH="/usr/local/micromamba/bin:$PATH"
-ENV LD_LIBRARY_PATH="/usr/local/micromamba/lib:$LD_LIBRARY_PATH"
+# Set the environment variables for conda
+ENV PATH="/opt/conda/bin:$PATH"
+ENV LD_LIBRARY_PATH="opt/conda/lib:$LD_LIBRARY_PATH"
+ENV CMDSTAN="/opt/conda/bin/cmdstan"
 
 # Pip install packages.
 # hadolint ignore=DL3013

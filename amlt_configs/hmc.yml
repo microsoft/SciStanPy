@@ -10,25 +10,20 @@ environment:
   registry: bjwamltcr.azurecr.io
 
 data:
-  remote_dir: data/paraphrase/
+  remote_dir: data/dms_stan/flip3_data/
+
+code:
+  local_dir: $CONFIG_DIR
 
 search:
-  max_trials: 750
+  max_trials: 1
+  parallel_trials: 16
   job_template:
     name: "{experiment_name:s}_{job_ind:s}_{rate_dist:s}_{growth_func:s}"
-    sku: C4
+    sku: 8C7
     preemptible: False
     command:
-      - dset_info=($(sed -n {job_ind}p dset_combos.txt))
-      - python dms_stan/pipelines/mcmc_flip.py
-        --dataset ${dset_info[0]}
-        --subset ${dset_info[1]}
-        --rate_dist {rate_dist}
-        --growth_func {growth_func}
-        --flip_data $$AMLT_DATA_DIR
-        --output_dir $$AMLT_DIRSYNC_DIR
-        --use_dask
-        --force_compile
+      - bash run_hmc_job.sh {job_ind} {rate_dist} {growth_func}
     submit_args:
       max_run_duration_seconds: 1209600
       env:
@@ -39,7 +34,7 @@ search:
   sampling: grid
   params:
     - name: job_ind
-      values: range(0, 15)
+      values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")
     - name: rate_dist
       values: choice("exponential", "gamma", "lomax")
     - name: growth_func
