@@ -252,7 +252,7 @@ class BaseFoldChangeRate(BaseEnrichmentModel):
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
         alpha: float = 0.75,
-        log_foldchange_sigma_sigma: float = 0.1,
+        log_foldchange_sigma_sigma: float = 0.5,
         **hyperparameters,
     ):
         # Run inherited init
@@ -316,7 +316,7 @@ class BaseExponentialRate(BaseFoldChangeRate):
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
         alpha: float = 0.75,
-        log_foldchange_sigma_sigma: float = 0.1,
+        log_foldchange_sigma_sigma: float = 0.5,
         beta: float = 1.0,
     ):
         # Run inherited init
@@ -352,7 +352,7 @@ class BaseLomaxRate(BaseFoldChangeRate):
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating],
         alpha: float = 0.75,
-        log_foldchange_sigma_sigma: float = 0.1,
+        log_foldchange_sigma_sigma: float = 0.5,
         lambda_: float = 1.0,
         lomax_alpha: float = 2.5,
     ):
