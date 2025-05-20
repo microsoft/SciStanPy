@@ -158,8 +158,7 @@ class SigmoidMixIn:
         self.c = dms_components.Gamma(
             alpha=c_alpha,
             beta=c_beta,
-            shape=(self.default_data["timepoint_counts"].shape[0],)
-            + (1,) * (self.default_data["timepoint_counts"].ndim - 1),
+            shape=(timepoint_counts.shape[0],) + (1,) * (timepoint_counts.ndim - 1),
         )
 
         # Initialize the base class
@@ -351,7 +350,7 @@ class BaseLomaxRate(BaseFoldChangeRate):
         self,
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
-        times: npt.NDArray[np.floating],
+        times: npt.NDArray[np.floating] | None = None,
         alpha: float = 0.75,
         log_foldchange_sigma_sigma: float = 0.5,
         lambda_: float = 1.0,

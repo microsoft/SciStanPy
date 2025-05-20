@@ -146,7 +146,7 @@ def reformat_pdz_zenodo_dset(infile: str, outfile: str) -> None:
                 if col.startswith("input")
             },
             **{
-                col: f"{col}A_e{col.removeprefix('output')}_s0_bNA_count"
+                col: f"{col}A_e{col.removeprefix('output')}_s1_b1_count"
                 for col in raw_data.columns
                 if col.startswith("output")
             },
