@@ -590,7 +590,7 @@ class Model(ABC):
         cpp_options=None,
         user_header=DEFAULT_USER_HEADER,
         model_name=DEFAULT_MODEL_NAME,
-        inits="prior",
+        inits=None,
         data=None,
         delay_run=False,
         **sample_kwargs,
