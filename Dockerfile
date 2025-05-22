@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/mirror/nvcr/nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04
+FROM mcr.microsoft.com/mirror/nvcr/nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04
 
 # Use bash
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -49,8 +49,7 @@ ENV CMDSTAN="/opt/conda/bin/cmdstan"
 RUN python3 -m pip install --no-cache-dir \
     torch \
     torchvision \
-    torchaudio \
-    --index-url https://download.pytorch.org/whl/cu128
+    torchaudio
 
 # Give full permissions to the cmdstan conda directory
 # hadolint ignore=DL3059
