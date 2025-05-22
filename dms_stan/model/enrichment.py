@@ -41,33 +41,13 @@ class BaseEnrichmentModel(dms.Model):
                 "The last dimension of starting and ending counts should be equivalent."
             )
 
-        # Extra processing if times are provided
-        if times is not None:
-
-            # The timepoint counts should be 3D. There must be as many timepoints
-            # as the middle dimension of timepoint counts
-            if timepoint_counts.ndim != 3:
-                raise ValueError(
-                    "If times are provided, the timepoint counts should be 3D."
-                )
-            if timepoint_counts.shape[1] != len(times):
-                raise ValueError(
-                    "The middle dimension of timepoint counts should match the length"
-                    "of times."
-                )
-
-            # Normalize times to have a maximum of 1
-            self.times = dms_components.Constant(
-                (times / times.max())[None, :, None], togglable=False
-            )
-
-        # Record no times if not provided
-        else:
-            if timepoint_counts.ndim != 2:
-                raise ValueError(
-                    "If times are not provided, the timepoint counts should be 2D."
-                )
-            self.times = None
+        # Record times if they are present and normalize them to have a maximum
+        # of 1
+        self.times = (
+            times
+            if times is None
+            else dms_components.Constant(times / times.max(), togglable=False)
+        )
 
         # Set the total number of starting and ending counts by replicate
         self.total_starting_counts = dms_components.Constant(
@@ -154,11 +134,16 @@ class SigmoidMixIn:
     ):
         # pylint: disable=no-member
         # Initialize a `c` parameter for the sigmoid growth function. We assume
-        # separate 'c' for each replicate
+        # separate 'c' for each replicate. `c` will be a scalar if there are no
+        # replicates.
         self.c = dms_components.Gamma(
             alpha=c_alpha,
             beta=c_beta,
-            shape=(timepoint_counts.shape[0],) + (1,) * (timepoint_counts.ndim - 1),
+            shape=(
+                ()
+                if timepoint_counts.shape[0] == 1
+                else ((timepoint_counts.shape[0],) + (1,) * (timepoint_counts.ndim - 1))
+            ),
         )
 
         # Initialize the base class
@@ -188,7 +173,63 @@ class SigmoidMixIn:
         )
 
 
-class BaseGammaInvRate(BaseEnrichmentModel):
+class HierarchicalModel(BaseEnrichmentModel):
+    """Used when we have replicates and want to model them hierarchically."""
+
+    def __init__(
+        self,
+        starting_counts: npt.NDArray[np.int64],
+        timepoint_counts: npt.NDArray[np.int64],
+        times: npt.NDArray[np.floating] | None = None,
+        alpha: float = 0.75,
+        **hyperparameters,
+    ):
+
+        # If times are provided, then the timepoint counts should be 3D and have
+        # the same middle dimension as the times. If times are not provided, then
+        # the timepoint counts should be 2D.
+        if times is not None:
+            # The timepoint counts should be 3D. There must be as many timepoints
+            # as the middle dimension of timepoint counts
+            if timepoint_counts.ndim != 3:
+                raise ValueError(
+                    "If times are provided, the timepoint counts should be 3D."
+                )
+            if timepoint_counts.shape[1] != len(times):
+                raise ValueError(
+                    "The middle dimension of timepoint counts should match the length"
+                    "of times."
+                )
+
+            # Correct the shape of the times array
+            assert times.ndim == 1, "Times should be a 1D array."
+            times = times[None, :, None]  # Add two new dimensions to times
+        else:
+            # The timepoint counts should be 2D. There must be as many timepoints
+            # as the last dimension of timepoint counts
+            if timepoint_counts.ndim != 2:
+                raise ValueError(
+                    "If times are not provided, the timepoint counts should be 2D."
+                )
+
+        # This model is not appropriate if there are no replicates
+        if timepoint_counts.shape[0] == 1:
+            raise ValueError(
+                "This model is not appropriate if there are no replicates. Use the "
+                "non-hierarchical model instead."
+            )
+
+        # Run inherited init
+        super().__init__(
+            starting_counts=starting_counts,
+            timepoint_counts=timepoint_counts,
+            times=times,
+            alpha=alpha,
+            **hyperparameters,
+        )
+
+
+class BaseGammaInvRate(HierarchicalModel):
     """
     Base model for all enrichment models that parametrize the inverse of the mean
     growth rate as gamma distributed and the individual growth rates as exponential.
@@ -216,6 +257,7 @@ class BaseGammaInvRate(BaseEnrichmentModel):
     def _define_additional_parameters(  # pylint: disable=arguments-differ
         self, inv_r_alpha: float, inv_r_beta: float
     ):
+
         # Every variant has a fundamental "rate" which will be the same across
         # experiments. This rate is modeled by the Gamma distribution and is the
         # inverse of the growth rate (so that we can use it as the exponential rate
@@ -240,7 +282,7 @@ class BaseGammaInvRate(BaseEnrichmentModel):
         )
 
 
-class BaseFoldChangeRate(BaseEnrichmentModel):
+class BaseFoldChangeRate(HierarchicalModel):
     """
     Base model for all TrpB growth models that parametrize the growth rate as a
     as a fold-change of some mean growth rate.
@@ -431,4 +473,141 @@ class LomaxRateExponGrowth(ExponentialMixIn, BaseLomaxRate):
 
 
 class LomaxRateSigmoidGrowth(SigmoidMixIn, BaseLomaxRate):
+    """Lomax-distributed rate parameter with a sigmoid growth function."""
+
+
+class NonHierarchicalModel(BaseEnrichmentModel):
+    """Used when we have no replicates."""
+
+    def __init__(
+        self,
+        starting_counts: npt.NDArray[np.int64],
+        timepoint_counts: npt.NDArray[np.int64],
+        times: npt.NDArray[np.floating] | None = None,
+        alpha: float = 0.75,
+        **hyperparameters,
+    ):
+        # If times are provided, then the timepoint counts should be 2D and have
+        # the same first dimension as the times. If times are not provided, then
+        # the timepoint counts should be 1D.
+        if times is not None:
+            # The timepoint counts should be 2D. There must be as many timepoints
+            # as the middle dimension of timepoint counts
+            if timepoint_counts.ndim != 2:
+                raise ValueError(
+                    "If times are provided, the timepoint counts should be 2D."
+                )
+            if timepoint_counts.shape[0] != len(times):
+                raise ValueError(
+                    "The middle dimension of timepoint counts should match the length"
+                    "of times."
+                )
+
+            # Correct the shape of the times array
+            assert times.ndim == 1, "Times should be a 1D array."
+            times = times[:, None]  # Append dimension to times
+        else:
+            # The timepoint counts should be 1D.
+            if timepoint_counts.ndim != 1:
+                raise ValueError(
+                    "If times are not provided, the timepoint counts should be 1D."
+                )
+
+        # Run inherited init
+        super().__init__(
+            starting_counts=starting_counts,
+            timepoint_counts=timepoint_counts,
+            alpha=alpha,
+            times=times,
+            **hyperparameters,
+        )
+
+
+class NonHierarchicalBaseExponentialRate(NonHierarchicalModel):
+    def __init__(
+        self,
+        starting_counts: npt.NDArray[np.integer],
+        timepoint_counts: npt.NDArray[np.integer],
+        times: npt.NDArray[np.floating] | None = None,
+        alpha: float = 0.75,
+        beta: float = 1.0,
+    ):
+        # Run inherited init
+        super().__init__(
+            starting_counts=starting_counts,
+            timepoint_counts=timepoint_counts,
+            times=times,
+            alpha=alpha,
+            beta=beta,
+        )
+
+    def _define_additional_parameters(  # pylint: disable=arguments-differ
+        self, beta: float
+    ):
+        # The mean growth rate is modeled as an exponential distribution
+        self.r = dms_components.Exponential(
+            beta=beta, shape=(self.default_data["timepoint_counts"].shape[-1],)
+        )
+
+
+class NonHierarchicalBaseLomaxRate(NonHierarchicalModel):
+    def __init__(
+        self,
+        starting_counts: npt.NDArray[np.integer],
+        timepoint_counts: npt.NDArray[np.integer],
+        times: npt.NDArray[np.floating] | None = None,
+        alpha: float = 0.75,
+        lambda_: float = 1.0,
+        lomax_alpha: float = 2.5,
+    ):
+        # Run inherited init
+        super().__init__(
+            starting_counts=starting_counts,
+            timepoint_counts=timepoint_counts,
+            times=times,
+            alpha=alpha,
+            lambda_=lambda_,
+            lomax_alpha=lomax_alpha,
+        )
+
+    def _define_additional_parameters(  # pylint: disable=arguments-differ
+        self, lambda_: float, lomax_alpha: float
+    ):
+        # The mean growth rate is modeled as a Lomax distribution
+        self.r = dms_components.Lomax(
+            lambda_=lambda_,
+            alpha=lomax_alpha,
+            shape=(self.default_data["timepoint_counts"].shape[-1],),
+        )
+
+
+class NonHierarchicalExponRateExponGrowth(
+    ExponentialMixIn, NonHierarchicalBaseExponentialRate
+):
+    """
+    Models the TrpB count data from Johnston et al. using an exponential growth
+    function to model the time-dependent increase in counts and a multinomial distribution
+    to model the counts at each timepoint. The prior on the growth rate is
+    exponential.
+    """
+
+
+class NonHierarchicalExponRateSigmoidGrowth(
+    SigmoidMixIn, NonHierarchicalBaseExponentialRate
+):
+    """Exponential-distributed rate parameter with a sigmoid growth function."""
+
+
+class NonHierarchicalLomaxRateExponGrowth(
+    ExponentialMixIn, NonHierarchicalBaseLomaxRate
+):
+    """
+    Models the TrpB count data from Johnston et al. using an exponential growth
+    function to model the time-dependent increase in counts and a multinomial distribution
+    to model the counts at each timepoint. The prior on the growth rate is
+    Lomax-distributed.
+    """
+
+
+class NonHierarchicalLomaxRateSigmoidGrowth(SigmoidMixIn, NonHierarchicalBaseLomaxRate):
     """Lomax-distributed rate parameter with a sigmoid growth function."""

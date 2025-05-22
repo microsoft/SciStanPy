@@ -105,7 +105,7 @@ def run_approximate_map(args: argparse.Namespace) -> None:
     # Save the MAP values
     np.savez(
         os.path.join(args.output_dir, f"{base_outfile}_map.npz"),
-        **{k: v.map for k, v in map_.model_varname_to_map.items()},
+        **{k: v.map for k, v in map_.model_varname_to_map.items() if v.map is not None},
     )
 
     # Draw samples from the MAP and save them

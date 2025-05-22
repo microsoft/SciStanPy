@@ -6,8 +6,27 @@ import pandas as pd
 
 from Bio.Seq import Seq
 
+# Note any timepoints that are skipped in the dataset. The key is the dataset
+# and the value gives (first) the indices of the non-t=0 timepoints that are skipped
+# and (second) the expected number of non-t=0 timepoints after the skipped timepoints
+# are removed
+TRPB_SKIPPED_TIMEPOINTS = {
+    "libA": ([], 2),
+    "libB": ([], 2),
+    "libC": ([], 2),
+    "libD": ([0], 4),
+    "libE": ([0], 4),
+    "libF": ([0, 1, 3], 2),
+    "libG": ([0], 4),
+    "libH": ([0], 4),
+    "libI": ([0], 4),
+    "four-site": ([], 6),
+}
 
-def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray | list[str]]:
+
+def load_trpb_dataset(
+    filepath: str, libname: str | None = None
+) -> dict[str, npt.NDArray | list[str]]:
     """
     Load a TrpB dataset from Johnston et al.
     """
@@ -17,6 +36,25 @@ def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray | list[str]]:
         return sorted(
             (col for col in data.columns if col.startswith(coltype)),
             key=lambda x: int(x.split("_")[1]),
+        )
+
+    # If not provided, attempt to get the library name from the file name
+    if libname is None:
+        possible_libs = [lib for lib in TRPB_SKIPPED_TIMEPOINTS if lib in filepath]
+        if len(possible_libs) == 0:
+            raise ValueError(
+                "No library name provided and no library name found in the file name."
+            )
+        elif len(possible_libs) > 1:
+            raise ValueError(
+                "Multiple library names found in the file name. Please provide a "
+                "library name."
+            )
+        libname = possible_libs[0]
+    elif libname not in TRPB_SKIPPED_TIMEPOINTS:
+        raise ValueError(
+            f"Library name {libname} not found in the list of known libraries. Please "
+            "provide a valid library name."
         )
 
     # Load in the data
@@ -42,9 +80,17 @@ def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray | list[str]]:
     else:
         t0_counts = t0_counts[:, None]
 
-    # Get the timepoint counts
+    # Get the times.
     times = data["Time (h)"].unique().astype(float)
     times.sort()
+
+    # Remove the timepoints that are skipped
+    skipped_timepoints, n_final_timepoints = TRPB_SKIPPED_TIMEPOINTS[libname]
+    assert times[0] > 0
+    times = np.delete(times, skipped_timepoints)
+    assert len(times) == n_final_timepoints
+
+    # Get the timepoint counts
     tg0_counts = np.zeros([len(output_cols), len(times), len(combo_order)], dtype=int)
     for timeind, time in enumerate(times):
 
@@ -56,6 +102,11 @@ def load_trpb_dataset(filepath: str) -> dict[str, npt.NDArray | list[str]]:
 
         # Get the counts
         tg0_counts[:, timeind, :] = time_data[output_cols].to_numpy(dtype=int).T
+
+    # If the first dimension of the timepoint counts is '1', we can remove it. This
+    # means that there were no replicates of the timepoint counts.
+    if tg0_counts.shape[0] == 1:
+        tg0_counts = tg0_counts[0]
 
     return {
         "times": times,

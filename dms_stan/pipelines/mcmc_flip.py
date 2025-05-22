@@ -12,6 +12,10 @@ from dms_stan.model.enrichment import (
     GammaInvRateSigmoidGrowth,
     LomaxRateExponGrowth,
     LomaxRateSigmoidGrowth,
+    NonHierarchicalExponRateExponGrowth,
+    NonHierarchicalExponRateSigmoidGrowth,
+    NonHierarchicalLomaxRateExponGrowth,
+    NonHierarchicalLomaxRateSigmoidGrowth,
 )
 
 # Define valid combinations of dataset and subset.
@@ -37,9 +41,16 @@ LOAD_DATASET_MAP = {
     "pdz": (load_pdz_dataset, ".tsv"),
 }
 
-# Map rate and growth function to the appropriate models
-MODEL_MAP = {
-    "trpb": {
+
+# Map experimental conditions to the appropriate models
+def build_model_map():
+
+    # Define the non-hierarchical datasets for TrpB
+    trpb_non_hierarchical_dsets = {"libA", "libB", "libC"}
+
+    # Define the appropriate dictionaries for the hierarchical and non-hierarchical
+    # models
+    hierarchical_models = {
         "exponential": {
             "exponential": ExponRateExponGrowth,
             "logistic": ExponRateSigmoidGrowth,
@@ -53,8 +64,41 @@ MODEL_MAP = {
             "logistic": LomaxRateSigmoidGrowth,
         },
     }
-}
-MODEL_MAP["pdz"] = MODEL_MAP["trpb"]  # Same models for pdz
+    non_hierarchical_models = {
+        "exponential": {
+            "exponential": NonHierarchicalExponRateExponGrowth,
+            "logistic": NonHierarchicalExponRateSigmoidGrowth,
+        },
+        "gamma": {
+            "exponential": None,
+            "logistic": None,
+        },
+        "lomax": {
+            "exponential": NonHierarchicalLomaxRateExponGrowth,
+            "logistic": NonHierarchicalLomaxRateSigmoidGrowth,
+        },
+    }
+
+    # Build the model map
+    model_map = {}
+    for dataset, subsets in VALID_COMBINATIONS.items():
+
+        # Build an empty dictionary for the dataset
+        model_map[dataset] = {}
+
+        # Process all subsets
+        for subset in subsets:
+
+            # Get the appropriate model map
+            if dataset == "trpb" and subset in trpb_non_hierarchical_dsets:
+                model_map[dataset][subset] = non_hierarchical_models
+            else:
+                model_map[dataset][subset] = hierarchical_models
+
+    return model_map
+
+
+MODEL_MAP = build_model_map()
 
 
 def define_base_parser() -> argparse.ArgumentParser:
@@ -176,9 +220,9 @@ def check_base_args(args: argparse.Namespace) -> None:
         raise ValueError(f"Output directory does not exist: {args.output_dir}.")
 
     # Check if the rate distribution and growth function are valid
-    if args.rate_dist not in MODEL_MAP[args.dataset]:
+    if args.rate_dist not in MODEL_MAP[args.dataset][args.subset]:
         raise ValueError(f"Invalid rate distribution: {args.rate_dist}.")
-    if args.growth_func not in MODEL_MAP[args.dataset][args.rate_dist]:
+    if args.growth_func not in MODEL_MAP[args.dataset][args.subset][args.rate_dist]:
         raise ValueError(f"Invalid growth function: {args.growth_func}.")
 
     # Seed must be a positive integer
@@ -210,12 +254,20 @@ def prep_run(args: argparse.Namespace) -> Model:
     # Load the dataset and remove information about the variants present
     load_func, file_ext = LOAD_DATASET_MAP[args.dataset]
     data = load_func(
-        os.path.join(args.flip_data, args.dataset, f"{args.subset}{file_ext}"),
+        os.path.join(
+            args.flip_data, "counts", args.dataset, f"{args.subset}{file_ext}"
+        ),
     )
     data.pop("variants")
 
     # Build an instance of the model
-    return MODEL_MAP[args.dataset][args.rate_dist][args.growth_func](**data)
+    model_class = MODEL_MAP[args.dataset][args.subset][args.rate_dist][args.growth_func]
+    if model_class is None:
+        raise ValueError(
+            f"Model class not found for dataset {args.dataset}, rate distribution "
+            f"{args.rate_dist}, and growth function {args.growth_func}."
+        )
+    return model_class(**data)
 
 
 def run_hmc(args: argparse.Namespace) -> None:
