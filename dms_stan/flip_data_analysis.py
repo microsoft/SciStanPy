@@ -3,7 +3,9 @@ import warnings
 
 from typing import Literal
 
+import holoviews as hv
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import xarray as xr
 
@@ -11,6 +13,8 @@ from scipy import stats
 
 from dms_stan.flip_dsets import load_trpb_dataset
 from dms_stan.model.pytorch.map import MAPInferenceRes
+from dms_stan.model.stan.stan_results import SampleResults
+from dms_stan.plotting import quantile_plot
 from dms_stan.utils import faster_autocorrelation
 
 
@@ -76,7 +80,15 @@ LIB_TO_OD600 = {
 
 
 class TrpBDataAnalyzer:
-    def __init__(self, lib_name: str, flip_data_loc: str, map_res_prefix: str):
+    def __init__(
+        self,
+        *,
+        lib_name: str,
+        flip_data_loc: str,
+        map_res_prefix: str,
+        hmc_res: str,
+        hmc_use_dask: bool = False,
+    ):
 
         # Note the name
         self.lib_name = lib_name
@@ -89,10 +101,12 @@ class TrpBDataAnalyzer:
             os.path.join(flip_data_loc, "fitnesses", "trpb", f"{lib_name}.csv")
         )
 
-        # Load the map samples
+        # Load the map and hmc samples
         self.map_samples = MAPInferenceRes(map_res_prefix + "_samples.nc")
+        self.hmc_samples = SampleResults.from_disk(
+            hmc_res, skip_fit=True, use_dask=hmc_use_dask
+        )
 
-        # TODO: Remove filter. We don't need it now that we don't save 'None' values
         # Load the map
         self.map = xr.Dataset(
             data_vars={
@@ -109,7 +123,6 @@ class TrpBDataAnalyzer:
                 for varname, vals in np.load(
                     map_res_prefix + "_map.npz", allow_pickle=True
                 ).items()
-                if vals.size != 1 or vals.item() is not None
             }
         )
 
@@ -133,17 +146,27 @@ class TrpBDataAnalyzer:
         assert np.array_equal(
             count_data["timepoint_counts"], self.reported_timepoint_counts.values
         )
+        assert np.array_equal(
+            self.map_samples.inference_obj.observed_data.starting_counts.values,
+            self.reported_starting_counts.values,
+        )
+        assert np.array_equal(
+            self.map_samples.inference_obj.observed_data.timepoint_counts.values,
+            self.reported_timepoint_counts.values,
+        )
 
-    def recalculate_fitness(
-        self, count_source: Literal["reported", "map_samples", "mcmc"]
-    ):
+    def recalculate_fitness(self, count_source: Literal["reported", "map", "hmc"]):
 
         # Get the appropriate counts
         c0, cf = {
             "reported": (self.reported_starting_counts, self.reported_timepoint_counts),
-            "map_samples": (
+            "map": (
                 self.map_samples.inference_obj.posterior_predictive.starting_counts,
                 self.map_samples.inference_obj.posterior_predictive.timepoint_counts,
+            ),
+            "hmc": (
+                self.hmc_samples.inference_obj.posterior_predictive.starting_counts,
+                self.hmc_samples.inference_obj.posterior_predictive.timepoint_counts,
             ),
         }[count_source]
 
@@ -160,8 +183,9 @@ class TrpBDataAnalyzer:
             )
             mu = np.log(xf / x0) / self.times
 
-        # Replace infs with NaNs
-        mu = mu.where(~np.isinf(mu))
+        # Replace infs with NaNs. Do the same for any variants that had x0 < 10
+        # on average
+        mu = mu.where((~np.isinf(mu)) & (c0 >= 10))
 
         # We need to know the average growth rate for stop codon variants at each timepoint
         stop_mu = mu.sel(a=["*" in var for var in self.variants]).mean(
@@ -177,13 +201,10 @@ class TrpBDataAnalyzer:
             skipna=True,
         )
 
-    def get_fitness_correlations(self):
-
-        # Calculate the relevant fitness values
+    def fitness_sanity_check(self) -> np.floating:
+        """Makes sure the recalculated fitness is close to the reported fitness values"""
+        # Get the recalculated fitness values
         recalculated_fitness = self.recalculate_fitness("reported")
-        sampled_fitness = self.recalculate_fitness("map_samples").stack(
-            draws=("chain", "draw")
-        )
 
         # Make sure the combinations are in the correct order
         reported_aas = self.reported_fitness.AAs.to_list()
@@ -193,38 +214,138 @@ class TrpBDataAnalyzer:
             var for var, mask in zip(self.variants, variant_mask) if mask
         ]
 
-        # Get spearman correlation between reported and recalculated fitness
-        reported_vs_recalculated = stats.spearmanr(
+        # Get the correlations
+        return stats.spearmanr(
             recalculated_fitness.sel(a=variant_mask).values,
             self.reported_fitness.fitness.to_numpy(),
             nan_policy="raise",
         ).statistic
 
-        # Now get spearman correlation between the recalculated and sampled fitness values
-        assert sampled_fitness.dims == ("a", "draws")
-        transposed_sampled_fitness = sampled_fitness.values.T
+    def get_fitness_correlations(
+        self, fitness: xr.DataArray | npt.NDArray[np.floating]
+    ) -> npt.NDArray[np.floating]:
+
+        # The input fitness must be an xarray DataArray
+        if not isinstance(fitness, xr.DataArray):
+            raise ValueError("The input fitness must be an xarray DataArray")
+
+        # The provided fitness values must have a "chain" and "draw" dimension
+        if "chain" not in fitness.dims or "draw" not in fitness.dims:
+            raise ValueError(
+                "The provided fitness values must have a 'chain' and 'draw' dimension"
+            )
+
+        # Stack the chain and draw dimensions
+        fitness = fitness.stack(draws=("chain", "draw"))
+        assert fitness.dims == ("a", "draws")
+        fitness = fitness.values.T
+
+        # Get the recalculated fitness values
+        recalculated_fitness = self.recalculate_fitness("reported").values
+        assert recalculated_fitness.ndim == 1
+
+        # Get spearman correlation between reported and recalculated fitness
         recalculated_vs_sampled = np.array(
             [
                 stats.spearmanr(
                     sample, recalculated_fitness, nan_policy="omit"
                 ).statistic
-                for sample in transposed_sampled_fitness
+                for sample in fitness
             ]
         )
 
+        return recalculated_vs_sampled
+        # TODO: Figure out if we want autocorrelation here or not
         # Now the autocorrelation of the sampled fitness values
-        autocorr = faster_autocorrelation(transposed_sampled_fitness)
+        autocorr = faster_autocorrelation(fitness)
 
         # Package fitness values and correlations
-        return (
-            {
-                "reported": self.reported_fitness.fitness.to_numpy(),
-                "recalculated": recalculated_fitness,
-                "map_samples": sampled_fitness,
-            },
-            {
-                "reported_vs_recalculated": reported_vs_recalculated,
-                "recalculated_vs_sampled": recalculated_vs_sampled,
-                "sampled_vs_sampled": autocorr,
-            },
+        return recalculated_vs_sampled, autocorr
+
+    def get_stdev_vs_counts(self, fitness: xr.DataArray) -> hv.Scatter:
+        """
+        Plot the standard deviation of the fitness values against the total number
+        of counts for each variant.
+        """
+        # Get the standard deviation of the fitness values
+        reduction_dims = [dim for dim in fitness.dims if dim != "a"]
+        stdevs = fitness.std(dim=reduction_dims, skipna=True)
+        n_nonna = fitness.notnull().sum(dim=reduction_dims)
+
+        # Get the total number of counts for each variant
+        total_counts = self.reported_starting_counts.sum(
+            dim=[dim for dim in self.reported_starting_counts.dims if dim != "a"]
+        ) + self.reported_timepoint_counts.sum(
+            dim=[dim for dim in self.reported_timepoint_counts.dims if dim != "a"]
+        )
+
+        # Build the plot
+        return hv.Scatter(
+            (total_counts.values, stdevs.values, self.variants, n_nonna.values),
+            kdims=["Total counts"],
+            vdims=["Standard deviation", "Variant", "N Fitness Values"],
+        ).opts(
+            title="Standard Deviation of Fitness Values vs Total Counts",
+            xlabel="Total Counts",
+            ylabel="Standard Deviation",
+            tools=["hover"],
+            width=600,
+            height=600,
+        )
+
+    def plot_fitness_distribution(
+        self,
+        fitness_samples: npt.NDArray[np.floating],
+        reference: npt.NDArray[np.floating] | None = None,
+    ) -> hv.Overlay:
+        """Builds a quantile plot of the fitness values provided by the samples"""
+        # The fitness samples must be at least 2D
+        if fitness_samples.ndim < 2:
+            raise ValueError("The fitness samples must be at least 2D")
+
+        # The reference is the median of the fitness values if not provided. The
+        # median is calculated along the last axis of the fitness samples.
+        if reference is None:
+            reference = np.nanmedian(
+                fitness_samples, axis=list(range(fitness_samples.ndim - 1))
+            )
+
+        # The reference must be 1D
+        if reference.ndim != 1:
+            raise ValueError("The reference must be 1D")
+
+        # The reference must be the same length as the fitness samples
+        if reference.shape[0] != fitness_samples.shape[-1]:
+            raise ValueError(
+                "The reference must be the same length as the fitness samples"
+            )
+
+        # Drop values that are `NaN` in the reference
+        mask = ~np.isnan(reference)
+        reference, fitness_samples = reference[mask], fitness_samples[..., mask]
+
+        # Sort by the reference values
+        sorted_indices = np.argsort(reference)
+        reference, fitness_samples = (
+            reference[sorted_indices],
+            fitness_samples[..., sorted_indices],
+        )
+
+        # Get the ranks of the samples and reference values
+        ref_rank = stats.rankdata(reference, nan_policy="raise")
+        fit_ranks = stats.rankdata(fitness_samples, axis=-1, nan_policy="omit")
+
+        # Build the plot
+        return quantile_plot(
+            x=ref_rank,
+            reference=fit_ranks,
+            quantiles=[0.025, 0.25],
+            observed_type="scatter",
+            allow_nan=True,
+        ).opts(
+            title="Quantile Plot of Fitness Values",
+            xlabel="Variant Index",
+            ylabel="Variant Rank",
+            height=600,
+            width=600,
         )
