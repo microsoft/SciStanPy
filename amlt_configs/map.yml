@@ -6,29 +6,24 @@ target:
   name: msrresrchlab
 
 environment:
-  image: dms_stan:latest
+  image: dms_stan:0.0.3
   registry: bjwamltcr.azurecr.io
 
 data:
-  remote_dir: data/paraphrase/
+  remote_dir: data/dms_stan/flip3_data/
+
+code:
+  local_dir: $CONFIG_DIR
 
 search:
   max_trials: 750
-  parallel_trials: 16
+  parallel_trials: 32
   job_template:
-    name: "{experiment_name:s}_{job_ind:s}_{rate_dist:s}_{growth_func:s}"
-    sku: 1G32
+    name: "{experiment_name:s}_{job_ind:s}_{growth_func:s}"
+    sku: 32G1-V100
     preemptible: False
     command:
-      - dset_info=($(sed -n {job_ind}p dset_combos.txt))
-      - python dms_stan/pipelines/approximate_map_flip.py
-        --dataset ${dset_info[0]}
-        --subset ${dset_info[1]}
-        --rate_dist {rate_dist}
-        --growth_func {growth_func}
-        --flip_data $$AMLT_DATA_DIR
-        --output_dir $$AMLT_OUTPUT_DIR
-        --sample_batch_size 100
+      - bash run_map_job.sh {job_ind} {growth_func}
     submit_args:
       max_run_duration_seconds: 1209600
       env:
@@ -38,8 +33,6 @@ search:
   sampling: grid
   params:
     - name: job_ind
-      values: range(0, 15)
-    - name: rate_dist
-      values: choice("exponential", "gamma", "lomax")
+      values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42")
     - name: growth_func
       values: choice("exponential", "logistic")

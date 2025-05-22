@@ -15,16 +15,15 @@ rate_dist="${dset_info[2]}"
 cd /opt/DMSStan/dms_stan/pipelines || exit
 
 # Report the job details
-echo "Running MCMC for $dataset-$subset with the growth modeled by $growth_func \
+echo "Running MAP for $dataset-$subset with the growth modeled by $growth_func \
 and the growth rate modeled by the $rate_dist distribution."
 
 # Run the HMC job
-python mcmc_flip.py \
+python approximate_map_flip.py \
     --dataset "$dataset" \
     --subset "$subset" \
     --rate_dist "$rate_dist" \
     --growth_func "$growth_func" \
     --flip_data "$AMLT_DATA_DIR" \
     --output_dir "$AMLT_DIRSYNC_DIR" \
-    --use_dask \
-    --force_compile
+    --sample_batch_size 5
