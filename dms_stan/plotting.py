@@ -506,6 +506,7 @@ def quantile_plot(
     area_kwargs: dict[str, Any] | None,
     median_kwargs: dict[str, Any] | None,
     observed_kwargs: dict[str, Any] | None,
+    allow_nan: bool,
 ) -> hv.Overlay: ...
 
 
@@ -524,6 +525,7 @@ def quantile_plot(
     area_kwargs: dict[str, Any] | None,
     median_kwargs: dict[str, Any] | None,
     observed_kwargs: dict[str, Any] | None,
+    allow_nan: bool,
 ) -> tuple[hv.Overlay, npt.NDArray[np.floating]]: ...
 
 
@@ -541,6 +543,7 @@ def quantile_plot(
     area_kwargs=None,
     median_kwargs=None,
     observed_kwargs=None,
+    allow_nan=False,
 ):
     """
     Given a 2D array of data, calculates the quantiles over the first axis and plots
@@ -649,7 +652,7 @@ def quantile_plot(
     assert quantiles[median_ind] == 0.5, "Quantiles must include 0.5"
 
     # Calculate the quantiles
-    area_bounds = np.quantile(
+    area_bounds = (np.nanquantile if allow_nan else np.quantile)(
         reference, quantiles, axis=0, overwrite_input=overwrite_input
     )
 
