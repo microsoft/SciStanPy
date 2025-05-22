@@ -136,15 +136,40 @@ class SigmoidMixIn:
         # Initialize a `c` parameter for the sigmoid growth function. We assume
         # separate 'c' for each replicate. `c` will be a scalar if there are no
         # replicates.
-        self.c = dms_components.Gamma(
-            alpha=c_alpha,
-            beta=c_beta,
-            shape=(
-                ()
-                if timepoint_counts.shape[0] == 1
-                else ((timepoint_counts.shape[0],) + (1,) * (timepoint_counts.ndim - 1))
-            ),
-        )
+        if times is None:
+
+            # No times provided and 2D timepoint counts means we have replicates
+            if timepoint_counts.ndim == 2:
+                shape = (timepoint_counts.shape[0], 1)
+
+            # No times provided and 1D timepoint counts means we have no replicates
+            elif timepoint_counts.ndim == 1:
+                shape = ()
+
+            # Otherwise, we have an error
+            else:
+                raise ValueError(
+                    "If times are not provided, the timepoint counts should be 1D "
+                    "for non-hierarchical models or 2D for hierarchical models."
+                )
+
+        else:
+            # Times provided and 3D timepoint counts means we have replicates
+            if timepoint_counts.ndim == 3:
+                shape = (timepoint_counts.shape[0], 1, 1)
+
+            # Times provided and 2D timepoint counts means we have no replicates
+            elif timepoint_counts.ndim == 2:
+                shape = ()
+
+            # Otherwise, we have an error
+            else:
+                raise ValueError(
+                    "If times are provided, the timepoint counts should be 2D for "
+                    "non-hierarchical models or 3D for hierarchical models."
+                )
+
+        self.c = dms_components.Gamma(alpha=c_alpha, beta=c_beta, shape=shape)
 
         # Initialize the base class
         super().__init__(
