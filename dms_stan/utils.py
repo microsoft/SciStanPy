@@ -8,6 +8,8 @@ import numpy.typing as npt
 import torch
 
 from arviz.utils import Dask
+from scipy import stats
+from tqdm import tqdm
 
 
 @overload
@@ -171,3 +173,41 @@ class az_dask:  # pylint: disable=invalid-name
 
     def __exit__(self, exc_type, exc_value, traceback):
         Dask.disable_dask()
+
+
+def faster_autocorrelation(x):
+    """
+    Faster version of scipy.stats.spearmanr when x and y might contain NaNs. `x`
+    is assumed to be a 2D array with shape (n, m), where `n` is the number of
+    samples and `m` is the number of features (i.e., like scipy's `spearmanr` but
+    with `axis=1`.)
+    """
+    # Build a mask for the non-NaN values in each row
+    nonnan_mask = ~np.isnan(x)
+
+    # Get an output array for the correlations
+    rhos = np.full((x.shape[0], x.shape[0]), np.nan)
+
+    # Calculate the rhos
+    for i, row_1 in tqdm(
+        enumerate(x), total=x.shape[0], smoothing=1.0, desc="Calculating rhos"
+    ):
+        for j, row_2 in enumerate(x):
+
+            # If i == j, then we can just set the value to 1
+            if i == j:
+                rhos[i, j] = 1.0
+                continue
+
+            # If i > j, then we can pull the value from the other side of the matrix
+            if i > j:
+                rhos[i, j] = rhos[j, i]
+                continue
+
+            # Calculate the correlation for the non-NaN values
+            mask = nonnan_mask[i] & nonnan_mask[j]
+            rhos[i, j] = stats.spearmanr(row_1[mask], row_2[mask]).statistic
+
+    # There should be no NaNs
+    assert not np.any(np.isnan(rhos))
+    return rhos
