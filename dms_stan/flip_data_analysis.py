@@ -1,6 +1,7 @@
 import os.path
 import warnings
 
+from abc import ABC, abstractmethod
 from typing import Literal
 
 import holoviews as hv
@@ -11,9 +12,9 @@ import xarray as xr
 
 from scipy import stats
 
-from dms_stan.flip_dsets import load_trpb_dataset
 from dms_stan.model.pytorch.map import MAPInferenceRes
 from dms_stan.model.stan.stan_results import SampleResults
+from dms_stan.pipelines.mcmc_flip import LOAD_DATASET_MAP
 from dms_stan.plotting import quantile_plot
 from dms_stan.utils import faster_autocorrelation
 
@@ -79,7 +80,25 @@ LIB_TO_OD600 = {
 }
 
 
-class TrpBDataAnalyzer:
+def reshape_fitness(fitness: xr.DataArray) -> npt.NDArray[np.floating]:
+    """Flattens the chain and draw dimensions of the fitness DataArray."""
+    # If already 1-dimensional, add a singleton dimension
+    if fitness.ndim == 1:
+        return fitness.values[None]
+
+    # Otherwise, stack the chain and draw dimensions into a single 'draws' dimension
+    fitness = fitness.stack(draws=("chain", "draw"))
+    assert fitness.dims == ("a", "draws")
+
+    return fitness.values.T
+
+
+class BaseDataAnalyzer(ABC):
+
+    # Class variable for dataset type
+    dataset_type: str = ""
+    growth_rate_variable: str = ""
+
     def __init__(
         self,
         *,
@@ -89,16 +108,32 @@ class TrpBDataAnalyzer:
         hmc_res: str,
         hmc_use_dask: bool = False,
     ):
+        # We must have set the dataset type
+        if not self.dataset_type:
+            raise ValueError(
+                "The dataset_type class variable must be set in the subclass."
+            )
+
+        # We must have set the growth rate variable
+        if not self.growth_rate_variable:
+            raise ValueError(
+                "The growth_rate_variable class variable must be set in the subclass."
+            )
 
         # Note the name
         self.lib_name = lib_name
 
         # Load the counts and fitness data
-        count_data = load_trpb_dataset(
-            os.path.join(flip_data_loc, "counts", "trpb", f"{lib_name}.csv")
+        load_func, file_ext = LOAD_DATASET_MAP[self.dataset_type]
+        self.raw_count_data = load_func(
+            os.path.join(
+                flip_data_loc, "counts", self.dataset_type, f"{lib_name}{file_ext}"
+            )
         )
         self.reported_fitness = pd.read_csv(
-            os.path.join(flip_data_loc, "fitnesses", "trpb", f"{lib_name}.csv")
+            os.path.join(
+                flip_data_loc, "fitnesses", self.dataset_type, f"{lib_name}.csv"
+            )
         )
 
         # Load the map and hmc samples
@@ -127,7 +162,6 @@ class TrpBDataAnalyzer:
         )
 
         # Convert relevant data to xarrays
-        self.times = xr.DataArray(count_data["times"], dims=["b"])
         self.reported_starting_counts = (
             self.map_samples.inference_obj.observed_data.starting_counts
         )
@@ -135,16 +169,16 @@ class TrpBDataAnalyzer:
             self.map_samples.inference_obj.observed_data.timepoint_counts
         )
 
-        # Build a mask for variants containing a stop codon
-        self.variants = count_data["variants"]
-        self.stop_mask = xr.DataArray(["*" in var for var in self.variants], dims=["a"])
+        # Record variants
+        self.variants = self.raw_count_data["variants"]
 
         # Make sure the indices of the loaded and sampled datasets are identical
         assert np.array_equal(
-            count_data["starting_counts"], self.reported_starting_counts.values
+            self.raw_count_data["starting_counts"], self.reported_starting_counts.values
         )
         assert np.array_equal(
-            count_data["timepoint_counts"], self.reported_timepoint_counts.values
+            self.raw_count_data["timepoint_counts"],
+            self.reported_timepoint_counts.values,
         )
         assert np.array_equal(
             self.map_samples.inference_obj.observed_data.starting_counts.values,
@@ -155,10 +189,21 @@ class TrpBDataAnalyzer:
             self.reported_timepoint_counts.values,
         )
 
-    def recalculate_fitness(self, count_source: Literal["reported", "map", "hmc"]):
+    @abstractmethod
+    def recalculate_fitness(
+        self, count_source: Literal["reported", "map", "hmc"]
+    ) -> tuple[xr.DataArray, xr.DataArray] | xr.DataArray:
+        """
+        Recalculates the fitness values based on the counts from the specified source.
+        The source can be 'reported', 'map', or 'hmc'.
 
+        This base method should be overridden in subclasses to implement the specific
+        logic for recalculating fitness based on the counts from the specified source.
+        This method will return the starting and timepoint counts for the specified
+        source.
+        """
         # Get the appropriate counts
-        c0, cf = {
+        return {
             "reported": (self.reported_starting_counts, self.reported_timepoint_counts),
             "map": (
                 self.map_samples.inference_obj.posterior_predictive.starting_counts,
@@ -169,37 +214,6 @@ class TrpBDataAnalyzer:
                 self.hmc_samples.inference_obj.posterior_predictive.timepoint_counts,
             ),
         }[count_source]
-
-        # Normalize by OD600 to get 'x' values
-        od600_0 = LIB_TO_OD600[self.lib_name].isel(b=0)
-        assert (od600_0 := np.unique(od600_0.values)).size == 1
-        x0 = c0 / od600_0
-        xf = cf / LIB_TO_OD600[self.lib_name].isel(b=slice(1, None))
-
-        # Calculate the specific growth rate for each timepoint
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", message="divide by zero encountered in log"
-            )
-            mu = np.log(xf / x0) / self.times
-
-        # Replace infs with NaNs. Do the same for any variants that had x0 < 10
-        # on average
-        mu = mu.where((~np.isinf(mu)) & (c0 >= 10))
-
-        # We need to know the average growth rate for stop codon variants at each timepoint
-        stop_mu = mu.sel(a=["*" in var for var in self.variants]).mean(
-            dim="a", skipna=True
-        )
-
-        # We need the maximum growth rate for each timepoint
-        max_mu = mu.max(dim="a")
-
-        # Calculate the fitness values. Ignore NaN in the calculation.
-        return ((mu - stop_mu) / (max_mu - stop_mu)).mean(
-            dim=[dim for dim in mu.dims if dim not in {"chain", "draw", "a"}],
-            skipna=True,
-        )
 
     def fitness_sanity_check(self) -> np.floating:
         """Makes sure the recalculated fitness is close to the reported fitness values"""
@@ -216,32 +230,26 @@ class TrpBDataAnalyzer:
 
         # Get the correlations
         return stats.spearmanr(
-            recalculated_fitness.sel(a=variant_mask).values,
+            recalculated_fitness.sel(a=variant_mask).values,  # pylint: disable=E1101
             self.reported_fitness.fitness.to_numpy(),
             nan_policy="raise",
         ).statistic
 
     def get_fitness_correlations(
-        self, fitness: xr.DataArray | npt.NDArray[np.floating]
-    ) -> npt.NDArray[np.floating]:
-
-        # The input fitness must be an xarray DataArray
-        if not isinstance(fitness, xr.DataArray):
-            raise ValueError("The input fitness must be an xarray DataArray")
-
-        # The provided fitness values must have a "chain" and "draw" dimension
-        if "chain" not in fitness.dims or "draw" not in fitness.dims:
-            raise ValueError(
-                "The provided fitness values must have a 'chain' and 'draw' dimension"
-            )
-
-        # Stack the chain and draw dimensions
-        fitness = fitness.stack(draws=("chain", "draw"))
-        assert fitness.dims == ("a", "draws")
-        fitness = fitness.values.T
+        self,
+        fitness: xr.DataArray,
+        skip_autocorr: bool = False,
+    ) -> (
+        npt.NDArray[np.floating]
+        | tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]
+    ):
+        # Flatten the fitness values
+        np_fitness = reshape_fitness(fitness)
 
         # Get the recalculated fitness values
-        recalculated_fitness = self.recalculate_fitness("reported").values
+        recalculated_fitness = self.recalculate_fitness(  # pylint: disable=E1101
+            "reported"
+        ).values
         assert recalculated_fitness.ndim == 1
 
         # Get spearman correlation between reported and recalculated fitness
@@ -250,16 +258,22 @@ class TrpBDataAnalyzer:
                 stats.spearmanr(
                     sample, recalculated_fitness, nan_policy="omit"
                 ).statistic
-                for sample in fitness
+                for sample in np_fitness
             ]
         )
 
-        return recalculated_vs_sampled
-        # TODO: Figure out if we want autocorrelation here or not
-        # Now the autocorrelation of the sampled fitness values
-        autocorr = faster_autocorrelation(fitness)
+        # Go no further if there are any NaN values in the provided fitness values
+        # and we are not forcing autocorrelation calculation
+        if skip_autocorr:
+            return recalculated_vs_sampled
 
-        # Package fitness values and correlations
+        # Otherwise, calculate autocorrelation of the sampled fitness values
+        autocorr = (
+            faster_autocorrelation(np_fitness)
+            if np.isnan(np_fitness).any()
+            else stats.spearmanr(np_fitness, axis=1, nan_policy="raise").statistic
+        )
+
         return recalculated_vs_sampled, autocorr
 
     def get_stdev_vs_counts(self, fitness: xr.DataArray) -> hv.Scatter:
@@ -295,13 +309,12 @@ class TrpBDataAnalyzer:
 
     def plot_fitness_distribution(
         self,
-        fitness_samples: npt.NDArray[np.floating],
+        fitness: xr.DataArray,
         reference: npt.NDArray[np.floating] | None = None,
     ) -> hv.Overlay:
         """Builds a quantile plot of the fitness values provided by the samples"""
-        # The fitness samples must be at least 2D
-        if fitness_samples.ndim < 2:
-            raise ValueError("The fitness samples must be at least 2D")
+        # Flatten the fitness values
+        fitness_samples = reshape_fitness(fitness)
 
         # The reference is the median of the fitness values if not provided. The
         # median is calculated along the last axis of the fitness samples.
@@ -349,3 +362,191 @@ class TrpBDataAnalyzer:
             height=600,
             width=600,
         )
+
+    def get_growth_rate(self, source: Literal["map", "hmc"]) -> xr.DataArray:
+        """Returns the growth rate from the specified source and variable"""
+        # Get the specified source
+        if source == "map":
+            dset = self.map
+        elif source == "hmc":
+            dset = self.hmc_samples.inference_obj.posterior
+        else:
+            raise ValueError(f"Invalid source: {source}. Must be 'map' or 'hmc'.")
+
+        # Get the growth rate variable
+        base_rate = dset[self.growth_rate_variable]
+
+        # Invert the growth rate variable if needed
+        if self.growth_rate_variable.startswith("inv_"):
+            return 1 / base_rate
+        return base_rate
+
+    def run_analysis(self):
+        """
+        Runs the full analysis for the dataset. This includes...
+
+        1. Running the fitness sanity check.
+        2. Calculating the fitness correlations between the recalculated and MAP/HMC
+        fitness values.
+        3. Calculating the correlations between the recalculated fitness and growth
+        rate values. Also calculates the autocorrelation of the growth rate values.
+        4. Plotting the quantile plot of the fitness values for the MAP and HMC.
+        5. Plotting the quantile plot of the growth rate values for the MAP and HMC.
+        6. Plotting the standard deviation of the fitness values against the total
+        number of counts for each variant.
+        7. Plotting the growth rate values against the total number of counts for
+        each variant.
+        8. Creating a dataframe that gives the sampled rate values.
+        """
+        # Run the fitness sanity check
+        print(
+            f"The correlation between the recalculated and reported fitness values is: "
+            f"{self.fitness_sanity_check():.4f}"
+        )
+
+        # Recalculate the fitness values for the MAP and HMC sources
+        print("Recalculating fitness values...")
+        recalculated_map = self.recalculate_fitness("map")
+        recalculated_hmc = self.recalculate_fitness("hmc")
+        r_map = self.get_growth_rate("map")
+        assert r_map.ndim == 1, "Growth rate for MAP should be 1D"
+        r_hmc = self.get_growth_rate("hmc")
+
+        # Get the fitness correlations
+        print("Calculating fitness correlations...")
+        map_vs_recalc = self.get_fitness_correlations(
+            recalculated_map, skip_autocorr=True
+        )
+        hmc_vs_recalc = self.get_fitness_correlations(
+            recalculated_hmc, skip_autocorr=True
+        )
+        r_map_vs_recalc = self.get_fitness_correlations(r_map, skip_autocorr=True)
+        r_hmc_vs_recalc, r_hmc_autocorr = self.get_fitness_correlations(r_hmc)
+
+        # Get quantile plots
+        print("Building quantile plots...")
+        quantile_plots = (
+            self.plot_fitness_distribution(recalculated_map).opts(
+                title="MAP: Recalculated Fitness Quantiles"
+            )
+            + self.plot_fitness_distribution(recalculated_hmc).opts(
+                title="HMC: Recalculated Fitness Quantiles"
+            )
+            + self.plot_fitness_distribution(r_hmc).opts(
+                title="HMC: Growth Rate Quantiles"
+            )
+        ).opts(hv.opts.Area(line_width=0.02))
+
+        # Get the standard deviation vs counts plot
+        print("Calculating standard deviation vs counts...")
+        stdev_vs_counts = (
+            self.get_stdev_vs_counts(recalculated_map).opts(
+                title="MAP: Recalculated Fitness σ vs Total Counts"
+            )
+            + self.get_stdev_vs_counts(recalculated_hmc).opts(
+                title="HMC: Recalculated Fitness σ vs Total Counts"
+            )
+            + self.get_stdev_vs_counts(r_hmc).opts(
+                title="HMC: Growth Rate σ vs Total Counts"
+            )
+        )
+
+        # Build a dataframe of growth rate values
+        print("Building dataframe of sampled growth rates...")
+        sample_df = pd.DataFrame(
+            {
+                "variant": self.variants,
+                "MAP": r_map.values,
+                **{
+                    f"sample_{i}": sample
+                    for i, sample in enumerate(reshape_fitness(r_hmc))
+                },
+            }
+        )
+
+        # Package the results
+        return {
+            "Correlations": {
+                "MAP Recalculated vs Recalculated Reported": map_vs_recalc,
+                "HMC Recalculated vs Recalculated Reported": hmc_vs_recalc,
+                "MAP Growth Rate vs Recalculated Reported": r_map_vs_recalc,
+                "HMC Growth Rate vs Recalculated Reported": r_hmc_vs_recalc,
+                "HMC Growth Rate Autocorrelation": r_hmc_autocorr,
+            },
+            "Quantile Plots": quantile_plots,
+            "Standard Deviation vs Counts": stdev_vs_counts,
+            "Sampled Growth Rates": sample_df,
+        }
+
+
+class TrpBDataAnalyzer(BaseDataAnalyzer):
+
+    # Set class variables
+    dataset_type = "trpb"
+
+    def __init__(self, **kwargs):
+        """See BaseDataAnalyzer.__init__ for parameters."""
+        # Run parent
+        super().__init__(**kwargs)
+
+        # We also need data on the variants that contain stop codons and the times
+        self.times = xr.DataArray(self.raw_count_data["times"], dims=["b"])
+        self.stop_mask = xr.DataArray(["*" in var for var in self.variants], dims=["a"])
+
+    def recalculate_fitness(self, count_source: Literal["reported", "map", "hmc"]):
+
+        # Get the starting and timepoint counts from the specified source
+        c0, cf = super().recalculate_fitness(count_source)
+
+        # Normalize by OD600 to get 'x' values
+        od600_0 = LIB_TO_OD600[self.lib_name].isel(b=0)
+        assert (od600_0 := np.unique(od600_0.values)).size == 1
+        x0 = c0 / od600_0
+        xf = cf / LIB_TO_OD600[self.lib_name].isel(b=slice(1, None))
+
+        # Calculate the specific growth rate for each timepoint
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", message="divide by zero encountered in log"
+            )
+            mu = np.log(xf / x0) / self.times
+
+        # Replace infs with NaNs. Do the same for any variants that had x0 < 10
+        # on average
+        mu = mu.where((~np.isinf(mu)) & (c0 >= 10))
+
+        # We need to know the average growth rate for stop codon variants at each timepoint
+        stop_mu = mu.sel(a=["*" in var for var in self.variants]).mean(
+            dim="a", skipna=True
+        )
+
+        # We need the maximum growth rate for each timepoint
+        max_mu = mu.max(dim="a")
+
+        # Calculate the fitness values. Ignore NaN in the calculation.
+        return ((mu - stop_mu) / (max_mu - stop_mu)).mean(
+            dim=[dim for dim in mu.dims if dim not in {"chain", "draw", "a"}],
+            skipna=True,
+        )
+
+
+class TrpBHierarchicalDataAnalyzer(TrpBDataAnalyzer):
+    growth_rate_variable = "inv_r_mean"
+
+
+class TrpBNonHierarchicalDataAnalyzer(TrpBDataAnalyzer):
+    growth_rate_variable = "r"
+
+
+TRPB_DATA_ANALYZER_MAP = {
+    "libA": TrpBNonHierarchicalDataAnalyzer,
+    "libB": TrpBNonHierarchicalDataAnalyzer,
+    "libC": TrpBNonHierarchicalDataAnalyzer,
+    "libD": TrpBHierarchicalDataAnalyzer,
+    "libE": TrpBHierarchicalDataAnalyzer,
+    "libF": TrpBHierarchicalDataAnalyzer,
+    "libG": TrpBHierarchicalDataAnalyzer,
+    "libH": TrpBHierarchicalDataAnalyzer,
+    "libI": TrpBHierarchicalDataAnalyzer,
+    "four-site": TrpBHierarchicalDataAnalyzer,
+}
