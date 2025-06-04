@@ -81,9 +81,6 @@ def check_args(args: argparse.Namespace) -> None:
 
 def run_approximate_map(args: argparse.Namespace) -> None:
     """Run the approximate MAP pipeline."""
-    # Check arguments
-    check_args(args)
-
     # Prepare the run
     model = prep_run(args)
 

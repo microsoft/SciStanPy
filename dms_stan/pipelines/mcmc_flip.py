@@ -10,6 +10,10 @@ from dms_stan.model.enrichment import (
     ExponRateSigmoidGrowth,
     GammaInvRateExponGrowth,
     GammaInvRateSigmoidGrowth,
+    GammaNoiseExponRateExponGrowth,
+    GammaNoiseExponRateSigmoidGrowth,
+    GammaNoiseLomaxRateExponGrowth,
+    GammaNoiseLomaxRateSigmoidGrowth,
     LomaxRateExponGrowth,
     LomaxRateSigmoidGrowth,
     NonHierarchicalExponRateExponGrowth,
@@ -17,6 +21,7 @@ from dms_stan.model.enrichment import (
     NonHierarchicalLomaxRateExponGrowth,
     NonHierarchicalLomaxRateSigmoidGrowth,
 )
+from dms_stan.model.stan.stan_results import SampleResults
 
 # Define valid combinations of dataset and subset.
 VALID_COMBINATIONS = {
@@ -42,11 +47,12 @@ LOAD_DATASET_MAP = {
 }
 
 
+# Define the non-hierarchical datasets for TrpB
+trpb_non_hierarchical_dsets = {"libA", "libB", "libC"}
+
+
 # Map experimental conditions to the appropriate models
 def build_model_map():
-
-    # Define the non-hierarchical datasets for TrpB
-    trpb_non_hierarchical_dsets = {"libA", "libB", "libC"}
 
     # Define the appropriate dictionaries for the hierarchical and non-hierarchical
     # models
@@ -55,6 +61,10 @@ def build_model_map():
             "exponential": ExponRateExponGrowth,
             "logistic": ExponRateSigmoidGrowth,
         },
+        "expon-gamma": {
+            "exponential": GammaNoiseExponRateExponGrowth,
+            "logistic": GammaNoiseExponRateSigmoidGrowth,
+        },
         "gamma": {
             "exponential": GammaInvRateExponGrowth,
             "logistic": GammaInvRateSigmoidGrowth,
@@ -62,6 +72,10 @@ def build_model_map():
         "lomax": {
             "exponential": LomaxRateExponGrowth,
             "logistic": LomaxRateSigmoidGrowth,
+        },
+        "lomax-gamma": {
+            "exponential": GammaNoiseLomaxRateExponGrowth,
+            "logistic": GammaNoiseLomaxRateSigmoidGrowth,
         },
     }
     non_hierarchical_models = {
@@ -124,7 +138,7 @@ def define_base_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--rate_dist",
         type=str,
-        choices=["exponential", "gamma", "lomax"],
+        choices=["exponential", "expon-gamma", "gamma", "lomax", "lomax-gamma"],
         required=True,
         help="Distribution that defines the mean rate of the model.",
     )
@@ -195,6 +209,14 @@ def parse_args():
         "--force_compile",
         action="store_true",
         help="Force compilation of the model even if it is already compiled.",
+    )
+    parser.add_argument(
+        "--conversion_catchup",
+        action="store_true",
+        help=(
+            "If set, the pipeline will not run HMC but will instead catch up on "
+            "previous runs that failed during the csv-to-nc conversion step."
+        ),
     )
 
     return parser.parse_args()
@@ -272,26 +294,34 @@ def prep_run(args: argparse.Namespace) -> Model:
 
 def run_hmc(args: argparse.Namespace) -> None:
     """Run HMC for the specified dataset and model."""
-    # Check arguments
-    check_args(args)
-
     # Prepare the run
     model = prep_run(args)
-
-    # Run HMC
     model_name = f"{args.dataset}_{args.subset}_{args.rate_dist}_{args.growth_func}"
-    res = model.mcmc(
-        output_dir=args.output_dir,
-        force_compile=args.force_compile,
-        model_name=model_name,
-        chains=args.n_chains,
-        seed=args.seed,
-        iter_warmup=args.n_warmup,
-        iter_sampling=args.n_samples,
-        show_console=True,
-        refresh=10,
-        use_dask=args.use_dask,
-    )
+
+    # Run HMC unless we are catching up due to a failed csv-to-nc conversion
+    if args.conversion_catchup:
+
+        # Load the fit object from the csv files
+        res = SampleResults(
+            model=model,
+            fit=os.path.join(args.output_dir, f"{model_name}*.csv"),
+            use_dask=args.use_dask,
+        )
+
+    else:
+        # Run HMC
+        res = model.mcmc(
+            output_dir=args.output_dir,
+            force_compile=args.force_compile,
+            model_name=model_name,
+            chains=args.n_chains,
+            seed=args.seed,
+            iter_warmup=args.n_warmup,
+            iter_sampling=args.n_samples,
+            show_console=True,
+            refresh=10,
+            use_dask=args.use_dask,
+        )
 
     # Run diagnostics on the results
     print("Running diagnostics...")
