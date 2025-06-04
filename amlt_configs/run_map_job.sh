@@ -25,5 +25,5 @@ python approximate_map_flip.py \
     --rate_dist "$rate_dist" \
     --growth_func "$growth_func" \
     --flip_data "$AMLT_DATA_DIR" \
-    --output_dir "$AMLT_DIRSYNC_DIR" \
+    --output_dir "$AMLT_OUTPUT_DIR" \
     --sample_batch_size 5
