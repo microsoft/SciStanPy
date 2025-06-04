@@ -343,8 +343,8 @@ class BaseFoldChangeRate(HierarchicalModel):
         self, log_foldchange_sigma_sigma: float, **hyperparameters
     ):
 
-        # Define the typical growth rate
-        self.r_raw = self._define_growth_distribution(**hyperparameters)
+        # Define the log of typical growth rate
+        self.log_r = self._define_growth_distribution(**hyperparameters)
 
         # The error on the log of the fold-change is modeled as a half-normal distribution.
         # We assume homoscedasticity in fold-change error
@@ -360,14 +360,11 @@ class BaseFoldChangeRate(HierarchicalModel):
         # The fold-change is modeled as a log-normal distribution (i.e., the log
         # of the fold-change is normally distributed) with a mean of 0 (i.e., the
         # typical fold-change is 1).
-        self.fold_change = dms_components.LogNormal(
-            mu=dms_components.Constant(0.0, togglable=False),
+        self.r = dms_components.LogNormal(
+            mu=self.log_r,
             sigma=self.log_foldchange_sigma,
             shape=tuple(shape),
         )
-
-        # The rate is then the product of the mean rate and the fold-change
-        self.r = self.r_raw * self.fold_change
 
 
 class BaseExponentialRate(BaseFoldChangeRate):
@@ -400,7 +397,7 @@ class BaseExponentialRate(BaseFoldChangeRate):
         self, beta: float
     ):
         # The mean growth rate is modeled as an exponential distribution
-        return dms_components.Exponential(
+        return dms_components.ExpExponential(
             beta=beta, shape=(self.default_data["timepoint_counts"].shape[-1],)
         )
 
@@ -437,7 +434,7 @@ class BaseLomaxRate(BaseFoldChangeRate):
     def _define_growth_distribution(  # pylint: disable=arguments-differ
         self, lambda_: float, lomax_alpha: float
     ):
-        return dms_components.Lomax(
+        return dms_components.ExpLomax(
             lambda_=lambda_,
             alpha=lomax_alpha,
             shape=(self.default_data["timepoint_counts"].shape[-1],),
