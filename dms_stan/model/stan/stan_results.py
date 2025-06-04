@@ -778,7 +778,7 @@ class SampleResults(MAPInferenceRes):
     def __init__(
         self,
         model: Union["dms_stan.model.Model", None] = None,
-        fit: cmdstanpy.CmdStanMCMC | None = None,
+        fit: str | list[str] | os.PathLike | CmdStanMCMC | None = None,
         data: dict[str, npt.NDArray] | None = None,
         precision: Literal["double", "single", "half"] = "single",
         inference_obj: Optional[az.InferenceData | str] = None,
