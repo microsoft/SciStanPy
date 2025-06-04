@@ -42,6 +42,9 @@ def _inverse_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
 # TODO: Make sure samples from Stan distributions obey the same bounds as noted
 # in the classes.
 
+# TODO: Most of the arguments to `__init__` of `Parameter` should be converted to
+# class attributes, as they are not expected to change per instance.
+
 
 class Parameter(AbstractModelComponent):
     """Base class for parameters used in DMS Stan"""
@@ -836,6 +839,56 @@ class Exponential(ContinuousDistribution):
         return beta
 
 
+class ExpExponential(Exponential):
+    """Defines the Exp-Exponential distribution, which is the distribution of y if
+    exp(y) follows an Exponential distribution. Equivalently, if y follows an
+    Exponential distribution, then log(y) follows an Exp-Exponential distribution.
+    """
+
+    LOWER_BOUND = None
+    STAN_DIST = "expexponential"
+
+    def __init__(
+        self,
+        *,
+        beta: "dms.custom_types.ContinuousParameterType",
+        **kwargs,
+    ):
+
+        super(Exponential, self).__init__(
+            numpy_dist="exponential",
+            torch_dist=custom_torch_dists.ExpExponential,
+            stan_to_np_names={"beta": "scale"},
+            stan_to_torch_names={"beta": "rate"},
+            stan_to_np_transforms={"beta": _inverse_transform},
+            beta=beta,
+            **kwargs,
+        )
+
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+        # The base distribution is the Exponential distribution
+        np_dist = super().get_numpy_dist(seed=seed)
+
+        # Wrap the exponential distribution to take the log of the draw
+        def expexponential_dist(
+            beta: npt.NDArray,
+            size: int | tuple[int, ...] | None = None,
+        ) -> npt.NDArray:
+            return np.log(np_dist(scale=beta, size=size))
+
+        return expexponential_dist
+
+    def _write_dist_args(self, beta: str) -> str:  # pylint: disable=arguments-differ
+        return beta
+
+    def get_supporting_functions(self) -> list[str]:
+        # We need to extend the set of supporting functions to include the custom
+        # Stan functions for the Exp-Exponential distribution
+        return super().get_supporting_functions() + [
+            "#include expexponential.stanfunctions"
+        ]
+
+
 class Lomax(ContinuousDistribution):
     """
     Defines the Pareto Type II distribution with the values for mu set to 0 (the
@@ -895,7 +948,61 @@ class Lomax(ContinuousDistribution):
         return f"0, {lambda_}, {alpha}"
 
 
-class _CustomStanFunctionMixIn:
+class ExpLomax(Lomax):
+    """
+    Defines the Exp-Lomax distribution, which is the distribution of y if exp(y)
+    follows a Lomax distribution. Equivalently, if y follows a Lomax distribution,
+    then log(y) follows an Exp-Lomax distribution.
+    """
+
+    LOWER_BOUND = None
+    STAN_DIST = "explomax"
+
+    def __init__(
+        self,
+        *,
+        lambda_: "dms.custom_types.ContinuousParameterType",
+        alpha: "dms.custom_types.ContinuousParameterType",
+        **kwargs,
+    ):
+
+        super(Lomax, self).__init__(
+            numpy_dist="pareto",
+            torch_dist=custom_torch_dists.ExpLomax,
+            stan_to_np_names={
+                "lambda_": "lambda_",
+                "alpha": "a",
+            },  # lambda_ is not used
+            stan_to_torch_names={"lambda_": "lambda_", "alpha": "alpha"},
+            lambda_=lambda_,
+            alpha=alpha,
+            **kwargs,
+        )
+
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+        # The base distribution is the Lomax distribution
+        np_dist = super().get_numpy_dist(seed=seed)
+
+        # Wrap the lomax distribution to take the log of the draw
+        def explomax_dist(
+            lambda_: npt.NDArray,
+            a: npt.NDArray,
+            size: int | tuple[int, ...] | None = None,
+        ) -> npt.NDArray:
+            return np.log(np_dist(lambda_=lambda_, a=a, size=size))
+
+        return explomax_dist
+
+    def _write_dist_args(self, lambda_: str, alpha: str) -> str:
+        return f"{lambda_}, {alpha}"
+
+    def get_supporting_functions(self) -> list[str]:
+        # We need to extend the set of supporting functions to include the custom
+        # Stan functions for the Exp-Lomax distribution
+        return super().get_supporting_functions() + ["#include explomax.stanfunctions"]
+
+
+class _CustomParallelizedStanFunctionMixIn:
     """
     Some distributions have custom Stan functions. This is a mixin to handle
     that.
@@ -909,7 +1016,7 @@ class _CustomStanFunctionMixIn:
         )
 
 
-class Dirichlet(_CustomStanFunctionMixIn, ContinuousDistribution):
+class Dirichlet(_CustomParallelizedStanFunctionMixIn, ContinuousDistribution):
     """Defines the Dirichlet distribution."""
 
     BASE_STAN_DTYPE = "simplex"
@@ -1098,7 +1205,7 @@ class Poisson(DiscreteDistribution):
         return lambda_
 
 
-class _MultinomialBase(_CustomStanFunctionMixIn, DiscreteDistribution):
+class _MultinomialBase(_CustomParallelizedStanFunctionMixIn, DiscreteDistribution):
     """Defines the base multinomial distribution."""
 
     def __init__(

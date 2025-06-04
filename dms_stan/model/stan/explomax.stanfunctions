@@ -1,0 +1,88 @@
+real explomax_lpdf(real y, real lambda, real alpha) {
+    // If exp(y) is Lomax distributed, then y is exp-lomax distributed.
+    // Equivalently, if y is Lomax distributed, then log(y) is exp-lomax distributed.
+
+    // Define variables to avoid repeated calculations
+    real log_lambda = log(lambda);
+
+    // Calculate the log probability
+    return log(alpha) - log_lambda + y -
+        (alpha + 1) * (log_sum_exp(y, log_lambda) - log_lambda);
+}
+
+real explomax_lpdf(vector y, vector lambda, vector alpha) {
+    // Vectorized version of the exp-lomax log probability density function
+
+    // Define variables to avoid repeated calculations
+    vector[size(lambda)] log_lambda = log(lambda);
+
+    // Calculate the log probability
+    return sum(log(alpha) - log_lambda + y -
+               (alpha + 1) .* (log_sum_exp(y, log_lambda) - log_lambda));
+}
+
+real explomax_lpdf(vector y, real lambda, real alpha) {
+    // Vectorized version of the exp-lomax log probability density function
+    // with a single lambda and alpha
+
+    // Define variables to avoid repeated calculations
+    real log_lambda = log(lambda);
+
+    // Calculate the log probability
+    return sum(log(alpha) - log_lambda + y -
+               (alpha + 1) * (log_sum_exp(y, log_lambda) - log_lambda));
+}
+
+real explomax_lpdf(vector y, real lambda, vector alpha) {
+    // Vectorized version of the exp-lomax log probability density function
+    // with a single lambda and a vector of alphas
+
+    // Define variables to avoid repeated calculations
+    real log_lambda = log(lambda);
+
+    // Calculate the log probability
+    return sum(log(alpha) - log_lambda + y -
+               (alpha + 1) .* (log_sum_exp(y, log_lambda) - log_lambda));
+}
+
+real explomax_lpdf(vector y, vector lambda, real alpha) {
+    // Vectorized version of the exp-lomax log probability density function
+    // with a vector of lambdas and a single alpha
+
+    // Define variables to avoid repeated calculations
+    vector[size(lambda)] log_lambda = log(lambda);
+
+    // Calculate the log probability
+    return sum(log(alpha) - log_lambda + y -
+               (alpha + 1) .* (log_sum_exp(y, log_lambda) - log_lambda));
+}
+
+real explomax_rng(real lambda, real alpha) {
+    // Generate a random sample from the exp-lomax distribution. This is done by
+    // generating a random sample from the Lomax distribution and then taking the
+    // logarithm of the sample.
+    return log(pareto_type_2_rng(0.0, lambda, alpha));
+}
+
+array[] real explomax_rng(vector lambda, real alpha) {
+    // Generate a random sample from the exp-lomax distribution with a vector of
+    // lambdas and a single alpha. This is done by generating a random sample from
+    // the Lomax distribution for each lambda and then taking the logarithm of the
+    // samples.
+    return log(pareto_type_2_rng(0.0, lambda, alpha));
+}
+
+array[] real explomax_rng(real lambda, vector alpha) {
+    // Generate a random sample from the exp-lomax distribution with a single lambda
+    // and a vector of alphas. This is done by generating a random sample from the
+    // Lomax distribution for each alpha and then taking the logarithm of the samples.
+    return log(pareto_type_2_rng(0.0, lambda, alpha));
+}
+
+array[] real explomax_rng(vector lambda, vector alpha) {
+    // Generate a random sample from the exp-lomax distribution with a vector of
+    // lambdas and a vector of alphas. This is done by generating a random sample
+    // from the Lomax distribution for each pair of lambda and alpha and then taking
+    // the logarithm of the samples.
+    return log(pareto_type_2_rng(0.0, lambda, alpha));
+}

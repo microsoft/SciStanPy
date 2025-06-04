@@ -9,6 +9,7 @@ from dms_stan.model.components.parameters import (
     ContinuousDistribution,
     Dirichlet,
     DiscreteDistribution,
+    ExpLomax,
     Exponential,
     Gamma,
     HalfNormal,

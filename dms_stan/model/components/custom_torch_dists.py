@@ -160,4 +160,41 @@ class Lomax(dist.transformed_distribution.TransformedDistribution, CustomDistrib
         super().__init__(base_dist, transforms, *args, **kwargs)
 
 
+class ExpLomax(
+    dist.transformed_distribution.TransformedDistribution, CustomDistribution
+):
+    """Implementation of the Exponential Lomax distribution."""
+
+    def __init__(self, lambda_: torch.Tensor, alpha: torch.Tensor, *args, **kwargs):
+        """
+        Args:
+            lambda_ (torch.Tensor): Scale parameter.
+            alpha (torch.Tensor): Shape parameter.
+            *args: Additional arguments for the base distribution.
+            **kwargs: Additional keyword arguments for the base distribution.
+        """
+        # Build the base distribution (Lomax) and transforms (log)
+        base_dist = Lomax(lambda_=lambda_, alpha=alpha)
+        transforms = [dist.transforms.ExpTransform().inv]
+        super().__init__(base_dist, transforms, *args, **kwargs)
+
+
+class ExpExponential(
+    dist.transformed_distribution.TransformedDistribution, CustomDistribution
+):
+    """Implementation of the Exponential Exponential distribution."""
+
+    def __init__(self, rate: torch.Tensor, *args, **kwargs):
+        """
+        Args:
+            lambda_ (torch.Tensor): Scale parameter.
+            *args: Additional arguments for the base distribution.
+            **kwargs: Additional keyword arguments for the base distribution.
+        """
+        # Build the base distribution (Exponential) and transforms (log)
+        base_dist = dist.Exponential(rate=rate)
+        transforms = [dist.transforms.ExpTransform().inv]
+        super().__init__(base_dist, transforms, *args, **kwargs)
+
+
 # pylint: enable=abstract-method
