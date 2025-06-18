@@ -2,18 +2,18 @@ real expexponential_lpdf(real y, real beta) {
     // If exp(y) is exponentially distributed, then y is exp-exponential distributed.
     // Equivalently, if y is exponentially distributed, then log(y) is exp-exponential
     // distributed.
-    return log(beta) - beta * exp(y) + y;
+    return exponential_lpdf(exp(y) | beta) + y;
 }
 
 real expexponential_lpdf(vector y, vector beta) {
     // Vectorized version of the exp-exponential log probability density function
-    return sum(log(beta) - beta .* exp(y) + y);
+    return exponential_lpdf(exp(y) | beta) + sum(y);
 }
 
 real expexponential_lpdf(vector y, real beta) {
     // Vectorized version of the exp-exponential log probability density function
     // with a single beta
-    return sum(log(beta) - beta * exp(y) + y);
+    return exponential_lpdf(exp(y) | beta) + sum(y);
 }
 
 real expexponential_rng(real beta) {

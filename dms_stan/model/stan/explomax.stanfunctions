@@ -6,8 +6,8 @@ real explomax_lpdf(real y, real lambda, real alpha) {
     real log_lambda = log(lambda);
 
     // Calculate the log probability
-    return log(alpha) - log_lambda + y -
-        (alpha + 1) * (log_sum_exp(y, log_lambda) - log_lambda);
+    return log(alpha) + alpha * log_lambda + y -
+            (alpha + 1) * (log_sum_exp(y, log_lambda));
 }
 
 real explomax_lpdf(vector y, vector lambda, vector alpha) {
@@ -17,8 +17,8 @@ real explomax_lpdf(vector y, vector lambda, vector alpha) {
     vector[size(lambda)] log_lambda = log(lambda);
 
     // Calculate the log probability
-    return sum(log(alpha) - log_lambda + y -
-               (alpha + 1) .* (log_sum_exp(y, log_lambda) - log_lambda));
+    return sum(log(alpha) + alpha .* log_lambda + y -
+            (alpha + 1) .* (log_sum_exp(y, log_lambda)));
 }
 
 real explomax_lpdf(vector y, real lambda, real alpha) {
@@ -29,8 +29,8 @@ real explomax_lpdf(vector y, real lambda, real alpha) {
     real log_lambda = log(lambda);
 
     // Calculate the log probability
-    return sum(log(alpha) - log_lambda + y -
-               (alpha + 1) * (log_sum_exp(y, log_lambda) - log_lambda));
+    return sum(log(alpha) + alpha * log_lambda + y -
+            (alpha + 1) * (log_sum_exp(y, log_lambda)));
 }
 
 real explomax_lpdf(vector y, real lambda, vector alpha) {
@@ -41,8 +41,8 @@ real explomax_lpdf(vector y, real lambda, vector alpha) {
     real log_lambda = log(lambda);
 
     // Calculate the log probability
-    return sum(log(alpha) - log_lambda + y -
-               (alpha + 1) .* (log_sum_exp(y, log_lambda) - log_lambda));
+    return sum(log(alpha) + alpha * log_lambda + y -
+            (alpha + 1) .* (log_sum_exp(y, log_lambda)));
 }
 
 real explomax_lpdf(vector y, vector lambda, real alpha) {
@@ -53,8 +53,8 @@ real explomax_lpdf(vector y, vector lambda, real alpha) {
     vector[size(lambda)] log_lambda = log(lambda);
 
     // Calculate the log probability
-    return sum(log(alpha) - log_lambda + y -
-               (alpha + 1) .* (log_sum_exp(y, log_lambda) - log_lambda));
+    return sum(log(alpha) + alpha * log_lambda + y -
+            (alpha + 1) .* (log_sum_exp(y, log_lambda)));
 }
 
 real explomax_rng(real lambda, real alpha) {
