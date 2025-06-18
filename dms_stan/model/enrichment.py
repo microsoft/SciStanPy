@@ -319,7 +319,7 @@ class BaseFoldChangeRate(HierarchicalModel):
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
         alpha: float = 0.75,
-        log_foldchange_sigma_sigma: float = 0.5,
+        log_foldchange_sigma_beta: float = 10.0,
         **hyperparameters,
     ):
         # Run inherited init
@@ -328,7 +328,7 @@ class BaseFoldChangeRate(HierarchicalModel):
             timepoint_counts=timepoint_counts,
             times=times,
             alpha=alpha,
-            log_foldchange_sigma_sigma=log_foldchange_sigma_sigma,
+            log_foldchange_sigma_beta=log_foldchange_sigma_beta,
             **hyperparameters,
         )
 
@@ -340,7 +340,7 @@ class BaseFoldChangeRate(HierarchicalModel):
         """
 
     def _define_additional_parameters(  # pylint: disable=arguments-differ
-        self, log_foldchange_sigma_sigma: float, **hyperparameters
+        self, log_foldchange_sigma_beta: float, **hyperparameters
     ):
 
         # Define the log of typical growth rate
@@ -348,8 +348,8 @@ class BaseFoldChangeRate(HierarchicalModel):
 
         # The error on the log of the fold-change is modeled as a half-normal distribution.
         # We assume homoscedasticity in fold-change error
-        self.log_foldchange_sigma = dms_components.HalfNormal(
-            sigma=log_foldchange_sigma_sigma
+        self.log_foldchange_sigma = dms_components.Exponential(
+            beta=log_foldchange_sigma_beta
         )
 
         # The shape of the fold-change depends on whether we are including times
@@ -380,7 +380,7 @@ class BaseExponentialRate(BaseFoldChangeRate):
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
         alpha: float = 0.75,
-        log_foldchange_sigma_sigma: float = 0.5,
+        log_foldchange_sigma_beta: float = 10.0,
         beta: float = 1.0,
     ):
         # Run inherited init
@@ -389,7 +389,7 @@ class BaseExponentialRate(BaseFoldChangeRate):
             timepoint_counts=timepoint_counts,
             times=times,
             alpha=alpha,
-            log_foldchange_sigma_sigma=log_foldchange_sigma_sigma,
+            log_foldchange_sigma_beta=log_foldchange_sigma_beta,
             beta=beta,
         )
 
@@ -416,7 +416,7 @@ class BaseLomaxRate(BaseFoldChangeRate):
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
         alpha: float = 0.75,
-        log_foldchange_sigma_sigma: float = 0.5,
+        log_foldchange_sigma_beta: float = 10.0,
         lambda_: float = 1.0,
         lomax_alpha: float = 2.5,
     ):
@@ -426,7 +426,7 @@ class BaseLomaxRate(BaseFoldChangeRate):
             timepoint_counts=timepoint_counts,
             times=times,
             alpha=alpha,
-            log_foldchange_sigma_sigma=log_foldchange_sigma_sigma,
+            log_foldchange_sigma_beta=log_foldchange_sigma_beta,
             lambda_=lambda_,
             lomax_alpha=lomax_alpha,
         )
