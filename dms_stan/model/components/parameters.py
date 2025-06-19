@@ -19,11 +19,7 @@ import dms_stan as dms
 from dms_stan.model.components import custom_torch_dists
 from .abstract_model_component import AbstractModelComponent
 from .constants import Constant
-from .transformed_data import (
-    MultinomialCoefficient,
-    SharedAlphaDirichlet,
-    TransformedData,
-)
+from .transformed_data import LogMultinomialCoefficient, TransformedData
 from .transformed_parameters import TransformableParameter
 
 # pylint: disable=too-many-lines
@@ -963,6 +959,7 @@ class ExpDirichlet(Dirichlet):
     LOWER_BOUND = None
     UPPER_BOUND = 0.0
     STAN_DIST = "expdirichlet"
+    HAS_RAW_VARNAME = True
 
     def __init__(
         self,
@@ -1022,11 +1019,6 @@ class ExpDirichlet(Dirichlet):
 
         # Now we just run the parent method
         return super().get_right_side(index_opts, dist_suffix=dist_suffix)
-
-    @property
-    def raw_varname(self) -> str:
-        """Return the raw variable name for the Exp-Dirichlet distribution"""
-        return f"{self.stan_model_varname}_raw"
 
 
 class Binomial(DiscreteDistribution):
@@ -1153,9 +1145,8 @@ class _MultinomialBase(DiscreteDistribution):
         raw = super().get_target_incrementation(index_opts)
 
         # Remove the N parameter
-        assert raw.count(", ") == 1, "Invalid target incrementation: " + raw
-        raw, _ = raw.split(", ")
-        return raw + ")"
+        *raw, _ = raw.split(", ")
+        return ", ".join(raw) + ")"
 
 
 class Multinomial(_MultinomialBase):
@@ -1172,7 +1163,7 @@ class Multinomial(_MultinomialBase):
         **kwargs,
     ):
         super().__init__(
-            torch_dist=custom_torch_dists.Multinomial,
+            torch_dist=custom_torch_dists.MultinomialProb,
             stan_to_np_names={"N": "n", "theta": "pvals"},
             stan_to_torch_names={"N": "total_count", "theta": "probs"},
             theta=theta,
@@ -1237,3 +1228,104 @@ class MultinomialLogit(_MultinomialBase):
             return base_dist(n=n, pvals=special.softmax(logits, axis=-1), size=size)
 
         return multinomial_logit
+
+
+class MultinomialLogTheta(MultinomialLogit):
+    """
+    Defines the multinomial distribution in terms of the log of the theta parameter.
+    """
+
+    LOG_SIMPLEX_PARAMS = {"log_theta"}
+    STAN_DIST = "multinomial_logtheta"
+
+    def __init__(
+        self,
+        *,
+        log_theta: "dms.custom_types.ContinuousParameterType",
+        N: "dms.custom_types.DiscreteParameterType",
+        **kwargs,
+    ):
+
+        # Init the parent class with the appropriate parameters
+        super(MultinomialLogit, self).__init__(
+            torch_dist=custom_torch_dists.MultinomialLogTheta,
+            stan_to_np_names={"N": "n", "log_theta": "logits"},
+            stan_to_torch_names={"N": "total_count", "log_theta": "logits"},
+            log_theta=log_theta,
+            N=N,
+            **kwargs,
+        )
+
+        # By default, we allow a multinomial coefficient to be pre-calculated. This
+        # assumes that the instance will be an observable parameter, so we modify
+        # the `_record_child` function to remove the coefficient as soon as something
+        # is added to the children.
+        self._coefficient = LogMultinomialCoefficient(self)
+
+    def _record_child(self, child: AbstractModelComponent) -> None:
+        """Handles removal of the coefficient when a child is added."""
+        # If this is not a multinomial coefficient, then we have to remove that
+        # coefficient from the children.
+        if not isinstance(child, LogMultinomialCoefficient):
+            assert len(self._children) == 1
+            del self._children[0]
+            self._coefficient = None
+
+        # Otherwise, the list of children must be empty, as the coefficient will
+        # be the first child added.
+        else:
+            assert len(self._children) == 0
+
+        # Run the parent method to record the child
+        super()._record_child(child)
+
+    def get_supporting_functions(self) -> list[str]:
+        """
+        Extend the set of supporting functions to include the custom Stan functions
+        for the MultinomialLogTheta distribution.
+        """
+        return super().get_supporting_functions() + [
+            "#include multinomial.stanfunctions"
+        ]
+
+    def _write_dist_args(  # pylint: disable=arguments-differ, arguments-renamed
+        self, log_theta: str, N: str, coeff: str = ""
+    ):
+        # If the coefficient is provided, insert it in the middle of the arguments.
+        # Otherwise, just return the log_theta and N parameters. This is a bit of
+        # a hack to make sure that "N" is stripped off by `get_target_incrementation`
+        # regardless of whether the coefficient is provided or not.
+        if coeff:
+            return f"{log_theta}, {coeff}, {N}"
+        return f"{log_theta}, {N}"
+
+    def get_right_side(
+        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
+    ) -> str:
+        """
+        Override the right side to use the log softmax transformation.
+        """
+        # Get the formattables
+        formattables = super(Parameter, self).get_right_side(index_opts)
+
+        # If no suffix is provided and this is an observable, we want to add the
+        # coefficient to the set of formattables and use manual normalization.
+        # Otherwise, we just use the standard normalization.
+        if dist_suffix == "":
+            if self.coefficient is None:
+                dist_suffix = "norm"
+            else:
+                formattables["coeff"] = self.coefficient.get_indexed_varname(index_opts)
+                dist_suffix = "manual_norm"
+
+        # Build the right side
+        return (
+            f"{self.STAN_DIST}_{dist_suffix}({self._write_dist_args(**formattables)})"
+        )
+
+    @property
+    def coefficient(self) -> LogMultinomialCoefficient | None:
+        """
+        Returns the coefficient for the multinomial distribution, if it exists.
+        """
+        return self._coefficient

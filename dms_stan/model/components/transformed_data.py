@@ -38,70 +38,35 @@ class TransformedData(Transformation):
     def model_varname(self) -> str: ...
 
 
-class SharedAlphaDirichlet(TransformedData):
+class LogMultinomialCoefficient(TransformedData):
     """
-    Used to define a transformed data component for use with the Dirichlet distribution
-    when all dimensions share the same alpha parameter.
+    When the multinomial distribution parametrized by log_theta is used to model
+    an observable, we can pre-calculate the log of the multinomial coefficient and
+    use it at each iteration. This speeds up the model.
     """
 
-    def __init__(self, alpha: "dms_components.Constant", **kwargs):
+    def __init__(self, counts: "dms_components.MultinomialLogTheta", **kwargs):
         """
-        Initializes the SharedAlphaDirichlet class.
+        Initializes the LogMultinomialCoefficient class.
 
         Args:
-            alpha: The alpha parameter to use for the Dirichlet distribution.
+            counts: The counts parameter to use for the log multinomial coefficient.
             **kwargs: Additional arguments to pass to the parent class.
         """
-        # The alpha must be a constant
-        if not isinstance(alpha, dms_components.Constant):
-            raise ValueError("The alpha parameter must be a constant.")
-
         # Initialize the parent class
-        super().__init__(alpha=alpha, **kwargs)
+        super().__init__(counts=counts, **kwargs)
 
-    def get_supporting_functions(self) -> list[str]:
-        """We need the Dirichlet function."""
-        return ["#include dirichlet.stanfunctions"]
-
-    def _write_operation(self, alpha: str) -> str:  # pylint: disable=arguments-differ
-        """Writes the Stan code for the transformed alpha parameter."""
-        # We just want the sum of alphas
-        return f"get_uniform_alpha_coefficient({alpha})"
-
-    @property
-    def model_varname(self) -> str:
-        return f"{self.alpha.model_varname}.coeff"
-
-
-class MultinomialCoefficient(TransformedData):
-    """
-    When the multinomial or multinomial_logit functions are used to model an
-    observable, we can pre-calculate the multinomial coefficient and use it at each
-    iteration. This speeds up the model.
-    """
-
-    def __init__(self, counts: "dms_components.Parameter", **kwargs):
-        """
-        Initializes the MultinomialCoefficient class.
-
-        Args:
-            counts: The counts parameter to use for the multinomial coefficient.
-            **kwargs: Additional arguments to pass to the parent class.
-        """
+    def _write_operation(self, counts: str) -> str:  # pylint: disable=arguments-differ
+        """Writes the operation for the multinomial coefficient."""
         # The counts must be an observable
-        if not counts.observable:
+        if not self.counts.observable:
             raise ValueError(
                 "We can only pre-calculate the multinomial coefficient for constant counts."
             )
 
-        # Initialize the parent class
-        super().__init__(counts=counts, **kwargs)
-
-    def get_supporting_functions(self) -> list[str]:
-        """We need the multinomial coefficient function."""
-        return ["#include multinomial.stanfunctions"]
+        return f"log_multinomial_coeff({counts})"
 
     @property
     def model_varname(self) -> str:
         """Returns the model variable name for the multinomial coefficient."""
-        return f"{self.counts.model_varname}.multinomial_coefficient"
+        return f"{self.counts.model_varname}.log_multinomial_coefficient"

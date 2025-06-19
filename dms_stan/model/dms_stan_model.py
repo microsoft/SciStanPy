@@ -176,7 +176,7 @@ class Model(ABC):
         cls._wrapped_init = cls.__init__
         cls.__init__ = __init__
 
-    def _build_model_varname_to_object() -> dict[str, AbstractModelComponent]:
+    def _build_model_varname_to_object(self) -> dict[str, AbstractModelComponent]:
         """Builds a mapping between model varnames and objects for easy access."""
 
         def build_initial_mapping() -> dict[str, AbstractModelComponent]:

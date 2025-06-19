@@ -142,6 +142,33 @@ class MultinomialLogit(Multinomial, CustomDistribution):
         )
 
 
+class MultinomialLogTheta(MultinomialLogit):
+    """
+    Identical to MultinomialLogit, but we make sure that the sum of the exponentiated
+    logits is already 1.
+    """
+
+    def __init__(
+        self,
+        total_count: int | torch.Tensor = 1,
+        log_probs: Optional[torch.Tensor] = None,
+        validate_args: Optional[bool] = None,
+    ) -> None:
+
+        # Make sure the log_probs are normalized
+        assert log_probs is not None, "log_probs must be provided"
+        assert torch.allclose(
+            log_probs.exp().sum(dim=-1), torch.ones_like(log_probs[..., 0])
+        ), "log_probs must be normalized to sum to 1"
+
+        # Otherwise, we can just call the parent class
+        super().__init__(
+            total_count=total_count,
+            logits=log_probs,
+            validate_args=validate_args,
+        )
+
+
 # pylint: disable=abstract-method
 class Lomax(dist.transformed_distribution.TransformedDistribution, CustomDistribution):
     """Implementation of the Lomax distribution (shifted Pareto distribution)."""

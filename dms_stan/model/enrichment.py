@@ -10,6 +10,109 @@ import dms_stan.model.components as dms_components
 import dms_stan.operations as dms_ops
 
 
+class LogEnrichmentModel(dms.Model):
+    """Runs in the log space"""
+
+    def __init__(
+        self,
+        starting_counts: npt.NDArray[np.int64],
+        timepoint_counts: npt.NDArray[np.int64],
+        times: npt.NDArray[np.floating] | None = None,
+        alpha: float = 0.75,
+        beta: float = 1.0,
+        log_foldchange_sigma_beta: float = 10.0,
+        **hyperparameters,
+    ):
+        """Initializes the PDZ3 model with starting and ending counts.
+
+        Args:
+            starting_counts (npt.NDArray[np.int64]): Starting counts for the PDZ3 dataset.
+            timepoint_counts (npt.NDArray[np.int64]): Ending counts for the PDZ3 dataset.
+        """
+        # Register default data
+        super().__init__(
+            default_data={
+                "starting_counts": starting_counts,
+                "timepoint_counts": timepoint_counts,
+            }
+        )
+
+        # The last dimension of starting and ending counts should be equivalent
+        if starting_counts.shape[-1] != timepoint_counts.shape[-1]:
+            raise ValueError(
+                "The last dimension of starting and ending counts should be equivalent."
+            )
+
+        # Record times if they are present and normalize them to have a maximum
+        # of 1
+        self.times = (
+            times
+            if times is None
+            else dms_components.Constant(
+                (times / times.max())[None, :, None], togglable=False
+            )
+        )
+
+        # Set the total number of starting and ending counts by replicate
+        self.total_starting_counts = dms_components.Constant(
+            starting_counts.sum(axis=-1, keepdims=True), togglable=False
+        )
+        self.total_timepoint_counts = dms_components.Constant(
+            timepoint_counts.sum(axis=-1, keepdims=True), togglable=False
+        )
+
+        # Starting log-proportions are exp-Dirichlet distributed
+        self.log_theta_t0 = dms_components.ExpDirichlet(
+            alpha=alpha, shape=starting_counts.shape
+        )
+
+        # Define the log of typical growth rate
+        self.log_r = dms_components.ExpExponential(
+            beta=beta, shape=(self.default_data["timepoint_counts"].shape[-1],)
+        )
+
+        # The error on the log of the fold-change is modeled as a half-normal distribution.
+        # We assume homoscedasticity in fold-change error
+        self.log_foldchange_sigma = dms_components.Exponential(
+            beta=log_foldchange_sigma_beta
+        )
+
+        # The shape of the fold-change depends on whether we are including times
+        shape = list(self.default_data["timepoint_counts"].shape)
+        if self.times is not None:
+            shape[1] = 1
+
+        # The fold-change is modeled as a log-normal distribution (i.e., the log
+        # of the fold-change is normally distributed) with a mean of 0 (i.e., the
+        # typical fold-change is 1).
+        self.r = dms_components.LogNormal(
+            mu=self.log_r,
+            sigma=self.log_foldchange_sigma,
+            shape=tuple(shape),
+        )
+
+        # Calculate ending proportions
+        self.raw_abundances_tg0 = dms_components.LogExponentialGrowth(
+            t=self.times,
+            log_A=self.log_theta_t0,
+            r=self.r,
+            shape=self.default_data["timepoint_counts"].shape,
+        )
+        self.log_theta_tg0 = dms_ops.normalize_log(self.raw_abundances_tg0)
+
+        # The counts are modeled as multinomial distributions
+        self.starting_counts = dms_components.MultinomialLogTheta(
+            log_theta=self.log_theta_t0,
+            N=self.total_starting_counts,
+            shape=starting_counts.shape,
+        )
+        self.timepoint_counts = dms_components.MultinomialLogTheta(
+            log_theta=self.log_theta_tg0,
+            N=self.total_timepoint_counts,
+            shape=timepoint_counts.shape,
+        )
+
+
 class BaseEnrichmentModel(dms.Model):
     """Base class for all enrichment models."""
 

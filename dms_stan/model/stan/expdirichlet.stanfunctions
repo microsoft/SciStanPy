@@ -1,4 +1,9 @@
-#!include dirichlet.stanfunctions
+real vectorized_lbeta(vector alpha) {
+    // Computes the log of the beta function for a vector of parameters alpha.
+    // This is used in the exp-dirichlet distribution to calculate the normalization
+    // constant.
+    return lgamma(sum(alpha)) - sum(lgamma(alpha));
+}
 
 vector logsoftmax_transform_lp(vector z) {
     // Computes the log of the softmax function for a vector z and updates the target

@@ -1,6 +1,0 @@
-real vectorized_lbeta(vector alpha) {
-    // Computes the log of the beta function for a vector of parameters alpha.
-    // This is used in the exp-dirichlet distribution to calculate the normalization
-    // constant.
-    return lgamma(sum(alpha)) - sum(lgamma(alpha));
-}
