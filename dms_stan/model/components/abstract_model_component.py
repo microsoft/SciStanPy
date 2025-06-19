@@ -18,6 +18,7 @@ class AbstractModelComponent(ABC):
     POSITIVE_PARAMS: set[str] = set()
     NEGATIVE_PARAMS: set[str] = set()
     SIMPLEX_PARAMS: set[str] = set()
+    LOG_SIMPLEX_PARAMS: set[str] = set()
 
     # Define the stan data type
     BASE_STAN_DTYPE: Literal["real", "int", "simplex"] = "real"
@@ -31,7 +32,6 @@ class AbstractModelComponent(ABC):
         self,
         *,
         shape: tuple[int, ...] = (),
-        parallelize: bool = False,
         _override_shape_check: bool = False,
         **parameters: "dms.custom_types.CombinableParameterType",
     ):
@@ -39,7 +39,6 @@ class AbstractModelComponent(ABC):
 
         # Define placeholder variables
         self._model_varname: str = ""  # DMS Stan Model variable name
-        self._allow_parallelization: bool = parallelize  # Intra-chain parallelization
         self._parents: dict[str, AbstractModelComponent]
         self._component_to_paramname: dict[AbstractModelComponent, str]
         self._shape: tuple[int, ...] = shape  # Shape of the parameter
@@ -65,7 +64,10 @@ class AbstractModelComponent(ABC):
         """Checks inputs to the __init__ method for validity."""
         # All bounded parameters must be named in the parameter dictionary
         if missing_names := (
-            self.POSITIVE_PARAMS | self.NEGATIVE_PARAMS | self.SIMPLEX_PARAMS
+            self.POSITIVE_PARAMS
+            | self.NEGATIVE_PARAMS
+            | self.SIMPLEX_PARAMS
+            | self.LOG_SIMPLEX_PARAMS
         ) - set(parameters.keys()):
             raise ValueError(
                 f"{', '.join(missing_names)} are bounded parameters but are missing "
@@ -109,7 +111,7 @@ class AbstractModelComponent(ABC):
             if name in self.POSITIVE_PARAMS:
                 lower_bound = 0
                 upper_bound = None
-            elif name in self.NEGATIVE_PARAMS:
+            elif name in self.NEGATIVE_PARAMS or name in self.LOG_SIMPLEX_PARAMS:
                 lower_bound = None
                 upper_bound = 0
             elif name in self.SIMPLEX_PARAMS:
@@ -317,6 +319,9 @@ class AbstractModelComponent(ABC):
             elif paramname in self.SIMPLEX_PARAMS:
                 assert np.all((_drawn[param] >= 0) & (_drawn[param] <= 1))
                 assert np.allclose(np.sum(_drawn[param], axis=-1), 1)
+            elif paramname in self.LOG_SIMPLEX_PARAMS:
+                assert np.all(_drawn[param] < 0)
+                assert np.allclose(np.sum(np.exp(_drawn[param]), axis=-1), 1)
 
         return draws, _drawn
 
@@ -386,9 +391,7 @@ class AbstractModelComponent(ABC):
     def get_supporting_functions(self) -> list[str]:
         """
         Gets the set of functions that need to be defined in the Stan model to support
-        the model component. A common use-case, for example, is to define the partial
-        sum function that is used in concert with Stan's `reduce_sum` to parallelize
-        the computation of the log-likelihood.
+        the model component.
 
         Each element of the list is a string that contains the function definition
         in Stan code.
@@ -747,21 +750,3 @@ class AbstractModelComponent(ABC):
         not observable.
         """
         return False
-
-    @property
-    def _parallelized(self) -> bool:
-        """
-        Returns True if the parameter is capable of being parallelized using `reduce_sum`.
-        This occurs when the parameter is not a scalar and has more than one element
-        in its final dimension. It must also be defined within the context of a
-        parallelized model.
-        """
-        return self._allow_parallelization and self.ndim > 0 and self.shape[-1] > 1
-
-    @_parallelized.setter
-    def _parallelized(self, value: bool) -> None:
-        """
-        Sets the parallelization flag for this parameter. This is used to determine
-        whether the parameter can be parallelized using `reduce_sum`.
-        """
-        self._allow_parallelization = value

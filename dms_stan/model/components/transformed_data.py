@@ -72,11 +72,6 @@ class SharedAlphaDirichlet(TransformedData):
     def model_varname(self) -> str:
         return f"{self.alpha.model_varname}.coeff"
 
-    @property
-    def _parallelized(self) -> bool:
-        """Returns whether the operation is parallelized."""
-        return self.alpha._parallelized  # pylint: disable=protected-access
-
 
 class MultinomialCoefficient(TransformedData):
     """
@@ -106,22 +101,7 @@ class MultinomialCoefficient(TransformedData):
         """We need the multinomial coefficient function."""
         return ["#include multinomial.stanfunctions"]
 
-    def _write_operation(self, counts: str) -> str:  # pylint: disable=arguments-differ
-        """Writes the Stan code for the multinomial coefficient.
-
-        Args:
-            counts (str): String representation of the counts parameter.
-        """
-        # If parallelized, use that version
-        prefix = "" if self._parallelized else "un"
-        return f"{prefix}parallelized_multinomial_factorial_component_lpmf({counts})"
-
     @property
     def model_varname(self) -> str:
         """Returns the model variable name for the multinomial coefficient."""
         return f"{self.counts.model_varname}.multinomial_coefficient"
-
-    @property
-    def _parallelized(self) -> bool:
-        """Returns whether the operation is parallelized."""
-        return self.counts._parallelized  # pylint: disable=protected-access

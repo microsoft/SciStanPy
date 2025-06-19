@@ -322,26 +322,7 @@ class NormalizeParameter(UnaryTransformedParameter):
             return dist1 / np.sum(dist1, keepdims=True, axis=-1)
 
     def _write_operation(self, dist1: str) -> str:
-        # Determine the denominator
-        denom = (
-            f"reduce_sum(partial_sum, to_array_1d({dist1}), 1)"
-            if self._parallelized
-            else f"sum({dist1})"
-        )
-
-        return f"{dist1} / {denom}"
-
-    def get_supporting_functions(self) -> list[str]:
-
-        # None if the function is not parallelized
-        if not self._parallelized:
-            return []
-
-        # Define the partial sum function that can be used in the sum operation
-        return [
-            "real partial_sum(array[] real x_slice, int start, int end) {\n\t\t"
-            "return sum(x_slice);\n}"
-        ]
+        return f"{dist1} / sum({dist1})"
 
 
 class NormalizeLogParameter(UnaryTransformedParameter):

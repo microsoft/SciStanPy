@@ -202,15 +202,11 @@ class Parameter(AbstractModelComponent):
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         """Return the Stan target incrementation for this parameter."""
+        # Determine the left side and operator
+        left_side = f"{self.get_indexed_varname(index_opts)} ~ "
+
         # Get the right-hand-side of the incrementation
         right_side = self.get_right_side(index_opts)
-
-        # Determine the left side and operator
-        left_side = (
-            "target += "
-            if self._parallelized
-            else f"{self.get_indexed_varname(index_opts)} ~ "
-        )
 
         # Put it all together
         return left_side + right_side
@@ -268,22 +264,6 @@ class Parameter(AbstractModelComponent):
     def get_right_side(
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
     ) -> str:
-        # If parallelized, the right side is a call to the `reduce_sum` function.
-        if self._parallelized and dist_suffix == "":
-            component_names = [
-                component.get_indexed_varname(index_opts)
-                for component in self.get_right_side_components()
-            ]
-            return (
-                "reduce_sum("
-                + f"{self.plp_function_name}, "
-                + f"to_array_1d({self.get_indexed_varname(index_opts)}), "
-                + "1"  # Automatic grainsize
-                + (", " if len(component_names) > 0 else "")
-                + ", ".join(component_names)
-                + ")"
-            )
-
         # Get the formattables
         formattables = super().get_right_side(index_opts=index_opts)
 
@@ -292,49 +272,6 @@ class Parameter(AbstractModelComponent):
         code = f"{self.STAN_DIST}{suffix}({self._write_dist_args(**formattables)})"
 
         return code
-
-    def get_supporting_functions(self) -> list[str]:
-        """
-        Returns the Stan code for the partial log probability function that is used
-        with Stan's `reduce_sum` function. This is used for parallelizing the log
-        probability calculation across multiple cores.
-        """
-
-        # No declaration if the function is not defined
-        if self.plp_function_name == "":
-            return []
-
-        # Get the arguments shared across all shards. These are all the variables
-        # that show up on the right-hand-side of the target incrementation
-        right_components = self.get_right_side_components()
-
-        # Get the datatype for the slice of this parameter used in the function
-        slice_dtype = f"array[] {'int' if self.BASE_STAN_DTYPE == 'int' else 'real'}"
-
-        # Get the argument specification for the function.
-        argspec = ", ".join(
-            [
-                f"{slice_dtype} {self.stan_model_varname}_slice",
-                "int start",
-                "int end",
-                *[component.plp_argspec_vardec for component in right_components],
-            ]
-        )
-
-        # Now get the function body. This will be the log probability calculated
-        # using the UNNORMALIZED log probability function directly.
-        right_side_sliced = self._write_dist_args(
-            **super().get_right_side(index_opts=None)
-        )
-        body = (
-            f"return {self.STAN_DIST}_{self.UNNORMALIZED_LOG_PROB_SUFFIX}("
-            f"{self.stan_model_varname}_slice | {right_side_sliced})"
-        )
-
-        # Complete the function declaration
-        return [
-            f"real {self.plp_function_name}({argspec}) {{" + "\n\t\t" + body + ";\n}"
-        ]
 
     def get_transformed_data_declaration(self) -> str:
         """Returns the Stan code for the transformed data block if there is any"""
@@ -434,24 +371,6 @@ class Parameter(AbstractModelComponent):
             isinstance(child, TransformedData) for child in self._children
         )
 
-    @property
-    def plp_function_name(self) -> str:
-        """
-        Returns the name of the partial log probability function that is used with
-        Stan's `reduce_sum` function. This is used for parallelizing the log probability
-        calculation across multiple cores.
-        """
-        # We can only use `reduce_sum` if this parameter is not a scalar and has
-        # more than one element in its final dimension
-        if not self._parallelized:
-            return ""
-
-        # Otherwise, the partial function is defined
-        return (
-            f"{self.stan_model_varname}_"
-            + self.UNNORMALIZED_LOG_PROB_SUFFIX.replace("lup", "lp")
-        )
-
 
 class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
@@ -546,11 +465,7 @@ class Normal(ContinuousDistribution):
         new_name = self.get_indexed_varname(
             index_opts, _name_override=self.noncentered_varname
         )
-        if self._parallelized:
-            return parent_incrementation.replace(
-                f"to_array_1d({default_name})",
-                f"to_array_1d({new_name})",
-            )
+
         return parent_incrementation.replace(f"{default_name} ~", f"{new_name} ~")
 
     def get_right_side_components(self) -> list[AbstractModelComponent]:
@@ -568,39 +483,13 @@ class Normal(ContinuousDistribution):
         if not self.is_noncentered:
             return super().get_right_side(index_opts, dist_suffix=dist_suffix)
 
-        # Otherwise, we cannot have the suffix set
+        # Otherwise, make sure we do not have the suffix set and return the standard
+        # normal distribution
         assert (
             dist_suffix == ""
         ), "Non-centered parameters should not have a distribution suffix"
 
-        # Run the parent method if parallelized, replacing the indexed variable name
-        # with the non-centered variable name
-        if self._parallelized:
-            return (
-                super()
-                .get_right_side(index_opts, dist_suffix=dist_suffix)
-                .replace(
-                    self.get_indexed_varname(index_opts),
-                    self.get_indexed_varname(
-                        index_opts, _name_override=self.noncentered_varname
-                    ),
-                )
-            )
-
-        # Otherwise, the right hand side is just the standard normal
         return "std_normal()"
-
-    def get_supporting_functions(self) -> list[str]:
-        # Parent method if not noncentered or if we are not parallelized
-        if not self.is_noncentered or not self._parallelized:
-            return super().get_supporting_functions()
-
-        # Otherwise, declare the function
-        argspec = f"array[] real {self.noncentered_varname}_slice, int start, int end"
-        body = f"return std_normal_lupdf({self.noncentered_varname}_slice)"
-        return [
-            f"real {self.plp_function_name}({argspec}) {{" + "\n\t\t" + body + ";\n}"
-        ]
 
     @property
     def noncentered_varname(self) -> str:
@@ -614,21 +503,6 @@ class Normal(ContinuousDistribution):
         and we did not set `noncentered` to False at initialization.
         """
         return self._noncentered and not self.is_hyperparameter and not self.observable
-
-    @property
-    def plp_function_name(self) -> str:
-
-        # Run the parent method
-        # pylint: disable=assignment-from-no-return
-        name = super(Normal, self.__class__).plp_function_name.fget(self)
-        # pylint: enable=assignment-from-no-return
-
-        # If there is no name or we are not noncentered, return
-        if name == "" or not self.is_noncentered:
-            return name
-
-        # If we are noncentered, prepend 'std'
-        return f"std_{name}"
 
 
 class HalfNormal(ContinuousDistribution):
@@ -878,9 +752,6 @@ class ExpExponential(Exponential):
 
         return expexponential_dist
 
-    def _write_dist_args(self, beta: str) -> str:  # pylint: disable=arguments-differ
-        return beta
-
     def get_supporting_functions(self) -> list[str]:
         # We need to extend the set of supporting functions to include the custom
         # Stan functions for the Exp-Exponential distribution
@@ -945,7 +816,7 @@ class Lomax(ContinuousDistribution):
     def _write_dist_args(  # pylint: disable=arguments-differ
         self, lambda_: str, alpha: str
     ) -> str:
-        return f"0, {lambda_}, {alpha}"
+        return f"0.0, {lambda_}, {alpha}"
 
 
 class ExpLomax(Lomax):
@@ -1002,21 +873,7 @@ class ExpLomax(Lomax):
         return super().get_supporting_functions() + ["#include explomax.stanfunctions"]
 
 
-class _CustomParallelizedStanFunctionMixIn:
-    """
-    Some distributions have custom Stan functions. This is a mixin to handle
-    that.
-    """
-
-    def get_supporting_functions(self) -> list[str]:
-        """Builds the appropriate #include statement for the custom Stan functions"""
-        # pylint: disable=no-member
-        return (
-            [f"#include {self.STAN_DIST}.stanfunctions"] if self._parallelized else []
-        )
-
-
-class Dirichlet(_CustomParallelizedStanFunctionMixIn, ContinuousDistribution):
+class Dirichlet(ContinuousDistribution):
     """Defines the Dirichlet distribution."""
 
     BASE_STAN_DTYPE = "simplex"
@@ -1056,14 +913,6 @@ class Dirichlet(_CustomParallelizedStanFunctionMixIn, ContinuousDistribution):
 
         # Set `enforce_uniformity` appropriately
         self.alpha.enforce_uniformity = enforce_uniformity
-
-        # Trigger the parallelization setter. This will build transformed data
-        # declarations if needed
-        self._parallelized = self._parallelized
-
-        # Placeholder for the shared alpha if we have not set it
-        if not hasattr(self, "_shared_alpha"):
-            self._shared_alpha: SharedAlphaDirichlet | None = None
 
     def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """
@@ -1110,43 +959,10 @@ class Dirichlet(_CustomParallelizedStanFunctionMixIn, ContinuousDistribution):
     def _write_dist_args(self, alpha: str) -> str:  # pylint: disable=arguments-differ
         return alpha
 
-    def get_right_side(
-        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
-    ) -> str:
-        # Parent method if provided a suffix or we are not parallelized
-        if dist_suffix != "" or not self._parallelized:
-            return super().get_right_side(index_opts, dist_suffix=dist_suffix)
-
-        # If we are enforcing uniformity, then we need to use the shared alpha.
-        thetas = f"to_array_1d({self.get_indexed_varname(index_opts)})"
-        if self.alpha.enforce_uniformity:
-            coeff = self._shared_alpha.get_indexed_varname(index_opts)
-            return f"parallelized_dirichlet_uniform_alpha_lpdf({thetas} | {coeff})"
-
-        # Otherwise, we calculate the full log probability
-        alphas = self.alpha.get_indexed_varname(index_opts)
-        return f"parallelized_dirichlet_lpdf({thetas} | {alphas})"
-
     @property
     def plp_function_name(self) -> str:
         """There is no partial log probability function for the Dirichlet distribution"""
         return ""
-
-    # Update the parallelized setter to add a shared alpha if relevant
-    @Parameter._parallelized.setter  # pylint: disable=protected-access
-    def _parallelized(self, value: bool) -> None:
-
-        # Set the parallelized attribute
-        super(Dirichlet, self.__class__)._parallelized.fset(self, value)
-
-        # If we are parallelized and enforcing uniformity, then we need to set
-        # the shared alpha
-        if value and self.alpha.enforce_uniformity:
-            self._shared_alpha = SharedAlphaDirichlet(
-                alpha=self.alpha,
-                shape=self.shape[:-1] + (1,),
-                parallelize=True,
-            )
 
 
 class Binomial(DiscreteDistribution):
@@ -1205,7 +1021,7 @@ class Poisson(DiscreteDistribution):
         return lambda_
 
 
-class _MultinomialBase(_CustomParallelizedStanFunctionMixIn, DiscreteDistribution):
+class _MultinomialBase(DiscreteDistribution):
     """Defines the base multinomial distribution."""
 
     def __init__(
@@ -1228,26 +1044,6 @@ class _MultinomialBase(_CustomParallelizedStanFunctionMixIn, DiscreteDistributio
             N=N,
             **kwargs,
         )
-
-        # Trigger the parallelization setter. This will build transformed data
-        # declarations if needed
-        self._parallelized = self._parallelized
-
-        # If we do not have a multinomial coefficient, then we need to set it
-        if not hasattr(self, "_multinomial_coefficient"):
-            self._multinomial_coefficient: MultinomialCoefficient | None = None
-
-    def _record_child(self, child: AbstractModelComponent) -> None:
-        # Run the inherited method
-        super()._record_child(child)
-
-        # If recording the multinomial coefficient, we are done
-        if isinstance(child, MultinomialCoefficient):
-            return
-
-        # If we have any other child, then we cannot precalculate the multinomial
-        # coefficient and so we need to remove the transformed data attribute
-        self._multinomial_coefficient = None
 
     def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """Returns the multinomial distribution function"""
@@ -1292,72 +1088,15 @@ class _MultinomialBase(_CustomParallelizedStanFunctionMixIn, DiscreteDistributio
         # in the distribution as defined in Stan
         raw = super().get_target_incrementation(index_opts)
 
-        # Just return raw if we are parallelized or if we are precalculating the
-        # multinomial coefficient
-        if self._parallelized or self._multinomial_coefficient is not None:
-            return raw
-
-        # If not parallelized, remove the N parameter
+        # Remove the N parameter
         assert raw.count(", ") == 1, "Invalid target incrementation: " + raw
         raw, _ = raw.split(", ")
         return raw + ")"
-
-    def get_right_side(
-        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
-    ) -> str:
-        # Parent method if provided a suffix or we are not parallelized
-        if dist_suffix != "" or not self._parallelized:
-            return super().get_right_side(index_opts, dist_suffix=dist_suffix)
-
-        # Get the indexed names for the loss calculations
-        ys = self.get_indexed_varname(index_opts)
-        probs = self.get_stan_probs_indexed_varname(index_opts)
-
-        # If we have a multinomial coefficient predefined, get it. Otherwise,
-        # we need to calculate it each time.
-        if self._multinomial_coefficient is not None:
-            coeff = self._multinomial_coefficient.get_indexed_varname(index_opts)
-
-        # Otherwise, we need to calculate the multinomial coefficient each time
-        else:
-            coeff = f"parallelized_multinomial_factorial_component_lpmf({ys})"
-
-        # We always need to calculate the log probability each time. We slice over
-        # theta instead of y if this is an observable to avoid copying gradients
-        if self.observable:
-            probs = f"to_array_1d({probs})"
-            midfunc = "thetaslice_"
-        else:
-            midfunc = ""
-        logprob = f"parallelized_multinomial_factorial_component_{midfunc}lpmf({ys} | {probs})"
-
-        # Overall log-loss is the coefficient + the log probability
-        return f"{coeff} + {logprob}"
-
-    @abstractmethod
-    def get_stan_probs_indexed_varname(self, index_opts: tuple[str, ...] | None) -> str:
-        """Returns Stan code that will yield the probabilities of the distribution"""
 
     @property
     def plp_function_name(self) -> str:
         """There is no partial log probability function for the multinomial distribution"""
         return ""
-
-    # Redefine the parallelized property setter to set the multinomial coefficient
-    @Parameter._parallelized.setter  # pylint: disable=protected-access
-    def _parallelized(self, value: bool) -> None:
-
-        # Run the parent setter
-        super(_MultinomialBase, self.__class__)._parallelized.fset(self, value)
-
-        # If we are parallelized and have no children, then we will want a precalculated
-        # multinomial coefficient
-        if value and len(self._children) == 0:
-            self._multinomial_coefficient = MultinomialCoefficient(
-                self,
-                shape=self.shape[:-1] + (1,),
-                parallelize=True,
-            )
 
 
 class Multinomial(_MultinomialBase):
@@ -1386,9 +1125,6 @@ class Multinomial(_MultinomialBase):
         self, theta: str, N: str
     ) -> str:
         return f"{theta}, {N}"
-
-    def get_stan_probs_indexed_varname(self, index_opts: tuple[str, ...] | None) -> str:
-        return self.theta.get_indexed_varname(index_opts)
 
 
 class MultinomialLogit(_MultinomialBase):
@@ -1442,6 +1178,3 @@ class MultinomialLogit(_MultinomialBase):
             return base_dist(n=n, pvals=special.softmax(logits, axis=-1), size=size)
 
         return multinomial_logit
-
-    def get_stan_probs_indexed_varname(self, index_opts: tuple[str, ...] | None) -> str:
-        return f"softmax({self.gamma.get_indexed_varname(index_opts)})"

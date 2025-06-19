@@ -197,4 +197,22 @@ class ExpExponential(
         super().__init__(base_dist, transforms, *args, **kwargs)
 
 
+class ExpDirichlet(
+    dist.transformed_distribution.TransformedDistribution, CustomDistribution
+):
+    """Implementation of the Exponential Dirichlet distribution."""
+
+    def __init__(self, concentration: torch.Tensor, *args, **kwargs):
+        """
+        Args:
+            concentration (torch.Tensor): Concentration parameter.
+            *args: Additional arguments for the base distribution.
+            **kwargs: Additional keyword arguments for the base distribution.
+        """
+        # Build the base distribution (Dirichlet) and transforms (log)
+        base_dist = dist.Dirichlet(concentration=concentration)
+        transforms = [dist.transforms.ExpTransform().inv]
+        super().__init__(base_dist, transforms, *args, **kwargs)
+
+
 # pylint: enable=abstract-method

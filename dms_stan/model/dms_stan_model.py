@@ -86,13 +86,11 @@ class Model(ABC):
     def __init__(
         self,
         *args,
-        default_parallelize: Optional[bool] = None,
         default_data: dict[str, npt.NDArray] | None = None,
         **kwargs,
     ):
         """This should be overridden by the subclass."""
         # Set the default values for the model
-        self._default_parallelize: Optional[bool] = default_parallelize
         self._default_data: dict[str, npt.NDArray] | None = default_data
         self._named_model_components: tuple[AbstractModelComponent, ...] = getattr(
             self, "_named_model_components", ()
@@ -114,7 +112,6 @@ class Model(ABC):
         def __init__(
             self: "Model",
             *init_args,
-            parallelize: Optional[bool] = None,
             **init_kwargs,
         ):
             # Initialization is incomplete at this stage
@@ -165,9 +162,7 @@ class Model(ABC):
             self._named_model_components = tuple(named_model_components.values())
 
             # Build the mapping between model variable names and parameter objects
-            self._model_varname_to_object = self._build_model_varname_to_object(
-                parallelize=parallelize
-            )
+            self._model_varname_to_object = self._build_model_varname_to_object()
 
             # Initialization is complete
             self._init_complete = True
@@ -181,9 +176,7 @@ class Model(ABC):
         cls._wrapped_init = cls.__init__
         cls.__init__ = __init__
 
-    def _build_model_varname_to_object(
-        self, parallelize: bool | None
-    ) -> dict[str, AbstractModelComponent]:
+    def _build_model_varname_to_object() -> dict[str, AbstractModelComponent]:
         """Builds a mapping between model varnames and objects for easy access."""
 
         def build_initial_mapping() -> dict[str, AbstractModelComponent]:
@@ -210,29 +203,6 @@ class Model(ABC):
 
             return model_varname_to_object
 
-        def update_parallelization(parallelize_local: bool | None) -> None:
-            """
-            For all components identified in `build_initial_mapping`, set the
-            parallelization attribute. This is done in `_build_model_varname_to_object`
-            because the act of setting parallelization may add new child components
-            to some of the components. These child components handle transformed
-            data.
-            """
-            # Handle parallelization. This might add some child components that handle
-            # transformed data
-            if (
-                parallelize_local is None
-                and getattr(self, "_default_parallelize", None) is not None
-            ):
-                parallelize_local = self._default_parallelize
-            if parallelize_local is not None:
-                for component in model_varname_to_object.values():
-                    if isinstance(component, TransformedData):
-                        continue
-                    component._parallelized = (  # pylint: disable=protected-access
-                        parallelize_local
-                    )
-
         def record_transformed_data() -> None:
             """Updates the mapping with all transformed data components."""
 
@@ -245,7 +215,6 @@ class Model(ABC):
 
         # Run the steps
         model_varname_to_object = build_initial_mapping()
-        update_parallelization(parallelize)
         record_transformed_data()
 
         # There can be no duplicate values in the mapping
