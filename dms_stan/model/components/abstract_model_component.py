@@ -713,12 +713,3 @@ class AbstractModelComponent(ABC):
         not observable.
         """
         return False
-
-    @property
-    def raw_varname(self) -> str:
-        """
-        Some parameters are defined in terms of others. That "other" parameter's
-        name is the raw variable name. This returns an empty string by default,
-        indicating no raw variable name.
-        """
-        return ""

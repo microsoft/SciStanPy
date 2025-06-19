@@ -50,6 +50,7 @@ class Parameter(AbstractModelComponent):
     """Base class for parameters used in DMS Stan"""
 
     STAN_DIST: str = ""  # The Stan distribution name
+    HAS_RAW_VARNAME: bool = False  # Whether the parameter has a raw variable name
 
     def __init__(
         self,
@@ -362,6 +363,15 @@ class Parameter(AbstractModelComponent):
             isinstance(child, TransformedData) for child in self._children
         )
 
+    @property
+    def raw_varname(self) -> str:
+        """
+        Some parameters are defined in terms of others. That "other" parameter's
+        name is the raw variable name. This returns an empty string by default,
+        indicating no raw variable name.
+        """
+        return f"{self.stan_model_varname}_raw" if self.HAS_RAW_VARNAME else ""
+
 
 class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
@@ -476,11 +486,6 @@ class Normal(ContinuousDistribution):
         ), "Non-centered parameters should not have a distribution suffix"
 
         return "std_normal()"
-
-    @property
-    def raw_varname(self) -> str:
-        """Return the non-centered variable name"""
-        return f"{self.stan_model_varname}_raw"
 
     @property
     def is_noncentered(self) -> bool:
