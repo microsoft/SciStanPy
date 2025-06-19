@@ -61,7 +61,7 @@ Putting everything together, the probability for the exponential-Dirichlet distr
 
 $$
 \begin{align}
-P_{\mathbf{y}}(\mathbf{y} | \mathbf{\alpha}) = P_{\mathbf{x}}(\text{e}^\mathbf{y} | \mathbf{\alpha}) \prod_{k=1}^K\text{e}^{y_k},
+P_{\mathbf{y}}(\mathbf{y} | \boldsymbol{\alpha}) = P_{\mathbf{x}}(\text{e}^\mathbf{y} | \boldsymbol{\alpha}) \prod_{k=1}^K\text{e}^{y_k},
 \end{align}
 $$
 
@@ -69,19 +69,29 @@ which, on the log scale, gives us
 
 $$
 \begin{align}
-\ln{\left(P_{\mathbf{y}}(\mathbf{y} | \mathbf{\alpha})\right)} &= \ln{\left(P_{\mathbf{x}}(\text{e}^\mathbf{y} | \mathbf{\alpha}) \prod_{k=1}^K\text{e}^{y_k}\right)} \\
+\ln{\left(P_{\mathbf{y}}(\mathbf{y} | \boldsymbol{\alpha})\right)} &= \ln{\left(P_{\mathbf{x}}(\text{e}^\mathbf{y} | \boldsymbol{\alpha}) \prod_{k=1}^K\text{e}^{y_k}\right)} \\
 
-&= \ln{\left(\frac{1}{\Beta(\mathbf{\alpha})} \prod_{k=1}^{K} (\text{e}^{y_k})^{\alpha_k - 1}\right)} + \ln{\left(\prod_{k=1}^K\text{e}^{y_k}\right)} \\
+&= \ln{\left(\frac{1}{\Beta(\boldsymbol{\alpha})} \prod_{k=1}^{K} (\text{e}^{y_k})^{\alpha_k - 1}\right)} + \ln{\left(\prod_{k=1}^K\text{e}^{y_k}\right)} \\
 
-&= \sum_{k=1}^K\ln{\left(\text{e}^{y_k(\alpha_k - 1)}\right)} - \ln{(\Beta(\mathbf{\alpha}))} + \sum_{k=1}^K \ln{\text{e}^{y_k}} \\
+&= \sum_{k=1}^K\ln{\left(\text{e}^{y_k(\alpha_k - 1)}\right)} - \ln{(\Beta(\boldsymbol{\alpha}))} + \sum_{k=1}^K \ln{\text{e}^{y_k}} \\
 
-&= \sum_{k=1}^K y_k\alpha_k - y_k + y_k - \ln{(\Beta(\mathbf{\alpha}))} \\
+&= \sum_{k=1}^K y_k\alpha_k - y_k + y_k - \ln{(\Beta(\boldsymbol{\alpha}))} \\
 
-&= \sum_{k=1}^K y_k\alpha_k - \ln{(\Beta(\mathbf{\alpha}))}
+&= \sum_{k=1}^K y_k\alpha_k - \ln{(\Beta(\boldsymbol{\alpha}))}
 \end{align}
 $$
 
-Importantly, note that when $\mathbf{\alpha}$ has no prior, the term $\ln{(\Beta(\mathbf{\alpha}))}$ is constant for all samples, so can be excluded from the computation, leading to improved sampling efficiency.
+Importantly, note that when $\boldsymbol{\alpha}$ has no prior, the term $\ln{(\Beta(\boldsymbol{\alpha}))}$ is constant for all samples, so can be excluded from the computation, leading to improved sampling efficiency. When it is included, it can be calcualted as follows:
+
+$$
+\begin{align}
+    \ln{(\Beta(\boldsymbol{\alpha}))} &= \ln{\left(\frac{\Gamma{\left(\sum_{k=1}^K \alpha_k\right)}}{\prod_{k=1}^K\Gamma{(\alpha_k)}}\right)} \\
+
+    &= \ln{\left(\Gamma{\left(\sum_{k=1}^K \alpha_k\right)}\right)} - \sum_{k=1}^K\ln{\Gamma{(\alpha_k)}},
+\end{align}
+$$
+
+which can be calculated by making use of Stan's `lgamma` function.
 
 # Constraint Transforms
 For the [exponential-Dirichlet](#exponential-dirichlet) distribution, the vector $\mathbf{y}$ must obey the constraint $\sum_{k=1}^K \text{e}^{y_k} = 1$. This is because, for the standard Dirichlet distribution, $\mathbf{x}$ is a simplex and $x_k = \text{e}^{y_k}$.
@@ -285,14 +295,14 @@ Some distributions in DMS Stan are reparametrizations of others. These do not in
 The PDF for the multinomial distribution is given as
 
 $$
-P(\mathbf{n} | \mathbf{\theta}) = \frac{\left(\sum_{k=1}^K n_k\right)!}{\prod_{k=1}^Kn_k!}\prod_{k=1}^K\theta_k^{n_k}
+P(\mathbf{n} | \boldsymbol{\theta}) = \frac{\left(\sum_{k=1}^K n_k\right)!}{\prod_{k=1}^Kn_k!}\prod_{k=1}^K\theta_k^{n_k}
 $$
 
-In many instances, we wish to stay on the log scale when modeling using the multinomial distribution. That is, we want to parametrize in terms of $\mathbf{\Theta} = \ln{\mathbf{\theta}}$. Making the appropriate substitutions gives us
+In many instances, we wish to stay on the log scale when modeling using the multinomial distribution. That is, we want to parametrize in terms of $\boldsymbol{\Theta} = \ln{\boldsymbol{\theta}}$. Making the appropriate substitutions gives us
 
 $$
 \begin{align}
-    P(\mathbf{n} | \mathbf{\Theta}) &= \frac{\left(\sum_{k=1}^K n_k\right)!}{\prod_{k=1}^Kn_k!}\prod_{k=1}^K\text{e}^{\Theta_k^{n_k}} \\
+    P(\mathbf{n} | \boldsymbol{\Theta}) &= \frac{\left(\sum_{k=1}^K n_k\right)!}{\prod_{k=1}^Kn_k!}\prod_{k=1}^K\text{e}^{\Theta_k^{n_k}} \\
 
     &= \frac{\left(\sum_{k=1}^K n_k\right)!}{\prod_{k=1}^Kn_k!}\prod_{k=1}^K\text{e}^{n_k\Theta_k}
 \end{align}
@@ -303,12 +313,14 @@ The log probability thus becomes
 
 $$
 \begin{align}
-    \ln{\left(P(\mathbf{n} | \mathbf{\Theta})\right)} &= \ln{\left(\left(\sum_{k=1}^K n_k\right)!\right)} - \ln{\prod_{k=1}^Kn_k!} + \ln{\prod_{k=1}^K\text{e}^{n_k\Theta_k}} \\
+    \ln{\left(P(\mathbf{n} | \boldsymbol{\Theta})\right)} &= \ln{\left(\left(\sum_{k=1}^K n_k\right)!\right)} - \ln{\prod_{k=1}^Kn_k!} + \ln{\prod_{k=1}^K\text{e}^{n_k\Theta_k}} \\
 
-    &= \sum_{i=1}^{\sum_{k=1}^K n_k}\ln{i} - \sum_{k=1}^K\ln{n_k!} + \sum_{k=1}^K\ln{\left(\text{e}^{n_k\Theta_k}\right)} \\
+    &= \text{logFactorial}\left(\sum_{k=1}^K n_k\right) - \sum_{k=1}^K\text{logFactorial}(n_k) + \sum_{k=1}^K\ln{\left(\text{e}^{n_k\Theta_k}\right)} \\
 
-    &= \sum_{i=1}^{\sum_{k=1}^K n_k}\ln{i} - \sum_{k=1}^K\sum_{j=1}^{n_k}\ln{j} + \sum_{k=1}^Kn_k\Theta_k \\
+    &= \text{logFactorial}\left(\sum_{k=1}^K n_k\right) - \sum_{k=1}^K\text{logFactorial}(n_k) + \sum_{k=1}^Kn_k\Theta_k ,
+
 \end{align}
 $$
 
+where the $\text{logFactorial}$ function is equivalent to Stan's inbuilt `lgamma(n + 1)`.
 Notably, when the observations, $\mathbf{n}$ are constant, as is often the case for multinomial distributions which are used to model observed count data, we can precalculate the sums of logs and store them as "transformed data" attributes for use during log-probability calculations.

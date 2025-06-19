@@ -1,56 +1,25 @@
-real partial_sum_of_logints(array[] real count_slice, int start, int end) {
-    // Used with reduce_sum to calculate the sum of logs of integers.
-    vector[end - start + 1] logints;
-    for (i in start:end) {
-        logints[i - start + 1] = log(i);
-    }
-    return sum(to_vector(count_slice) .* logints);
-}
+real log_multinomial_coeff(array[] int n) {
+    // Computes the log of the multinomial coefficient for a vector n.
 
-array[] real get_count_coefficient(array[] int y) {
-    // Count how many times the log of an integer shows up in the log factorial
-    // component of the multinomial distribution lpmf.
-    int N = sum(y); // Total number of trials
-    int K = num_elements(y); // Number of categories
+    // Get the log factorial of the sum of n
+    real coeff = lgamma(sum(n) + 1);
 
-    // Everything is lower than 'N', so we know from the start that there is one
-    // of all integers from 1 to N. After that, we SUBTRACT one for each integer
-    // between 1 and y_k for all y_k in y
-    vector[N] count_of_counts = ones_vector(N);
-    for (k in 1:K) {
-        for (i in 1:(y[k])) {
-            count_of_counts[i] -= 1;
-        }
+    // Subtract the log factorial of each element in n
+    for (i in 1:size(n)) {
+        coeff -= lgamma(n[i] + 1);
     }
 
-    return to_array_1d(count_of_counts);
+    return coeff;
 }
 
-real parallelized_multinomial_factorial_component_lpmf(array[] int y) {
-    // Now we can calculate the sum of the logs of each integer 1 to N multiplied
-    // by the number of times it shows up in the log factorial.
-    return reduce_sum(partial_sum_of_logints, get_count_coefficient(y), 1);
+real mn_logtheta_unorm_lpmf(array[] int n, vector log_theta) {
+    // Unnormalized log probability density function for the multinomial distribution
+    // parametrized using the log of the probabilities (log_theta).
+    return to_row_vector(n) * log_theta;
 }
 
-real mn_nonfactor_partial_sum(array[] int y, int start, int end, vector theta) {
-    // Calculates the partial sum of y_i * log(theta_i) for the multinomial distribution
-    return to_row_vector(y) * log(theta[start:end]);
-}
-
-real mn_nonfactor_partial_sum_theta_slice(array[] real theta, int start, int end, array[] int y) {
-    // Calculates the partial sum of y_i * log(theta_i) for the multinomial distribution
-    // with a slice over theta rather than y.
-    return to_row_vector(y[start:end]) * log(to_vector(theta));
-}
-
-real parallelized_multinomial_nonfactorial_component_lpmf(array[] int y, vector theta) {
-    // Calculates the log probability mass function for the non-factorial component
-    // of the multinomial distribution (i.e., y_1 * log(theta_1) + y_2 * log(theta_2) + ...).
-    return reduce_sum(mn_nonfactor_partial_sum, y, 1, theta);
-}
-
-real parallelized_multinomial_factorial_component_thetaslice_lpmf(array[] int y, array[] real theta) {
-    // Calculates the log probability mass function for the non-factorial component
-    // of the multinomial distribution (i.e., y_1 * log(theta_1) + y_2 * log(theta_2) + ...).
-    return reduce_sum(mn_nonfactor_partial_sum_theta_slice, theta, 1, y);
+real mn_logtheta_norm_lpmf(array[] int n, vector log_theta) {
+    // Log probability density function for the multinomial distribution parametrized
+    // using the log of the probabilities (log_theta).
+    return log_multinomial_coeff(n) + mn_logtheta_unorm_lpmf(n | log_theta);
 }

@@ -1,0 +1,21 @@
+real vectorized_lbeta(vector alpha) {
+    // Computes the log of the beta function for a vector of parameters alpha.
+    // This is used in the exp-dirichlet distribution to calculate the normalization
+    // constant.
+    return lgamma(sum(alpha)) - sum(lgamma(alpha));
+}
+
+real expdirichlet_unnorm_lpdf(vector y, vector alpha) {
+    // Unnormalized log probability density function for the exp-dirichlet distribution.
+    // This is the same as the log of the exponential of the dot product of alpha and y.
+    return dot_product(alpha, y);
+}
+
+real expdirichlet_norm_lpdf(vector y, vector alpha) {
+    // Log probability density function for the exp-dirichlet distribution. For
+    // a vector y, if the exponential of y is dirichlet distributed, then y is
+    // exp-dirichlet distributed. Equivalently, if y is dirichlet distributed,
+    // then log(y) is exp-dirichlet distributed. This is calcualted as the dot
+    // product of the alpha and y vectors minus the log of the beta function
+    return expdirichlet_unnorm_lpdf(y | alpha) - vectorized_lbeta(alpha);
+}
