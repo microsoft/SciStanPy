@@ -50,9 +50,6 @@ class Parameter(AbstractModelComponent):
     """Base class for parameters used in DMS Stan"""
 
     STAN_DIST: str = ""  # The Stan distribution name
-    UNNORMALIZED_LOG_PROB_SUFFIX: str = (
-        ""  # Will be 'lupmf' for discrete, 'lupdf' for continuous
-    )
 
     def __init__(
         self,
@@ -78,12 +75,6 @@ class Parameter(AbstractModelComponent):
         # Make sure the STAN_DIST class attribute is defined
         if self.STAN_DIST == "":
             raise NotImplementedError("The STAN_DIST class attribute must be defined")
-
-        # We must have defined the `UNNORMALIZED_LOG_PROB_SUFFIX` class attribute
-        if self.UNNORMALIZED_LOG_PROB_SUFFIX == "":
-            raise NotImplementedError(
-                "The UNNORMALIZED_LOG_PROB_SUFFIX class attribute must be defined"
-            )
 
         # Parameters can be manually set as observables, so we need a flag to
         # track this
@@ -375,8 +366,6 @@ class Parameter(AbstractModelComponent):
 class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
 
-    UNNORMALIZED_LOG_PROB_SUFFIX: str = "lupdf"
-
 
 class DiscreteDistribution(Parameter):
     """
@@ -387,7 +376,6 @@ class DiscreteDistribution(Parameter):
 
     BASE_STAN_DTYPE: str = "int"
     LOWER_BOUND: int = 0
-    UNNORMALIZED_LOG_PROB_SUFFIX: str = "lupmf"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -441,7 +429,7 @@ class Normal(ContinuousDistribution):
         formattables = super(Parameter, self).get_right_side(index_opts)
         mu_declaration, sigma_declaration = formattables["mu"], formattables["sigma"]
         raw_declaration = self.get_indexed_varname(
-            index_opts, _name_override=self.noncentered_varname
+            index_opts, _name_override=self.raw_varname
         )
 
         # Otherwise, we redefine this parameter as the transformation of a draw
@@ -462,9 +450,7 @@ class Normal(ContinuousDistribution):
         # Otherwise, replace the default variable name with the non-centered variable
         # name
         default_name = self.get_indexed_varname(index_opts)
-        new_name = self.get_indexed_varname(
-            index_opts, _name_override=self.noncentered_varname
-        )
+        new_name = self.get_indexed_varname(index_opts, _name_override=self.raw_varname)
 
         return parent_incrementation.replace(f"{default_name} ~", f"{new_name} ~")
 
@@ -492,7 +478,7 @@ class Normal(ContinuousDistribution):
         return "std_normal()"
 
     @property
-    def noncentered_varname(self) -> str:
+    def raw_varname(self) -> str:
         """Return the non-centered variable name"""
         return f"{self.stan_model_varname}_raw"
 
@@ -959,10 +945,83 @@ class Dirichlet(ContinuousDistribution):
     def _write_dist_args(self, alpha: str) -> str:  # pylint: disable=arguments-differ
         return alpha
 
+
+class ExpDirichlet(Dirichlet):
+    """Defines the Exp-Dirichlet distribution, which is the distribution of y if
+    exp(y) follows a Dirichlet distribution. Equivalently, if y follows a Dirichlet
+    distribution, then log(y) follows an Exp-Dirichlet distribution.
+    """
+
+    BASE_STAN_DTYPE = "real"
+    IS_SIMPLEX = False
+    IS_LOG_SIMPLEX = True
+    LOWER_BOUND = None
+    UPPER_BOUND = 0.0
+    STAN_DIST = "expdirichlet"
+
+    def __init__(
+        self,
+        *,
+        alpha: Union[AbstractModelComponent, npt.ArrayLike],
+        **kwargs,
+    ):
+        super(Dirichlet, self).__init__(
+            numpy_dist="dirichlet",
+            torch_dist=custom_torch_dists.ExpDirichlet,
+            stan_to_np_names={"alpha": "alpha"},
+            stan_to_torch_names={"alpha": "concentration"},
+            alpha=alpha,
+            **kwargs,
+        )
+
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+        # The base distribution is the Dirichlet distribution
+        np_dist = super().get_numpy_dist(seed=seed)
+
+        # Wrap the dirichlet distribution to take the log of the draw
+        def expdirichlet_dist(
+            alpha: npt.NDArray, size: int | tuple[int, ...] | None = None
+        ) -> npt.NDArray:
+            return np.log(np_dist(alpha=alpha, size=size))
+
+        return expdirichlet_dist
+
+    def get_supporting_functions(self) -> list[str]:
+        # We need to extend the set of supporting functions to include the custom
+        # Stan functions for the Exp-Dirichlet distribution
+        return super().get_supporting_functions() + [
+            "#include expdirichlet.stanfunctions"
+        ]
+
+    def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
+        """
+        There is no 'log simplex' type in Stan, so we need to redefine the base
+        vector definition to be constrained to the log simplex.
+        """
+        # We constrain and adjust the Jacobian for the transformation
+        raw_varname = self.get_indexed_varname(
+            index_opts, _name_override=self.raw_varname
+        )
+        transformed_varname = self.get_indexed_varname(index_opts)
+
+        return f"{transformed_varname} = logsoftmax_transform_lp({raw_varname})"
+
+    def get_right_side(
+        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
+    ) -> str:
+        # If no suffix is provided, determine whether we are using the normalized
+        # or unnormalized version of the distribution. We use unnormalized when
+        # the parameter is a hyperparameter with no parents.
+        if dist_suffix == "":
+            dist_suffix = "unnorm" if self.is_hyperparameter else "norm"
+
+        # Now we just run the parent method
+        return super().get_right_side(index_opts, dist_suffix=dist_suffix)
+
     @property
-    def plp_function_name(self) -> str:
-        """There is no partial log probability function for the Dirichlet distribution"""
-        return ""
+    def raw_varname(self) -> str:
+        """Return the raw variable name for the Exp-Dirichlet distribution"""
+        return f"{self.stan_model_varname}_raw"
 
 
 class Binomial(DiscreteDistribution):
@@ -1092,11 +1151,6 @@ class _MultinomialBase(DiscreteDistribution):
         assert raw.count(", ") == 1, "Invalid target incrementation: " + raw
         raw, _ = raw.split(", ")
         return raw + ")"
-
-    @property
-    def plp_function_name(self) -> str:
-        """There is no partial log probability function for the multinomial distribution"""
-        return ""
 
 
 class Multinomial(_MultinomialBase):

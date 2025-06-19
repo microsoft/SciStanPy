@@ -27,6 +27,7 @@ class AbstractModelComponent(ABC):
     LOWER_BOUND: Optional[float | int] = None
     UPPER_BOUND: Optional[float | int] = None
     IS_SIMPLEX: bool = False
+    IS_LOG_SIMPLEX: bool = False
 
     def __init__(  # pylint: disable=unused-argument
         self,
@@ -89,6 +90,14 @@ class AbstractModelComponent(ABC):
                 raise ValueError("Simplex parameters cannot have lower bounds")
             if self.UPPER_BOUND is not None and self.UPPER_BOUND != 1.0:
                 raise ValueError("Simplex parameters cannot have upper bounds")
+
+        # If THIS parameter is a log simplex, then the upper and lower bounds cannot
+        # be set
+        if self.IS_LOG_SIMPLEX:
+            if self.LOWER_BOUND is not None and self.LOWER_BOUND != -np.inf:
+                raise ValueError("Log simplex parameters cannot have lower bounds")
+            if self.UPPER_BOUND is not None and self.UPPER_BOUND != 0.0:
+                raise ValueError("Log simplex parameters cannot have upper bounds")
 
     def _set_parents(
         self,
@@ -452,11 +461,7 @@ class AbstractModelComponent(ABC):
                 isinstance(param, (dms_components.Constant, dms_components.Parameter))
                 or param.is_named
             ):
-                components[name] = (
-                    param.plp_function_body_varname
-                    if index_opts is None
-                    else param.get_indexed_varname(index_opts)
-                )
+                components[name] = param.get_indexed_varname(index_opts)
 
             # Otherwise, we need to get the thread of operations that make up the
             # transformation for the parameter. This is equivalent to calling the
@@ -606,48 +611,6 @@ class AbstractModelComponent(ABC):
         return dtype
 
     @property
-    def plp_argspec_dtype(self) -> str:
-        """
-        Returns the datatype used in the argument specification for this parameter
-        when used in the partial log probability function used alongside Stan's
-        `reduce_sum` function.
-        """
-        # Get the datatype. We use the base datatype for scalars and elements
-        # whose last dimension is a singleton.
-        if self.ndim == 0 or self.shape[-1] == 1:
-            return "int" if self.BASE_STAN_DTYPE == "int" else "real"
-
-        # For everything else, we use the relevant multi-dimensional datatype
-        elif self.BASE_STAN_DTYPE in {"real", "simplex"}:
-            return "vector"
-        elif self.BASE_STAN_DTYPE == "int":
-            return "array[] int"
-
-        # If we get here, then we have an unknown base datatype
-        raise AssertionError(f"Unknown base datatype: {self.BASE_STAN_DTYPE}")
-
-    @property
-    def plp_argspec_vardec(self) -> str:
-        """
-        Returns the variable declaration for this parameter when used in the
-        argument specification for the partial log probability function used
-        alongside Stan's `reduce_sum` function.
-        """
-        return f"{self.plp_argspec_dtype} {self.stan_model_varname}"
-
-    @property
-    def plp_function_body_varname(self) -> str:
-        """
-        Returns the variable name used in the body of the partial log probability
-        function for this parameter. This will be identical to the `stan_model_varname`
-        if the parameter is a scalar or its last dimension is a singleton. Otherwise,
-        it will be the sliced version of the `stan_model_varname`.
-        """
-        if self.plp_argspec_dtype in {"int", "real"}:
-            return self.stan_model_varname
-        return f"{self.stan_model_varname}[start:end]"
-
-    @property
     def stan_code_level(self) -> int:
         """
         The level (index of the for-loop block) at which the parameter is manipulated
@@ -750,3 +713,12 @@ class AbstractModelComponent(ABC):
         not observable.
         """
         return False
+
+    @property
+    def raw_varname(self) -> str:
+        """
+        Some parameters are defined in terms of others. That "other" parameter's
+        name is the raw variable name. This returns an empty string by default,
+        indicating no raw variable name.
+        """
+        return ""

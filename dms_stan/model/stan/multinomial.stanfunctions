@@ -12,14 +12,27 @@ real log_multinomial_coeff(array[] int n) {
     return coeff;
 }
 
-real mn_logtheta_unorm_lpmf(array[] int n, vector log_theta) {
+real multinomial_logtheta_unorm_lpmf(array[] int n, vector log_theta) {
     // Unnormalized log probability density function for the multinomial distribution
     // parametrized using the log of the probabilities (log_theta).
     return to_row_vector(n) * log_theta;
 }
 
-real mn_logtheta_norm_lpmf(array[] int n, vector log_theta) {
+real multinomial_logtheta_norm_lpmf(array[] int n, vector log_theta) {
     // Log probability density function for the multinomial distribution parametrized
     // using the log of the probabilities (log_theta).
-    return log_multinomial_coeff(n) + mn_logtheta_unorm_lpmf(n | log_theta);
+    return log_multinomial_coeff(n) + multinomial_logtheta_unorm_lpmf(n | log_theta);
+}
+
+real multinomial_logtheta_manual_norm_lpmf(array[] int n, vector log_theta, real coeff) {
+    // Log probability density function for the multinomial distribution parametrized
+    // using the log of the probabilities (log_theta). This is calculated by providing
+    // a pre-calculated normalization constant.
+    return coeff + multinomial_logtheta_unorm_lpmf(n | log_theta);
+}
+
+array[] int multinomial_logtheta_rng(vector log_theta, int N) {
+    // Generate a random sample from the multinomial distribution parametrized
+    // using the log of the probabilities (log_theta).
+    return multinomial_rng(exp(log_theta), N);
 }
