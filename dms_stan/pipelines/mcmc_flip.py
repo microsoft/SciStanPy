@@ -10,10 +10,6 @@ from dms_stan.model.enrichment import (
     ExponRateSigmoidGrowth,
     GammaInvRateExponGrowth,
     GammaInvRateSigmoidGrowth,
-    GammaNoiseExponRateExponGrowth,
-    GammaNoiseExponRateSigmoidGrowth,
-    GammaNoiseLomaxRateExponGrowth,
-    GammaNoiseLomaxRateSigmoidGrowth,
     LomaxRateExponGrowth,
     LomaxRateSigmoidGrowth,
     NonHierarchicalExponRateExponGrowth,
@@ -61,10 +57,6 @@ def build_model_map():
             "exponential": ExponRateExponGrowth,
             "logistic": ExponRateSigmoidGrowth,
         },
-        "expon-gamma": {
-            "exponential": GammaNoiseExponRateExponGrowth,
-            "logistic": GammaNoiseExponRateSigmoidGrowth,
-        },
         "gamma": {
             "exponential": GammaInvRateExponGrowth,
             "logistic": GammaInvRateSigmoidGrowth,
@@ -72,10 +64,6 @@ def build_model_map():
         "lomax": {
             "exponential": LomaxRateExponGrowth,
             "logistic": LomaxRateSigmoidGrowth,
-        },
-        "lomax-gamma": {
-            "exponential": GammaNoiseLomaxRateExponGrowth,
-            "logistic": GammaNoiseLomaxRateSigmoidGrowth,
         },
     }
     non_hierarchical_models = {
