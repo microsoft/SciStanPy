@@ -561,6 +561,54 @@ class LogExponentialGrowth(TransformedParameter):
         return f"{log_A} + {r} .* {t}"
 
 
+class BinaryLogExponentialGrowth(TransformedParameter):
+    """
+    Special case of `LogExponentialGrowth` used for modeling when only two timepoints
+    are available. In this case, we assume that t0 = 0 and t1 = 1, reducing the
+    operation to:
+
+    $$
+    log(x) = log_A + r
+    $$
+
+    """
+
+    def __init__(
+        self,
+        log_A: "dms.custom_types.CombinableParameterType",
+        r: "dms.custom_types.CombinableParameterType",
+        **kwargs,
+    ):
+        """Initializes the BinaryLogExponentialGrowth distribution.
+
+        Args:
+            log_A ("dms.custom_types.SampleType"): The log of the amplitude parameter.
+
+            r ("dms.custom_types.SampleType"): The rate parameter.
+
+            shape (tuple[int, ...], optional): The shape of the distribution. In
+                most cases, this can be ignored as it will be calculated automatically.
+        """
+        super().__init__(log_A=log_A, r=r, **kwargs)
+
+    # pylint: disable=arguments-differ
+    @overload
+    def operation(self, log_A: torch.Tensor, r: torch.Tensor) -> torch.Tensor: ...
+    @overload
+    def operation(
+        self,
+        log_A: "dms.custom_types.SampleType",
+        r: "dms.custom_types.SampleType",
+    ) -> npt.NDArray: ...
+    def operation(self, *, log_A, r):
+        return log_A + r
+
+    def _write_operation(self, log_A: str, r: str) -> str:
+        return f"{log_A} + {r}"
+
+    # pylint: enable=arguments-differ
+
+
 class SigmoidGrowth(SigmoidParameter):
     r"""
     A transformed parameter that models sigmoid growth. Specifically, parameters
@@ -767,3 +815,72 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
         return f"{x0} .* exp(log1p_exp({r} .* {c}) - log1p_exp({r} .* ({c} - {t})))"
 
     # pylint: enable=arguments-renamed, arguments-differ
+
+
+class LogSigmoidGrowthInitParametrization(TransformedParameter):
+    r"""
+    An alternative parametrization of the log sigmoid growth function that
+    parametrizes in terms of starting abundances rather than the maximum abundances.
+    """
+
+    LOWER_BOUND: None = None
+    UPPER_BOUND: None = None
+
+    def __init__(  # pylint: disable=useless-parent-delegation
+        self,
+        *,
+        t: "dms.custom_types.CombinableParameterType",
+        log_x0: "dms.custom_types.CombinableParameterType",  # pylint: disable=invalid-name
+        r: "dms.custom_types.CombinableParameterType",
+        c: "dms.custom_types.CombinableParameterType",
+        **kwargs,
+    ):
+        """Initializes the LogSigmoidGrowthInitParametrization distribution.
+
+        Args:
+            t (dms.custom_types.CombinableParameterType): The time parameter.
+            log_x0 (dms.custom_types.CombinableParameterType): Logarithm of initial
+                abundances.
+            r (dms.custom_types.CombinableParameterType): Growth rate.
+            c (dms.custom_types.CombinableParameterType): Offset parameter.
+            shape (tuple[int, ...], optional): The shape of the distribution. Defaults
+            to ().
+        """
+        # Initialize using the base transformed parameter class
+        super().__init__(t=t, log_x0=log_x0, r=r, c=c, **kwargs)
+
+    # pylint: disable=arguments-renamed, arguments-differ
+    @overload
+    def operation(
+        self,
+        t: torch.Tensor,
+        log_x0: torch.Tensor,  # pylint: disable=invalid-name
+        r: torch.Tensor,
+        c: torch.Tensor,
+    ) -> torch.Tensor: ...
+
+    @overload
+    def operation(
+        self,
+        t: "dms.custom_types.SampleType",
+        log_x0: "dms.custom_types.SampleType",  # pylint: disable=invalid-name
+        r: "dms.custom_types.SampleType",
+        c: "dms.custom_types.SampleType",
+    ) -> npt.NDArray: ...
+
+    def operation(self, t, log_x0, r, c):
+        """We use a log-add-exp trick to calculate in a numerically stable way."""
+        # Get the module
+        mod = _choose_module(log_x0)
+
+        # Define zero
+        zero = 0.0 if mod is np else torch.tensor(0.0, device=log_x0.device)
+
+        # Calculate
+        return log_x0 + mod.logaddexp(zero, r * c) - mod.logaddexp(zero, r * (c - t))
+
+    def _write_operation(
+        self, t: str, log_x0: str, r: str, c: str  # pylint: disable=invalid-name
+    ) -> str:
+        """Calculate using Stan's log1p_exp function."""
+        return f"{log_x0} + log1p_exp({r} .* {c}) - log1p_exp({r} .* ({c} - {t}))"
