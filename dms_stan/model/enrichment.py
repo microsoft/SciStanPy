@@ -160,8 +160,8 @@ class BaseEnrichmentModel(dms.Model):
             timepoint_counts.sum(axis=-1, keepdims=True), togglable=False
         )
 
-        # Starting proportions are Dirichlet distributed
-        self.theta_t0 = dms_components.Dirichlet(
+        # Starting proportions are Exp-Dirichlet distributed
+        self.log_theta_t0 = dms_components.ExpDirichlet(
             alpha=alpha, shape=starting_counts.shape
         )
 
@@ -170,16 +170,17 @@ class BaseEnrichmentModel(dms.Model):
 
         # Calculate ending proportions
         self.raw_abundances_tg0 = self._define_growth_function()
-        self.theta_tg0 = dms_ops.normalize(self.raw_abundances_tg0)
+        self.log_theta_tg0 = dms_ops.normalize_log(self.raw_abundances_tg0)
 
-        # The counts are modeled as multinomial distributions
-        self.starting_counts = dms_components.Multinomial(
-            theta=self.theta_t0,
+        # The counts are modeled as multinomial distributions, parametrized using
+        # the log theta parameter
+        self.starting_counts = dms_components.MultinomialLogTheta(
+            log_theta=self.log_theta_t0,
             N=self.total_starting_counts,
             shape=starting_counts.shape,
         )
-        self.timepoint_counts = dms_components.Multinomial(
-            theta=self.theta_tg0,
+        self.timepoint_counts = dms_components.MultinomialLogTheta(
+            log_theta=self.log_theta_tg0,
             N=self.total_timepoint_counts,
             shape=timepoint_counts.shape,
         )
@@ -201,28 +202,30 @@ class BaseEnrichmentModel(dms.Model):
         """
 
 
-class ExponentialMixIn:
-    """Mixin class for exponential growth models."""
+class LogExponentialMixIn:
+    """Mixin class for log-exponential growth models."""
 
     def _define_growth_function(
         self,
-    ) -> dms_components.BinaryExponentialGrowth | dms_components.ExponentialGrowth:
+    ) -> (
+        dms_components.BinaryLogExponentialGrowth | dms_components.LogExponentialGrowth
+    ):
         # pylint: disable=no-member
         if self.times is None:
-            return dms_components.BinaryExponentialGrowth(
-                A=self.theta_t0,
+            return dms_components.BinaryLogExponentialGrowth(
+                log_A=self.log_theta_t0,
                 r=self.r,
                 shape=self.default_data["timepoint_counts"].shape,
             )
-        return dms_components.ExponentialGrowth(
+        return dms_components.LogExponentialGrowth(
             t=self.times,
-            A=self.theta_t0,
+            log_A=self.log_theta_t0,
             r=self.r,
             shape=self.default_data["timepoint_counts"].shape,
         )
 
 
-class SigmoidMixIn:
+class LogSigmoidMixIn:
     """Mixin class for sigmoid growth models."""
 
     def __init__(
@@ -285,16 +288,16 @@ class SigmoidMixIn:
 
     def _define_growth_function(
         self,
-    ) -> dms_components.SigmoidGrowthInitParametrization:
+    ) -> dms_components.LogSigmoidGrowthInitParametrization:
         # pylint: disable=no-member
         # Get the ending abundances
-        return dms_components.SigmoidGrowthInitParametrization(
+        return dms_components.LogSigmoidGrowthInitParametrization(
             t=(
                 dms_components.Constant(1.0, togglable=False)
                 if self.times is None
                 else self.times
             ),
-            x0=self.theta_t0,
+            log_x0=self.log_theta_t0,
             r=self.r,
             c=self.c,
             shape=self.default_data["timepoint_counts"].shape,
@@ -449,7 +452,7 @@ class BaseFoldChangeRate(HierarchicalModel):
         # Define the log of typical growth rate
         self.log_r = self._define_growth_distribution(**hyperparameters)
 
-        # The error on the log of the fold-change is modeled as a half-normal distribution.
+        # The error on the log of the fold-change is modeled as an exponential distribution.
         # We assume homoscedasticity in fold-change error
         self.log_foldchange_sigma = dms_components.Exponential(
             beta=log_foldchange_sigma_beta
@@ -460,9 +463,9 @@ class BaseFoldChangeRate(HierarchicalModel):
         if self.times is not None:
             shape[1] = 1
 
-        # The fold-change is modeled as a log-normal distribution (i.e., the log
-        # of the fold-change is normally distributed) with a mean of 0 (i.e., the
-        # typical fold-change is 1).
+        # We model the r values as normally distributed around their log (i.e.,
+        # we assume we can have equal foldchange to lower and higher values) and
+        # the typical fold-change is 1 (i.e., the log of the fold-change is 0).
         self.r = dms_components.LogNormal(
             mu=self.log_r,
             sigma=self.log_foldchange_sigma,
@@ -544,7 +547,7 @@ class BaseLomaxRate(BaseFoldChangeRate):
         )
 
 
-class GammaInvRateExponGrowth(ExponentialMixIn, BaseGammaInvRate):
+class GammaInvRateExponGrowth(LogExponentialMixIn, BaseGammaInvRate):
     """
     Models the TrpB count data from Johnston et al. using an exponential growth
     function to model the time-dependent increase in counts and a multinomial distribution
@@ -553,7 +556,7 @@ class GammaInvRateExponGrowth(ExponentialMixIn, BaseGammaInvRate):
     """
 
 
-class GammaInvRateSigmoidGrowth(SigmoidMixIn, BaseGammaInvRate):
+class GammaInvRateSigmoidGrowth(LogSigmoidMixIn, BaseGammaInvRate):
     """Gamma-distributed inverse rate parameter with a sigmoid growth function."""
 
     def __init__(  # Updating default values
@@ -575,7 +578,7 @@ class GammaInvRateSigmoidGrowth(SigmoidMixIn, BaseGammaInvRate):
         )
 
 
-class ExponRateExponGrowth(ExponentialMixIn, BaseExponentialRate):
+class ExponRateExponGrowth(LogExponentialMixIn, BaseExponentialRate):
     """
     Models the TrpB count data from Johnston et al. using an exponential growth
     function to model the time-dependent increase in counts and a multinomial distribution
@@ -584,11 +587,11 @@ class ExponRateExponGrowth(ExponentialMixIn, BaseExponentialRate):
     """
 
 
-class ExponRateSigmoidGrowth(SigmoidMixIn, BaseExponentialRate):
+class ExponRateSigmoidGrowth(LogSigmoidMixIn, BaseExponentialRate):
     """Exponential-distributed rate parameter with a sigmoid growth function."""
 
 
-class LomaxRateExponGrowth(ExponentialMixIn, BaseLomaxRate):
+class LomaxRateExponGrowth(LogExponentialMixIn, BaseLomaxRate):
     """
     Models the TrpB count data from Johnston et al. using an exponential growth
     function to model the time-dependent increase in counts and a multinomial distribution
@@ -597,7 +600,7 @@ class LomaxRateExponGrowth(ExponentialMixIn, BaseLomaxRate):
     """
 
 
-class LomaxRateSigmoidGrowth(SigmoidMixIn, BaseLomaxRate):
+class LomaxRateSigmoidGrowth(LogSigmoidMixIn, BaseLomaxRate):
     """Lomax-distributed rate parameter with a sigmoid growth function."""
 
 
@@ -707,7 +710,7 @@ class NonHierarchicalBaseLomaxRate(NonHierarchicalModel):
 
 
 class NonHierarchicalExponRateExponGrowth(
-    ExponentialMixIn, NonHierarchicalBaseExponentialRate
+    LogExponentialMixIn, NonHierarchicalBaseExponentialRate
 ):
     """
     Models the TrpB count data from Johnston et al. using an exponential growth
@@ -718,13 +721,13 @@ class NonHierarchicalExponRateExponGrowth(
 
 
 class NonHierarchicalExponRateSigmoidGrowth(
-    SigmoidMixIn, NonHierarchicalBaseExponentialRate
+    LogSigmoidMixIn, NonHierarchicalBaseExponentialRate
 ):
     """Exponential-distributed rate parameter with a sigmoid growth function."""
 
 
 class NonHierarchicalLomaxRateExponGrowth(
-    ExponentialMixIn, NonHierarchicalBaseLomaxRate
+    LogExponentialMixIn, NonHierarchicalBaseLomaxRate
 ):
     """
     Models the TrpB count data from Johnston et al. using an exponential growth
@@ -734,5 +737,7 @@ class NonHierarchicalLomaxRateExponGrowth(
     """
 
 
-class NonHierarchicalLomaxRateSigmoidGrowth(SigmoidMixIn, NonHierarchicalBaseLomaxRate):
+class NonHierarchicalLomaxRateSigmoidGrowth(
+    LogSigmoidMixIn, NonHierarchicalBaseLomaxRate
+):
     """Lomax-distributed rate parameter with a sigmoid growth function."""
