@@ -3,7 +3,10 @@ raw_data
 temp
 flip3
 flip3_data
+flip_data
 .amltconfig
+amlt
+tmp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
