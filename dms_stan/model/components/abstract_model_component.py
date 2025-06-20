@@ -213,7 +213,7 @@ class AbstractModelComponent(ABC):
         return child_paramnames
 
     def get_indexed_varname(
-        self, index_opts: tuple[str, ...], _name_override: str = ""
+        self, index_opts: tuple[str, ...] | None, _name_override: str = ""
     ) -> str:
         """
         Returns the variable name used by stan with the appropriate indices. Note
@@ -231,7 +231,7 @@ class AbstractModelComponent(ABC):
         base_name = _name_override or self.stan_model_varname
 
         # If there are no indices, then we just return the variable name
-        if self.ndim == 0:
+        if self.ndim == 0 or index_opts is None:
             return base_name
 
         # Singleton dimensions get a "1" index. All others get the index options.
@@ -534,8 +534,14 @@ class AbstractModelComponent(ABC):
         except KeyError as error:
             try:
                 string_repr = repr(self)
-            except Exception:  # pylint: disable=broad-except
+            except Exception as error2:  # pylint: disable=broad-except
                 string_repr = super().__repr__()
+                raise AttributeError(
+                    f"Attribute '{key}' not found in {string_repr}. "
+                    "Encountered an error while trying to get the string representation."
+                ) from error2
+
+            # Otherwise, just raise the original error
             raise AttributeError(
                 f"Attribute '{key}' not found in {string_repr}"
             ) from error

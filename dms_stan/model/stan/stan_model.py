@@ -39,7 +39,6 @@ from dms_stan.model.components import (
     Constant,
     Multinomial,
     MultinomialLogit,
-    Normal,
     Parameter,
     TransformedData,
     TransformedParameter,
@@ -705,16 +704,15 @@ class StanProgram(StanCodeBase):
         """Returns the Stan code for the parameters block."""
         # Loop over all components recursively and define the parameters
         declarations: list[str] = []
-        for component in self.model.all_model_components:
+        for component in self.model.parameters:
 
-            # Special case for non-centered normal distributions.
-            if isinstance(component, Normal) and component.is_noncentered:
-                declarations.append(
-                    f"{component.stan_dtype} {component.noncentered_varname}"
-                )
+            # If the component is defined in raw form, we declare the raw variable.
+            # The true variable will be defined in the transformed parameters block.
+            if component.HAS_RAW_VARNAME:
+                declarations.append(component.raw_stan_parameter_declaration)
 
-            # Otherwise, add all parameters that are not observables
-            elif isinstance(component, Parameter) and not component.observable:
+            # Otherwise, add regular declarations for parameters.
+            else:
                 declarations.append(component.stan_parameter_declaration)
 
         # Combine the lines and enclose in the parameters block
@@ -734,12 +732,13 @@ class StanProgram(StanCodeBase):
     def transformed_parameters_block(self) -> str:
         """Returns the Stan code for the transformed parameters block."""
         # Get the declarations for transformed parameters. We take any named transformed
-        # parameters. We also take non-centered normal distributions.
+        # parameters. We also take any Parameter that transforms a raw to a real
+        # parameter
         declarations = [
             component.stan_parameter_declaration
             for component in self.recurse_model_components()
             if (isinstance(component, TransformedParameter) and component.is_named)
-            or (isinstance(component, Normal) and component.is_noncentered)
+            or (isinstance(component, Parameter) and component.HAS_RAW_VARNAME)
         ]
 
         # Combine declarations

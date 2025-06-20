@@ -1,6 +1,7 @@
 """Holds classes that can be used for defining models in DMS Stan models."""
 
 import inspect
+import re
 
 from abc import abstractmethod
 from functools import partial
@@ -368,6 +369,14 @@ class Parameter(AbstractModelComponent):
         """
         return f"{self.stan_model_varname}_raw" if self.HAS_RAW_VARNAME else ""
 
+    @property
+    def raw_stan_parameter_declaration(self) -> str:
+        """Declares the raw Stan parameter for this parameter."""
+        if self.HAS_RAW_VARNAME:
+            return self.declare_stan_variable(self.raw_varname)
+
+        return ""
+
 
 class ContinuousDistribution(Parameter, TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
@@ -490,6 +499,8 @@ class Normal(ContinuousDistribution):
         and we did not set `noncentered` to False at initialization.
         """
         return self._noncentered and not self.is_hyperparameter and not self.observable
+
+    HAS_RAW_VARNAME = is_noncentered  # Raw varname only if noncentered
 
 
 class HalfNormal(ContinuousDistribution):
@@ -860,20 +871,13 @@ class ExpLomax(Lomax):
         return super().get_supporting_functions() + ["#include explomax.stanfunctions"]
 
 
-class Dirichlet(ContinuousDistribution):
-    """Defines the Dirichlet distribution."""
-
-    BASE_STAN_DTYPE = "simplex"
-    IS_SIMPLEX = True
-    STAN_DIST = "dirichlet"
-    POSITIVE_PARAMS = {"alpha"}
+class _EnforceUniformityMixIn:
+    """Mix-in class to enforce uniformity of alpha parameters in Dirichlet-like distributions."""
 
     def __init__(
-        self,
-        *,
-        alpha: Union[AbstractModelComponent, npt.ArrayLike],
-        **kwargs,
+        self, *, alpha: Union[AbstractModelComponent, npt.ArrayLike], **kwargs
     ):
+
         # If a float or int is provided, then "shape" must be provided too. We will
         # create a numpy array filled of that shape filled with the value
         enforce_uniformity = True
@@ -888,6 +892,28 @@ class Dirichlet(ContinuousDistribution):
         else:
             enforce_uniformity = False
 
+        # Run the init method of the class one level up in the MRO hierarchy
+        super().__init__(alpha=alpha, **kwargs)
+
+        # Set `enforce_uniformity` appropriately
+        self.alpha.enforce_uniformity = enforce_uniformity  # pylint: disable=no-member
+
+
+class Dirichlet(_EnforceUniformityMixIn, ContinuousDistribution):
+    """Defines the Dirichlet distribution."""
+
+    BASE_STAN_DTYPE = "simplex"
+    IS_SIMPLEX = True
+    STAN_DIST = "dirichlet"
+    POSITIVE_PARAMS = {"alpha"}
+
+    def __init__(
+        self,
+        *,
+        alpha: Union[AbstractModelComponent, npt.ArrayLike],
+        **kwargs,
+    ):
+
         # Run the parent class's init
         super().__init__(
             numpy_dist="dirichlet",
@@ -897,9 +923,6 @@ class Dirichlet(ContinuousDistribution):
             alpha=alpha,
             **kwargs,
         )
-
-        # Set `enforce_uniformity` appropriately
-        self.alpha.enforce_uniformity = enforce_uniformity
 
     def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
         """
@@ -1006,7 +1029,7 @@ class ExpDirichlet(Dirichlet):
         )
         transformed_varname = self.get_indexed_varname(index_opts)
 
-        return f"{transformed_varname} = logsoftmax_transform_lp({raw_varname})"
+        return f"{transformed_varname} = logsoftmax_transform_jacobian({raw_varname})"
 
     def get_right_side(
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
@@ -1019,6 +1042,30 @@ class ExpDirichlet(Dirichlet):
 
         # Now we just run the parent method
         return super().get_right_side(index_opts, dist_suffix=dist_suffix)
+
+    @property
+    def raw_stan_parameter_declaration(self) -> str:
+        """
+        Declares the raw Stan parameter for this parameter. We must account for
+        the fact that the raw parameter has K - 1 dimensions, where K is the number
+        of categories in the Dirichlet distribution.
+        """
+        # Run the parent method to get the raw variable name
+        raw_varname = super().raw_stan_parameter_declaration
+
+        # We should always have a raw variable name if we are using the Exp-Dirichlet
+        assert raw_varname, "Raw variable name should not be empty for Exp-Dirichlet"
+
+        # Every ExpDirichlet will have a 'vector<upper=0.0>[K]' datatype. We want
+        # to split the raw variable name on this signature
+        array_info, index, var_info = re.match(
+            r"(.*)vector<upper=0.0>\[([0-9]+)\](.+)", raw_varname
+        ).groups()
+        index = int(index) - 1  # Remove extra dimension for the raw variable
+
+        # Reconstruct the raw variable name with the correct number of dimensions.
+        # Note that there is no upper bound on the raw variable
+        return f"{array_info}vector[{index}]{var_info}"
 
 
 class Binomial(DiscreteDistribution):

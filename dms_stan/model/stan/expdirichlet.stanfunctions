@@ -5,7 +5,7 @@ real vectorized_lbeta(vector alpha) {
     return lgamma(sum(alpha)) - sum(lgamma(alpha));
 }
 
-vector logsoftmax_transform_lp(vector z) {
+vector logsoftmax_transform_jacobian(vector z) {
     // Computes the log of the softmax function for a vector z and updates the target
     // variable with the absolute value of the Jacobian determinant of the transformation.
 
@@ -17,7 +17,7 @@ vector logsoftmax_transform_lp(vector z) {
     vector[K] y = z_extended - log_sum_exp(z_extended);
 
     // Jacobian determinant correction
-    target += y[K];
+    jacobian += y[K];
 
     return y;
 }

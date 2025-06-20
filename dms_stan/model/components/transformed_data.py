@@ -18,7 +18,7 @@ class TransformedData(Transformation):
 
     def __init__(self, **kwargs):
         # We do not check shapes for transformed data
-        super().__init__(_override_shape_check=True, **kwargs)
+        super().__init__(**kwargs)
 
     # There is no implementation of `_draw` or `torch_parametrization` for this
     # class.
@@ -54,7 +54,12 @@ class LogMultinomialCoefficient(TransformedData):
             **kwargs: Additional arguments to pass to the parent class.
         """
         # Initialize the parent class
-        super().__init__(counts=counts, **kwargs)
+        super().__init__(
+            counts=counts,
+            shape=counts.shape[:-1] + (1,),
+            _override_shape_check=True,
+            **kwargs,
+        )
 
     def _write_operation(self, counts: str) -> str:  # pylint: disable=arguments-differ
         """Writes the operation for the multinomial coefficient."""
