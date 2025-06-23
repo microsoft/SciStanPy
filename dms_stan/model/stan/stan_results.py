@@ -9,7 +9,6 @@ from glob import glob
 from typing import Any, Generator, Literal, Optional, overload, Sequence, Union
 
 import arviz as az
-import cmdstanpy
 import dask
 import holoviews as hv
 import h5netcdf
