@@ -15,7 +15,7 @@ TRPB_SKIPPED_TIMEPOINTS = {
     "libB": ([], 2),
     "libC": ([], 2),
     "libD": ([0], 4),
-    "libE": ([0], 4),
+    "libE": ([0, 1], 3),
     "libF": ([0, 1, 3], 2),
     "libG": ([0], 4),
     "libH": ([0], 4),
