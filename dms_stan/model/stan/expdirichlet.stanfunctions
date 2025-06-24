@@ -10,7 +10,7 @@ vector logsoftmax_transform_jacobian(vector z) {
     // variable with the absolute value of the Jacobian determinant of the transformation.
 
     // Append '0' to the vector z
-    int K = size(z);
+    int K = size(z) + 1;
     vector[K] z_extended = append_row(z, 0);
 
     // Normalize the extended vector on the log scale
