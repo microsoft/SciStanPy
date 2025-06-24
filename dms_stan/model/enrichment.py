@@ -18,7 +18,7 @@ class BaseEnrichmentModel(dms.Model):
         starting_counts: npt.NDArray[np.int64],
         timepoint_counts: npt.NDArray[np.int64],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         **hyperparameters,
     ):
         """Initializes the PDZ3 model with starting and ending counts.
@@ -130,7 +130,7 @@ class LogSigmoidMixIn:
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         c_alpha: float = 4.0,
         c_beta: float = 8.0,
         **hyperparameters,
@@ -209,7 +209,7 @@ class HierarchicalModel(BaseEnrichmentModel):
         starting_counts: npt.NDArray[np.int64],
         timepoint_counts: npt.NDArray[np.int64],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         **hyperparameters,
     ):
 
@@ -268,7 +268,7 @@ class BaseGammaInvRate(HierarchicalModel):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         inv_r_alpha: float = 7.0,
         inv_r_beta: float = 1.0,
     ):
@@ -321,7 +321,7 @@ class BaseFoldChangeRate(HierarchicalModel):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         log_foldchange_sigma_sigma: float = 0.1,
         **hyperparameters,
     ):
@@ -384,7 +384,7 @@ class BaseExponentialRate(BaseFoldChangeRate):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         log_foldchange_sigma_sigma: float = 0.1,
         beta: float = 1.0,
     ):
@@ -420,7 +420,7 @@ class BaseLomaxRate(BaseFoldChangeRate):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         log_foldchange_sigma_sigma: float = 0.1,
         lambda_: float = 1.0,
         lomax_alpha: float = 2.5,
@@ -463,7 +463,7 @@ class GammaInvRateSigmoidGrowth(LogSigmoidMixIn, BaseGammaInvRate):
         starting_counts: npt.NDArray[np.int64],
         timepoint_counts: npt.NDArray[np.int64],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         inv_r_alpha: float = 2.5,
         inv_r_beta: float = 0.5,
     ):
@@ -511,7 +511,7 @@ class NonHierarchicalModel(BaseEnrichmentModel):
         starting_counts: npt.NDArray[np.int64],
         timepoint_counts: npt.NDArray[np.int64],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         **hyperparameters,
     ):
         # If times are provided, then the timepoint counts should be 2D and have
@@ -556,7 +556,7 @@ class NonHierarchicalBaseExponentialRate(NonHierarchicalModel):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         beta: float = 1.0,
     ):
         # Run inherited init
@@ -583,7 +583,7 @@ class NonHierarchicalBaseLomaxRate(NonHierarchicalModel):
         starting_counts: npt.NDArray[np.integer],
         timepoint_counts: npt.NDArray[np.integer],
         times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.75,
+        alpha: float = 0.1,
         lambda_: float = 1.0,
         lomax_alpha: float = 2.5,
     ):
