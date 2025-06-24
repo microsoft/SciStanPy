@@ -164,10 +164,13 @@ class VariableAnalyzer:
                 metrictests = vartests.sel(metric=metric).to_numpy()
 
                 # Get the indices of the failing tests
-                failing_inds = [
-                    ".".join(map(str, indices))
-                    for indices in zip(*np.nonzero(metrictests))
-                ]
+                if metrictests.ndim > 0:
+                    failing_inds = [
+                        ".".join(map(str, indices))
+                        for indices in zip(*np.nonzero(metrictests))
+                    ]
+                else:
+                    failing_inds = [""] if metrictests else []  # Just variable name
 
                 # Record the failing tests
                 if len(failing_inds) > 0:
