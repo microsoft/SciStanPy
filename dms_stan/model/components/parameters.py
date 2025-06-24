@@ -273,12 +273,14 @@ class Parameter(AbstractModelComponent):
             lp += bounded_params[..., -1].sum()
 
         # Next, if we have both bounds, adjust in a slightly more complex way
+        # pylint: disable=not-callable
         elif self.LOWER_BOUND is not None and self.UPPER_BOUND is not None:
             lp += torch.sum(
                 torch.log(self.UPPER_BOUND - self.LOWER_BOUND)
                 + F.logsigmoid(self._torch_parametrization)
                 + F.logsigmoid(1 - self._torch_parametrization)
             )
+        # pylint: enable=not-callable
 
         # If just the lower bound or just the upper bound, we add the untransformed
         # variables
@@ -800,10 +802,10 @@ class ExpExponential(Exponential):
 
         # Wrap the exponential distribution to take the log of the draw
         def expexponential_dist(
-            beta: npt.NDArray,
+            scale: npt.NDArray,
             size: int | tuple[int, ...] | None = None,
         ) -> npt.NDArray:
-            return np.log(np_dist(scale=beta, size=size))
+            return np.log(np_dist(scale=scale, size=size))
 
         return expexponential_dist
 
