@@ -495,9 +495,7 @@ class Model(ABC):
             for observable in self.observables
         }
 
-    def simulate_mle_approximation(
-        self, **kwargs
-    ) -> tuple[dict[str, npt.NDArray], MLE]:
+    def simulate_mle(self, **kwargs) -> tuple[dict[str, npt.NDArray], MLE]:
         """
         Samples data from the model prior, then fits a PyTorch model to this sampled
         data. This is useful for debugging, mainly for checking that any peculiarities
@@ -516,7 +514,7 @@ class Model(ABC):
         kwargs["data"] = self._get_simulation_data(seed=kwargs.get("seed"))
 
         # Fit the model
-        return kwargs["data"], self.approximate_mle(**kwargs)
+        return kwargs["data"], self.mle(**kwargs)
 
     @overload
     def mcmc(
