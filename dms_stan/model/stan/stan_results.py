@@ -243,17 +243,25 @@ class VariableAnalyzer:
         # Tests as numpy array
         tests = tests.to_numpy()
 
-        # Split into passing and failing tests
-        self._failing_samples, self._passing_samples = (
-            self._np_samples[tests],
-            self._np_samples[~tests],
-        )
-
-        # Map between index name and failing index
-        self._index_map = {
-            ".".join(map(str, indices)): i
-            for i, indices in enumerate(zip(*np.nonzero(tests)))
-        }
+        # Map between index name and failing index. Separate the failing and passing
+        # samples. Note the different approach for scalar variables (no indices)
+        if tests.ndim == 0:
+            self._index_map = {"": ...}  # No indices, no map
+            if tests:
+                self._failing_samples = self._np_samples.copy()
+                self._passing_samples = np.array([], dtype=self._np_samples.dtype)
+            else:
+                self._failing_samples = np.array([], dtype=self._np_samples.dtype)
+                self._passing_samples = self._np_samples.copy()
+        else:
+            self._index_map = {
+                ".".join(map(str, indices)): i
+                for i, indices in enumerate(zip(*np.nonzero(tests)))
+            }
+            self._failing_samples, self._passing_samples = (
+                self._np_samples[tests],
+                self._np_samples[~tests],
+            )
 
     def _update_plot(self, event):  # pylint: disable=unused-argument
         """Updates the panel plot based on the selected variable, metric, and index"""
@@ -275,7 +283,12 @@ class VariableAnalyzer:
 
         # Calculate the relative quantiles for the selected failing index relative
         # to the passing samples
-        failing_samples = self._failing_samples[self._index_map[self.indexchoice.value]]
+        if self.indexchoice.value == "":  # For scalars
+            failing_samples = self._failing_samples
+        else:
+            failing_samples = self._failing_samples[
+                self._index_map[self.indexchoice.value]
+            ]
         n_failing, n_passing = len(self._failing_samples), len(self._passing_samples)
 
         # We always calculate quantiles. If there are no reference samples, however,
@@ -304,6 +317,14 @@ class VariableAnalyzer:
             failing_samples.shape
             == failing_quantiles.shape
             == (self.n_chains, self.x.size)
+        ), (
+            failing_samples.shape,
+            failing_quantiles.shape,
+            self.n_chains,
+            self.x.size,
+            self._failing_samples.shape,
+            self.indexchoice.value,
+            self._np_samples.shape,
         )
 
         # Build an overlay for the failing quantiles and use it to update the plot
@@ -970,6 +991,7 @@ class SampleResults(MAPInferenceRes):
 
         return sample_tests
 
+    # TODO: ESS thresh should be changed to a per-chain value, not a global one
     def evaluate_variable_diagnostic_stats(
         self, r_hat_thresh: float = DEFAULT_RHAT_THRESH, ess_thresh=DEFAULT_ESS_THRESH
     ) -> xr.Dataset:
@@ -1006,6 +1028,9 @@ class SampleResults(MAPInferenceRes):
                 "The following metrics are missing from the `variable_diagnostic_stats` "
                 f"group: {missing_metrics}."
             )
+
+        # Update the ess threshold based on the number of chains
+        ess_thresh *= self.inference_obj.posterior.sizes["chain"]
 
         # Run all tests and build a dataset
         variable_tests = xr.concat(
