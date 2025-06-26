@@ -991,7 +991,6 @@ class SampleResults(MAPInferenceRes):
 
         return sample_tests
 
-    # TODO: ESS thresh should be changed to a per-chain value, not a global one
     def evaluate_variable_diagnostic_stats(
         self, r_hat_thresh: float = DEFAULT_RHAT_THRESH, ess_thresh=DEFAULT_ESS_THRESH
     ) -> xr.Dataset:
