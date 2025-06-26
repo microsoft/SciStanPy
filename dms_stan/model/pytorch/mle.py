@@ -1,4 +1,4 @@
-"""Holds code for the maximum a posteriori (MAP) estimation of the model parameters."""
+"""Holds code for the maximum likelihood (MLE) estimation of the model parameters."""
 
 import warnings
 
@@ -43,7 +43,7 @@ def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
 # def dask_enabled_summary_stats(inference_obj: az.InferenceData) ->
 
 
-class MAPInferenceRes:
+class MLEInferenceRes:
     """
     Holds results from a CmdStanMCMC object and an ArviZ object. This should never
     be instantiated directly. Instead, use the `from_disk` method to load the object.
@@ -617,8 +617,8 @@ class MAPInferenceRes:
         return pn.Column(widget, plots)
 
 
-class MAPParam:
-    """Holds the MAP estimate for a single parameter."""
+class MLEParam:
+    """Holds the MLE estimate for a single parameter."""
 
     def __init__(
         self,
@@ -629,14 +629,14 @@ class MAPParam:
 
         # Store the inputs
         self.name = name
-        self.map = value
+        self.mle = value
         self.distribution = distribution
 
     def draw(
         self, n: int, *, seed: Optional[int] = None, batch_size: Optional[int] = None
     ) -> npt.NDArray:
         """
-        Sample from the MAP estimate.
+        Sample from the MLE estimate.
         """
         # Set the seed if provided
         if seed is not None:
@@ -659,40 +659,40 @@ class MAPParam:
         )
 
 
-class MAP:
-    """Holds the MAP estimate for all parameters of a model."""
+class MLE:
+    """Holds the MLE estimate for all parameters of a model."""
 
     def __init__(
         self,
         model: "dms.model.Model",
-        map_estimate: dict[str, npt.NDArray],
+        mle_estimate: dict[str, npt.NDArray],
         distributions: dict[str, torch.distributions.Distribution],
         losses: npt.NDArray,
         data: dict[str, npt.NDArray],
     ):
 
-        # The keys of the map estimate should be a subset of the keys of the distributions
-        if not set(map_estimate.keys()).issubset(distributions.keys()):
+        # The keys of the mle estimate should be a subset of the keys of the distributions
+        if not set(mle_estimate.keys()).issubset(distributions.keys()):
             raise ValueError(
-                "Keys of map estimate should be a subset of the keys of the distributions"
+                "Keys of mle estimate should be a subset of the keys of the distributions"
             )
 
         # Record the model and data
         self.model = model
         self.data = data
 
-        # Store inputs. Each key in the map estimate will be mapped to an instance
+        # Store inputs. Each key in the mle estimate will be mapped to an instance
         # variable
-        self.model_varname_to_map: dict[str, MAPParam] = {
-            key: MAPParam(name=key, value=map_estimate.get(key), distribution=value)
+        self.model_varname_to_mle: dict[str, MLEParam] = {
+            key: MLEParam(name=key, value=mle_estimate.get(key), distribution=value)
             for key, value in distributions.items()
         }
 
-        # Set an attribute for all MAP parameters
-        for k, v in self.model_varname_to_map.items():
+        # Set an attribute for all MLE parameters
+        for k, v in self.model_varname_to_mle.items():
             if hasattr(self, k):
                 raise ValueError(
-                    f"MAP parameter {k} already exists in the model. Please rename it."
+                    f"MLE parameter {k} already exists in the model. Please rename it."
                 )
             setattr(self, k, v)
 
@@ -706,7 +706,7 @@ class MAP:
         )
 
     def plot_loss_curve(self, logy: bool = True):
-        """Plots the loss curve of the MAP estimation."""
+        """Plots the loss curve of the MLE estimation."""
         # Get y-label and title
         y = "-log pdf/pmf"
         if logy:
@@ -747,7 +747,7 @@ class MAP:
     ) -> dict[str, npt.NDArray]: ...
 
     def draw(self, n: int, *, seed=None, as_xarray=False, batch_size=None):
-        """Draws samples from the MAP estimate.
+        """Draws samples from the MLE estimate.
 
         Args:
             n (int): The number of samples to draw.
@@ -758,7 +758,7 @@ class MAP:
                 exclusive.
 
         Returns:
-            dict[str, npt.NDArray] | xr.DataSet: The samples drawn from the MAP
+            dict[str, npt.NDArray] | xr.DataSet: The samples drawn from the MLE
                 estimate. If `as_xarray` is `True`, returns an xarray DataSet.
                 Otherwise, returns a dictionary of numpy arrays.
         """
@@ -769,7 +769,7 @@ class MAP:
         # Draw samples
         draws = {
             self.model.all_model_components_dict[k]: v.draw(n, batch_size=batch_size)
-            for k, v in self.model_varname_to_map.items()
+            for k, v in self.model_varname_to_mle.items()
         }
 
         # If returning as an xarray or InferenceData object, convert the draws to
@@ -788,8 +788,8 @@ class MAP:
         *,
         seed: Optional[int] = None,
         batch_size: Optional[int] = None,
-    ) -> MAPInferenceRes:
-        """Builds an inference data object from the MAP estimate."""
+    ) -> MLEInferenceRes:
+        """Builds an inference data object from the MLE estimate."""
         # Get the samples from the posterior
         draws = self.draw(n, seed=seed, as_xarray=True, batch_size=batch_size)
 
@@ -805,7 +805,7 @@ class MAP:
             draws[
                 [
                     varname
-                    for varname, map_param in self.model_varname_to_map.items()
+                    for varname, mle_param in self.model_varname_to_mle.items()
                     if not self.model.all_model_components_dict[varname].observable
                 ]
             ]
@@ -823,9 +823,9 @@ class MAP:
             posterior_predictive=draws[
                 [
                     varname
-                    for varname, map_param in self.model_varname_to_map.items()
+                    for varname, mle_param in self.model_varname_to_mle.items()
                     if self.model.all_model_components_dict[varname].observable
                 ]
             ],
         )
-        return MAPInferenceRes(inference_data)
+        return MLEInferenceRes(inference_data)

@@ -12,7 +12,7 @@ import xarray as xr
 
 from scipy import stats
 
-from dms_stan.model.pytorch.map import MAPInferenceRes
+from dms_stan.model.pytorch.mle import MLEInferenceRes
 from dms_stan.model.stan.stan_results import SampleResults
 from dms_stan.pipelines.mcmc_flip import LOAD_DATASET_MAP
 from dms_stan.plotting import quantile_plot
@@ -104,7 +104,7 @@ class BaseDataAnalyzer(ABC):
         *,
         lib_name: str,
         flip_data_loc: str,
-        map_res_prefix: str,
+        mle_res_prefix: str,
         hmc_res: str,
         hmc_use_dask: bool = False,
     ):
@@ -136,19 +136,19 @@ class BaseDataAnalyzer(ABC):
             )
         )
 
-        # Load the map and hmc samples
-        self.map_samples = MAPInferenceRes(map_res_prefix + "_samples.nc")
+        # Load the mle and hmc samples
+        self.mle_samples = MLEInferenceRes(mle_res_prefix + "_samples.nc")
         self.hmc_samples = SampleResults.from_disk(
             hmc_res, skip_fit=True, use_dask=hmc_use_dask
         )
 
-        # Load the map
-        self.map = xr.Dataset(
+        # Load the mle
+        self.mle = xr.Dataset(
             data_vars={
                 varname: (
                     tuple(
                         dim
-                        for dim in self.map_samples.inference_obj.posterior[
+                        for dim in self.mle_samples.inference_obj.posterior[
                             varname
                         ].dims
                         if dim not in {"chain", "draw"}
@@ -156,17 +156,17 @@ class BaseDataAnalyzer(ABC):
                     vals.squeeze(),
                 )
                 for varname, vals in np.load(
-                    map_res_prefix + "_map.npz", allow_pickle=True
+                    mle_res_prefix + "_mle.npz", allow_pickle=True
                 ).items()
             }
         )
 
         # Convert relevant data to xarrays
         self.reported_starting_counts = (
-            self.map_samples.inference_obj.observed_data.starting_counts
+            self.mle_samples.inference_obj.observed_data.starting_counts
         )
         self.reported_timepoint_counts = (
-            self.map_samples.inference_obj.observed_data.timepoint_counts
+            self.mle_samples.inference_obj.observed_data.timepoint_counts
         )
 
         # Record variants
@@ -181,21 +181,21 @@ class BaseDataAnalyzer(ABC):
             self.reported_timepoint_counts.values,
         )
         assert np.array_equal(
-            self.map_samples.inference_obj.observed_data.starting_counts.values,
+            self.mle_samples.inference_obj.observed_data.starting_counts.values,
             self.reported_starting_counts.values,
         )
         assert np.array_equal(
-            self.map_samples.inference_obj.observed_data.timepoint_counts.values,
+            self.mle_samples.inference_obj.observed_data.timepoint_counts.values,
             self.reported_timepoint_counts.values,
         )
 
     @abstractmethod
     def recalculate_fitness(
-        self, count_source: Literal["reported", "map", "hmc"]
+        self, count_source: Literal["reported", "mle", "hmc"]
     ) -> tuple[xr.DataArray, xr.DataArray] | xr.DataArray:
         """
         Recalculates the fitness values based on the counts from the specified source.
-        The source can be 'reported', 'map', or 'hmc'.
+        The source can be 'reported', 'mle', or 'hmc'.
 
         This base method should be overridden in subclasses to implement the specific
         logic for recalculating fitness based on the counts from the specified source.
@@ -205,9 +205,9 @@ class BaseDataAnalyzer(ABC):
         # Get the appropriate counts
         return {
             "reported": (self.reported_starting_counts, self.reported_timepoint_counts),
-            "map": (
-                self.map_samples.inference_obj.posterior_predictive.starting_counts,
-                self.map_samples.inference_obj.posterior_predictive.timepoint_counts,
+            "mle": (
+                self.mle_samples.inference_obj.posterior_predictive.starting_counts,
+                self.mle_samples.inference_obj.posterior_predictive.timepoint_counts,
             ),
             "hmc": (
                 self.hmc_samples.inference_obj.posterior_predictive.starting_counts,
@@ -363,15 +363,15 @@ class BaseDataAnalyzer(ABC):
             width=600,
         )
 
-    def get_growth_rate(self, source: Literal["map", "hmc"]) -> xr.DataArray:
+    def get_growth_rate(self, source: Literal["mle", "hmc"]) -> xr.DataArray:
         """Returns the growth rate from the specified source and variable"""
         # Get the specified source
-        if source == "map":
-            dset = self.map
+        if source == "mle":
+            dset = self.mle
         elif source == "hmc":
             dset = self.hmc_samples.inference_obj.posterior
         else:
-            raise ValueError(f"Invalid source: {source}. Must be 'map' or 'hmc'.")
+            raise ValueError(f"Invalid source: {source}. Must be 'mle' or 'hmc'.")
 
         # Get the growth rate variable
         base_rate = dset[self.growth_rate_variable]
@@ -386,12 +386,12 @@ class BaseDataAnalyzer(ABC):
         Runs the full analysis for the dataset. This includes...
 
         1. Running the fitness sanity check.
-        2. Calculating the fitness correlations between the recalculated and MAP/HMC
+        2. Calculating the fitness correlations between the recalculated and MLE/HMC
         fitness values.
         3. Calculating the correlations between the recalculated fitness and growth
         rate values. Also calculates the autocorrelation of the growth rate values.
-        4. Plotting the quantile plot of the fitness values for the MAP and HMC.
-        5. Plotting the quantile plot of the growth rate values for the MAP and HMC.
+        4. Plotting the quantile plot of the fitness values for the MLE and HMC.
+        5. Plotting the quantile plot of the growth rate values for the MLE and HMC.
         6. Plotting the standard deviation of the fitness values against the total
         number of counts for each variant.
         7. Plotting the growth rate values against the total number of counts for
@@ -404,30 +404,30 @@ class BaseDataAnalyzer(ABC):
             f"{self.fitness_sanity_check():.4f}"
         )
 
-        # Recalculate the fitness values for the MAP and HMC sources
+        # Recalculate the fitness values for the MLE and HMC sources
         print("Recalculating fitness values...")
-        recalculated_map = self.recalculate_fitness("map")
+        recalculated_mle = self.recalculate_fitness("mle")
         recalculated_hmc = self.recalculate_fitness("hmc")
-        r_map = self.get_growth_rate("map")
-        assert r_map.ndim == 1, "Growth rate for MAP should be 1D"
+        r_mle = self.get_growth_rate("mle")
+        assert r_mle.ndim == 1, "Growth rate for MLE should be 1D"
         r_hmc = self.get_growth_rate("hmc")
 
         # Get the fitness correlations
         print("Calculating fitness correlations...")
-        map_vs_recalc = self.get_fitness_correlations(
-            recalculated_map, skip_autocorr=True
+        mle_vs_recalc = self.get_fitness_correlations(
+            recalculated_mle, skip_autocorr=True
         )
         hmc_vs_recalc = self.get_fitness_correlations(
             recalculated_hmc, skip_autocorr=True
         )
-        r_map_vs_recalc = self.get_fitness_correlations(r_map, skip_autocorr=True)
+        r_mle_vs_recalc = self.get_fitness_correlations(r_mle, skip_autocorr=True)
         r_hmc_vs_recalc, r_hmc_autocorr = self.get_fitness_correlations(r_hmc)
 
         # Get quantile plots
         print("Building quantile plots...")
         quantile_plots = (
-            self.plot_fitness_distribution(recalculated_map).opts(
-                title="MAP: Recalculated Fitness Quantiles"
+            self.plot_fitness_distribution(recalculated_mle).opts(
+                title="MLE: Recalculated Fitness Quantiles"
             )
             + self.plot_fitness_distribution(recalculated_hmc).opts(
                 title="HMC: Recalculated Fitness Quantiles"
@@ -440,8 +440,8 @@ class BaseDataAnalyzer(ABC):
         # Get the standard deviation vs counts plot
         print("Calculating standard deviation vs counts...")
         stdev_vs_counts = (
-            self.get_stdev_vs_counts(recalculated_map).opts(
-                title="MAP: Recalculated Fitness σ vs Total Counts"
+            self.get_stdev_vs_counts(recalculated_mle).opts(
+                title="MLE: Recalculated Fitness σ vs Total Counts"
             )
             + self.get_stdev_vs_counts(recalculated_hmc).opts(
                 title="HMC: Recalculated Fitness σ vs Total Counts"
@@ -456,7 +456,7 @@ class BaseDataAnalyzer(ABC):
         sample_df = pd.DataFrame(
             {
                 "variant": self.variants,
-                "MAP": r_map.values,
+                "MLE": r_mle.values,
                 **{
                     f"sample_{i}": sample
                     for i, sample in enumerate(reshape_fitness(r_hmc))
@@ -467,9 +467,9 @@ class BaseDataAnalyzer(ABC):
         # Package the results
         return {
             "Correlations": {
-                "MAP Recalculated vs Recalculated Reported": map_vs_recalc,
+                "MLE Recalculated vs Recalculated Reported": mle_vs_recalc,
                 "HMC Recalculated vs Recalculated Reported": hmc_vs_recalc,
-                "MAP Growth Rate vs Recalculated Reported": r_map_vs_recalc,
+                "MLE Growth Rate vs Recalculated Reported": r_mle_vs_recalc,
                 "HMC Growth Rate vs Recalculated Reported": r_hmc_vs_recalc,
                 "HMC Growth Rate Autocorrelation": r_hmc_autocorr,
             },
@@ -493,7 +493,7 @@ class TrpBDataAnalyzer(BaseDataAnalyzer):
         self.times = xr.DataArray(self.raw_count_data["times"], dims=["b"])
         self.stop_mask = xr.DataArray(["*" in var for var in self.variants], dims=["a"])
 
-    def recalculate_fitness(self, count_source: Literal["reported", "map", "hmc"]):
+    def recalculate_fitness(self, count_source: Literal["reported", "mle", "hmc"]):
 
         # Get the starting and timepoint counts from the specified source
         c0, cf = super().recalculate_fitness(count_source)

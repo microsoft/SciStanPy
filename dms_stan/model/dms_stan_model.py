@@ -38,7 +38,7 @@ from .components import (
     TransformedParameter,
 )
 from .components.abstract_model_component import AbstractModelComponent
-from .pytorch.map import MAP
+from .pytorch.mle import MLE
 from .pytorch import check_observable_data, PyTorchModel
 from .stan import SampleResults, StanModel
 
@@ -429,7 +429,7 @@ class Model(ABC):
         """
         return StanModel(self, **kwargs)
 
-    def approximate_map(
+    def mle(
         self,
         epochs: int = DEFAULT_N_EPOCHS,
         early_stop: int = DEFAULT_EARLY_STOP,
@@ -437,9 +437,9 @@ class Model(ABC):
         data: Optional[dict[str, Union[torch.Tensor, npt.NDArray]]] = None,
         device: int | str = "cpu",
         seed: Optional[int] = None,
-    ) -> MAP:
+    ) -> MLE:
         """
-        Approximate the maximum a posteriori (MAP) estimate of the model parameters.
+        Approximate the maximum likelihood (MLE) estimate of the model parameters.
         Under the hood, this fits a PyTorch model to the data that minimizes the
         sum of `log_pdf` and `log_pmf` for all distributions. The parameter values
         that minimize this loss are then returned.
@@ -469,8 +469,8 @@ class Model(ABC):
             data=data,
         )
 
-        # Get the MAP estimate for all model parameters
-        map_ = {
+        # Get the MLE estimate for all model parameters
+        mle = {
             k: v.detach().cpu().numpy()
             for k, v in pytorch_model.export_params().items()
         }
@@ -478,10 +478,10 @@ class Model(ABC):
         # Get the distributions of the parameters
         distributions = pytorch_model.export_distributions()
 
-        # Return the MAP estimate, the distributions, and the loss trajectory
-        return MAP(
+        # Return the MLE estimate, the distributions, and the loss trajectory
+        return MLE(
             model=self,
-            map_estimate=map_,
+            mle_estimate=mle,
             distributions=distributions,
             losses=loss_trajectory.detach().cpu().numpy(),
             data={k: v.detach().cpu().numpy() for k, v in data.items()},
@@ -495,29 +495,28 @@ class Model(ABC):
             for observable in self.observables
         }
 
-    def simulate_map_approximation(
+    def simulate_mle_approximation(
         self, **kwargs
-    ) -> tuple[dict[str, npt.NDArray], MAP]:
+    ) -> tuple[dict[str, npt.NDArray], MLE]:
         """
         Samples data from the model prior, then fits a PyTorch model to this sampled
         data. This is useful for debugging, mainly for checking that any peculiarities
-        observed during MAP approximation are not due to the data.
+        observed during MLE approximation are not due to the data.
         Args:
-            **kwargs: Keyword arguments to pass to the `approximate_map` method,
-                excepting `data`.
+            **kwargs: Keyword arguments to pass to the `mle` method, excepting `data`.
 
         Returns:
             dict[str, npt.NDArray]: A dictionary where the keys are the names of
                 the observable parameters and the values are the samples drawn.
-            MAP: The MAP object resulting from the fit to the simulated data.
+            MLE: The MLE object resulting from the fit to the simulated data.
         """
         # TODO: This and the other simulate method should include non-observables
-        # in the returned MAP as well.
+        # in the returned MLE as well.
         # Get the data
         kwargs["data"] = self._get_simulation_data(seed=kwargs.get("seed"))
 
         # Fit the model
-        return kwargs["data"], self.approximate_map(**kwargs)
+        return kwargs["data"], self.approximate_mle(**kwargs)
 
     @overload
     def mcmc(

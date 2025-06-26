@@ -35,7 +35,7 @@ from dms_stan.model.components import (
     Parameter,
     TransformedParameter,
 )
-from dms_stan.model.pytorch.map import MAPInferenceRes
+from dms_stan.model.pytorch.mle import MLEInferenceRes
 from dms_stan.plotting import calculate_relative_quantiles
 from dms_stan.utils import az_dask, get_chunk_shape
 
@@ -792,7 +792,7 @@ def dask_enabled_diagnostics(inference_obj: az.InferenceData) -> xr.Dataset:
     )
 
 
-class SampleResults(MAPInferenceRes):
+class SampleResults(MLEInferenceRes):
     """
     Holds results from a CmdStanMCMC object and an ArviZ object. This should never
     be instantiated directly. Instead, use the `from_disk` method to load the object.

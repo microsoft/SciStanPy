@@ -1,4 +1,4 @@
-"""Same layout as `mcmc_flip.py` but with the `approximate_map` pipeline."""
+"""Same layout as `mcmc_flip.py` but with the `mle` pipeline."""
 
 import argparse
 import os.path
@@ -14,7 +14,7 @@ def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     # Build the parser specifically for this pipeline
     parser = argparse.ArgumentParser(
-        description="Approximate the MAP for FLIP datasets.",
+        description="Maximum likelihood estimation for FLIP datasets.",
         parents=[define_base_parser()],
     )
 
@@ -79,13 +79,13 @@ def check_args(args: argparse.Namespace) -> None:
             raise ValueError(f"{attr} must be greater than 0.")
 
 
-def run_approximate_map(args: argparse.Namespace) -> None:
-    """Run the approximate MAP pipeline."""
+def run_mle(args: argparse.Namespace) -> None:
+    """Run the approximate MLE pipeline."""
     # Prepare the run
     model = prep_run(args)
 
-    # Run map approximation
-    map_ = model.approximate_map(
+    # Run mle approximation
+    mle = model.mle(
         epochs=args.n_epochs,
         early_stop=args.early_stopping,
         lr=args.lr,
@@ -95,18 +95,18 @@ def run_approximate_map(args: argparse.Namespace) -> None:
 
     # Save the loss curve
     base_outfile = f"{args.dataset}_{args.subset}_{args.rate_dist}_{args.growth_func}"
-    map_.losses.to_csv(
+    mle.losses.to_csv(
         os.path.join(args.output_dir, f"{base_outfile}_loss-curve.csv"), index=False
     )
 
-    # Save the MAP values
+    # Save the MLE values
     np.savez(
-        os.path.join(args.output_dir, f"{base_outfile}_map.npz"),
-        **{k: v.map for k, v in map_.model_varname_to_map.items() if v.map is not None},
+        os.path.join(args.output_dir, f"{base_outfile}_mle.npz"),
+        **{k: v.mle for k, v in mle.model_varname_to_mle.items() if v.mle is not None},
     )
 
-    # Draw samples from the MAP and save them
-    samples = map_.get_inference_obj(seed=args.seed, batch_size=args.sample_batch_size)
+    # Draw samples from the MLE and save them
+    samples = mle.get_inference_obj(seed=args.seed, batch_size=args.sample_batch_size)
     samples.save_netcdf(os.path.join(args.output_dir, f"{base_outfile}_samples.nc"))
 
 
@@ -119,7 +119,7 @@ def main():
     check_args(args)
 
     # Run the pipeline
-    run_approximate_map(args)
+    run_mle(args)
 
 
 if __name__ == "__main__":
