@@ -12,7 +12,6 @@ import numpy.typing as npt
 import torch
 import torch.distributions as dist
 import torch.nn as nn
-import torch.nn.functional as F
 
 from scipy import special
 
@@ -230,25 +229,6 @@ class Parameter(AbstractModelComponent):
             torch.Tensor: Log probability of the parameters given the observed data.
         """
 
-        def simplex_jacobian() -> torch.Tensor:
-            """
-            Calculate the Jacobian adjustment for simplex parameters. See the last
-            comment of this Stan Forum:
-            https://discourse.mc-stan.org/t/jacobian-of-softmax-tansformation-of-a-n-1-degrees-of-freedom-unbounded-parameter/18780/28
-            """
-            log_s = torch.logsumexp(
-                torch.cat(
-                    [
-                        self._torch_parametrization,
-                        torch.zeros_like(
-                            self._torch_parametrization[..., :1], requires_grad=False
-                        ),
-                    ],
-                    dim=-1,
-                )
-            )
-            return self._torch_parametrization.sum() - bounded_params.shape[-1] * log_s
-
         # Observed parameters must have an observed value.
         if self.observable and observed is None:
             raise ValueError("Observed parameters must have an observed value.")
@@ -257,38 +237,9 @@ class Parameter(AbstractModelComponent):
         if not self.observable and observed is not None:
             raise ValueError("Latent parameters should not have an observed value.")
 
-        # We can return immediately for observables, as we are not doing any transforms
-        if self.observable:
-            return self.torch_dist_instance.log_prob(observed)
-
-        # For parameters, we may need to do a Jacobian adjustment depending on the
-        # bounds.
-        bounded_params = self.torch_parametrization
-        lp = self.torch_dist_instance.log_prob(bounded_params)
-
-        # First, simplex parameters
-        if self.IS_SIMPLEX:
-            lp += simplex_jacobian()
-        elif self.IS_LOG_SIMPLEX:
-            lp += bounded_params[..., -1].sum()
-
-        # Next, if we have both bounds, adjust in a slightly more complex way
-        # pylint: disable=not-callable
-        elif self.LOWER_BOUND is not None and self.UPPER_BOUND is not None:
-            lp += torch.sum(
-                torch.log(self.UPPER_BOUND - self.LOWER_BOUND)
-                + F.logsigmoid(self._torch_parametrization)
-                + F.logsigmoid(1 - self._torch_parametrization)
-            )
-        # pylint: enable=not-callable
-
-        # If just the lower bound or just the upper bound, we add the untransformed
-        # variables
-        elif self.LOWER_BOUND is not None or self.UPPER_BOUND is not None:
-            lp += self._torch_parametrization.exp().sum()
-
-        # Calculate log probability using the observed data and the distribution
-        return lp
+        return self.torch_dist_instance.log_prob(
+            observed if self.observable else self.torch_parametrization
+        )
 
     def get_rng(self, seed: Optional[int] = None) -> np.random.Generator:
         """Return the random number generator"""
