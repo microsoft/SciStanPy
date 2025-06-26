@@ -5,21 +5,15 @@ real vectorized_lbeta(vector alpha) {
     return lgamma(sum(alpha)) - sum(lgamma(alpha));
 }
 
-vector logsoftmax_transform_jacobian(vector z) {
-    // Computes the log of the softmax function for a vector z and updates the target
-    // variable with the absolute value of the Jacobian determinant of the transformation.
-
-    // Append '0' to the vector z
-    int K = size(z) + 1;
-    vector[K] z_extended = append_row(z, 0);
-
-    // Normalize the extended vector on the log scale
-    vector[K] y = z_extended - log_sum_exp(z_extended);
-
-    // Jacobian determinant correction
-    jacobian += y[K];
-
-    return y;
+vector logsoftmax_transform_jacobian(vector y) {
+    int N = rows(y) + 1;
+    vector[N - 1] ns = linspaced_vector(N - 1, 1, N - 1);
+    vector[N - 1] w = y ./ sqrt(ns .* (ns + 1));
+    vector[N] z = append_row(reverse(cumulative_sum(reverse(w))), 0) - append_row(0, ns .* w);
+    real r = log_sum_exp(z);
+    vector[N] log_x = z - r;
+    jacobian += 0.5 * log(N);
+    return log_x;
 }
 
 real expdirichlet_unnorm_lpdf(vector y, vector alpha) {
