@@ -126,7 +126,7 @@ def define_base_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--rate_dist",
         type=str,
-        choices=["exponential", "expon-gamma", "gamma", "lomax", "lomax-gamma"],
+        choices=["exponential", "gamma", "lomax"],
         required=True,
         help="Distribution that defines the mean rate of the model.",
     )
@@ -173,20 +173,20 @@ def parse_args():
     parser.add_argument(
         "--n_chains",
         type=int,
-        default=4,
-        help="Number of chains to run. Default = 4.",
+        default=8,
+        help="Number of chains to run. Default = 8.",
     )
     parser.add_argument(
         "--n_warmup",
         type=int,
-        default=3000,
-        help="Number of warmup iterations. Default = 3000.",
+        default=2000,
+        help="Number of warmup iterations. Default = 2000.",
     )
     parser.add_argument(
         "--n_samples",
         type=int,
-        default=1000,
-        help="Number of samples to draw after warmup. Default = 1000.",
+        default=2000,
+        help="Number of samples to draw after warmup. Default = 2000.",
     )
     parser.add_argument(
         "--use_dask",
