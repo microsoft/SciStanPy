@@ -616,6 +616,14 @@ class MLEInferenceRes:
 
         return pn.Column(widget, plots)
 
+    @classmethod
+    def from_disk(cls, path: str) -> "MLEInferenceRes":
+        """
+        Loads an MLEInferenceRes object from disk. The path should point to a netcdf
+        file containing the inference data.
+        """
+        return cls(az.from_netcdf(path))
+
 
 class MLEParam:
     """Holds the MLE estimate for a single parameter."""
