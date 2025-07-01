@@ -384,6 +384,9 @@ class CmdStanMCMCToNetCDFConverter:
         # Record the config object
         self.config = fit.metadata.cmdstan_config
 
+        # The number of chains is per thread. We want the number of chains total
+        self.config["total_chains"] = len(fit.runset.csv_files)
+
         # How many samples are we expecting?
         self.num_draws = self.config["num_samples"] + (
             self.config["num_warmup"] if self.config["save_warmup"] else 0
@@ -496,7 +499,7 @@ class CmdStanMCMCToNetCDFConverter:
 
             # Set dimensions
             netcdf_file.dimensions = {
-                "chain": self.config["num_chains"],
+                "chain": self.config["total_chains"],
                 "draw": self.num_draws,
                 **{
                     dimname: dimsize
@@ -508,7 +511,7 @@ class CmdStanMCMCToNetCDFConverter:
             }
 
             # We need a group for metadata, samples, posterior predictive checks,
-            # and observations
+            # observations, and transformed parameters.
             metadata_group = netcdf_file.create_group("sample_stats")
             sample_group = netcdf_file.create_group("posterior")
             ppc_group = netcdf_file.create_group("posterior_predictive")
@@ -522,7 +525,7 @@ class CmdStanMCMCToNetCDFConverter:
                     name=varname,
                     dimensions=("chain", "draw"),
                     dtype=method_var_dtypes[varname],
-                    chunks=(self.config["num_chains"], self.num_draws),
+                    chunks=(self.config["total_chains"], self.num_draws),
                 )
                 for varname in self.fit.metadata.method_vars.keys()
             }
@@ -542,7 +545,7 @@ class CmdStanMCMCToNetCDFConverter:
                 # are typically performing operations over.
                 chunk_shape = get_chunk_shape(
                     array_shape=(
-                        self.config["num_chains"],
+                        self.config["total_chains"],
                         self.num_draws,
                         *true_shape,
                     ),
