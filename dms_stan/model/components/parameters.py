@@ -131,19 +131,12 @@ class Parameter(AbstractModelComponent):
         if self.observable:
             raise ValueError("Observables do not have a torch parametrization")
 
-        # Get the target shape. This is the shape of the parameter unless we are
-        # working with a simplex, in which case the final dimension loses a degree
-        # of freedom
-        target_shape = self.shape
-        if self.IS_SIMPLEX or self.IS_LOG_SIMPLEX:
-            target_shape[-1] -= 1
-
         # If no initialization value is provided, then we create one on the range
         # of -1 to 1. This is done by drawing from the distribution.
         if init_val is None:
             init_val = np.squeeze(
                 self.get_rng(seed=seed).uniform(
-                    low=-1.0, high=1.0, size=(1,) + target_shape
+                    low=-1.0, high=1.0, size=(1,) + self.shape
                 ),
                 axis=0,
             )
@@ -154,10 +147,10 @@ class Parameter(AbstractModelComponent):
 
         # The shape of the initialization value must match the shape of the
         # parameter being initialized
-        if init_val.shape != target_shape:
+        if init_val.shape != self.shape:
             raise ValueError(
                 f"The shape of the initialization value must match the shape of the "
-                f"parameter. Expected: {target_shape}, provided: {init_val.shape}"
+                f"parameter. Expected: {self.shape}, provided: {init_val.shape}"
             )
 
         # Initialize the parameter
@@ -239,7 +232,7 @@ class Parameter(AbstractModelComponent):
 
         return self.torch_dist_instance.log_prob(
             observed if self.observable else self.torch_parametrization
-        )
+        ).sum()
 
     def get_rng(self, seed: Optional[int] = None) -> np.random.Generator:
         """Return the random number generator"""
@@ -312,24 +305,21 @@ class Parameter(AbstractModelComponent):
         if self.observable:
             raise ValueError("Observables do not have a torch parametrization")
 
-        # If a simplex or log simplex, run normalization
-        if self.IS_SIMPLEX or self.IS_LOG_SIMPLEX:
-            zero_appended = torch.cat(
-                [
-                    self._torch_parametrization,
-                    torch.zeros_like(
-                        self._torch_parametrization[..., :1], requires_grad=False
-                    ),
-                ],
-                dim=-1,
-            )
-            if self.IS_SIMPLEX:
-                return torch.softmax(zero_appended, dim=-1)
-            return torch.log_softmax(zero_appended, dim=-1)
+        # Just return the parameter if there are no bounds
+        if (
+            self.LOWER_BOUND is None
+            and self.UPPER_BOUND is None
+            and not self.IS_SIMPLEX
+            and not self.IS_LOG_SIMPLEX
+        ):
+            return self._torch_parametrization
 
-        # If we have both bounds, then we need to transform the parameter to be
-        # bounded between the two bounds.
-        if self.LOWER_BOUND is not None and self.UPPER_BOUND is not None:
+        # Set bounds where we have both upper and lower
+        if self.IS_SIMPLEX:
+            return torch.softmax(self._torch_parametrization, dim=-1)
+        elif self.IS_LOG_SIMPLEX:
+            return torch.log_softmax(self._torch_parametrization, dim=-1)
+        elif self.LOWER_BOUND is not None and self.UPPER_BOUND is not None:
             return self.LOWER_BOUND + (
                 self.UPPER_BOUND - self.LOWER_BOUND
             ) * torch.sigmoid(self._torch_parametrization)
@@ -1307,7 +1297,7 @@ class MultinomialLogTheta(MultinomialLogit):
         super(MultinomialLogit, self).__init__(
             torch_dist=custom_torch_dists.MultinomialLogTheta,
             stan_to_np_names={"N": "n", "log_theta": "logits"},
-            stan_to_torch_names={"N": "total_count", "log_theta": "logits"},
+            stan_to_torch_names={"N": "total_count", "log_theta": "log_probs"},
             log_theta=log_theta,
             N=N,
             **kwargs,
