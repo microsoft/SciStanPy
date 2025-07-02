@@ -6,7 +6,7 @@ target:
   name: msrresrchvc
 
 environment:
-  image: dms_stan:0.0.4
+  image: dms_stan:0.0.5
   registry: bjwamltcr.azurecr.io
 
 data:
@@ -17,10 +17,10 @@ code:
 
 search:
   max_trials: 750
-  parallel_trials: 375
+  parallel_trials: 100
   job_template:
     name: "{experiment_name:s}_{job_ind:s}_{growth_func:s}"
-    sku: 8C7
+    sku: 8C30
     preemptible: False
     command:
       - bash run_hmc_job.sh {job_ind} {growth_func}

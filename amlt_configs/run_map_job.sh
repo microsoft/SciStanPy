@@ -19,7 +19,7 @@ echo "Running MAP for $dataset-$subset with the growth modeled by $growth_func \
 and the growth rate modeled by the $rate_dist distribution."
 
 # Run the HMC job
-python approximate_map_flip.py \
+python mle_flip.py \
     --dataset "$dataset" \
     --subset "$subset" \
     --rate_dist "$rate_dist" \
