@@ -40,7 +40,6 @@ RUN mamba install -y -c conda-forge \
     && mamba clean --all --force-pkgs-dirs --yes
 
 # Set the environment variables for conda
-ENV PATH="/opt/conda/bin:$PATH"
 ENV LD_LIBRARY_PATH="opt/conda/lib:$LD_LIBRARY_PATH"
 ENV CMDSTAN="/opt/conda/bin/cmdstan"
 
