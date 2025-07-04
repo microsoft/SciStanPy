@@ -1,26 +1,98 @@
 """Holds code relevant for the TrpB datasets."""
 
+from typing import Literal
+
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
 from Bio.Seq import Seq
 
+from dms_stan.model import Model
+from dms_stan.model.enrichment import (
+    hierarchical_class_factory,
+    non_hierarchical_class_factory,
+)
+
 # Note any timepoints that are skipped in the dataset. The key is the dataset
 # and the value gives (first) the indices of the non-t=0 timepoints that are skipped
 # and (second) the expected number of non-t=0 timepoints after the skipped timepoints
 # are removed
 TRPB_SKIPPED_TIMEPOINTS = {
-    "libA": ([], 2),
-    "libB": ([], 2),
-    "libC": ([], 2),
-    "libD": ([0], 4),
-    "libE": ([0, 1], 3),
-    "libF": ([0, 1, 3], 2),
-    "libG": ([0], 4),
-    "libH": ([0], 4),
-    "libI": ([0], 4),
-    "four-site": ([], 6),
+    "LibA": (np.array([], dtype=int), 2),
+    "LibB": (np.array([], dtype=int), 2),
+    "LibC": (np.array([], dtype=int), 2),
+    "LibD": (np.array([0]), 4),
+    "LibE": (np.array([0, 1]), 3),
+    "LibF": (np.array([0, 1, 3]), 2),
+    "LibG": (np.array([0]), 4),
+    "LibH": (np.array([0]), 4),
+    "LibI": (np.array([0]), 4),
+    "four-site": (np.array([], dtype=int), 6),
+}
+
+TRPB_OD600 = {
+    "LibA": (np.array(0.1), np.array([0.72, 2.55])),
+    "LibB": (np.array(0.1), np.array([0.75, 3.3])),
+    "LibC": (np.array(0.1), np.array([0.74, 1.95])),
+    "LibD": (
+        np.array(0.05),
+        np.array([[0.19, 0.29, 0.51, 0.85, 1.42], [0.18, 0.28, 0.49, 0.97, 1.81]]),
+    ),
+    "LibE": (
+        np.array(0.05),
+        np.array(
+            [
+                [0.20, 0.27, 0.47, 0.91, 1.41],
+                [0.20, 0.26, 0.44, 0.94, 1.54],
+            ]
+        ),
+    ),
+    "LibF": (
+        np.array(0.05),
+        np.array(
+            [
+                [0.17, 0.20, 0.23, 0.27, 0.79],
+                [0.17, 0.20, 0.24, 0.27, 0.79],
+            ]
+        ),
+    ),
+    "LibG": (
+        np.array(0.05),
+        np.array(
+            [
+                [0.14, 0.18, 0.23, 0.44, 2.0],
+                [0.14, 0.18, 0.23, 0.44, 1.95],
+            ]
+        ),
+    ),
+    "LibH": (
+        np.array(0.05),
+        np.array(
+            [
+                [0.15, 0.19, 0.26, 0.67, 2.9],
+                [0.14, 0.18, 0.26, 0.58, 1.85],
+            ]
+        ),
+    ),
+    "LibI": (
+        np.array(0.05),
+        np.array(
+            [
+                [0.36, 0.83, 1.24, 1.7, 1.95],
+                [0.39, 0.87, 1.36, 2.1, 2.25],
+            ]
+        ),
+    ),
+    "four-site": (
+        np.array([0.025, 0.025]),
+        np.array(
+            [
+                [0.19, 0.51, 1.26, 1.5, 1.675, 1.75],
+                [0.19, 0.52, 1.34, 1.625, 1.75, 1.875],
+            ]
+        ),
+    ),
 }
 
 
@@ -90,6 +162,11 @@ def load_trpb_dataset(
     times = np.delete(times, skipped_timepoints)
     assert len(times) == n_final_timepoints
 
+    # Remove ODs for timepoints that are skipped.
+    od600_t0, od600_tg0 = TRPB_OD600[libname]
+    od600_tg0 = np.delete(od600_tg0, skipped_timepoints, axis=-1)
+    assert od600_tg0.shape[-1] == n_final_timepoints
+
     # Get the timepoint counts
     tg0_counts = np.zeros([len(output_cols), len(times), len(combo_order)], dtype=int)
     for timeind, time in enumerate(times):
@@ -110,6 +187,8 @@ def load_trpb_dataset(
 
     return {
         "times": times,
+        "starting_od": od600_t0,
+        "timepoint_od": od600_tg0,
         "starting_counts": t0_counts,
         "timepoint_counts": tg0_counts,
         "variants": combo_order,
@@ -206,4 +285,66 @@ def reformat_pdz_zenodo_dset(infile: str, outfile: str) -> None:
         outfile,
         sep="\t",
         index=False,
+    )
+
+
+def trpb_class_factory(
+    name: Literal[
+        "LibA", "LibB", "LibC", "LibD", "LibE", "LibF", "LibG", "LibH", "FourSite"
+    ],
+    growth_func: Literal["exponential", "logistic"],
+    rate_dist: Literal["gamma", "exponential", "lomax"],
+) -> type[Model]:
+    """Builds classes for the different TrpB datasets"""
+    # Some libraries need a hierarchical model, some need a non-hierarchical model
+    base_func = (
+        non_hierarchical_class_factory
+        if name in {"LibA", "LibB", "LibC"}
+        else hierarchical_class_factory
+    )
+
+    # Create a new class with the specified parameters
+    return base_func(
+        name=name,
+        growth_func=growth_func,
+        rate_dist=rate_dist,
+        include_times=True,  # All TrpB models include times
+        include_od=True,  # All TrpB models include ODs
+    )
+
+
+def trpb_instance_factory(
+    filepath: str,
+    libname: Literal[
+        "LibA", "LibB", "LibC", "LibD", "LibE", "LibF", "LibG", "LibH", "FourSite"
+    ],
+    growth_func: Literal["exponential", "logistic"],
+    rate_dist: Literal["gamma", "exponential", "lomax"],
+) -> Model:
+    """Builds an instance of the TrpB model for the given parameters."""
+    # Load the trpb data and remove the variant identities
+    trpb_data = load_trpb_dataset(filepath=filepath, libname=libname)
+    trpb_data.pop("variants")
+
+    # Get the class for the given parameters and instantiate it
+    return trpb_class_factory(
+        name=libname,
+        growth_func=growth_func,
+        rate_dist=rate_dist,
+    )(**trpb_data)
+
+
+def pdz3_class_factory(
+    name: Literal["CriptC", "CriptN", "Cis", "Trans1", "Trans2"],
+    growth_func: Literal["exponential", "logistic"],
+    rate_dist: Literal["gamma", "exponential", "lomax"],
+) -> type[Model]:
+    """Builds classes for the different PDZ3 datasets."""
+    # All PDZ3 models are hierarchical and do not include times or ODs
+    return hierarchical_class_factory(
+        name=name,
+        growth_func=growth_func,
+        rate_dist=rate_dist,
+        include_times=False,  # PDZ3 models do not include times
+        include_od=False,  # PDZ3 models do not include ODs
     )

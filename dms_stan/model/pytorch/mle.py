@@ -632,7 +632,7 @@ class MLEParam:
         self,
         name: str,
         value: Optional[npt.NDArray],
-        distribution: dms.custom_types.DMSStanDistribution,
+        distribution: "dms.custom_types.DMSStanDistribution",
     ):
 
         # Store the inputs

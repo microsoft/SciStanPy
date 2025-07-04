@@ -1,6 +1,6 @@
 """Holds DMS Stan models used for modeling enrichment assays."""
 
-from abc import abstractmethod
+from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -10,633 +10,626 @@ import dms_stan.model.components as dms_components
 import dms_stan.operations as dms_ops
 
 
-class BaseEnrichmentModel(dms.Model):
-    """Base class for all enrichment models."""
+class MetaEnrichment(type):
+    """Metaclass for the enrichment models. This is responsible for assigning the
+    appropriate growth function and shape checks to the model classes."""
 
-    def __init__(
-        self,
-        starting_counts: npt.NDArray[np.int64],
-        timepoint_counts: npt.NDArray[np.int64],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        **hyperparameters,
-    ):
-        """Initializes the PDZ3 model with starting and ending counts.
-
-        Args:
-            starting_counts (npt.NDArray[np.int64]): Starting counts for the PDZ3 dataset.
-            timepoint_counts (npt.NDArray[np.int64]): Ending counts for the PDZ3 dataset.
+    def __new__(
+        mcs,
+        name,
+        bases,
+        namespace: dict[str, Any],
+        growth_func: Literal["exponential", "logistic"],
+        rate_dist: Literal["gamma", "exponential", "lomax"],
+        include_times: bool,
+        biological_replicates: bool,
+        include_od: bool,
+    ) -> type[dms.Model]:
         """
-        # Register default data
-        super().__init__(
-            default_data={
-                "starting_counts": starting_counts,
-                "timepoint_counts": timepoint_counts,
-            }
-        )
-
-        # The last dimension of starting and ending counts should be equivalent
-        if starting_counts.shape[-1] != timepoint_counts.shape[-1]:
-            raise ValueError(
-                "The last dimension of starting and ending counts should be equivalent."
+        Prepare the namespace for the model class. This is where we build the appropriate
+        __init__ method for the model class based on the provided parameters.
+        """
+        # The only allowed base class is dms.Model
+        if not bases or bases[0] is not dms.Model:
+            raise TypeError(
+                "Enrichment models must inherit from dms.Model. "
+                f"Got {bases[0].__name__ if bases else 'None'} instead."
+            )
+        if len(bases) > 1:
+            raise TypeError(
+                "Enrichment models must inherit from dms.Model only. "
+                f"Got {', '.join(base.__name__ for base in bases)} instead."
             )
 
-        # Record times if they are present and normalize them to have a maximum
-        # of 1
-        self.times = (
-            times
-            if times is None
-            else dms_components.Constant(times / times.max(), togglable=False)
+        # Get the base __init__ method for the model class
+        namespace["base_init"] = mcs.set_base_init(
+            include_times=include_times,
+            biological_replicates=biological_replicates,
         )
 
-        # Set the total number of starting and ending counts by replicate
-        self.total_starting_counts = dms_components.Constant(
-            starting_counts.sum(axis=-1, keepdims=True), togglable=False
-        )
-        self.total_timepoint_counts = dms_components.Constant(
-            timepoint_counts.sum(axis=-1, keepdims=True), togglable=False
-        )
+        # We need to set the times
+        namespace["init_times"] = mcs.set_times(include_times=include_times)
 
-        # Starting proportions are Exp-Dirichlet distributed
-        self.log_theta_t0 = dms_components.ExpDirichlet(
-            alpha=alpha, shape=starting_counts.shape
+        # Now the rate distribution, fold change, and growth function
+        namespace["init_rate_distribution"] = mcs.set_rate_distribution(
+            rate_distribution=rate_dist,
+            biological_replicates=biological_replicates,
         )
-
-        # Define non-base parameters
-        self._define_additional_parameters(**hyperparameters)
-
-        # Calculate ending proportions
-        self.raw_abundances_tg0 = self._define_growth_function()
-        self.log_theta_tg0 = dms_ops.normalize_log(self.raw_abundances_tg0)
-
-        # The counts are modeled as multinomial distributions, parametrized using
-        # the log theta parameter
-        self.starting_counts = dms_components.MultinomialLogTheta(
-            log_theta=self.log_theta_t0,
-            N=self.total_starting_counts,
-            shape=starting_counts.shape,
+        namespace["init_foldchange"] = mcs.set_foldchange(
+            rate_distribution=rate_dist, biological_replicates=biological_replicates
         )
-        self.timepoint_counts = dms_components.MultinomialLogTheta(
-            log_theta=self.log_theta_tg0,
-            N=self.total_timepoint_counts,
-            shape=timepoint_counts.shape,
+        namespace["init_growth_function"] = mcs.set_growth_function(
+            growth_function=growth_func,
+            include_times=include_times,
+            biological_replicates=biological_replicates,
         )
 
-    @abstractmethod
-    def _define_additional_parameters(self, **hyperparameters):
-        """
-        Defines additional parameters for the model. This must be overridden in
-        child classes and is used to define any additional parameters needed for
-        the model.
-        """
+        # Next, set the OD distribution if needed
+        namespace["init_od"] = mcs.set_od_distribution(include_od=include_od)
 
-    @abstractmethod
-    def _define_growth_function(self) -> dms_components.TransformedParameter:
-        """
-        Defines the transformation for the model. This must be overridden in
-        child classes and is used to define the transformation between starting
-        and ending abundances.
-        """
+        # Finally, set the __init__ method for the model class
+        namespace["__init__"] = mcs.set_init(
+            growth_func=growth_func,
+            rate_dist=rate_dist,
+            include_times=include_times,
+            biological_replicates=biological_replicates,
+            include_od=include_od,
+        )
 
+        # Run the base new method to create the class
+        return super().__new__(mcs, name, bases, namespace)
 
-class LogExponentialMixIn:
-    """Mixin class for log-exponential growth models."""
-
-    def _define_growth_function(
-        self,
-    ) -> (
-        dms_components.BinaryLogExponentialGrowth | dms_components.LogExponentialGrowth
+    @classmethod
+    def set_init(
+        mcs,
+        growth_func: Literal["exponential", "logistic"],
+        rate_dist: Literal["gamma", "exponential", "lomax"],
+        include_times: bool,
+        biological_replicates: bool,
+        include_od: bool,
     ):
-        # pylint: disable=no-member
-        if self.times is None:
-            return dms_components.BinaryLogExponentialGrowth(
-                log_A=self.log_theta_t0,
+        """
+        Runs all other initialization methods to complete object initialization.
+        """
+        # Determine the allowed and required keywords for the model class
+        required_keywords = ["starting_counts", "timepoint_counts"]
+        allowed_keywords = []
+
+        # Different keywords for different growth functions (no keywords for exponential)
+        if growth_func == "logistic":
+            allowed_keywords.extend(["c_alpha", "c_beta"])
+
+        # Different keywords for different rate distributions
+        if rate_dist == "gamma":
+            allowed_keywords.extend(["inv_r_alpha", "inv_r_beta"])
+        elif rate_dist == "exponential":
+            allowed_keywords.append("beta")
+        elif rate_dist == "lomax":
+            allowed_keywords.extend(["lambda_", "lomax_alpha"])
+
+        # If we have times, we need to include keywords for them
+        if include_times:
+            required_keywords.append("times")
+
+        # If biological replicates and either the exponential or lomax rate distribution
+        # is used, we add the `log_foldchange_sigma_sigma` keyword.
+        if biological_replicates and rate_dist in {"exponential", "lomax"}:
+            allowed_keywords.append("log_foldchange_sigma_sigma")
+
+        # If we have ODs, we need to include keywords for them
+        if include_od:
+            required_keywords.extend(["starting_od", "timepoint_od"])
+            allowed_keywords.extend(
+                [
+                    "conversion_factor_mean",
+                    "conversion_factor_std",
+                    "od_measurement_error",
+                ]
+            )
+
+        # Convert allowed and required keywords to sets
+        required_keywords = frozenset(required_keywords)
+        allowed_keywords = frozenset(allowed_keywords) | required_keywords
+
+        # Build the __init__ method for the model class
+        def __init__(self, **kwargs):
+            """Initializes the enrichment model with the provided parameters."""
+            # Check that all required keywords are present
+            if missing_keywords := required_keywords - kwargs.keys():
+                raise ValueError(
+                    f"Missing required keyword arguments: {', '.join(missing_keywords)}"
+                )
+
+            # Make sure we don't have any unexpected keywords
+            if unexpected_keywords := kwargs.keys() - allowed_keywords:
+                raise ValueError(
+                    f"Unexpected keyword arguments: {', '.join(unexpected_keywords)}"
+                )
+
+            # Run the various initialization methods
+            self.base_init(**kwargs)
+            self.init_times(**kwargs)
+            self.init_rate_distribution(**kwargs)
+            self.init_foldchange(**kwargs)
+            self.init_growth_function(**kwargs)
+            self.init_od(**kwargs)
+
+        return __init__
+
+    @classmethod
+    def set_base_init(mcs, include_times: bool, biological_replicates: bool):
+        """Defines the portion of the init method that is shared by all enrichment models."""
+
+        def validate_count_arrays(
+            starting_counts: npt.NDArray[np.int64],
+            timepoint_counts: npt.NDArray[np.int64],
+            kwargs: dict[str, Any],
+        ) -> None:
+            """Confirms the shape of the starting and timepoint counts arrays depending
+            on whether we are including times and biological replicates."""
+            # The last dimension of starting and ending counts should be equivalent
+            if starting_counts.shape[-1] != timepoint_counts.shape[-1]:
+                raise ValueError(
+                    "The last dimension of starting and ending counts should be equivalent."
+                )
+
+            # If no times and no biological replicates, both sets of counts should
+            # be 1D.
+            if not include_times and not biological_replicates:
+                if starting_counts.ndim != 1 or timepoint_counts.ndim != 1:
+                    raise ValueError(
+                        "If no times and no biological replicates, both sets of counts "
+                        "should be 1D."
+                    )
+
+            # If we have times but no biological replicates, the starting counts
+            # should be 1D and the timepoint counts should be 2D. The first dimension
+            # is the timepoint, and the second dimension is the variant.
+            elif include_times and not biological_replicates:
+                if starting_counts.ndim != 1 or timepoint_counts.ndim != 2:
+                    raise ValueError(
+                        "If times are provided but no biological replicates, the "
+                        "starting counts should be 1D and the timepoint counts should "
+                        "be 2D."
+                    )
+                if len(kwargs["times"]) != timepoint_counts.shape[0]:
+                    raise ValueError(
+                        "The number of timepoints should match the first dimension "
+                        "of the timepoint counts."
+                    )
+
+            # If we have biological replicates but not times, both sets of counts
+            # should be 2D. Shapes should be (n_replicates, n_variants).
+            elif biological_replicates and not include_times:
+                if starting_counts.ndim != 2 or timepoint_counts.ndim != 2:
+                    raise ValueError(
+                        "If biological replicates are provided but no times, both sets "
+                        "of counts should be 2D."
+                    )
+                if starting_counts.shape[0] != timepoint_counts.shape[0]:
+                    raise ValueError(
+                        "The first dimension of starting and timepoint counts should "
+                        "be the same if biological replicates are provided."
+                    )
+
+            # If we have both times and biological replicates, the starting counts
+            # and timepoint counts should be 3D. Shapes should be (n_replicates,
+            # n_times, n_variants). This means that there will be a singleton dimension
+            # for the times in the starting counts.
+            elif include_times and biological_replicates:
+                if starting_counts.ndim != 3 or timepoint_counts.ndim != 3:
+                    raise ValueError(
+                        "If both times and biological replicates are provided, both sets "
+                        "of counts should be 3D."
+                    )
+                if starting_counts.shape[1] != 1:
+                    raise ValueError(
+                        "If both times and biological replicates are provided, the "
+                        "starting counts should have a singleton dimension for the times."
+                    )
+                if timepoint_counts.shape[1] != len(kwargs["times"]):
+                    raise ValueError(
+                        "The second dimension of timepoint counts should match the "
+                        "length of times."
+                    )
+
+        def set_r_shape(timepoint_counts: npt.NDArray[np.floating]) -> tuple[int, ...]:
+            """Sets the shape of the r parameter based on the timepoint counts."""
+            # Base shape matches that of the timepoint counts
+            r_shape = list(timepoint_counts.shape)
+
+            # If we have times, then we need a singleton dimension at the times
+            # index
+            if include_times:
+                r_shape[-1] = 1
+
+            return tuple(r_shape)
+
+        # Define the init code shared by all enrichment models.
+        # Define the base __init__ method used by all enrichment models.
+        def base_init(
+            self,
+            *,
+            starting_counts: npt.NDArray[np.int64],
+            timepoint_counts: npt.NDArray[np.int64],
+            alpha: float = 0.1,
+            **kwargs,
+        ):
+            # Validate the shape of the starting and timepoint counts arrays
+            validate_count_arrays(
+                starting_counts=starting_counts,
+                timepoint_counts=timepoint_counts,
+                kwargs=kwargs,
+            )
+
+            # Initialize the base class.
+            dms.Model.__init__(
+                self,
+                default_data={
+                    "starting_counts": starting_counts,
+                    "timepoint_counts": timepoint_counts,
+                },
+            )
+
+            # Get the number of variants and the shape of `r`
+            self.n_variants = starting_counts.shape[-1]
+            self.r_shape = set_r_shape(timepoint_counts)
+
+            # Set the total number of starting and ending counts by replicate
+            self.total_starting_counts = dms_components.Constant(
+                starting_counts.sum(axis=-1, keepdims=True), togglable=False
+            )
+            self.total_timepoint_counts = dms_components.Constant(
+                timepoint_counts.sum(axis=-1, keepdims=True), togglable=False
+            )
+
+            # Starting proportions are Exp-Dirichlet distributed
+            self.log_theta_t0 = dms_components.ExpDirichlet(
+                alpha=alpha, shape=starting_counts.shape
+            )
+
+        return base_init
+
+    @classmethod
+    def set_times(mcs, include_times: bool):
+        """Sets the `time` attribute if needed"""
+
+        def null_init_times(self, **kwargs) -> None:  # pylint: disable=unused-argument
+            """Does nothing"""
+
+        def init_times(self, times, **kwargs) -> None:
+
+            # If times are provided, they should be a 1D array.
+            if times.ndim != 1:
+                raise ValueError("Expected 'times' to be a 1D array.")
+
+            # Normalize and record times if they are provided
+            self.times = dms_components.Constant(times / times.max(), togglable=False)
+
+        # Use the appropriate function for initializing times
+        if include_times:
+            return init_times
+        return null_init_times
+
+    @classmethod
+    def set_rate_distribution(
+        mcs,
+        rate_distribution: Literal["gamma", "exponential", "lomax"],
+        biological_replicates: bool,
+    ):
+        """Sets the rate distribution for the model."""
+
+        def init_gamma_inv_rate(
+            self,
+            *,
+            inv_r_alpha: float = 7.0,
+            inv_r_beta: float = 1.0,
+            **kwargs,  # pylint: disable=unused-argument
+        ) -> None:
+
+            # Every variant has a fundamental "rate" which will be the same across
+            # experiments. This rate is modeled by the Gamma distribution and is the
+            # inverse of the growth rate (so that we can use it as the exponential rate
+            # parameter).
+            if biological_replicates:
+                varname = "inv_r_mean"
+                distclass = dms_components.Gamma
+            else:
+                varname = "r"
+                distclass = dms_components.InverseGamma
+
+            # Set the inverse growth rate distribution
+            setattr(
+                self,
+                varname,
+                distclass(alpha=inv_r_alpha, beta=inv_r_beta, shape=(self.n_variants,)),
+            )
+
+        def init_exponential_rate(
+            self, *, beta: float = 1.0, **kwargs  # pylint: disable=unused-argument
+        ) -> None:
+
+            # We stay in the log space for hierarchical models, but not for non-hierarchical
+            # models
+            if biological_replicates:
+                varname = "log_r"
+                distclass = dms_components.ExpExponential
+            else:
+                varname = "r"
+                distclass = dms_components.Exponential
+
+            # Set the growth rate distribution
+            setattr(self, varname, distclass(beta=beta, shape=(self.n_variants,)))
+
+        def init_lomax_rate(
+            self,
+            *,
+            lambda_: float = 1.0,
+            lomax_alpha: float = 2.5,
+            **kwargs,  # pylint: disable=unused-argument
+        ) -> None:
+
+            # We stay in the log space for hierarchical models, but not for non-hierarchical
+            # models
+            if biological_replicates:
+                varname = "log_r"
+                distclass = dms_components.ExpLomax
+            else:
+                varname = "r"
+                distclass = dms_components.Lomax
+
+            # Set the growth rate distribution
+            setattr(
+                self,
+                varname,
+                distclass(lambda_=lambda_, alpha=lomax_alpha, shape=(self.n_variants,)),
+            )
+
+        # Return the appropriate initialization method based on the rate distribution
+        if rate_distribution == "gamma":
+            return init_gamma_inv_rate
+        if rate_distribution == "exponential":
+            return init_exponential_rate
+        if rate_distribution == "lomax":
+            return init_lomax_rate
+        raise ValueError("Unsupported rate distribution.")
+
+    @classmethod
+    def set_foldchange(
+        mcs,
+        rate_distribution: Literal["gamma", "exponential", "lomax"],
+        biological_replicates: bool,
+    ):
+        """Sets the fold-change that we observe"""
+
+        def null_init_foldchange(
+            self, **kwargs  # pylint: disable=unused-argument
+        ) -> None:
+            """Does nothing for non-hierarchical models."""
+            return
+
+        def init_gamma_inv_rate_foldchange(
+            self, **kwargs  # pylint: disable=unused-argument
+        ) -> None:
+            """Builds 'r' from 'inv_r_mean'"""
+            self.r = dms_components.Exponential(
+                beta=self.inv_r_mean, shape=self.r_shape
+            )
+
+        def init_exp_lomax_rate_foldchange(
+            self,
+            log_foldchange_sigma_sigma: float = 0.1,
+            **kwargs,  # pylint: disable=unused-argument
+        ) -> None:
+            """Builds 'r' from 'log_r'"""
+
+            # Get the sigma for the log fold-change
+            self.log_foldchange_sigma = dms_components.HalfNormal(
+                sigma=log_foldchange_sigma_sigma
+            )
+
+            # Calculate r
+            self.r = dms_ops.exp(
+                dms_components.Normal(
+                    mu=self.log_r,
+                    sigma=log_foldchange_sigma_sigma,
+                    shape=self.r_shape,
+                )
+            )
+
+        # Do nothing for non-hierarchical models
+        if not biological_replicates:
+            return null_init_foldchange
+
+        # Return the appropriate initialization method based on the rate distribution
+        if rate_distribution == "gamma":
+            return init_gamma_inv_rate_foldchange
+        elif rate_distribution in {"exponential", "lomax"}:
+            return init_exp_lomax_rate_foldchange
+        raise ValueError("Unsupported rate distribution.")
+
+    @classmethod
+    def set_growth_function(
+        mcs,
+        growth_function: Literal["exponential", "logistic"],
+        include_times: bool,
+        biological_replicates: bool,
+    ):
+        """Sets the growth function for the model."""
+
+        # Define the different init functions
+        def init_exponential_growth(
+            self, **kwargs  # pylint: disable=unused-argument
+        ) -> None:
+            """Initializes the binary exponential growth function."""
+            # Different growth functions depending on whether we have times or not
+            if include_times:
+                self.growth_function = dms_components.LogExponentialGrowth(
+                    t=self.times,
+                    log_A=self.log_theta_t0,
+                    r=self.r,
+                    shape=self.default_data["timepoint_counts"].shape,
+                )
+            else:
+                self.growth_function = dms_components.BinaryLogExponentialGrowth(
+                    log_A=self.log_theta_t0,
+                    r=self.r,
+                    shape=self.default_data["timepoint_counts"].shape,
+                )
+
+        def init_logistic_growth(
+            self,
+            c_alpha: float = 4.0,
+            c_beta: float = 8.0,
+            **kwargs,  # pylint: disable=unused-argument
+        ) -> None:
+            """Initializes the binary logistic growth function."""
+            # Get the shape of `c`. If we have biological replicates, We have as
+            # many values for `c` as we do biological replicates.
+            if biological_replicates:
+                c_shape = [1] * self.default_data["timepoint_counts"].ndim
+                c_shape[0] = self.default_data["timepoint_counts"].shape[0]
+                if all(dim == 1 for dim in c_shape):
+                    c_shape = ()
+            else:
+                c_shape = ()
+
+            # Define c.
+            self.c = dms_components.Gamma(alpha=c_alpha, beta=c_beta, shape=c_shape)
+
+            # Growth is different depending on whether we have times or not
+            self.growth_function = dms_components.LogSigmoidGrowthInitParametrization(
+                t=(
+                    self.times
+                    if include_times
+                    else dms_components.Constant(1.0, togglable=False)
+                ),
+                log_x0=self.log_theta_t0,
                 r=self.r,
+                c=self.c,
                 shape=self.default_data["timepoint_counts"].shape,
             )
-        return dms_components.LogExponentialGrowth(
-            t=self.times,
-            log_A=self.log_theta_t0,
-            r=self.r,
-            shape=self.default_data["timepoint_counts"].shape,
-        )
 
+        # Return the appropriate initialization method based on the growth function
+        if growth_function == "exponential":
+            return init_exponential_growth
+        if growth_function == "logistic":
+            return init_logistic_growth
+        raise ValueError("Unsupported growth function.")
 
-class LogSigmoidMixIn:
-    """Mixin class for sigmoid growth models."""
+    @classmethod
+    def set_od_distribution(mcs, include_od: bool):
+        """Sets the OD distribution based on whether we are including ODs."""
 
-    def __init__(
-        self,
-        starting_counts: npt.NDArray[np.integer],
-        timepoint_counts: npt.NDArray[np.integer],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        c_alpha: float = 4.0,
-        c_beta: float = 8.0,
-        **hyperparameters,
-    ):
-        # pylint: disable=no-member
-        # Initialize a `c` parameter for the sigmoid growth function. We assume
-        # separate 'c' for each replicate. `c` will be a scalar if there are no
-        # replicates.
-        if times is None:
+        # Null operation for models that do not include ODs
+        def init_od_null(self, **kwargs) -> None:  # pylint: disable=unused-argument
+            """Does nothing for models that do not include ODs."""
+            return
 
-            # No times provided and 2D timepoint counts means we have replicates
-            if timepoint_counts.ndim == 2:
-                shape = (timepoint_counts.shape[0], 1)
-
-            # No times provided and 1D timepoint counts means we have no replicates
-            elif timepoint_counts.ndim == 1:
-                shape = ()
-
-            # Otherwise, we have an error
-            else:
+        # OD distribution for models that include ODs
+        def init_od(
+            self,
+            starting_od: npt.NDArray[np.floating],
+            timepoint_od: npt.NDArray[np.floating],
+            conversion_factor_mean: float = -2.3,
+            conversion_factor_std: float = 1.0,
+            od_measurement_error: float = 0.1,
+            **kwargs,  # pylint: disable=unused-argument
+        ) -> None:
+            """Sets the OD distribution for models that include ODs."""
+            # Check OD shapes. They should match the shapes of their respective
+            # counts except in the final dimension, which should be a singleton
+            if (
+                starting_od.shape[:-1]
+                != self.default_data["starting_counts"].shape[:-1]
+            ):
                 raise ValueError(
-                    "If times are not provided, the timepoint counts should be 1D "
-                    "for non-hierarchical models or 2D for hierarchical models."
+                    "The shape of starting_od should match the shape of "
+                    "starting_counts except in the last dimension."
+                )
+            if (
+                timepoint_od.shape[:-1]
+                != self.default_data["timepoint_counts"].shape[:-1]
+            ):
+                raise ValueError(
+                    "The shape of timepoint_od should match the shape of "
+                    "timepoint_counts except in the last dimension."
+                )
+            if starting_od.shape[-1] != 1 or timepoint_od.shape[-1] != 1:
+                raise ValueError(
+                    "The last dimension of starting_od and timepoint_od should be a "
+                    "singleton dimension."
                 )
 
-        else:
-            # Times provided and 3D timepoint counts means we have replicates
-            if timepoint_counts.ndim == 3:
-                shape = (timepoint_counts.shape[0], 1, 1)
-
-            # Times provided and 2D timepoint counts means we have no replicates
-            elif timepoint_counts.ndim == 2:
-                shape = ()
-
-            # Otherwise, we have an error
-            else:
-                raise ValueError(
-                    "If times are provided, the timepoint counts should be 2D for "
-                    "non-hierarchical models or 3D for hierarchical models."
-                )
-
-        self.c = dms_components.Gamma(alpha=c_alpha, beta=c_beta, shape=shape)
-
-        # Initialize the base class
-        super().__init__(
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            times=times,
-            alpha=alpha,
-            **hyperparameters,
-        )
-
-    def _define_growth_function(
-        self,
-    ) -> dms_components.LogSigmoidGrowthInitParametrization:
-        # pylint: disable=no-member
-        # Get the ending abundances
-        return dms_components.LogSigmoidGrowthInitParametrization(
-            t=(
-                dms_components.Constant(1.0, togglable=False)
-                if self.times is None
-                else self.times
-            ),
-            log_x0=self.log_theta_t0,
-            r=self.r,
-            c=self.c,
-            shape=self.default_data["timepoint_counts"].shape,
-        )
-
-
-class HierarchicalModel(BaseEnrichmentModel):
-    """Used when we have replicates and want to model them hierarchically."""
-
-    def __init__(
-        self,
-        starting_counts: npt.NDArray[np.int64],
-        timepoint_counts: npt.NDArray[np.int64],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        **hyperparameters,
-    ):
-
-        # If times are provided, then the timepoint counts should be 3D and have
-        # the same middle dimension as the times. If times are not provided, then
-        # the timepoint counts should be 2D.
-        if times is not None:
-            # The timepoint counts should be 3D. There must be as many timepoints
-            # as the middle dimension of timepoint counts
-            if timepoint_counts.ndim != 3:
-                raise ValueError(
-                    "If times are provided, the timepoint counts should be 3D."
-                )
-            if timepoint_counts.shape[1] != len(times):
-                raise ValueError(
-                    "The middle dimension of timepoint counts should match the length"
-                    "of times."
-                )
-
-            # Correct the shape of the times array
-            assert times.ndim == 1, "Times should be a 1D array."
-            times = times[None, :, None]  # Add two new dimensions to times
-        else:
-            # The timepoint counts should be 2D. There must be as many timepoints
-            # as the last dimension of timepoint counts
-            if timepoint_counts.ndim != 2:
-                raise ValueError(
-                    "If times are not provided, the timepoint counts should be 2D."
-                )
-
-        # This model is not appropriate if there are no replicates
-        if timepoint_counts.shape[0] == 1:
-            raise ValueError(
-                "This model is not appropriate if there are no replicates. Use the "
-                "non-hierarchical model instead."
+            # Get the conversion factor
+            self.log_abundance_to_od = dms_components.Normal(
+                mu=conversion_factor_mean,
+                sigma=conversion_factor_std,
             )
 
-        # Run inherited init
-        super().__init__(
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            times=times,
-            alpha=alpha,
-            **hyperparameters,
-        )
-
-
-class BaseGammaInvRate(HierarchicalModel):
-    """
-    Base model for all enrichment models that parametrize the inverse of the mean
-    growth rate as gamma distributed and the individual growth rates as exponential.
-    """
-
-    def __init__(
-        self,
-        starting_counts: npt.NDArray[np.integer],
-        timepoint_counts: npt.NDArray[np.integer],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        inv_r_alpha: float = 7.0,
-        inv_r_beta: float = 1.0,
-    ):
-        # Run inherited init
-        super().__init__(
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            alpha=alpha,
-            times=times,
-            inv_r_alpha=inv_r_alpha,
-            inv_r_beta=inv_r_beta,
-        )
-
-    def _define_additional_parameters(  # pylint: disable=arguments-differ
-        self, inv_r_alpha: float, inv_r_beta: float
-    ):
-
-        # Every variant has a fundamental "rate" which will be the same across
-        # experiments. This rate is modeled by the Gamma distribution and is the
-        # inverse of the growth rate (so that we can use it as the exponential rate
-        # parameter).
-        self.inv_r_mean = dms_components.Gamma(
-            alpha=inv_r_alpha,
-            beta=inv_r_beta,
-            shape=(self.default_data["timepoint_counts"].shape[-1],),
-        )
-
-        # Get the shape of r. We need to account for possible additional dimensions
-        # needed because of the times parameter.
-        r_shape = list(self.default_data["timepoint_counts"].shape)
-        if self.times is not None:
-            r_shape[1] = 1
-
-        # The inverse rate is the beta parameter for the exponential distributions
-        # describing the growth rates in each experiment.
-        self.r = dms_components.Exponential(
-            beta=self.inv_r_mean,
-            shape=tuple(r_shape),
-        )
-
-
-class BaseFoldChangeRate(HierarchicalModel):
-    """
-    Base model for all TrpB growth models that parametrize the growth rate as a
-    as a fold-change of some mean growth rate.
-    """
-
-    def __init__(
-        self,
-        starting_counts: npt.NDArray[np.integer],
-        timepoint_counts: npt.NDArray[np.integer],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        log_foldchange_sigma_sigma: float = 0.1,
-        **hyperparameters,
-    ):
-        # Run inherited init
-        super().__init__(
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            times=times,
-            alpha=alpha,
-            log_foldchange_sigma_sigma=log_foldchange_sigma_sigma,
-            **hyperparameters,
-        )
-
-    @abstractmethod
-    def _define_growth_distribution(self, **hyperparameters):
-        """
-        Define the growth rate distribution for the model. This should return a
-        Parameter object.
-        """
-
-    def _define_additional_parameters(  # pylint: disable=arguments-differ
-        self, log_foldchange_sigma_sigma: float, **hyperparameters
-    ):
-
-        # Define the log of typical growth rate
-        self.log_r = self._define_growth_distribution(**hyperparameters)
-
-        # The error on the log of the fold-change is modeled as an exponential distribution.
-        # We assume homoscedasticity in fold-change error
-        self.log_foldchange_sigma = dms_components.HalfNormal(
-            sigma=log_foldchange_sigma_sigma
-        )
-
-        # The shape of the fold-change depends on whether we are including times
-        shape = list(self.default_data["timepoint_counts"].shape)
-        if self.times is not None:
-            shape[1] = 1
-
-        # We model the r values as normally distributed around their log (i.e.,
-        # we assume we can have equal foldchange to lower and higher values) and
-        # the typical fold-change is 1 (i.e., the log of the fold-change is 0).
-        self.r = dms_ops.exp(
-            dms_components.Normal(
-                mu=self.log_r,
-                sigma=self.log_foldchange_sigma,
-                shape=tuple(shape),
+            # Now get the stdev of the measurement error
+            self.od_measurement_error = dms_components.HalfNormal(
+                sigma=od_measurement_error
             )
-        )
+
+            # Model the OD at t=0. This is just the correction factor exponentiated
+            self.od_t0 = dms_components.Normal(
+                mu=dms_ops.exp(self.log_abundance_to_od),
+                sigma=self.od_measurement_error,
+                shape=starting_od.shape,
+            )
+
+            # Model at t > 0. This is the abundance plus the correction factor
+            self.od_tg0 = dms_components.Normal(
+                mu=dms_ops.exp(self.log_abundance_to_od + self.raw_abundances_tg0),
+                sigma=self.od_measurement_error,
+                shape=timepoint_od.shape,
+            )
+
+        # Return the appropriate initialization method based on whether we are
+        # including ODs
+        if include_od:
+            return init_od
+        return init_od_null
 
 
-class BaseExponentialRate(BaseFoldChangeRate):
-    """
-    Base model for all TrpB growth models that parametrize the mean growth rate
-    as exponential distributed and the individual growth rates as being derived
-    from some fold-change of the mean.
-    """
-
-    def __init__(
-        self,
-        starting_counts: npt.NDArray[np.integer],
-        timepoint_counts: npt.NDArray[np.integer],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        log_foldchange_sigma_sigma: float = 0.1,
-        beta: float = 1.0,
-    ):
-        # Run inherited init
-        super().__init__(
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            times=times,
-            alpha=alpha,
-            log_foldchange_sigma_sigma=log_foldchange_sigma_sigma,
-            beta=beta,
-        )
-
-    def _define_growth_distribution(  # pylint: disable=arguments-differ
-        self, beta: float
-    ):
-        # The mean growth rate is modeled as an exponential distribution
-        return dms_components.ExpExponential(
-            beta=beta, shape=(self.default_data["timepoint_counts"].shape[-1],)
-        )
+def hierarchical_class_factory(
+    name: str,
+    growth_func: Literal["exponential", "logistic"],
+    rate_dist: Literal["gamma", "exponential", "lomax"],
+    include_times: bool = False,
+    include_od: bool = False,
+) -> type[dms.Model]:
+    """Factory function to create a hierarchical enrichment model class with the specified parameters."""
+    # Create a new class with the specified parameters
+    return MetaEnrichment(
+        name,
+        (dms.Model,),
+        {},
+        growth_func=growth_func,
+        rate_dist=rate_dist,
+        include_times=include_times,
+        biological_replicates=True,
+        include_od=include_od,
+    )
 
 
-class BaseLomaxRate(BaseFoldChangeRate):
-    """
-    Base model for all TrpB growth models that parametrize the mean growth rate
-    as Lomax (Paretto Type II) distributed and the individual growth rates as being
-    derived from some fold-change of the mean. This is similar to the exponential
-    model, but allows for a heavier tail.
-    """
-
-    def __init__(
-        self,
-        starting_counts: npt.NDArray[np.integer],
-        timepoint_counts: npt.NDArray[np.integer],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        log_foldchange_sigma_sigma: float = 0.1,
-        lambda_: float = 1.0,
-        lomax_alpha: float = 2.5,
-    ):
-        # Run inherited init
-        super().__init__(
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            times=times,
-            alpha=alpha,
-            log_foldchange_sigma_sigma=log_foldchange_sigma_sigma,
-            lambda_=lambda_,
-            lomax_alpha=lomax_alpha,
-        )
-
-    def _define_growth_distribution(  # pylint: disable=arguments-differ
-        self, lambda_: float, lomax_alpha: float
-    ):
-        return dms_components.ExpLomax(
-            lambda_=lambda_,
-            alpha=lomax_alpha,
-            shape=(self.default_data["timepoint_counts"].shape[-1],),
-        )
-
-
-class GammaInvRateExponGrowth(LogExponentialMixIn, BaseGammaInvRate):
-    """
-    Models the TrpB count data from Johnston et al. using an exponential growth
-    function to model the time-dependent increase in counts and a multinomial distribution
-    to model the counts at each timepoint. The prior on the inverse growth rate is
-    gamma distributed.
-    """
-
-
-class GammaInvRateSigmoidGrowth(LogSigmoidMixIn, BaseGammaInvRate):
-    """Gamma-distributed inverse rate parameter with a sigmoid growth function."""
-
-    def __init__(  # Updating default values
-        self,
-        starting_counts: npt.NDArray[np.int64],
-        timepoint_counts: npt.NDArray[np.int64],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        inv_r_alpha: float = 2.5,
-        inv_r_beta: float = 0.5,
-    ):
-        super().__init__(
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            times=times,
-            alpha=alpha,
-            inv_r_alpha=inv_r_alpha,
-            inv_r_beta=inv_r_beta,
-        )
-
-
-class ExponRateExponGrowth(LogExponentialMixIn, BaseExponentialRate):
-    """
-    Models the TrpB count data from Johnston et al. using an exponential growth
-    function to model the time-dependent increase in counts and a multinomial distribution
-    to model the counts at each timepoint. The prior on the growth rate is
-    exponential.
-    """
-
-
-class ExponRateSigmoidGrowth(LogSigmoidMixIn, BaseExponentialRate):
-    """Exponential-distributed rate parameter with a sigmoid growth function."""
-
-
-class LomaxRateExponGrowth(LogExponentialMixIn, BaseLomaxRate):
-    """
-    Models the TrpB count data from Johnston et al. using an exponential growth
-    function to model the time-dependent increase in counts and a multinomial distribution
-    to model the counts at each timepoint. The prior on the growth rate is
-    Lomax-distributed.
-    """
-
-
-class LomaxRateSigmoidGrowth(LogSigmoidMixIn, BaseLomaxRate):
-    """Lomax-distributed rate parameter with a sigmoid growth function."""
-
-
-class NonHierarchicalModel(BaseEnrichmentModel):
-    """Used when we have no replicates."""
-
-    def __init__(
-        self,
-        starting_counts: npt.NDArray[np.int64],
-        timepoint_counts: npt.NDArray[np.int64],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        **hyperparameters,
-    ):
-        # If times are provided, then the timepoint counts should be 2D and have
-        # the same first dimension as the times. If times are not provided, then
-        # the timepoint counts should be 1D.
-        if times is not None:
-            # The timepoint counts should be 2D. There must be as many timepoints
-            # as the middle dimension of timepoint counts
-            if timepoint_counts.ndim != 2:
-                raise ValueError(
-                    "If times are provided, the timepoint counts should be 2D."
-                )
-            if timepoint_counts.shape[0] != len(times):
-                raise ValueError(
-                    "The middle dimension of timepoint counts should match the length"
-                    "of times."
-                )
-
-            # Correct the shape of the times array
-            assert times.ndim == 1, "Times should be a 1D array."
-            times = times[:, None]  # Append dimension to times
-        else:
-            # The timepoint counts should be 1D.
-            if timepoint_counts.ndim != 1:
-                raise ValueError(
-                    "If times are not provided, the timepoint counts should be 1D."
-                )
-
-        # Run inherited init
-        super().__init__(
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            alpha=alpha,
-            times=times,
-            **hyperparameters,
-        )
-
-
-class NonHierarchicalBaseExponentialRate(NonHierarchicalModel):
-    def __init__(
-        self,
-        starting_counts: npt.NDArray[np.integer],
-        timepoint_counts: npt.NDArray[np.integer],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        beta: float = 1.0,
-    ):
-        # Run inherited init
-        super().__init__(
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            times=times,
-            alpha=alpha,
-            beta=beta,
-        )
-
-    def _define_additional_parameters(  # pylint: disable=arguments-differ
-        self, beta: float
-    ):
-        # The mean growth rate is modeled as an exponential distribution
-        self.r = dms_components.Exponential(
-            beta=beta, shape=(self.default_data["timepoint_counts"].shape[-1],)
-        )
-
-
-class NonHierarchicalBaseLomaxRate(NonHierarchicalModel):
-    def __init__(
-        self,
-        starting_counts: npt.NDArray[np.integer],
-        timepoint_counts: npt.NDArray[np.integer],
-        times: npt.NDArray[np.floating] | None = None,
-        alpha: float = 0.1,
-        lambda_: float = 1.0,
-        lomax_alpha: float = 2.5,
-    ):
-        # Run inherited init
-        super().__init__(
-            starting_counts=starting_counts,
-            timepoint_counts=timepoint_counts,
-            times=times,
-            alpha=alpha,
-            lambda_=lambda_,
-            lomax_alpha=lomax_alpha,
-        )
-
-    def _define_additional_parameters(  # pylint: disable=arguments-differ
-        self, lambda_: float, lomax_alpha: float
-    ):
-        # The mean growth rate is modeled as a Lomax distribution
-        self.r = dms_components.Lomax(
-            lambda_=lambda_,
-            alpha=lomax_alpha,
-            shape=(self.default_data["timepoint_counts"].shape[-1],),
-        )
-
-
-class NonHierarchicalExponRateExponGrowth(
-    LogExponentialMixIn, NonHierarchicalBaseExponentialRate
-):
-    """
-    Models the TrpB count data from Johnston et al. using an exponential growth
-    function to model the time-dependent increase in counts and a multinomial distribution
-    to model the counts at each timepoint. The prior on the growth rate is
-    exponential.
-    """
-
-
-class NonHierarchicalExponRateSigmoidGrowth(
-    LogSigmoidMixIn, NonHierarchicalBaseExponentialRate
-):
-    """Exponential-distributed rate parameter with a sigmoid growth function."""
-
-
-class NonHierarchicalLomaxRateExponGrowth(
-    LogExponentialMixIn, NonHierarchicalBaseLomaxRate
-):
-    """
-    Models the TrpB count data from Johnston et al. using an exponential growth
-    function to model the time-dependent increase in counts and a multinomial distribution
-    to model the counts at each timepoint. The prior on the growth rate is
-    Lomax-distributed.
-    """
-
-
-class NonHierarchicalLomaxRateSigmoidGrowth(
-    LogSigmoidMixIn, NonHierarchicalBaseLomaxRate
-):
-    """Lomax-distributed rate parameter with a sigmoid growth function."""
+def non_hierarchical_class_factory(
+    name: str,
+    growth_func: Literal["exponential", "logistic"],
+    rate_dist: Literal["gamma", "exponential", "lomax"],
+    include_times: bool = False,
+    include_od: bool = False,
+) -> type[dms.Model]:
+    """Factory function to create a non-hierarchical enrichment model class with the specified parameters."""
+    # Create a new class with the specified parameters
+    return MetaEnrichment(
+        name,
+        (dms.Model,),
+        {},
+        growth_func=growth_func,
+        rate_dist=rate_dist,
+        include_times=include_times,
+        biological_replicates=False,
+        include_od=include_od,
+    )

@@ -3,7 +3,6 @@
 import os.path
 import pickle
 
-from abc import ABC, abstractmethod
 from typing import Any, Iterable, Literal, Optional, overload, Union
 
 import numpy as np
@@ -14,7 +13,6 @@ import xarray as xr
 
 import dms_stan as dms
 
-from dms_stan.custom_types import CombinableParameterType
 from dms_stan.defaults import (
     DEFAULT_CPP_OPTIONS,
     DEFAULT_DIM_NAMES,
@@ -27,16 +25,7 @@ from dms_stan.defaults import (
     DEFAULT_USER_HEADER,
 )
 
-from .components import (
-    Constant,
-    LogExponentialGrowth,
-    LogSigmoidGrowth,
-    Multinomial,
-    Normal,
-    Parameter,
-    TransformedData,
-    TransformedParameter,
-)
+from .components import Constant, Parameter, TransformedData, TransformedParameter
 from .components.abstract_model_component import AbstractModelComponent
 from .pytorch.mle import MLE
 from .pytorch import check_observable_data, PyTorchModel
@@ -74,7 +63,7 @@ def run_delayed_mcmc(filepath: str) -> SampleResults:
     )
 
 
-class Model(ABC):
+class Model:
     """
     A metaclass that modifies the __init__ method of a class to register all instance
     variables that are instances of the `Parameter` class and observables in the
@@ -82,7 +71,6 @@ class Model(ABC):
     attribute.
     """
 
-    @abstractmethod
     def __init__(
         self,
         *args,
@@ -833,106 +821,3 @@ class Model(ABC):
     def observable_dict(self) -> dict[str, Parameter]:
         """Returns the observables of the model as a dictionary."""
         return components_to_dict(self.observables)
-
-
-class BaseGrowthModel(Model):
-    """Defines a model of count data over time."""
-
-    def __init__(  # pylint: disable=super-init-not-called, unused-argument
-        self,
-        *,
-        t: npt.NDArray[np.floating],
-        counts: npt.NDArray[np.integer],
-        sigma: CombinableParameterType,
-        **kwargs,
-    ):
-        # Assign the noise parameter
-        self.sigma = sigma
-
-        # Define the growth curve
-        self.log_theta_unorm_mean = self._define_growth_curve(t=t, counts=counts)
-
-        # Define the regression distribution
-        self.log_theta_unorm = Normal(
-            mu=self.log_theta_unorm_mean,
-            sigma=self.sigma,
-            shape=self.log_theta_unorm_mean.shape,
-        )
-
-        # We normalize the thetas to add to 1
-        self.log_theta = dms.operations.normalize_log(self.log_theta_unorm)
-
-        # Transform the log thetas to thetas
-        self.theta = dms.operations.exp(self.log_theta)
-
-        # Counts are "Multinomial" distributed as the base
-        self.counts = Multinomial(
-            theta=self.theta,
-            N=counts.sum(axis=-1, keepdims=True),
-            shape=counts.shape,
-        ).as_observable()
-
-    @abstractmethod
-    def _define_growth_curve(
-        self, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer]
-    ) -> AbstractModelComponent:
-        """Define the growth curve of the model."""
-
-
-class ExponentialGrowthBinomialModel(BaseGrowthModel):
-    """Mix in class for exponential growth."""
-
-    def __init__(
-        self,
-        *,
-        t: npt.NDArray[np.floating],
-        counts: npt.NDArray[np.integer],
-        log_A: CombinableParameterType,
-        r: CombinableParameterType,
-        sigma: CombinableParameterType,
-        **kwargs,
-    ):
-
-        # Assign the growth parameters
-        self.log_A = log_A  # pylint: disable=invalid-name
-        self.r = r
-
-        # Call the parent class constructor. This will set up the remaining parameters
-        super().__init__(t=t, counts=counts, sigma=sigma, **kwargs)
-
-    def _define_growth_curve(
-        self, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer]
-    ) -> AbstractModelComponent:
-        return LogExponentialGrowth(t=t, log_A=self.log_A, r=self.r, shape=counts.shape)
-
-
-class SigmoidGrowthBinomialModel(BaseGrowthModel):
-    """Mix in class for sigmoid growth."""
-
-    def __init__(
-        self,
-        *,
-        t: npt.NDArray[np.floating],
-        counts: npt.NDArray[np.integer],
-        log_A: CombinableParameterType,
-        r: CombinableParameterType,
-        c: CombinableParameterType,
-        sigma: CombinableParameterType,
-        **kwargs,
-    ):
-
-        # Assign the growth parameters
-        self.log_A = log_A  # pylint: disable=invalid-name
-        self.r = r
-        self.c = c
-
-        # Call the parent class constructor. This will set up the timepoints as a
-        # constant but do nothing with the counts except check their shape.
-        super().__init__(t=t, counts=counts, sigma=sigma, **kwargs)
-
-    def _define_growth_curve(
-        self, t: npt.NDArray[np.floating], counts: npt.NDArray[np.integer]
-    ) -> AbstractModelComponent:
-        return LogSigmoidGrowth(
-            t=t, log_A=self.log_A, r=self.r, c=self.c, shape=counts.shape
-        )

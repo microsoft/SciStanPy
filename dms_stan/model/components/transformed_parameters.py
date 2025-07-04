@@ -1,7 +1,7 @@
 """Holds parameter transformations for DMS Stan models."""
 
 from abc import abstractmethod
-from typing import Optional, overload
+from typing import Any, Optional, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -197,8 +197,23 @@ class BinaryTransformedParameter(TransformedParameter):
 class UnaryTransformedParameter(TransformedParameter):
     """Transformed parameter that only requires one parameter."""
 
-    def __init__(self, dist1: "dms.custom_types.CombinableParameterType", **kwargs):
+    ALLOWED_CALLKWARGS: set[str] = set()  # Allowed kwargs for the operation
+
+    def __init__(
+        self,
+        dist1: "dms.custom_types.CombinableParameterType",
+        *,
+        call_kwargs: dict[str, Any] | None = None,
+        **kwargs,
+    ):
         super().__init__(dist1=dist1, **kwargs)
+
+        # Check provided call kwargs against allowed ones
+        self.call_kwargs = call_kwargs or {}
+        if not self.ALLOWED_CALLKWARGS.issuperset(self.call_kwargs.keys()):
+            raise ValueError(
+                f"Invalid call kwargs: {self.call_kwargs.keys() - self.ALLOWED_CALLKWARGS}"
+            )
 
     # pylint: disable=arguments-differ
     @overload
@@ -341,6 +356,20 @@ class NormalizeLogParameter(UnaryTransformedParameter):
 
     def _write_operation(self, dist1: str) -> str:
         return f"{dist1} - log_sum_exp({dist1})"
+
+
+class LogSumExpParameter(UnaryTransformedParameter):
+    """Defines a parameter that computes the log of the sum of exponentials of another."""
+
+    # TODO: Handle the shape losing a dimension or having a dimension shrink
+    def operation(self, dist1):
+        if isinstance(dist1, torch.Tensor):
+            return torch.logsumexp(dist1, **self.call_kwargs)
+        else:
+            return sp.logsumexp(dist1, **self.call_kwargs)
+
+    def _write_operation(self, dist1: str) -> str:
+        return f"log_sum_exp({dist1})"
 
 
 class SigmoidParameter(UnaryTransformedParameter):

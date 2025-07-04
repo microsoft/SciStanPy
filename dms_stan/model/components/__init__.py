@@ -38,6 +38,7 @@ from dms_stan.model.components.transformed_parameters import (
     LogParameter,
     LogSigmoidGrowth,
     LogSigmoidGrowthInitParametrization,
+    LogSumExpParameter,
     NormalizeLogParameter,
     NormalizeParameter,
     SigmoidGrowth,
