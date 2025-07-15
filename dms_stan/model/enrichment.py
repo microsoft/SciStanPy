@@ -48,7 +48,9 @@ class MetaEnrichment(type):
         )
 
         # We need to set the times
-        namespace["init_times"] = mcs.set_times(include_times=include_times)
+        namespace["init_times"] = mcs.set_times(
+            include_times=include_times, biological_replicates=biological_replicates
+        )
 
         # Now the rate distribution, fold change, and growth function
         namespace["init_rate_distribution"] = mcs.set_rate_distribution(
@@ -63,6 +65,12 @@ class MetaEnrichment(type):
             include_times=include_times,
             biological_replicates=biological_replicates,
         )
+
+        # Next, set the counts. This involves normalizing the raw abundances first
+        namespace["init_abundance_normalization"] = mcs.set_normalization(
+            include_od=include_od
+        )
+        namespace["init_counts"] = mcs.set_counts()
 
         # Next, set the OD distribution if needed
         namespace["init_od"] = mcs.set_od_distribution(include_od=include_od)
@@ -152,13 +160,15 @@ class MetaEnrichment(type):
             self.init_rate_distribution(**kwargs)
             self.init_foldchange(**kwargs)
             self.init_growth_function(**kwargs)
+            self.init_abundance_normalization()
+            self.init_counts()
             self.init_od(**kwargs)
 
         return __init__
 
     @classmethod
     def set_base_init(mcs, include_times: bool, biological_replicates: bool):
-        """Defines the portion of the init method that is shared by all enrichment models."""
+        """Defines the portions of the init method that is shared by all enrichment models."""
 
         def validate_count_arrays(
             starting_counts: npt.NDArray[np.int64],
@@ -291,10 +301,11 @@ class MetaEnrichment(type):
         return base_init
 
     @classmethod
-    def set_times(mcs, include_times: bool):
+    def set_times(mcs, include_times: bool, biological_replicates: bool):
         """Sets the `time` attribute if needed"""
 
-        def null_init_times(self, **kwargs) -> None:  # pylint: disable=unused-argument
+        # pylint: disable=unused-argument
+        def null_init_times(self, **kwargs) -> None:
             """Does nothing"""
 
         def init_times(self, times, **kwargs) -> None:
@@ -302,6 +313,14 @@ class MetaEnrichment(type):
             # If times are provided, they should be a 1D array.
             if times.ndim != 1:
                 raise ValueError("Expected 'times' to be a 1D array.")
+
+            # If we have biological replicates, we need a leading dimension. We
+            # always need a trailing dimension.
+            if biological_replicates:
+                new_shape = (None, slice(None), None)
+            else:
+                new_shape = (slice(None), None)
+            times = times[new_shape]
 
             # Normalize and record times if they are provided
             self.times = dms_components.Constant(times / times.max(), togglable=False)
@@ -464,14 +483,14 @@ class MetaEnrichment(type):
             """Initializes the binary exponential growth function."""
             # Different growth functions depending on whether we have times or not
             if include_times:
-                self.growth_function = dms_components.LogExponentialGrowth(
+                self.raw_abundances_tg0 = dms_components.LogExponentialGrowth(
                     t=self.times,
                     log_A=self.log_theta_t0,
                     r=self.r,
                     shape=self.default_data["timepoint_counts"].shape,
                 )
             else:
-                self.growth_function = dms_components.BinaryLogExponentialGrowth(
+                self.raw_abundances_tg0 = dms_components.BinaryLogExponentialGrowth(
                     log_A=self.log_theta_t0,
                     r=self.r,
                     shape=self.default_data["timepoint_counts"].shape,
@@ -498,16 +517,18 @@ class MetaEnrichment(type):
             self.c = dms_components.Gamma(alpha=c_alpha, beta=c_beta, shape=c_shape)
 
             # Growth is different depending on whether we have times or not
-            self.growth_function = dms_components.LogSigmoidGrowthInitParametrization(
-                t=(
-                    self.times
-                    if include_times
-                    else dms_components.Constant(1.0, togglable=False)
-                ),
-                log_x0=self.log_theta_t0,
-                r=self.r,
-                c=self.c,
-                shape=self.default_data["timepoint_counts"].shape,
+            self.raw_abundances_tg0 = (
+                dms_components.LogSigmoidGrowthInitParametrization(
+                    t=(
+                        self.times
+                        if include_times
+                        else dms_components.Constant(1.0, togglable=False)
+                    ),
+                    log_x0=self.log_theta_t0,
+                    r=self.r,
+                    c=self.c,
+                    shape=self.default_data["timepoint_counts"].shape,
+                )
             )
 
         # Return the appropriate initialization method based on the growth function
@@ -516,6 +537,55 @@ class MetaEnrichment(type):
         if growth_function == "logistic":
             return init_logistic_growth
         raise ValueError("Unsupported growth function.")
+
+    @classmethod
+    def set_normalization(mcs, include_od: bool):
+        """Sets the normalization of the raw abundances."""
+
+        # If we are including ODs, we have an additional transformed parameter in
+        # the normalization coefficient
+        def init_od_normalization(self) -> None:
+            """Initializes the normalization of the raw abundances when ODs are included."""
+            # Sum over the last dimension to get the total raw abundances, keeping
+            # the last dimension
+            self.total_raw_abundance_tg0 = dms_ops.logsumexp(
+                self.raw_abundances_tg0, keepdims=True
+            )
+
+            # Normalize the raw abundances to get proportions at t > 0
+            self.log_theta_tg0 = self.raw_abundances_tg0 - self.total_raw_abundance_tg0
+
+        # Otherwise, we wrap everything in the log normalization function
+        def init_normalization(self) -> None:
+            """Initializes the normalization of the raw abundances."""
+            self.log_theta_tg0 = dms_ops.normalize_log(self.raw_abundances_tg0)
+
+        if include_od:
+            return init_od_normalization
+        return init_normalization
+
+    @classmethod
+    def set_counts(mcs):
+        """
+        Assigns the model for counts. We use the multinomial distribution parametrized
+        with log proportions.
+        """
+
+        def init_counts(self) -> None:
+            """Initializes modeling of counts."""
+            # Counts are modeled as a multinomial distribution
+            self.starting_counts = dms_components.MultinomialLogTheta(
+                log_theta=self.log_theta_t0,
+                N=self.total_starting_counts,
+                shape=self.default_data["starting_counts"].shape,
+            )
+            self.timepoint_counts = dms_components.MultinomialLogTheta(
+                log_theta=self.log_theta_tg0,
+                N=self.total_timepoint_counts,
+                shape=self.default_data["timepoint_counts"].shape,
+            )
+
+        return init_counts
 
     @classmethod
     def set_od_distribution(mcs, include_od: bool):
@@ -538,28 +608,26 @@ class MetaEnrichment(type):
         ) -> None:
             """Sets the OD distribution for models that include ODs."""
             # Check OD shapes. They should match the shapes of their respective
-            # counts except in the final dimension, which should be a singleton
-            if (
-                starting_od.shape[:-1]
-                != self.default_data["starting_counts"].shape[:-1]
-            ):
+            # counts up to the last dimension
+            if starting_od.shape != self.default_data["starting_counts"].shape[:-1]:
                 raise ValueError(
-                    "The shape of starting_od should match the shape of "
-                    "starting_counts except in the last dimension."
+                    "The shape of `starting_od` should match the shape of all but the "
+                    f"last dimension of `starting_counts` {starting_od.shape} != "
+                    f"{self.default_data['starting_counts'].shape}[:-1]"
                 )
-            if (
-                timepoint_od.shape[:-1]
-                != self.default_data["timepoint_counts"].shape[:-1]
-            ):
+            if timepoint_od.shape != self.default_data["timepoint_counts"].shape[:-1]:
                 raise ValueError(
-                    "The shape of timepoint_od should match the shape of "
-                    "timepoint_counts except in the last dimension."
+                    "The shape of `timepoint_od` should match the shape of all but the "
+                    f"last dimension of `timepoint_counts` {timepoint_od.shape} != "
+                    f"{self.default_data['timepoint_counts'].shape}[:-1]"
                 )
-            if starting_od.shape[-1] != 1 or timepoint_od.shape[-1] != 1:
-                raise ValueError(
-                    "The last dimension of starting_od and timepoint_od should be a "
-                    "singleton dimension."
-                )
+
+            # Append a singleton dimension to the ODs
+            starting_od, timepoint_od = starting_od[..., None], timepoint_od[..., None]
+
+            # Record as default data
+            self.default_data["starting_od"] = starting_od
+            self.default_data["timepoint_od"] = timepoint_od
 
             # Get the conversion factor
             self.log_abundance_to_od = dms_components.Normal(
@@ -573,15 +641,15 @@ class MetaEnrichment(type):
             )
 
             # Model the OD at t=0. This is just the correction factor exponentiated
-            self.od_t0 = dms_components.Normal(
+            self.starting_od = dms_components.Normal(
                 mu=dms_ops.exp(self.log_abundance_to_od),
                 sigma=self.od_measurement_error,
                 shape=starting_od.shape,
             )
 
-            # Model at t > 0. This is the abundance plus the correction factor
-            self.od_tg0 = dms_components.Normal(
-                mu=dms_ops.exp(self.log_abundance_to_od + self.raw_abundances_tg0),
+            # Model at t > 0. This is the total abundance plus the correction factor
+            self.timepoint_od = dms_components.Normal(
+                mu=dms_ops.exp(self.log_abundance_to_od + self.total_raw_abundance_tg0),
                 sigma=self.od_measurement_error,
                 shape=timepoint_od.shape,
             )
@@ -600,7 +668,10 @@ def hierarchical_class_factory(
     include_times: bool = False,
     include_od: bool = False,
 ) -> type[dms.Model]:
-    """Factory function to create a hierarchical enrichment model class with the specified parameters."""
+    """
+    Factory function to create a hierarchical enrichment model class with the specified
+    parameters.
+    """
     # Create a new class with the specified parameters
     return MetaEnrichment(
         name,
@@ -621,7 +692,10 @@ def non_hierarchical_class_factory(
     include_times: bool = False,
     include_od: bool = False,
 ) -> type[dms.Model]:
-    """Factory function to create a non-hierarchical enrichment model class with the specified parameters."""
+    """
+    Factory function to create a non-hierarchical enrichment model class with the
+    specified parameters.
+    """
     # Create a new class with the specified parameters
     return MetaEnrichment(
         name,

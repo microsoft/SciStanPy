@@ -56,10 +56,13 @@ class LogMultinomialCoefficient(TransformedData):
         # Initialize the parent class
         super().__init__(
             counts=counts,
-            shape=counts.shape[:-1] + (1,),
-            _override_shape_check=True,
+            shape=counts.shape[:-1] + (1,),  # The last dimension is reduced to 1
             **kwargs,
         )
+
+    # We don't want to run the shape checking function for this class
+    def _set_shape(self, *args, **kwargs):
+        """No shape checking for LogMultinomialCoefficient."""
 
     def _write_operation(self, counts: str) -> str:  # pylint: disable=arguments-differ
         """Writes the operation for the multinomial coefficient."""

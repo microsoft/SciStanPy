@@ -11,6 +11,7 @@ from dms_stan.model.components import (
     AbsParameter,
     ExpParameter,
     LogParameter,
+    LogSumExpParameter,
     NormalizeLogParameter,
     NormalizeParameter,
     SigmoidParameter,
@@ -157,7 +158,7 @@ class UnaryOperation(Operation):
         """
         # If a dms_stan parameter, apply the transformation
         if isinstance(x, AbstractModelComponent):
-            return self.distclass(x)
+            return self.distclass(x, **kwargs)
 
         # Otherwise, apply the numpy function
         return self.func(x, **kwargs)
@@ -186,6 +187,9 @@ def _unary_transformation_factory(
 abs_ = _unary_transformation_factory(AbsParameter, np.abs, "np.abs")
 exp = _unary_transformation_factory(ExpParameter, np.exp, "np.exp")
 log = _unary_transformation_factory(LogParameter, np.log, "np.log")
+logsumexp = _unary_transformation_factory(
+    LogSumExpParameter, sp.logsumexp, "sp.logsumexp"
+)
 normalize = _unary_transformation_factory(NormalizeParameter, _normalize_parameter)
 normalize_log = _unary_transformation_factory(
     NormalizeLogParameter, _normalize_log_parameter

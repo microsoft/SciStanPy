@@ -1,7 +1,7 @@
 """Holds parameter transformations for DMS Stan models."""
 
 from abc import abstractmethod
-from typing import Any, Optional, overload
+from typing import Optional, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -121,7 +121,10 @@ class TransformedParameter(Transformation, TransformableParameter):
     get_transformation_assignment = Transformation._transformation
 
     def _draw(
-        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+        self,
+        n: int,
+        level_draws: dict[str, npt.NDArray],
+        seed: Optional[int],  # pylint: disable=unused-argument
     ) -> npt.NDArray:
         """Sample from this parameter's distribution `n` times."""
         # Perform the operation on the draws
@@ -197,23 +200,12 @@ class BinaryTransformedParameter(TransformedParameter):
 class UnaryTransformedParameter(TransformedParameter):
     """Transformed parameter that only requires one parameter."""
 
-    ALLOWED_CALLKWARGS: set[str] = set()  # Allowed kwargs for the operation
-
     def __init__(
         self,
         dist1: "dms.custom_types.CombinableParameterType",
-        *,
-        call_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
         super().__init__(dist1=dist1, **kwargs)
-
-        # Check provided call kwargs against allowed ones
-        self.call_kwargs = call_kwargs or {}
-        if not self.ALLOWED_CALLKWARGS.issuperset(self.call_kwargs.keys()):
-            raise ValueError(
-                f"Invalid call kwargs: {self.call_kwargs.keys() - self.ALLOWED_CALLKWARGS}"
-            )
 
     # pylint: disable=arguments-differ
     @overload
@@ -359,14 +351,44 @@ class NormalizeLogParameter(UnaryTransformedParameter):
 
 
 class LogSumExpParameter(UnaryTransformedParameter):
-    """Defines a parameter that computes the log of the sum of exponentials of another."""
+    """
+    Defines a parameter that computes the log of the sum of exponentials of another.
+    This can only be applied over the last dimension and occurs with or without
+    `keepdims` set to True.
+    """
 
-    # TODO: Handle the shape losing a dimension or having a dimension shrink
+    def __init__(
+        self,
+        dist1: "dms.custom_types.CombinableParameterType",
+        keepdims: bool = False,
+        **kwargs,
+    ):
+        """
+        Initializes the LogSumExpParameter. This applies the log-sum-exp operation
+        over the last dimension of the input parameter, either with or without
+        keeping the last dimension.
+        """
+        # Record whether to keep the last dimension
+        self.keepdims = keepdims
+
+        # The shape is the leading dimensions of the input parameter plus a singleton
+        # dimension if keepdims is True.
+        shape = dist1.shape[:-1]
+        if keepdims:
+            shape += (1,)
+
+        # Init as normal
+        super().__init__(dist1=dist1, shape=shape, **kwargs)
+
+    # No shape checking for this class
+    def _set_shape(self, *args, **kwargs):
+        pass
+
     def operation(self, dist1):
         if isinstance(dist1, torch.Tensor):
-            return torch.logsumexp(dist1, **self.call_kwargs)
+            return torch.logsumexp(dist1, keepdim=self.keepdims, dim=-1)
         else:
-            return sp.logsumexp(dist1, **self.call_kwargs)
+            return sp.logsumexp(dist1, keepdims=self.keepdims, axis=-1)
 
     def _write_operation(self, dist1: str) -> str:
         return f"log_sum_exp({dist1})"

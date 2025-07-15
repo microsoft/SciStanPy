@@ -73,9 +73,9 @@ class Model:
 
     def __init__(
         self,
-        *args,
+        *args,  # pylint: disable=unused-argument
         default_data: dict[str, npt.NDArray] | None = None,
-        **kwargs,
+        **kwargs,  # pylint: disable=unused-argument
     ):
         """This should be overridden by the subclass."""
         # Set the default values for the model
@@ -228,10 +228,11 @@ class Model:
             if name not in self.named_model_components_dict
         ]
 
-        # Check sizes of all observables and record the dimension names
+        # Check sizes of all observables and record the dimension names. Dimensions
+        # of size '1' are not named as we do not need to distinguish them in an xarray
         for observable in self.observables:
             for dimkey in enumerate(observable.shape[::-1]):
-                if dimkey not in dims:
+                if dimkey not in dims and dimkey[1] > 1:
                     dims[dimkey] = allowed_dim_names[len(dims)]
 
         return dims

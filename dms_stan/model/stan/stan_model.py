@@ -1022,7 +1022,11 @@ class StanModel(CmdStanModel):
         return {
             varname.replace(".", "__"): tuple(
                 reversed(
-                    [name_mapper[k] for k in enumerate(self.model[varname].shape[::-1])]
+                    [
+                        name_mapper[k]
+                        for k in enumerate(self.model[varname].shape[::-1])
+                        if k[-1] > 1
+                    ]
                 )
             )
             for varname in self.program.all_varnames

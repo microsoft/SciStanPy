@@ -33,7 +33,6 @@ class AbstractModelComponent(ABC):
         self,
         *,
         shape: tuple[int, ...] = (),
-        _override_shape_check: bool = False,
         **parameters: "dms.custom_types.CombinableParameterType",
     ):
         """Builds a parameter instance with the given shape."""
@@ -56,7 +55,7 @@ class AbstractModelComponent(ABC):
             val._record_child(self)
 
         # Set the shape
-        self._set_shape(_override_shape_check)
+        self._set_shape()
 
     def _validate_parameters(
         self,
@@ -155,26 +154,26 @@ class AbstractModelComponent(ABC):
         # Record the child
         self._children.append(child)
 
-    def _set_shape(self, override_shape_check: bool) -> None:
+    def _set_shape(self) -> None:
         """Sets the shape of the draws for the parameter."""
         # The shape must be broadcastable to the shapes of the parameters.
         try:
-            broadcasted_shape = np.broadcast_shapes(
-                self._shape, *[param.shape for param in self.parents]
-            )
+            parent_shapes = [param.shape for param in self.parents]
+            broadcasted_shape = np.broadcast_shapes(self._shape, *parent_shapes)
         except ValueError as error:
-            raise ValueError("Shape is not broadcastable to parent shapes") from error
-
-        # If overriding the shape check, do not broadcast the shape
-        if override_shape_check:
-            return
+            raise ValueError(
+                f"Shape is not broadcastable to parent shapes while initializing instance "
+                f"of {self.__class__.__name__}: {','.join(map(str, parent_shapes))} "
+                f"not broadcastable to {self._shape}"
+            ) from error
 
         # The broadcasted shape must be the same as the shape of the parameter if
         # it is not 0-dimensional.
         if broadcasted_shape != self._shape and self._shape != ():
             raise ValueError(
-                "Provided shape does not match broadcasted shapes of parents: "
-                f"{self._shape} != {broadcasted_shape}"
+                "Provided shape does not match broadcasted shapes of parents while "
+                f"initializing instance of {self.__class__.__name__}. {self._shape} "
+                f"!= {broadcasted_shape}"
             )
 
         # Set the shape
