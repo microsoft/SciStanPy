@@ -19,27 +19,27 @@ from dms_stan.model.enrichment import (
 # and (second) the expected number of non-t=0 timepoints after the skipped timepoints
 # are removed
 TRPB_SKIPPED_TIMEPOINTS = {
-    "LibA": (np.array([], dtype=int), 2),
-    "LibB": (np.array([], dtype=int), 2),
-    "LibC": (np.array([], dtype=int), 2),
-    "LibD": (np.array([0]), 4),
-    "LibE": (np.array([0, 1]), 3),
-    "LibF": (np.array([0, 1, 3]), 2),
-    "LibG": (np.array([0]), 4),
-    "LibH": (np.array([0]), 4),
-    "LibI": (np.array([0]), 4),
+    "libA": (np.array([], dtype=int), 2),
+    "libB": (np.array([], dtype=int), 2),
+    "libC": (np.array([], dtype=int), 2),
+    "libD": (np.array([0]), 4),
+    "libE": (np.array([0, 1]), 3),
+    "libF": (np.array([0, 1, 3]), 2),
+    "libG": (np.array([0]), 4),
+    "libH": (np.array([0]), 4),
+    "libI": (np.array([0]), 4),
     "four-site": (np.array([], dtype=int), 6),
 }
 
 TRPB_OD600 = {
-    "LibA": (np.array(0.1), np.array([0.72, 2.55])),
-    "LibB": (np.array(0.1), np.array([0.75, 3.3])),
-    "LibC": (np.array(0.1), np.array([0.74, 1.95])),
-    "LibD": (
+    "libA": (np.array(0.1), np.array([0.72, 2.55])),
+    "libB": (np.array(0.1), np.array([0.75, 3.3])),
+    "libC": (np.array(0.1), np.array([0.74, 1.95])),
+    "libD": (
         np.array(0.05),
         np.array([[0.19, 0.29, 0.51, 0.85, 1.42], [0.18, 0.28, 0.49, 0.97, 1.81]]),
     ),
-    "LibE": (
+    "libE": (
         np.array(0.05),
         np.array(
             [
@@ -48,7 +48,7 @@ TRPB_OD600 = {
             ]
         ),
     ),
-    "LibF": (
+    "libF": (
         np.array(0.05),
         np.array(
             [
@@ -57,7 +57,7 @@ TRPB_OD600 = {
             ]
         ),
     ),
-    "LibG": (
+    "libG": (
         np.array(0.05),
         np.array(
             [
@@ -66,7 +66,7 @@ TRPB_OD600 = {
             ]
         ),
     ),
-    "LibH": (
+    "libH": (
         np.array(0.05),
         np.array(
             [
@@ -75,7 +75,7 @@ TRPB_OD600 = {
             ]
         ),
     ),
-    "LibI": (
+    "libI": (
         np.array(0.05),
         np.array(
             [
@@ -125,7 +125,7 @@ def load_trpb_dataset(
         libname = possible_libs[0]
     elif libname not in TRPB_SKIPPED_TIMEPOINTS:
         raise ValueError(
-            f"Library name {libname} not found in the list of known libraries. Please "
+            f"library name {libname} not found in the list of known libraries. Please "
             "provide a valid library name."
         )
 
@@ -290,7 +290,16 @@ def reformat_pdz_zenodo_dset(infile: str, outfile: str) -> None:
 
 def trpb_class_factory(
     name: Literal[
-        "LibA", "LibB", "LibC", "LibD", "LibE", "LibF", "LibG", "LibH", "FourSite"
+        "libA",
+        "libB",
+        "libC",
+        "libD",
+        "libE",
+        "libF",
+        "libG",
+        "libH",
+        "libI",
+        "FourSite",
     ],
     growth_func: Literal["exponential", "logistic"],
     rate_dist: Literal["gamma", "exponential", "lomax"],
@@ -299,7 +308,7 @@ def trpb_class_factory(
     # Some libraries need a hierarchical model, some need a non-hierarchical model
     base_func = (
         non_hierarchical_class_factory
-        if name in {"LibA", "LibB", "LibC"}
+        if name in {"libA", "libB", "libC"}
         else hierarchical_class_factory
     )
 
@@ -316,7 +325,16 @@ def trpb_class_factory(
 def trpb_instance_factory(
     filepath: str,
     libname: Literal[
-        "LibA", "LibB", "LibC", "LibD", "LibE", "LibF", "LibG", "LibH", "FourSite"
+        "libA",
+        "libB",
+        "libC",
+        "libD",
+        "libE",
+        "libF",
+        "libG",
+        "libH",
+        "libI",
+        "FourSite",
     ],
     growth_func: Literal["exponential", "logistic"],
     rate_dist: Literal["gamma", "exponential", "lomax"],
@@ -335,7 +353,7 @@ def trpb_instance_factory(
 
 
 def pdz3_class_factory(
-    name: Literal["CriptC", "CriptN", "Cis", "Trans1", "Trans2"],
+    name: Literal["cript-c", "cript-n", "cis", "trans-1", "trans-2"],
     growth_func: Literal["exponential", "logistic"],
     rate_dist: Literal["gamma", "exponential", "lomax"],
 ) -> type[Model]:
@@ -348,3 +366,22 @@ def pdz3_class_factory(
         include_times=False,  # PDZ3 models do not include times
         include_od=False,  # PDZ3 models do not include ODs
     )
+
+
+def pdz3_instance_factory(
+    filepath: str,
+    libname: Literal["cript-c", "cript-n", "cis", "trans-1", "trans-2"],
+    growth_func: Literal["exponential", "logistic"],
+    rate_dist: Literal["gamma", "exponential", "lomax"],
+) -> Model:
+    """Builds an instance of the PDZ3 model for the given parameters."""
+    # Load the pdz3 data and remove the variant identities
+    pdz3_data = load_pdz_dataset(filepath)
+    pdz3_data.pop("variants")
+
+    # Get the class for the given parameters and instantiate it
+    return pdz3_class_factory(
+        name=libname,
+        growth_func=growth_func,
+        rate_dist=rate_dist,
+    )(**pdz3_data)

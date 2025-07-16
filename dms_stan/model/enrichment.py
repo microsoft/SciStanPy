@@ -223,19 +223,25 @@ class MetaEnrichment(type):
                     )
 
             # If we have both times and biological replicates, the starting counts
-            # and timepoint counts should be 3D. Shapes should be (n_replicates,
-            # n_times, n_variants). This means that there will be a singleton dimension
-            # for the times in the starting counts.
+            # can be 1D or 3D, but the timepoint counts should be 3D. Shapes should
+            # be (n_replicates, n_times, n_variants). This means that there will
+            # be a singleton dimension for the times in the starting counts.
             elif include_times and biological_replicates:
-                if starting_counts.ndim != 3 or timepoint_counts.ndim != 3:
-                    raise ValueError(
-                        "If both times and biological replicates are provided, both sets "
-                        "of counts should be 3D."
-                    )
-                if starting_counts.shape[1] != 1:
+                if starting_counts.ndim != 1 and starting_counts.ndim != 3:
                     raise ValueError(
                         "If both times and biological replicates are provided, the "
-                        "starting counts should have a singleton dimension for the times."
+                        "starting counts should be 1D or 3D. Got "
+                        f"{starting_counts.ndim} dimensions."
+                    )
+                if timepoint_counts.ndim != 3:
+                    raise ValueError(
+                        "If both times and biological replicates are provided, the "
+                        f"timepoint counts should be 3D. Got {timepoint_counts.ndim}."
+                    )
+                if starting_counts.ndim == 3 and starting_counts.shape[1] != 1:
+                    raise ValueError(
+                        "For 3D starting counts, the time dimension should be a "
+                        f"singleton. Got {starting_counts.shape[1]}."
                     )
                 if timepoint_counts.shape[1] != len(kwargs["times"]):
                     raise ValueError(
@@ -251,7 +257,7 @@ class MetaEnrichment(type):
             # If we have times, then we need a singleton dimension at the times
             # index
             if include_times:
-                r_shape[-1] = 1
+                r_shape[-2] = 1
 
             return tuple(r_shape)
 
@@ -451,7 +457,7 @@ class MetaEnrichment(type):
             self.r = dms_ops.exp(
                 dms_components.Normal(
                     mu=self.log_r,
-                    sigma=log_foldchange_sigma_sigma,
+                    sigma=self.log_foldchange_sigma,
                     shape=self.r_shape,
                 )
             )
@@ -510,6 +516,8 @@ class MetaEnrichment(type):
                 c_shape[0] = self.default_data["timepoint_counts"].shape[0]
                 if all(dim == 1 for dim in c_shape):
                     c_shape = ()
+                else:
+                    c_shape = tuple(c_shape)
             else:
                 c_shape = ()
 
@@ -601,9 +609,11 @@ class MetaEnrichment(type):
             self,
             starting_od: npt.NDArray[np.floating],
             timepoint_od: npt.NDArray[np.floating],
-            conversion_factor_mean: float = -2.3,
-            conversion_factor_std: float = 1.0,
-            od_measurement_error: float = 0.1,
+            log_slope_mean: float = 0.0,
+            log_slope_std: float = 1.0,
+            intercept_mean: float = 0.0,
+            intercept_std: float = 1.0,
+            od_measurement_error: float = 0.01,
             **kwargs,  # pylint: disable=unused-argument
         ) -> None:
             """Sets the OD distribution for models that include ODs."""
@@ -629,10 +639,15 @@ class MetaEnrichment(type):
             self.default_data["starting_od"] = starting_od
             self.default_data["timepoint_od"] = timepoint_od
 
-            # Get the conversion factor
-            self.log_abundance_to_od = dms_components.Normal(
-                mu=conversion_factor_mean,
-                sigma=conversion_factor_std,
+            # Get the abundance to OD slope and intercept. We don't know much about
+            # the slope or the intercept, so we use weak priors.
+            self.log_abundance_to_od_slope = dms_components.Normal(
+                mu=log_slope_mean,
+                sigma=log_slope_std,
+            )
+            self.od_intercept = dms_components.Normal(
+                mu=intercept_mean,
+                sigma=intercept_std,
             )
 
             # Now get the stdev of the measurement error
@@ -640,16 +655,20 @@ class MetaEnrichment(type):
                 sigma=od_measurement_error
             )
 
-            # Model the OD at t=0. This is just the correction factor exponentiated
+            # Model the OD at t=0. The raw abundance is always "1" at this point,
+            # so we ignore it
             self.starting_od = dms_components.Normal(
-                mu=dms_ops.exp(self.log_abundance_to_od),
+                mu=dms_ops.exp(self.log_abundance_to_od_slope) + self.od_intercept,
                 sigma=self.od_measurement_error,
                 shape=starting_od.shape,
             )
 
             # Model at t > 0. This is the total abundance plus the correction factor
             self.timepoint_od = dms_components.Normal(
-                mu=dms_ops.exp(self.log_abundance_to_od + self.total_raw_abundance_tg0),
+                mu=dms_ops.exp(
+                    self.log_abundance_to_od_slope + self.total_raw_abundance_tg0
+                )
+                + self.od_intercept,
                 sigma=self.od_measurement_error,
                 shape=timepoint_od.shape,
             )
