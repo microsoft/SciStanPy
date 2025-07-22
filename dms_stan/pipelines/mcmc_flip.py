@@ -85,6 +85,15 @@ def define_base_parser() -> argparse.ArgumentParser:
         default=1025,
         help="Random seed for reproducibility.",
     )
+    parser.add_argument(
+        "--ignore_od",
+        action="store_false",
+        target="include_od",
+        help=(
+            "If set, the model will not include optical density (OD) data. This is "
+            "only applicable for TrpB datasets."
+        ),
+    )
 
     return parser
 
@@ -185,14 +194,18 @@ def prep_run(args: argparse.Namespace) -> Model:
 
     # Build the model instance
     instance_factory, file_ext = FACTORY_MAP[args.dataset]
-    return instance_factory(
-        filepath=os.path.join(
+    instance_kwargs = {
+        "filepath": os.path.join(
             args.flip_data, "counts", args.dataset, f"{args.subset}{file_ext}"
         ),
-        libname=args.subset,
-        growth_func=args.growth_func,
-        rate_dist=args.rate_dist,
-    )
+        "libname": args.subset,
+        "growth_func": args.growth_func,
+        "rate_dist": args.rate_dist,
+    }
+    if args.dataset == "trpb":
+        instance_kwargs["include_od"] = args.include_od
+
+    return instance_factory(**instance_kwargs)
 
 
 def run_hmc(args: argparse.Namespace) -> None:
