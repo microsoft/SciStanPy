@@ -6,7 +6,7 @@ target:
   name: msrresrchlab
 
 environment:
-  image: dms_stan:0.0.5
+  image: dms_stan:0.0.6
   registry: bjwamltcr.azurecr.io
 
 data:
