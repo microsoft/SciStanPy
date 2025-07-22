@@ -10,6 +10,15 @@ import dms_stan.model.components as dms_components
 import dms_stan.operations as dms_ops
 
 
+def is_broadcastable(*shapes):
+    """True if inputs are broadcastable. False otherwise."""
+    try:
+        _ = np.broadcast_shapes(*shapes)
+        return True
+    except ValueError:
+        return False
+
+
 class MetaEnrichment(type):
     """Metaclass for the enrichment models. This is responsible for assigning the
     appropriate growth function and shape checks to the model classes."""
@@ -23,6 +32,7 @@ class MetaEnrichment(type):
         rate_dist: Literal["gamma", "exponential", "lomax"],
         include_times: bool,
         biological_replicates: bool,
+        sequence_replicates: bool,
         include_od: bool,
     ) -> type[dms.Model]:
         """
@@ -45,11 +55,14 @@ class MetaEnrichment(type):
         namespace["base_init"] = mcs.set_base_init(
             include_times=include_times,
             biological_replicates=biological_replicates,
+            sequence_replicates=sequence_replicates,
         )
 
         # We need to set the times
         namespace["init_times"] = mcs.set_times(
-            include_times=include_times, biological_replicates=biological_replicates
+            include_times=include_times,
+            biological_replicates=biological_replicates,
+            sequence_replicates=sequence_replicates,
         )
 
         # Now the rate distribution, fold change, and growth function
@@ -167,7 +180,9 @@ class MetaEnrichment(type):
         return __init__
 
     @classmethod
-    def set_base_init(mcs, include_times: bool, biological_replicates: bool):
+    def set_base_init(
+        mcs, include_times: bool, biological_replicates: bool, sequence_replicates: bool
+    ):
         """Defines the portions of the init method that is shared by all enrichment models."""
 
         def validate_count_arrays(
@@ -177,92 +192,67 @@ class MetaEnrichment(type):
         ) -> None:
             """Confirms the shape of the starting and timepoint counts arrays depending
             on whether we are including times and biological replicates."""
-            # The last dimension of starting and ending counts should be equivalent
-            if starting_counts.shape[-1] != timepoint_counts.shape[-1]:
+            # The starting counts must be broadcastable to the timepoint counts
+            if not is_broadcastable(starting_counts.shape, timepoint_counts.shape):
                 raise ValueError(
-                    "The last dimension of starting and ending counts should be equivalent."
+                    "The starting counts must be broadcastable to the timepoint "
+                    f"counts. Got {starting_counts.shape} and {timepoint_counts.shape}."
                 )
 
-            # If no times and no biological replicates, both sets of counts should
-            # be 1D.
-            if not include_times and not biological_replicates:
-                if starting_counts.ndim != 1 or timepoint_counts.ndim != 1:
+            # The number of dimensions of timepoint counts depends on whether we
+            # are including times and whether we have replicates
+            if timepoint_counts.ndim != (
+                expected_dims := sum(
+                    [
+                        include_times,
+                        biological_replicates,
+                        sequence_replicates,
+                        1,
+                    ]  # +1 for variants
+                )
+            ):
+                raise ValueError(
+                    f"With include_times={include_times}, biological_replicates="
+                    f"{biological_replicates}, sequence_replicates={sequence_replicates}, "
+                    f"the timepoint counts must be {expected_dims}D. Got "
+                    f"{timepoint_counts.ndim}D."
+                )
+
+            # If we have times, the second-to-last dimension of the timepoint counts
+            # should be the number of times
+            if include_times:
+                if timepoint_counts.shape[-2] != len(kwargs["times"]):
                     raise ValueError(
-                        "If no times and no biological replicates, both sets of counts "
-                        "should be 1D."
+                        "The second-to-last dimension of the timepoint counts should "
+                        f"match the length of times. Got {timepoint_counts.shape[-2]} "
+                        f"and {len(kwargs['times'])}."
                     )
 
-            # If we have times but no biological replicates, the starting counts
-            # should be 1D and the timepoint counts should be 2D. The first dimension
-            # is the timepoint, and the second dimension is the variant.
-            elif include_times and not biological_replicates:
-                if starting_counts.ndim != 1 or timepoint_counts.ndim != 2:
-                    raise ValueError(
-                        "If times are provided but no biological replicates, the "
-                        "starting counts should be 1D and the timepoint counts should "
-                        "be 2D."
-                    )
-                if len(kwargs["times"]) != timepoint_counts.shape[0]:
-                    raise ValueError(
-                        "The number of timepoints should match the first dimension "
-                        "of the timepoint counts."
-                    )
-
-            # If we have biological replicates but not times, both sets of counts
-            # should be 2D. Shapes should be (n_replicates, n_variants).
-            elif biological_replicates and not include_times:
-                if starting_counts.ndim != 2 or timepoint_counts.ndim != 2:
-                    raise ValueError(
-                        "If biological replicates are provided but no times, both sets "
-                        "of counts should be 2D."
-                    )
-                if starting_counts.shape[0] != timepoint_counts.shape[0]:
-                    raise ValueError(
-                        "The first dimension of starting and timepoint counts should "
-                        "be the same if biological replicates are provided."
-                    )
-
-            # If we have both times and biological replicates, the starting counts
-            # can be 1D or 3D, but the timepoint counts should be 3D. Shapes should
-            # be (n_replicates, n_times, n_variants). This means that there will
-            # be a singleton dimension for the times in the starting counts.
-            elif include_times and biological_replicates:
-                if starting_counts.ndim != 1 and starting_counts.ndim != 3:
-                    raise ValueError(
-                        "If both times and biological replicates are provided, the "
-                        "starting counts should be 1D or 3D. Got "
-                        f"{starting_counts.ndim} dimensions."
-                    )
-                if timepoint_counts.ndim != 3:
-                    raise ValueError(
-                        "If both times and biological replicates are provided, the "
-                        f"timepoint counts should be 3D. Got {timepoint_counts.ndim}."
-                    )
-                if starting_counts.ndim == 3 and starting_counts.shape[1] != 1:
-                    raise ValueError(
-                        "For 3D starting counts, the time dimension should be a "
-                        f"singleton. Got {starting_counts.shape[1]}."
-                    )
-                if timepoint_counts.shape[1] != len(kwargs["times"]):
-                    raise ValueError(
-                        "The second dimension of timepoint counts should match the "
-                        "length of times."
-                    )
-
-        def set_r_shape(timepoint_counts: npt.NDArray[np.floating]) -> tuple[int, ...]:
-            """Sets the shape of the r parameter based on the timepoint counts."""
-            # Base shape matches that of the timepoint counts
+        def set_shapes(
+            timepoint_counts: npt.NDArray[np.floating],
+        ) -> tuple[tuple[int, ...], tuple[int, ...]]:
+            """
+            Sets the shape of the r and log_theta_tg0 parameters based on the timepoint
+            counts.
+            """
+            # Base shape matches that of the timepoint counts.
             r_shape = list(timepoint_counts.shape)
+            tg0_shape = r_shape.copy()
 
             # If we have times, then we need a singleton dimension at the times
-            # index
+            # index for the rate
             if include_times:
                 r_shape[-2] = 1
 
-            return tuple(r_shape)
+            # If we have sequence replicates, we need a singleton dimension at the
+            # sequence replicates index for both r and log_theta_tg0
+            if sequence_replicates:
+                r_shape[-3] = 1
+                tg0_shape[-3] = 1
+
+            return tuple(r_shape), tuple(tg0_shape)
 
         # Define the init code shared by all enrichment models.
-        # Define the base __init__ method used by all enrichment models.
         def base_init(
             self,
             *,
@@ -287,9 +277,9 @@ class MetaEnrichment(type):
                 },
             )
 
-            # Get the number of variants and the shape of `r`
+            # Get the number of variants and the shapes of `r` and `log_theta_tg0`
             self.n_variants = starting_counts.shape[-1]
-            self.r_shape = set_r_shape(timepoint_counts)
+            self.r_shape, self.log_theta_tg0_shape = set_shapes(timepoint_counts)
 
             # Set the total number of starting and ending counts by replicate
             self.total_starting_counts = dms_components.Constant(
@@ -299,15 +289,26 @@ class MetaEnrichment(type):
                 timepoint_counts.sum(axis=-1, keepdims=True), togglable=False
             )
 
-            # Starting proportions are Exp-Dirichlet distributed
+            # Get the shape of the proportions. This is identical to the shape of
+            # the counts EXCEPT for the sequence replicates dimension, if present
+            theta_t0_shape = list(starting_counts.shape)
+            if sequence_replicates and len(theta_t0_shape) > 2:
+                theta_t0_shape[-3] = 1
+
+            # Starting proportions are Exp-Dirichlet distributed.
             self.log_theta_t0 = dms_components.ExpDirichlet(
-                alpha=alpha, shape=starting_counts.shape
+                alpha=alpha, shape=tuple(theta_t0_shape)
             )
 
         return base_init
 
     @classmethod
-    def set_times(mcs, include_times: bool, biological_replicates: bool):
+    def set_times(
+        mcs,
+        include_times: bool,
+        biological_replicates: bool,
+        sequence_replicates: bool = False,
+    ):
         """Sets the `time` attribute if needed"""
 
         # pylint: disable=unused-argument
@@ -320,13 +321,12 @@ class MetaEnrichment(type):
             if times.ndim != 1:
                 raise ValueError("Expected 'times' to be a 1D array.")
 
-            # If we have biological replicates, we need a leading dimension. We
-            # always need a trailing dimension.
-            if biological_replicates:
-                new_shape = (None, slice(None), None)
-            else:
-                new_shape = (slice(None), None)
-            times = times[new_shape]
+            # Add the appropriate number of dimensions depending on whether we have
+            # replicates.
+            times = times[
+                (None,) * sum([biological_replicates, sequence_replicates])
+                + (slice(None), None)
+            ]
 
             # Normalize and record times if they are provided
             self.times = dms_components.Constant(times / times.max(), togglable=False)
@@ -493,13 +493,13 @@ class MetaEnrichment(type):
                     t=self.times,
                     log_A=self.log_theta_t0,
                     r=self.r,
-                    shape=self.default_data["timepoint_counts"].shape,
+                    shape=self.log_theta_tg0_shape,
                 )
             else:
                 self.raw_abundances_tg0 = dms_components.BinaryLogExponentialGrowth(
                     log_A=self.log_theta_t0,
                     r=self.r,
-                    shape=self.default_data["timepoint_counts"].shape,
+                    shape=self.log_theta_tg0_shape,
                 )
 
         def init_logistic_growth(
@@ -535,7 +535,7 @@ class MetaEnrichment(type):
                     log_x0=self.log_theta_t0,
                     r=self.r,
                     c=self.c,
-                    shape=self.default_data["timepoint_counts"].shape,
+                    shape=self.log_theta_tg0_shape,
                 )
             )
 
@@ -617,30 +617,41 @@ class MetaEnrichment(type):
             **kwargs,  # pylint: disable=unused-argument
         ) -> None:
             """Sets the OD distribution for models that include ODs."""
-            # Check OD shapes. They should match the shapes of their respective
-            # counts up to the last dimension
-            if starting_od.shape != self.default_data["starting_counts"].shape[:-1]:
+            # Check OD shapes. They must be broadcastable with the first dimensions
+            # of the starting and timepoint counts.
+            if not is_broadcastable(
+                starting_od.shape, self.starting_counts.shape[: starting_od.ndim]
+            ):
                 raise ValueError(
-                    "The shape of `starting_od` should match the shape of all but the "
-                    f"last dimension of `starting_counts` {starting_od.shape} != "
-                    f"{self.default_data['starting_counts'].shape}[:-1]"
+                    f"The starting OD must be broadcastable to the first {starting_od.ndim} "
+                    f"dimensions of the starting counts. Got {starting_od.shape} and "
+                    f"{self.starting_counts.shape}."
                 )
-            if timepoint_od.shape != self.default_data["timepoint_counts"].shape[:-1]:
+            if not is_broadcastable(
+                timepoint_od.shape, self.timepoint_counts.shape[: timepoint_od.ndim]
+            ):
                 raise ValueError(
-                    "The shape of `timepoint_od` should match the shape of all but the "
-                    f"last dimension of `timepoint_counts` {timepoint_od.shape} != "
-                    f"{self.default_data['timepoint_counts'].shape}[:-1]"
+                    f"The timepoint OD must be broadcastable to the first {timepoint_od.ndim} "
+                    f"dimensions of the timepoint counts. Got {timepoint_od.shape} and "
+                    f"{self.timepoint_counts.shape}."
                 )
 
-            # Append a singleton dimension to the ODs
-            starting_od, timepoint_od = starting_od[..., None], timepoint_od[..., None]
+            # Add the appropriate number of dimensions to the ODs
+            if starting_od.ndim > 0 and starting_od.ndim < self.starting_counts.ndim:
+                starting_od = starting_od[
+                    (...,) + (None,) * (self.starting_counts.ndim - starting_od.ndim)
+                ]
+            if timepoint_od.ndim < self.timepoint_counts.ndim:
+                timepoint_od = timepoint_od[
+                    (...,) + (None,) * (self.timepoint_counts.ndim - timepoint_od.ndim)
+                ]
 
             # Record as default data
             self.default_data["starting_od"] = starting_od
             self.default_data["timepoint_od"] = timepoint_od
 
             # Get the abundance to OD slope and intercept. We don't know much about
-            # the slope or the intercept, so we use weak priors.
+            # the slope or the intercept, only that the slope is positive.
             self.log_abundance_to_od_slope = dms_components.Normal(
                 mu=log_slope_mean,
                 sigma=log_slope_std,
@@ -685,6 +696,7 @@ def hierarchical_class_factory(
     growth_func: Literal["exponential", "logistic"],
     rate_dist: Literal["gamma", "exponential", "lomax"],
     include_times: bool = False,
+    sequence_replicates: bool = False,
     include_od: bool = False,
 ) -> type[dms.Model]:
     """
@@ -700,6 +712,7 @@ def hierarchical_class_factory(
         rate_dist=rate_dist,
         include_times=include_times,
         biological_replicates=True,
+        sequence_replicates=sequence_replicates,
         include_od=include_od,
     )
 
@@ -709,6 +722,7 @@ def non_hierarchical_class_factory(
     growth_func: Literal["exponential", "logistic"],
     rate_dist: Literal["gamma", "exponential", "lomax"],
     include_times: bool = False,
+    sequence_replicates: bool = False,
     include_od: bool = False,
 ) -> type[dms.Model]:
     """
@@ -724,5 +738,6 @@ def non_hierarchical_class_factory(
         rate_dist=rate_dist,
         include_times=include_times,
         biological_replicates=False,
+        sequence_replicates=sequence_replicates,
         include_od=include_od,
     )

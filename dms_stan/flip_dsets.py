@@ -85,11 +85,11 @@ TRPB_OD600 = {
         ),
     ),
     "four-site": (
-        np.array([0.025, 0.025]),
+        np.array(0.025),
         np.array(
             [
-                [0.19, 0.51, 1.26, 1.5, 1.675, 1.75],
-                [0.19, 0.52, 1.34, 1.625, 1.75, 1.875],
+                [[0.19, 0.51, 1.26, 1.5, 1.675, 1.75]],
+                [[0.19, 0.52, 1.34, 1.625, 1.75, 1.875]],
             ]
         ),
     ),
@@ -145,12 +145,14 @@ def load_trpb_dataset(
     combo_order = t0_data.AAs.tolist()
 
     # If the first dimension of the input counts is '1', we can remove it. This
-    # means that there were no replicates of the input counts. Otherwise, we need
-    # to insert a new axis to handle the timepoint dimension.
+    # should happen for all non-four-site libraries and  means that there were no
+    # replicates (biological or otherwise) of the input counts.
     if t0_counts.shape[0] == 1:
+        assert libname != "four-site", (
+            "The four-site library should have replicates of the input counts. "
+            "Please check the data."
+        )
         t0_counts = t0_counts[0]
-    else:
-        t0_counts = t0_counts[:, None]
 
     # Get the times.
     times = data["Time (h)"].unique().astype(float)
@@ -184,6 +186,17 @@ def load_trpb_dataset(
     # means that there were no replicates of the timepoint counts.
     if tg0_counts.shape[0] == 1:
         tg0_counts = tg0_counts[0]
+
+    # For the four-site library, we add biological replicate and time singleton
+    # dimensions to the starting counts. The timepoint counts get a sequencing replicate
+    # singleton dimension. All other libraries should have a 1D starting count.
+    if libname == "four-site":
+        t0_counts = t0_counts[None, :, None, :]
+        tg0_counts = tg0_counts[:, None]
+        assert t0_counts.ndim == 4
+        assert tg0_counts.ndim == 4
+    else:
+        assert t0_counts.ndim == 1
 
     return {
         "times": times,
@@ -299,10 +312,11 @@ def trpb_class_factory(
         "libG",
         "libH",
         "libI",
-        "FourSite",
+        "four-site",
     ],
     growth_func: Literal["exponential", "logistic"],
     rate_dist: Literal["gamma", "exponential", "lomax"],
+    include_od: bool = True,
 ) -> type[Model]:
     """Builds classes for the different TrpB datasets"""
     # Some libraries need a hierarchical model, some need a non-hierarchical model
@@ -318,7 +332,8 @@ def trpb_class_factory(
         growth_func=growth_func,
         rate_dist=rate_dist,
         include_times=True,  # All TrpB models include times
-        include_od=True,  # All TrpB models include ODs
+        sequence_replicates=name == "four-site",  # 4-site library only
+        include_od=include_od,
     )
 
 
@@ -334,10 +349,11 @@ def trpb_instance_factory(
         "libG",
         "libH",
         "libI",
-        "FourSite",
+        "four-site",
     ],
     growth_func: Literal["exponential", "logistic"],
     rate_dist: Literal["gamma", "exponential", "lomax"],
+    include_od: bool = True,
 ) -> Model:
     """Builds an instance of the TrpB model for the given parameters."""
     # Load the trpb data and remove the variant identities
@@ -349,6 +365,7 @@ def trpb_instance_factory(
         name=libname,
         growth_func=growth_func,
         rate_dist=rate_dist,
+        include_od=include_od,
     )(**trpb_data)
 
 
