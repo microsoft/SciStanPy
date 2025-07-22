@@ -19,11 +19,11 @@ search:
   max_trials: 750
   parallel_trials: 32
   job_template:
-    name: "{experiment_name:s}_{job_ind:s}_{growth_func:s}"
+    name: "{experiment_name:s}_{dset_ind:s}_{rate_dist:s}_{growth_func:s}"
     sku: 32G1-V100
     preemptible: False
     command:
-      - bash run_map_job.sh {job_ind} {growth_func}
+      - bash run_map_job.sh {dset_ind} {rate_dist} {growth_func}
     submit_args:
       max_run_duration_seconds: 1209600
       env:
@@ -32,7 +32,9 @@ search:
   type: hyperdrive
   sampling: grid
   params:
-    - name: job_ind
-      values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42")
+    - name: dset_ind
+      values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14")
+    - name: rate_dist
+      values: choice("gamma", "exponential", "lomax")
     - name: growth_func
       values: choice("exponential", "logistic")
