@@ -88,7 +88,7 @@ def define_base_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--ignore_od",
         action="store_false",
-        target="include_od",
+        dest="include_od",
         help=(
             "If set, the model will not include optical density (OD) data. This is "
             "only applicable for TrpB datasets."
