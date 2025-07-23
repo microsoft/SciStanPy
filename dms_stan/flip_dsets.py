@@ -360,6 +360,11 @@ def trpb_instance_factory(
     trpb_data = load_trpb_dataset(filepath=filepath, libname=libname)
     trpb_data.pop("variants")
 
+    # Remove the ODs if they are not included
+    if not include_od:
+        trpb_data.pop("starting_od")
+        trpb_data.pop("timepoint_od")
+
     # Get the class for the given parameters and instantiate it
     return trpb_class_factory(
         name=libname,
