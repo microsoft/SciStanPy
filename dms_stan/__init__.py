@@ -11,7 +11,7 @@ import numpy as np
 import torch
 
 # Define the version
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 # Set up type checking
 install_import_hook("dms_stan")
