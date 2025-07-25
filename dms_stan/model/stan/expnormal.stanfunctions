@@ -1,0 +1,48 @@
+real expnormal_lpdf(real y, real mu, real sigma) {
+    // If exp(y) is normally distributed, then y is exp-normal distributed.
+    // Equivalently, if y is normally distributed, then log(y) is exp-normal
+    // distributed.
+    return normal_lpdf(exp(y) | mu, sigma) + y;
+}
+
+real expnormal_lpdf(vector y, vector mu, vector sigma) {
+    // Vectorized version of the exp-normal log probability density function
+    return normal_lpdf(exp(y) | mu, sigma) + sum(y);
+}
+
+real expnormal_lpdf(vector y, vector mu, real sigma) {
+    // Vectorized version of the exp-normal log probability density function
+    // with a single beta
+    return normal_lpdf(exp(y) | mu, sigma) + sum(y);
+}
+
+real expnormal_lpdf(vector y, real mu, vector sigma) {
+    // Vectorized version of the exp-normal log probability density function
+    // with a single mu and vector sigma
+    return normal_lpdf(exp(y) | mu, sigma) + sum(y);
+}
+
+real expnormal_lpdf(vector y, real mu, real sigma) {
+    // Vectorized version of the exp-normal log probability density function
+    // with a single mu and sigma
+    return normal_lpdf(exp(y) | mu, sigma) + sum(y);
+}
+
+real expnormal_rng(real mu, real sigma) {
+    // Generates a random sample from the exp-normal distribution. This involves
+    // generating a sample from the normal distribution and then taking its
+    // logarithm.
+    return log(normal_rng(mu, sigma));
+}
+
+array[] real expnormal_rng(vector mu, vector sigma) {
+    return log(normal_rng(mu, sigma));
+}
+
+array[] real expnormal_rng(vector mu, real sigma) {
+    return log(normal_rng(mu, sigma));
+}
+
+array[] real expnormal_rng(real mu, vector sigma) {
+    return log(normal_rng(mu, sigma));
+}

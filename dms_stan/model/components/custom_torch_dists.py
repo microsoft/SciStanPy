@@ -242,4 +242,23 @@ class ExpDirichlet(
         super().__init__(base_dist, transforms, *args, **kwargs)
 
 
+class ExpNormal(
+    dist.transformed_distribution.TransformedDistribution, CustomDistribution
+):
+    """Implementation of the Exponential Normal distribution."""
+
+    def __init__(self, mu: torch.Tensor, sigma: torch.Tensor, *args, **kwargs):
+        """
+        Args:
+            mu (torch.Tensor): Mean parameter.
+            sigma (torch.Tensor): Standard deviation parameter.
+            *args: Additional arguments for the base distribution.
+            **kwargs: Additional keyword arguments for the base distribution.
+        """
+        # Build the base distribution (Normal) and transforms (log)
+        base_dist = dist.Normal(loc=mu, scale=sigma)
+        transforms = [dist.transforms.ExpTransform().inv]
+        super().__init__(base_dist, transforms, *args, **kwargs)
+
+
 # pylint: enable=abstract-method

@@ -503,6 +503,49 @@ class Normal(ContinuousDistribution):
     HAS_RAW_VARNAME = is_noncentered  # Raw varname only if noncentered
 
 
+class ExpNormal(ContinuousDistribution):
+    """
+    A parameter whose exponential is normally distributed. This is distinct from
+    the LogNormal distribution, which describes a parameter whose logarithm is
+    normally distributed.
+    """
+
+    POSITIVE_PARAMS = {"sigma"}
+    STAN_DIST = "expnormal"
+
+    def __init__(
+        self,
+        *,
+        mu: "dms.custom_types.ContinuousParameterType",
+        sigma: "dms.custom_types.ContinuousParameterType",
+        **kwargs,
+    ):
+        super().__init__(
+            numpy_dist="normal",
+            torch_dist=custom_torch_dists.ExpNormal,
+            stan_to_np_names={"mu": "loc", "sigma": "scale"},
+            stan_to_torch_names={"mu": "loc", "sigma": "scale"},
+            mu=mu,
+            sigma=sigma,
+            **kwargs,
+        )
+
+    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+        """Returns the numpy distribution function"""
+        base_dist = super().get_numpy_dist(seed=seed)
+
+        def expnormal(**kwargs):
+            return np.log(base_dist(loc=kwargs["mu"], scale=kwargs["sigma"]))
+
+        return expnormal
+
+    def _write_dist_args(  # pylint: disable=arguments-differ
+        self, mu: str, sigma: str
+    ) -> str:
+        """Writes the distribution arguments in the correct format"""
+        return f"{mu}, {sigma}"
+
+
 class HalfNormal(ContinuousDistribution):
     """Parameter that is represented by the half-normal distribution."""
 
