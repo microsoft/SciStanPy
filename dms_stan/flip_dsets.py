@@ -401,9 +401,10 @@ def load_nuclease_data(
                     ["read_count_2_high_g1", "read_count_2_high_reseq_g1"]
                 ].to_numpy(dtype=int),
                 "hc3": df[["read_count_3_high_g1"]].to_numpy(dtype=int),
-                "ft_low": np.array([0.1, 0.115, 0.1]),
-                "ft_high": np.array([0.501, 0.6, 0.370]),
             }
+
+        # Add the fluorescence threshold
+        compiled["ft"] = np.array([[0.1, 0.115, 0.1], [0.501, 0.6, 0.370]])
 
         # Package the
         return compiled
@@ -436,8 +437,10 @@ def load_nuclease_data(
                     dtype=int
                 ),  # Goes with IC1
                 "c93": df[["read_count_2_93_g2"]].to_numpy(dtype=int),  # Goes with IC2
-                "ft": np.array([0.201, 0.318, 0.385]),
             }
+
+        # Add the fluorescence threshold
+        compiled_g2["ft"] = np.array([0.201, 0.318, 0.385])
 
         return compiled_g2
 
@@ -470,8 +473,8 @@ def load_nuclease_data(
         for key, df in zip(("data", "fiducial"), (g3, fid_g3)):
             compiled_g3[key] = {
                 "variants": df["mutations"].tolist(),
-                "ic": df[["read_count_0_input_g3"]].to_numpy(dtype=int),
-                "oc": df[
+                "ic1": df[["read_count_0_input_g3"]].to_numpy(dtype=int),
+                "oc1": df[
                     [
                         "read_count_1_59_g3",
                         "read_count_1_80_g3",
@@ -479,8 +482,10 @@ def load_nuclease_data(
                         "read_count_2_99_g3",
                     ]
                 ].to_numpy(dtype=int),
-                "ft": np.array([0.118, 0.217, 0.285, 0.346]),
             }
+
+        # Add the fluorescence threshold
+        compiled_g3["ft"] = np.array([0.118, 0.217, 0.285, 0.346])
 
         return compiled_g3
 
@@ -520,8 +525,8 @@ def load_nuclease_data(
         for key, df in zip(("data", "fiducial"), (g4, fid_g4)):
             compiled_g4[key] = {
                 "variants": df["mutations"].tolist(),
-                "ic": df[["read_count_0_input_g4"]].to_numpy(dtype=int),
-                "oc": df[
+                "ic1": df[["read_count_0_input_g4"]].to_numpy(dtype=int),
+                "oc1": df[
                     [
                         "read_count_1_70_g4",
                         "read_count_2_90_g4",
@@ -529,8 +534,10 @@ def load_nuclease_data(
                         "read_count_4_99.5_g4",
                     ]
                 ].to_numpy(dtype=int),
-                "ft": np.array([0.124, 0.199, 0.306, 0.384]),
             }
+
+        # Add the fluorescence threshold
+        compiled_g4["ft"] = np.array([0.124, 0.199, 0.306, 0.384])
 
         return compiled_g4
 
@@ -557,9 +564,21 @@ def load_nuclease_data(
         """
         Add an array of indices corresponding to variants for each dataset.
         """
-        for g in (g1, g2, g3, g4):
+        for fiducial_signatures, g in (
+            (("",), g1),
+            (("",), g2),
+            (("", "A73R"), g3),
+            (("", "A73R", "A73R_D74S", "A63P_A73R_D74H_I84Y"), g4),
+        ):
+
+            # Maps for non-fiducial datasets
             g["data"]["variant_inds"] = np.array(
                 [var_to_ind[variant] for variant in g["data"]["variants"]]
+            )
+
+            # Maps for fiducials
+            g["fiducial"]["variant_inds"] = np.array(
+                [var_to_ind[sig] for sig in fiducial_signatures]
             )
 
     # Load all datasets
