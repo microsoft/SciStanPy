@@ -1,5 +1,7 @@
 """Holds code relevant for the TrpB datasets."""
 
+import re
+
 from typing import Literal
 
 import numpy as np
@@ -299,6 +301,306 @@ def reformat_pdz_zenodo_dset(infile: str, outfile: str) -> None:
         sep="\t",
         index=False,
     )
+
+
+# Types for the nuclease data
+SingleNucDatasetType = dict[
+    str, dict[str, npt.NDArray[np.integer | np.floating] | list[str]]
+]
+MultiNucDatasetType = dict[str, dict[str, int] | SingleNucDatasetType]
+
+
+def load_nuclease_data(
+    processed_data_dir: str, processed_fiducial_data_dir: str
+) -> MultiNucDatasetType:
+    """Loads the Nuclease dataset. The data is described in [this](https://www.cell.com/cell-systems/fulltext/S2405-4712(25)00069-9?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS2405471225000699%3Fshowall%3Dtrue)
+    paper and was downloaded using its associated GitHub repository.
+    """
+
+    def load_basis_data(
+        filepath: str, check_unique: bool = True, check_mutcount: bool = True
+    ) -> pd.DataFrame:
+        """
+        Load the basis data for a Nuclease dataset.
+        """
+        # Regular expression to match the mutation list format
+        list_regex = re.compile(r"\[{1,2}(.*?)\]")
+
+        def build_mut_signature(mutlist: str) -> str:
+            """
+            Converts a string-formatted list of mutations into a single hashable string
+            that can be used as a signature for the mutation.
+            """
+            # An empty list is just the wildtype, so return an empty string (no mutations)
+            if mutlist == "[]":
+                return ""
+
+            # First identify the mutations in the string
+            matches = re.findall(list_regex, mutlist)
+
+            # Clean up the additional characters in the matches and format as a list sorted
+            # by the mutation position
+            cleaned = [[x.strip(', "') for x in el.split()] for el in matches]
+            cleaned.sort(key=lambda x: int(x[1]))
+
+            # Join the cleaned mutations into a single string
+            return "_".join("".join(el) for el in cleaned)
+
+        # Load in the data
+        df = pd.read_csv(filepath)
+
+        # Convert the mutations column to a list of signatures
+        df["mutations"] = df["mutations"].apply(build_mut_signature)
+
+        # Run some checks
+        assert (not check_unique) or df.mutations.is_unique
+        assert (not check_mutcount) or (
+            df.mutations.str.split("_").apply(lambda x: 0 if x == [""] else len(x))
+            == df.num_mutations
+        ).all()
+
+        return df
+
+    def load_g1(
+        filepath: str, fiducial_filepath: str, negative_filepath: str
+    ) -> SingleNucDatasetType:
+        """
+        Load the G1 dataset.
+        """
+        # Get the basis data for the dataset, fiducial sequences, and negative controls
+        g1 = load_basis_data(filepath)
+        fid_g1 = load_basis_data(
+            fiducial_filepath, check_unique=False, check_mutcount=False
+        )
+        neg_controls = load_basis_data(negative_filepath, check_mutcount=False)
+
+        # Negative controls can be combined with standard data
+        g1 = pd.concat([g1, neg_controls], ignore_index=True)
+
+        # Gather data
+        compiled: SingleNucDatasetType = {}
+        for key, df in zip(("data", "fiducial"), (g1, fid_g1)):
+            compiled[key] = {
+                "variants": df["mutations"].tolist(),
+                "ic1": df[
+                    ["read_count_1_input_g1", "read_count_1_input_reseq_g1"]
+                ].to_numpy(dtype=int),
+                "ic2": df[
+                    ["read_count_2_input_g1", "read_count_2_input_reseq_g1"]
+                ].to_numpy(dtype=int),
+                "ic3": df[["read_count_3_input_g1"]].to_numpy(dtype=int),
+                "lc": df[
+                    [
+                        "read_count_1_low_g1",
+                        "read_count_2_low_g1",
+                        "read_count_3_low_g1",
+                    ]
+                ].to_numpy(dtype=int),
+                "hc1": df[["read_count_1_high_g1"]].to_numpy(dtype=int),
+                "hc2": df[
+                    ["read_count_2_high_g1", "read_count_2_high_reseq_g1"]
+                ].to_numpy(dtype=int),
+                "hc3": df[["read_count_3_high_g1"]].to_numpy(dtype=int),
+                "ft_low": np.array([0.1, 0.115, 0.1]),
+                "ft_high": np.array([0.501, 0.6, 0.370]),
+            }
+
+        # Package the
+        return compiled
+
+    def load_g2(
+        filepath: str, fiducial_filepath: str, negative_filepath: str
+    ) -> SingleNucDatasetType:
+
+        # Load raw
+        g2 = load_basis_data(filepath)
+        fid_g2 = load_basis_data(
+            fiducial_filepath, check_unique=False, check_mutcount=False
+        )
+        neg_controls_g2 = load_basis_data(negative_filepath, check_mutcount=False)
+
+        # Negative controls and basis data can be combined
+        g2 = pd.concat([g2, neg_controls_g2], ignore_index=True)
+
+        # Compile the data into a dictionary
+        compiled_g2: SingleNucDatasetType = {}
+        for key, df in zip(("data", "fiducial"), (g2, fid_g2)):
+            compiled_g2[key] = {
+                "variants": df["mutations"].tolist(),
+                "ic1": df[
+                    ["read_count_1_input_deep_g2", "read_count_1_input_g2"]
+                ].to_numpy(dtype=int),
+                "ic2": df[["read_count_2_input_g2"]].to_numpy(dtype=int),
+                "c86": df[["read_count_1_86_g2"]].to_numpy(dtype=int),  # Goes with IC1
+                "c975": df[["read_count_1_97.5_g2"]].to_numpy(
+                    dtype=int
+                ),  # Goes with IC1
+                "c93": df[["read_count_2_93_g2"]].to_numpy(dtype=int),  # Goes with IC2
+                "ft": np.array([0.201, 0.318, 0.385]),
+            }
+
+        return compiled_g2
+
+    def load_g3(
+        filepath: str,
+        fiducial_filepath: str,
+        negative_filepath: str,
+        a73r_filepath: str,
+    ) -> SingleNucDatasetType:
+        """
+        Load the G3 dataset.
+        """
+        # Load raw
+        g3 = load_basis_data(filepath)
+        fid_g3 = load_basis_data(
+            fiducial_filepath, check_unique=False, check_mutcount=False
+        )
+        neg_controls_g3 = load_basis_data(negative_filepath, check_mutcount=False)
+        a73r_g3 = load_basis_data(
+            a73r_filepath, check_unique=False, check_mutcount=False
+        )
+
+        # The negative controls and basis data can be combined. As can the a73r data and
+        # the wild-type data.
+        g3 = pd.concat([g3, neg_controls_g3], ignore_index=True)
+        fid_g3 = pd.concat([fid_g3, a73r_g3], ignore_index=True)
+
+        # Compile the data into a dictionary
+        compiled_g3: SingleNucDatasetType = {}
+        for key, df in zip(("data", "fiducial"), (g3, fid_g3)):
+            compiled_g3[key] = {
+                "variants": df["mutations"].tolist(),
+                "ic": df[["read_count_0_input_g3"]].to_numpy(dtype=int),
+                "oc": df[
+                    [
+                        "read_count_1_59_g3",
+                        "read_count_1_80_g3",
+                        "read_count_2_95_g3",
+                        "read_count_2_99_g3",
+                    ]
+                ].to_numpy(dtype=int),
+                "ft": np.array([0.118, 0.217, 0.285, 0.346]),
+            }
+
+        return compiled_g3
+
+    def load_g4(
+        filepath: str,
+        fiducial_filepath: str,
+        negtive_filepath: str,
+        a73r_filepath: str,
+        a73r_d74s_filepath: str,
+        a63p_a73r_d74h_i84y_filepath: str,
+    ) -> SingleNucDatasetType:
+
+        # Load the G4 datasets
+        g4 = load_basis_data(filepath)
+        fid_g4 = load_basis_data(
+            fiducial_filepath, check_unique=False, check_mutcount=False
+        )
+        neg_controls_g4 = load_basis_data(negtive_filepath, check_mutcount=False)
+        a73r_g4 = load_basis_data(
+            a73r_filepath, check_unique=False, check_mutcount=False
+        )
+        a73r_d74s_g4 = load_basis_data(
+            a73r_d74s_filepath, check_unique=False, check_mutcount=False
+        )
+        a63p_a73r_d74h_i84y_g4 = load_basis_data(
+            a63p_a73r_d74h_i84y_filepath, check_unique=False, check_mutcount=False
+        )
+
+        # Combine negative controls with basis data, fiducials with fiducials
+        g4 = pd.concat([g4, neg_controls_g4], ignore_index=True)
+        fid_g4 = pd.concat(
+            [fid_g4, a73r_g4, a73r_d74s_g4, a63p_a73r_d74h_i84y_g4], ignore_index=True
+        )
+
+        # Compile the data into a dictionary
+        compiled_g4: SingleNucDatasetType = {}
+        for key, df in zip(("data", "fiducial"), (g4, fid_g4)):
+            compiled_g4[key] = {
+                "variants": df["mutations"].tolist(),
+                "ic": df[["read_count_0_input_g4"]].to_numpy(dtype=int),
+                "oc": df[
+                    [
+                        "read_count_1_70_g4",
+                        "read_count_2_90_g4",
+                        "read_count_3_98_g4",
+                        "read_count_4_99.5_g4",
+                    ]
+                ].to_numpy(dtype=int),
+                "ft": np.array([0.124, 0.199, 0.306, 0.384]),
+            }
+
+        return compiled_g4
+
+    # Function for building the mapping from variant to index
+    def build_var_to_ind() -> dict[str, int]:
+        """
+        Build a mapping from variant to index.
+        """
+        # Get all unique variants from the different generations and map to unique
+        # indexes. We want to retain the original order as much as possible for
+        # computational efficiency in Stan
+        var_to_ind = {}
+        n_entries = 0
+        for g in (g1, g2, g3, g4):
+            for variant in g["data"]["variants"]:
+                if variant not in var_to_ind:
+                    var_to_ind[variant] = n_entries
+                    n_entries += 1
+
+        return var_to_ind
+
+    # Assigns an array of indices corresponding to variants for each dataset
+    def build_variant_ind_arrays() -> None:
+        """
+        Add an array of indices corresponding to variants for each dataset.
+        """
+        for g in (g1, g2, g3, g4):
+            g["data"]["variant_inds"] = np.array(
+                [var_to_ind[variant] for variant in g["data"]["variants"]]
+            )
+
+    # Load all datasets
+    g1 = load_g1(
+        filepath=f"{processed_data_dir}/g1.csv",
+        fiducial_filepath=f"{processed_fiducial_data_dir}/g1_wt.csv",
+        negative_filepath=f"{processed_fiducial_data_dir}/g1_neg_control.csv",
+    )
+    g2 = load_g2(
+        filepath=f"{processed_data_dir}/g2.csv",
+        fiducial_filepath=f"{processed_fiducial_data_dir}/g2_wt.csv",
+        negative_filepath=f"{processed_fiducial_data_dir}/g2_neg_control.csv",
+    )
+    g3 = load_g3(
+        filepath=f"{processed_data_dir}/g3.csv",
+        fiducial_filepath=f"{processed_fiducial_data_dir}/g3_wt.csv",
+        negative_filepath=f"{processed_fiducial_data_dir}/g3_neg_control.csv",
+        a73r_filepath=f"{processed_fiducial_data_dir}/g3_a73r.csv",
+    )
+    g4 = load_g4(
+        filepath=f"{processed_data_dir}/g4.csv",
+        fiducial_filepath=f"{processed_fiducial_data_dir}/g4_wt.csv",
+        negtive_filepath=f"{processed_fiducial_data_dir}/g4_neg_control.csv",
+        a73r_filepath=f"{processed_fiducial_data_dir}/g4_a73r.csv",
+        a73r_d74s_filepath=f"{processed_fiducial_data_dir}/g4_a73r_d74s.csv",
+        a63p_a73r_d74h_i84y_filepath=f"{processed_fiducial_data_dir}/g4_a63p_a73r_d74h_i84y.csv",
+    )
+
+    # Map variants to indices
+    var_to_ind = build_var_to_ind()
+
+    # Add an array of indices corresponding to variants for each dataset
+    build_variant_ind_arrays()
+
+    return {
+        "g1": g1,
+        "g2": g2,
+        "g3": g3,
+        "g4": g4,
+        "var_to_ind": var_to_ind,
+    }
 
 
 def trpb_class_factory(
