@@ -1,7 +1,7 @@
 """Holds parameter transformations for DMS Stan models."""
 
 from abc import abstractmethod
-from typing import Optional, overload
+from typing import get_type_hints, Optional, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -162,6 +162,71 @@ class TransformedParameter(Transformation, TransformableParameter):
                 for name, param in self._parents.items()
             }
         )
+
+
+class CDF(TransformedParameter):
+    """
+    Base class for cumulative distribution functions (CDFs) of parameters. Note
+    that this cannot be instantiated directly, but is used as a template
+    """
+
+    # Init function makes sure we have the correct parameters before initializing
+    def __init__(self, **kwargs: "dms.custom_types.CombinableParameterType"):
+
+        # Check if the parameters passed are the ones required for the CDF
+        self.check_parameters(set(kwargs))
+
+        super().__init__(**kwargs)
+
+    def check_parameters(self, kwargset: set[str]) -> None:
+        """Checks if the parameters passed are the ones required for the CDF."""
+        # Make sure that these are the only parameters passed
+        if additional_params := kwargset - self.PARAMETERS:
+            raise TypeError(
+                f"Unexpected parameters {additional_params} passed to "
+                f"{self.__class__.__name__}."
+            )
+        if missing_params := self.PARAMETERS - kwargset:
+            raise TypeError(
+                f"Missing parameters {missing_params} for {self.__class__.__name__}."
+            )
+
+
+class MetaCDF(type):
+    """
+    Metaclass for cumulative distribution functions (CDFs) of parameters.
+    This is used to create a CDF class for each parameter class.
+    """
+
+    def __new__(mcs, parameter: type["dms.model.components.Parameter"]):
+        """Rewrites the `__new__` method of `type` to create a shortcut for
+        creating CDF classes.
+        """
+        return super().__new__(  # pylint: disable=unused-variable
+            mcs,
+            f"{parameter.__name__}CDF",
+            (CDF,),
+            {
+                "PARAMETERS": mcs._get_parameters(parameter),  # Parameter names
+                "STAN_CDF_FUNC": f"{parameter.STAN_DIST}_cdf",  # Stan CDF function
+            },
+        )
+
+    @classmethod
+    def _get_parameters(
+        mcs, parameter: type["dms.model.components.Parameter"]
+    ) -> set[str]:
+        """Gets the names of the parameters required for the CDF."""
+        return {
+            param_name
+            for param_name, param in get_type_hints(parameter.__init__).items()
+            if param
+            in {
+                dms.custom_types.CombinableParameterType,
+                dms.custom_types.ContinuousParameterType,
+                dms.custom_types.DiscreteParameterType,
+            }
+        }
 
 
 class BinaryTransformedParameter(TransformedParameter):
