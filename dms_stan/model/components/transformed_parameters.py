@@ -191,6 +191,9 @@ class CDF(TransformedParameter):
                 f"Missing parameters {missing_params} for {self.__class__.__name__}."
             )
 
+    def operation(self, **draws):
+        pass
+
 
 class MetaCDF(type):
     """

@@ -14,6 +14,7 @@ import torch.distributions as dist
 import torch.nn as nn
 
 from scipy import special
+from scipy import stats
 
 import dms_stan as dms
 
@@ -21,7 +22,7 @@ from dms_stan.model.components import custom_torch_dists
 from .abstract_model_component import AbstractModelComponent
 from .constants import Constant
 from .transformed_data import LogMultinomialCoefficient, TransformedData
-from .transformed_parameters import TransformableParameter
+from .transformed_parameters import TransformedParameter, TransformableParameter
 
 # pylint: disable=too-many-lines
 
@@ -32,6 +33,14 @@ def _inverse_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
     a lambda function to avoid pickling issues.
     """
     return 1 / x
+
+
+def _null_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
+    """
+    A null transformation function that returns the input unchanged. This is used
+    when no transformation is needed.
+    """
+    return x
 
 
 # TODO: Make sure samples from torch distributions obey the same bounds as noted
@@ -48,75 +57,63 @@ class Parameter(AbstractModelComponent):
 
     STAN_DIST: str = ""  # The Stan distribution name
     HAS_RAW_VARNAME: bool = False  # Whether the parameter has a raw variable name
+    CDF = None  # Transformed parameter class representing the CDF
+    CCDF = None  # Transformed parameter class representing the CCDF
+    LOG_CDF = None  # Transformed parameter class representing the log CDF
+    LOG_CCDF = None  # Transformed parameter class representing the log CCDF
+    SCIPY_DIST: type[stats.rv_continuous] | type[stats.rv_discrete] | None = (
+        None  # The SciPy distribution
+    )
+    TORCH_DIST: (
+        type[dist.distribution.Distribution]
+        | type[custom_torch_dists.CustomDistribution]
+        | None
+    ) = None  # The PyTorch distribution class
+    STAN_TO_SCIPY_NAMES: dict[str, str] = {}  # Mapping from Stan to SciPy names
+    STAN_TO_TORCH_NAMES: dict[str, str] = {}  # Mapping from Stan to PyTorch names
+    STAN_TO_SCIPY_TRANSFORMS: dict[str, Callable[[npt.NDArray], npt.NDArray]] = {}
 
-    def __init__(
-        self,
-        numpy_dist: str,
-        torch_dist: (
-            type[dist.distribution.Distribution]
-            | type[custom_torch_dists.CustomDistribution]
-        ),
-        stan_to_np_names: dict[str, str],
-        stan_to_torch_names: dict[str, str],
-        stan_to_np_transforms: Optional[
-            dict[str, Callable[[npt.NDArray], npt.NDArray]]
-        ] = None,
-        **kwargs,
-    ):
+    def __init__(self, **kwargs):
         """
         Sets up random number generation and handles all parameters on which this
         parameter depends.
         """
+        # Confirm that class attributes are set correctly
+        if missing_attributes := [
+            attr
+            for attr in (
+                "STAN_DIST",
+                "CDF",
+                "CCDF",
+                "LOG_CDF",
+                "LOG_CCDF",
+                "SCIPY_DIST",
+                "TORCH_DIST",
+                "STAN_TO_SCIPY_NAMES",
+                "STAN_TO_TORCH_NAMES",
+                "STAN_TO_SCIPY_TRANSFORMS",
+            )
+            if not getattr(self, attr)
+        ]:
+            raise NotImplementedError(
+                f"The following class attributes must be defined: {', '.join(missing_attributes)}"
+            )
+
+        # Make sure we have the expected parameters
+        kwargset = set(kwargs.keys())
+        if additional_params := kwargset - self.STAN_TO_SCIPY_NAMES.keys():
+            raise TypeError(
+                f"Unexpected parameters {additional_params} passed to {self}."
+            )
+        if missing_params := self.STAN_TO_SCIPY_NAMES.keys() - kwargset:
+            raise TypeError(f"Missing parameters {missing_params} for {self}.")
+
         # Initialize the parameters
         super().__init__(**kwargs)
-
-        # Make sure the STAN_DIST class attribute is defined
-        if self.STAN_DIST == "":
-            raise NotImplementedError("The STAN_DIST class attribute must be defined")
 
         # Parameters can be manually set as observables, so we need a flag to
         # track this
         self._observable = False
-
-        # Store the distributions
-        self._numpy_dist = numpy_dist
-        self._torch_dist = torch_dist
-
-        # Default value for the transforms dictionary is an empty dictionary
-        stan_to_np_transforms = stan_to_np_transforms or {}
-
-        # Identify the parameters. This is anything that is not defined as an argument
-        # in the AbstractModelComponent __init__ method.
-        parameters = {
-            k: v
-            for k, v in kwargs.items()
-            if k not in inspect.signature(AbstractModelComponent.__init__).parameters
-        }
-
-        # All parameter names must be in the stan_to_np_names dictionary
-        if missing_names := set(parameters.keys()) - set(stan_to_np_names.keys()):
-            raise ValueError(
-                f"Missing names in stan_to_np_names: {', '.join(missing_names)}"
-            )
-
-        # All parameter names must be in the stan_to_torch_names dictionary
-        if missing_names := set(parameters.keys()) - set(stan_to_torch_names.keys()):
-            raise ValueError(
-                f"Missing names in stan_to_torch_names: {', '.join(missing_names)}"
-            )
-
-        # Any key in the `stan_to_np_transforms` dictionary must be in `stan_to_np_names`
-        # dictionary as well
-        if not set(stan_to_np_transforms.keys()).issubset(stan_to_np_names.keys()):
-            raise ValueError(
-                "All keys in `stan_to_np_transforms` must be in `stan_to_np_names`"
-            )
-
-        # Store the stan names to names dictionaries and the numpy distribution
-        # transformation dictionary
-        self.stan_to_np_names = stan_to_np_names
-        self.stan_to_np_transforms = stan_to_np_transforms
-        self.stan_to_torch_names = stan_to_torch_names
 
         # Initialize a parametrization using PyTorch
         self._torch_parametrization: Optional[nn.Parameter] = None
@@ -156,27 +153,23 @@ class Parameter(AbstractModelComponent):
         # Initialize the parameter
         self._torch_parametrization = nn.Parameter(init_val)
 
-    def _transform_and_rename_np(
-        self, level_draws: dict[str, npt.NDArray]
-    ) -> dict[str, npt.NDArray]:
-        """Transforms the numpy level draws to the correct format"""
-        # Perform transforms
-        for name, transform in self.stan_to_np_transforms.items():
-            level_draws[name] = transform(level_draws[name])
-
-        # Rename the parameters to the names used by numpy
-        return {self.stan_to_np_names[name]: val for name, val in level_draws.items()}
-
     def _draw(
         self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
-    ) -> npt.NDArray:
-        """Sample from the distribution that represents the parameter `n` times"""
-        # Perform any necessary transformations and rename the parameters
-        level_draws = self._transform_and_rename_np(level_draws)
+    ) -> dict[str, npt.NDArray]:
+        """
+        Applies the appropriate transforms to the scipy draws from a parent parameter
+        such that we can sample from the scipy distribution of this parameter.
+        """
+        # Transform and rename the draws from the previous level
+        level_draws = {
+            self.STAN_TO_SCIPY_NAMES[name]: self.STAN_TO_SCIPY_TRANSFORMS[name](draw)
+            for name, draw in level_draws.items()
+        }
 
-        # Sample from this distribution using numpy. Alter the shape to account
-        # for the new first dimension of length `n`.
-        return self.get_numpy_dist(seed=seed)(**level_draws, size=(n,) + self.shape)
+        # Draw from the scipy distribution
+        return self.scipy_dist_instance.rvs(
+            **level_draws, size=(n,) + self.shape, random_state=seed
+        )
 
     def as_observable(self) -> "Parameter":
         """Redefines the parameter as an observable variable (i.e., data)"""
@@ -242,9 +235,9 @@ class Parameter(AbstractModelComponent):
             return dms.RNG
         return np.random.default_rng(seed)
 
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        """Returns the numpy distribution function"""
-        return getattr(self.get_rng(seed=seed), self._numpy_dist)
+    def get_scipy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
+        """Returns the scipy distribution function"""
+        return getattr(self.get_rng(seed=seed), self.SCIPY_DIST)
 
     @abstractmethod
     def _write_dist_args(self, **to_format: str) -> str:
@@ -267,6 +260,46 @@ class Parameter(AbstractModelComponent):
         # None by default
         return ""
 
+    def cdf(
+        self: Union["Parameter", None] = None,
+        **params: "dms.custom_types.CombinableParameterType",
+    ) -> TransformedParameter:
+        """
+        Can be used as a class method or instance method to return the CDF of the
+        parameter. If called as a class method, the parameters must be provided.
+        Otherwise, the parent parameters are used to calculate the CDF.
+        """
+
+    def ccdf(
+        self: Union["Parameter", None] = None,
+        **params: "dms.custom_types.CombinableParameterType",
+    ) -> TransformedParameter:
+        """
+        Can be used as a class method or instance method to return the complementary
+        CDF of the parameter. If called as a class method, the parameters must be
+        provided. Otherwise, the parent parameters are used to calculate the CCDF.
+        """
+
+    def log_cdf(
+        self: Union["Parameter", None] = None,
+        **params: "dms.custom_types.CombinableParameterType",
+    ) -> TransformedParameter:
+        """
+        Can be used as a class method or instance method to return the log CDF of the
+        parameter. If called as a class method, the parameters must be provided.
+        Otherwise, the parent parameters are used to calculate the log CDF.
+        """
+
+    def log_ccdf(
+        self: Union["Parameter", None] = None,
+        **params: "dms.custom_types.CombinableParameterType",
+    ) -> TransformedParameter:
+        """
+        Can be used as a class method or instance method to return the log CCDF of the
+        parameter. If called as a class method, the parameters must be provided.
+        Otherwise, the parent parameters are used to calculate the log CCDF.
+        """
+
     def __str__(self) -> str:
         right_side = (
             self.get_right_side(None)
@@ -277,21 +310,21 @@ class Parameter(AbstractModelComponent):
         return f"{self.model_varname} ~ {right_side}"
 
     @property
-    def torch_dist(self) -> type["dms.custom_types.DMSStanDistribution"]:
-        """Returns the torch distribution class"""
-        return self._torch_dist
-
-    @property
     def torch_dist_instance(self) -> "dms.custom_types.DMSStanDistribution":
         """Returns an instance of the torch distribution class"""
-        return self.torch_dist(
+        return self.TORCH_DIST(  # pylint: disable=not-callable
             **{
-                self.stan_to_torch_names[name]: torch.broadcast_to(
+                self.STAN_TO_TORCH_NAMES[name]: torch.broadcast_to(
                     param.torch_parametrization, self.shape
                 )
                 for name, param in self._parents.items()
             }
         )
+
+    @property
+    def scipy_dist_instance(self) -> stats.rv_continuous | stats.rv_discrete:
+        """Returns an instance of the scipy distribution class"""
+        return self.SCIPY_DIST() # pylint: disable=not-callable
 
     @property
     def is_hyperparameter(self) -> bool:
@@ -383,17 +416,10 @@ class ContinuousDistribution(Parameter, TransformableParameter):
 
 
 class DiscreteDistribution(Parameter):
-    """
-    Base class for parameters represented by discrete distributions. This is
-    more-or-less a passthrough to the Parameter class; however, the default for
-    discrete distributions is to set the observable attribute to True.
-    """
+    """Base class for parameters represented by discrete distributions"""
 
     BASE_STAN_DTYPE: str = "int"
     LOWER_BOUND: int = 0
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
 
 class Normal(ContinuousDistribution):
@@ -401,6 +427,11 @@ class Normal(ContinuousDistribution):
 
     POSITIVE_PARAMS = {"sigma"}
     STAN_DIST = "normal"
+    SCIPY_DIST = stats.norm
+    TORCH_DIST = dist.normal.Normal
+    STAN_TO_SCIPY_NAMES = {"mu": "loc", "sigma": "scale"}
+    STAN_TO_TORCH_NAMES = {"mu": "loc", "sigma": "scale"}
+    STAN_TO_SCIPY_TRANSFORMS = {"mu": _null_transform, "sigma": _null_transform}
 
     def __init__(
         self,
@@ -411,15 +442,7 @@ class Normal(ContinuousDistribution):
         **kwargs,
     ):
         # Build the instance
-        super().__init__(
-            numpy_dist="normal",
-            torch_dist=dist.normal.Normal,
-            stan_to_np_names={"mu": "loc", "sigma": "scale"},
-            stan_to_torch_names={"mu": "loc", "sigma": "scale"},
-            mu=mu,
-            sigma=sigma,
-            **kwargs,
-        )
+        super().__init__(mu=mu, sigma=sigma, **kwargs)
 
         # Are we using non-centered parameterization?
         self._noncentered = noncentered
@@ -512,6 +535,7 @@ class ExpNormal(ContinuousDistribution):
 
     POSITIVE_PARAMS = {"sigma"}
     STAN_DIST = "expnormal"
+    SCIPY_DIST =
 
     def __init__(
         self,
