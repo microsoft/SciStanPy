@@ -1,9 +1,7 @@
 """Holds classes that can be used for defining models in DMS Stan models."""
 
-import inspect
 import re
 
-from abc import abstractmethod
 from functools import partial
 from typing import Callable, Optional, Union
 
@@ -13,12 +11,11 @@ import torch
 import torch.distributions as dist
 import torch.nn as nn
 
-from scipy import special
 from scipy import stats
 
 import dms_stan as dms
 
-from dms_stan.model.components import custom_torch_dists
+from dms_stan.model.components import custom_scipy_dists, custom_torch_dists
 from .abstract_model_component import AbstractModelComponent
 from .constants import Constant
 from .transformed_data import LogMultinomialCoefficient, TransformedData
@@ -35,21 +32,10 @@ def _inverse_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
     return 1 / x
 
 
-def _null_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
-    """
-    A null transformation function that returns the input unchanged. This is used
-    when no transformation is needed.
-    """
-    return x
-
-
 # TODO: Make sure samples from torch distributions obey the same bounds as noted
 # in the classes.
 # TODO: Make sure samples from Stan distributions obey the same bounds as noted
 # in the classes.
-
-# TODO: Most of the arguments to `__init__` of `Parameter` should be converted to
-# class attributes, as they are not expected to change per instance.
 
 
 class Parameter(AbstractModelComponent):
@@ -91,7 +77,6 @@ class Parameter(AbstractModelComponent):
                 "TORCH_DIST",
                 "STAN_TO_SCIPY_NAMES",
                 "STAN_TO_TORCH_NAMES",
-                "STAN_TO_SCIPY_TRANSFORMS",
             )
             if not getattr(self, attr)
         ]:
@@ -160,9 +145,11 @@ class Parameter(AbstractModelComponent):
         Applies the appropriate transforms to the scipy draws from a parent parameter
         such that we can sample from the scipy distribution of this parameter.
         """
-        # Transform and rename the draws from the previous level
+        # Transform and rename the draws from the previous level.
         level_draws = {
-            self.STAN_TO_SCIPY_NAMES[name]: self.STAN_TO_SCIPY_TRANSFORMS[name](draw)
+            self.STAN_TO_SCIPY_NAMES[name]: self.STAN_TO_SCIPY_TRANSFORMS.get(
+                name, lambda x: x
+            )(draw)
             for name, draw in level_draws.items()
         }
 
@@ -235,13 +222,12 @@ class Parameter(AbstractModelComponent):
             return dms.RNG
         return np.random.default_rng(seed)
 
-    def get_scipy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        """Returns the scipy distribution function"""
-        return getattr(self.get_rng(seed=seed), self.SCIPY_DIST)
-
-    @abstractmethod
-    def _write_dist_args(self, **to_format: str) -> str:
-        """Writes the distribution arguments in the correct format"""
+    def write_dist_args(self, **to_format: str) -> str:
+        """
+        Writes the distribution arguments in the correct format. Default is to concatenate
+        values with commas as delimiters. The order is set up `STAN_TO_SCIPY_NAMES`.
+        """
+        return ", ".join(to_format[name] for name in self.STAN_TO_SCIPY_NAMES)
 
     def get_right_side(
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
@@ -251,7 +237,7 @@ class Parameter(AbstractModelComponent):
 
         # Build the distribution argument and format the Stan code
         suffix = "" if dist_suffix == "" else f"_{dist_suffix}"
-        code = f"{self.STAN_DIST}{suffix}({self._write_dist_args(**formattables)})"
+        code = f"{self.STAN_DIST}{suffix}({self.write_dist_args(**formattables)})"
 
         return code
 
@@ -324,7 +310,7 @@ class Parameter(AbstractModelComponent):
     @property
     def scipy_dist_instance(self) -> stats.rv_continuous | stats.rv_discrete:
         """Returns an instance of the scipy distribution class"""
-        return self.SCIPY_DIST() # pylint: disable=not-callable
+        return self.SCIPY_DIST()  # pylint: disable=not-callable
 
     @property
     def is_hyperparameter(self) -> bool:
@@ -431,7 +417,6 @@ class Normal(ContinuousDistribution):
     TORCH_DIST = dist.normal.Normal
     STAN_TO_SCIPY_NAMES = {"mu": "loc", "sigma": "scale"}
     STAN_TO_TORCH_NAMES = {"mu": "loc", "sigma": "scale"}
-    STAN_TO_SCIPY_TRANSFORMS = {"mu": _null_transform, "sigma": _null_transform}
 
     def __init__(
         self,
@@ -447,7 +432,7 @@ class Normal(ContinuousDistribution):
         # Are we using non-centered parameterization?
         self._noncentered = noncentered
 
-    def _write_dist_args(  # pylint: disable=arguments-differ
+    def write_dist_args(  # pylint: disable=arguments-differ
         self, mu: str, sigma: str
     ) -> str:
         return f"{mu}, {sigma}"
@@ -535,39 +520,17 @@ class ExpNormal(ContinuousDistribution):
 
     POSITIVE_PARAMS = {"sigma"}
     STAN_DIST = "expnormal"
-    SCIPY_DIST =
+    SCIPY_DIST = custom_scipy_dists.expnormal
+    TORCH_DIST = custom_torch_dists.ExpNormal
+    STAN_TO_SCIPY_NAMES = {"mu": "loc", "sigma": "scale"}
+    STAN_TO_TORCH_NAMES = {"mu": "loc", "sigma": "scale"}
 
-    def __init__(
-        self,
-        *,
-        mu: "dms.custom_types.ContinuousParameterType",
-        sigma: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-        super().__init__(
-            numpy_dist="normal",
-            torch_dist=custom_torch_dists.ExpNormal,
-            stan_to_np_names={"mu": "loc", "sigma": "scale"},
-            stan_to_torch_names={"mu": "loc", "sigma": "scale"},
-            mu=mu,
-            sigma=sigma,
-            **kwargs,
-        )
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        """Returns the numpy distribution function"""
-        base_dist = super().get_numpy_dist(seed=seed)
-
-        def expnormal(**kwargs):
-            return np.log(base_dist(loc=kwargs["mu"], scale=kwargs["sigma"]))
-
-        return expnormal
-
-    def _write_dist_args(  # pylint: disable=arguments-differ
-        self, mu: str, sigma: str
-    ) -> str:
-        """Writes the distribution arguments in the correct format"""
-        return f"{mu}, {sigma}"
+    def get_supporting_functions(self) -> list[str]:
+        """
+        Returns the Stan functions that are needed to support this distribution.
+        """
+        # We need the expnormal function for the Stan model
+        return super().get_supporting_functions() + ["#include expnormal.stanfunctions"]
 
 
 class HalfNormal(ContinuousDistribution):
@@ -575,43 +538,31 @@ class HalfNormal(ContinuousDistribution):
 
     LOWER_BOUND: float = 0.0
     STAN_DIST = "normal"
+    SCIPY_DIST = stats.halfnorm
+    TORCH_DIST = dist.half_normal.HalfNormal
+    STAN_TO_SCIPY_NAMES = {"sigma": "scale"}
+    STAN_TO_TORCH_NAMES = {"sigma": "scale"}
 
-    def __init__(
-        self,
-        *,
-        sigma: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-        super().__init__(
-            numpy_dist="normal",
-            torch_dist=dist.half_normal.HalfNormal,
-            stan_to_np_names={"sigma": "scale"},
-            stan_to_torch_names={"sigma": "scale"},
-            sigma=sigma,
-            **kwargs,
-        )
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        """Returns the absolute value of the numpy distribution function"""
-        base_dist = super().get_numpy_dist(seed=seed)
-
-        def half_normal(**kwargs):
-            return np.abs(base_dist(loc=0.0, **kwargs))
-
-        return half_normal
-
-    def _write_dist_args(self, sigma: str) -> str:  # pylint: disable=arguments-differ
+    def write_dist_args(self, sigma: str) -> str:  # pylint: disable=arguments-differ
         return f"0, {sigma}"
 
 
 class UnitNormal(Normal):
     """Parameter that is represented by the unit normal distribution."""
 
+    STAN_DIST = "std_normal"
+
     def __init__(self, **kwargs):
         super().__init__(mu=0.0, sigma=1.0, noncentered=False, **kwargs)
 
         # Sigma is not togglable
         self.sigma.is_togglable = False
+
+    def write_dist_args(
+        self, mu: str, sigma: str
+    ) -> str:  # pylint: disable=arguments-differ
+        # No arguments needed for the unit normal distribution in Stan.
+        return ""
 
 
 class LogNormal(ContinuousDistribution):
@@ -620,28 +571,10 @@ class LogNormal(ContinuousDistribution):
     POSITIVE_PARAMS = {"sigma"}
     LOWER_BOUND: float = 0.0
     STAN_DIST = "lognormal"
-
-    def __init__(
-        self,
-        *,
-        mu: "dms.custom_types.ContinuousParameterType",
-        sigma: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-        super().__init__(
-            numpy_dist="lognormal",
-            torch_dist=dist.log_normal.LogNormal,
-            stan_to_np_names={"mu": "mean", "sigma": "sigma"},
-            stan_to_torch_names={"mu": "loc", "sigma": "scale"},
-            mu=mu,
-            sigma=sigma,
-            **kwargs,
-        )
-
-    def _write_dist_args(  # pylint: disable=arguments-differ
-        self, mu: str, sigma: str
-    ) -> str:
-        return f"{mu}, {sigma}"
+    SCIPY_DIST = stats.lognorm
+    TORCH_DIST = dist.log_normal.LogNormal
+    STAN_TO_SCIPY_NAMES = {"mu": "loc", "sigma": "scale"}
+    STAN_TO_TORCH_NAMES = {"mu": "loc", "sigma": "scale"}
 
 
 class Beta(ContinuousDistribution):
@@ -651,29 +584,10 @@ class Beta(ContinuousDistribution):
     LOWER_BOUND: float = 0.0
     UPPER_BOUND: float = 1.0
     STAN_DIST = "beta"
-
-    def __init__(
-        self,
-        *,
-        alpha: "dms.custom_types.ContinuousParameterType",
-        beta: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-
-        super().__init__(
-            numpy_dist="beta",
-            torch_dist=dist.beta.Beta,
-            stan_to_np_names={"alpha": "a", "beta": "b"},
-            stan_to_torch_names={"alpha": "concentration1", "beta": "concentration0"},
-            alpha=alpha,
-            beta=beta,
-            **kwargs,
-        )
-
-    def _write_dist_args(  # pylint: disable=arguments-differ
-        self, alpha: str, beta: str
-    ) -> str:
-        return f"{alpha}, {beta}"
+    SCIPY_DIST = stats.beta
+    TORCH_DIST = dist.beta.Beta
+    STAN_TO_SCIPY_NAMES = {"alpha": "a", "beta": "b"}
+    STAN_TO_TORCH_NAMES = {"alpha": "concentration1", "beta": "concentration0"}
 
 
 class Gamma(ContinuousDistribution):
@@ -682,30 +596,13 @@ class Gamma(ContinuousDistribution):
     POSITIVE_PARAMS = {"alpha", "beta"}
     LOWER_BOUND: float = 0.0
     STAN_DIST = "gamma"
-
-    def __init__(
-        self,
-        *,
-        alpha: "dms.custom_types.ContinuousParameterType",
-        beta: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-
-        super().__init__(
-            numpy_dist="gamma",
-            torch_dist=dist.gamma.Gamma,
-            stan_to_np_names={"alpha": "shape", "beta": "scale"},
-            stan_to_torch_names={"alpha": "concentration", "beta": "rate"},
-            stan_to_np_transforms={"beta": _inverse_transform},
-            alpha=alpha,
-            beta=beta,
-            **kwargs,
-        )
-
-    def _write_dist_args(  # pylint: disable=arguments-differ
-        self, alpha: str, beta: str
-    ) -> str:
-        return f"{alpha}, {beta}"
+    SCIPY_DIST = stats.gamma
+    TORCH_DIST = dist.gamma.Gamma
+    STAN_TO_SCIPY_NAMES = {"alpha": "a", "beta": "scale"}
+    STAN_TO_TORCH_NAMES = {"alpha": "concentration", "beta": "rate"}
+    STAN_TO_SCIPY_TRANSFORMS = {
+        "beta": _inverse_transform
+    }  # Transform beta to match the scipy distribution's scale parameter
 
 
 class InverseGamma(ContinuousDistribution):
@@ -714,40 +611,10 @@ class InverseGamma(ContinuousDistribution):
     POSITIVE_PARAMS = {"alpha", "beta"}
     LOWER_BOUND: float = 0.0
     STAN_DIST = "inv_gamma"
-
-    def __init__(
-        self,
-        *,
-        alpha: "dms.custom_types.ContinuousParameterType",
-        beta: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-
-        super().__init__(
-            numpy_dist="gamma",
-            torch_dist=dist.inverse_gamma.InverseGamma,
-            stan_to_np_names={"alpha": "shape", "beta": "scale"},
-            stan_to_torch_names={"alpha": "concentration", "beta": "rate"},
-            stan_to_np_transforms={"beta": _inverse_transform},
-            alpha=alpha,
-            beta=beta,
-            **kwargs,
-        )
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        """Builds the numpy distribution function"""
-        # Get the base distribution
-        np_dist = super().get_numpy_dist(seed=seed)
-
-        def inverse_gamma_dist(*args, **kwargs) -> npt.NDArray[np.floating]:
-            return 1 / np_dist(*args, **kwargs)
-
-        return inverse_gamma_dist
-
-    def _write_dist_args(  # pylint: disable=arguments-differ
-        self, alpha: str, beta: str
-    ) -> str:
-        return f"{alpha}, {beta}"
+    SCIPY_DIST = stats.invgamma
+    TORCH_DIST = dist.inverse_gamma.InverseGamma
+    STAN_TO_SCIPY_NAMES = {"alpha": "a", "beta": "scale"}
+    STAN_TO_TORCH_NAMES = {"alpha": "concentration", "beta": "rate"}
 
 
 class Exponential(ContinuousDistribution):
@@ -756,26 +623,13 @@ class Exponential(ContinuousDistribution):
     POSITIVE_PARAMS = {"beta"}
     LOWER_BOUND: float = 0.0
     STAN_DIST = "exponential"
-
-    def __init__(
-        self,
-        *,
-        beta: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-
-        super().__init__(
-            numpy_dist="exponential",
-            torch_dist=dist.exponential.Exponential,
-            stan_to_np_names={"beta": "scale"},
-            stan_to_torch_names={"beta": "rate"},
-            stan_to_np_transforms={"beta": _inverse_transform},
-            beta=beta,
-            **kwargs,
-        )
-
-    def _write_dist_args(self, beta: str) -> str:  # pylint: disable=arguments-differ
-        return beta
+    SCIPY_DIST = stats.expon
+    TORCH_DIST = dist.exponential.Exponential
+    STAN_TO_SCIPY_NAMES = {"beta": "scale"}
+    STAN_TO_TORCH_NAMES = {"beta": "rate"}
+    STAN_TO_SCIPY_TRANSFORMS = {
+        "beta": _inverse_transform
+    }  # Transform beta to match the scipy distribution's scale parameter
 
 
 class ExpExponential(Exponential):
@@ -786,36 +640,13 @@ class ExpExponential(Exponential):
 
     LOWER_BOUND = None
     STAN_DIST = "expexponential"
-
-    def __init__(
-        self,
-        *,
-        beta: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-
-        super(Exponential, self).__init__(
-            numpy_dist="exponential",
-            torch_dist=custom_torch_dists.ExpExponential,
-            stan_to_np_names={"beta": "scale"},
-            stan_to_torch_names={"beta": "rate"},
-            stan_to_np_transforms={"beta": _inverse_transform},
-            beta=beta,
-            **kwargs,
-        )
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        # The base distribution is the Exponential distribution
-        np_dist = super().get_numpy_dist(seed=seed)
-
-        # Wrap the exponential distribution to take the log of the draw
-        def expexponential_dist(
-            scale: npt.NDArray,
-            size: int | tuple[int, ...] | None = None,
-        ) -> npt.NDArray:
-            return np.log(np_dist(scale=scale, size=size))
-
-        return expexponential_dist
+    SCIPY_DIST = custom_scipy_dists.expexponential
+    TORCH_DIST = custom_torch_dists.ExpExponential
+    STAN_TO_SCIPY_NAMES = {"beta": "scale"}
+    STAN_TO_TORCH_NAMES = {"beta": "rate"}
+    STAN_TO_SCIPY_TRANSFORMS = {
+        "beta": _inverse_transform
+    }  # Transform beta to match the scipy distribution's scale parameter
 
     def get_supporting_functions(self) -> list[str]:
         # We need to extend the set of supporting functions to include the custom
@@ -834,51 +665,12 @@ class Lomax(ContinuousDistribution):
     LOWER_BOUND: float = 0.0
     POSITIVE_PARAMS = {"lambda_", "alpha"}
     STAN_DIST = "pareto_type_2"
+    SCIPY_DIST = stats.lomax
+    TORCH_DIST = custom_torch_dists.Lomax
+    STAN_TO_SCIPY_NAMES = {"lambda_": "scale", "alpha": "c"}
+    STAN_TO_TORCH_NAMES = {"lambda_": "lambda_", "alpha": "alpha"}
 
-    def __init__(
-        self,
-        *,
-        lambda_: "dms.custom_types.ContinuousParameterType",
-        alpha: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-
-        super().__init__(
-            numpy_dist="pareto",
-            torch_dist=custom_torch_dists.Lomax,
-            stan_to_np_names={
-                "lambda_": "lambda_",
-                "alpha": "a",
-            },  # lambda_ is not used
-            stan_to_torch_names={"lambda_": "lambda_", "alpha": "alpha"},
-            lambda_=lambda_,
-            alpha=alpha,
-            **kwargs,
-        )
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-
-        # Get the base distribution
-        np_dist = super().get_numpy_dist(seed=seed)
-
-        # Wrap the numpy distribution to handle the lambda_ parameter
-        def lomax_dist(
-            lambda_: npt.NDArray,
-            a: npt.NDArray,
-            size: int | tuple[int, ...] | None = None,
-        ) -> npt.NDArray:
-
-            # Call the base distribution with the 'a' parameter. This is because
-            # the numpy inbuilt assumes that lambda_ = 1.
-            base_draw = np_dist(a=a, size=size)
-
-            # Now we need to scale the draw appropriately to account for different
-            # values of lambda_
-            return base_draw * lambda_
-
-        return lomax_dist
-
-    def _write_dist_args(  # pylint: disable=arguments-differ
+    def write_dist_args(  # pylint: disable=arguments-differ
         self, lambda_: str, alpha: str
     ) -> str:
         return f"0.0, {lambda_}, {alpha}"
@@ -893,44 +685,10 @@ class ExpLomax(Lomax):
 
     LOWER_BOUND = None
     STAN_DIST = "explomax"
-
-    def __init__(
-        self,
-        *,
-        lambda_: "dms.custom_types.ContinuousParameterType",
-        alpha: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-
-        super(Lomax, self).__init__(
-            numpy_dist="pareto",
-            torch_dist=custom_torch_dists.ExpLomax,
-            stan_to_np_names={
-                "lambda_": "lambda_",
-                "alpha": "a",
-            },  # lambda_ is not used
-            stan_to_torch_names={"lambda_": "lambda_", "alpha": "alpha"},
-            lambda_=lambda_,
-            alpha=alpha,
-            **kwargs,
-        )
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        # The base distribution is the Lomax distribution
-        np_dist = super().get_numpy_dist(seed=seed)
-
-        # Wrap the lomax distribution to take the log of the draw
-        def explomax_dist(
-            lambda_: npt.NDArray,
-            a: npt.NDArray,
-            size: int | tuple[int, ...] | None = None,
-        ) -> npt.NDArray:
-            return np.log(np_dist(lambda_=lambda_, a=a, size=size))
-
-        return explomax_dist
-
-    def _write_dist_args(self, lambda_: str, alpha: str) -> str:
-        return f"{lambda_}, {alpha}"
+    SCIPY_DIST = custom_scipy_dists.explomax
+    TORCH_DIST = custom_torch_dists.ExpLomax
+    STAN_TO_SCIPY_NAMES = {"lambda_": "scale", "alpha": "c"}
+    STAN_TO_TORCH_NAMES = {"lambda_": "lambda_", "alpha": "alpha"}
 
     def get_supporting_functions(self) -> list[str]:
         # We need to extend the set of supporting functions to include the custom
@@ -938,13 +696,21 @@ class ExpLomax(Lomax):
         return super().get_supporting_functions() + ["#include explomax.stanfunctions"]
 
 
-class _EnforceUniformityMixIn:
-    """Mix-in class to enforce uniformity of alpha parameters in Dirichlet-like distributions."""
+class Dirichlet(ContinuousDistribution):
+    """Defines the Dirichlet distribution."""
+
+    BASE_STAN_DTYPE = "simplex"
+    IS_SIMPLEX = True
+    STAN_DIST = "dirichlet"
+    POSITIVE_PARAMS = {"alpha"}
+    SCIPY_DIST = custom_scipy_dists.dirichlet
+    TORCH_DIST = dist.dirichlet.Dirichlet
+    STAN_TO_SCIPY_NAMES = {"alpha": "alpha"}
+    STAN_TO_TORCH_NAMES = {"alpha": "concentration"}
 
     def __init__(
         self, *, alpha: Union[AbstractModelComponent, npt.ArrayLike], **kwargs
     ):
-
         # If a float or int is provided, then "shape" must be provided too. We will
         # create a numpy array filled of that shape filled with the value
         enforce_uniformity = True
@@ -966,77 +732,6 @@ class _EnforceUniformityMixIn:
         self.alpha.enforce_uniformity = enforce_uniformity  # pylint: disable=no-member
 
 
-class Dirichlet(_EnforceUniformityMixIn, ContinuousDistribution):
-    """Defines the Dirichlet distribution."""
-
-    BASE_STAN_DTYPE = "simplex"
-    IS_SIMPLEX = True
-    STAN_DIST = "dirichlet"
-    POSITIVE_PARAMS = {"alpha"}
-
-    def __init__(
-        self,
-        *,
-        alpha: Union[AbstractModelComponent, npt.ArrayLike],
-        **kwargs,
-    ):
-
-        # Run the parent class's init
-        super().__init__(
-            numpy_dist="dirichlet",
-            torch_dist=dist.dirichlet.Dirichlet,
-            stan_to_np_names={"alpha": "alpha"},
-            stan_to_torch_names={"alpha": "concentration"},
-            alpha=alpha,
-            **kwargs,
-        )
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        """
-        The dirichlet distribution in numpy cannot be batched. This is a wrapper
-        around that distribution to allow for batching.
-        """
-        # Get the base distribution
-        np_dist = super().get_numpy_dist(seed=seed)
-
-        def dirichlet_dist(
-            alpha: npt.NDArray, size: int | tuple[int, ...] | None = None
-        ) -> npt.NDArray:
-
-            # Set the size
-            if size is None:
-                size = alpha.shape
-            elif isinstance(size, int):
-                size = (size, *alpha.shape)
-            else:
-                size = tuple(size)
-
-            # The trailing dimensions of the size must match the shape of the alphas
-            # The last dimension is the number of categories. All others are the
-            # batch dimensions
-            batch_dims, trailing_dims = size[: -(alpha.ndim)], size[-(alpha.ndim) :]
-            if trailing_dims != alpha.shape:
-                raise ValueError(
-                    f"Trailing dimensions of the size ({size}) do not match the "
-                    f"shape of the alphas ({alpha.shape})"
-                )
-
-            # Reshape the alphas to be 2D. The last dimension is the number of
-            # categories. All others are the batch dimensions.
-            alphas = alpha.reshape(-1, alpha.shape[-1])
-
-            # Sample from the Dirichlet distribution according to the batch dims
-            return np.stack(
-                [np_dist(alpha, size=batch_dims) for alpha in alphas],
-                axis=len(batch_dims),
-            ).reshape(size)
-
-        return dirichlet_dist
-
-    def _write_dist_args(self, alpha: str) -> str:  # pylint: disable=arguments-differ
-        return alpha
-
-
 class ExpDirichlet(Dirichlet):
     """Defines the Exp-Dirichlet distribution, which is the distribution of y if
     exp(y) follows a Dirichlet distribution. Equivalently, if y follows a Dirichlet
@@ -1050,33 +745,10 @@ class ExpDirichlet(Dirichlet):
     UPPER_BOUND = 0.0
     STAN_DIST = "expdirichlet"
     HAS_RAW_VARNAME = True
-
-    def __init__(
-        self,
-        *,
-        alpha: Union[AbstractModelComponent, npt.ArrayLike],
-        **kwargs,
-    ):
-        super(Dirichlet, self).__init__(
-            numpy_dist="dirichlet",
-            torch_dist=custom_torch_dists.ExpDirichlet,
-            stan_to_np_names={"alpha": "alpha"},
-            stan_to_torch_names={"alpha": "concentration"},
-            alpha=alpha,
-            **kwargs,
-        )
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        # The base distribution is the Dirichlet distribution
-        np_dist = super().get_numpy_dist(seed=seed)
-
-        # Wrap the dirichlet distribution to take the log of the draw
-        def expdirichlet_dist(
-            alpha: npt.NDArray, size: int | tuple[int, ...] | None = None
-        ) -> npt.NDArray:
-            return np.log(np_dist(alpha=alpha, size=size))
-
-        return expdirichlet_dist
+    SCIPY_DIST = custom_scipy_dists.expdirichlet
+    TORCH_DIST = custom_torch_dists.ExpDirichlet
+    STAN_TO_SCIPY_NAMES = {"alpha": "alpha"}
+    STAN_TO_TORCH_NAMES = {"alpha": "concentration"}
 
     def get_supporting_functions(self) -> list[str]:
         # We need to extend the set of supporting functions to include the custom
@@ -1096,7 +768,9 @@ class ExpDirichlet(Dirichlet):
         )
         transformed_varname = self.get_indexed_varname(index_opts)
 
-        return f"{transformed_varname} = logsoftmax_transform_jacobian({raw_varname})"
+        return (
+            f"{transformed_varname} = inv_ilr_log_simplex_constrain_lp({raw_varname})"
+        )
 
     def get_right_side(
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
@@ -1140,29 +814,10 @@ class Binomial(DiscreteDistribution):
 
     POSITIVE_PARAMS = {"theta", "N"}
     STAN_DIST = "binomial"
-
-    def __init__(
-        self,
-        *,
-        theta: "dms.custom_types.ContinuousParameterType",
-        N: "dms.custom_types.DiscreteParameterType",
-        **kwargs,
-    ):
-
-        super().__init__(
-            numpy_dist="binomial",
-            torch_dist=dist.binomial.Binomial,
-            stan_to_np_names={"N": "n", "theta": "p"},
-            stan_to_torch_names={"N": "total_count", "theta": "probs"},
-            N=N,
-            theta=theta,
-            **kwargs,
-        )
-
-    def _write_dist_args(  # pylint: disable=arguments-differ
-        self, N: str, theta: str
-    ) -> str:
-        return f"{N}, {theta}"
+    SCIPY_DIST = stats.binom
+    TORCH_DIST = dist.binomial.Binomial
+    STAN_TO_SCIPY_NAMES = {"N": "n", "theta": "p"}
+    STAN_TO_TORCH_NAMES = {"N": "total_count", "theta": "probs"}
 
 
 class Poisson(DiscreteDistribution):
@@ -1170,88 +825,18 @@ class Poisson(DiscreteDistribution):
 
     POSITIVE_PARAMS = {"lambda_"}
     STAN_DIST = "poisson"
-
-    def __init__(
-        self,
-        *,
-        lambda_: "dms.custom_types.ContinuousParameterType",
-        **kwargs,
-    ):
-
-        super().__init__(
-            numpy_dist="poisson",
-            torch_dist=dist.poisson.Poisson,
-            stan_to_np_names={"lambda_": "lam"},
-            stan_to_torch_names={"lambda_": "rate"},
-            lambda_=lambda_,
-            **kwargs,
-        )
-
-    def _write_dist_args(self, lambda_: str) -> str:  # pylint: disable=arguments-differ
-        return lambda_
+    SCIPY_DIST = stats.poisson
+    TORCH_DIST = dist.poisson.Poisson
+    STAN_TO_SCIPY_NAMES = {"lambda_": "mu"}
+    STAN_TO_TORCH_NAMES = {"lambda_": "rate"}
 
 
 class _MultinomialBase(DiscreteDistribution):
     """Defines the base multinomial distribution."""
 
-    def __init__(
-        self,
-        *,
-        torch_dist: type[custom_torch_dists.CustomDistribution],
-        stan_to_np_names: dict[str, str],
-        stan_to_torch_names: dict[str, str],
-        N: Union[AbstractModelComponent, int, npt.NDArray[np.integer]],
-        **kwargs,
-    ):
-
-        # Run the parent class's init
-        super().__init__(
-            numpy_dist="multinomial",
-            torch_dist=torch_dist,
-            stan_to_np_names=stan_to_np_names,
-            stan_to_torch_names=stan_to_torch_names,
-            stan_to_np_transforms={"N": partial(np.squeeze, axis=-1)},
-            N=N,
-            **kwargs,
-        )
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        """Returns the multinomial distribution function"""
-        # Get the base distribution
-        np_dist = super().get_numpy_dist(seed=seed)
-
-        # The last dimension is ignored in the multinomial distribution by default
-        def multinomial_dist(
-            n: int | npt.NDArray[np.integer],
-            pvals: npt.NDArray[np.floating],
-            size: int | tuple[int, ...] | None = None,
-        ) -> npt.NDArray[np.integer]:
-            # The dimensions of `n` must equal the leading dimensions of `pvals`
-            if isinstance(n, np.ndarray) and n.shape != pvals.shape[:-1]:
-                raise ValueError(
-                    f"Dimensions of `n` ({n.shape}) must equal the leading dimensions "
-                    f"of `pvals` ({pvals.shape[:-1]})"
-                )
-
-            # Set the size
-            if size is None:
-                size = pvals.shape
-            elif isinstance(size, int):
-                size = (size, *pvals.shape)
-            else:
-                size = tuple(size)
-
-            # The last dimension of the size must match the shape of the pvals
-            if size[-1] != pvals.shape[-1]:
-                raise ValueError(
-                    f"Last dimension of the size ({size}) must match the shape of "
-                    f"the pvals ({pvals.shape[-1]})"
-                )
-
-            # Run the base distribution, ignoring the last dimension
-            return np_dist(n=n, pvals=pvals, size=size[:-1])
-
-        return multinomial_dist
+    STAN_TO_NP_TRANSFORMS = {
+        "N": partial(np.squeeze, axis=-1)
+    }  # Squeeze the N parameter to match the numpy distribution's expected shape
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         # We need to strip the N parameter from the declaration as this is implicit
@@ -1268,27 +853,10 @@ class Multinomial(_MultinomialBase):
 
     SIMPLEX_PARAMS = {"theta"}
     STAN_DIST = "multinomial"
-
-    def __init__(
-        self,
-        *,
-        theta: "dms.custom_types.ContinuousParameterType",
-        N: "dms.custom_types.DiscreteParameterType",
-        **kwargs,
-    ):
-        super().__init__(
-            torch_dist=custom_torch_dists.MultinomialProb,
-            stan_to_np_names={"N": "n", "theta": "pvals"},
-            stan_to_torch_names={"N": "total_count", "theta": "probs"},
-            theta=theta,
-            N=N,
-            **kwargs,
-        )
-
-    def _write_dist_args(  # pylint: disable=arguments-differ
-        self, theta: str, N: str
-    ) -> str:
-        return f"{theta}, {N}"
+    SCIPY_DIST = custom_scipy_dists.multinomial
+    TORCH_DIST = custom_torch_dists.Multinomial
+    STAN_TO_SCIPY_NAMES = {"theta": "p", "N": "n"}
+    STAN_TO_TORCH_NAMES = {"theta": "probs", "N": "total_count"}
 
 
 class MultinomialLogit(_MultinomialBase):
@@ -1301,56 +869,23 @@ class MultinomialLogit(_MultinomialBase):
     """
 
     STAN_DIST = "multinomial_logit"
-
-    def __init__(
-        self,
-        *,
-        gamma: "dms.custom_types.ContinuousParameterType",
-        N: "dms.custom_types.DiscreteParameterType",
-        **kwargs,
-    ):
-        super().__init__(
-            torch_dist=custom_torch_dists.MultinomialLogit,
-            stan_to_np_names={"N": "n", "gamma": "logits"},
-            stan_to_torch_names={"N": "total_count", "gamma": "logits"},
-            gamma=gamma,
-            N=N,
-            **kwargs,
-        )
-
-    def _write_dist_args(  # pylint: disable=arguments-differ
-        self, gamma: str, N: str
-    ) -> str:
-        return f"{gamma}, {N}"
-
-    def get_numpy_dist(self, seed: Optional[int] = None) -> Callable[..., npt.NDArray]:
-        """
-        Override the numpy distribution of the multinomial distribution to apply the
-        log transformation.
-        """
-
-        # The new function applies the softmax transformation to the output of the
-        # multinomial distribution (over the last dimension)
-        base_dist = super().get_numpy_dist(seed=seed)
-
-        def multinomial_logit(
-            n: int | npt.NDArray[np.integer],
-            logits: npt.NDArray[np.floating],
-            size: int | tuple[int, ...] | None = None,
-        ):
-            # Run the base distribution with the logits softmaxed
-            return base_dist(n=n, pvals=special.softmax(logits, axis=-1), size=size)
-
-        return multinomial_logit
+    SCIPY_DIST = custom_scipy_dists.multinomial_logit
+    TORCH_DIST = custom_torch_dists.MultinomialLogit
+    STAN_TO_SCIPY_NAMES = {"gamma": "logits", "N": "n"}
+    STAN_TO_TORCH_NAMES = {"gamma": "logits", "N": "total_count"}
 
 
-class MultinomialLogTheta(MultinomialLogit):
+class MultinomialLogTheta(_MultinomialBase):
     """
     Defines the multinomial distribution in terms of the log of the theta parameter.
     """
 
     LOG_SIMPLEX_PARAMS = {"log_theta"}
     STAN_DIST = "multinomial_logtheta"
+    SCIPY_DIST = custom_scipy_dists.multinomial_log_theta
+    TORCH_DIST = custom_torch_dists.MultinomialLogTheta
+    STAN_TO_SCIPY_NAMES = {"log_theta": "log_p", "N": "n"}
+    STAN_TO_TORCH_NAMES = {"log_theta": "log_probs", "N": "total_count"}
 
     def __init__(
         self,
@@ -1361,14 +896,7 @@ class MultinomialLogTheta(MultinomialLogit):
     ):
 
         # Init the parent class with the appropriate parameters
-        super(MultinomialLogit, self).__init__(
-            torch_dist=custom_torch_dists.MultinomialLogTheta,
-            stan_to_np_names={"N": "n", "log_theta": "logits"},
-            stan_to_torch_names={"N": "total_count", "log_theta": "log_probs"},
-            log_theta=log_theta,
-            N=N,
-            **kwargs,
-        )
+        super().__init__(log_theta=log_theta, N=N, **kwargs)
 
         # By default, we allow a multinomial coefficient to be pre-calculated. This
         # assumes that the instance will be an observable parameter, so we modify
@@ -1402,7 +930,7 @@ class MultinomialLogTheta(MultinomialLogit):
             "#include multinomial.stanfunctions"
         ]
 
-    def _write_dist_args(  # pylint: disable=arguments-differ, arguments-renamed
+    def write_dist_args(  # pylint: disable=arguments-differ, arguments-renamed
         self, log_theta: str, N: str, coeff: str = ""
     ):
         # If the coefficient is provided, insert it in the middle of the arguments.
@@ -1433,9 +961,7 @@ class MultinomialLogTheta(MultinomialLogit):
                 dist_suffix = "manual_norm"
 
         # Build the right side
-        return (
-            f"{self.STAN_DIST}_{dist_suffix}({self._write_dist_args(**formattables)})"
-        )
+        return f"{self.STAN_DIST}_{dist_suffix}({self.write_dist_args(**formattables)})"
 
     @property
     def coefficient(self) -> LogMultinomialCoefficient | None:
