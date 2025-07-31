@@ -5,7 +5,9 @@ real vectorized_lbeta(vector alpha) {
     return lgamma(sum(alpha)) - sum(lgamma(alpha));
 }
 
-vector logsoftmax_transform_jacobian(vector y) {
+vector inv_ilr_log_simplex_constrain_jacobian(vector y) {
+    // This function comes from here:
+    // https://github.com/bob-carpenter/transforms/blob/main/simplex_transforms/stan/transforms/ILR/ILR_functions.stan
     int N = rows(y) + 1;
     vector[N - 1] ns = linspaced_vector(N - 1, 1, N - 1);
     vector[N - 1] w = y ./ sqrt(ns .* (ns + 1));
@@ -28,7 +30,7 @@ real expdirichlet_norm_lpdf(vector y, vector alpha) {
     // exp-dirichlet distributed. Equivalently, if y is dirichlet distributed,
     // then log(y) is exp-dirichlet distributed. This is calcualted as the dot
     // product of the alpha and y vectors minus the log of the beta function
-    return expdirichlet_unnorm_lpdf(y | alpha) - vectorized_lbeta(alpha);
+    return expdirichlet_unnorm_lpdf(y | alpha) + vectorized_lbeta(alpha);
 }
 
 vector expdirichlet_rng(vector alpha) {
