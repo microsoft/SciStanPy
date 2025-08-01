@@ -64,7 +64,9 @@ class LogMultinomialCoefficient(TransformedData):
     def _set_shape(self, *args, **kwargs):
         """No shape checking for LogMultinomialCoefficient."""
 
-    def _write_operation(self, counts: str) -> str:  # pylint: disable=arguments-differ
+    def write_stan_operation(  # pylint: disable=arguments-differ
+        self, counts: str
+    ) -> str:
         """Writes the operation for the multinomial coefficient."""
         # The counts must be an observable
         if not self.counts.observable:
