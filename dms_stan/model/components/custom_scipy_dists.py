@@ -34,7 +34,7 @@ def _combine_args_kwargs(function: Callable, args: tuple, kwargs: dict) -> dict:
     return combined_kwargs
 
 
-class CustomDirichlet(stats.dirichlet_gen):
+class CustomDirichlet(stats._multivariate.dirichlet_gen):  # pylint: disable=W0212
     """
     Subclass of scipy's dirichlet distribution to support variable numbers of
     batch dimensions.
@@ -49,10 +49,6 @@ class CustomDirichlet(stats.dirichlet_gen):
 
         @functools.wraps(function)
         def inner(*args, **kwargs):
-
-            import warnings
-
-            warnings.warn("This decorator has not been tested")
 
             # Combine args and kwargs
             combined_kwargs = _combine_args_kwargs(function, args, kwargs)
@@ -101,12 +97,14 @@ class CustomDirichlet(stats.dirichlet_gen):
 
         return inner
 
-    logpdf = _expand_batch(stats.dirichlet_gen.logpdf, expect_x=True)
-    pdf = _expand_batch(stats.dirichlet_gen.pdf, expect_x=True)
-    mean = _expand_batch(stats.dirichlet_gen.mean)
-    var = _expand_batch(stats.dirichlet_gen.var)
-    cov = _expand_batch(stats.dirichlet_gen.cov)
-    entropy = _expand_batch(stats.dirichlet_gen.entropy)
+    # pylint: disable=W0212
+    logpdf = _expand_batch(stats._multivariate.dirichlet_gen.logpdf, expect_x=True)
+    pdf = _expand_batch(stats._multivariate.dirichlet_gen.pdf, expect_x=True)
+    mean = _expand_batch(stats._multivariate.dirichlet_gen.mean)
+    var = _expand_batch(stats._multivariate.dirichlet_gen.var)
+    cov = _expand_batch(stats._multivariate.dirichlet_gen.cov)
+    entropy = _expand_batch(stats._multivariate.dirichlet_gen.entropy)
+    # pylint: enable=W0212
 
     def rvs(
         self,
@@ -151,7 +149,7 @@ class CustomDirichlet(stats.dirichlet_gen):
         ).reshape(size)
 
 
-class CustomMultinomial(stats.multinomial_gen):
+class CustomMultinomial(stats._multivariate.multinomial_gen):  # pylint: disable=W0212
     """
     Custom subclass of scipy's multinomial distribution to support variable numbers
     of batch dimensions.
