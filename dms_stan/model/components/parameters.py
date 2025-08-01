@@ -2,6 +2,7 @@
 
 import re
 
+from abc import ABCMeta
 from functools import partial
 from typing import Callable, Optional, Union
 
@@ -15,7 +16,7 @@ from scipy import stats
 
 import dms_stan as dms
 
-from dms_stan.model.components import custom_scipy_dists, custom_torch_dists
+from dms_stan.model.components import cdf, custom_scipy_dists, custom_torch_dists
 from .abstract_model_component import AbstractModelComponent
 from .constants import Constant
 from .transformed_data import LogMultinomialCoefficient, TransformedData
@@ -38,15 +39,37 @@ def _inverse_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
 # in the classes.
 
 
-class Parameter(AbstractModelComponent):
+class ParameterMeta(ABCMeta):
+    """
+    Metaclass for Parameter subclass construction. This makes sure that each subclass
+    has an appropriately defined `CDF`, `SF`, `LOG_CDF`, and `LOG_SF` class.
+    """
+
+    def __init__(cls, name, bases, attrs):
+        """
+        Assigns the CDF, SF, LOG_CDF, and LOG_SF classes to the Parameter subclass.
+        """
+        # Run the parent class's __init__ method
+        super().__init__(name, bases, attrs)
+
+        # Add CDF, SF, LOG_CDF, and LOG_SF classes to the Parameter subclass
+        cls.CDF = type(f"{name}CDF", (cdf.CDF,), {"PARAMETER": cls})
+        cls.SF = type(f"{name}SF", (cdf.SurvivalFunction,), {"PARAMETER": cls})
+        cls.LOG_CDF = type(f"{name}LOG_CDF", (cdf.LogCDF,), {"PARAMETER": cls})
+        cls.LOG_SF = type(
+            f"{name}LOG_SF", (cdf.LogSurvivalFunction,), {"PARAMETER": cls}
+        )
+
+
+class Parameter(AbstractModelComponent, metaclass=ParameterMeta):
     """Base class for parameters used in DMS Stan"""
 
     STAN_DIST: str = ""  # The Stan distribution name
     HAS_RAW_VARNAME: bool = False  # Whether the parameter has a raw variable name
-    CDF = None  # Transformed parameter class representing the CDF
-    CCDF = None  # Transformed parameter class representing the CCDF
-    LOG_CDF = None  # Transformed parameter class representing the log CDF
-    LOG_CCDF = None  # Transformed parameter class representing the log CCDF
+    CDF = None  # Transformed parameter class for the CDF
+    SF = None  # Transformed parameter class for the survival function (CCDF)
+    LOG_CDF = None  # Transformed parameter class for the log CDF
+    LOG_SF = None  # Transformed parameter for the log survival function (log CCDF)
     SCIPY_DIST: type[stats.rv_continuous] | type[stats.rv_discrete] | None = (
         None  # The SciPy distribution
     )
