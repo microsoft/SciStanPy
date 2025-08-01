@@ -1,7 +1,7 @@
 """Holds parameter transformations for DMS Stan models."""
 
 from abc import abstractmethod
-from typing import get_type_hints, Optional, overload
+from typing import Optional, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -81,7 +81,7 @@ class Transformation(AbstractModelComponent):
         )
 
     @abstractmethod
-    def _write_operation(self, **to_format: str) -> str:
+    def write_stan_operation(self, **to_format: str) -> str:
         """Write the operation in Stan code."""
 
     def get_right_side(self, index_opts: tuple[str, ...] | None) -> str:
@@ -100,7 +100,7 @@ class Transformation(AbstractModelComponent):
 
         # Format the right-hand side of the operation. Exactly how formatting is
         # done depends on the child class.
-        return self._write_operation(**components)
+        return self.write_stan_operation(**components)
 
     def __str__(self) -> str:
         right_side = (
@@ -128,20 +128,22 @@ class TransformedParameter(Transformation, TransformableParameter):
     ) -> npt.NDArray:
         """Sample from this parameter's distribution `n` times."""
         # Perform the operation on the draws
-        return self.operation(**level_draws)
+        return self.run_np_torch_op(**level_draws)
 
     @overload
-    def operation(self, **draws: torch.Tensor) -> torch.Tensor: ...
+    def run_np_torch_op(self, **draws: torch.Tensor) -> torch.Tensor: ...
 
     @overload
-    def operation(self, **draws: "dms.custom_types.SampleType") -> npt.NDArray: ...
+    def run_np_torch_op(
+        self, **draws: "dms.custom_types.SampleType"
+    ) -> npt.NDArray: ...
 
     @abstractmethod
-    def operation(self, **draws):
+    def run_np_torch_op(self, **draws):
         """Perform the operation on the draws or torch parameters."""
 
     @abstractmethod
-    def _write_operation(self, **to_format: str) -> str:
+    def write_stan_operation(self, **to_format: str) -> str:
         """Write the operation in Stan code."""
         # The Stan operator must be defined in the child class
         if self.STAN_OPERATOR == "":
@@ -151,85 +153,17 @@ class TransformedParameter(Transformation, TransformableParameter):
 
     # Calling this class should return the result of the operation.
     def __call__(self, *args, **kwargs):
-        return self.operation(*args, **kwargs)
+        return self.run_np_torch_op(*args, **kwargs)
 
     @property
     def torch_parametrization(self) -> torch.Tensor:
         # This is just the operation performed on the torch parameters of the parents
-        return self.operation(
+        return self.run_np_torch_op(
             **{
                 name: param.torch_parametrization
                 for name, param in self._parents.items()
             }
         )
-
-
-class CDF(TransformedParameter):
-    """
-    Base class for cumulative distribution functions (CDFs) of parameters. Note
-    that this cannot be instantiated directly, but is used as a template
-    """
-
-    # Init function makes sure we have the correct parameters before initializing
-    def __init__(self, **kwargs: "dms.custom_types.CombinableParameterType"):
-
-        # Check if the parameters passed are the ones required for the CDF
-        self.check_parameters(set(kwargs))
-
-        super().__init__(**kwargs)
-
-    def check_parameters(self, kwargset: set[str]) -> None:
-        """Checks if the parameters passed are the ones required for the CDF."""
-        # Make sure that these are the only parameters passed
-        if additional_params := kwargset - self.PARAMETERS:
-            raise TypeError(
-                f"Unexpected parameters {additional_params} passed to "
-                f"{self.__class__.__name__}."
-            )
-        if missing_params := self.PARAMETERS - kwargset:
-            raise TypeError(
-                f"Missing parameters {missing_params} for {self.__class__.__name__}."
-            )
-
-    def operation(self, **draws):
-        pass
-
-
-class MetaCDF(type):
-    """
-    Metaclass for cumulative distribution functions (CDFs) of parameters.
-    This is used to create a CDF class for each parameter class.
-    """
-
-    def __new__(mcs, parameter: type["dms.model.components.Parameter"]):
-        """Rewrites the `__new__` method of `type` to create a shortcut for
-        creating CDF classes.
-        """
-        return super().__new__(  # pylint: disable=unused-variable
-            mcs,
-            f"{parameter.__name__}CDF",
-            (CDF,),
-            {
-                "PARAMETERS": mcs._get_parameters(parameter),  # Parameter names
-                "STAN_CDF_FUNC": f"{parameter.STAN_DIST}_cdf",  # Stan CDF function
-            },
-        )
-
-    @classmethod
-    def _get_parameters(
-        mcs, parameter: type["dms.model.components.Parameter"]
-    ) -> set[str]:
-        """Gets the names of the parameters required for the CDF."""
-        return {
-            param_name
-            for param_name, param in get_type_hints(parameter.__init__).items()
-            if param
-            in {
-                dms.custom_types.CombinableParameterType,
-                dms.custom_types.ContinuousParameterType,
-                dms.custom_types.DiscreteParameterType,
-            }
-        }
 
 
 class BinaryTransformedParameter(TransformedParameter):
@@ -248,18 +182,20 @@ class BinaryTransformedParameter(TransformedParameter):
 
     # pylint: disable=arguments-differ
     @overload
-    def operation(self, dist1: torch.Tensor, dist2: torch.Tensor) -> torch.Tensor: ...
+    def run_np_torch_op(
+        self, dist1: torch.Tensor, dist2: torch.Tensor
+    ) -> torch.Tensor: ...
 
     @overload
-    def operation(
+    def run_np_torch_op(
         self, dist1: "dms.custom_types.SampleType", dist2: "dms.custom_types.SampleType"
     ) -> npt.NDArray: ...
 
     @abstractmethod
-    def operation(self, dist1, dist2): ...
+    def run_np_torch_op(self, dist1, dist2): ...
 
-    def _write_operation(self, dist1: str, dist2: str) -> str:
-        super()._write_operation()
+    def write_stan_operation(self, dist1: str, dist2: str) -> str:
+        super().write_stan_operation()
         return f"{dist1} {self.STAN_OPERATOR} {dist2}"
 
     # pylint: enable=arguments-differ
@@ -277,16 +213,16 @@ class UnaryTransformedParameter(TransformedParameter):
 
     # pylint: disable=arguments-differ
     @overload
-    def operation(self, dist1: torch.Tensor) -> torch.Tensor: ...
+    def run_np_torch_op(self, dist1: torch.Tensor) -> torch.Tensor: ...
 
     @overload
-    def operation(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray: ...
+    def run_np_torch_op(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray: ...
 
     @abstractmethod
-    def operation(self, dist1): ...
+    def run_np_torch_op(self, dist1): ...
 
-    def _write_operation(self, dist1: str) -> str:
-        super()._write_operation()
+    def write_stan_operation(self, dist1: str) -> str:
+        super().write_stan_operation()
         return f"{self.STAN_OPERATOR}{dist1}"
 
     # pylint: enable=arguments-differ
@@ -297,7 +233,7 @@ class AddParameter(BinaryTransformedParameter):
 
     STAN_OPERATOR: str = "+"
 
-    def operation(self, dist1, dist2):
+    def run_np_torch_op(self, dist1, dist2):
         return dist1 + dist2
 
 
@@ -306,7 +242,7 @@ class SubtractParameter(BinaryTransformedParameter):
 
     STAN_OPERATOR: str = "-"
 
-    def operation(self, dist1, dist2):
+    def run_np_torch_op(self, dist1, dist2):
         return dist1 - dist2
 
 
@@ -315,7 +251,7 @@ class MultiplyParameter(BinaryTransformedParameter):
 
     STAN_OPERATOR: str = ".*"
 
-    def operation(self, dist1, dist2):
+    def run_np_torch_op(self, dist1, dist2):
         return dist1 * dist2
 
 
@@ -324,7 +260,7 @@ class DivideParameter(BinaryTransformedParameter):
 
     STAN_OPERATOR: str = "./"
 
-    def operation(self, dist1, dist2):
+    def run_np_torch_op(self, dist1, dist2):
         return dist1 / dist2
 
 
@@ -333,7 +269,7 @@ class PowerParameter(BinaryTransformedParameter):
 
     STAN_OPERATOR: str = ".^"
 
-    def operation(self, dist1, dist2):
+    def run_np_torch_op(self, dist1, dist2):
         return dist1**dist2
 
 
@@ -342,7 +278,7 @@ class NegateParameter(UnaryTransformedParameter):
 
     STAN_OPERATOR: str = "-"
 
-    def operation(self, dist1):
+    def run_np_torch_op(self, dist1):
         return -dist1
 
 
@@ -351,10 +287,10 @@ class AbsParameter(UnaryTransformedParameter):
 
     LOWER_BOUND: float = 0.0
 
-    def operation(self, dist1):
+    def run_np_torch_op(self, dist1):
         return _choose_module(dist1).abs(dist1)
 
-    def _write_operation(self, dist1: str) -> str:
+    def write_stan_operation(self, dist1: str) -> str:
         return f"abs({dist1})"
 
 
@@ -364,10 +300,10 @@ class LogParameter(UnaryTransformedParameter):
     # The distribution must be positive
     POSITIVE_PARAMS = {"dist1"}
 
-    def operation(self, dist1):
+    def run_np_torch_op(self, dist1):
         return _choose_module(dist1).log(dist1)
 
-    def _write_operation(self, dist1: str) -> str:
+    def write_stan_operation(self, dist1: str) -> str:
         return f"log({dist1})"
 
 
@@ -376,11 +312,11 @@ class ExpParameter(UnaryTransformedParameter):
 
     LOWER_BOUND: float = 0.0
 
-    def operation(self, dist1):
+    def run_np_torch_op(self, dist1):
 
         return _choose_module(dist1).exp(dist1)
 
-    def _write_operation(self, dist1: str) -> str:
+    def write_stan_operation(self, dist1: str) -> str:
         return f"exp({dist1})"
 
 
@@ -390,13 +326,13 @@ class NormalizeParameter(UnaryTransformedParameter):
     LOWER_BOUND: float = 0.0
     UPPER_BOUND: float = 1.0
 
-    def operation(self, dist1):
+    def run_np_torch_op(self, dist1):
         if isinstance(dist1, torch.Tensor):
             return dist1 / dist1.sum(dim=-1, keepdim=True)
         else:
             return dist1 / np.sum(dist1, keepdims=True, axis=-1)
 
-    def _write_operation(self, dist1: str) -> str:
+    def write_stan_operation(self, dist1: str) -> str:
         return f"{dist1} / sum({dist1})"
 
 
@@ -408,13 +344,13 @@ class NormalizeLogParameter(UnaryTransformedParameter):
 
     UPPER_BOUND: float = 0.0
 
-    def operation(self, dist1):
+    def run_np_torch_op(self, dist1):
         if isinstance(dist1, torch.Tensor):
             return dist1 - torch.logsumexp(dist1, keepdims=True, dim=-1)
         else:
             return dist1 - sp.logsumexp(dist1, keepdims=True, axis=-1)
 
-    def _write_operation(self, dist1: str) -> str:
+    def write_stan_operation(self, dist1: str) -> str:
         return f"{dist1} - log_sum_exp({dist1})"
 
 
@@ -452,13 +388,13 @@ class LogSumExpParameter(UnaryTransformedParameter):
     def _set_shape(self, *args, **kwargs):
         pass
 
-    def operation(self, dist1):
+    def run_np_torch_op(self, dist1):
         if isinstance(dist1, torch.Tensor):
             return torch.logsumexp(dist1, keepdim=self.keepdims, dim=-1)
         else:
             return sp.logsumexp(dist1, keepdims=self.keepdims, axis=-1)
 
-    def _write_operation(self, dist1: str) -> str:
+    def write_stan_operation(self, dist1: str) -> str:
         return f"log_sum_exp({dist1})"
 
 
@@ -468,7 +404,7 @@ class SigmoidParameter(UnaryTransformedParameter):
     UPPER_BOUND: float = 1.0
     LOWER_BOUND: float = 0.0
 
-    def operation(self, dist1):
+    def run_np_torch_op(self, dist1):
         """
         Calculates the inverse logit (sigmoid) function in a numerically stable
         way.
@@ -488,7 +424,7 @@ class SigmoidParameter(UnaryTransformedParameter):
                 "Unsupported type for dist1. Expected torch.Tensor or np.ndarray."
             )
 
-    def _write_operation(self, dist1: str) -> str:
+    def write_stan_operation(self, dist1: str) -> str:
         return f"inv_logit({dist1})"
 
 
@@ -497,7 +433,7 @@ class LogSigmoidParameter(UnaryTransformedParameter):
 
     UPPER_BOUND: float = 0.0
 
-    def operation(self, dist1):
+    def run_np_torch_op(self, dist1):
         if isinstance(dist1, torch.Tensor):
             return F.logsigmoid(dist1)  # pylint: disable=not-callable
         elif isinstance(dist1, np.ndarray):
@@ -507,7 +443,7 @@ class LogSigmoidParameter(UnaryTransformedParameter):
                 "Unsupported type for dist1. Expected torch.Tensor or np.ndarray."
             )
 
-    def _write_operation(self, dist1: str) -> str:
+    def write_stan_operation(self, dist1: str) -> str:
         return f"log_inv_logit({dist1})"
 
 
@@ -545,27 +481,27 @@ class ExponentialGrowth(ExpParameter):
 
     # pylint: disable=arguments-differ
     @overload
-    def operation(
+    def run_np_torch_op(
         self, t: torch.Tensor, A: torch.Tensor, r: torch.Tensor
     ) -> torch.Tensor: ...
 
     @overload
-    def operation(
+    def run_np_torch_op(
         self,
         t: "dms.custom_types.SampleType",
         A: "dms.custom_types.SampleType",
         r: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
 
-    def operation(self, *, t, A, r):
-        return A * super().operation(r * t)
+    def run_np_torch_op(self, *, t, A, r):
+        return A * super().run_np_torch_op(r * t)
 
     # pylint: enable=arguments-differ
 
-    def _write_operation(  # pylint: disable=arguments-differ
+    def write_stan_operation(  # pylint: disable=arguments-differ
         self, t: str, A: str, r: str
     ) -> str:
-        par_string = super()._write_operation(f"{r} .* {t}")
+        par_string = super().write_stan_operation(f"{r} .* {t}")
         return f"{A} .* {par_string}"
 
 
@@ -601,18 +537,18 @@ class BinaryExponentialGrowth(ExpParameter):
 
     # pylint: disable=arguments-differ
     @overload
-    def operation(self, A: torch.Tensor, r: torch.Tensor) -> torch.Tensor: ...
+    def run_np_torch_op(self, A: torch.Tensor, r: torch.Tensor) -> torch.Tensor: ...
     @overload
-    def operation(
+    def run_np_torch_op(
         self,
         A: "dms.custom_types.SampleType",
         r: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
-    def operation(self, *, A, r):
-        return A * super().operation(r)
+    def run_np_torch_op(self, *, A, r):
+        return A * super().run_np_torch_op(r)
 
-    def _write_operation(self, A: str, r: str) -> str:
-        return f"{A} .* {super()._write_operation(r)}"
+    def write_stan_operation(self, A: str, r: str) -> str:
+        return f"{A} .* {super().write_stan_operation(r)}"
 
     # pylint: enable=arguments-differ
 
@@ -657,24 +593,24 @@ class LogExponentialGrowth(TransformedParameter):
 
     # pylint: disable=arguments-differ
     @overload
-    def operation(
+    def run_np_torch_op(
         self, t: torch.Tensor, log_A: torch.Tensor, r: torch.Tensor
     ) -> torch.Tensor: ...
 
     @overload
-    def operation(
+    def run_np_torch_op(
         self,
         t: "dms.custom_types.SampleType",
         log_A: "dms.custom_types.SampleType",
         r: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
 
-    def operation(self, *, t, log_A, r):
+    def run_np_torch_op(self, *, t, log_A, r):
         return log_A + r * t
 
     # pylint: enable=arguments-differ
 
-    def _write_operation(  # pylint: disable=arguments-differ
+    def write_stan_operation(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str
     ) -> str:
         return f"{log_A} + {r} .* {t}"
@@ -712,17 +648,17 @@ class BinaryLogExponentialGrowth(TransformedParameter):
 
     # pylint: disable=arguments-differ
     @overload
-    def operation(self, log_A: torch.Tensor, r: torch.Tensor) -> torch.Tensor: ...
+    def run_np_torch_op(self, log_A: torch.Tensor, r: torch.Tensor) -> torch.Tensor: ...
     @overload
-    def operation(
+    def run_np_torch_op(
         self,
         log_A: "dms.custom_types.SampleType",
         r: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
-    def operation(self, *, log_A, r):
+    def run_np_torch_op(self, *, log_A, r):
         return log_A + r
 
-    def _write_operation(self, log_A: str, r: str) -> str:
+    def write_stan_operation(self, log_A: str, r: str) -> str:
         return f"{log_A} + {r}"
 
     # pylint: enable=arguments-differ
@@ -770,12 +706,12 @@ class SigmoidGrowth(SigmoidParameter):
 
     # pylint: disable=arguments-differ
     @overload
-    def operation(
+    def run_np_torch_op(
         self, t: torch.Tensor, A: torch.Tensor, r: torch.Tensor, c: torch.Tensor
     ) -> torch.Tensor: ...
 
     @overload
-    def operation(
+    def run_np_torch_op(
         self,
         t: "dms.custom_types.SampleType",
         A: "dms.custom_types.SampleType",
@@ -783,15 +719,15 @@ class SigmoidGrowth(SigmoidParameter):
         c: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
 
-    def operation(self, *, t, A, r, c):
-        return A * super().operation(r * (t - c))
+    def run_np_torch_op(self, *, t, A, r, c):
+        return A * super().run_np_torch_op(r * (t - c))
 
     # pylint: enable=arguments-differ
 
-    def _write_operation(  # pylint: disable=arguments-differ
+    def write_stan_operation(  # pylint: disable=arguments-differ
         self, t: str, A: str, r: str, c: str
     ) -> str:
-        par_string = super()._write_operation(f"{r} .* ({t} - {c})")
+        par_string = super().write_stan_operation(f"{r} .* ({t} - {c})")
         return f"{A} .* {par_string}"
 
 
@@ -841,12 +777,12 @@ class LogSigmoidGrowth(LogSigmoidParameter):
 
     # pylint: disable=arguments-differ
     @overload
-    def operation(
+    def run_np_torch_op(
         self, t: torch.Tensor, log_A: torch.Tensor, r: torch.Tensor, c: torch.Tensor
     ) -> torch.Tensor: ...
 
     @overload
-    def operation(
+    def run_np_torch_op(
         self,
         t: "dms.custom_types.SampleType",
         log_A: "dms.custom_types.SampleType",
@@ -854,15 +790,15 @@ class LogSigmoidGrowth(LogSigmoidParameter):
         c: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
 
-    def operation(self, *, t, log_A, r, c):
-        return log_A + super().operation(r * (t - c))
+    def run_np_torch_op(self, *, t, log_A, r, c):
+        return log_A + super().run_np_torch_op(r * (t - c))
 
     # pylint: enable=arguments-differ
 
-    def _write_operation(  # pylint: disable=arguments-differ
+    def write_stan_operation(  # pylint: disable=arguments-differ
         self, t: str, log_A: str, r: str, c: str
     ) -> str:
-        par_string = super()._write_operation(f"{r} .* ({t} - {c})")
+        par_string = super().write_stan_operation(f"{r} .* ({t} - {c})")
         return f"{log_A} + {par_string}"
 
 
@@ -899,12 +835,12 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
 
     # pylint: disable=arguments-renamed, arguments-differ
     @overload
-    def operation(
+    def run_np_torch_op(
         self, t: torch.Tensor, x0: torch.Tensor, r: torch.Tensor, c: torch.Tensor
     ) -> torch.Tensor: ...
 
     @overload
-    def operation(
+    def run_np_torch_op(
         self,
         t: "dms.custom_types.SampleType",
         x0: "dms.custom_types.SampleType",  # pylint: disable=invalid-name
@@ -912,7 +848,7 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
         c: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
 
-    def operation(self, t, x0, r, c):
+    def run_np_torch_op(self, t, x0, r, c):
         """We use a log-add-exp trick to calculate in a numerically stable way."""
         # Get the module
         mod = _choose_module(x0)
@@ -927,7 +863,7 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
         # Calculate the abundance
         return x0 * foldchange
 
-    def _write_operation(
+    def write_stan_operation(
         self, t: str, x0: str, r: str, c: str  # pylint: disable=invalid-name
     ) -> str:
         """Calculate using Stan's log1p_exp function."""
@@ -970,7 +906,7 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
 
     # pylint: disable=arguments-renamed, arguments-differ
     @overload
-    def operation(
+    def run_np_torch_op(
         self,
         t: torch.Tensor,
         log_x0: torch.Tensor,  # pylint: disable=invalid-name
@@ -979,7 +915,7 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
     ) -> torch.Tensor: ...
 
     @overload
-    def operation(
+    def run_np_torch_op(
         self,
         t: "dms.custom_types.SampleType",
         log_x0: "dms.custom_types.SampleType",  # pylint: disable=invalid-name
@@ -987,7 +923,7 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
         c: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
 
-    def operation(self, t, log_x0, r, c):
+    def run_np_torch_op(self, t, log_x0, r, c):
         """We use a log-add-exp trick to calculate in a numerically stable way."""
         # Get the module
         mod = _choose_module(log_x0)
@@ -998,7 +934,7 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
         # Calculate
         return log_x0 + mod.logaddexp(zero, r * c) - mod.logaddexp(zero, r * (c - t))
 
-    def _write_operation(
+    def write_stan_operation(
         self, t: str, log_x0: str, r: str, c: str  # pylint: disable=invalid-name
     ) -> str:
         """Calculate using Stan's log1p_exp function."""
