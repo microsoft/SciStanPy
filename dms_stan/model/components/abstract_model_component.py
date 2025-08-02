@@ -7,8 +7,8 @@ import numpy as np
 import numpy.typing as npt
 import torch
 
-import dms_stan as dms
-import dms_stan.model.components as dms_components
+from dms_stan.exceptions import NumpySampleError
+from dms_stan.model.components import constants, parameters, transformations
 
 
 class AbstractModelComponent(ABC):
@@ -33,7 +33,7 @@ class AbstractModelComponent(ABC):
         self,
         *,
         shape: tuple[int, ...] = (),
-        **parameters: "dms.custom_types.CombinableParameterType",
+        **model_params: "dms.custom_types.CombinableParameterType",
     ):
         """Builds a parameter instance with the given shape."""
 
@@ -45,10 +45,10 @@ class AbstractModelComponent(ABC):
         self._children: list[AbstractModelComponent] = []  # Children of the component
 
         # Validate incoming parameters
-        self._validate_parameters(parameters)
+        self._validate_parameters(model_params)
 
         # Set parents
-        self._set_parents(parameters)
+        self._set_parents(model_params)
 
         # Link parent and child parameters
         for val in self._parents.values():
@@ -59,7 +59,7 @@ class AbstractModelComponent(ABC):
 
     def _validate_parameters(
         self,
-        parameters: dict[str, "dms.custom_types.CombinableParameterType"],
+        model_params: dict[str, "dms.custom_types.CombinableParameterType"],
     ) -> None:
         """Checks inputs to the __init__ method for validity."""
         # All bounded parameters must be named in the parameter dictionary
@@ -68,7 +68,7 @@ class AbstractModelComponent(ABC):
             | self.NEGATIVE_PARAMS
             | self.SIMPLEX_PARAMS
             | self.LOG_SIMPLEX_PARAMS
-        ) - set(parameters.keys()):
+        ) - set(model_params.keys()):
             raise ValueError(
                 f"{', '.join(missing_names)} are bounded parameters but are missing "
                 "from those defined"
@@ -100,14 +100,14 @@ class AbstractModelComponent(ABC):
 
     def _set_parents(
         self,
-        parameters: dict[str, "dms.custom_types.CombinableParameterType"],
+        model_params: dict[str, "dms.custom_types.CombinableParameterType"],
     ) -> None:
         """Sets the parent parameters of the current parameter."""
 
         # Convert any non-model components to model components, making sure to
         # propagate any restrictions on
         self._parents = {}
-        for name, val in parameters.items():
+        for name, val in model_params.items():
 
             # Just the value if an AbstractModelComponent
             if isinstance(val, AbstractModelComponent):
@@ -128,7 +128,7 @@ class AbstractModelComponent(ABC):
             else:
                 lower_bound = None
                 upper_bound = None
-            self._parents[name] = dms_components.Constant(
+            self._parents[name] = constants.Constant(
                 value=val,
                 lower_bound=lower_bound,
                 upper_bound=upper_bound,
@@ -303,7 +303,7 @@ class AbstractModelComponent(ABC):
         try:
             draws = self._draw(n, level_draws, seed=seed)
         except ValueError as error:
-            raise dms.exceptions.NumpySampleError(
+            raise NumpySampleError(
                 f"Error encountered when trying to sample from {self.model_varname}: {error}"
             ) from error
 
@@ -457,7 +457,7 @@ class AbstractModelComponent(ABC):
             # If the parameter is a constant or another parameter OR it is a named
             # transformed parameter, we get its indexed variable name
             if (
-                isinstance(param, (dms_components.Constant, dms_components.Parameter))
+                isinstance(param, (constants.Constant, parameters.Parameter))
                 or param.is_named
             ):
                 components[name] = param.get_indexed_varname(index_opts)
@@ -465,7 +465,7 @@ class AbstractModelComponent(ABC):
             # Otherwise, we need to get the thread of operations that make up the
             # transformation for the parameter. This is equivalent to calling the
             # get_right_side method of the parameter.
-            elif isinstance(param, dms_components.TransformedParameter):
+            elif isinstance(param, transformations.TransformedParameter):
                 components[name] = param.get_right_side(index_opts)
 
             # Otherwise, raise an error
@@ -485,9 +485,7 @@ class AbstractModelComponent(ABC):
         for component in self._parents.values():
             # If named, a parameter, or a constant, we can just add it to the list
             if (
-                isinstance(
-                    component, (dms_components.Constant, dms_components.Parameter)
-                )
+                isinstance(component, (constants.Constant, parameters.Parameter))
                 or component.is_named
             ):
                 components.append(component)
@@ -495,7 +493,7 @@ class AbstractModelComponent(ABC):
 
             # Otherwise, this must be a transformed parameter that is not named
             # and we need to recurse up to the first named parameter
-            assert isinstance(component, dms_components.TransformedParameter)
+            assert isinstance(component, transformations.TransformedParameter)
             components.extend(component.get_right_side_components())
 
         return components
@@ -656,7 +654,9 @@ class AbstractModelComponent(ABC):
             [
                 f"{child.model_varname}.{name}"
                 for child, name in self.get_child_paramnames().items()
-                if not isinstance(child, dms_components.TransformedData)
+                if not isinstance(
+                    child, transformations.transformed_data.TransformedData
+                )
             ]
         )
 
@@ -683,7 +683,7 @@ class AbstractModelComponent(ABC):
         return {
             name: component
             for name, component in self._parents.items()
-            if isinstance(component, dms_components.Constant)
+            if isinstance(component, constants.Constant)
         }
 
     @property

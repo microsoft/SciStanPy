@@ -8,9 +8,8 @@ from abc import abstractmethod
 import numpy as np
 import torch
 
-import dms_stan as dms
-
-from dms_stan.model.components import transformed_parameters
+from dms_stan import utils
+from dms_stan.model.components.transformations import transformed_parameters
 
 
 class CDFLike(transformed_parameters.TransformedParameter):
@@ -51,7 +50,7 @@ class CDFLike(transformed_parameters.TransformedParameter):
     def run_np_torch_op(self, **draws):
 
         # Get the module for the CDF function
-        module = transformed_parameters.choose_module(draws.values()[0])
+        module = utils.choose_module(draws.values()[0])
 
         # If numpy use scipy dist. If torch, use torch dist. Torch will always
         # return the CDF, so child classes need to override this method.

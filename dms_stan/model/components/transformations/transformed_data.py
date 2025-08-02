@@ -16,10 +16,6 @@ class TransformedData(Transformation):
     # The transformation is renamed to be more descriptive
     get_transformed_data_assignment = Transformation._transformation
 
-    def __init__(self, **kwargs):
-        # We do not check shapes for transformed data
-        super().__init__(**kwargs)
-
     # There is no implementation of `_draw` or `torch_parametrization` for this
     # class.
     def _draw(self, *args, **kwargs):

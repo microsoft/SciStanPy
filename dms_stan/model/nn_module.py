@@ -11,13 +11,11 @@ import torch.nn as nn
 
 from tqdm import tqdm
 
-import dms_stan.model as dms_model
-
 from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
-from dms_stan.model.components import Constant, Multinomial
+from dms_stan.model import components, Model
 
 
-def check_observable_data(model: "dms_model.Model", data: dict[str, torch.Tensor]):
+def check_observable_data(model: Model, data: dict[str, torch.Tensor]):
     """Makes sure that the correct observables are provided for a givne model."""
     # There must be perfect overlap between the keys of the provided data and the
     # expected observations
@@ -92,7 +90,9 @@ class PyTorchModel(nn.Module):
             temp_log_prob = param.get_torch_logprob(observed=data.get(name))
 
             # Log probability should be 0-dimensional if anything but a Multinomial
-            assert temp_log_prob.ndim == 0 or isinstance(param, Multinomial)
+            assert temp_log_prob.ndim == 0 or isinstance(
+                param, components.parameters.Multinomial
+            )
 
             # Add to the total log probability
             log_prob += temp_log_prob.sum()
@@ -211,7 +211,8 @@ class PyTorchModel(nn.Module):
         # constants and not parameters)
         # pylint: disable=protected-access
         for constant in filter(
-            lambda x: isinstance(x, Constant), self.model.all_model_components
+            lambda x: isinstance(x, components.constants.Constant),
+            self.model.all_model_components,
         ):
             constant._torch_parametrization = getattr(
                 constant._torch_parametrization, funcname

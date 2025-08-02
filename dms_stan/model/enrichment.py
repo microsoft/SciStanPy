@@ -5,8 +5,8 @@ from typing import Any, Literal
 import numpy as np
 import numpy.typing as npt
 
-import dms_stan.model as dms
-import dms_stan.model.components as dms_components
+from dms_stan.model import Model
+from dms_stan.model.components import constants, parameters
 import dms_stan.operations as dms_ops
 
 
@@ -34,20 +34,20 @@ class MetaEnrichment(type):
         biological_replicates: bool,
         sequence_replicates: bool,
         include_od: bool,
-    ) -> type[dms.Model]:
+    ) -> type[Model]:
         """
         Prepare the namespace for the model class. This is where we build the appropriate
         __init__ method for the model class based on the provided parameters.
         """
-        # The only allowed base class is dms.Model
-        if not bases or bases[0] is not dms.Model:
+        # The only allowed base class is Model
+        if not bases or bases[0] is not Model:
             raise TypeError(
-                "Enrichment models must inherit from dms.Model. "
+                "Enrichment models must inherit from Model. "
                 f"Got {bases[0].__name__ if bases else 'None'} instead."
             )
         if len(bases) > 1:
             raise TypeError(
-                "Enrichment models must inherit from dms.Model only. "
+                "Enrichment models must inherit from Model only. "
                 f"Got {', '.join(base.__name__ for base in bases)} instead."
             )
 
@@ -70,7 +70,7 @@ class MetaEnrichment(type):
             rate_distribution=rate_dist,
             biological_replicates=biological_replicates,
         )
-        namespace["init_foldchange"] = mcs.set_foldchange(
+        namespace["init_growth_noise"] = mcs.set_growth_noise(
             rate_distribution=rate_dist, biological_replicates=biological_replicates
         )
         namespace["init_growth_function"] = mcs.set_growth_function(
@@ -133,9 +133,9 @@ class MetaEnrichment(type):
             required_keywords.append("times")
 
         # If biological replicates and either the exponential or lomax rate distribution
-        # is used, we add the `log_foldchange_sigma_sigma` keyword.
+        # is used, we add the `r_sigma_sigma` keyword.
         if biological_replicates and rate_dist in {"exponential", "lomax"}:
-            allowed_keywords.append("log_foldchange_sigma_sigma")
+            allowed_keywords.append("r_sigma_sigma")
 
         # If we have ODs, we need to include keywords for them
         if include_od:
@@ -171,7 +171,7 @@ class MetaEnrichment(type):
             self.base_init(**kwargs)
             self.init_times(**kwargs)
             self.init_rate_distribution(**kwargs)
-            self.init_foldchange(**kwargs)
+            self.init_growth_noise(**kwargs)
             self.init_growth_function(**kwargs)
             self.init_abundance_normalization()
             self.init_counts()
@@ -269,7 +269,7 @@ class MetaEnrichment(type):
             )
 
             # Initialize the base class.
-            dms.Model.__init__(
+            Model.__init__(
                 self,
                 default_data={
                     "starting_counts": starting_counts,
@@ -282,10 +282,10 @@ class MetaEnrichment(type):
             self.r_shape, self.log_theta_tg0_shape = set_shapes(timepoint_counts)
 
             # Set the total number of starting and ending counts by replicate
-            self.total_starting_counts = dms_components.Constant(
+            self.total_starting_counts = constants.Constant(
                 starting_counts.sum(axis=-1, keepdims=True), togglable=False
             )
-            self.total_timepoint_counts = dms_components.Constant(
+            self.total_timepoint_counts = constants.Constant(
                 timepoint_counts.sum(axis=-1, keepdims=True), togglable=False
             )
 
@@ -296,7 +296,7 @@ class MetaEnrichment(type):
                 theta_t0_shape[-3] = 1
 
             # Starting proportions are Exp-Dirichlet distributed.
-            self.log_theta_t0 = dms_components.ExpDirichlet(
+            self.log_theta_t0 = parameters.ExpDirichlet(
                 alpha=alpha, shape=tuple(theta_t0_shape)
             )
 
@@ -329,7 +329,7 @@ class MetaEnrichment(type):
             ]
 
             # Normalize and record times if they are provided
-            self.times = dms_components.Constant(times / times.max(), togglable=False)
+            self.times = constants.Constant(times / times.max(), togglable=False)
 
         # Use the appropriate function for initializing times
         if include_times:
@@ -358,10 +358,10 @@ class MetaEnrichment(type):
             # parameter).
             if biological_replicates:
                 varname = "inv_r_mean"
-                distclass = dms_components.Gamma
+                distclass = parameters.Gamma
             else:
                 varname = "r"
-                distclass = dms_components.InverseGamma
+                distclass = parameters.InverseGamma
 
             # Set the inverse growth rate distribution
             setattr(
@@ -377,11 +377,11 @@ class MetaEnrichment(type):
             # We stay in the log space for hierarchical models, but not for non-hierarchical
             # models
             if biological_replicates:
-                varname = "log_r"
-                distclass = dms_components.ExpExponential
+                varname = "log_r_mean"
+                distclass = parameters.ExpExponential
             else:
                 varname = "r"
-                distclass = dms_components.Exponential
+                distclass = parameters.Exponential
 
             # Set the growth rate distribution
             setattr(self, varname, distclass(beta=beta, shape=(self.n_variants,)))
@@ -397,11 +397,11 @@ class MetaEnrichment(type):
             # We stay in the log space for hierarchical models, but not for non-hierarchical
             # models
             if biological_replicates:
-                varname = "log_r"
-                distclass = dms_components.ExpLomax
+                varname = "log_r_mean"
+                distclass = parameters.ExpLomax
             else:
                 varname = "r"
-                distclass = dms_components.Lomax
+                distclass = parameters.Lomax
 
             # Set the growth rate distribution
             setattr(
@@ -420,57 +420,49 @@ class MetaEnrichment(type):
         raise ValueError("Unsupported rate distribution.")
 
     @classmethod
-    def set_foldchange(
+    def set_growth_noise(
         mcs,
         rate_distribution: Literal["gamma", "exponential", "lomax"],
         biological_replicates: bool,
     ):
         """Sets the fold-change that we observe"""
 
-        def null_init_foldchange(
+        def null_init_growth_noise(
             self, **kwargs  # pylint: disable=unused-argument
         ) -> None:
             """Does nothing for non-hierarchical models."""
             return
 
-        def init_gamma_inv_rate_foldchange(
+        def init_gamma_inv_rate_growth_noise(
             self, **kwargs  # pylint: disable=unused-argument
         ) -> None:
             """Builds 'r' from 'inv_r_mean'"""
-            self.r = dms_components.Exponential(
-                beta=self.inv_r_mean, shape=self.r_shape
-            )
+            self.r = parameters.Exponential(beta=self.inv_r_mean, shape=self.r_shape)
 
-        def init_exp_lomax_rate_foldchange(
+        def init_exp_lomax_rate_growth_noise(
             self,
-            log_foldchange_sigma_sigma: float = 0.1,
+            r_sigma_sigma: float = 0.01,
             **kwargs,  # pylint: disable=unused-argument
         ) -> None:
-            """Builds 'r' from 'log_r'"""
+            """Builds 'r' from 'log_r_mean'"""
 
             # Get the sigma for the log fold-change
-            self.log_foldchange_sigma = dms_components.HalfNormal(
-                sigma=log_foldchange_sigma_sigma
-            )
+            self.r_sigma = parameters.HalfNormal(sigma=r_sigma_sigma)
 
             # Calculate r
-            self.r = dms_ops.exp(
-                dms_components.Normal(
-                    mu=self.log_r,
-                    sigma=self.log_foldchange_sigma,
-                    shape=self.r_shape,
-                )
+            self.r = parameters.Normal(
+                mu=dms_ops.exp(self.log_r_mean), sigma=self.r_sigma, shape=self.r_shape
             )
 
         # Do nothing for non-hierarchical models
         if not biological_replicates:
-            return null_init_foldchange
+            return null_init_growth_noise
 
         # Return the appropriate initialization method based on the rate distribution
         if rate_distribution == "gamma":
-            return init_gamma_inv_rate_foldchange
+            return init_gamma_inv_rate_growth_noise
         elif rate_distribution in {"exponential", "lomax"}:
-            return init_exp_lomax_rate_foldchange
+            return init_exp_lomax_rate_growth_noise
         raise ValueError("Unsupported rate distribution.")
 
     @classmethod
@@ -489,14 +481,14 @@ class MetaEnrichment(type):
             """Initializes the binary exponential growth function."""
             # Different growth functions depending on whether we have times or not
             if include_times:
-                self.raw_abundances_tg0 = dms_components.LogExponentialGrowth(
+                self.raw_abundances_tg0 = dms_ops.log_exponential_growth(
                     t=self.times,
                     log_A=self.log_theta_t0,
                     r=self.r,
                     shape=self.log_theta_tg0_shape,
                 )
             else:
-                self.raw_abundances_tg0 = dms_components.BinaryLogExponentialGrowth(
+                self.raw_abundances_tg0 = dms_ops.binary_log_exponential_growth(
                     log_A=self.log_theta_t0,
                     r=self.r,
                     shape=self.log_theta_tg0_shape,
@@ -522,21 +514,19 @@ class MetaEnrichment(type):
                 c_shape = ()
 
             # Define c.
-            self.c = dms_components.Gamma(alpha=c_alpha, beta=c_beta, shape=c_shape)
+            self.c = parameters.Gamma(alpha=c_alpha, beta=c_beta, shape=c_shape)
 
             # Growth is different depending on whether we have times or not
-            self.raw_abundances_tg0 = (
-                dms_components.LogSigmoidGrowthInitParametrization(
-                    t=(
-                        self.times
-                        if include_times
-                        else dms_components.Constant(1.0, togglable=False)
-                    ),
-                    log_x0=self.log_theta_t0,
-                    r=self.r,
-                    c=self.c,
-                    shape=self.log_theta_tg0_shape,
-                )
+            self.raw_abundances_tg0 = dms_ops.log_sigmoid_growth_init_parametrization(
+                t=(
+                    self.times
+                    if include_times
+                    else constants.Constant(1.0, togglable=False)
+                ),
+                log_x0=self.log_theta_t0,
+                r=self.r,
+                c=self.c,
+                shape=self.log_theta_tg0_shape,
             )
 
         # Return the appropriate initialization method based on the growth function
@@ -582,12 +572,12 @@ class MetaEnrichment(type):
         def init_counts(self) -> None:
             """Initializes modeling of counts."""
             # Counts are modeled as a multinomial distribution
-            self.starting_counts = dms_components.MultinomialLogTheta(
+            self.starting_counts = parameters.MultinomialLogTheta(
                 log_theta=self.log_theta_t0,
                 N=self.total_starting_counts,
                 shape=self.default_data["starting_counts"].shape,
             )
-            self.timepoint_counts = dms_components.MultinomialLogTheta(
+            self.timepoint_counts = parameters.MultinomialLogTheta(
                 log_theta=self.log_theta_tg0,
                 N=self.total_timepoint_counts,
                 shape=self.default_data["timepoint_counts"].shape,
@@ -652,30 +642,30 @@ class MetaEnrichment(type):
 
             # Get the abundance to OD slope and intercept. We don't know much about
             # the slope or the intercept, only that the slope is positive.
-            self.log_abundance_to_od_slope = dms_components.Normal(
+            self.log_abundance_to_od_slope = parameters.Normal(
                 mu=log_slope_mean,
                 sigma=log_slope_std,
             )
-            self.od_intercept = dms_components.Normal(
+            self.od_intercept = parameters.Normal(
                 mu=intercept_mean,
                 sigma=intercept_std,
             )
 
             # Now get the stdev of the measurement error
-            self.od_measurement_error = dms_components.HalfNormal(
+            self.od_measurement_error = parameters.HalfNormal(
                 sigma=od_measurement_error
             )
 
             # Model the OD at t=0. The raw abundance is always "1" at this point,
             # so we ignore it
-            self.starting_od = dms_components.Normal(
+            self.starting_od = parameters.Normal(
                 mu=dms_ops.exp(self.log_abundance_to_od_slope) + self.od_intercept,
                 sigma=self.od_measurement_error,
                 shape=starting_od.shape,
             )
 
             # Model at t > 0. This is the total abundance plus the correction factor
-            self.timepoint_od = dms_components.Normal(
+            self.timepoint_od = parameters.Normal(
                 mu=dms_ops.exp(
                     self.log_abundance_to_od_slope + self.total_raw_abundance_tg0
                 )
@@ -698,7 +688,7 @@ def hierarchical_class_factory(
     include_times: bool = False,
     sequence_replicates: bool = False,
     include_od: bool = False,
-) -> type[dms.Model]:
+) -> type[Model]:
     """
     Factory function to create a hierarchical enrichment model class with the specified
     parameters.
@@ -706,7 +696,7 @@ def hierarchical_class_factory(
     # Create a new class with the specified parameters
     return MetaEnrichment(
         name,
-        (dms.Model,),
+        (Model,),
         {},
         growth_func=growth_func,
         rate_dist=rate_dist,
@@ -724,7 +714,7 @@ def non_hierarchical_class_factory(
     include_times: bool = False,
     sequence_replicates: bool = False,
     include_od: bool = False,
-) -> type[dms.Model]:
+) -> type[Model]:
     """
     Factory function to create a non-hierarchical enrichment model class with the
     specified parameters.
@@ -732,7 +722,7 @@ def non_hierarchical_class_factory(
     # Create a new class with the specified parameters
     return MetaEnrichment(
         name,
-        (dms.Model,),
+        (Model,),
         {},
         growth_func=growth_func,
         rate_dist=rate_dist,

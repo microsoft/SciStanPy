@@ -2,7 +2,7 @@
 
 import argparse
 
-from dms_stan.model import run_delayed_mcmc
+from dms_stan.model.model import run_delayed_mcmc
 
 
 def main():

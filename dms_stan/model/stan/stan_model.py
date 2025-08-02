@@ -24,27 +24,25 @@ import numpy.typing as npt
 
 from cmdstanpy import CmdStanModel, format_stan_file
 
-import dms_stan as dms
+import dms_stan
 
-from dms_stan.custom_types import SampleType
+from dms_stan import custom_types
 from dms_stan.defaults import (
     DEFAULT_CPP_OPTIONS,
     DEFAULT_FORCE_COMPILE,
     DEFAULT_MODEL_NAME,
+    DEFAULT_INDEX_ORDER,
     DEFAULT_STANC_OPTIONS,
     DEFAULT_USER_HEADER,
 )
-
+from dms_stan.model import results, stan
 from dms_stan.model.components import (
-    Constant,
-    Multinomial,
-    MultinomialLogit,
-    Parameter,
-    TransformedData,
-    TransformedParameter,
+    abstract_model_component,
+    constants,
+    parameters,
+    transformations,
 )
-from dms_stan.model.components.abstract_model_component import AbstractModelComponent
-from dms_stan.model.stan.stan_results import SampleResults
+
 
 # pylint: disable=too-many-lines
 
@@ -78,13 +76,16 @@ class StanCodeBase(ABC, list):
 
     def recurse_model_components(
         self,
-    ) -> Generator[AbstractModelComponent, None, None]:
+    ) -> Generator[abstract_model_component.AbstractModelComponent, None, None]:
         """Recursively generates all model components in the program."""
         for component in self:
             if isinstance(component, StanForLoop):
                 yield from component.recurse_model_components()
             else:
-                assert isinstance(component, AbstractModelComponent)
+                assert isinstance(
+                    component,
+                    abstract_model_component.AbstractModelComponent,
+                )
                 yield component
 
     @abstractmethod
@@ -107,37 +108,49 @@ class StanCodeBase(ABC, list):
     ) -> str:
 
         def filter_generated_quantities(
-            nested_component: Union[StanCodeBase, AbstractModelComponent],
+            nested_component: Union[
+                StanCodeBase, abstract_model_component.AbstractModelComponent
+            ],
         ) -> bool:
             """
             Filters hierarchy of loops for the generated quantities block. We take
             observables.
             """
             return (
-                isinstance(nested_component, Parameter) and nested_component.observable
+                isinstance(nested_component, parameters.Parameter)
+                and nested_component.observable
             ) or isinstance(nested_component, StanForLoop)
 
         # Functions for filtering the tree
         def filter_model_transformed_params(
-            nested_component: Union[StanCodeBase, AbstractModelComponent],
+            nested_component: Union[
+                StanCodeBase, abstract_model_component.AbstractModelComponent
+            ],
         ) -> bool:
             """
             Filters hierarchy of loops for the model and transformed parameters
             blocks. We take Parameters and named TransformedParameters.
             """
-            return isinstance(nested_component, (Parameter, StanForLoop)) or (
-                isinstance(nested_component, TransformedParameter)
+            return isinstance(
+                nested_component, (parameters.Parameter, StanForLoop)
+            ) or (
+                isinstance(nested_component, transformations.TransformedParameter)
                 and nested_component.is_named
             )
 
         def filter_transformed_data(
-            nested_component: Union[StanCodeBase, AbstractModelComponent],
+            nested_component: Union[
+                StanCodeBase, abstract_model_component.AbstractModelComponent
+            ],
         ) -> bool:
             """
             Filters hierarchy of loops for the transformed data block. We take
             TransformedData only.
             """
-            return isinstance(nested_component, (TransformedData, StanForLoop))
+            return isinstance(
+                nested_component,
+                (transformations.transformed_data.TransformedData, StanForLoop),
+            )
 
         # We need a dictionary that will map from block name to the prefix for the
         # block we are writing,
@@ -259,12 +272,14 @@ class StanCodeBase(ABC, list):
         return [component for component in self if isinstance(component, StanForLoop)]
 
     @property
-    def model_components(self) -> list[AbstractModelComponent]:
+    def model_components(
+        self,
+    ) -> list[abstract_model_component.AbstractModelComponent]:
         """Returns the model components in the program."""
         return [
             component
             for component in self
-            if isinstance(component, AbstractModelComponent)
+            if isinstance(component, abstract_model_component.AbstractModelComponent)
         ]
 
     @property
@@ -349,10 +364,15 @@ class StanForLoop(StanCodeBase):
             self.parent_loop.remove(self)
             self.parent_loop = None
 
-    def append(self, component: Union["StanForLoop", AbstractModelComponent]) -> None:
+    def append(
+        self,
+        component: Union[
+            "StanForLoop", abstract_model_component.AbstractModelComponent
+        ],
+    ) -> None:
         """Appends a component to the list."""
         # If a model component, make sure we are at the appropriate code level
-        if isinstance(component, AbstractModelComponent):
+        if isinstance(component, abstract_model_component.AbstractModelComponent):
             assert component.stan_code_level == (self.shape_index + 1)
 
         # Append the component
@@ -441,9 +461,9 @@ class StanProgram(StanCodeBase):
         self.model = model
 
         # Build the map from model node to depth in the tree of nodes
-        self.node_to_depth: dict[AbstractModelComponent, int] = (
-            self.build_node_to_depth()
-        )
+        self.node_to_depth: dict[
+            abstract_model_component.AbstractModelComponent, int
+        ] = self.build_node_to_depth()
 
         # Get the names of all variables, parameters, and data inputs for the model
         (
@@ -456,29 +476,34 @@ class StanProgram(StanCodeBase):
         # Get allowed index variable names for each level
         self._allowed_index_names = tuple(
             char
-            for char in dms.defaults.DEFAULT_INDEX_ORDER
+            for char in DEFAULT_INDEX_ORDER
             if {char, char.upper()}.isdisjoint(self.all_varnames)
         )
 
         # Compile the program
         self.compile()
 
-    def build_node_to_depth(self) -> dict[AbstractModelComponent, int]:
+    def build_node_to_depth(
+        self,
+    ) -> dict[abstract_model_component.AbstractModelComponent, int]:
         """
         Builds a mapping from each node to its maximum depth in the tree relative
         to the tree roots.
         """
         # We need a mapping from each node to its maximum depth in the tree.
-        node_to_depth: dict[AbstractModelComponent, int] = {}
+        node_to_depth: dict[abstract_model_component.AbstractModelComponent, int] = {}
 
         # Get all constants, named or otherwise
-        constants = list(
-            filter(lambda x: isinstance(x, Constant), self.model.all_model_components)
+        model_constants = list(
+            filter(
+                lambda x: isinstance(x, constants.Constant),
+                self.model.all_model_components,
+            )
         )
 
         # Starting from constants (which are all root nodes), walk down the tree
         # and record the depth of each node
-        for root in constants:
+        for root in model_constants:
 
             # Root nodes are at depth 0
             node_to_depth[root] = 0
@@ -505,19 +530,19 @@ class StanProgram(StanCodeBase):
         all_paramnames = {
             node.model_varname
             for node in self.node_to_depth
-            if isinstance(node, Parameter) and not node.observable
+            if isinstance(node, parameters.Parameter) and not node.observable
         }
 
         # Get all data inputs
         auto_gathered_data = {
             node.model_varname
             for node in self.node_to_depth
-            if isinstance(node, Constant)
+            if isinstance(node, constants.Constant)
         }
         user_provided_varnames = {
             node.model_varname
             for node in self.node_to_depth
-            if isinstance(node, Parameter) and node.observable
+            if isinstance(node, parameters.Parameter) and node.observable
         }
 
         return all_varnames, all_paramnames, auto_gathered_data, user_provided_varnames
@@ -531,8 +556,11 @@ class StanProgram(StanCodeBase):
         """Organizes the elements of the Stan program into the correct order."""
         # Get the order of operations. This is a list of nodes sorted by their maximum
         # depth in the tree
-        order_of_operations: list[AbstractModelComponent] = sorted(
-            self.node_to_depth, key=lambda x: (self.node_to_depth[x], x.stan_code_level)
+        order_of_operations: list[abstract_model_component.AbstractModelComponent] = (
+            sorted(
+                self.node_to_depth,
+                key=lambda x: (self.node_to_depth[x], x.stan_code_level),
+            )
         )
 
         # The first component in the order of operations must be at code level 0
@@ -605,10 +633,15 @@ class StanProgram(StanCodeBase):
         for loop in self.nested_loops:
             yield from loop.recurse_for_loops()
 
-    def append(self, component: Union["StanForLoop", AbstractModelComponent]) -> None:
+    def append(
+        self,
+        component: Union[
+            "StanForLoop", abstract_model_component.AbstractModelComponent
+        ],
+    ) -> None:
         """Appends a component to the list."""
         # If a model component, make sure we are at the appropriate code level
-        if isinstance(component, AbstractModelComponent):
+        if isinstance(component, abstract_model_component.AbstractModelComponent):
             assert component.stan_code_level == 0
 
         # Append the component
@@ -632,12 +665,13 @@ class StanProgram(StanCodeBase):
         # This is because the MultinomialLogit component will include the Multinomial
         # functions, so we don't need to include them again.
         if any(
-            isinstance(component, MultinomialLogit) for component in model_components
+            isinstance(component, parameters.MultinomialLogit)
+            for component in model_components
         ):
             model_components = [
                 component
                 for component in model_components
-                if not isinstance(component, Multinomial)
+                if not isinstance(component, parameters.Multinomial)
             ]
 
         # Get all supporting functions
@@ -670,8 +704,8 @@ class StanProgram(StanCodeBase):
         declarations = [
             component.stan_parameter_declaration
             for component in self.model.all_model_components
-            if (isinstance(component, Parameter) and component.observable)
-            or isinstance(component, Constant)
+            if (isinstance(component, parameters.Parameter) and component.observable)
+            or isinstance(component, constants.Constant)
         ]
 
         # Combine declarations and wrap in the data block
@@ -686,7 +720,7 @@ class StanProgram(StanCodeBase):
         declarations = [
             component.stan_parameter_declaration
             for component in self.model.all_model_components
-            if isinstance(component, TransformedData)
+            if isinstance(component, transformations.transformed_data.TransformedData)
         ]
 
         # No transformed data if no declarations
@@ -737,8 +771,14 @@ class StanProgram(StanCodeBase):
         declarations = [
             component.stan_parameter_declaration
             for component in self.recurse_model_components()
-            if (isinstance(component, TransformedParameter) and component.is_named)
-            or (isinstance(component, Parameter) and component.HAS_RAW_VARNAME)
+            if (
+                isinstance(component, transformations.TransformedParameter)
+                and component.is_named
+            )
+            or (
+                isinstance(component, parameters.Parameter)
+                and component.HAS_RAW_VARNAME
+            )
         ]
 
         # Combine declarations
@@ -755,7 +795,7 @@ class StanProgram(StanCodeBase):
         declarations = [
             component.stan_generated_quantity_declaration
             for component in self.recurse_model_components()
-            if isinstance(component, Parameter) and component.observable
+            if isinstance(component, parameters.Parameter) and component.observable
         ]
 
         # Combine declarations
@@ -830,7 +870,7 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
         # If a seed is not provided, use the global random number generator to get
         # one
         if kwargs.get("seed") is None:
-            kwargs["seed"] = dms.RNG.integers(0, 2**32 - 1)
+            kwargs["seed"] = dms_stan.RNG.integers(0, 2**32 - 1)
 
         # `data` must be a key in the kwargs
         if "data" not in kwargs:
@@ -872,8 +912,7 @@ class StanModel(CmdStanModel):
 
         # Add the "include_paths" kwarg
         self._stanc_options["include-paths"] = (
-            self._stanc_options.get("include-paths", [])
-            + dms.model.stan.STAN_INCLUDE_PATHS
+            self._stanc_options.get("include-paths", []) + stan.STAN_INCLUDE_PATHS
         )
 
         # Note the underlying DMSStan model
@@ -938,7 +977,9 @@ class StanModel(CmdStanModel):
             stanc_options=self._stanc_options,
         )
 
-    def gather_inputs(self, **observables: SampleType) -> dict[str, SampleType]:
+    def gather_inputs(
+        self, **observables: custom_types.SampleType
+    ) -> dict[str, custom_types.SampleType]:
         """
         Gathers the inputs for the Stan model. Values for observables must be provided
         by the user. All other inputs will be drawn from the DMS Stan model itself.
@@ -1000,7 +1041,7 @@ class StanModel(CmdStanModel):
             for component, draw in self.model.draw(
                 n=chains, named_only=False, seed=seed
             ).items()
-            if isinstance(component, Parameter) and not component.observable
+            if isinstance(component, parameters.Parameter) and not component.observable
         }
 
         # The draws should overlap perfectly with the parameters of the model
@@ -1039,7 +1080,7 @@ class StanModel(CmdStanModel):
         mib_per_chunk: int | None = None,
         use_dask: bool = False,
         **kwargs,
-    ) -> SampleResults:
+    ) -> results.SampleResults:
 
         # Update the sample function from CmdStanModel to automatically pull the
         # data from the StanModel
@@ -1062,7 +1103,7 @@ class StanModel(CmdStanModel):
         fit = updated_parent_sample(self, **kwargs)
 
         # Build the results object
-        return SampleResults(
+        return results.SampleResults(
             model=self.model,
             fit=fit,
             precision=precision,

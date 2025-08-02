@@ -9,24 +9,8 @@ import scipy.special as sp
 import torch
 import torch.nn.functional as F
 
-import dms_stan as dms
-
-from .abstract_model_component import AbstractModelComponent
-
-
-@overload
-def choose_module(dist: torch.Tensor) -> torch: ...
-
-
-@overload
-def choose_module(dist: dms.custom_types.SampleType) -> np: ...
-
-
-def choose_module(dist):
-    """
-    Choose the module to use for the operation based on the type of the distribution.
-    """
-    return torch if isinstance(dist, torch.Tensor) else np
+from dms_stan import utils
+from dms_stan.model.components import abstract_model_component
 
 
 class TransformableParameter:
@@ -68,7 +52,7 @@ class TransformableParameter:
         return NegateParameter(self)
 
 
-class Transformation(AbstractModelComponent):
+class Transformation(abstract_model_component.AbstractModelComponent):
     """
     Base class for transformations, including `transformed parameters` and
     `transformed data`.
@@ -288,7 +272,7 @@ class AbsParameter(UnaryTransformedParameter):
     LOWER_BOUND: float = 0.0
 
     def run_np_torch_op(self, dist1):
-        return choose_module(dist1).abs(dist1)
+        return utils.choose_module(dist1).abs(dist1)
 
     def write_stan_operation(self, dist1: str) -> str:
         return f"abs({dist1})"
@@ -301,7 +285,7 @@ class LogParameter(UnaryTransformedParameter):
     POSITIVE_PARAMS = {"dist1"}
 
     def run_np_torch_op(self, dist1):
-        return choose_module(dist1).log(dist1)
+        return utils.choose_module(dist1).log(dist1)
 
     def write_stan_operation(self, dist1: str) -> str:
         return f"log({dist1})"
@@ -314,7 +298,7 @@ class ExpParameter(UnaryTransformedParameter):
 
     def run_np_torch_op(self, dist1):
 
-        return choose_module(dist1).exp(dist1)
+        return utils.choose_module(dist1).exp(dist1)
 
     def write_stan_operation(self, dist1: str) -> str:
         return f"exp({dist1})"
@@ -416,7 +400,7 @@ class SigmoidParameter(UnaryTransformedParameter):
         # If using numpy, we manually calculate the sigmoid function using a more
         # numerically stable approach.
         elif isinstance(dist1, np.ndarray):
-            return dms.utils.stable_sigmoid(dist1)
+            return utils.stable_sigmoid(dist1)
 
         # If using a different type, raise an error.
         else:
@@ -437,7 +421,7 @@ class LogSigmoidParameter(UnaryTransformedParameter):
         if isinstance(dist1, torch.Tensor):
             return F.logsigmoid(dist1)  # pylint: disable=not-callable
         elif isinstance(dist1, np.ndarray):
-            return np.log(dms.utils.stable_sigmoid(dist1))
+            return np.log(utils.stable_sigmoid(dist1))
         else:
             raise TypeError(
                 "Unsupported type for dist1. Expected torch.Tensor or np.ndarray."
@@ -851,7 +835,7 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
     def run_np_torch_op(self, t, x0, r, c):
         """We use a log-add-exp trick to calculate in a numerically stable way."""
         # Get the module
-        mod = choose_module(x0)
+        mod = utils.choose_module(x0)
 
         # Get the fold-change. We use the log-add-exp function to calculate this
         # in a more numerically stable way
@@ -926,7 +910,7 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
     def run_np_torch_op(self, t, log_x0, r, c):
         """We use a log-add-exp trick to calculate in a numerically stable way."""
         # Get the module
-        mod = choose_module(log_x0)
+        mod = utils.choose_module(log_x0)
 
         # Define zero
         zero = 0.0 if mod is np else torch.tensor(0.0, device=log_x0.device)

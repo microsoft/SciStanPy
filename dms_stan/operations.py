@@ -7,18 +7,10 @@ import numpy as np
 import numpy.typing as npt
 import scipy.special as sp
 
-from dms_stan.model.components import (
-    AbsParameter,
-    ExpParameter,
-    LogParameter,
-    LogSumExpParameter,
-    NormalizeLogParameter,
-    NormalizeParameter,
-    SigmoidParameter,
-    UnaryTransformedParameter,
-)
-from dms_stan.model.components.abstract_model_component import AbstractModelComponent
-from dms_stan.utils import stable_sigmoid
+from dms_stan.model import components
+from dms_stan import utils
+
+# TODO: Growth functions should be moved in here
 
 
 def _normalize_parameter(
@@ -65,7 +57,9 @@ class MetaOperation(ABCMeta):
         classname,
         class_parents,
         class_attrs,
-        distclass: Optional[type[UnaryTransformedParameter]] = None,
+        distclass: Optional[
+            type[components.transformations.UnaryTransformedParameter]
+        ] = None,
         func: Optional[Callable[..., npt.NDArray]] = None,
         funcname: Optional[str] = None,
     ):
@@ -102,7 +96,7 @@ class Operation(metaclass=MetaOperation):
     is the function to use when applying the operation to numpy arrays.
     """
 
-    distclass: type[UnaryTransformedParameter]
+    distclass: type[components.transformations.UnaryTransformedParameter]
     func: Callable[..., npt.NDArray]
 
     def __init__(self):
@@ -133,7 +127,9 @@ class UnaryOperation(Operation):
     """Base class for dms_stan unary operations."""
 
     @overload
-    def __call__(self, x: AbstractModelComponent) -> AbstractModelComponent: ...
+    def __call__(
+        self, x: components.abstract_model_component.AbstractModelComponent
+    ) -> components.abstract_model_component.AbstractModelComponent: ...
 
     @overload
     def __call__(
@@ -157,7 +153,7 @@ class UnaryOperation(Operation):
             The result of applying the operation to x.
         """
         # If a dms_stan parameter, apply the transformation
-        if isinstance(x, AbstractModelComponent):
+        if isinstance(x, components.abstract_model_component.AbstractModelComponent):
             return self.distclass(x, **kwargs)
 
         # Otherwise, apply the numpy function
@@ -165,7 +161,7 @@ class UnaryOperation(Operation):
 
 
 def _unary_transformation_factory(
-    distclass: type[UnaryTransformedParameter],
+    distclass: type[components.transformations.UnaryTransformedParameter],
     func: Callable[..., npt.NDArray],
     funcname: Optional[str] = None,
 ) -> UnaryOperation:
@@ -184,14 +180,24 @@ def _unary_transformation_factory(
 
 
 # Define our operations
-abs_ = _unary_transformation_factory(AbsParameter, np.abs, "np.abs")
-exp = _unary_transformation_factory(ExpParameter, np.exp, "np.exp")
-log = _unary_transformation_factory(LogParameter, np.log, "np.log")
+abs_ = _unary_transformation_factory(
+    components.transformations.AbsParameter, np.abs, "np.abs"
+)
+exp = _unary_transformation_factory(
+    components.transformations.ExpParameter, np.exp, "np.exp"
+)
+log = _unary_transformation_factory(
+    components.transformations.LogParameter, np.log, "np.log"
+)
 logsumexp = _unary_transformation_factory(
-    LogSumExpParameter, sp.logsumexp, "sp.logsumexp"
+    components.transformations.LogSumExpParameter, sp.logsumexp, "sp.logsumexp"
 )
-normalize = _unary_transformation_factory(NormalizeParameter, _normalize_parameter)
+normalize = _unary_transformation_factory(
+    components.transformations.NormalizeParameter, _normalize_parameter
+)
 normalize_log = _unary_transformation_factory(
-    NormalizeLogParameter, _normalize_log_parameter
+    components.transformations.NormalizeLogParameter, _normalize_log_parameter
 )
-sigmoid = _unary_transformation_factory(SigmoidParameter, stable_sigmoid)
+sigmoid = _unary_transformation_factory(
+    components.transformations.SigmoidParameter, utils.stable_sigmoid
+)

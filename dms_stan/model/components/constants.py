@@ -6,10 +6,10 @@ import numpy as np
 import numpy.typing as npt
 import torch
 
-from .abstract_model_component import AbstractModelComponent
+from dms_stan.components import abstract_model_component
 
 
-class Constant(AbstractModelComponent):
+class Constant(abstract_model_component.AbstractModelComponent):
     """
     Abstract class for components that pass through the values of their children.
     """

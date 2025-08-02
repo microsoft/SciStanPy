@@ -1,3 +1,5 @@
+"""Used for analyzing fits to the FlipV3 datasets."""
+
 import os.path
 import warnings
 
@@ -12,12 +14,15 @@ import xarray as xr
 
 from scipy import stats
 
-from dms_stan.model.pytorch.mle import MLEInferenceRes
-from dms_stan.model.stan.stan_results import SampleResults
-from dms_stan.pipelines.mcmc_flip import LOAD_DATASET_MAP
+from dms_stan.model.results import MLEInferenceRes, SampleResults
 from dms_stan.plotting import quantile_plot
 from dms_stan.utils import faster_autocorrelation
+from flipv3.flip_dsets import load_trpb_dataset, load_pdz_dataset
 
+LOAD_DATASET_MAP = {
+    "trpb": (load_trpb_dataset, ".csv"),
+    "pdz": (load_pdz_dataset, ".tsv"),
+}
 
 LIB_TO_OD600 = {
     "libA": xr.DataArray(np.array([0.1, 0.75, 2.55]), dims=["b"]),

@@ -3,9 +3,9 @@
 import argparse
 import os.path
 
-from dms_stan.flip_dsets import pdz3_instance_factory, trpb_instance_factory
 from dms_stan.model import Model
-from dms_stan.model.stan.stan_results import SampleResults
+from dms_stan.model.results import SampleResults
+from flipv3.flip_dsets import pdz3_instance_factory, trpb_instance_factory
 
 # Define valid combinations of dataset and subset.
 VALID_COMBINATIONS = {

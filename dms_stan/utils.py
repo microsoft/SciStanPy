@@ -11,20 +11,27 @@ from arviz.utils import Dask
 from scipy import stats
 from tqdm import tqdm
 
-
-@overload
-def _get_module(exponent: npt.NDArray[np.floating]) -> np: ...
+from dms_stan import custom_types
 
 
 @overload
-def _get_module(exponent: torch.Tensor) -> torch: ...
+def choose_module(dist: torch.Tensor) -> torch: ...
 
 
-def _get_module(exponent):
+@overload
+def choose_module(dist: custom_types.SampleType) -> np: ...
+
+
+def choose_module(dist):
     """
-    Get the module (numpy or torch) based on the type of the input.
+    Choose the module to use for the operation based on the type of the distribution.
     """
-    return np if isinstance(exponent, np.ndarray) else torch
+    if isinstance(dist, torch.Tensor):
+        return torch
+    elif isinstance(dist, np.ndarray):
+        return np
+    else:
+        raise TypeError(f"Unsupported type for determining module: {type(dist)}.")
 
 
 @overload
@@ -40,7 +47,7 @@ def stable_sigmoid(exponent):
     Stable sigmoid function to avoid overflow.
     """
     # Are we working with torch or numpy?
-    module = _get_module(exponent)
+    module = choose_module(exponent)
 
     # Empty array to store the results
     sigma_exponent = module.full_like(exponent, module.nan)

@@ -22,22 +22,15 @@ from cmdstanpy.stanfit import CmdStanMCMC, RunSet
 from cmdstanpy.utils import check_sampler_csv, scan_config
 from tqdm import tqdm
 
-import dms_stan.model  # pylint: disable=unused-import
 
-from dms_stan.custom_types import ProcessedTestRes, StrippedTestRes
+from dms_stan import custom_types, plotting, utils
 from dms_stan.defaults import (
     DEFAULT_EBFMI_THRESH,
     DEFAULT_ESS_THRESH,
     DEFAULT_RHAT_THRESH,
 )
-from dms_stan.model.components import (
-    DiscreteDistribution,
-    Parameter,
-    TransformedParameter,
-)
-from dms_stan.model.pytorch.mle import MLEInferenceRes
-from dms_stan.plotting import calculate_relative_quantiles
-from dms_stan.utils import az_dask, get_chunk_shape
+from dms_stan.model.components import parameters
+from .mle import MLEInferenceRes
 
 # pylint: disable=too-many-lines
 
@@ -307,7 +300,7 @@ class VariableAnalyzer:
                     "There are more failing samples than passing samples for "
                     f"{self.varchoice.values}. Consider plotting true values instead."
                 )
-            failing_quantiles = calculate_relative_quantiles(
+            failing_quantiles = plotting.calculate_relative_quantiles(
                 reference=self._passing_samples,
                 observed=failing_samples[None],
             )[0]
@@ -543,7 +536,7 @@ class CmdStanMCMCToNetCDFConverter:
                 # Calculate the chunk shape. We always hold the first two dimensions
                 # frozen. This is because the first two dimensions are what we
                 # are typically performing operations over.
-                chunk_shape = get_chunk_shape(
+                chunk_shape = utils.get_chunk_shape(
                     array_shape=(
                         self.config["total_chains"],
                         self.num_draws,
@@ -643,16 +636,22 @@ class CmdStanMCMCToNetCDFConverter:
         for varname, component in self.model.named_model_components_dict.items():
 
             # We only take parameters and transformed parameters
-            if not isinstance(component, (Parameter, TransformedParameter)):
+            if not isinstance(
+                component, (parameters.Parameter, parameters.TransformedParameter)
+            ):
                 continue
 
             # Update the varname if needed
-            if isinstance(component, Parameter) and component.observable:
+            if isinstance(component, parameters.Parameter) and component.observable:
                 varname = f"{varname}_ppc"
 
             # Record the datatype
             stan_var_dtypes[varname] = _NP_TYPE_MAP[precision][
-                "int" if isinstance(component, DiscreteDistribution) else "float"
+                (
+                    "int"
+                    if isinstance(component, parameters.DiscreteDistribution)
+                    else "float"
+                )
             ]
 
             # Record the dimension names
@@ -746,7 +745,7 @@ def cmdstan_csv_to_netcdf(
 def dask_enabled_summary_stats(inference_obj: az.InferenceData) -> xr.Dataset:
     """Calculates summary statistics for the inference object using Dask."""
     # Queue up the delayed computations
-    with az_dask():
+    with utils.az_dask():
         delayed_summaries = [
             inference_obj.posterior.mean(dim=("chain", "draw")),
             inference_obj.posterior.std(dim=("chain", "draw")),
@@ -774,7 +773,7 @@ def dask_enabled_summary_stats(inference_obj: az.InferenceData) -> xr.Dataset:
 def dask_enabled_diagnostics(inference_obj: az.InferenceData) -> xr.Dataset:
     """Calculates diagnostics for the inference object using Dask."""
     # Run computations
-    with az_dask():
+    with utils.az_dask():
         diagnostics = dask.compute(
             az.mcse(inference_obj.posterior, method="mean"),
             az.mcse(inference_obj.posterior, method="sd"),
@@ -1054,8 +1053,8 @@ class SampleResults(MLEInferenceRes):
         return variable_tests
 
     def identify_failed_diagnostics(self, silent: bool = False) -> tuple[
-        StrippedTestRes,
-        dict[str, StrippedTestRes],
+        custom_types.StrippedTestRes,
+        dict[str, custom_types.StrippedTestRes],
     ]:
         """
         Evaluates diagnostic tests and prints a summary of the results. This method
@@ -1065,7 +1064,9 @@ class SampleResults(MLEInferenceRes):
         have been run first.
         """
 
-        def process_test_results(test_res_dataarray: xr.Dataset) -> ProcessedTestRes:
+        def process_test_results(
+            test_res_dataarray: xr.Dataset,
+        ) -> custom_types.ProcessedTestRes:
             """
             Process the test results from a DataArray into a dictionary of test results.
 
@@ -1076,7 +1077,7 @@ class SampleResults(MLEInferenceRes):
 
             Returns
             -------
-            ProcessedTestRes
+            custom_types.ProcessedTestRes
                 A dictionary where the keys are the variable names and the values are tuples
                 containing the indices of the failed tests and the total number of tests.
             """
@@ -1085,24 +1086,26 @@ class SampleResults(MLEInferenceRes):
                 for varname, tests in test_res_dataarray.items()
             }
 
-        def strip_totals(processed_test_results: ProcessedTestRes) -> StrippedTestRes:
+        def strip_totals(
+            processed_test_results: custom_types.ProcessedTestRes,
+        ) -> custom_types.StrippedTestRes:
             """
             Strip the totals from the test results.
 
             Parameters
             ----------
-            processed_test_results : ProcessedTestRes
+            processed_test_results : custom_types.ProcessedTestRes
                 The processed test results from the `process_test_results` function.
 
             Returns
             -------
-            StrippedTestRes
+            custom_types.StrippedTestRes
                 The processed test results with the totals stripped.
             """
             return {k: v[0] for k, v in processed_test_results.items()}
 
         def report_test_summary(
-            processed_test_results: ProcessedTestRes,
+            processed_test_results: custom_types.ProcessedTestRes,
             type_: str,
             prepend_newline: bool = True,
         ) -> None:
@@ -1187,7 +1190,7 @@ class SampleResults(MLEInferenceRes):
         r_hat_thresh: float = DEFAULT_RHAT_THRESH,
         ess_thresh: float = DEFAULT_ESS_THRESH,
         silent: bool = False,
-    ) -> tuple[StrippedTestRes, dict[str, StrippedTestRes]]:
+    ) -> tuple[custom_types.StrippedTestRes, dict[str, custom_types.StrippedTestRes]]:
         """
         Runs the full diagnostics pipeline. Under the hood, this calls, in order:
 
@@ -1299,7 +1302,7 @@ class SampleResults(MLEInferenceRes):
             )
 
             # Get the quantiles of the  failed samples relative to the passed ones
-            failed_quantiles = calculate_relative_quantiles(
+            failed_quantiles = plotting.calculate_relative_quantiles(
                 passed_samples, failed_samples
             )
 
