@@ -29,3 +29,13 @@ def manual_seed(seed: Optional[int] = None):
 
 
 manual_seed()  # Set the seed for the global random number generator
+
+# Import objects that should be easily accessible from the package level
+# pylint: disable=wrong-import-position
+from dms_stan import utils
+
+# Lazy imports for performance and to avoid circular imports
+Constant = utils.lazy_import_from("dms_stan.model.components.constants", "Constant")
+parameters = utils.lazy_import("dms_stan.model.components.parameters")
+Model = utils.lazy_import_from("dms_stan.model.model", "Model")
+results = utils.lazy_import("dms_stan.model.results")

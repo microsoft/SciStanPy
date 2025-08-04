@@ -17,17 +17,20 @@ import torch.nn as nn
 from scipy import stats
 
 import dms_stan
-from dms_stan.model.components import abstract_model_component, constants
+from dms_stan import utils
+
+from dms_stan.model.components import abstract_model_component
 from dms_stan.model.components.custom_distributions import (
     custom_scipy_dists,
     custom_torch_dists,
 )
-from dms_stan.model.components.transformations import (
-    cdfs,
-    transformed_data,
-    transformed_parameters,
-)
+from dms_stan.model.components.transformations import transformed_parameters
 
+cdfs = utils.lazy_import("dms_stan.model.components.transformations.cdfs")
+constants = utils.lazy_import("dms_stan.model.components.constants")
+transformed_data = utils.lazy_import(
+    "dms_stan.model.components.transformations.transformed_data"
+)
 
 # pylint: disable=too-many-lines
 
@@ -281,7 +284,7 @@ class Parameter(
     def cdf(
         self: Union["Parameter", None] = None,
         **params: "dms.custom_types.CombinableParameterType",
-    ) -> cdfs.CDF:
+    ) -> "cdfs.CDF":
         """
         Can be used as a class method or instance method to return the CDF of the
         parameter. If called as a class method, the parameters must be provided.
@@ -291,7 +294,7 @@ class Parameter(
     def ccdf(
         self: Union["Parameter", None] = None,
         **params: "dms.custom_types.CombinableParameterType",
-    ) -> cdfs.SurvivalFunction:
+    ) -> "cdfs.SurvivalFunction":
         """
         Can be used as a class method or instance method to return the complementary
         CDF of the parameter. If called as a class method, the parameters must be
@@ -301,7 +304,7 @@ class Parameter(
     def log_cdf(
         self: Union["Parameter", None] = None,
         **params: "dms.custom_types.CombinableParameterType",
-    ) -> cdfs.LogCDF:
+    ) -> "cdfs.LogCDF":
         """
         Can be used as a class method or instance method to return the log CDF of the
         parameter. If called as a class method, the parameters must be provided.
@@ -311,7 +314,7 @@ class Parameter(
     def log_ccdf(
         self: Union["Parameter", None] = None,
         **params: "dms.custom_types.CombinableParameterType",
-    ) -> cdfs.LogSurvivalFunction:
+    ) -> "cdfs.LogSurvivalFunction":
         """
         Can be used as a class method or instance method to return the log CCDF of the
         parameter. If called as a class method, the parameters must be provided.

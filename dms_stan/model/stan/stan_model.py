@@ -29,6 +29,7 @@ from cmdstanpy import CmdStanModel, format_stan_file
 
 import dms_stan
 
+from dms_stan import utils
 from dms_stan.defaults import (
     DEFAULT_CPP_OPTIONS,
     DEFAULT_FORCE_COMPILE,
@@ -37,7 +38,7 @@ from dms_stan.defaults import (
     DEFAULT_STANC_OPTIONS,
     DEFAULT_USER_HEADER,
 )
-from dms_stan.model import results, stan
+from dms_stan.model import stan
 from dms_stan.model.components import abstract_model_component, constants, parameters
 from dms_stan.model.components.transformations import (
     transformed_data,
@@ -47,6 +48,7 @@ from dms_stan.model.components.transformations import (
 if TYPE_CHECKING:
     from dms_stan import custom_types
 
+results = utils.lazy_import("dms_stan.model.results")
 
 # pylint: disable=too-many-lines
 
@@ -1086,7 +1088,7 @@ class StanModel(CmdStanModel):
         mib_per_chunk: int | None = None,
         use_dask: bool = False,
         **kwargs,
-    ) -> results.SampleResults:
+    ) -> "results.SampleResults":
 
         # Update the sample function from CmdStanModel to automatically pull the
         # data from the StanModel

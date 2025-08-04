@@ -13,6 +13,7 @@ import panel as pn
 import torch
 import xarray as xr
 
+from dms_stan import utils
 from dms_stan.defaults import (
     DEFAULT_CPP_OPTIONS,
     DEFAULT_DIM_NAMES,
@@ -24,8 +25,6 @@ from dms_stan.defaults import (
     DEFAULT_STANC_OPTIONS,
     DEFAULT_USER_HEADER,
 )
-from dms_stan.model import mle as mle_module
-from dms_stan.model import nn_module
 from dms_stan.model.components import abstract_model_component
 from dms_stan.model.components import (
     constants as constants_module,
@@ -35,11 +34,14 @@ from dms_stan.model.components.transformations import (
     transformed_data,
     transformed_parameters as transformed_parameters_module,
 )
-from dms_stan.model.stan import stan_model
-from dms_stan.plotting import prior_predictive
 
 if TYPE_CHECKING:
     from dms_stan.model.results import hmc as hmc_results
+
+mle_module = utils.lazy_import("dms_stan.model.mle")
+nn_module = utils.lazy_import("dms_stan.model.nn_module")
+prior_predictive_module = utils.lazy_import("dms_stan.prior_predictive")
+stan_model = utils.lazy_import("dms_stan.model.stan.stan_model")
 
 
 def model_comps_to_dict(
@@ -431,13 +433,13 @@ class Model:
             return {k.model_varname: v for k, v in draws.items()}
         return draws
 
-    def to_pytorch(self, seed: Optional[int] = None) -> nn_module.PyTorchModel:
+    def to_pytorch(self, seed: Optional[int] = None) -> "nn_module.PyTorchModel":
         """
         Compiles the model to a trainable PyTorch model.
         """
         return nn_module.PyTorchModel(self, seed=seed)
 
-    def to_stan(self, **kwargs) -> stan_model.StanModel:
+    def to_stan(self, **kwargs) -> "stan_model.StanModel":
         """
         Compiles the model to a Stan model.
         """
@@ -451,7 +453,7 @@ class Model:
         data: Optional[dict[str, Union[torch.Tensor, npt.NDArray]]] = None,
         device: int | str = "cpu",
         seed: Optional[int] = None,
-    ) -> mle_module.MLE:
+    ) -> "mle_module.MLE":
         """
         Approximate the maximum likelihood (MLE) estimate of the model parameters.
         Under the hood, this fits a PyTorch model to the data that minimizes the
@@ -509,7 +511,7 @@ class Model:
             for observable in self.observables
         }
 
-    def simulate_mle(self, **kwargs) -> tuple[dict[str, npt.NDArray], mle_module.MLE]:
+    def simulate_mle(self, **kwargs) -> tuple[dict[str, npt.NDArray], "mle_module.MLE"]:
         """
         Samples data from the model prior, then fits a PyTorch model to this sampled
         data. This is useful for debugging, mainly for checking that any peculiarities
@@ -657,7 +659,7 @@ class Model:
         See `dms_stan.prior_predictive.PriorPredictiveCheck` for more details.
         """
         # Create the prior predictive object
-        pp = prior_predictive.PriorPredictiveCheck(self, copy_model=copy_model)
+        pp = prior_predictive_module.PriorPredictiveCheck(self, copy_model=copy_model)
 
         # Return the plot
         return pp.display()
