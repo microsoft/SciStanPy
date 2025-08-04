@@ -1,6 +1,11 @@
 """Utility functions for the DMS Stan package."""
 
-from typing import Collection, Literal, overload
+from __future__ import annotations
+
+import importlib.util
+import sys
+
+from typing import Collection, Literal, overload, TYPE_CHECKING
 
 import dask.config
 import numpy as np
@@ -11,7 +16,85 @@ from arviz.utils import Dask
 from scipy import stats
 from tqdm import tqdm
 
-from dms_stan import custom_types
+if TYPE_CHECKING:
+    from dms_stan import custom_types
+
+
+def lazy_import(name: str):
+    """
+    Used for importing a module only when it is needed. This is for speeding up
+    the import time of the package.
+
+    Args:
+        name: The module name to import (e.g., 'dms_stan.model.components.constants')
+
+    Returns:
+        The imported module
+    """
+    # Check if the module is already imported
+    if name in sys.modules:
+        return sys.modules[name]
+
+    # If not, import it lazily (modified from here:
+    # https://docs.python.org/3/library/importlib.html#implementing-lazy-imports)
+    spec = importlib.util.find_spec(name)
+    spec.loader = importlib.util.LazyLoader(spec.loader)
+    module = importlib.util.module_from_spec(spec)
+
+    # Store with the alias if provided, otherwise use original name
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+class LazyObjectProxy:
+    """A proxy that delays importing a module and accessing an object until first use."""
+
+    def __init__(self, module_name: str, obj_name: str):
+        self._module_name = module_name
+        self._obj_name = obj_name
+        self._cached_obj = None
+
+    def _get_object(self):
+        """Import the module and get the object if not already cached."""
+        if self._cached_obj is None:
+            module = lazy_import(self._module_name)
+            try:
+                self._cached_obj = getattr(module, self._obj_name)
+            except AttributeError as e:
+                raise ImportError(
+                    f"cannot import name '{self._obj_name}' from '{self._module_name}'"
+                ) from e
+        return self._cached_obj
+
+    def __call__(self, *args, **kwargs):
+        """Forward calls to the actual object."""
+        return self._get_object()(*args, **kwargs)
+
+    def __getattr__(self, name):
+        """Forward attribute access to the actual object."""
+        return getattr(self._get_object(), name)
+
+    def __repr__(self):
+        """Return a representation of the proxy."""
+        if self._cached_obj is not None:
+            return repr(self._cached_obj)
+        return f"<LazyObjectProxy for {self._module_name}.{self._obj_name}>"
+
+
+def lazy_import_from(module_name: str, obj_name: str):
+    """
+    Return a proxy that will lazily import a specific object from a module only when first used.
+    Equivalent to 'from module_name import obj_name' but delayed until actual use.
+
+    Args:
+        module_name: The module name to import from (e.g., 'dms_stan.model.components.constants')
+        obj_name: The object name to import (e.g., 'Constant')
+
+    Returns:
+        LazyObjectProxy: A proxy that will import and return the object when first accessed
+    """
+    return LazyObjectProxy(module_name, obj_name)
 
 
 @overload
@@ -19,7 +102,7 @@ def choose_module(dist: torch.Tensor) -> torch: ...
 
 
 @overload
-def choose_module(dist: custom_types.SampleType) -> np: ...
+def choose_module(dist: "custom_types.SampleType") -> np: ...
 
 
 def choose_module(dist):
