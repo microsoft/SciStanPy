@@ -32,12 +32,16 @@ class CDFLike(transformed_parameters.TransformedParameter):
     STAN_SUFFIX: str  # The suffix for the Stan operation, e.g., "cdf"
 
     # Init function makes sure we have the correct parameters before initializing
-    def __init__(self, **kwargs: "custom_types.CombinableParameterType"):
+    def __init__(
+        self,
+        x: "custom_types.CombinableParameterType",
+        **params: "custom_types.CombinableParameterType",
+    ):
 
         # Check if the parameters passed are the ones required for the CDF
-        self.check_parameters(set(kwargs))
+        self.check_parameters(set(params.keys()))
 
-        super().__init__(**kwargs)
+        super().__init__(x=x, **params)
 
     def check_parameters(self, kwargset: set[str]) -> None:
         """Checks if the parameters passed are the ones required for the CDF."""
@@ -63,8 +67,13 @@ class CDFLike(transformed_parameters.TransformedParameter):
         # return the CDF, so child classes need to override this method.
         if module is np:
             return getattr(self.PARAMETER.SCIPY_DIST, self.SCIPY_FUNC)(**draws)
+
+        # Torch separates distribution creation and function operation, so we need
+        # to split out the 'x' value from the draws.
         elif module is torch:
-            return getattr(self.PARAMETER.TORCH_DIST, "cdf")(**draws)
+            draws_copy = draws.copy()
+            val = draws_copy.pop("x")
+            return getattr(self.PARAMETER.TORCH_DIST, "cdf")(**draws_copy)(val)
         else:
             raise TypeError(
                 f"Unsupported module {module} for CDF operation. "
@@ -77,7 +86,7 @@ class CDFLike(transformed_parameters.TransformedParameter):
         func = f"{self.PARAMETER.STAN_DIST}_{self.STAN_SUFFIX}"
         args = ", ".join(kwargs[name] for name in self.PARAMETER.STAN_TO_SCIPY_NAMES)
 
-        return f"{func}({args})"
+        return f"{func}({kwargs['x']} | {args})"
 
 
 class CDF(CDFLike):

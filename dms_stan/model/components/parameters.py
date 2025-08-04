@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import functools
 import re
 
 from abc import ABCMeta
-from functools import partial
 from typing import Callable, Optional, Union
 
 import numpy as np
@@ -71,7 +71,48 @@ class ParameterMeta(ABCMeta):
         )
 
 
-# TODO: Handle the CDF and related methods
+def _gather_cdflike_args(func: Callable) -> Callable:
+    """
+    Decorator for the CDF, CCDF, log CDF, and log CCDF methods of the Parameter
+    class. This modifies the function to use the parameters of the Parameter instance
+    if called as an instance method, or to use the provided parameters if called
+    as a static method.
+    """
+
+    @functools.wraps(func)
+    def inner(self: Optional["Parameter"] = None, **kwargs):
+        """
+        If called as an instance method, use the parameters of the Parameter instance.
+        If called as a static method, use the provided parameters.
+        """
+        # `x` must always be a kwarg
+        if "x" not in kwargs:
+            raise ValueError(
+                "Expected `x` to be a keyword argument for the CDF-like methods."
+            )
+
+        # If called as a static method, then kwargs must be provided. Note that
+        # the names of the kwargs are checked inside the `CDFLike` class.
+        if self is None:
+            if len(kwargs) <= 1:
+                raise ValueError(
+                    f"If calling {func.__name__} as a static method, parameters "
+                    "must be explicitly provided."
+                )
+            return func(self=self, **kwargs)
+
+        # If called as an instance method, kwargs must be empty aside from `x`.
+        # We will use the parameters of the Parameter instance.
+        if len(kwargs) > 1:
+            raise ValueError(
+                f"If calling {func.__name__} as an instance method, only `x` must "
+                "be provided."
+            )
+
+        # pylint: disable=protected-access
+        return func(self=self, **kwargs, **self._parents)
+
+    return inner
 
 
 class Parameter(
@@ -81,10 +122,10 @@ class Parameter(
 
     STAN_DIST: str = ""  # The Stan distribution name
     HAS_RAW_VARNAME: bool = False  # Whether the parameter has a raw variable name
-    CDF = None  # Transformed parameter class for the CDF
-    SF = None  # Transformed parameter class for the survival function (CCDF)
-    LOG_CDF = None  # Transformed parameter class for the log CDF
-    LOG_SF = None  # Transformed parameter for the log survival function (log CCDF)
+    CDF: type[cdfs.CDF]  # CDF transform
+    SF: type[cdfs.SurvivalFunction]  # Survival function (CCDF) transform
+    LOG_CDF: type[cdfs.LogCDF]  # Log CDF transform
+    LOG_SF: type[cdfs.LogSurvivalFunction]  # Log survival function (log CCDF) transform
     SCIPY_DIST: type[stats.rv_continuous] | type[stats.rv_discrete] | None = (
         None  # The SciPy distribution
     )
@@ -284,45 +325,51 @@ class Parameter(
         # None by default
         return ""
 
+    @_gather_cdflike_args
     def cdf(
-        self: Union["Parameter", None] = None,
+        self: Optional["Parameter"] = None,
         **params: "dms.custom_types.CombinableParameterType",
     ) -> "cdfs.CDF":
         """
-        Can be used as a class method or instance method to return the CDF of the
-        parameter. If called as a class method, the parameters must be provided.
+        Can be used as a static method or instance method to return the CDF of the
+        parameter. If called as a static method, the parameters must be provided.
         Otherwise, the parent parameters are used to calculate the CDF.
         """
+        return self.CDF(**params)
 
+    @_gather_cdflike_args
     def ccdf(
-        self: Union["Parameter", None] = None,
+        self: Optional["Parameter"] = None,
         **params: "dms.custom_types.CombinableParameterType",
     ) -> "cdfs.SurvivalFunction":
         """
-        Can be used as a class method or instance method to return the complementary
-        CDF of the parameter. If called as a class method, the parameters must be
+        Can be used as a static method or instance method to return the complementary
+        CDF of the parameter. If called as a static method, the parameters must be
         provided. Otherwise, the parent parameters are used to calculate the CCDF.
         """
+        return self.SF(**params)
 
     def log_cdf(
-        self: Union["Parameter", None] = None,
+        self: Optional["Parameter"] = None,
         **params: "dms.custom_types.CombinableParameterType",
     ) -> "cdfs.LogCDF":
         """
-        Can be used as a class method or instance method to return the log CDF of the
-        parameter. If called as a class method, the parameters must be provided.
+        Can be used as a static method or instance method to return the log CDF of the
+        parameter. If called as a static method, the parameters must be provided.
         Otherwise, the parent parameters are used to calculate the log CDF.
         """
+        return self.LOG_CDF(**params)
 
     def log_ccdf(
-        self: Union["Parameter", None] = None,
+        self: Optional["Parameter"] = None,
         **params: "dms.custom_types.CombinableParameterType",
     ) -> "cdfs.LogSurvivalFunction":
         """
-        Can be used as a class method or instance method to return the log CCDF of the
-        parameter. If called as a class method, the parameters must be provided.
+        Can be used as a static method or instance method to return the log CCDF of the
+        parameter. If called as a static method, the parameters must be provided.
         Otherwise, the parent parameters are used to calculate the log CCDF.
         """
+        return self.LOG_SF(**params)
 
     def __str__(self) -> str:
         right_side = (
@@ -881,7 +928,7 @@ class _MultinomialBase(DiscreteDistribution):
     """Defines the base multinomial distribution."""
 
     STAN_TO_NP_TRANSFORMS = {
-        "N": partial(np.squeeze, axis=-1)
+        "N": functools.partial(np.squeeze, axis=-1)
     }  # Squeeze the N parameter to match the numpy distribution's expected shape
 
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
