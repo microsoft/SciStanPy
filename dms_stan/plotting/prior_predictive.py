@@ -16,8 +16,8 @@ import xarray as xr
 
 from param.parameterized import Event
 
-from dms_stan.model import components
-from dms_stan.model import Model
+from dms_stan import model as dms_model
+from dms_stan.model.components import constants
 
 # We need a regular expression for separating the variable name from its indices
 _INDEX_EXTRACTOR = re.compile(r"([A-Za-z0-9_\.]+)\[?([0-9, ]*)\]?")
@@ -26,7 +26,7 @@ _INDEX_EXTRACTOR = re.compile(r"([A-Za-z0-9_\.]+)\[?([0-9, ]*)\]?")
 class PriorPredictiveCheck:
     """Base class for prior predictive checks."""
 
-    def __init__(self, model: Model, copy_model: bool = False):
+    def __init__(self, model: "dms_model.Model", copy_model: bool = False):
 
         # Copy the model if requested. If we don't copy, then we can modify our
         # values on the model directly.
@@ -39,7 +39,7 @@ class PriorPredictiveCheck:
             options=[
                 k
                 for k, v in self.model.named_model_components_dict.items()
-                if not isinstance(v, components.constants.Constant)
+                if not isinstance(v, constants.Constant)
             ],
             value=self.model.observables[0].model_varname,
         )
@@ -105,7 +105,7 @@ class PriorPredictiveCheck:
 
             # Skip non-constants and non-togglable parameters
             if (
-                not isinstance(hyperparam_val, components.constants.Constant)
+                not isinstance(hyperparam_val, constants.Constant)
                 or not hyperparam_val.is_togglable
             ):
                 continue

@@ -8,7 +8,7 @@ import numpy.typing as npt
 import torch
 
 from dms_stan.exceptions import NumpySampleError
-from dms_stan.model.components import constants, parameters, transformations
+from dms_stan.model import components
 
 
 class AbstractModelComponent(ABC):
@@ -128,7 +128,7 @@ class AbstractModelComponent(ABC):
             else:
                 lower_bound = None
                 upper_bound = None
-            self._parents[name] = constants.Constant(
+            self._parents[name] = components.constants.Constant(
                 value=val,
                 lower_bound=lower_bound,
                 upper_bound=upper_bound,
@@ -451,13 +451,16 @@ class AbstractModelComponent(ABC):
         """
         # Get variables that make up the right side of the statement. These will
         # be the parent parameters of the current parameter.
-        components: dict[str, str] = {}
+        model_components: dict[str, str] = {}
         for name, param in self._parents.items():
 
             # If the parameter is a constant or another parameter OR it is a named
             # transformed parameter, we get its indexed variable name
             if (
-                isinstance(param, (constants.Constant, parameters.Parameter))
+                isinstance(
+                    param,
+                    (components.constants.Constant, components.parameters.Parameter),
+                )
                 or param.is_named
             ):
                 components[name] = param.get_indexed_varname(index_opts)
@@ -465,14 +468,14 @@ class AbstractModelComponent(ABC):
             # Otherwise, we need to get the thread of operations that make up the
             # transformation for the parameter. This is equivalent to calling the
             # get_right_side method of the parameter.
-            elif isinstance(param, transformations.TransformedParameter):
-                components[name] = param.get_right_side(index_opts)
+            elif isinstance(param, components.transformations.TransformedParameter):
+                model_components[name] = param.get_right_side(index_opts)
 
             # Otherwise, raise an error
             else:
                 raise TypeError(f"Unknown model component type {type(param)}")
 
-        return components
+        return model_components
 
     def get_right_side_components(self) -> list["AbstractModelComponent"]:
         """
@@ -481,22 +484,27 @@ class AbstractModelComponent(ABC):
         """
         # Recurse over the parents up until we reach a named one or the top of the
         # tree
-        components = []
+        model_components = []
         for component in self._parents.values():
             # If named, a parameter, or a constant, we can just add it to the list
             if (
-                isinstance(component, (constants.Constant, parameters.Parameter))
+                isinstance(
+                    component,
+                    (components.constants.Constant, components.parameters.Parameter),
+                )
                 or component.is_named
             ):
-                components.append(component)
+                model_components.append(component)
                 continue
 
             # Otherwise, this must be a transformed parameter that is not named
             # and we need to recurse up to the first named parameter
-            assert isinstance(component, transformations.TransformedParameter)
-            components.extend(component.get_right_side_components())
+            assert isinstance(
+                component, components.transformations.TransformedParameter
+            )
+            model_components.extend(component.get_right_side_components())
 
-        return components
+        return model_components
 
     def declare_stan_variable(self, varname: str) -> str:
         """Declares a variable in Stan code."""
@@ -655,7 +663,7 @@ class AbstractModelComponent(ABC):
                 f"{child.model_varname}.{name}"
                 for child, name in self.get_child_paramnames().items()
                 if not isinstance(
-                    child, transformations.transformed_data.TransformedData
+                    child, components.transformations.transformed_data.TransformedData
                 )
             ]
         )
@@ -683,7 +691,7 @@ class AbstractModelComponent(ABC):
         return {
             name: component
             for name, component in self._parents.items()
-            if isinstance(component, constants.Constant)
+            if isinstance(component, components.constants.Constant)
         }
 
     @property

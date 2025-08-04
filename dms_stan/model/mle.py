@@ -10,8 +10,8 @@ import torch
 import xarray as xr
 
 from dms_stan import custom_types
-from dms_stan.model import Model
-from dms_stan.model.results import MLEInferenceRes
+from dms_stan import model as dms_model
+from dms_stan.model import results
 
 
 class MLEParam:
@@ -61,7 +61,7 @@ class MLE:
 
     def __init__(
         self,
-        model: Model,
+        model: "dms_model.Model",
         mle_estimate: dict[str, npt.NDArray],
         distributions: dict[str, torch.distributions.Distribution],
         losses: npt.NDArray,
@@ -185,7 +185,7 @@ class MLE:
         *,
         seed: Optional[int] = None,
         batch_size: Optional[int] = None,
-    ) -> MLEInferenceRes:
+    ) -> results.MLEInferenceRes:
         """Builds an inference data object from the MLE estimate."""
         # Get the samples from the posterior
         draws = self.draw(n, seed=seed, as_xarray=True, batch_size=batch_size)
@@ -225,4 +225,4 @@ class MLE:
                 ]
             ],
         )
-        return MLEInferenceRes(inference_data)
+        return results.MLEInferenceRes(inference_data)

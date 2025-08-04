@@ -22,13 +22,25 @@ from dms_stan.defaults import (
     DEFAULT_STANC_OPTIONS,
     DEFAULT_USER_HEADER,
 )
-from dms_stan.model import components, mle, nn_module, results, stan
-from dms_stan.plotting.prior_predictive import PriorPredictiveCheck
+from dms_stan.model import mle as mle_module
+from dms_stan.model import nn_module
+from dms_stan.model.components import abstract_model_component
+from dms_stan.model.components import (
+    constants as constants_module,
+    parameters as parameters_module,
+)
+from dms_stan.model.components.transformations import (
+    transformed_data,
+    transformed_parameters as transformed_parameters_module,
+)
+from dms_stan.model.results import hmc as hmc_results
+from dms_stan.model.stan import stan_model
+from dms_stan.plotting import prior_predictive
 
 
 def model_comps_to_dict(
-    model_comps: Iterable[components.abstract_model_component.AbstractModelComponent],
-) -> dict[str, components.abstract_model_component.AbstractModelComponent]:
+    model_comps: Iterable[abstract_model_component.AbstractModelComponent],
+) -> dict[str, abstract_model_component.AbstractModelComponent]:
     """
     Converts a list of components to a dictionary where the keys are the model variable
     names of the components.
@@ -36,7 +48,7 @@ def model_comps_to_dict(
     return {comp.model_varname: comp for comp in model_comps}
 
 
-def run_delayed_mcmc(filepath: str) -> results.SampleResults:
+def run_delayed_mcmc(filepath: str) -> hmc_results.SampleResults:
     """
     Runs a delayed MCMC run created by calling `Model.mcmc()` with `delay_run=True`.
     The filepath should be the path to the pickled object that resulted from this
@@ -60,7 +72,7 @@ def run_delayed_mcmc(filepath: str) -> results.SampleResults:
 class Model:
     """
     A metaclass that modifies the __init__ method of a class to register all instance
-    variables that are instances of the `components.parameters.Parameter` class
+    variables that are instances of the `parameters_module.Parameter` class
     and observables in the `_observables` attribute and all that are not observables
     in the `_parameters` attribute.
     """
@@ -76,11 +88,11 @@ class Model:
         self._default_data: dict[str, npt.NDArray] | None = default_data
 
         self._named_model_components: tuple[
-            components.abstract_model_component.AbstractModelComponent, ...
+            abstract_model_component.AbstractModelComponent, ...
         ] = getattr(self, "_named_model_components", ())
 
         self._model_varname_to_object: dict[
-            str, components.abstract_model_component.AbstractModelComponent
+            str, abstract_model_component.AbstractModelComponent
         ] = getattr(self, "_model_varname_to_object", {})
 
         self._init_complete: bool = getattr(self, "_init_complete", False)
@@ -120,7 +132,7 @@ class Model:
             for attr in vars(self).keys():
                 if not isinstance(
                     retrieved := getattr(self, attr),
-                    components.abstract_model_component.AbstractModelComponent,
+                    abstract_model_component.AbstractModelComponent,
                 ):
                     continue
 
@@ -164,17 +176,17 @@ class Model:
 
     def _build_model_varname_to_object(
         self,
-    ) -> dict[str, components.abstract_model_component.AbstractModelComponent]:
+    ) -> dict[str, abstract_model_component.AbstractModelComponent]:
         """Builds a mapping between model varnames and objects for easy access."""
 
         def build_initial_mapping() -> (
-            dict[str, components.abstract_model_component.AbstractModelComponent]
+            dict[str, abstract_model_component.AbstractModelComponent]
         ):
             """Builds an initial mapping of model varnames to objects."""
 
             # Start from each observable and walk up the tree to the root
             model_varname_to_object: dict[
-                str, components.abstract_model_component.AbstractModelComponent
+                str, abstract_model_component.AbstractModelComponent
             ] = {}
             for observable in self.observables:
 
@@ -183,7 +195,7 @@ class Model:
                 model_varname_to_object[observable.model_varname] = observable
 
                 # Add all parents to the mapping and make sure
-                # `components.parameters.Parameter` instances are explicitly defined.
+                # `parameters_module.Parameter` instances are explicitly defined.
                 for *_, parent in observable.walk_tree(walk_down=False):
 
                     # If the parent is already in the mapping, make sure it is the
@@ -203,7 +215,7 @@ class Model:
                 for child in component._children:  # pylint: disable=protected-access
                     if isinstance(
                         child,
-                        components.transformations.transformed_data.TransformedData,
+                        transformed_data.TransformedData,
                     ):
                         assert child.model_varname not in model_varname_to_object
                         model_varname_to_object[child.model_varname] = child
@@ -293,9 +305,7 @@ class Model:
 
     def _dict_to_xarray(
         self,
-        draws: dict[
-            components.abstract_model_component.AbstractModelComponent, npt.NDArray
-        ],
+        draws: dict[abstract_model_component.AbstractModelComponent, npt.NDArray],
     ) -> xr.Dataset:
         """
         Builds the kwargs for the xarray dataset. The data values are the
@@ -307,7 +317,7 @@ class Model:
             *[
                 [comp, draw]
                 for comp, draw in draws.items()
-                if not isinstance(comp, components.constants.Constant)
+                if not isinstance(comp, constants_module.Constant)
             ]
         )
         coordinates = list(
@@ -316,7 +326,7 @@ class Model:
                     [parent, parent.value]
                     for component in self.all_model_components
                     for parent in component.parents
-                    if isinstance(parent, components.constants.Constant)
+                    if isinstance(parent, constants_module.Constant)
                     and np.prod(parent.shape) > 1
                 ]
             )
@@ -364,9 +374,7 @@ class Model:
         named_only: Literal[False],
         as_xarray: Literal[False],
         seed: Optional[int],
-    ) -> dict[
-        components.abstract_model_component.AbstractModelComponent, npt.NDArray
-    ]: ...
+    ) -> dict[abstract_model_component.AbstractModelComponent, npt.NDArray]: ...
 
     @overload
     def draw(
@@ -401,9 +409,7 @@ class Model:
                 the model components and the values are the samples drawn.
         """
         # Draw from all observables
-        draws: dict[
-            components.abstract_model_component.AbstractModelComponent, npt.NDArray
-        ] = {}
+        draws: dict[abstract_model_component.AbstractModelComponent, npt.NDArray] = {}
         for observable in self.observables:
             _, draws = observable.draw(n, _drawn=draws, seed=seed)
 
@@ -427,11 +433,11 @@ class Model:
         """
         return nn_module.PyTorchModel(self, seed=seed)
 
-    def to_stan(self, **kwargs) -> stan.stan_model.StanModel:
+    def to_stan(self, **kwargs) -> stan_model.StanModel:
         """
         Compiles the model to a Stan model.
         """
-        return stan.stan_model.StanModel(self, **kwargs)
+        return stan_model.StanModel(self, **kwargs)
 
     def mle(
         self,
@@ -441,7 +447,7 @@ class Model:
         data: Optional[dict[str, Union[torch.Tensor, npt.NDArray]]] = None,
         device: int | str = "cpu",
         seed: Optional[int] = None,
-    ) -> mle.MLE:
+    ) -> mle_module.MLE:
         """
         Approximate the maximum likelihood (MLE) estimate of the model parameters.
         Under the hood, this fits a PyTorch model to the data that minimizes the
@@ -483,7 +489,7 @@ class Model:
         distributions = pytorch_model.export_distributions()
 
         # Return the MLE estimate, the distributions, and the loss trajectory
-        return mle.MLE(
+        return mle_module.MLE(
             model=self,
             mle_estimate=max_likelihood,
             distributions=distributions,
@@ -499,7 +505,7 @@ class Model:
             for observable in self.observables
         }
 
-    def simulate_mle(self, **kwargs) -> tuple[dict[str, npt.NDArray], mle.MLE]:
+    def simulate_mle(self, **kwargs) -> tuple[dict[str, npt.NDArray], mle_module.MLE]:
         """
         Samples data from the model prior, then fits a PyTorch model to this sampled
         data. This is useful for debugging, mainly for checking that any peculiarities
@@ -510,7 +516,8 @@ class Model:
         Returns:
             dict[str, npt.NDArray]: A dictionary where the keys are the names of
                 the observable parameters and the values are the samples drawn.
-            mle.MLE: The mle.MLE object resulting from the fit to the simulated data.
+            mle_module.MLE: The mle_module.MLE object resulting from the fit to
+                the simulated data.
         """
         # TODO: This and the other simulate method should include non-observables
         # in the returned MLE as well.
@@ -534,7 +541,7 @@ class Model:
         data: Optional[dict[str, npt.NDArray]],
         delay_run: Literal[False],
         **sample_kwargs,
-    ) -> results.SampleResults: ...
+    ) -> hmc_results.SampleResults: ...
     @overload
     def mcmc(
         self,
@@ -580,7 +587,7 @@ class Model:
             )
 
         # Build the Stan model
-        stan_model = self.to_stan(
+        model = self.to_stan(
             output_dir=output_dir,
             force_compile=force_compile,
             stanc_options=stanc_options,
@@ -590,7 +597,7 @@ class Model:
         )
 
         # Update the output directory in the sample kwargs
-        sample_kwargs["output_dir"] = os.path.abspath(stan_model.output_dir)
+        sample_kwargs["output_dir"] = os.path.abspath(model.output_dir)
 
         # If delaying, then we save the data needed for sampling and return
         if delay_run:
@@ -598,13 +605,13 @@ class Model:
                 (
                     delay_run
                     if isinstance(delay_run, str)
-                    else f"{stan_model.stan_executable_path}-delay.pkl"
+                    else f"{model.stan_executable_path}-delay.pkl"
                 ),
                 "wb",
             ) as f:
                 pickle.dump(
                     {
-                        "stan_model": stan_model,
+                        "stan_model": model,
                         "sample_kwargs": sample_kwargs,
                         "data": data,
                         "inits": inits,
@@ -614,12 +621,12 @@ class Model:
             return
 
         # Sample from the model
-        return stan_model.sample(inits=inits, data=data, **sample_kwargs)
+        return model.sample(inits=inits, data=data, **sample_kwargs)
 
     @overload
     def simulate_mcmc(
         self, delay_run: Literal[False], **kwargs
-    ) -> tuple[dict[str, npt.NDArray], results.SampleResults]: ...
+    ) -> tuple[dict[str, npt.NDArray], hmc_results.SampleResults]: ...
     @overload
     def simulate_mcmc(self, delay_run: Literal[True], **kwargs) -> None: ...
 
@@ -646,7 +653,7 @@ class Model:
         See `dms_stan.prior_predictive.PriorPredictiveCheck` for more details.
         """
         # Create the prior predictive object
-        pp = PriorPredictiveCheck(self, copy_model=copy_model)
+        pp = prior_predictive.PriorPredictiveCheck(self, copy_model=copy_model)
 
         # Return the plot
         return pp.display()
@@ -658,7 +665,7 @@ class Model:
             "Constants": [
                 el
                 for el in self.all_model_components
-                if isinstance(el, components.constants.Constant)
+                if isinstance(el, constants_module.Constant)
             ],
             "Transformed Parameters": self.transformed_parameters,
             "Parameters": self.parameters,
@@ -678,7 +685,7 @@ class Model:
 
     def __getitem__(
         self, paramname: str
-    ) -> components.abstract_model_component.AbstractModelComponent:
+    ) -> abstract_model_component.AbstractModelComponent:
         """Returns the parameter or observable with the given name."""
         return self._model_varname_to_object[paramname]
 
@@ -745,21 +752,21 @@ class Model:
     @property
     def named_model_components(
         self,
-    ) -> tuple[components.abstract_model_component.AbstractModelComponent, ...]:
+    ) -> tuple[abstract_model_component.AbstractModelComponent, ...]:
         """Returns the named model components sorted by the model variable name."""
         return self._named_model_components
 
     @property
     def named_model_components_dict(
         self,
-    ) -> dict[str, components.abstract_model_component.AbstractModelComponent]:
+    ) -> dict[str, abstract_model_component.AbstractModelComponent]:
         """Returns the named model components as a dictionary."""
         return model_comps_to_dict(self.named_model_components)
 
     @property
     def all_model_components(
         self,
-    ) -> tuple[components.abstract_model_component.AbstractModelComponent, ...]:
+    ) -> tuple[abstract_model_component.AbstractModelComponent, ...]:
         """Returns all model components sorted by the model variable name."""
         return tuple(
             sorted(
@@ -770,51 +777,51 @@ class Model:
     @property
     def all_model_components_dict(
         self,
-    ) -> dict[str, components.abstract_model_component.AbstractModelComponent]:
+    ) -> dict[str, abstract_model_component.AbstractModelComponent]:
         """Returns all model components as a dictionary."""
         return self._model_varname_to_object
 
     @property
-    def parameters(self) -> tuple[components.parameters.Parameter, ...]:
+    def parameters(self) -> tuple[parameters_module.Parameter, ...]:
         """Returns the parameters of the model."""
         return tuple(
             filter(
-                lambda x: isinstance(x, components.parameters.Parameter)
+                lambda x: isinstance(x, parameters_module.Parameter)
                 and not x.observable,
                 self.all_model_components,
             )
         )
 
     @property
-    def parameter_dict(self) -> dict[str, components.parameters.Parameter]:
+    def parameter_dict(self) -> dict[str, parameters_module.Parameter]:
         """Returns the parameters of the model as a dictionary."""
         return model_comps_to_dict(self.parameters)
 
     @property
-    def hyperparameters(self) -> tuple[components.parameters.Parameter, ...]:
+    def hyperparameters(self) -> tuple[parameters_module.Parameter, ...]:
         """
-        Returns the hyperparameters of the model. These are `components.parameters.Parameter`
+        Returns the hyperparameters of the model. These are `parameters_module.Parameter`
         instances whose parents are constants.
         """
         return tuple(filter(lambda x: x.is_hyperparameter, self.parameters))
 
     @property
-    def hyperparameter_dict(self) -> dict[str, components.parameters.Parameter]:
+    def hyperparameter_dict(self) -> dict[str, parameters_module.Parameter]:
         """
         Returns the hyperparameters of the model as a dictionary. These are
-        `components.parameters.Parameter` instances whose parents are constants.
+        `parameters_module.Parameter` instances whose parents are constants.
         """
         return model_comps_to_dict(self.hyperparameters)
 
     @property
     def transformed_parameters(
         self,
-    ) -> tuple[components.transformations.TransformedParameter, ...]:
+    ) -> tuple[transformed_parameters_module.TransformedParameter, ...]:
         """Returns the transformed parameters of the model."""
         return tuple(
             filter(
                 lambda x: isinstance(
-                    x, components.transformations.TransformedParameter
+                    x, transformed_parameters_module.TransformedParameter
                 ),
                 self.named_model_components,
             )
@@ -823,22 +830,22 @@ class Model:
     @property
     def transformed_parameter_dict(
         self,
-    ) -> dict[str, components.transformations.TransformedParameter]:
+    ) -> dict[str, transformed_parameters_module.TransformedParameter]:
         """Returns the transformed parameters of the model as a dictionary."""
         return model_comps_to_dict(self.transformed_parameters)
 
     @property
-    def constants(self) -> tuple[components.constants.Constant, ...]:
+    def constants(self) -> tuple[constants_module.Constant, ...]:
         """Returns named constants of the model"""
         return tuple(
             filter(
-                lambda x: isinstance(x, components.constants.Constant),
+                lambda x: isinstance(x, constants_module.Constant),
                 self.named_model_components,
             )
         )
 
     @property
-    def constant_dict(self) -> dict[str, components.constants.Constant]:
+    def constant_dict(self) -> dict[str, constants_module.Constant]:
         """
         Returns the hyperparameters of the model. These are explicitly defined
         constants and constants implicit to the model based on parameter definitions.
@@ -846,17 +853,16 @@ class Model:
         return model_comps_to_dict(self.constants)
 
     @property
-    def observables(self) -> tuple[components.parameters.Parameter, ...]:
+    def observables(self) -> tuple[parameters_module.Parameter, ...]:
         """Returns the observables of the model."""
         return tuple(
             filter(
-                lambda x: isinstance(x, components.parameters.Parameter)
-                and x.observable,
+                lambda x: isinstance(x, parameters_module.Parameter) and x.observable,
                 self.named_model_components,
             )
         )
 
     @property
-    def observable_dict(self) -> dict[str, components.parameters.Parameter]:
+    def observable_dict(self) -> dict[str, parameters_module.Parameter]:
         """Returns the observables of the model as a dictionary."""
         return model_comps_to_dict(self.observables)

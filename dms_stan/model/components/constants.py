@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 import torch
 
-from dms_stan.components import abstract_model_component
+from dms_stan.model.components import abstract_model_component
 
 
 class Constant(abstract_model_component.AbstractModelComponent):

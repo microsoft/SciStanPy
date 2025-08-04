@@ -15,12 +15,17 @@ import torch.nn as nn
 from scipy import stats
 
 import dms_stan
-from dms_stan.model.components import (
-    abstract_model_component,
-    constants,
-    custom_distributions,
-    transformations,
+from dms_stan.model.components import abstract_model_component, constants
+from dms_stan.model.components.custom_distributions import (
+    custom_scipy_dists,
+    custom_torch_dists,
 )
+from dms_stan.model.components.transformations import (
+    cdfs,
+    transformed_data,
+    transformed_parameters,
+)
+
 
 # pylint: disable=too-many-lines
 
@@ -53,17 +58,11 @@ class ParameterMeta(ABCMeta):
         super().__init__(name, bases, attrs)
 
         # Add CDF, SF, LOG_CDF, and LOG_SF classes to the Parameter subclass
-        cls.CDF = type(f"{name}CDF", (transformations.cdf.CDF,), {"PARAMETER": cls})
-        cls.SF = type(
-            f"{name}SF", (transformations.cdf.SurvivalFunction,), {"PARAMETER": cls}
-        )
-        cls.LOG_CDF = type(
-            f"{name}LOG_CDF", (transformations.cdf.LogCDF,), {"PARAMETER": cls}
-        )
+        cls.CDF = type(f"{name}CDF", (cdfs.CDF,), {"PARAMETER": cls})
+        cls.SF = type(f"{name}SF", (cdfs.SurvivalFunction,), {"PARAMETER": cls})
+        cls.LOG_CDF = type(f"{name}LOG_CDF", (cdfs.LogCDF,), {"PARAMETER": cls})
         cls.LOG_SF = type(
-            f"{name}LOG_SF",
-            (transformations.cdf.LogSurvivalFunction,),
-            {"PARAMETER": cls},
+            f"{name}LOG_SF", (cdfs.LogSurvivalFunction,), {"PARAMETER": cls}
         )
 
 
@@ -83,7 +82,7 @@ class Parameter(
     )
     TORCH_DIST: (
         type[dist.distribution.Distribution]
-        | type[custom_distributions.custom_torch_dists.CustomDistribution]
+        | type[custom_torch_dists.CustomDistribution]
         | None
     ) = None  # The PyTorch distribution class
     STAN_TO_SCIPY_NAMES: dict[str, str] = {}  # Mapping from Stan to SciPy names
@@ -280,7 +279,7 @@ class Parameter(
     def cdf(
         self: Union["Parameter", None] = None,
         **params: "dms.custom_types.CombinableParameterType",
-    ) -> transformations.cdf.CDF:
+    ) -> cdfs.CDF:
         """
         Can be used as a class method or instance method to return the CDF of the
         parameter. If called as a class method, the parameters must be provided.
@@ -290,7 +289,7 @@ class Parameter(
     def ccdf(
         self: Union["Parameter", None] = None,
         **params: "dms.custom_types.CombinableParameterType",
-    ) -> transformations.cdf.SurvivalFunction:
+    ) -> cdfs.SurvivalFunction:
         """
         Can be used as a class method or instance method to return the complementary
         CDF of the parameter. If called as a class method, the parameters must be
@@ -300,7 +299,7 @@ class Parameter(
     def log_cdf(
         self: Union["Parameter", None] = None,
         **params: "dms.custom_types.CombinableParameterType",
-    ) -> transformations.cdf.LogCDF:
+    ) -> cdfs.LogCDF:
         """
         Can be used as a class method or instance method to return the log CDF of the
         parameter. If called as a class method, the parameters must be provided.
@@ -310,7 +309,7 @@ class Parameter(
     def log_ccdf(
         self: Union["Parameter", None] = None,
         **params: "dms.custom_types.CombinableParameterType",
-    ) -> transformations.cdf.LogSurvivalFunction:
+    ) -> cdfs.LogSurvivalFunction:
         """
         Can be used as a class method or instance method to return the log CCDF of the
         parameter. If called as a class method, the parameters must be provided.
@@ -407,7 +406,7 @@ class Parameter(
     def observable(self) -> bool:
         """Observable if the parameter has no children or it is set as such."""
         return self._observable or all(
-            isinstance(child, transformations.transformed_data.TransformedData)
+            isinstance(child, transformed_data.TransformedData)
             for child in self._children
         )
 
@@ -429,7 +428,7 @@ class Parameter(
         return ""
 
 
-class ContinuousDistribution(Parameter, transformations.TransformableParameter):
+class ContinuousDistribution(Parameter, transformed_parameters.TransformableParameter):
     """Base class for parameters represented by continuous distributions."""
 
 
@@ -554,8 +553,8 @@ class ExpNormal(ContinuousDistribution):
 
     POSITIVE_PARAMS = {"sigma"}
     STAN_DIST = "expnormal"
-    SCIPY_DIST = custom_distributions.custom_scipy_dists.expnormal
-    TORCH_DIST = custom_distributions.custom_torch_dists.ExpNormal
+    SCIPY_DIST = custom_scipy_dists.expnormal
+    TORCH_DIST = custom_torch_dists.ExpNormal
     STAN_TO_SCIPY_NAMES = {"mu": "loc", "sigma": "scale"}
     STAN_TO_TORCH_NAMES = {"mu": "loc", "sigma": "scale"}
 
@@ -674,8 +673,8 @@ class ExpExponential(Exponential):
 
     LOWER_BOUND = None
     STAN_DIST = "expexponential"
-    SCIPY_DIST = custom_distributions.custom_scipy_dists.expexponential
-    TORCH_DIST = custom_distributions.custom_torch_dists.ExpExponential
+    SCIPY_DIST = custom_scipy_dists.expexponential
+    TORCH_DIST = custom_torch_dists.ExpExponential
     STAN_TO_SCIPY_NAMES = {"beta": "scale"}
     STAN_TO_TORCH_NAMES = {"beta": "rate"}
     STAN_TO_SCIPY_TRANSFORMS = {
@@ -700,7 +699,7 @@ class Lomax(ContinuousDistribution):
     POSITIVE_PARAMS = {"lambda_", "alpha"}
     STAN_DIST = "pareto_type_2"
     SCIPY_DIST = stats.lomax
-    TORCH_DIST = custom_distributions.custom_torch_dists.Lomax
+    TORCH_DIST = custom_torch_dists.Lomax
     STAN_TO_SCIPY_NAMES = {"lambda_": "scale", "alpha": "c"}
     STAN_TO_TORCH_NAMES = {"lambda_": "lambda_", "alpha": "alpha"}
 
@@ -719,8 +718,8 @@ class ExpLomax(Lomax):
 
     LOWER_BOUND = None
     STAN_DIST = "explomax"
-    SCIPY_DIST = custom_distributions.custom_scipy_dists.explomax
-    TORCH_DIST = custom_distributions.custom_torch_dists.ExpLomax
+    SCIPY_DIST = custom_scipy_dists.explomax
+    TORCH_DIST = custom_torch_dists.ExpLomax
     STAN_TO_SCIPY_NAMES = {"lambda_": "scale", "alpha": "c"}
     STAN_TO_TORCH_NAMES = {"lambda_": "lambda_", "alpha": "alpha"}
 
@@ -737,7 +736,7 @@ class Dirichlet(ContinuousDistribution):
     IS_SIMPLEX = True
     STAN_DIST = "dirichlet"
     POSITIVE_PARAMS = {"alpha"}
-    SCIPY_DIST = custom_distributions.custom_scipy_dists.dirichlet
+    SCIPY_DIST = custom_scipy_dists.dirichlet
     TORCH_DIST = dist.dirichlet.Dirichlet
     STAN_TO_SCIPY_NAMES = {"alpha": "alpha"}
     STAN_TO_TORCH_NAMES = {"alpha": "concentration"}
@@ -784,8 +783,8 @@ class ExpDirichlet(Dirichlet):
     UPPER_BOUND = 0.0
     STAN_DIST = "expdirichlet"
     HAS_RAW_VARNAME = True
-    SCIPY_DIST = custom_distributions.custom_scipy_dists.expdirichlet
-    TORCH_DIST = custom_distributions.custom_torch_dists.ExpDirichlet
+    SCIPY_DIST = custom_scipy_dists.expdirichlet
+    TORCH_DIST = custom_torch_dists.ExpDirichlet
     STAN_TO_SCIPY_NAMES = {"alpha": "alpha"}
     STAN_TO_TORCH_NAMES = {"alpha": "concentration"}
 
@@ -892,8 +891,8 @@ class Multinomial(_MultinomialBase):
 
     SIMPLEX_PARAMS = {"theta"}
     STAN_DIST = "multinomial"
-    SCIPY_DIST = custom_distributions.custom_scipy_dists.multinomial
-    TORCH_DIST = custom_distributions.custom_torch_dists.Multinomial
+    SCIPY_DIST = custom_scipy_dists.multinomial
+    TORCH_DIST = custom_torch_dists.Multinomial
     STAN_TO_SCIPY_NAMES = {"theta": "p", "N": "n"}
     STAN_TO_TORCH_NAMES = {"theta": "probs", "N": "total_count"}
 
@@ -908,8 +907,8 @@ class MultinomialLogit(_MultinomialBase):
     """
 
     STAN_DIST = "multinomial_logit"
-    SCIPY_DIST = custom_distributions.custom_scipy_dists.multinomial_logit
-    TORCH_DIST = custom_distributions.custom_torch_dists.MultinomialLogit
+    SCIPY_DIST = custom_scipy_dists.multinomial_logit
+    TORCH_DIST = custom_torch_dists.MultinomialLogit
     STAN_TO_SCIPY_NAMES = {"gamma": "logits", "N": "n"}
     STAN_TO_TORCH_NAMES = {"gamma": "logits", "N": "total_count"}
 
@@ -921,8 +920,8 @@ class MultinomialLogTheta(_MultinomialBase):
 
     LOG_SIMPLEX_PARAMS = {"log_theta"}
     STAN_DIST = "multinomial_logtheta"
-    SCIPY_DIST = custom_distributions.custom_scipy_dists.multinomial_log_theta
-    TORCH_DIST = custom_distributions.custom_torch_dists.MultinomialLogTheta
+    SCIPY_DIST = custom_scipy_dists.multinomial_log_theta
+    TORCH_DIST = custom_torch_dists.MultinomialLogTheta
     STAN_TO_SCIPY_NAMES = {"log_theta": "log_p", "N": "n"}
     STAN_TO_TORCH_NAMES = {"log_theta": "log_probs", "N": "total_count"}
 
@@ -941,9 +940,7 @@ class MultinomialLogTheta(_MultinomialBase):
         # assumes that the instance will be an observable parameter, so we modify
         # the `_record_child` function to remove the coefficient as soon as something
         # is added to the children.
-        self._coefficient = transformations.transformed_data.LogMultinomialCoefficient(
-            self
-        )
+        self._coefficient = transformed_data.LogMultinomialCoefficient(self)
 
     def _record_child(
         self, child: abstract_model_component.AbstractModelComponent
@@ -951,9 +948,7 @@ class MultinomialLogTheta(_MultinomialBase):
         """Handles removal of the coefficient when a child is added."""
         # If this is not a multinomial coefficient, then we have to remove that
         # coefficient from the children.
-        if not isinstance(
-            child, transformations.transformed_data.LogMultinomialCoefficient
-        ):
+        if not isinstance(child, transformed_data.LogMultinomialCoefficient):
             assert len(self._children) == 1
             del self._children[0]
             self._coefficient = None
@@ -1009,9 +1004,7 @@ class MultinomialLogTheta(_MultinomialBase):
         return f"{self.STAN_DIST}_{dist_suffix}({self.write_dist_args(**formattables)})"
 
     @property
-    def coefficient(
-        self,
-    ) -> transformations.transformed_data.LogMultinomialCoefficient | None:
+    def coefficient(self) -> transformed_data.LogMultinomialCoefficient | None:
         """
         Returns the coefficient for the multinomial distribution, if it exists.
         """
