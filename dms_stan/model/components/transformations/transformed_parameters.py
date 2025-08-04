@@ -14,6 +14,8 @@ import torch.nn.functional as F
 from dms_stan import utils
 from dms_stan.model.components import abstract_model_component
 
+# TODO: Add support for indexing
+
 
 class TransformableParameter:
     """
@@ -374,11 +376,23 @@ class LogSumExpParameter(UnaryTransformedParameter):
     def _set_shape(self, *args, **kwargs):
         pass
 
-    def run_np_torch_op(self, dist1):
-        if isinstance(dist1, torch.Tensor):
-            return torch.logsumexp(dist1, keepdim=self.keepdims, dim=-1)
+    def run_np_torch_op(self, dist1, keepdim: bool | None = None):
+
+        # Keepdim can only be provided if called as a static method
+        if self is None:
+            keepdim = bool(keepdim)
+        elif keepdim is not None:
+            raise ValueError(
+                "The `keepdim` argument can only be provided when calling this method "
+                "as a static method."
+            )
         else:
-            return sp.logsumexp(dist1, keepdims=self.keepdims, axis=-1)
+            keepdim = self.keepdims
+
+        if isinstance(dist1, torch.Tensor):
+            return torch.logsumexp(dist1, keepdim=keepdim, dim=-1)
+        else:
+            return sp.logsumexp(dist1, keepdims=keepdim, axis=-1)
 
     def write_stan_operation(self, dist1: str) -> str:
         return f"log_sum_exp({dist1})"
@@ -480,7 +494,7 @@ class ExponentialGrowth(ExpParameter):
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, A, r):
-        return A * super().run_np_torch_op(r * t)
+        return A * ExpParameter.run_np_torch_op(self, r * t)
 
     # pylint: enable=arguments-differ
 
@@ -531,7 +545,7 @@ class BinaryExponentialGrowth(ExpParameter):
         r: "dms.custom_types.SampleType",
     ) -> npt.NDArray: ...
     def run_np_torch_op(self, *, A, r):
-        return A * super().run_np_torch_op(r)
+        return A * ExpParameter.run_np_torch_op(self, r)
 
     def write_stan_operation(self, A: str, r: str) -> str:
         return f"{A} .* {super().write_stan_operation(r)}"
@@ -706,7 +720,7 @@ class SigmoidGrowth(SigmoidParameter):
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, A, r, c):
-        return A * super().run_np_torch_op(r * (t - c))
+        return A * SigmoidParameter.run_np_torch_op(self, r * (t - c))
 
     # pylint: enable=arguments-differ
 
@@ -777,7 +791,7 @@ class LogSigmoidGrowth(LogSigmoidParameter):
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, log_A, r, c):
-        return log_A + super().run_np_torch_op(r * (t - c))
+        return log_A + LogSigmoidParameter.run_np_torch_op(self, r * (t - c))
 
     # pylint: enable=arguments-differ
 

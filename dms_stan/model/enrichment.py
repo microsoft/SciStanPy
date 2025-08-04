@@ -520,7 +520,7 @@ class MetaEnrichment(type):
             self.c = parameters.Gamma(alpha=c_alpha, beta=c_beta, shape=c_shape)
 
             # Growth is different depending on whether we have times or not
-            self.raw_abundances_tg0 = dms_ops.log_sigmoid_growth_init_parametrization(
+            self.raw_abundances_tg0 = dms_ops.log_sigmoid_growth_init_param(
                 t=(
                     self.times
                     if include_times
