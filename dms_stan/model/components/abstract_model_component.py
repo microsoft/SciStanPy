@@ -1,5 +1,7 @@
 """Holds the abstract classes for the core components of a DMS Stan model."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Literal, Optional
 
@@ -8,7 +10,17 @@ import numpy.typing as npt
 import torch
 
 from dms_stan.exceptions import NumpySampleError
-from dms_stan.model import components
+from dms_stan import utils
+
+# Lazy imports for performance and to avoid circular imports
+constants_module = utils.lazy_import("dms_stan.model.components.constants")
+parameters = utils.lazy_import("dms_stan.model.components.parameters")
+transformed_data = utils.lazy_import(
+    "dms_stan.model.components.transformations.transformed_data"
+)
+transformed_parameters = utils.lazy_import(
+    "dms_stan.model.components.transformations.transformed_parameters"
+)
 
 
 class AbstractModelComponent(ABC):
@@ -128,7 +140,7 @@ class AbstractModelComponent(ABC):
             else:
                 lower_bound = None
                 upper_bound = None
-            self._parents[name] = components.constants.Constant(
+            self._parents[name] = constants_module.Constant(
                 value=val,
                 lower_bound=lower_bound,
                 upper_bound=upper_bound,
@@ -459,16 +471,16 @@ class AbstractModelComponent(ABC):
             if (
                 isinstance(
                     param,
-                    (components.constants.Constant, components.parameters.Parameter),
+                    (constants_module.Constant, parameters.Parameter),
                 )
                 or param.is_named
             ):
-                components[name] = param.get_indexed_varname(index_opts)
+                model_components[name] = param.get_indexed_varname(index_opts)
 
             # Otherwise, we need to get the thread of operations that make up the
             # transformation for the parameter. This is equivalent to calling the
             # get_right_side method of the parameter.
-            elif isinstance(param, components.transformations.TransformedParameter):
+            elif isinstance(param, transformed_parameters.TransformedParameter):
                 model_components[name] = param.get_right_side(index_opts)
 
             # Otherwise, raise an error
@@ -490,7 +502,7 @@ class AbstractModelComponent(ABC):
             if (
                 isinstance(
                     component,
-                    (components.constants.Constant, components.parameters.Parameter),
+                    (constants_module.Constant, parameters.Parameter),
                 )
                 or component.is_named
             ):
@@ -499,9 +511,7 @@ class AbstractModelComponent(ABC):
 
             # Otherwise, this must be a transformed parameter that is not named
             # and we need to recurse up to the first named parameter
-            assert isinstance(
-                component, components.transformations.TransformedParameter
-            )
+            assert isinstance(component, transformed_parameters.TransformedParameter)
             model_components.extend(component.get_right_side_components())
 
         return model_components
@@ -662,9 +672,7 @@ class AbstractModelComponent(ABC):
             [
                 f"{child.model_varname}.{name}"
                 for child, name in self.get_child_paramnames().items()
-                if not isinstance(
-                    child, components.transformations.transformed_data.TransformedData
-                )
+                if not isinstance(child, transformed_data.TransformedData)
             ]
         )
 
@@ -691,7 +699,7 @@ class AbstractModelComponent(ABC):
         return {
             name: component
             for name, component in self._parents.items()
-            if isinstance(component, components.constants.Constant)
+            if isinstance(component, constants_module.Constant)
         }
 
     @property

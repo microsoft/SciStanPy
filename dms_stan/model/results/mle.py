@@ -1,5 +1,7 @@
 """Holds code for the maximum likelihood (MLE) estimation of the model parameters."""
 
+from __future__ import annotations
+
 from typing import Generator, Literal, Optional, overload, Sequence, Union
 
 import arviz as az
@@ -12,12 +14,7 @@ import xarray as xr
 
 from scipy import stats
 
-from dms_stan.plotting import (
-    calculate_relative_quantiles,
-    hexgrid_with_mean,
-    plot_calibration,
-    quantile_plot,
-)
+from dms_stan import plotting
 
 
 def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
@@ -252,7 +249,7 @@ class MLEInferenceRes:
         for varname, reference, observed in self._iter_pp_obs():
 
             # Build calibration plots and record deviance
-            plot, dev = plot_calibration(reference, observed[None])
+            plot, dev = plotting.plot_calibration(reference, observed[None])
             dev = dev.item()
             deviances[varname] = dev
 
@@ -380,7 +377,7 @@ class MLEInferenceRes:
             )
 
             # Build the plot
-            plots[varname] = quantile_plot(
+            plots[varname] = plotting.quantile_plot(
                 x=x,
                 reference=reference,
                 quantiles=quantiles,
@@ -455,7 +452,7 @@ class MLEInferenceRes:
         for varname, reference, observed in self._iter_pp_obs():
 
             # Get the quantiles of the observed data relative to the reference
-            y = calculate_relative_quantiles(
+            y = plotting.calculate_relative_quantiles(
                 reference, observed[None] if observed.ndim == 1 else observed
             )
 
@@ -464,7 +461,7 @@ class MLEInferenceRes:
             x = stats.rankdata(x, method="ordinal") if use_ranks else x
 
             # Build the plot
-            plots[varname] = hexgrid_with_mean(
+            plots[varname] = plotting.hexgrid_with_mean(
                 x=x, y=y, mean_windowsize=windowsize
             ).opts(
                 xlabel=f"Observed Value {'Rank' if use_ranks else ''}: {varname}",

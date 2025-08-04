@@ -1,13 +1,16 @@
 """Holds DMS Stan models used for modeling enrichment assays."""
 
+from __future__ import annotations
+
 from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
 
-from dms_stan.model import Model
-from dms_stan.model.components import constants, parameters
 import dms_stan.operations as dms_ops
+
+from dms_stan.model.components import constants, parameters
+from dms_stan.model.model import Model
 
 
 def is_broadcastable(*shapes):

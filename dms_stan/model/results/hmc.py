@@ -1,12 +1,23 @@
 """Handles results from a `dms_stan.model.stan.StanModel` object."""
 
+from __future__ import annotations
+
 import itertools
 import os.path
 import re
 import warnings
 
 from glob import glob
-from typing import Any, Generator, Literal, Optional, overload, Sequence, Union
+from typing import (
+    Any,
+    Generator,
+    Literal,
+    Optional,
+    overload,
+    Sequence,
+    TYPE_CHECKING,
+    Union,
+)
 
 import arviz as az
 import dask
@@ -22,15 +33,18 @@ from cmdstanpy.stanfit import CmdStanMCMC, RunSet
 from cmdstanpy.utils import check_sampler_csv, scan_config
 from tqdm import tqdm
 
-
-from dms_stan import custom_types, plotting, utils
+from dms_stan import plotting, utils
 from dms_stan.defaults import (
     DEFAULT_EBFMI_THRESH,
     DEFAULT_ESS_THRESH,
     DEFAULT_RHAT_THRESH,
 )
 from dms_stan.model.components import parameters
-from .mle import MLEInferenceRes
+from dms_stan.model.components.transformations import transformed_parameters
+from dms_stan.model.results import mle
+
+if TYPE_CHECKING:
+    from dms_stan import custom_types
 
 # pylint: disable=too-many-lines
 
@@ -637,7 +651,8 @@ class CmdStanMCMCToNetCDFConverter:
 
             # We only take parameters and transformed parameters
             if not isinstance(
-                component, (parameters.Parameter, parameters.TransformedParameter)
+                component,
+                (parameters.Parameter, transformed_parameters.TransformedParameter),
             ):
                 continue
 
@@ -794,7 +809,7 @@ def dask_enabled_diagnostics(inference_obj: az.InferenceData) -> xr.Dataset:
     )
 
 
-class SampleResults(MLEInferenceRes):
+class SampleResults(mle.MLEInferenceRes):
     """
     Holds results from a CmdStanMCMC object and an ArviZ object. This should never
     be instantiated directly. Instead, use the `from_disk` method to load the object.
@@ -1053,8 +1068,8 @@ class SampleResults(MLEInferenceRes):
         return variable_tests
 
     def identify_failed_diagnostics(self, silent: bool = False) -> tuple[
-        custom_types.StrippedTestRes,
-        dict[str, custom_types.StrippedTestRes],
+        "custom_types.StrippedTestRes",
+        dict[str, "custom_types.StrippedTestRes"],
     ]:
         """
         Evaluates diagnostic tests and prints a summary of the results. This method
@@ -1066,7 +1081,7 @@ class SampleResults(MLEInferenceRes):
 
         def process_test_results(
             test_res_dataarray: xr.Dataset,
-        ) -> custom_types.ProcessedTestRes:
+        ) -> "custom_types.ProcessedTestRes":
             """
             Process the test results from a DataArray into a dictionary of test results.
 
@@ -1087,8 +1102,8 @@ class SampleResults(MLEInferenceRes):
             }
 
         def strip_totals(
-            processed_test_results: custom_types.ProcessedTestRes,
-        ) -> custom_types.StrippedTestRes:
+            processed_test_results: "custom_types.ProcessedTestRes",
+        ) -> "custom_types.StrippedTestRes":
             """
             Strip the totals from the test results.
 
@@ -1105,7 +1120,7 @@ class SampleResults(MLEInferenceRes):
             return {k: v[0] for k, v in processed_test_results.items()}
 
         def report_test_summary(
-            processed_test_results: custom_types.ProcessedTestRes,
+            processed_test_results: "custom_types.ProcessedTestRes",
             type_: str,
             prepend_newline: bool = True,
         ) -> None:
@@ -1190,7 +1205,9 @@ class SampleResults(MLEInferenceRes):
         r_hat_thresh: float = DEFAULT_RHAT_THRESH,
         ess_thresh: float = DEFAULT_ESS_THRESH,
         silent: bool = False,
-    ) -> tuple[custom_types.StrippedTestRes, dict[str, custom_types.StrippedTestRes]]:
+    ) -> tuple[
+        "custom_types.StrippedTestRes", dict[str, "custom_types.StrippedTestRes"]
+    ]:
         """
         Runs the full diagnostics pipeline. Under the hood, this calls, in order:
 

@@ -1,5 +1,7 @@
 """Holds objects used for plotting."""
 
+from __future__ import annotations
+
 from functools import partial, wraps
 from typing import Any, Callable, Optional, overload, Literal, ParamSpec, TypeVar, Union
 

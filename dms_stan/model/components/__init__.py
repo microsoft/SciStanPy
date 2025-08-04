@@ -1,3 +1,3 @@
 """Initialize the components module."""
 
-from . import constants, parameters, transformations
+from dms_stan.model.components import abstract_model_component, constants, parameters

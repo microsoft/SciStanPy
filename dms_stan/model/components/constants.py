@@ -1,5 +1,7 @@
 """Holds code for working with constant values in a DMS Stan model."""
 
+from __future__ import annotations
+
 from typing import Literal, Optional, Union
 
 import numpy as np

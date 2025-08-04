@@ -3,13 +3,20 @@ Holds CDFs for the Parameter classes. These are special TransformedParameter
 classes.
 """
 
+from __future__ import annotations
+
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
 
 from dms_stan import utils
 from dms_stan.model.components.transformations import transformed_parameters
+
+if TYPE_CHECKING:
+    from dms_stan import custom_types
+    from dms_stan.model.components import parameters
 
 
 class CDFLike(transformed_parameters.TransformedParameter):
@@ -20,12 +27,12 @@ class CDFLike(transformed_parameters.TransformedParameter):
     """
 
     # Class variables for each CDF
-    PARAMETER: "dms.model.components.Parameter"
+    PARAMETER: "parameters.Parameter"
     SCIPY_FUNC: str  # cdf, sf, log_cdf, log_sf
     STAN_SUFFIX: str  # The suffix for the Stan operation, e.g., "cdf"
 
     # Init function makes sure we have the correct parameters before initializing
-    def __init__(self, **kwargs: "dms.custom_types.CombinableParameterType"):
+    def __init__(self, **kwargs: "custom_types.CombinableParameterType"):
 
         # Check if the parameters passed are the ones required for the CDF
         self.check_parameters(set(kwargs))

@@ -1,11 +1,17 @@
 """Runs Hamiltonian Monte Carlo (HMC) for FLIP datasets."""
 
+from __future__ import annotations
+
 import argparse
 import os.path
 
-from dms_stan.model import Model
+from typing import TYPE_CHECKING
+
 from dms_stan.model.results import SampleResults
 from flipv3.flip_dsets import pdz3_instance_factory, trpb_instance_factory
+
+if TYPE_CHECKING:
+    from dms_stan.model import Model
 
 # Define valid combinations of dataset and subset.
 VALID_COMBINATIONS = {
@@ -182,7 +188,7 @@ def check_args(args: argparse.Namespace) -> None:
             raise ValueError(f"{arg} must be a positive integer.")
 
 
-def prep_run(args: argparse.Namespace) -> Model:
+def prep_run(args: argparse.Namespace) -> "Model":
     """
     Preps for the run by checking arguments, loading the data, and instantiating
     the model.

@@ -1,5 +1,7 @@
 """Holds custom torch distributions used by DMS Stan"""
 
+from __future__ import annotations
+
 from typing import Optional, ParamSpec
 
 import torch

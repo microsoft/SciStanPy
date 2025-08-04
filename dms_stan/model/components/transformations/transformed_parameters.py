@@ -1,5 +1,7 @@
 """Holds parameter transformations for DMS Stan models."""
 
+from __future__ import annotations
+
 from abc import abstractmethod
 from typing import Optional, overload
 

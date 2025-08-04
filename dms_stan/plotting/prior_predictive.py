@@ -1,10 +1,12 @@
 """This module is used for building and displaying prior predictive checks."""
 
+from __future__ import annotations
+
 import itertools
 import re
 
 from copy import deepcopy
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import holoviews as hv
 import hvplot.pandas  # pylint: disable=unused-import
@@ -16,8 +18,10 @@ import xarray as xr
 
 from param.parameterized import Event
 
-from dms_stan import model as dms_model
 from dms_stan.model.components import constants
+
+if TYPE_CHECKING:
+    from dms_stan import model as dms_model
 
 # We need a regular expression for separating the variable name from its indices
 _INDEX_EXTRACTOR = re.compile(r"([A-Za-z0-9_\.]+)\[?([0-9, ]*)\]?")

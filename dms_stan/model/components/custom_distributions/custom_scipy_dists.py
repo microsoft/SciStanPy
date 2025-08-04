@@ -1,5 +1,7 @@
 """Holds subclasses for transformed distributions."""
 
+from __future__ import annotations
+
 import functools
 import inspect
 

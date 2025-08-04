@@ -1,5 +1,7 @@
 """Holds classes that can be used for defining models in DMS Stan models."""
 
+from __future__ import annotations
+
 import re
 
 from abc import ABCMeta

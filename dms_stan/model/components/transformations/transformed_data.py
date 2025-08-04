@@ -3,18 +3,24 @@ Contains the TransformedData class, which is used to define the transformed data
 block in a Stan model.
 """
 
+from __future__ import annotations
+
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 
-import dms_stan.model.components as dms_components
+from dms_stan.model.components.transformations import transformed_parameters
 
-from .transformed_parameters import Transformation
+if TYPE_CHECKING:
+    from dms_stan.model.components import parameters
 
 
-class TransformedData(Transformation):
+class TransformedData(transformed_parameters.Transformation):
     """Defines the `transformed data` block in a Stan model."""
 
     # The transformation is renamed to be more descriptive
-    get_transformed_data_assignment = Transformation._transformation
+    get_transformed_data_assignment = (
+        transformed_parameters.Transformation._transformation  # pylint: disable=protected-access
+    )
 
     # There is no implementation of `_draw` or `torch_parametrization` for this
     # class.
@@ -41,7 +47,7 @@ class LogMultinomialCoefficient(TransformedData):
     use it at each iteration. This speeds up the model.
     """
 
-    def __init__(self, counts: "dms_components.MultinomialLogTheta", **kwargs):
+    def __init__(self, counts: "parameters.MultinomialLogTheta", **kwargs):
         """
         Initializes the LogMultinomialCoefficient class.
 

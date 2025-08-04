@@ -1,38 +1,44 @@
 """Holds custom component types for DMS Stan models."""
 
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
-import numpy as np
-import numpy.typing as npt
-import torch.distributions as dist
+# Everything in this file is only imported if TYPE_CHECKING is True.
+if TYPE_CHECKING:
 
-# from dms_stan.model import components
+    import numpy as np
+    import numpy.typing as npt
+    import torch.distributions as dist
+
+    from dms_stan.model.components import constants, parameters
+    from dms_stan.model.components.custom_distributions import custom_torch_dists
+    from dms_stan.model.components.transformations import transformed_parameters
+
 
 # Parameter types
-SampleType = Union[int, float, npt.NDArray]
+SampleType = Union[int, float, "npt.NDArray"]
 BaseParameterType = Union[
-    "components.transformations.TransformedParameter", "components.constants.Constant"
+    "transformed_parameters.TransformedParameter", "constants.Constant"
 ]
 ContinuousParameterType = Union[
     BaseParameterType,
-    "components.parameters.ContinuousDistribution",
+    "parameters.ContinuousDistribution",
     float,
-    npt.NDArray[np.floating],
+    "npt.NDArray[np.floating]",
 ]
 DiscreteParameterType = Union[
     BaseParameterType,
-    "components.parameters.DiscreteDistribution",
+    "parameters.DiscreteDistribution",
     int,
-    npt.NDArray[np.integer],
+    "npt.NDArray[np.integer]",
 ]
 CombinableParameterType = Union[ContinuousParameterType, DiscreteParameterType]
 
 # Distribution types
 DMSStanDistribution = Union[
-    dist.Distribution,
-    "components.custom_distributions.custom_torch_dists.CustomDistribution",
+    "dist.Distribution",
+    "custom_torch_dists.CustomDistribution",
 ]
 
 # Diagnostic output types
-ProcessedTestRes = dict[str, tuple[tuple[npt.NDArray, ...], int]]
-StrippedTestRes = dict[str, tuple[npt.NDArray, ...]]
+ProcessedTestRes = dict[str, tuple[tuple["npt.NDArray", ...], int]]
+StrippedTestRes = dict[str, tuple["npt.NDArray", ...]]

@@ -2,7 +2,7 @@
 
 import warnings
 
-from typing import Optional, Union
+from typing import Optional, TYPE_CHECKING, Union
 
 import itertools
 import numpy.typing as npt
@@ -11,9 +11,11 @@ import torch.nn as nn
 
 from tqdm import tqdm
 
-from dms_stan import model as dms_model
 from dms_stan.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
 from dms_stan.model.components import constants, parameters
+
+if TYPE_CHECKING:
+    from dms_stan import model as dms_model
 
 
 def check_observable_data(model: "dms_model.Model", data: dict[str, torch.Tensor]):

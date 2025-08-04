@@ -1,5 +1,7 @@
 """Holds code for interfacing with the Stan modeling language."""
 
+from __future__ import annotations
+
 import functools
 import os.path
 import warnings
@@ -15,6 +17,7 @@ from typing import (
     Literal,
     Optional,
     ParamSpec,
+    TYPE_CHECKING,
     TypeVar,
     Union,
 )
@@ -26,7 +29,6 @@ from cmdstanpy import CmdStanModel, format_stan_file
 
 import dms_stan
 
-from dms_stan import custom_types
 from dms_stan.defaults import (
     DEFAULT_CPP_OPTIONS,
     DEFAULT_FORCE_COMPILE,
@@ -36,12 +38,14 @@ from dms_stan.defaults import (
     DEFAULT_USER_HEADER,
 )
 from dms_stan.model import results, stan
-from dms_stan.model.components import (
-    abstract_model_component,
-    constants,
-    parameters,
-    transformations,
+from dms_stan.model.components import abstract_model_component, constants, parameters
+from dms_stan.model.components.transformations import (
+    transformed_data,
+    transformed_parameters,
 )
+
+if TYPE_CHECKING:
+    from dms_stan import custom_types
 
 
 # pylint: disable=too-many-lines
@@ -134,7 +138,9 @@ class StanCodeBase(ABC, list):
             return isinstance(
                 nested_component, (parameters.Parameter, StanForLoop)
             ) or (
-                isinstance(nested_component, transformations.TransformedParameter)
+                isinstance(
+                    nested_component, transformed_parameters.TransformedParameter
+                )
                 and nested_component.is_named
             )
 
@@ -149,7 +155,7 @@ class StanCodeBase(ABC, list):
             """
             return isinstance(
                 nested_component,
-                (transformations.transformed_data.TransformedData, StanForLoop),
+                (transformed_data.TransformedData, StanForLoop),
             )
 
         # We need a dictionary that will map from block name to the prefix for the
@@ -720,7 +726,7 @@ class StanProgram(StanCodeBase):
         declarations = [
             component.stan_parameter_declaration
             for component in self.model.all_model_components
-            if isinstance(component, transformations.transformed_data.TransformedData)
+            if isinstance(component, transformed_data.TransformedData)
         ]
 
         # No transformed data if no declarations
@@ -772,7 +778,7 @@ class StanProgram(StanCodeBase):
             component.stan_parameter_declaration
             for component in self.recurse_model_components()
             if (
-                isinstance(component, transformations.TransformedParameter)
+                isinstance(component, transformed_parameters.TransformedParameter)
                 and component.is_named
             )
             or (
@@ -978,8 +984,8 @@ class StanModel(CmdStanModel):
         )
 
     def gather_inputs(
-        self, **observables: custom_types.SampleType
-    ) -> dict[str, custom_types.SampleType]:
+        self, **observables: "custom_types.SampleType"
+    ) -> dict[str, "custom_types.SampleType"]:
         """
         Gathers the inputs for the Stan model. Values for observables must be provided
         by the user. All other inputs will be drawn from the DMS Stan model itself.

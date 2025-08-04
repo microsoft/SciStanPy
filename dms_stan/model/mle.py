@@ -1,6 +1,10 @@
+"""Holds code for running MLE estimation on DMS Stan models."""
+
+from __future__ import annotations
+
 import warnings
 
-from typing import Literal, Optional, overload
+from typing import Literal, Optional, overload, TYPE_CHECKING
 
 import arviz as az
 import numpy as np
@@ -9,9 +13,11 @@ import pandas as pd
 import torch
 import xarray as xr
 
-from dms_stan import custom_types
-from dms_stan import model as dms_model
 from dms_stan.model import results
+
+if TYPE_CHECKING:
+    from dms_stan import custom_types
+    from dms_stan import model as dms_model
 
 
 class MLEParam:
@@ -21,7 +27,7 @@ class MLEParam:
         self,
         name: str,
         value: Optional[npt.NDArray],
-        distribution: custom_types.DMSStanDistribution,
+        distribution: "custom_types.DMSStanDistribution",
     ):
 
         # Store the inputs

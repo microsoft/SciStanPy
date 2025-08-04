@@ -1,9 +1,11 @@
 """Contains the Model base class, which is used to define all DMS Stan models."""
 
+from __future__ import annotations
+
 import os.path
 import pickle
 
-from typing import Any, Iterable, Literal, Optional, overload, Union
+from typing import Any, Iterable, Literal, Optional, overload, TYPE_CHECKING, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -33,9 +35,11 @@ from dms_stan.model.components.transformations import (
     transformed_data,
     transformed_parameters as transformed_parameters_module,
 )
-from dms_stan.model.results import hmc as hmc_results
 from dms_stan.model.stan import stan_model
 from dms_stan.plotting import prior_predictive
+
+if TYPE_CHECKING:
+    from dms_stan.model.results import hmc as hmc_results
 
 
 def model_comps_to_dict(
@@ -48,7 +52,7 @@ def model_comps_to_dict(
     return {comp.model_varname: comp for comp in model_comps}
 
 
-def run_delayed_mcmc(filepath: str) -> hmc_results.SampleResults:
+def run_delayed_mcmc(filepath: str) -> "hmc_results.SampleResults":
     """
     Runs a delayed MCMC run created by calling `Model.mcmc()` with `delay_run=True`.
     The filepath should be the path to the pickled object that resulted from this
@@ -541,7 +545,7 @@ class Model:
         data: Optional[dict[str, npt.NDArray]],
         delay_run: Literal[False],
         **sample_kwargs,
-    ) -> hmc_results.SampleResults: ...
+    ) -> "hmc_results.SampleResults": ...
     @overload
     def mcmc(
         self,
@@ -626,7 +630,7 @@ class Model:
     @overload
     def simulate_mcmc(
         self, delay_run: Literal[False], **kwargs
-    ) -> tuple[dict[str, npt.NDArray], hmc_results.SampleResults]: ...
+    ) -> tuple[dict[str, npt.NDArray], "hmc_results.SampleResults"]: ...
     @overload
     def simulate_mcmc(self, delay_run: Literal[True], **kwargs) -> None: ...
 
