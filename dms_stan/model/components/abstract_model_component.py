@@ -397,13 +397,15 @@ class AbstractModelComponent(ABC):
         ):
 
             # If the dimensions are equal or at least one is 1, they are compatible
-            # at this level of indentation
+            # at this level of indentation. Otherwise, we break the loop, as we
+            # have reached a position where the shapes are not compatible.
             if (
                 prev_dimsize == current_dimsize
                 or prev_dimsize == 1
                 or current_dimsize == 1
             ):
                 compat_level = i
+            else:
                 break
 
         return compat_level
@@ -486,33 +488,6 @@ class AbstractModelComponent(ABC):
             # Otherwise, raise an error
             else:
                 raise TypeError(f"Unknown model component type {type(param)}")
-
-        return model_components
-
-    def get_right_side_components(self) -> list["AbstractModelComponent"]:
-        """
-        Gets the components (i.e., Python objects) that make up the right-hand-side
-        of this component's statement.
-        """
-        # Recurse over the parents up until we reach a named one or the top of the
-        # tree
-        model_components = []
-        for component in self._parents.values():
-            # If named, a parameter, or a constant, we can just add it to the list
-            if (
-                isinstance(
-                    component,
-                    (constants_module.Constant, parameters.Parameter),
-                )
-                or component.is_named
-            ):
-                model_components.append(component)
-                continue
-
-            # Otherwise, this must be a transformed parameter that is not named
-            # and we need to recurse up to the first named parameter
-            assert isinstance(component, transformed_parameters.TransformedParameter)
-            model_components.extend(component.get_right_side_components())
 
         return model_components
 
@@ -734,3 +709,14 @@ class AbstractModelComponent(ABC):
         not observable.
         """
         return False
+
+    @property
+    def is_indexed(self) -> bool:
+        """
+        Returns `True` if the parameter is transformed via an indexing operation.
+        This means we will force the compiler to define this variable in the Stan
+        code.
+        """
+        return any(
+            child is transformed_parameters.IndexParameter for child in self._children
+        )

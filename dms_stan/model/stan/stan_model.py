@@ -774,14 +774,14 @@ class StanProgram(StanCodeBase):
     def transformed_parameters_block(self) -> str:
         """Returns the Stan code for the transformed parameters block."""
         # Get the declarations for transformed parameters. We take any named transformed
-        # parameters. We also take any Parameter that transforms a raw to a real
-        # parameter
+        # that are named or indexed. We also take any Parameter that transforms
+        # a raw to a real parameter
         declarations = [
             component.stan_parameter_declaration
             for component in self.recurse_model_components()
             if (
                 isinstance(component, transformed_parameters.TransformedParameter)
-                and component.is_named
+                and (component.is_named or component.is_indexed)
             )
             or (
                 isinstance(component, parameters.Parameter)

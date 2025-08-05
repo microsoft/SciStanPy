@@ -563,16 +563,6 @@ class Normal(ContinuousDistribution):
 
         return parent_incrementation.replace(f"{default_name} ~", f"{new_name} ~")
 
-    def get_right_side_components(
-        self,
-    ) -> list[abstract_model_component.AbstractModelComponent]:
-        # If noncentered, then there aren't any right-hand-side components
-        if self.is_noncentered:
-            return []
-
-        # Otherwise, we use the parent method
-        return super().get_right_side_components()
-
     def get_right_side(
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
     ) -> str:

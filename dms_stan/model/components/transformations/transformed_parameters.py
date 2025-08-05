@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Optional, overload
+from typing import Optional, overload, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -12,9 +12,12 @@ import torch
 import torch.nn.functional as F
 
 from dms_stan import utils
-from dms_stan.model.components import abstract_model_component
+from dms_stan.model.components import abstract_model_component, constants
 
-# TODO: Add support for indexing
+if TYPE_CHECKING:
+    from dms_stan import custom_types
+
+# pylint: disable=too-many-lines
 
 
 class TransformableParameter:
@@ -22,38 +25,45 @@ class TransformableParameter:
     Mixin class for parameters that can be transformed using mathematical operations.
     """
 
-    def __add__(self, other: "dms.custom_types.CombinableParameterType"):
+    def __add__(self, other: "custom_types.CombinableParameterType"):
         return AddParameter(self, other)
 
-    def __radd__(self, other: "dms.custom_types.CombinableParameterType"):
+    def __radd__(self, other: "custom_types.CombinableParameterType"):
         return AddParameter(other, self)
 
-    def __sub__(self, other: "dms.custom_types.CombinableParameterType"):
+    def __sub__(self, other: "custom_types.CombinableParameterType"):
         return SubtractParameter(self, other)
 
-    def __rsub__(self, other: "dms.custom_types.CombinableParameterType"):
+    def __rsub__(self, other: "custom_types.CombinableParameterType"):
         return SubtractParameter(other, self)
 
-    def __mul__(self, other: "dms.custom_types.CombinableParameterType"):
+    def __mul__(self, other: "custom_types.CombinableParameterType"):
         return MultiplyParameter(self, other)
 
-    def __rmul__(self, other: "dms.custom_types.CombinableParameterType"):
+    def __rmul__(self, other: "custom_types.CombinableParameterType"):
         return MultiplyParameter(other, self)
 
-    def __truediv__(self, other: "dms.custom_types.CombinableParameterType"):
+    def __truediv__(self, other: "custom_types.CombinableParameterType"):
         return DivideParameter(self, other)
 
-    def __rtruediv__(self, other: "dms.custom_types.CombinableParameterType"):
+    def __rtruediv__(self, other: "custom_types.CombinableParameterType"):
         return DivideParameter(other, self)
 
-    def __pow__(self, other: "dms.custom_types.CombinableParameterType"):
+    def __pow__(self, other: "custom_types.CombinableParameterType"):
         return PowerParameter(self, other)
 
-    def __rpow__(self, other: "dms.custom_types.CombinableParameterType"):
+    def __rpow__(self, other: "custom_types.CombinableParameterType"):
         return PowerParameter(other, self)
 
     def __neg__(self):
         return NegateParameter(self)
+
+    def __getitem__(self, key: "custom_types.IndexType"):
+        # If key is not a tuple, make it one
+        if not isinstance(key, tuple):
+            key = (key,)
+
+        return IndexParameter(self, *key)
 
 
 class Transformation(abstract_model_component.AbstractModelComponent):
@@ -82,7 +92,7 @@ class Transformation(abstract_model_component.AbstractModelComponent):
         # Wrap the declaration for any unnamed parents in parentheses. This is to
         # ensure that the order of operations is correct in Stan.
         components = {
-            name: (value if self._parents[name] else f"( {value} )")
+            name: (value if self._parents[name].is_named else f"( {value} )")
             for name, value in components.items()
         }
 
@@ -122,9 +132,7 @@ class TransformedParameter(Transformation, TransformableParameter):
     def run_np_torch_op(self, **draws: torch.Tensor) -> torch.Tensor: ...
 
     @overload
-    def run_np_torch_op(
-        self, **draws: "dms.custom_types.SampleType"
-    ) -> npt.NDArray: ...
+    def run_np_torch_op(self, **draws: "custom_types.SampleType") -> npt.NDArray: ...
 
     @abstractmethod
     def run_np_torch_op(self, **draws):
@@ -162,8 +170,8 @@ class BinaryTransformedParameter(TransformedParameter):
 
     def __init__(
         self,
-        dist1: "dms.custom_types.CombinableParameterType",
-        dist2: "dms.custom_types.CombinableParameterType",
+        dist1: "custom_types.CombinableParameterType",
+        dist2: "custom_types.CombinableParameterType",
         **kwargs,
     ):
         super().__init__(dist1=dist1, dist2=dist2, **kwargs)
@@ -176,7 +184,7 @@ class BinaryTransformedParameter(TransformedParameter):
 
     @overload
     def run_np_torch_op(
-        self, dist1: "dms.custom_types.SampleType", dist2: "dms.custom_types.SampleType"
+        self, dist1: "custom_types.SampleType", dist2: "custom_types.SampleType"
     ) -> npt.NDArray: ...
 
     @abstractmethod
@@ -194,7 +202,7 @@ class UnaryTransformedParameter(TransformedParameter):
 
     def __init__(
         self,
-        dist1: "dms.custom_types.CombinableParameterType",
+        dist1: "custom_types.CombinableParameterType",
         **kwargs,
     ):
         super().__init__(dist1=dist1, **kwargs)
@@ -204,7 +212,7 @@ class UnaryTransformedParameter(TransformedParameter):
     def run_np_torch_op(self, dist1: torch.Tensor) -> torch.Tensor: ...
 
     @overload
-    def run_np_torch_op(self, dist1: "dms.custom_types.SampleType") -> npt.NDArray: ...
+    def run_np_torch_op(self, dist1: "custom_types.SampleType") -> npt.NDArray: ...
 
     @abstractmethod
     def run_np_torch_op(self, dist1): ...
@@ -351,7 +359,7 @@ class LogSumExpParameter(UnaryTransformedParameter):
 
     def __init__(
         self,
-        dist1: "dms.custom_types.CombinableParameterType",
+        dist1: "custom_types.CombinableParameterType",
         keepdims: bool = False,
         **kwargs,
     ):
@@ -460,19 +468,19 @@ class ExponentialGrowth(ExpParameter):
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
-        t: "dms.custom_types.CombinableParameterType",
-        A: "dms.custom_types.CombinableParameterType",
-        r: "dms.custom_types.CombinableParameterType",
+        t: "custom_types.CombinableParameterType",
+        A: "custom_types.CombinableParameterType",
+        r: "custom_types.CombinableParameterType",
         **kwargs,
     ):
         """Initializes the LogExponentialGrowth distribution.
 
         Args:
-            t ("dms.custom_types.SampleType"): The time parameter.
+            t ("custom_types.SampleType"): The time parameter.
 
-            A ("dms.custom_types.SampleType"): The amplitude parameter.
+            A ("custom_types.SampleType"): The amplitude parameter.
 
-            r ("dms.custom_types.SampleType"): The rate parameter.
+            r ("custom_types.SampleType"): The rate parameter.
 
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
@@ -488,9 +496,9 @@ class ExponentialGrowth(ExpParameter):
     @overload
     def run_np_torch_op(
         self,
-        t: "dms.custom_types.SampleType",
-        A: "dms.custom_types.SampleType",
-        r: "dms.custom_types.SampleType",
+        t: "custom_types.SampleType",
+        A: "custom_types.SampleType",
+        r: "custom_types.SampleType",
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, A, r):
@@ -519,16 +527,16 @@ class BinaryExponentialGrowth(ExpParameter):
 
     def __init__(
         self,
-        A: "dms.custom_types.CombinableParameterType",
-        r: "dms.custom_types.CombinableParameterType",
+        A: "custom_types.CombinableParameterType",
+        r: "custom_types.CombinableParameterType",
         **kwargs,
     ):
         """Initializes the BinaryExponentialGrowth distribution.
 
         Args:
-            A ("dms.custom_types.SampleType"): The amplitude parameter.
+            A ("custom_types.SampleType"): The amplitude parameter.
 
-            r ("dms.custom_types.SampleType"): The rate parameter.
+            r ("custom_types.SampleType"): The rate parameter.
 
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
@@ -541,8 +549,8 @@ class BinaryExponentialGrowth(ExpParameter):
     @overload
     def run_np_torch_op(
         self,
-        A: "dms.custom_types.SampleType",
-        r: "dms.custom_types.SampleType",
+        A: "custom_types.SampleType",
+        r: "custom_types.SampleType",
     ) -> npt.NDArray: ...
     def run_np_torch_op(self, *, A, r):
         return A * ExpParameter.run_np_torch_op(self, r)
@@ -572,19 +580,19 @@ class LogExponentialGrowth(TransformedParameter):
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
-        t: "dms.custom_types.CombinableParameterType",
-        log_A: "dms.custom_types.CombinableParameterType",
-        r: "dms.custom_types.CombinableParameterType",
+        t: "custom_types.CombinableParameterType",
+        log_A: "custom_types.CombinableParameterType",
+        r: "custom_types.CombinableParameterType",
         **kwargs,
     ):
         """Initializes the LogExponentialGrowth distribution.
 
         Args:
-            t ("dms.custom_types.SampleType"): The time parameter.
+            t ("custom_types.SampleType"): The time parameter.
 
-            log_A ("dms.custom_types.SampleType"): The log of the amplitude parameter.
+            log_A ("custom_types.SampleType"): The log of the amplitude parameter.
 
-            r ("dms.custom_types.SampleType"): The rate parameter.
+            r ("custom_types.SampleType"): The rate parameter.
 
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
@@ -600,9 +608,9 @@ class LogExponentialGrowth(TransformedParameter):
     @overload
     def run_np_torch_op(
         self,
-        t: "dms.custom_types.SampleType",
-        log_A: "dms.custom_types.SampleType",
-        r: "dms.custom_types.SampleType",
+        t: "custom_types.SampleType",
+        log_A: "custom_types.SampleType",
+        r: "custom_types.SampleType",
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, log_A, r):
@@ -630,16 +638,16 @@ class BinaryLogExponentialGrowth(TransformedParameter):
 
     def __init__(
         self,
-        log_A: "dms.custom_types.CombinableParameterType",
-        r: "dms.custom_types.CombinableParameterType",
+        log_A: "custom_types.CombinableParameterType",
+        r: "custom_types.CombinableParameterType",
         **kwargs,
     ):
         """Initializes the BinaryLogExponentialGrowth distribution.
 
         Args:
-            log_A ("dms.custom_types.SampleType"): The log of the amplitude parameter.
+            log_A ("custom_types.SampleType"): The log of the amplitude parameter.
 
-            r ("dms.custom_types.SampleType"): The rate parameter.
+            r ("custom_types.SampleType"): The rate parameter.
 
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
@@ -652,8 +660,8 @@ class BinaryLogExponentialGrowth(TransformedParameter):
     @overload
     def run_np_torch_op(
         self,
-        log_A: "dms.custom_types.SampleType",
-        r: "dms.custom_types.SampleType",
+        log_A: "custom_types.SampleType",
+        r: "custom_types.SampleType",
     ) -> npt.NDArray: ...
     def run_np_torch_op(self, *, log_A, r):
         return log_A + r
@@ -680,23 +688,23 @@ class SigmoidGrowth(SigmoidParameter):
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
-        t: "dms.custom_types.CombinableParameterType",
-        A: "dms.custom_types.CombinableParameterType",
-        r: "dms.custom_types.CombinableParameterType",
-        c: "dms.custom_types.CombinableParameterType",
+        t: "custom_types.CombinableParameterType",
+        A: "custom_types.CombinableParameterType",
+        r: "custom_types.CombinableParameterType",
+        c: "custom_types.CombinableParameterType",
         **kwargs,
     ):
         """Initializes the LogSigmoidGrowth distribution.
 
         Args:
-            t ("dms.custom_types.SampleType"): The time parameter.
+            t ("custom_types.SampleType"): The time parameter.
 
-            A ("dms.custom_types.SampleType"): The amplitude parameter. Specifically,
+            A ("custom_types.SampleType"): The amplitude parameter. Specifically,
                 this is the maximum value of the sigmoid function.
 
-            r ("dms.custom_types.SampleType"): The rate parameter.
+            r ("custom_types.SampleType"): The rate parameter.
 
-            c ("dms.custom_types.SampleType"): The offset parameter. This is the
+            c ("custom_types.SampleType"): The offset parameter. This is the
                 inflection point of the sigmoid function.
 
             shape (tuple[int, ...], optional): The shape of the distribution. In
@@ -713,10 +721,10 @@ class SigmoidGrowth(SigmoidParameter):
     @overload
     def run_np_torch_op(
         self,
-        t: "dms.custom_types.SampleType",
-        A: "dms.custom_types.SampleType",
-        r: "dms.custom_types.SampleType",
-        c: "dms.custom_types.SampleType",
+        t: "custom_types.SampleType",
+        A: "custom_types.SampleType",
+        r: "custom_types.SampleType",
+        c: "custom_types.SampleType",
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, A, r, c):
@@ -751,22 +759,22 @@ class LogSigmoidGrowth(LogSigmoidParameter):
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
-        t: "dms.custom_types.CombinableParameterType",
-        log_A: "dms.custom_types.CombinableParameterType",
-        r: "dms.custom_types.CombinableParameterType",
-        c: "dms.custom_types.CombinableParameterType",
+        t: "custom_types.CombinableParameterType",
+        log_A: "custom_types.CombinableParameterType",
+        r: "custom_types.CombinableParameterType",
+        c: "custom_types.CombinableParameterType",
         **kwargs,
     ):
         """Initializes the LogSigmoidGrowth distribution.
 
         Args:
-            exp_t ("dms.custom_types.SampleType"): The exponentiated time parameter.
+            exp_t ("custom_types.SampleType"): The exponentiated time parameter.
 
-            log_A ("dms.custom_types.SampleType"): The log of the amplitude parameter.
+            log_A ("custom_types.SampleType"): The log of the amplitude parameter.
 
-            r ("dms.custom_types.SampleType"): The rate parameter.
+            r ("custom_types.SampleType"): The rate parameter.
 
-            c ("dms.custom_types.SampleType"): The offset parameter.
+            c ("custom_types.SampleType"): The offset parameter.
 
             shape (tuple[int, ...], optional): The shape of the distribution. In
                 most cases, this can be ignored as it will be calculated automatically.
@@ -784,10 +792,10 @@ class LogSigmoidGrowth(LogSigmoidParameter):
     @overload
     def run_np_torch_op(
         self,
-        t: "dms.custom_types.SampleType",
-        log_A: "dms.custom_types.SampleType",
-        r: "dms.custom_types.SampleType",
-        c: "dms.custom_types.SampleType",
+        t: "custom_types.SampleType",
+        log_A: "custom_types.SampleType",
+        r: "custom_types.SampleType",
+        c: "custom_types.SampleType",
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, log_A, r, c):
@@ -814,19 +822,19 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
-        t: "dms.custom_types.CombinableParameterType",
-        x0: "dms.custom_types.CombinableParameterType",  # pylint: disable=invalid-name
-        r: "dms.custom_types.CombinableParameterType",
-        c: "dms.custom_types.CombinableParameterType",
+        t: "custom_types.CombinableParameterType",
+        x0: "custom_types.CombinableParameterType",  # pylint: disable=invalid-name
+        r: "custom_types.CombinableParameterType",
+        c: "custom_types.CombinableParameterType",
         **kwargs,
     ):
         """Initializes the SigmoidGrowthInitParametrization distribution.
 
         Args:
-            t (dms.custom_types.CombinableParameterType): The time parameter.
-            x0 (dms.custom_types.CombinableParameterType): Initial abundances.
-            r (dms.custom_types.CombinableParameterType): Growth rate.
-            c (dms.custom_types.CombinableParameterType): Offset parameter.
+            t (custom_types.CombinableParameterType): The time parameter.
+            x0 (custom_types.CombinableParameterType): Initial abundances.
+            r (custom_types.CombinableParameterType): Growth rate.
+            c (custom_types.CombinableParameterType): Offset parameter.
             shape (tuple[int, ...], optional): The shape of the distribution. Defaults
             to ().
         """
@@ -842,10 +850,10 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
     @overload
     def run_np_torch_op(
         self,
-        t: "dms.custom_types.SampleType",
-        x0: "dms.custom_types.SampleType",  # pylint: disable=invalid-name
-        r: "dms.custom_types.SampleType",
-        c: "dms.custom_types.SampleType",
+        t: "custom_types.SampleType",
+        x0: "custom_types.SampleType",  # pylint: disable=invalid-name
+        r: "custom_types.SampleType",
+        c: "custom_types.SampleType",
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, t, x0, r, c):
@@ -884,20 +892,20 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
     def __init__(  # pylint: disable=useless-parent-delegation
         self,
         *,
-        t: "dms.custom_types.CombinableParameterType",
-        log_x0: "dms.custom_types.CombinableParameterType",  # pylint: disable=invalid-name
-        r: "dms.custom_types.CombinableParameterType",
-        c: "dms.custom_types.CombinableParameterType",
+        t: "custom_types.CombinableParameterType",
+        log_x0: "custom_types.CombinableParameterType",  # pylint: disable=invalid-name
+        r: "custom_types.CombinableParameterType",
+        c: "custom_types.CombinableParameterType",
         **kwargs,
     ):
         """Initializes the LogSigmoidGrowthInitParametrization distribution.
 
         Args:
-            t (dms.custom_types.CombinableParameterType): The time parameter.
-            log_x0 (dms.custom_types.CombinableParameterType): Logarithm of initial
+            t (custom_types.CombinableParameterType): The time parameter.
+            log_x0 (custom_types.CombinableParameterType): Logarithm of initial
                 abundances.
-            r (dms.custom_types.CombinableParameterType): Growth rate.
-            c (dms.custom_types.CombinableParameterType): Offset parameter.
+            r (custom_types.CombinableParameterType): Growth rate.
+            c (custom_types.CombinableParameterType): Offset parameter.
             shape (tuple[int, ...], optional): The shape of the distribution. Defaults
             to ().
         """
@@ -917,10 +925,10 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
     @overload
     def run_np_torch_op(
         self,
-        t: "dms.custom_types.SampleType",
-        log_x0: "dms.custom_types.SampleType",  # pylint: disable=invalid-name
-        r: "dms.custom_types.SampleType",
-        c: "dms.custom_types.SampleType",
+        t: "custom_types.SampleType",
+        log_x0: "custom_types.SampleType",  # pylint: disable=invalid-name
+        r: "custom_types.SampleType",
+        c: "custom_types.SampleType",
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, t, log_x0, r, c):
@@ -939,3 +947,323 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
     ) -> str:
         """Calculate using Stan's log1p_exp function."""
         return f"{log_x0} + log1p_exp({r} .* {c}) - log1p_exp({r} .* ({c} - {t}))"
+
+
+class IndexParameter(TransformedParameter):
+    """
+    Used for indexing one parameter to create another with a different shape. Currently
+    supports slicing, indexing with scalars, and indexing with single-dimension
+    arrays. Multi-dimensional indexing is not supported. Boolean indexing is not
+    supported.
+
+    IMPORTANT: Indexing follows the same rules as NUMPY, not Stan. This means that
+    the following:
+
+    ```python
+    test = np.array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]
+    ])
+    ind1 = [0, 2, 1]
+    ind2 = [1, 0, 2]
+    ```
+
+    will yield
+
+    ```python
+    test[ind1, ind2]
+
+    >>   array([2, 7, 6])
+    ```
+
+    which is different from Stan's indexing rules. Using Stan's rules (and adjusting
+    for Stan's use of 1-indexing rather than 0-indexing), this would yield
+    ```stan
+    test[ind1, ind2]
+    >>   array([
+        [2, 1, 3],
+        [8, 7, 9],
+        [5, 4, 6]
+    ])
+    ```
+    """
+
+    def __init__(
+        self,
+        dist: "custom_types.CombinableParameterType",
+        *indices: "custom_types.IndexType",
+    ):
+        """
+        Initializes the IndexParameter transformation.
+
+        Args:
+            dist ("custom_types.SampleType"): The parameter to index.
+            *indices ("custom_types.IndexType"): The indices to use for indexing the
+                parameter. These can be a mix of `slice`, `np.ndarray`, or `int`.
+                The indices must be compatible with the shape of the distribution.
+        """
+        # Process and unify the different index types
+        shape, self.indices, parents = self._process_indices(dist, indices)
+
+        # Init using parent method. Provide the shape with `None` values removed --
+        # these are the dimensions that are removed by indexing
+        super().__init__(dist=dist, shape=shape, **parents)
+
+    @overload
+    def neg_to_pos(self, neg_ind: int, dim: int) -> int: ...
+
+    @overload
+    def neg_to_pos(
+        self, neg_ind: npt.NDArray[np.int64], dim: int
+    ) -> npt.NDArray[np.int64]: ...
+
+    def neg_to_pos(self, neg_ind, dim):
+        """Converts negative indices to positive indices in Python format"""
+        # If a numpy array, we update negative positions only
+        if isinstance(neg_ind, np.ndarray):
+            out = neg_ind.copy()
+            out[out < 0] += self.dist.shape[dim]
+
+            # There should be no negatives
+            if np.any(out < 0):
+                raise ValueError(
+                    f"Negative indices {neg_ind} cannot be converted to positive "
+                    f"indices for dimension {dim} with shape {self.dist.shape[dim]}."
+                )
+
+            # The max should be less than the dimension size
+            if np.any(out >= self.dist.shape[dim]):
+                raise ValueError(
+                    f"Indices {neg_ind} exceed the size of dimension {dim} "
+                    f"with shape {self.dist.shape[dim]}."
+                )
+
+            return out
+
+        # If a single integer, we convert it directly.
+        elif isinstance(neg_ind, int):
+            out = neg_ind + self.dist.shape[dim] if neg_ind < 0 else neg_ind
+
+            # Check that the index is within bounds
+            if out < 0:
+                raise ValueError(
+                    f"Negative index {neg_ind} cannot be converted to positive "
+                    f"index for dimension {dim} with shape {self.dist.shape[dim]}."
+                )
+            if out >= self.dist.shape[dim]:
+                raise ValueError(
+                    f"Index {neg_ind} exceeds the size of dimension {dim} "
+                    f"with shape {self.dist.shape[dim]}."
+                )
+
+            return out
+
+        # Error if the type is not supported
+        raise TypeError(
+            f"Unsupported index type {type(neg_ind)}. Expected int or numpy array."
+        )
+
+    def _process_indices(
+        self,
+        dist: "custom_types.CombinableParameterType",
+        indices: tuple["custom_types.IndexType", ...],
+    ) -> tuple[
+        tuple[int, ...],
+        tuple["custom_types.IndexType", ...],
+        dict[str, constants.Constant],
+    ]:
+        """
+        Processes the indices provided to the IndexParameter transformation to unify
+        their format and determine the output shape.
+        """
+
+        def process_slice() -> None:
+            """Helper function to process slices."""
+            # Step cannot be set
+            if ind.step is not None and ind.step != 1:
+                raise ValueError(
+                    f"Step size {ind.step} is not supported in IndexParameter transformation."
+                )
+
+            # Get the size of the output shape (stop - start after converting negatives
+            # to positives)
+            start = 0 if ind.start is None else self.neg_to_pos(ind.start, indpos)
+            stop = (
+                dist.shape[indpos]
+                if ind.stop is None
+                else self.neg_to_pos(ind.stop, indpos)
+            )
+            shape[indpos] = stop - start
+
+        def process_array() -> int:
+            """Helper function to process numpy arrays and constants."""
+
+            # Ensure the array contains integers
+            if ind.dtype is not np.int64:
+                raise TypeError(
+                    f"Indexing with non-integer arrays is not supported. Got dtype "
+                    f"{ind.dtype}."
+                )
+
+            # Different approaches for 1 vs 0 d
+            if ind.ndim == 1:
+
+                # Must be the same as previous 1-d arrays
+                arrlen = len(ind)
+                if int_arr_len > 0 and int_arr_len != arrlen:
+                    raise ValueError(
+                        f"All 1-dimensional integer arrays must have the same length. "
+                        f"Got lengths {int_arr_len} and {arrlen}."
+                    )
+
+                # Store the index length
+                shape[indpos] = arrlen
+
+                # Build a constant for the index. This involves adjusting the indices
+                # to be Stan-compatible (1-indexed, no negative indices).
+                parents[f"idx_{indpos}"] = constants.Constant(
+                    self.neg_to_pos(ind, indpos) + 1
+                )
+
+                return arrlen
+
+            # If not 1-d or 0-d, raise an error
+            elif ind.ndim > 1:
+                raise ValueError(
+                    f"Indexing with multi-dimensional arrays is not supported. "
+                    f"Got {ind.ndim} dimensions."
+                )
+
+            return 0
+
+        # We cannot have more indices than dimensions in the distribution.
+        if (n_inds := len(indices)) > dist.ndim:
+            raise ValueError(
+                f"Too many indices provided. Expected at most {dist.ndim}, got {n_inds}."
+            )
+
+        # Each index must be a Constant, numpy array, slice, or int and must be
+        # compatible with the distribution's shape.
+        shape = [None] * n_inds
+        parents: dict[str, constants.Constant] = {}
+        int_arr_len = 0
+        indices = shape.copy()
+        for indpos, ind in enumerate(indices):
+
+            # Process slices
+            if isinstance(ind, slice):
+                process_slice()
+
+            # Process numpy arrays
+            elif isinstance(ind, np.ndarray):
+                int_arr_len = max(int_arr_len, process_array())
+
+            # If not an integer at this point, error
+            elif not isinstance(ind, int):
+                raise TypeError(
+                    f"Indexing with {type(ind)} is not supported. Expected a Constant, "
+                    "numpy array, slice, or int."
+                )
+
+            # Record index
+            indices[indpos] = ind
+
+        # Index list should be full now and no longer changing
+        assert None not in indices, "Not all indices were processed."
+
+        # Remove None values from the shape
+        return tuple(s for s in shape if s is not None), tuple(indices), parents
+
+    # Note that parents are ignored here as their indices have been adjusted to
+    # reflect Stan's 1-indexing and no negative indices.
+    def run_np_torch_op(  # pylint: disable=arguments-differ, unused-argument
+        self, dist, **parents
+    ):
+        # We just index the input and return
+        return dist[self.indices]
+
+    def get_right_side(self, index_opts: tuple[str, ...] | None) -> str:
+        """
+        Gets the name of the variable that is being indexed, then passes it to
+        the `write_stan_operation` method to get the full Stan code for the transformation
+        """
+        return self.write_stan_operation(dist=self.dist.model_varname)
+
+    def write_stan_operation(  # pylint: disable=arguments-differ
+        self, dist: str
+    ) -> str:
+        def python_to_stan_inds() -> str:
+            """
+            There are a few major differences between Python and Stan indexing:
+
+            1. Python uses 0-indexing, while Stan uses 1-indexing.
+            2. Python allows for negative indexing, while Stan does not.
+            3. Stan upper bounds are inclusive, while Python's are exclusive.
+
+            This function converts Python-style indices to Stan-style indices. Note
+            that the Constants that were created as part of initialization already
+            obey this format. Pre-processing the indices in these is necessary to
+            avoid writing the entire array as neat text into the Stan code (i.e.,
+            it allows us to define it as 'data')
+            """
+            # If a slice, convert to positive as needed, then convert to Stan format.
+            # This is done by converting both to positive indices as needed, then
+            # adding 1 to the start and 0 to the stop index. We do not add 1 to
+            # the stop because Stan's stop index is inclusive while Python's is
+            # exclusive (e.g., :2 in Python takes indices 0 and 1 while in Stan
+            # takes indices 1 and 2 -- the first two in both cases. 1: takes everything
+            # after the first index in Python, while in Stan it takes everything.
+            if isinstance(ind, slice):
+                start = (
+                    ""
+                    if ind.start is None
+                    else str(self.neg_to_pos(ind.start, dim) + 1)
+                )
+                end = "" if ind.stop is None else str(self.neg_to_pos(ind.stop, dim))
+                return f"{start}:{end}"
+
+            # If an integer, convert to positive and add 1 for Stan's 1-indexing.
+            elif isinstance(ind, int):
+                return str(self.neg_to_pos(ind, dim) + 1)
+
+            # If an array, we need to use the constant that we defined if 1D, otherwise
+            # we extract and update the single value
+            elif isinstance(ind, np.ndarray):
+                if ind.ndim == 1:
+                    return self._parents[f"idx_{dim}"].get_indexed_varname(None)
+                elif ind.ndim == 0:
+                    return str(self.neg_to_pos(ind.item(), dim) + 1)
+                raise AssertionError("This should have been caught before")
+
+        # Compile all indices. Every time we encounter an array index, we start
+        # a new indexing operation. This allows us to mimic numpy behavior in Stan.
+        components = []
+        current_component = []
+        arr_encountered = False
+        for dim, ind in enumerate(self.indices):
+
+            # If an array and we have already encountered an array, we need to
+            # start a new component. If we have not already encountered an array,
+            # note now that we have.
+            if isinstance(ind, np.ndarray):
+                if arr_encountered:
+                    components.append(current_component)
+                    current_component = []
+                    arr_encountered = False
+                else:
+                    arr_encountered = True
+
+            # Add the processed index to the current component
+            current_component.append(python_to_stan_inds())
+
+        # Record the last component
+        components.append(current_component)
+
+        # Join all components
+        return dist + "[" + "][".join(",".join(c) for c in components) + "]"
+
+    # Stan code level is always 0 for this transformation
+    @property
+    def stan_code_level(self) -> int:
+        return 0

@@ -42,3 +42,6 @@ DMSStanDistribution = Union[
 # Diagnostic output types
 ProcessedTestRes = dict[str, tuple[tuple["npt.NDArray", ...], int]]
 StrippedTestRes = dict[str, tuple["npt.NDArray", ...]]
+
+# Type for indexing
+IndexType = Union["npt.NDArray[np.integer]", slice, int]
