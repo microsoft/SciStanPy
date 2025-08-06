@@ -87,10 +87,10 @@ def build_operation(
     """
     # Build the class via the metaclass
     return MetaOperation(
-        name=distclass.__name__.lower(),
-        bases=(Operation,),
-        attrs={"distclass": distclass, "__doc__": distclass.__doc__},
-    )
+        distclass.__name__.lower(),
+        (Operation,),
+        {"distclass": distclass, "__doc__": distclass.__doc__},
+    )()
 
 
 # Define our operations

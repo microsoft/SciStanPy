@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Literal, Optional
+from typing import Literal, Optional, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -21,6 +21,9 @@ transformed_data = utils.lazy_import(
 transformed_parameters = utils.lazy_import(
     "dms_stan.model.components.transformations.transformed_parameters"
 )
+
+if TYPE_CHECKING:
+    from dms_stan import custom_types
 
 
 class AbstractModelComponent(ABC):
@@ -45,7 +48,7 @@ class AbstractModelComponent(ABC):
         self,
         *,
         shape: tuple[int, ...] = (),
-        **model_params: "dms.custom_types.CombinableParameterType",
+        **model_params: "custom_types.CombinableParameterType",
     ):
         """Builds a parameter instance with the given shape."""
 
@@ -71,7 +74,7 @@ class AbstractModelComponent(ABC):
 
     def _validate_parameters(
         self,
-        model_params: dict[str, "dms.custom_types.CombinableParameterType"],
+        model_params: dict[str, "custom_types.CombinableParameterType"],
     ) -> None:
         """Checks inputs to the __init__ method for validity."""
         # All bounded parameters must be named in the parameter dictionary
@@ -112,7 +115,7 @@ class AbstractModelComponent(ABC):
 
     def _set_parents(
         self,
-        model_params: dict[str, "dms.custom_types.CombinableParameterType"],
+        model_params: dict[str, "custom_types.CombinableParameterType"],
     ) -> None:
         """Sets the parent parameters of the current parameter."""
 

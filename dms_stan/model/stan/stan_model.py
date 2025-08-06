@@ -358,7 +358,7 @@ class StanForLoop(StanCodeBase):
         return self.parent_loop.ancestry + [self.parent_loop]
 
     def get_parent_loop(self, n: int) -> StanCodeBase:
-        return (self.ancestry + self)[n]
+        return (self.ancestry + [self])[n]
 
     def squash(self) -> None:
         """
@@ -460,7 +460,7 @@ class StanForLoop(StanCodeBase):
 class StanProgram(StanCodeBase):
     """Represents a Stan program"""
 
-    def __init__(self, model: "dms.model.Model"):
+    def __init__(self, model: "dms_stan.Model"):
         """Initializes and compiles the Stan program."""
         # Initialize the list
         super().__init__(None)
@@ -906,7 +906,7 @@ class StanModel(CmdStanModel):
     # We initialize with a DMSStan model instance
     def __init__(
         self,
-        model: "dms.model.Model",
+        model: "dms_stan.Model",
         output_dir: Optional[str] = None,
         force_compile: bool = DEFAULT_FORCE_COMPILE,
         stanc_options: Optional[dict[str, Any]] = None,
@@ -922,6 +922,7 @@ class StanModel(CmdStanModel):
         self._stanc_options["include-paths"] = (
             self._stanc_options.get("include-paths", []) + stan.STAN_INCLUDE_PATHS
         )
+        print(self._stanc_options)
 
         # Note the underlying DMSStan model
         self.model = model

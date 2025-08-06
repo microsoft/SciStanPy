@@ -37,7 +37,14 @@ def lazy_import(name: str):
 
     # If not, import it lazily (modified from here:
     # https://docs.python.org/3/library/importlib.html#implementing-lazy-imports)
+    # Get the spec
     spec = importlib.util.find_spec(name)
+
+    # If the spec is None, raise an ImportError
+    if spec is None:
+        raise ImportError(f"Module '{name}' not found.")
+
+    # Create the module with a lazy loader
     spec.loader = importlib.util.LazyLoader(spec.loader)
     module = importlib.util.module_from_spec(spec)
 

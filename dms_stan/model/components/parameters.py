@@ -6,7 +6,7 @@ import functools
 import re
 
 from abc import ABCMeta
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, TYPE_CHECKING, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -31,6 +31,9 @@ constants = utils.lazy_import("dms_stan.model.components.constants")
 transformed_data = utils.lazy_import(
     "dms_stan.model.components.transformations.transformed_data"
 )
+
+if TYPE_CHECKING:
+    from dms_stan import custom_types
 
 # pylint: disable=too-many-lines
 
@@ -149,28 +152,25 @@ class Parameter(
             for attr in (
                 "STAN_DIST",
                 "CDF",
-                "CCDF",
+                "SF",
                 "LOG_CDF",
-                "LOG_CCDF",
+                "LOG_SF",
                 "SCIPY_DIST",
                 "TORCH_DIST",
                 "STAN_TO_SCIPY_NAMES",
                 "STAN_TO_TORCH_NAMES",
             )
-            if not getattr(self, attr)
+            if not hasattr(self, attr)
         ]:
             raise NotImplementedError(
                 f"The following class attributes must be defined: {', '.join(missing_attributes)}"
             )
 
         # Make sure we have the expected parameters
-        kwargset = set(kwargs.keys())
-        if additional_params := kwargset - self.STAN_TO_SCIPY_NAMES.keys():
+        if missing_params := self.STAN_TO_SCIPY_NAMES.keys() - set(kwargs.keys()):
             raise TypeError(
-                f"Unexpected parameters {additional_params} passed to {self}."
+                f"Missing parameters {missing_params} for {self.__class__.__name__}."
             )
-        if missing_params := self.STAN_TO_SCIPY_NAMES.keys() - kwargset:
-            raise TypeError(f"Missing parameters {missing_params} for {self}.")
 
         # Initialize the parameters
         super().__init__(**kwargs)
@@ -328,7 +328,7 @@ class Parameter(
     @_gather_cdflike_args
     def cdf(
         self: Optional["Parameter"] = None,
-        **params: "dms.custom_types.CombinableParameterType",
+        **params: "custom_types.CombinableParameterType",
     ) -> "cdfs.CDF":
         """
         Can be used as a static method or instance method to return the CDF of the
@@ -340,7 +340,7 @@ class Parameter(
     @_gather_cdflike_args
     def ccdf(
         self: Optional["Parameter"] = None,
-        **params: "dms.custom_types.CombinableParameterType",
+        **params: "custom_types.CombinableParameterType",
     ) -> "cdfs.SurvivalFunction":
         """
         Can be used as a static method or instance method to return the complementary
@@ -351,7 +351,7 @@ class Parameter(
 
     def log_cdf(
         self: Optional["Parameter"] = None,
-        **params: "dms.custom_types.CombinableParameterType",
+        **params: "custom_types.CombinableParameterType",
     ) -> "cdfs.LogCDF":
         """
         Can be used as a static method or instance method to return the log CDF of the
@@ -362,7 +362,7 @@ class Parameter(
 
     def log_ccdf(
         self: Optional["Parameter"] = None,
-        **params: "dms.custom_types.CombinableParameterType",
+        **params: "custom_types.CombinableParameterType",
     ) -> "cdfs.LogSurvivalFunction":
         """
         Can be used as a static method or instance method to return the log CCDF of the
@@ -381,7 +381,7 @@ class Parameter(
         return f"{self.model_varname} ~ {right_side}"
 
     @property
-    def torch_dist_instance(self) -> "dms.custom_types.DMSStanDistribution":
+    def torch_dist_instance(self) -> "custom_types.DMSStanDistribution":
         """Returns an instance of the torch distribution class"""
         return self.TORCH_DIST(  # pylint: disable=not-callable
             **{
@@ -507,8 +507,8 @@ class Normal(ContinuousDistribution):
     def __init__(
         self,
         *,
-        mu: "dms.custom_types.ContinuousParameterType",
-        sigma: "dms.custom_types.ContinuousParameterType",
+        mu: "custom_types.ContinuousParameterType",
+        sigma: "custom_types.ContinuousParameterType",
         noncentered: bool = True,
         **kwargs,
     ):
@@ -851,9 +851,7 @@ class ExpDirichlet(Dirichlet):
         )
         transformed_varname = self.get_indexed_varname(index_opts)
 
-        return (
-            f"{transformed_varname} = inv_ilr_log_simplex_constrain_lp({raw_varname})"
-        )
+        return f"{transformed_varname} = inv_ilr_log_simplex_constrain_jacobian({raw_varname})"
 
     def get_right_side(
         self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
@@ -973,8 +971,8 @@ class MultinomialLogTheta(_MultinomialBase):
     def __init__(
         self,
         *,
-        log_theta: "dms.custom_types.ContinuousParameterType",
-        N: "dms.custom_types.DiscreteParameterType",
+        log_theta: "custom_types.ContinuousParameterType",
+        N: "custom_types.DiscreteParameterType",
         **kwargs,
     ):
 

@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 mle_module = utils.lazy_import("dms_stan.model.mle")
 nn_module = utils.lazy_import("dms_stan.model.nn_module")
-prior_predictive_module = utils.lazy_import("dms_stan.prior_predictive")
+prior_predictive_module = utils.lazy_import("dms_stan.plotting.prior_predictive")
 stan_model = utils.lazy_import("dms_stan.model.stan.stan_model")
 
 
