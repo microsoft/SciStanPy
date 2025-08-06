@@ -160,6 +160,59 @@ class StanCodeBase(ABC, list):
                 (transformed_data.TransformedData, StanForLoop),
             )
 
+        def filter_components() -> (
+            list[Union[StanCodeBase, abstract_model_component.AbstractModelComponent]]
+        ):
+            """Filters components to those we want and combines for-loops."""
+            # First combine for-loops at this level that are identical. First we filter.
+            # Then, we iterate over and check for for loops with the same start and end
+            # values that are next to one another and share the same parent loop. If
+            # they do, we combine them.
+            filtered_components = []
+            prev_loop: Optional[StanForLoop] = None
+            for current_component in filter(filter_func, self):
+
+                # If the current component has no assignments, skip it. It has
+                # no impact on this block.
+                if getattr(current_component, func)(self.allowed_index_names) == "":
+                    continue
+
+                # If this is a for loop, perform a series of checks to see if we can
+                # combine it with the previous loop (if there was one).
+                if isinstance(current_component, StanForLoop):
+
+                    # Combine with the previous for-loop if it is compatible
+                    if (
+                        prev_loop is not None
+                        and current_component.end == prev_loop.end
+                        and current_component.stan_code_level
+                        == prev_loop.stan_code_level
+                        and current_component.parent_loop is prev_loop.parent_loop
+                    ):
+                        print("Combining for-loops")
+
+                        # Extend a copy of the previous loop with the current component
+                        combined_loop = prev_loop.copy()
+                        combined_loop.extend(current_component)
+
+                        # Set the previous loop to the combined loop
+                        filtered_components[-1] = combined_loop
+                        prev_loop = combined_loop
+                        continue
+
+                    # If not compatible, just set the previous loop to this one
+                    else:
+                        prev_loop = current_component
+
+                # If not a for-loop, there is no previous loop
+                else:
+                    prev_loop = None
+
+                # Record the current component
+                filtered_components.append(current_component)
+
+            return filtered_components
+
         # We need a dictionary that will map from block name to the prefix for the
         # block we are writing,
         dispatcher = {
@@ -192,10 +245,9 @@ class StanCodeBase(ABC, list):
 
         # Get assignments and incrementations
         assignments = [
-            addition
-            for component in self
-            if filter_func(component)
-            and (addition := getattr(component, func)(self.allowed_index_names))
+            assignment
+            for component in filter_components()
+            if (assignment := getattr(component, func)(self.allowed_index_names))
         ]
 
         # Null string if no assignments
@@ -324,7 +376,7 @@ class StanCodeBase(ABC, list):
 class StanForLoop(StanCodeBase):
     """Represents a Stan for-loop."""
 
-    def __init__(self, parent_loop: StanCodeBase):
+    def __init__(self, parent_loop: StanCodeBase, record_in_parent: bool = True):
         """Initialize the for-loop.
 
         Args:
@@ -335,8 +387,9 @@ class StanForLoop(StanCodeBase):
         # Initialize the list
         super().__init__(parent_loop)
 
-        # Append this loop to the parent loop
-        self.parent_loop.append(self)
+        # Append this loop to the parent loop if requested
+        if record_in_parent:
+            self.parent_loop.append(self)
 
         # Get the ancestry of the loop
         self.ancestry = self._get_ancestry()
@@ -385,6 +438,18 @@ class StanForLoop(StanCodeBase):
 
         # Append the component
         super().append(component)
+
+    def copy(self, record_in_parent: bool = False) -> "StanForLoop":
+        """Returns a shallow copy of the loop."""
+        # Create a new loop with the same parent loop
+        new_loop = StanForLoop(
+            parent_loop=self.parent_loop, record_in_parent=record_in_parent
+        )
+
+        # Populate the new loop with the same components
+        new_loop.extend(self)
+
+        return new_loop
 
     @property
     def end(self) -> int:
@@ -922,7 +987,6 @@ class StanModel(CmdStanModel):
         self._stanc_options["include-paths"] = (
             self._stanc_options.get("include-paths", []) + stan.STAN_INCLUDE_PATHS
         )
-        print(self._stanc_options)
 
         # Note the underlying DMSStan model
         self.model = model
