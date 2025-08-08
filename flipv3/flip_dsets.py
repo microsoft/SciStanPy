@@ -10,7 +10,7 @@ import pandas as pd
 
 from Bio.Seq import Seq
 
-from dms_stan.model import Model
+from dms_stan import Model
 from dms_stan.model.enrichment import (
     hierarchical_class_factory,
     non_hierarchical_class_factory,

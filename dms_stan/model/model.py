@@ -117,6 +117,7 @@ class Model:
             *init_args,
             **init_kwargs,
         ):
+
             # Initialization is incomplete at this stage
             self._init_complete = False
 

@@ -54,110 +54,14 @@ class MetaEnrichment(type):
                 f"Got {', '.join(base.__name__ for base in bases)} instead."
             )
 
-        # Get the base __init__ method for the model class
-        namespace["base_init"] = mcs.set_base_init(
-            include_times=include_times,
-            biological_replicates=biological_replicates,
-            sequence_replicates=sequence_replicates,
-        )
-
-        # We need to set the times
-        namespace["init_times"] = mcs.set_times(
-            include_times=include_times,
-            biological_replicates=biological_replicates,
-            sequence_replicates=sequence_replicates,
-        )
-
-        # Now the rate distribution, fold change, and growth function
-        namespace["init_rate_distribution"] = mcs.set_rate_distribution(
-            rate_distribution=rate_dist,
-            biological_replicates=biological_replicates,
-        )
-        namespace["init_growth_noise"] = mcs.set_growth_noise(
-            rate_distribution=rate_dist, biological_replicates=biological_replicates
-        )
-        namespace["init_growth_function"] = mcs.set_growth_function(
-            growth_function=growth_func,
-            include_times=include_times,
-            biological_replicates=biological_replicates,
-        )
-
-        # Next, set the counts. This involves normalizing the raw abundances first
-        namespace["init_abundance_normalization"] = mcs.set_normalization(
-            include_od=include_od
-        )
-        namespace["init_counts"] = mcs.set_counts()
-
-        # Next, set the OD distribution if needed
-        namespace["init_od"] = mcs.set_od_distribution(include_od=include_od)
-
-        # Finally, set the __init__ method for the model class
-        namespace["__init__"] = mcs.set_init(
-            growth_func=growth_func,
-            rate_dist=rate_dist,
-            include_times=include_times,
-            biological_replicates=biological_replicates,
-            include_od=include_od,
-        )
-
-        # Run the base new method to create the class
-        return super().__new__(mcs, name, bases, namespace)
-
-    @classmethod
-    def set_init(
-        mcs,
-        growth_func: Literal["exponential", "logistic"],
-        rate_dist: Literal["gamma", "exponential", "lomax"],
-        include_times: bool,
-        biological_replicates: bool,
-        include_od: bool,
-    ):
-        """
-        Runs all other initialization methods to complete object initialization.
-        """
-        # Determine the allowed and required keywords for the model class
-        required_keywords = ["starting_counts", "timepoint_counts"]
-        allowed_keywords = []
-
-        # Different keywords for different growth functions (no keywords for exponential)
-        if growth_func == "logistic":
-            allowed_keywords.extend(["c_alpha", "c_beta"])
-
-        # Different keywords for different rate distributions
-        if rate_dist == "gamma":
-            allowed_keywords.extend(["inv_r_alpha", "inv_r_beta"])
-        elif rate_dist == "exponential":
-            allowed_keywords.append("beta")
-        elif rate_dist == "lomax":
-            allowed_keywords.extend(["lambda_", "lomax_alpha"])
-
-        # If we have times, we need to include keywords for them
-        if include_times:
-            required_keywords.append("times")
-
-        # If biological replicates and either the exponential or lomax rate distribution
-        # is used, we add the `r_sigma_sigma` keyword.
-        if biological_replicates and rate_dist in {"exponential", "lomax"}:
-            allowed_keywords.append("r_sigma_sigma")
-
-        # If we have ODs, we need to include keywords for them
-        if include_od:
-            required_keywords.extend(["starting_od", "timepoint_od"])
-            allowed_keywords.extend(
-                [
-                    "conversion_factor_mean",
-                    "conversion_factor_std",
-                    "od_measurement_error",
-                ]
-            )
-
-        # Convert allowed and required keywords to sets
-        required_keywords = frozenset(required_keywords)
-        allowed_keywords = frozenset(allowed_keywords) | required_keywords
-
-        # Build the __init__ method for the model class
+        # Define the init function. We have to do this here because of the __init_subclass__
+        # method in Model expecting an __init__ method to be present before the
+        # class is created.
         def __init__(self, **kwargs):
             """Initializes the enrichment model with the provided parameters."""
+            # Get the allowed and required keywords for the model class
+            required_keywords, allowed_keywords = self.get_allowed_keywords()
+
             # Check that all required keywords are present
             if missing_keywords := required_keywords - kwargs.keys():
                 raise ValueError(
@@ -180,12 +84,106 @@ class MetaEnrichment(type):
             self.init_counts()
             self.init_od(**kwargs)
 
-        return __init__
+        # Add the growth function, rate dsitribution, and whether we are including
+        # times, biological replicates, and ODs to the namespace
+        namespace.update(
+            {
+                "GROWTH_FUNC": growth_func,
+                "RATE_DISTRIBUTION": rate_dist,
+                "INCLUDE_TIMES": include_times,
+                "BIOLOGICAL_REPLICATES": biological_replicates,
+                "SEQUENCE_REPLICATES": sequence_replicates,
+                "INCLUDE_OD": include_od,
+                "__init__": __init__,
+            }
+        )
 
-    @classmethod
-    def set_base_init(
-        mcs, include_times: bool, biological_replicates: bool, sequence_replicates: bool
+        # Run the base new method to create the class
+        return super().__new__(mcs, name, bases, namespace)
+
+    def __init__(  # pylint: disable=unused-argument
+        cls, name, bases, namespace, *args, **kwargs
     ):
+        """Initialize the class. This involves assigning functions to the class"""
+
+        # Run the parent init method
+        super().__init__(name, bases, namespace)
+
+        # Set the various methods for the model class
+        # pylint: disable=no-value-for-parameter
+        cls.set_get_allowed_keywords()
+        cls.set_base_init()
+        cls.set_times()
+        cls.set_rate_distribution()
+        cls.set_growth_noise()
+        cls.set_growth_function()
+        cls.set_normalization()
+        cls.set_counts()
+        cls.set_od_distribution()
+        # pylint: enable=no-value-for-parameter
+
+    def set_get_allowed_keywords(cls):
+        """Returns the allowed keywords for the model class."""
+
+        def get_allowed_keywords(self) -> tuple[frozenset[str], frozenset[str]]:
+
+            # We always need the starting and timepoint counts
+            required_keywords = ["starting_counts", "timepoint_counts"]
+            allowed_keywords = []
+
+            # Different keywords for different growth functions (no keywords for exponential)
+            if self.GROWTH_FUNC == "logistic":
+                allowed_keywords.extend(["c_alpha", "c_beta"])
+            elif self.GROWTH_FUNC != "exponential":
+                raise ValueError(
+                    f"Unsupported growth function: {self.GROWTH_FUNC}. "
+                    "Supported functions are 'exponential' and 'logistic'."
+                )
+
+            # Different keywords for different rate distributions
+            if self.RATE_DISTRIBUTION == "gamma":
+                allowed_keywords.extend(["inv_r_alpha", "inv_r_beta"])
+            elif self.RATE_DISTRIBUTION == "exponential":
+                allowed_keywords.append("beta")
+            elif self.RATE_DISTRIBUTION == "lomax":
+                allowed_keywords.extend(["lambda_", "lomax_alpha"])
+            else:
+                raise ValueError(
+                    f"Unsupported rate distribution: {self.RATE_DISTRIBUTION}"
+                )
+
+            # If we have times, we need to include keywords for them
+            if self.INCLUDE_TIMES:
+                required_keywords.append("times")
+
+            # If biological replicates and either the exponential or lomax rate distribution
+            # is used, we add the `r_sigma_sigma` keyword.
+            if self.BIOLOGICAL_REPLICATES and self.RATE_DISTRIBUTION in {
+                "exponential",
+                "lomax",
+            }:
+                allowed_keywords.append("r_sigma_sigma")
+
+            # If we have ODs, we need to include keywords for them
+            if self.INCLUDE_OD:
+                required_keywords.extend(["starting_od", "timepoint_od"])
+                allowed_keywords.extend(
+                    [
+                        "conversion_factor_mean",
+                        "conversion_factor_std",
+                        "od_measurement_error",
+                    ]
+                )
+
+            # Convert allowed and required keywords to sets
+            required_keywords = frozenset(required_keywords)
+            allowed_keywords = frozenset(allowed_keywords) | required_keywords
+
+            return required_keywords, allowed_keywords
+
+        cls.get_allowed_keywords = get_allowed_keywords
+
+    def set_base_init(cls):
         """Defines the portions of the init method that is shared by all enrichment models."""
 
         def validate_count_arrays(
@@ -207,23 +205,23 @@ class MetaEnrichment(type):
             if timepoint_counts.ndim != (
                 expected_dims := sum(
                     [
-                        include_times,
-                        biological_replicates,
-                        sequence_replicates,
+                        cls.INCLUDE_TIMES,
+                        cls.BIOLOGICAL_REPLICATES,
+                        cls.SEQUENCE_REPLICATES,
                         1,
                     ]  # +1 for variants
                 )
             ):
                 raise ValueError(
-                    f"With include_times={include_times}, biological_replicates="
-                    f"{biological_replicates}, sequence_replicates={sequence_replicates}, "
-                    f"the timepoint counts must be {expected_dims}D. Got "
-                    f"{timepoint_counts.ndim}D."
+                    f"With include_times={cls.INCLUDE_TIMES}, include_biological_replicates="
+                    f"{cls.BIOLOGICAL_REPLICATES}, include_sequence_replicates="
+                    f"{cls.SEQUENCE_REPLICATES}, the timepoint counts must be "
+                    f"{expected_dims}D. Got {timepoint_counts.ndim}D."
                 )
 
             # If we have times, the second-to-last dimension of the timepoint counts
             # should be the number of times
-            if include_times:
+            if cls.INCLUDE_TIMES:
                 if timepoint_counts.shape[-2] != len(kwargs["times"]):
                     raise ValueError(
                         "The second-to-last dimension of the timepoint counts should "
@@ -244,12 +242,12 @@ class MetaEnrichment(type):
 
             # If we have times, then we need a singleton dimension at the times
             # index for the rate
-            if include_times:
+            if cls.INCLUDE_TIMES:
                 r_shape[-2] = 1
 
             # If we have sequence replicates, we need a singleton dimension at the
             # sequence replicates index for both r and log_theta_tg0
-            if sequence_replicates:
+            if cls.SEQUENCE_REPLICATES:
                 r_shape[-3] = 1
                 tg0_shape[-3] = 1
 
@@ -295,7 +293,7 @@ class MetaEnrichment(type):
             # Get the shape of the proportions. This is identical to the shape of
             # the counts EXCEPT for the sequence replicates dimension, if present
             theta_t0_shape = list(starting_counts.shape)
-            if sequence_replicates and len(theta_t0_shape) > 2:
+            if cls.SEQUENCE_REPLICATES and len(theta_t0_shape) > 2:
                 theta_t0_shape[-3] = 1
 
             # Starting proportions are Exp-Dirichlet distributed.
@@ -303,15 +301,9 @@ class MetaEnrichment(type):
                 alpha=alpha, shape=tuple(theta_t0_shape)
             )
 
-        return base_init
+        cls.base_init = base_init
 
-    @classmethod
-    def set_times(
-        mcs,
-        include_times: bool,
-        biological_replicates: bool,
-        sequence_replicates: bool = False,
-    ):
+    def set_times(cls):
         """Sets the `time` attribute if needed"""
 
         # pylint: disable=unused-argument
@@ -327,7 +319,7 @@ class MetaEnrichment(type):
             # Add the appropriate number of dimensions depending on whether we have
             # replicates.
             times = times[
-                (None,) * sum([biological_replicates, sequence_replicates])
+                (None,) * sum([cls.BIOLOGICAL_REPLICATES, cls.SEQUENCE_REPLICATES])
                 + (slice(None), None)
             ]
 
@@ -335,16 +327,9 @@ class MetaEnrichment(type):
             self.times = constants.Constant(times / times.max(), togglable=False)
 
         # Use the appropriate function for initializing times
-        if include_times:
-            return init_times
-        return null_init_times
+        cls.init_times = init_times if cls.INCLUDE_TIMES else null_init_times
 
-    @classmethod
-    def set_rate_distribution(
-        mcs,
-        rate_distribution: Literal["gamma", "exponential", "lomax"],
-        biological_replicates: bool,
-    ):
+    def set_rate_distribution(cls):
         """Sets the rate distribution for the model."""
 
         def init_gamma_inv_rate(
@@ -359,7 +344,7 @@ class MetaEnrichment(type):
             # experiments. This rate is modeled by the Gamma distribution and is the
             # inverse of the growth rate (so that we can use it as the exponential rate
             # parameter).
-            if biological_replicates:
+            if cls.BIOLOGICAL_REPLICATES:
                 varname = "inv_r_mean"
                 distclass = parameters.Gamma
             else:
@@ -379,9 +364,9 @@ class MetaEnrichment(type):
 
             # We stay in the log space for hierarchical models, but not for non-hierarchical
             # models
-            if biological_replicates:
-                varname = "log_r_mean"
-                distclass = parameters.ExpExponential
+            if cls.BIOLOGICAL_REPLICATES:
+                varname = "r_mean"
+                distclass = parameters.Exponential
             else:
                 varname = "r"
                 distclass = parameters.Exponential
@@ -399,8 +384,8 @@ class MetaEnrichment(type):
 
             # We stay in the log space for hierarchical models, but not for non-hierarchical
             # models
-            if biological_replicates:
-                varname = "log_r_mean"
+            if cls.BIOLOGICAL_REPLICATES:
+                varname = "r_mean"
                 distclass = parameters.ExpLomax
             else:
                 varname = "r"
@@ -414,20 +399,16 @@ class MetaEnrichment(type):
             )
 
         # Return the appropriate initialization method based on the rate distribution
-        if rate_distribution == "gamma":
-            return init_gamma_inv_rate
-        if rate_distribution == "exponential":
-            return init_exponential_rate
-        if rate_distribution == "lomax":
-            return init_lomax_rate
-        raise ValueError("Unsupported rate distribution.")
+        if cls.RATE_DISTRIBUTION == "gamma":
+            cls.init_rate_distribution = init_gamma_inv_rate
+        elif cls.RATE_DISTRIBUTION == "exponential":
+            cls.init_rate_distribution = init_exponential_rate
+        elif cls.RATE_DISTRIBUTION == "lomax":
+            cls.init_rate_distribution = init_lomax_rate
+        else:
+            raise ValueError("Unsupported rate distribution.")
 
-    @classmethod
-    def set_growth_noise(
-        mcs,
-        rate_distribution: Literal["gamma", "exponential", "lomax"],
-        biological_replicates: bool,
-    ):
+    def set_growth_noise(cls):
         """Sets the fold-change that we observe"""
 
         def null_init_growth_noise(
@@ -447,34 +428,27 @@ class MetaEnrichment(type):
             r_sigma_sigma: float = 0.01,
             **kwargs,  # pylint: disable=unused-argument
         ) -> None:
-            """Builds 'r' from 'log_r_mean'"""
+            """Builds 'r' from 'r_mean'"""
 
             # Get the sigma for the log fold-change
             self.r_sigma = parameters.HalfNormal(sigma=r_sigma_sigma)
 
             # Calculate r
             self.r = parameters.Normal(
-                mu=dms_ops.exp(self.log_r_mean), sigma=self.r_sigma, shape=self.r_shape
+                mu=self.r_mean, sigma=self.r_sigma, shape=self.r_shape
             )
 
         # Do nothing for non-hierarchical models
-        if not biological_replicates:
-            return null_init_growth_noise
+        if not cls.BIOLOGICAL_REPLICATES:
+            cls.init_growth_noise = null_init_growth_noise
+        elif cls.RATE_DISTRIBUTION == "gamma":
+            cls.init_growth_noise = init_gamma_inv_rate_growth_noise
+        elif cls.RATE_DISTRIBUTION in {"exponential", "lomax"}:
+            cls.init_growth_noise = init_exp_lomax_rate_growth_noise
+        else:
+            raise ValueError("Unsupported rate distribution.")
 
-        # Return the appropriate initialization method based on the rate distribution
-        if rate_distribution == "gamma":
-            return init_gamma_inv_rate_growth_noise
-        elif rate_distribution in {"exponential", "lomax"}:
-            return init_exp_lomax_rate_growth_noise
-        raise ValueError("Unsupported rate distribution.")
-
-    @classmethod
-    def set_growth_function(
-        mcs,
-        growth_function: Literal["exponential", "logistic"],
-        include_times: bool,
-        biological_replicates: bool,
-    ):
+    def set_growth_function(cls):
         """Sets the growth function for the model."""
 
         # Define the different init functions
@@ -483,7 +457,7 @@ class MetaEnrichment(type):
         ) -> None:
             """Initializes the binary exponential growth function."""
             # Different growth functions depending on whether we have times or not
-            if include_times:
+            if cls.INCLUDE_TIMES:
                 self.raw_abundances_tg0 = dms_ops.log_exponential_growth(
                     t=self.times,
                     log_A=self.log_theta_t0,
@@ -506,7 +480,7 @@ class MetaEnrichment(type):
             """Initializes the binary logistic growth function."""
             # Get the shape of `c`. If we have biological replicates, We have as
             # many values for `c` as we do biological replicates.
-            if biological_replicates:
+            if cls.BIOLOGICAL_REPLICATES:
                 c_shape = [1] * self.default_data["timepoint_counts"].ndim
                 c_shape[0] = self.default_data["timepoint_counts"].shape[0]
                 if all(dim == 1 for dim in c_shape):
@@ -523,7 +497,7 @@ class MetaEnrichment(type):
             self.raw_abundances_tg0 = dms_ops.log_sigmoid_growth_init_param(
                 t=(
                     self.times
-                    if include_times
+                    if cls.INCLUDE_TIMES
                     else constants.Constant(1.0, togglable=False)
                 ),
                 log_x0=self.log_theta_t0,
@@ -533,14 +507,17 @@ class MetaEnrichment(type):
             )
 
         # Return the appropriate initialization method based on the growth function
-        if growth_function == "exponential":
-            return init_exponential_growth
-        if growth_function == "logistic":
-            return init_logistic_growth
-        raise ValueError("Unsupported growth function.")
+        if cls.GROWTH_FUNC == "exponential":
+            cls.init_growth_function = init_exponential_growth
+        elif cls.GROWTH_FUNC == "logistic":
+            cls.init_growth_function = init_logistic_growth
+        else:
+            raise ValueError(
+                f"Unsupported growth function: {cls.GROWTH_FUNC}. "
+                "Supported functions are 'exponential' and 'logistic'."
+            )
 
-    @classmethod
-    def set_normalization(mcs, include_od: bool):
+    def set_normalization(cls):
         """Sets the normalization of the raw abundances."""
 
         # If we are including ODs, we have an additional transformed parameter in
@@ -561,12 +538,11 @@ class MetaEnrichment(type):
             """Initializes the normalization of the raw abundances."""
             self.log_theta_tg0 = dms_ops.normalize_log(self.raw_abundances_tg0)
 
-        if include_od:
-            return init_od_normalization
-        return init_normalization
+        cls.init_abundance_normalization = (
+            init_od_normalization if cls.INCLUDE_OD else init_normalization
+        )
 
-    @classmethod
-    def set_counts(mcs):
+    def set_counts(cls):
         """
         Assigns the model for counts. We use the multinomial distribution parametrized
         with log proportions.
@@ -586,10 +562,9 @@ class MetaEnrichment(type):
                 shape=self.default_data["timepoint_counts"].shape,
             )
 
-        return init_counts
+        cls.init_counts = init_counts
 
-    @classmethod
-    def set_od_distribution(mcs, include_od: bool):
+    def set_od_distribution(cls):
         """Sets the OD distribution based on whether we are including ODs."""
 
         # Null operation for models that do not include ODs
@@ -679,9 +654,7 @@ class MetaEnrichment(type):
 
         # Return the appropriate initialization method based on whether we are
         # including ODs
-        if include_od:
-            return init_od
-        return init_od_null
+        cls.init_od = init_od if cls.INCLUDE_OD else init_od_null
 
 
 def hierarchical_class_factory(

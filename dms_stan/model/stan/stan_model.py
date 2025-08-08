@@ -189,7 +189,6 @@ class StanCodeBase(ABC, list):
                         == prev_loop.stan_code_level
                         and current_component.parent_loop is prev_loop.parent_loop
                     ):
-                        print("Combining for-loops")
 
                         # Extend a copy of the previous loop with the current component
                         combined_loop = prev_loop.copy()
