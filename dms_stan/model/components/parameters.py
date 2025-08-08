@@ -349,6 +349,7 @@ class Parameter(
         """
         return self.SF(**params)
 
+    @_gather_cdflike_args
     def log_cdf(
         self: Optional["Parameter"] = None,
         **params: "custom_types.CombinableParameterType",
@@ -360,6 +361,7 @@ class Parameter(
         """
         return self.LOG_CDF(**params)
 
+    @_gather_cdflike_args
     def log_ccdf(
         self: Optional["Parameter"] = None,
         **params: "custom_types.CombinableParameterType",
