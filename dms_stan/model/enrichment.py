@@ -365,8 +365,8 @@ class MetaEnrichment(type):
             # We stay in the log space for hierarchical models, but not for non-hierarchical
             # models
             if cls.BIOLOGICAL_REPLICATES:
-                varname = "r_mean"
-                distclass = parameters.Exponential
+                varname = "log_r_mean"
+                distclass = parameters.ExpExponential
             else:
                 varname = "r"
                 distclass = parameters.Exponential
@@ -385,8 +385,8 @@ class MetaEnrichment(type):
             # We stay in the log space for hierarchical models, but not for non-hierarchical
             # models
             if cls.BIOLOGICAL_REPLICATES:
-                varname = "r_mean"
-                distclass = parameters.Lomax
+                varname = "log_r_mean"
+                distclass = parameters.ExpLomax
             else:
                 varname = "r"
                 distclass = parameters.Lomax
@@ -428,14 +428,16 @@ class MetaEnrichment(type):
             r_sigma_sigma: float = 0.01,
             **kwargs,  # pylint: disable=unused-argument
         ) -> None:
-            """Builds 'r' from 'r_mean'"""
+            """Builds 'r' from 'log_r_mean'"""
 
             # Get the sigma for the log fold-change
             self.r_sigma = parameters.HalfNormal(sigma=r_sigma_sigma)
 
             # Calculate r
             self.r = parameters.Normal(
-                mu=self.r_mean, sigma=self.r_sigma, shape=self.r_shape
+                mu=dms_ops.exp(self.log_r_mean),
+                sigma=self.r_sigma,
+                shape=self.r_shape,
             )
 
         # Do nothing for non-hierarchical models
