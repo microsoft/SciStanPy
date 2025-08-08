@@ -35,7 +35,8 @@ manual_seed()  # Set the seed for the global random number generator
 from dms_stan import utils
 
 # Lazy imports for performance and to avoid circular imports
-Constant = utils.lazy_import_from("dms_stan.model.components.constants", "Constant")
+from dms_stan.model.components.constants import Constant
+from dms_stan.model.model import Model
+
 parameters = utils.lazy_import("dms_stan.model.components.parameters")
-Model = utils.lazy_import_from("dms_stan.model.model", "Model")
 results = utils.lazy_import("dms_stan.model.results")
