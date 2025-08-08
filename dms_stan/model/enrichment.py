@@ -386,7 +386,7 @@ class MetaEnrichment(type):
             # models
             if cls.BIOLOGICAL_REPLICATES:
                 varname = "r_mean"
-                distclass = parameters.ExpLomax
+                distclass = parameters.Lomax
             else:
                 varname = "r"
                 distclass = parameters.Lomax
