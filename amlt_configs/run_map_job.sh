@@ -12,7 +12,7 @@ dataset="${dset_info[0]}"
 subset="${dset_info[1]}"
 
 # Switch to the code directory
-cd /opt/DMSStan/dms_stan/pipelines || exit
+cd /opt/SciStanPy/scistanpy/pipelines || exit
 
 # Report the job details
 echo "Running MAP for $dataset-$subset with the growth modeled by $growth_func \

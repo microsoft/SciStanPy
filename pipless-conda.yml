@@ -1,4 +1,4 @@
-name: dms_stan
+name: scistanpy
 channels:
   - conda-forge
 dependencies:

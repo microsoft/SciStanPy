@@ -6,11 +6,11 @@ target:
   name: msrresrchlab
 
 environment:
-  image: dms_stan:0.0.6
+  image: scistanpy:0.0.7
   registry: bjwamltcr.azurecr.io
 
 data:
-  remote_dir: data/dms_stan/flip3_data/
+  remote_dir: data/scistanpy/flip3_data/
 
 code:
   local_dir: $CONFIG_DIR
@@ -33,7 +33,7 @@ search:
   sampling: grid
   params:
     - name: dset_ind
-      values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14")
+      values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
     - name: rate_dist
       values: choice("gamma", "exponential", "lomax")
     - name: growth_func

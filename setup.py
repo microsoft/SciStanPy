@@ -1,5 +1,5 @@
 """
-Installs DMS Stan
+Installs SciStanPy
 """
 
 import re
@@ -16,7 +16,7 @@ def get_package_info():
     package_version = None
 
     # Open the file containing version info
-    with open("dms_stan/__init__.py", "r", encoding="utf-8") as file:
+    with open("scistanpy/__init__.py", "r", encoding="utf-8") as file:
         for line in file:
             # Check version
             if match_obj := re.match(r"__version__.+([0-9]+\.[0-9]+\.[0-9]+)", line):
@@ -30,7 +30,4 @@ def get_package_info():
 
 
 # Run setup
-setup(
-    version=get_package_info(),
-    packages=find_packages()
-)
+setup(version=get_package_info(), packages=find_packages())

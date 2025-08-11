@@ -5,7 +5,7 @@ from typing import Literal
 import numpy as np
 import numpy.typing as npt
 
-from dms_stan import Constant, parameters
+from scistanpy import Constant, parameters
 from .base_models import (
     BaseEnrichmentTemplate,
     FlatEnrichmentMeta,

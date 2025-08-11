@@ -12,7 +12,7 @@ dataset="${dset_info[0]}"
 subset="${dset_info[1]}"
 
 # Switch to the code directory
-cd /opt/DMSStan/dms_stan/pipelines || exit
+cd /opt/SciStanPy/scistanpy/pipelines || exit
 
 # Report the job details
 echo "Running MCMC for $dataset-$subset with the growth modeled by $growth_func \
@@ -27,4 +27,5 @@ python mcmc_flip.py \
     --flip_data "$AMLT_DATA_DIR" \
     --output_dir "$AMLT_DIRSYNC_DIR" \
     --use_dask \
-    --force_compile
+    --force_compile \
+    --ignore_od

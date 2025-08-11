@@ -5,7 +5,7 @@ from abc import abstractmethod
 import numpy as np
 import numpy.typing as npt
 
-from dms_stan import Constant, Model, operations, parameters
+from scistanpy import Constant, Model, operations, parameters
 from .constants import DEFAULT_HYPERPARAMS
 
 

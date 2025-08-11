@@ -54,8 +54,8 @@ RUN python3 -m pip install --no-cache-dir \
 # hadolint ignore=DL3059
 RUN chmod -R 777 /opt/conda/bin/cmdstan
 
-# Install dms_stan
-COPY pyproject.toml setup.py /opt/DMSStan/
-COPY dms_stan/ /opt/DMSStan/dms_stan/
-WORKDIR /opt/DMSStan
+# Install scistanpy
+COPY pyproject.toml setup.py /opt/SciStanPy/
+COPY scistanpy/ /opt/SciStanPy/scistanpy/
+WORKDIR /opt/SciStanPy
 RUN python3 -m pip install --no-cache-dir -e .

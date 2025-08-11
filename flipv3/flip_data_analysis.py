@@ -14,9 +14,9 @@ import xarray as xr
 
 from scipy import stats
 
-from dms_stan.model.results import MLEInferenceRes, SampleResults
-from dms_stan.plotting import quantile_plot
-from dms_stan.utils import faster_autocorrelation
+from scistanpy.model.results import MLEInferenceRes, SampleResults
+from scistanpy.plotting import quantile_plot
+from scistanpy.utils import faster_autocorrelation
 from flipv3.flip_dsets import load_trpb_dataset, load_pdz_dataset
 
 LOAD_DATASET_MAP = {

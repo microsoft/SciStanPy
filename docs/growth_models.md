@@ -1,6 +1,6 @@
 Growth Models
 =============
-This file describes the different models of organismal growth that are included in DMS-Stan.
+This file describes the different models of organismal growth that are included in SciStanPy.
 
 ## Competitive Lotka-Volterra
 The base growth model that we start from is the [Lotka-Volterra equation for competitive growth](https://journals.biologists.com/jeb/article/9/4/389/22702/Experimental-Studies-on-the-Struggle-for):
@@ -13,7 +13,7 @@ $$
 
 which is a differential equation that describes the rate of change in a population of species $i$ with size $x_i$ given their base rate of change ($r_i$), their carrying capacity ($K_i$), the current population sizes of all competing species ($x_j$) including competition amongst the population itself, and a coefficient that describes the level of impact species $j$ has on species $i$ ($\alpha_{ij}$).
 
-Notably, as applied in DMS Stan where we parametrize our models such that we are working with relative proportions of variants and not absolute abundances, the carrying capacity for all variants must be the same (i.e., when they are the only variant in the population). Thus, all $K_i$ must be equal and so we will ignore it as a scaling factor (an alternative way to think about it is that it is implicitly encoded in all $\alpha_{ij}$). The form of the Lotka-Volterra equation used in DMS Stan is thus
+Notably, as applied in SciStanPy where we parametrize our models such that we are working with relative proportions of variants and not absolute abundances, the carrying capacity for all variants must be the same (i.e., when they are the only variant in the population). Thus, all $K_i$ must be equal and so we will ignore it as a scaling factor (an alternative way to think about it is that it is implicitly encoded in all $\alpha_{ij}$). The form of the Lotka-Volterra equation used in SciStanPy is thus
 
 $$
 \begin{align}
@@ -32,7 +32,7 @@ $$
 \end{align}
 $$
 
-Again, because DMS Stan works with relative proportions of variants, not absolute counts. The total sum of the proportions of all variants ($\sum_{j = 1}^Nx_j$) must thus be constant. This constant can be captured in the $\alpha$ parameter itself, allowing us to simplify to
+Again, because SciStanPy works with relative proportions of variants, not absolute counts. The total sum of the proportions of all variants ($\sum_{j = 1}^Nx_j$) must thus be constant. This constant can be captured in the $\alpha$ parameter itself, allowing us to simplify to
 
 $$
 \begin{align}
@@ -50,7 +50,7 @@ $$
 
 This is just the exponential growth curve modified to include some global adjustment to growth rates $\beta$. In this model, each variant has a basal growth rate ($r_i$) that is influenced by the relative abundance of all other variants (implictly encoded by $x_i$) with strength $\beta$.
 
-In actuality, we do not need the term $\beta$, as it is just a scaling factor. Indeed, if we were to include it, we would have unidentifiable models, where any values of $r$ would be allowed so long as their relative proportions stayed constant. Thus, in DMS Stan, we set $\beta = 1$ and simply model the exponential growth curve (with the assumption that the scale of $r$ accounts for global interactions among variants):
+In actuality, we do not need the term $\beta$, as it is just a scaling factor. Indeed, if we were to include it, we would have unidentifiable models, where any values of $r$ would be allowed so long as their relative proportions stayed constant. Thus, in SciStanPy, we set $\beta = 1$ and simply model the exponential growth curve (with the assumption that the scale of $r$ accounts for global interactions among variants):
 
 $$
 \begin{align}

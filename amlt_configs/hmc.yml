@@ -6,11 +6,11 @@ target:
   name: msrresrchvc
 
 environment:
-  image: dms_stan:0.0.6
+  image: scistanpyy:0.0.7
   registry: bjwamltcr.azurecr.io
 
 data:
-  remote_dir: data/dms_stan/flip3_data/
+  remote_dir: data/scistanpy/flip3_data/
 
 code:
   local_dir: $CONFIG_DIR
@@ -20,7 +20,7 @@ search:
   parallel_trials: 100
   job_template:
     name: "{experiment_name:s}_{dset_ind:s}_{rate_dist:s}_{growth_func:s}"
-    sku: 8C30
+    sku: 8C60
     preemptible: False
     command:
       - bash run_hmc_job.sh {dset_ind} {rate_dist} {growth_func}
@@ -40,25 +40,25 @@ search:
     - name: growth_func
       values: choice("exponential", "logistic")
   # max_trials: 750
-  #   parallel_trials: 100
-  #   job_template:
-  #     name: "{experiment_name:s}_{dset_ind:s}_{rate_dist:s}_{growth_func:s}"
-  #     sku: 8C30
-  #     preemptible: False
-  #     command:
-  #       - bash run_hmc_job.sh {dset_ind} {rate_dist} {growth_func}
-  #     submit_args:
-  #       max_run_duration_seconds: 1209600
-  #       env:
-  #         _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/84a94086-6c26-4611-8249-b3549944c86c/resourcegroups/bjwamlt/providers/Microsoft.ManagedIdentity/userAssignedIdentities/bjwamltuami
-  #         AMLT_DIRSYNC_FREQ: 600
-  #     identity: managed
-  #   type: hyperdrive
-  #   sampling: grid
-  #   params:
-  #     - name: dset_ind
-  #       values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "13")
-  #     - name: rate_dist
-  #       values: choice("gamma", "exponential", "lomax")
-  #     - name: growth_func
-  #       values: choice("exponential", "logistic")
+  # parallel_trials: 100
+  # job_template:
+  #   name: "{experiment_name:s}_{dset_ind:s}_{rate_dist:s}_{growth_func:s}"
+  #   sku: 8C15
+  #   preemptible: False
+  #   command:
+  #     - bash run_hmc_job.sh {dset_ind} {rate_dist} {growth_func}
+  #   submit_args:
+  #     max_run_duration_seconds: 1209600
+  #     env:
+  #       _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/84a94086-6c26-4611-8249-b3549944c86c/resourcegroups/bjwamlt/providers/Microsoft.ManagedIdentity/userAssignedIdentities/bjwamltuami
+  #       AMLT_DIRSYNC_FREQ: 600
+  #   identity: managed
+  # type: hyperdrive
+  # sampling: grid
+  # params:
+  #   - name: dset_ind
+  #     values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "13")
+  #   - name: rate_dist
+  #     values: choice("gamma", "exponential", "lomax")
+  #   - name: growth_func
+  #     values: choice("exponential", "logistic")
