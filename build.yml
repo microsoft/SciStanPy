@@ -87,3 +87,11 @@ steps:
 #   inputs:
 #     GdnBreakAllTools: true
 #####################################################
+
+# Schedule
+schedules:
+- cron: '00 00 * * 01'
+  displayName: Weekly build
+  branches:
+    include: 
+    - main
