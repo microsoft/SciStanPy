@@ -44,7 +44,7 @@ from scistanpy.model.components.transformations import transformed_parameters
 from scistanpy.model.results import mle
 
 if TYPE_CHECKING:
-    from scistanpy import custom_types
+    from scistanpy import custom_types, Model
 
 # pylint: disable=too-many-lines
 
@@ -371,7 +371,7 @@ class CmdStanMCMCToNetCDFConverter:
     def __init__(
         self,
         fit: CmdStanMCMC | str | list[str] | os.PathLike,
-        model: "scistanpy.model.Model",
+        model: "Model",
         data: dict[str, Any] | None = None,
     ):
         """
@@ -731,7 +731,7 @@ class CmdStanMCMCToNetCDFConverter:
 
 def cmdstan_csv_to_netcdf(
     path: str | list[str] | os.PathLike | CmdStanMCMC,
-    model: "scistanpy.model.Model",
+    model: "Model",
     data: dict[str, Any] | None = None,
     output_filename: str | None = None,
     precision: Literal["double", "single", "half"] = "single",
@@ -817,7 +817,7 @@ class SampleResults(mle.MLEInferenceRes):
 
     def __init__(
         self,
-        model: Union["scistanpy.model.Model", None] = None,
+        model: Union["Model", None] = None,
         fit: str | list[str] | os.PathLike | CmdStanMCMC | None = None,
         data: dict[str, npt.NDArray] | None = None,
         precision: Literal["double", "single", "half"] = "single",
