@@ -410,7 +410,10 @@ class StanForLoop(StanCodeBase):
         return self.parent_loop.ancestry + [self.parent_loop]
 
     def get_parent_loop(self, n: int) -> StanCodeBase:
-        print("HERE")
+        # Clip n to the number of ancestors
+        n = min(n, len(self.ancestry))
+
+        # Get the appropriate loop
         return (self.ancestry + [self])[n]
 
     def squash(self) -> None:
