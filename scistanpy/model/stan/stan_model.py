@@ -185,8 +185,7 @@ class StanCodeBase(ABC, list):
                     if (
                         prev_loop is not None
                         and current_component.end == prev_loop.end
-                        and current_component.stan_code_level
-                        == prev_loop.stan_code_level
+                        and current_component.depth == prev_loop.depth
                         and current_component.parent_loop is prev_loop.parent_loop
                     ):
 
@@ -262,9 +261,7 @@ class StanCodeBase(ABC, list):
             + prefix
             + ("\n" + declarations + "\n" if isinstance(declarations, str) else "")
             + ("\n" if n_model_components > 0 else "")
-            + self.combine_lines(
-                assignments, indentation_level=self.stan_code_level + 1
-            )
+            + self.combine_lines(assignments, indentation_level=self.depth + 1)
             + "\n"
             + self.finalize_line("}")
         )
@@ -299,7 +296,7 @@ class StanCodeBase(ABC, list):
 
         # Get the indentation level
         indendation_level = (
-            self.stan_code_level if indendation_level is None else indendation_level
+            self.depth if indendation_level is None else indendation_level
         )
 
         # Pad the input text with spaces
@@ -343,8 +340,8 @@ class StanCodeBase(ABC, list):
 
     @property
     @abstractmethod
-    def stan_code_level(self) -> int:
-        """Returns the code level of the object."""
+    def depth(self) -> int:
+        """Returns the depth of the object."""
 
     @property
     @abstractmethod
@@ -393,11 +390,6 @@ class StanForLoop(StanCodeBase):
         # Get the ancestry of the loop
         self.ancestry = self._get_ancestry()
 
-        # The shape index is the initial code level of the loop minus 1. In other
-        # words, if the loop is at code level "1", then we are indexing the first
-        # dimension of the model components (index 0).
-        self._shape_index = self.stan_code_level - 1
-
     def _get_ancestry(self) -> list[StanCodeBase]:
         """Retrieves the ancestry of the loop."""
 
@@ -437,7 +429,7 @@ class StanForLoop(StanCodeBase):
         """Appends a component to the list."""
         # If a model component, make sure we are at the appropriate code level
         if isinstance(component, abstract_model_component.AbstractModelComponent):
-            assert component.stan_code_level == (self.shape_index + 1)
+            assert component.assign_depth == self.depth
 
         # Append the component
         super().append(component)
@@ -463,7 +455,7 @@ class StanForLoop(StanCodeBase):
         # Get the size of the dimension at the index level for all model components
         # nested in the loop
         all_ends = {
-            component.shape[self.shape_index]
+            component.shape[self.depth - 1]
             for component in self.recurse_model_components()
         }
 
@@ -492,8 +484,8 @@ class StanForLoop(StanCodeBase):
         return self.program.allowed_index_names
 
     @property
-    def stan_code_level(self) -> int:
-        """Returns the code level of the loop, which is the number of ancestors."""
+    def depth(self) -> int:
+        """Returns the depth of the loop, which is the number of ancestors."""
         n_ancestors = len(self.ancestry)
         assert n_ancestors > 0
         return n_ancestors
@@ -501,7 +493,7 @@ class StanForLoop(StanCodeBase):
     @property
     def loop_index(self) -> str:
         """Returns the index of the loop in the program."""
-        return self.program.allowed_index_names[self.shape_index]
+        return self.program.allowed_index_names[self.depth - 1]
 
     @property
     def target_inc_prefix(self) -> str:
@@ -518,11 +510,6 @@ class StanForLoop(StanCodeBase):
     @property
     def transformed_data_prefix(self) -> str:
         return self.target_inc_prefix
-
-    @property
-    def shape_index(self) -> int:
-        """Returns the index level of the loop."""
-        return self._shape_index
 
 
 class StanProgram(StanCodeBase):
@@ -635,12 +622,12 @@ class StanProgram(StanCodeBase):
         order_of_operations: list[abstract_model_component.AbstractModelComponent] = (
             sorted(
                 self.node_to_depth,
-                key=lambda x: (self.node_to_depth[x], x.stan_code_level),
+                key=lambda x: (self.node_to_depth[x], x.assign_depth),
             )
         )
 
-        # The first component in the order of operations must be at code level 0
-        assert order_of_operations[0].stan_code_level == 0
+        # The first component in the order of operations must be at definition depth 0
+        assert order_of_operations[0].assign_depth == 0
 
         # Set up for compilation. We define the `target_loop`, which is the loop
         # to which components will be actively added. We also defined the `previous_component`,
@@ -649,15 +636,12 @@ class StanProgram(StanCodeBase):
         previous_component = None  # Item one operation back
         for component in order_of_operations:
 
-            # If the current or previous component is at code level 0, then the
+            # If the current or previous component is defined a depth 0, then the
             # program is the target loop. We will need to add as many for-loops
             # as we have levels of indentation in the current component.
-            if (
-                component.stan_code_level == 0
-                or previous_component.stan_code_level == 0
-            ):
+            if component.assign_depth == 0 or previous_component.assign_depth == 0:
                 target_loop = self
-                n_loops = component.stan_code_level
+                n_loops = component.assign_depth
 
             # In any other case, we need to determine which dimensions of the current
             # component are compatible with the previous component and find the
@@ -667,9 +651,7 @@ class StanProgram(StanCodeBase):
                 # We need to determine the extent to which the shapes of the current
                 # and previous components are compatible. This is the number of
                 # shared leading dimensions between the two components' shapes.
-                compat_level = previous_component.get_stan_level_compatibility(
-                    other=component
-                )
+                compat_level = previous_component.get_shared_leading(component)
 
                 # Get the parent loop of the current component that is compatible
                 # with the the current component. Note that we also update our referenced
@@ -679,9 +661,10 @@ class StanProgram(StanCodeBase):
                 assert isinstance(target_loop, StanForLoop)
                 target_loop = target_loop.get_parent_loop(compat_level)
 
-                # How many for-loops do we need to add? The code level of the current
-                # component must be greater than or equal to the target now
-                n_loops = component.stan_code_level - target_loop.stan_code_level
+                # How many for-loops do we need to add? The definition depth of
+                # the current component must be greater than or equal to the depth
+                # of the current loop
+                n_loops = component.assign_depth - target_loop.depth
                 assert n_loops >= 0
 
             # Add for-loops if necessary
@@ -716,16 +699,16 @@ class StanProgram(StanCodeBase):
         ],
     ) -> None:
         """Appends a component to the list."""
-        # If a model component, make sure we are at the appropriate code level
+        # If a model component, make sure we are at the appropriate depth
         if isinstance(component, abstract_model_component.AbstractModelComponent):
-            assert component.stan_code_level == 0
+            assert component.assign_depth == 0
 
         # Append the component
         super().append(component)
 
     @property
-    def stan_code_level(self) -> int:
-        """Returns the code level of the program, which is always 0."""
+    def depth(self) -> int:
+        """Returns the depth of the program, which is always 0."""
         return 0
 
     @property

@@ -1263,7 +1263,7 @@ class IndexParameter(TransformedParameter):
         # Join all components
         return dist + "[" + "][".join(",".join(c) for c in components) + "]"
 
-    # Stan code level is always 0 for this transformation
+    # The definition depth is always 0 for this transformation
     @property
-    def stan_code_level(self) -> int:
+    def assign_depth(self) -> int:  # pylint: disable=C0116
         return 0

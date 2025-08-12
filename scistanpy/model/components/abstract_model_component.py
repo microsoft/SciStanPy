@@ -47,7 +47,7 @@ class AbstractModelComponent(ABC):
     def __init__(  # pylint: disable=unused-argument
         self,
         *,
-        shape: tuple[int, ...] = (),
+        shape: tuple[int, ...] | int = (),
         **model_params: "custom_types.CombinableParameterType",
     ):
         """Builds a parameter instance with the given shape."""
@@ -56,7 +56,7 @@ class AbstractModelComponent(ABC):
         self._model_varname: str = ""  # SciStanPy Model variable name
         self._parents: dict[str, AbstractModelComponent]
         self._component_to_paramname: dict[AbstractModelComponent, str]
-        self._shape: tuple[int, ...] = shape  # Shape of the parameter
+        self._shape: tuple[int, ...] = (shape,) if isinstance(shape, int) else shape
         self._children: list[AbstractModelComponent] = []  # Children of the component
 
         # Validate incoming parameters
@@ -227,7 +227,10 @@ class AbstractModelComponent(ABC):
         return child_paramnames
 
     def get_indexed_varname(
-        self, index_opts: tuple[str, ...] | None, _name_override: str = ""
+        self,
+        index_opts: tuple[str, ...] | None,
+        offset: int = 0,
+        _name_override: str = "",
     ) -> str:
         """
         Returns the variable name used by stan with the appropriate indices. Note
@@ -236,11 +239,18 @@ class AbstractModelComponent(ABC):
 
         Args:
             index_opts (tuple[str, ...]): The index options for the variable name.
+            offset (int): The number of leading indices to skip. We need this because
+                singleton dimensions are implicitly added when broadcasting from
+                this parameter to a child. Thus, we need to offset indexing to account
+                for these implicit singletons depending on the child.
 
         Returns:
             str: The variable name with the appropriate indices (if any).
             bool: Whether the variable is a vector.
         """
+        # Offset must be >= 0
+        assert offset >= 0
+
         # If the name override is provided, then we use that name
         base_name = _name_override or self.stan_model_varname
 
@@ -251,7 +261,7 @@ class AbstractModelComponent(ABC):
         # Singleton dimensions get a "1" index. All others get the index options.
         indices = [
             "1" if dimsize == 1 else index_opts[i]
-            for i, dimsize in enumerate(self.shape)
+            for i, dimsize in enumerate(self.shape, start=offset)
         ]
 
         # If the last dimension is vectorized, then we don't need to index it. We
@@ -385,7 +395,7 @@ class AbstractModelComponent(ABC):
 
         return to_return
 
-    def get_stan_level_compatibility(self, other: "AbstractModelComponent") -> int:
+    def get_shared_leading(self, other: "AbstractModelComponent") -> int:
         """
         Determines the extent to which the shapes of this and the other components
         are compatible. This is the number of shared leading dimensions between
@@ -480,7 +490,9 @@ class AbstractModelComponent(ABC):
                 )
                 or param.is_named
             ):
-                model_components[name] = param.get_indexed_varname(index_opts)
+                model_components[name] = param.get_indexed_varname(
+                    index_opts, offset=self.ndim - param.ndim
+                )
 
             # Otherwise, we need to get the thread of operations that make up the
             # transformation for the parameter. This is equivalent to calling the
@@ -610,12 +622,13 @@ class AbstractModelComponent(ABC):
         return dtype
 
     @property
-    def stan_code_level(self) -> int:
+    def assign_depth(self) -> int:
         """
-        The level (index of the for-loop block) at which the parameter is manipulated
+        The level (index of the for-loop block) at which the parameter is DEFINED
         in the Stan code. This is the number of dimensions, excluding trailing singleton
-        dimensions, of the parameter minus one, clipped at zero. This is because
-        the last dimension is assumed to always be vectorized.
+        dimensions, of the parameter minus one, clipped at zero. Note that the
+        parameter might be manipulated at a different level in the code than the
+        level at which it is defined.
         """
         # Default is number of dimensions minus one. We subtract one because the
         # last dimension is always vectorized.
