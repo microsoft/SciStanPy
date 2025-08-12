@@ -55,7 +55,7 @@ class FlatEnrichmentMeta(BaseEnrichmentMeta):
             self, beta: float = DEFAULT_HYPERPARAMS["exp_beta"], **kwargs
         ):
             """Set the growth rate to exponential."""
-            return parameters.Exponential(rate=beta, shape=self.n_variants)
+            return parameters.Exponential(beta=beta, shape=self.n_variants)
 
         def lomax_growth_rate(  # pylint: disable=unused-argument
             self,
@@ -86,14 +86,12 @@ class FlatEnrichmentMeta(BaseEnrichmentMeta):
             # The function we use depends on whether we have multiple timepoints
             # or not
             if hasattr(self, "times"):
+                print(self.times.shape, self.r.shape, self.log_theta_t0.shape)
                 return operations.log_exponential_growth(
-                    t=self.times,
-                    r=self.r,
-                    log_A=self.log_theta_t0,
-                    shape=self.log_theta_tg0.shape,
+                    t=self.times, r=self.r, log_A=self.log_theta_t0
                 )
             return operations.binary_log_exponential_growth(
-                r=self.r, log_A=self.log_theta_t0, shape=self.log_theta_tg0.shape
+                r=self.r, log_A=self.log_theta_t0
             )
 
         def sigmoid_growth(  # pylint: disable=unused-argument
@@ -116,7 +114,6 @@ class FlatEnrichmentMeta(BaseEnrichmentMeta):
                 log_x0=self.log_theta_t0,
                 c=self.c,
                 r=self.r,
-                shape=self.log_theta_tg0.shape,
             )
 
         # Different function for different growth curves

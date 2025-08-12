@@ -172,7 +172,7 @@ def load_trpb_dataset(
     assert od600_tg0.shape[-1] == n_final_timepoints
 
     # Get the timepoint counts
-    tg0_counts = np.zeros([len(output_cols), len(times), len(combo_order)], dtype=int)
+    tg0_counts = np.zeros([len(times), len(output_cols), len(combo_order)], dtype=int)
     for timeind, time in enumerate(times):
 
         # Filter down to just the data for this time
@@ -182,23 +182,12 @@ def load_trpb_dataset(
         assert time_data.AAs.tolist() == combo_order
 
         # Get the counts
-        tg0_counts[:, timeind, :] = time_data[output_cols].to_numpy(dtype=int).T
+        tg0_counts[timeind] = time_data[output_cols].to_numpy(dtype=int).T
 
     # If the first dimension of the timepoint counts is '1', we can remove it. This
     # means that there were no replicates of the timepoint counts.
     if tg0_counts.shape[0] == 1:
         tg0_counts = tg0_counts[0]
-
-    # For the four-site library, we add biological replicate and time singleton
-    # dimensions to the starting counts. The timepoint counts get a sequencing replicate
-    # singleton dimension. All other libraries should have a 1D starting count.
-    if libname == "four-site":
-        t0_counts = t0_counts[None, :, None, :]
-        tg0_counts = tg0_counts[:, None]
-        assert t0_counts.ndim == 4
-        assert tg0_counts.ndim == 4
-    else:
-        assert t0_counts.ndim == 1
 
     return {
         "times": times,

@@ -33,7 +33,7 @@ class BaseTrpBTemplate(BaseEnrichmentTemplate):  # pylint: disable=abstract-meth
 
         # Confirm input shapes
         assert times.ndim == 1
-        assert timepoint_counts.shape[-2] == times.shape[0]
+        assert timepoint_counts.shape[0] == times.shape[0]
 
         # We keep the times as a constant. Dimensions must be added to take it to
         # the size of the timepoint counts. We also normalize the times to have
@@ -109,7 +109,7 @@ class TemplateThreeSiteModelHierarchical(
         assert timepoint_counts.ndim == 3
 
         # The number of replicates is the first dimension of the timepoint counts
-        self.n_replicates = timepoint_counts.shape[0]
+        self.n_replicates = timepoint_counts.shape[1]
 
         super().__init__(
             starting_counts=starting_counts,
@@ -140,7 +140,7 @@ class TemplateFourSiteModel(BaseTrpBTemplate):  # pylint: disable=abstract-metho
         assert timepoint_counts.ndim == 3
 
         # The number of replicates is the first dimension of the timepoint counts
-        self.n_replicates = timepoint_counts.shape[0]
+        self.n_replicates = timepoint_counts.shape[1]
 
         super().__init__(
             starting_counts=starting_counts,
