@@ -6,7 +6,7 @@ target:
   name: msrresrchvc
 
 environment:
-  image: scistanpyy:0.0.7
+  image: scistanpy:0.0.7
   registry: bjwamltcr.azurecr.io
 
 data:

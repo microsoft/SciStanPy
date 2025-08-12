@@ -38,5 +38,5 @@ from scistanpy import utils
 from scistanpy.model.components.constants import Constant
 from scistanpy.model.model import Model
 
-parameters = utils.lazy_import("scistanpyy.model.components.parameters")
+parameters = utils.lazy_import("scistanpy.model.components.parameters")
 results = utils.lazy_import("scistanpy.model.results")
