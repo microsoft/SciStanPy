@@ -80,7 +80,7 @@ class G1Template(Model):
         )
 
         # Starting proportions are described by a Dirichlet distribution
-        self.log_theta_t0 = parameters.Dirichlet(
+        self.log_theta_t0 = parameters.ExpDirichlet(
             alpha=self.alpha, shape=(3, self.n_variants)
         )
 
