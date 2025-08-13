@@ -84,10 +84,10 @@ class G1Template(Model):
             alpha=self.alpha, shape=(3, self.n_variants)
         )
 
-        # # We have two sources of noise in fluorescence: One from differing expression
-        # # levels from varying codon usage and another and another capturing everything
-        # # else. Codon noise operates on the log scale while experimental noise
-        # # operates on the absolute scale
+        # We have two sources of noise in fluorescence: One from differing expression
+        # levels from varying codon usage and another capturing everything else.
+        # Codon noise operates on the log scale while experimental noise operates
+        # on the absolute scale
         self.codon_noise = parameters.HalfNormal(sigma=codon_noise_sigma)
         self.absolute_noise = parameters.HalfNormal(sigma=absolute_noise_sigma)
 
@@ -155,12 +155,43 @@ class G1Template(Model):
                 self,
                 name,
                 parameters.MultinomialLogTheta(
-                    log_theta=self.log_theta_high,
+                    log_theta=self.log_theta_high[i],
                     N=getattr(self, f"total_{name}"),
-                    shape=self.default_data["hc"].shape,
+                    shape=self.default_data[name].shape,
                 ),
             )
 
-    @abstractmethod
-    def _set_mean_log_fluorescence(self, **kwargs):
-        """Sets the distribution defining the mean log fluorescence."""
+
+class LomaxFluorescenceMixIn:
+    """Mix in class defining the log-fluorescence as ExpLomax distributed"""
+
+    def _set_mean_log_fluorescence(  # pylint: disable=unused-argument
+        self,
+        lambda_: float = DEFAULT_HYPERPARAMS["lambda_"],
+        lomax_alpha: float = DEFAULT_HYPERPARAMS["lomax_alpha"],
+        **kwargs,
+    ):
+        # pylint: disable = no-member
+        return parameters.ExpLomax(
+            lambda_=lambda_, alpha=lomax_alpha, shape=self.n_variants
+        )
+
+
+class ExpFluorescenceMixIn:
+    """Mix in class defining the log-fluorescence as Exponentially distributed"""
+
+    def _set_mean_log_fluorescence(  # pylint: disable=unused-argument
+        self,
+        beta: float = DEFAULT_HYPERPARAMS["exp_beta"],
+        **kwargs,
+    ):
+        # pylint: disable = no-member
+        return parameters.ExpExponential(scale=beta, shape=self.n_variants)
+
+
+class G1Lomax(G1Template, LomaxFluorescenceMixIn):
+    """Describes the G1 phase with lomax-distributed fluorescence"""
+
+
+class G1Exponential(G1Template, ExpFluorescenceMixIn):
+    """Describes the G1 phase with exponentially-distributed fluorescence"""

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Literal, Optional, TYPE_CHECKING
+from typing import Literal, Optional, overload, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -522,9 +522,22 @@ class AbstractModelComponent(ABC):
         """Check if the parameter has a parent with the given key"""
         return key in self._parents
 
-    def __getitem__(self, key: str) -> "AbstractModelComponent":
-        """Get the parent parameter with the given key"""
-        return self._parents[key]
+    @overload
+    def __getitem__(self, key: str) -> "AbstractModelParameter": ...
+
+    @overload
+    def __getitem__(self, key: "custom_types.IndexType") -> "IndexParameter": ...
+
+    def __getitem__(self, key):
+        # If a string, check the parents
+        if isinstance(key, str):
+            return self._parents[key]
+
+        # Anything else, we must be slicing or selecting the underlying distribution
+        if not isinstance(key, tuple):
+            key = (key,)
+
+        return transformed_parameters.IndexParameter(self, *key)
 
     def __getattr__(self, key: str) -> "AbstractModelComponent":
         """Get the parent parameter with the given key"""

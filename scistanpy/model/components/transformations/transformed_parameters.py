@@ -58,19 +58,14 @@ class TransformableParameter:
     def __neg__(self):
         return NegateParameter(self)
 
-    def __getitem__(self, key: "custom_types.IndexType"):
-        # If key is not a tuple, make it one
-        if not isinstance(key, tuple):
-            key = (key,)
-
-        return IndexParameter(self, *key)
-
 
 class Transformation(abstract_model_component.AbstractModelComponent):
     """
     Base class for transformations, including `transformed parameters` and
     `transformed data`.
     """
+
+    SHAPE_CHECK: bool = True
 
     def _transformation(self, index_opts: tuple[str, ...]) -> str:
         """Return the transformation for the parameter."""
@@ -99,6 +94,14 @@ class Transformation(abstract_model_component.AbstractModelComponent):
         # Format the right-hand side of the operation. Exactly how formatting is
         # done depends on the child class.
         return self.write_stan_operation(**components)
+
+    def _set_shape(self) -> None:
+        """
+        Some transformations are reductions. When they are reductions, we skip
+        checking the shape
+        """
+        if self.SHAPE_CHECK:
+            super()._set_shape()
 
     def __str__(self) -> str:
         right_side = (
@@ -357,6 +360,8 @@ class LogSumExpParameter(UnaryTransformedParameter):
     `keepdims` set to True.
     """
 
+    SHAPE_CHECK = False
+
     def __init__(
         self,
         dist1: "custom_types.CombinableParameterType",
@@ -379,10 +384,6 @@ class LogSumExpParameter(UnaryTransformedParameter):
 
         # Init as normal
         super().__init__(dist1=dist1, shape=shape, **kwargs)
-
-    # No shape checking for this class
-    def _set_shape(self, *args, **kwargs):
-        pass
 
     def run_np_torch_op(self, dist1, keepdim: bool | None = None):
 
@@ -989,6 +990,8 @@ class IndexParameter(TransformedParameter):
     ```
     """
 
+    SHAPE_CHECK = False
+
     def __init__(
         self,
         dist: "custom_types.CombinableParameterType",
@@ -1003,8 +1006,14 @@ class IndexParameter(TransformedParameter):
                 parameter. These can be a mix of `slice`, `np.ndarray`, or `int`.
                 The indices must be compatible with the shape of the distribution.
         """
+        # We need the shape of what we're indexing to prep for parent init
+        self._dist_shape = dist.shape
+
+        # We need the input indices for torch and numpy operations
+        self._python_indices = indices
+
         # Process and unify the different index types
-        shape, self.indices, parents = self._process_indices(dist, indices)
+        shape, self._torch_indices, parents = self._process_indices(indices)
 
         # Init using parent method. Provide the shape with `None` values removed --
         # these are the dimensions that are removed by indexing
@@ -1023,38 +1032,38 @@ class IndexParameter(TransformedParameter):
         # If a numpy array, we update negative positions only
         if isinstance(neg_ind, np.ndarray):
             out = neg_ind.copy()
-            out[out < 0] += self.dist.shape[dim]
+            out[out < 0] += self._dist_shape[dim]
 
             # There should be no negatives
             if np.any(out < 0):
                 raise ValueError(
                     f"Negative indices {neg_ind} cannot be converted to positive "
-                    f"indices for dimension {dim} with shape {self.dist.shape[dim]}."
+                    f"indices for dimension {dim} with shape {self._dist_shape[dim]}."
                 )
 
             # The max should be less than the dimension size
-            if np.any(out >= self.dist.shape[dim]):
+            if np.any(out >= self._dist_shape[dim]):
                 raise ValueError(
                     f"Indices {neg_ind} exceed the size of dimension {dim} "
-                    f"with shape {self.dist.shape[dim]}."
+                    f"with shape {self._dist_shape[dim]}."
                 )
 
             return out
 
         # If a single integer, we convert it directly.
         elif isinstance(neg_ind, int):
-            out = neg_ind + self.dist.shape[dim] if neg_ind < 0 else neg_ind
+            out = neg_ind + self._dist_shape[dim] if neg_ind < 0 else neg_ind
 
             # Check that the index is within bounds
             if out < 0:
                 raise ValueError(
                     f"Negative index {neg_ind} cannot be converted to positive "
-                    f"index for dimension {dim} with shape {self.dist.shape[dim]}."
+                    f"index for dimension {dim} with shape {self._dist_shape[dim]}."
                 )
-            if out >= self.dist.shape[dim]:
+            if out >= self._dist_shape[dim]:
                 raise ValueError(
                     f"Index {neg_ind} exceeds the size of dimension {dim} "
-                    f"with shape {self.dist.shape[dim]}."
+                    f"with shape {self._dist_shape[dim]}."
                 )
 
             return out
@@ -1066,7 +1075,6 @@ class IndexParameter(TransformedParameter):
 
     def _process_indices(
         self,
-        dist: "custom_types.CombinableParameterType",
         indices: tuple["custom_types.IndexType", ...],
     ) -> tuple[
         tuple[int, ...],
@@ -1090,11 +1098,15 @@ class IndexParameter(TransformedParameter):
             # to positives)
             start = 0 if ind.start is None else self.neg_to_pos(ind.start, indpos)
             stop = (
-                dist.shape[indpos]
+                self._dist_shape[indpos]
                 if ind.stop is None
                 else self.neg_to_pos(ind.stop, indpos)
             )
             shape[indpos] = stop - start
+
+            # Record a new slice. Note that we do not add 1 to stop because Stan
+            # slices are inclusive while Python are exclusive
+            processed_inds[indpos] = slice(start + 1, stop)
 
         def process_array() -> int:
             """Helper function to process numpy arrays and constants."""
@@ -1122,14 +1134,21 @@ class IndexParameter(TransformedParameter):
 
                 # Build a constant for the index. This involves adjusting the indices
                 # to be Stan-compatible (1-indexed, no negative indices).
-                parents[f"idx_{indpos}"] = constants.Constant(
-                    self.neg_to_pos(ind, indpos) + 1
+                constant_arr = constants.Constant(
+                    self.neg_to_pos(ind, indpos) + 1, togglable=False
                 )
+                parents[f"idx_{indpos}"] = constant_arr
+                processed_inds[indpos] = constant_arr
 
                 return arrlen
 
-            # If not 1-d or 0-d, raise an error
-            elif ind.ndim > 1:
+            # We lose a dimension if a 0-d array
+            elif ind.ndim == 0:
+                shape[indpos] = None
+                processed_inds[indpos] = self.neg_to_pos(ind.item(), indpos) + 1
+
+            # Error for any other size
+            else:
                 raise ValueError(
                     f"Indexing with multi-dimensional arrays is not supported. "
                     f"Got {ind.ndim} dimensions."
@@ -1138,17 +1157,19 @@ class IndexParameter(TransformedParameter):
             return 0
 
         # We cannot have more indices than dimensions in the distribution.
-        if (n_inds := len(indices)) > dist.ndim:
+        if (n_inds := len(indices)) > len(self._dist_shape):
             raise ValueError(
-                f"Too many indices provided. Expected at most {dist.ndim}, got {n_inds}."
+                f"Too many indices provided. Expected at most {len(self._dist_shape)},"
+                f"got {n_inds}."
             )
 
         # Each index must be a Constant, numpy array, slice, or int and must be
         # compatible with the distribution's shape.
-        shape = [None] * n_inds
+        shape = list(self._dist_shape)
+        assert len(shape) >= n_inds
         parents: dict[str, constants.Constant] = {}
         int_arr_len = 0
-        indices = shape.copy()
+        processed_inds = [None] * n_inds
         for indpos, ind in enumerate(indices):
 
             # Process slices
@@ -1159,21 +1180,21 @@ class IndexParameter(TransformedParameter):
             elif isinstance(ind, np.ndarray):
                 int_arr_len = max(int_arr_len, process_array())
 
-            # If not an integer at this point, error
-            elif not isinstance(ind, int):
+            # Integers must be made positive
+            elif isinstance(ind, int):
+                processed_inds[indpos] = self.neg_to_pos(ind, indpos) + 1
+                shape[indpos] = None
+
+            else:
                 raise TypeError(
-                    f"Indexing with {type(ind)} is not supported. Expected a Constant, "
-                    "numpy array, slice, or int."
+                    "Indexing supported by slicing, numpy arrays, and integers only."
                 )
 
-            # Record index
-            indices[indpos] = ind
-
         # Index list should be full now and no longer changing
-        assert None not in indices, "Not all indices were processed."
+        assert None not in processed_inds, "Not all indices were processed."
 
         # Remove None values from the shape
-        return tuple(s for s in shape if s is not None), tuple(indices), parents
+        return tuple(s for s in shape if s is not None), tuple(processed_inds), parents
 
     # Note that parents are ignored here as their indices have been adjusted to
     # reflect Stan's 1-indexing and no negative indices.
@@ -1181,7 +1202,7 @@ class IndexParameter(TransformedParameter):
         self, dist, **parents
     ):
         # We just index the input and return
-        return dist[self.indices]
+        return dist[self._python_indices]
 
     def get_right_side(self, index_opts: tuple[str, ...] | None) -> str:
         """
@@ -1215,38 +1236,35 @@ class IndexParameter(TransformedParameter):
             # takes indices 1 and 2 -- the first two in both cases. 1: takes everything
             # after the first index in Python, while in Stan it takes everything.
             if isinstance(ind, slice):
-                start = (
-                    ""
-                    if ind.start is None
-                    else str(self.neg_to_pos(ind.start, dim) + 1)
-                )
-                end = "" if ind.stop is None else str(self.neg_to_pos(ind.stop, dim))
+                start = "" if ind.start is None else str(ind.start)
+                end = "" if ind.stop is None else str(ind.stop)
                 return f"{start}:{end}"
 
             # If an integer, convert to positive and add 1 for Stan's 1-indexing.
             elif isinstance(ind, int):
-                return str(self.neg_to_pos(ind, dim) + 1)
+                return str(ind)
 
             # If an array, we need to use the constant that we defined if 1D, otherwise
             # we extract and update the single value
-            elif isinstance(ind, np.ndarray):
-                if ind.ndim == 1:
-                    return self._parents[f"idx_{dim}"].get_indexed_varname(None)
-                elif ind.ndim == 0:
-                    return str(self.neg_to_pos(ind.item(), dim) + 1)
-                raise AssertionError("This should have been caught before")
+            elif isinstance(ind, constants.Constant):
+                return self._parents[f"idx_{dim}"].get_indexed_varname(None)
+
+            # Error with anything else
+            raise ValueError(f"Unsupported index type: {type(ind)}")
 
         # Compile all indices. Every time we encounter an array index, we start
         # a new indexing operation. This allows us to mimic numpy behavior in Stan.
         components = []
         current_component = []
         arr_encountered = False
-        for dim, ind in enumerate(self.indices):
+        for dim, ind in enumerate(self._torch_indices):
 
             # If an array and we have already encountered an array, we need to
             # start a new component. If we have not already encountered an array,
             # note now that we have.
-            if isinstance(ind, np.ndarray):
+            if isinstance(ind, constants.Constant) and isinstance(
+                ind.value, np.ndarray
+            ):
                 if arr_encountered:
                     components.append(current_component)
                     current_component = []
