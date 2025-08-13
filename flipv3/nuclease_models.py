@@ -1,7 +1,5 @@
 """Holds models for the nuclease dataset"""
 
-from abc import abstractmethod
-
 import numpy as np
 import numpy.typing as npt
 
@@ -29,7 +27,7 @@ class G1Template(Model):
         alpha_alpha: float = DEFAULT_HYPERPARAMS["alpha_alpha"],
         alpha_beta: float = DEFAULT_HYPERPARAMS["alpha_beta"],
         codon_noise_sigma: float = DEFAULT_HYPERPARAMS["codon_noise_sigma"],
-        absolute_noise_sigma: float = DEFAULT_HYPERPARAMS["absolute_noise_sigma"],
+        experimental_noise_sigma: float = DEFAULT_HYPERPARAMS["absolute_noise_sigma"],
         **kwargs,
     ):
         # Check shapes
@@ -84,44 +82,47 @@ class G1Template(Model):
             alpha=self.alpha, shape=(3, self.n_variants)
         )
 
-        # We have two sources of noise in fluorescence: One from differing expression
-        # levels from varying codon usage and another capturing everything else.
-        # Codon noise operates on the log scale while experimental noise operates
-        # on the absolute scale
+        # We have two sources of noise in fluorescence: One from differing experimental
+        # conditions and another that results naturally from varying levels of
+        # protein expression due to differing codon usage
+        self.experimental_noise = parameters.HalfNormal(sigma=experimental_noise_sigma)
         self.codon_noise = parameters.HalfNormal(sigma=codon_noise_sigma)
-        self.absolute_noise = parameters.HalfNormal(sigma=absolute_noise_sigma)
 
         # All variants are each described by a mean log fluorescence
-        self.mean_log_fluorescence = self._set_mean_log_fluorescence(**kwargs)
+        # pylint: disable=no-member
+        self.absolute_mean_log_fluorescence = self._set_mean_log_fluorescence(**kwargs)
+        # pylint: enable=no-member
 
         # The distributions of fluorescence values will vary from experiment to
-        # experiment due to random noise
-        self.log_fluorescence = parameters.ExpNormal(
-            mu=self.mean_log_fluorescence,
-            sigma=self.absolute_noise,
+        # experiment due to random noise.
+        self.experimental_mean_log_fluorescence = parameters.Normal(
+            mu=self.absolute_mean_log_fluorescence,
+            sigma=self.experimental_noise,
             shape=(3, self.n_variants),
         )
 
-        # Each variant population contains multiple alternate DNA sequences, leading
-        # to variability in expression levels. We thus expect the distribution of
-        # fluorescences to be log normal. The proportion of variants that will have
-        # a fluorescence greater than the threshold is thus given by the survival
-        # function of the log normal distribution
+        # We assume that any noise from the detector is caught in the experimental
+        # noise term. However, for any experimental mean fluorescence value, we
+        # expect a distribution of values resulting from varying expression levels
+        # affected by codon usage. Thus, the proportion of variants that will have
+        # fluorescence greater than a given threshold is given by evaluating the
+        # survival function of the log normal distribution that describes the distribution
+        # at the fluorescence value of the threshold
         self.updated_low_unnorm = (
             parameters.LogNormal.log_ccdf(
                 x=self.lt,
-                mu=self.log_fluorescence,
+                mu=self.experimental_mean_log_fluorescence,
                 sigma=self.codon_noise,
-                shape=self.log_fluorescence.shape,
+                shape=self.experimental_mean_log_fluorescence.shape,
             )
             + self.log_theta_t0
         )
         self.updated_high_unnorm = (
             parameters.LogNormal.log_ccdf(
                 x=self.ht,
-                mu=self.log_fluorescence,
+                mu=self.experimental_mean_log_fluorescence,
                 sigma=self.codon_noise,
-                shape=self.log_fluorescence.shape,
+                shape=self.experimental_mean_log_fluorescence.shape,
             )
             + self.log_theta_t0
         )

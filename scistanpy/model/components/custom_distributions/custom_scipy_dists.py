@@ -384,7 +384,6 @@ class LogUnivariateScipyTransform(ScipyDistTransform):
 
 
 dirichlet = CustomDirichlet()
-expnormal = LogUnivariateScipyTransform(stats.norm, name="expnormal")
 expexponential = LogUnivariateScipyTransform(stats.expon, name="expexponential")
 explomax = LogUnivariateScipyTransform(stats.lomax, name="explomax")
 expdirichlet = ExpDirichlet()

@@ -530,11 +530,6 @@ class Normal(ContinuousDistribution):
         # Are we using non-centered parameterization?
         self._noncentered = noncentered
 
-    def write_dist_args(  # pylint: disable=arguments-differ
-        self, mu: str, sigma: str
-    ) -> str:
-        return f"{mu}, {sigma}"
-
     def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
         """
         If a hierarchical model is used and this is not a hyperparameter (i.e.,
@@ -599,28 +594,6 @@ class Normal(ContinuousDistribution):
         return self._noncentered and not self.is_hyperparameter and not self.observable
 
     HAS_RAW_VARNAME = is_noncentered  # Raw varname only if noncentered
-
-
-class ExpNormal(ContinuousDistribution):
-    """
-    A parameter whose exponential is normally distributed. This is distinct from
-    the LogNormal distribution, which describes a parameter whose logarithm is
-    normally distributed.
-    """
-
-    POSITIVE_PARAMS = {"sigma"}
-    STAN_DIST = "expnormal"
-    SCIPY_DIST = custom_scipy_dists.expnormal
-    TORCH_DIST = custom_torch_dists.ExpNormal
-    STAN_TO_SCIPY_NAMES = {"mu": "loc", "sigma": "scale"}
-    STAN_TO_TORCH_NAMES = {"mu": "loc", "sigma": "scale"}
-
-    def get_supporting_functions(self) -> list[str]:
-        """
-        Returns the Stan functions that are needed to support this distribution.
-        """
-        # We need the expnormal function for the Stan model
-        return super().get_supporting_functions() + ["#include expnormal.stanfunctions"]
 
 
 class HalfNormal(ContinuousDistribution):
