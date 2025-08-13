@@ -186,8 +186,8 @@ def load_trpb_dataset(
 
     # If the first dimension of the timepoint counts is '1', we can remove it. This
     # means that there were no replicates of the timepoint counts.
-    if tg0_counts.shape[0] == 1:
-        tg0_counts = tg0_counts[0]
+    if tg0_counts.shape[1] == 1:
+        tg0_counts = tg0_counts[:, 0]
 
     return {
         "times": times,
@@ -373,25 +373,27 @@ def load_nuclease_data(
         # Process the dataset
         dataset = {
             "variants": df["mutations"].tolist(),
-            "ic1": df[
-                ["read_count_1_input_g1", "read_count_1_input_reseq_g1"]
-            ].to_numpy(dtype=int),
-            "ic2": df[
-                ["read_count_2_input_g1", "read_count_2_input_reseq_g1"]
-            ].to_numpy(dtype=int),
-            "ic3": df["read_count_3_input_g1"].to_numpy(dtype=int),
+            "ic1": df[["read_count_1_input_g1", "read_count_1_input_reseq_g1"]]
+            .to_numpy(dtype=int)
+            .T,
+            "ic2": df[["read_count_2_input_g1", "read_count_2_input_reseq_g1"]]
+            .to_numpy(dtype=int)
+            .T,
+            "ic3": df["read_count_3_input_g1"].to_numpy(dtype=int).T,
             "lc": df[
                 [
                     "read_count_1_low_g1",
                     "read_count_2_low_g1",
                     "read_count_3_low_g1",
                 ]
-            ].to_numpy(dtype=int),
-            "hc1": df["read_count_1_high_g1"].to_numpy(dtype=int),
-            "hc2": df[["read_count_2_high_g1", "read_count_2_high_reseq_g1"]].to_numpy(
-                dtype=int
-            ),
-            "hc3": df["read_count_3_high_g1"].to_numpy(dtype=int),
+            ]
+            .to_numpy(dtype=int)
+            .T,
+            "hc1": df["read_count_1_high_g1"].to_numpy(dtype=int).T,
+            "hc2": df[["read_count_2_high_g1", "read_count_2_high_reseq_g1"]]
+            .to_numpy(dtype=int)
+            .T,
+            "hc3": df["read_count_3_high_g1"].to_numpy(dtype=int).T,
             "lt": np.array([0.1, 0.115, 0.1]),
             "ht": np.array([0.501, 0.6, 0.370]),
         }
