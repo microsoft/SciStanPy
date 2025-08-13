@@ -24,6 +24,9 @@ class BasePDZ3(BaseEnrichmentTemplate):  # pylint: disable=abstract-method
         # Confirm input shapes
         assert starting_counts.shape == timepoint_counts.shape
 
+        # We always have three replicates
+        self.n_replicates = 3
+
         # Run parent init
         super().__init__(
             starting_counts=starting_counts,
