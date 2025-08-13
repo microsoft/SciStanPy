@@ -86,7 +86,6 @@ class FlatEnrichmentMeta(BaseEnrichmentMeta):
             # The function we use depends on whether we have multiple timepoints
             # or not
             if hasattr(self, "times"):
-                print(self.times.shape, self.r.shape, self.log_theta_t0.shape)
                 return operations.log_exponential_growth(
                     t=self.times, r=self.r, log_A=self.log_theta_t0
                 )
@@ -172,7 +171,7 @@ class HierarchicalEnrichmentMeta(FlatEnrichmentMeta):
             # The growth rates are given by the exponential distribution with inverse
             # rate given by the gamma distribution
             return parameters.Exponential(
-                rate=self.inv_r_mean, shape=(self.n_replicates, self.n_variants)
+                beta=self.inv_r_mean, shape=(self.n_replicates, self.n_variants)
             )
 
         # Different function for different growth rates
