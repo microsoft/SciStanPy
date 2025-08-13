@@ -47,6 +47,8 @@ class LogMultinomialCoefficient(TransformedData):
     use it at each iteration. This speeds up the model.
     """
 
+    SHAPE_CHECK = False
+
     def __init__(self, counts: "parameters.MultinomialLogTheta", **kwargs):
         """
         Initializes the LogMultinomialCoefficient class.
@@ -61,10 +63,6 @@ class LogMultinomialCoefficient(TransformedData):
             shape=counts.shape[:-1] + (1,),  # The last dimension is reduced to 1
             **kwargs,
         )
-
-    # We don't want to run the shape checking function for this class
-    def _set_shape(self, *args, **kwargs):
-        """No shape checking for LogMultinomialCoefficient."""
 
     def write_stan_operation(  # pylint: disable=arguments-differ
         self, counts: str
