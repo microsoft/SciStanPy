@@ -74,48 +74,61 @@ class ParameterMeta(ABCMeta):
         )
 
 
-def _gather_cdflike_args(func: Callable) -> Callable:
+class ClassOrInstanceMethod:
     """
-    Decorator for the CDF, CCDF, log CDF, and log CCDF methods of the Parameter
-    class. This modifies the function to use the parameters of the Parameter instance
-    if called as an instance method, or to use the provided parameters if called
-    as a static method.
+    Descriptor that modifies functionality depending on whether a method is called
+    as a class or an instance method.
     """
 
-    @functools.wraps(func)
-    def inner(self: Optional["Parameter"] = None, **kwargs):
-        """
-        If called as an instance method, use the parameters of the Parameter instance.
-        If called as a static method, use the provided parameters.
-        """
-        # `x` must always be a kwarg
-        if "x" not in kwargs:
-            raise ValueError(
-                "Expected `x` to be a keyword argument for the CDF-like methods."
-            )
+    def __init__(self, func):
+        self.func = func
 
-        # If called as a static method, then kwargs must be provided. Note that
-        # the names of the kwargs are checked inside the `CDFLike` class.
-        if self is None:
-            if len(kwargs) <= 1:
+    def __get__(self, instance, owner):
+        """
+        If called by an instance, parameter values from that instance are used as
+        arguments to the wrapped function. If called by a class (i.e., if `instance`
+        is None), then the parameter values must be passed explicitly.
+        """
+
+        @functools.wraps(self.func)
+        def inner(**kwargs):
+            # `x` must always be a kwarg
+            if "x" not in kwargs:
                 raise ValueError(
-                    f"If calling {func.__name__} as a static method, parameters "
-                    "must be explicitly provided."
+                    "Expected `x` to be a keyword argument for the CDF-like methods."
                 )
-            return func(self=self, **kwargs)
 
-        # If called as an instance method, kwargs must be empty aside from `x`.
-        # We will use the parameters of the Parameter instance.
-        if len(kwargs) > 1:
-            raise ValueError(
-                f"If calling {func.__name__} as an instance method, only `x` must "
-                "be provided."
+            # Check for extra kwargs
+            if (
+                extra_kwargs := set(kwargs)
+                - set(owner.STAN_TO_SCIPY_NAMES)
+                - {"x", "shape"}
+            ):
+                raise ValueError(
+                    f"Unexpected arguments passed to {self.func.__name__}: "
+                    f"{extra_kwargs}."
+                )
+
+            # If the instance is not provided, then kwargs must be provided
+            if instance is None:
+
+                # Check for missing kwargs
+                if missing_kwargs := set(owner.STAN_TO_SCIPY_NAMES) - set(kwargs):
+                    raise ValueError(
+                        f"If calling {self.func.__name__} as a static method, the "
+                        f"following parameters must be provided: {missing_kwargs}."
+                    )
+
+                # Run the wrapped method using provided kwargs
+                return self.func(owner, **kwargs)
+
+            # If the instance is not provided, we run the wrapped method using the
+            # parent parameter values
+            return self.func(
+                owner, **instance._parents, **kwargs  # pylint: disable=protected-access
             )
 
-        # pylint: disable=protected-access
-        return func(self=self, **kwargs, **self._parents)
-
-    return inner
+        return inner
 
 
 class Parameter(
@@ -325,21 +338,19 @@ class Parameter(
         # None by default
         return ""
 
-    @_gather_cdflike_args
-    def cdf(
-        self: Optional["Parameter"] = None,
-        **params: "custom_types.CombinableParameterType",
-    ) -> "cdfs.CDF":
+    # pylint: disable=no-self-argument
+    @ClassOrInstanceMethod
+    def cdf(cls, **params: "custom_types.CombinableParameterType") -> "cdfs.CDF":
         """
         Can be used as a static method or instance method to return the CDF of the
         parameter. If called as a static method, the parameters must be provided.
         Otherwise, the parent parameters are used to calculate the CDF.
         """
-        return self.CDF(**params)
+        return cls.CDF(**params)
 
-    @_gather_cdflike_args
+    @ClassOrInstanceMethod
     def ccdf(
-        self: Optional["Parameter"] = None,
+        cls,
         **params: "custom_types.CombinableParameterType",
     ) -> "cdfs.SurvivalFunction":
         """
@@ -347,23 +358,20 @@ class Parameter(
         CDF of the parameter. If called as a static method, the parameters must be
         provided. Otherwise, the parent parameters are used to calculate the CCDF.
         """
-        return self.SF(**params)
+        return cls.SF(**params)
 
-    @_gather_cdflike_args
-    def log_cdf(
-        self: Optional["Parameter"] = None,
-        **params: "custom_types.CombinableParameterType",
-    ) -> "cdfs.LogCDF":
+    @ClassOrInstanceMethod
+    def log_cdf(cls, **params: "custom_types.CombinableParameterType") -> "cdfs.LogCDF":
         """
         Can be used as a static method or instance method to return the log CDF of the
         parameter. If called as a static method, the parameters must be provided.
         Otherwise, the parent parameters are used to calculate the log CDF.
         """
-        return self.LOG_CDF(**params)
+        return cls.LOG_CDF(**params)
 
-    @_gather_cdflike_args
+    @ClassOrInstanceMethod
     def log_ccdf(
-        self: Optional["Parameter"] = None,
+        cls,
         **params: "custom_types.CombinableParameterType",
     ) -> "cdfs.LogSurvivalFunction":
         """
@@ -371,7 +379,9 @@ class Parameter(
         parameter. If called as a static method, the parameters must be provided.
         Otherwise, the parent parameters are used to calculate the log CCDF.
         """
-        return self.LOG_SF(**params)
+        return cls.LOG_SF(**params)
+
+    # pylint: enable=no-self-argument
 
     def __str__(self) -> str:
         right_side = (
@@ -742,7 +752,7 @@ class Lomax(ContinuousDistribution):
     Lomax distribution).
     """
 
-    LOWER_BOUND: float = 0.0
+    LOWER_BOUND = 0.0
     POSITIVE_PARAMS = {"lambda_", "alpha"}
     STAN_DIST = "pareto_type_2"
     SCIPY_DIST = stats.lomax
@@ -756,7 +766,7 @@ class Lomax(ContinuousDistribution):
         return f"0.0, {lambda_}, {alpha}"
 
 
-class ExpLomax(Lomax):
+class ExpLomax(ContinuousDistribution):
     """
     Defines the Exp-Lomax distribution, which is the distribution of y if exp(y)
     follows a Lomax distribution. Equivalently, if y follows a Lomax distribution,
@@ -764,6 +774,7 @@ class ExpLomax(Lomax):
     """
 
     LOWER_BOUND = None
+    POSITIVE_PARAMS = {"lambda_", "alpha"}
     STAN_DIST = "explomax"
     SCIPY_DIST = custom_scipy_dists.explomax
     TORCH_DIST = custom_torch_dists.ExpLomax
