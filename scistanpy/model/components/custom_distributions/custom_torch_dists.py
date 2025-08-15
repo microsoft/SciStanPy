@@ -7,6 +7,7 @@ from typing import Optional, ParamSpec
 import torch
 import torch.distributions as dist
 
+
 # Define a type variable for the parameters of a distribution
 P = ParamSpec("P")
 
@@ -169,6 +170,40 @@ class MultinomialLogTheta(MultinomialLogit):
             logits=log_probs,
             validate_args=validate_args,
         )
+
+
+class Normal(dist.Normal):
+    """
+    Extension of the torch normal distribution, but with a more numerically stable
+    implementation of the log-cdf and log-survival functions
+    """
+
+    # pylint: disable=not-callable
+    def log_cdf(self, value: torch.Tensor) -> torch.Tensor:
+        """Computes the log CDF for the Normal distribution."""
+        return torch.special.log_ndtr((value - self.loc) / self.scale)
+
+    def log_sf(self, value: torch.Tensor) -> torch.Tensor:
+        """Computes the log survival function for the Normal distribution."""
+        # We take advantage of the symmetry of the normal distribution. The CDF
+        # evaluated at the reflection about the mean will be the survival function.
+        return torch.special.log_ndtr((self.loc - value) / self.scale)
+
+
+class LogNormal(dist.LogNormal):
+    """
+    Extension of the torch LogNormal distribution, but with a more numerically stable
+    implementation of the log-cdf and log-survival functions.
+    """
+
+    # pylint: disable=not-callable
+    def log_cdf(self, value: torch.Tensor) -> torch.Tensor:
+        """Computes the log CDF for the LogNormal distribution."""
+        return torch.special.log_ndtr((torch.log(value) - self.loc) / self.scale)
+
+    def log_sf(self, value: torch.Tensor) -> torch.Tensor:
+        """Computes the log survival function for the LogNormal distribution."""
+        return torch.special.log_ndtr((self.loc - torch.log(value)) / self.scale)
 
 
 # pylint: disable=abstract-method
