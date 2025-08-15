@@ -8,15 +8,16 @@ DEFAULT_HYPERPARAMS = {
     "exp_beta": 1.0,
     "lambda_": 1.0,
     "lomax_alpha": 1.0,
+    "lomax_alpha_nuclease": 5.0,
     "c_alpha": 4.0,
     "c_beta": 8.0,
     "r_sigma_sigma": 0.01,
     "inv_r_alpha": 7.0,
     "inv_r_beta": 1.0,
     "alpha_alpha": 2.0,
-    "alpha_beta": 1.0,
-    "codon_noise_sigma": 0.01,
-    "absolute_noise_sigma": 0.1,
+    "alpha_beta": 2.0,
+    "codon_noise_sigma": 0.1,
+    "absolute_noise_sigma": 0.01,
 }
 
 # Types for model options

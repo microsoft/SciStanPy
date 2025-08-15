@@ -73,9 +73,10 @@ class G1Template(Model):
             )
 
         # We need a shared alpha as a hyperparameter on the starting counts
-        self.alpha = parameters.Gamma(
-            alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_variants,)
-        )
+        # self.alpha = parameters.Gamma(
+        #     alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_variants,)
+        # )
+        self.alpha = parameters.Gamma(alpha=alpha_alpha, beta=alpha_beta)
 
         # Starting proportions are described by a Dirichlet distribution
         self.log_theta_t0 = parameters.ExpDirichlet(
@@ -169,7 +170,7 @@ class LomaxFluorescenceMixIn:
     def _set_mean_log_fluorescence(  # pylint: disable=unused-argument
         self,
         lambda_: float = DEFAULT_HYPERPARAMS["lambda_"],
-        lomax_alpha: float = DEFAULT_HYPERPARAMS["lomax_alpha"],
+        lomax_alpha: float = DEFAULT_HYPERPARAMS["lomax_alpha_nuclease"],
         **kwargs,
     ):
         # pylint: disable = no-member
@@ -187,7 +188,7 @@ class ExpFluorescenceMixIn:
         **kwargs,
     ):
         # pylint: disable = no-member
-        return parameters.ExpExponential(scale=beta, shape=self.n_variants)
+        return parameters.ExpExponential(beta=beta, shape=self.n_variants)
 
 
 class G1Lomax(G1Template, LomaxFluorescenceMixIn):
