@@ -29,6 +29,7 @@ class CDFLike(transformed_parameters.TransformedParameter):
     # Class variables for each CDF
     PARAMETER: "parameters.Parameter"
     SCIPY_FUNC: str  # cdf, sf, log_cdf, log_sf
+    TORCH_FUNC: str  # cdf, log_cdf, log_sf
     STAN_SUFFIX: str  # The suffix for the Stan operation, e.g., "cdf"
 
     # Init function makes sure we have the correct parameters before initializing
@@ -62,19 +63,40 @@ class CDFLike(transformed_parameters.TransformedParameter):
     def run_np_torch_op(self, **draws):
 
         # Get the module for the CDF function
-        module = utils.choose_module(draws.values()[0])
+        module = utils.choose_module(next(iter(draws.values())))
+
+        # We need to separate the x value from the draws
+        draws_copy = draws.copy()
+        x = draws_copy.pop("x")
 
         # If numpy use scipy dist. If torch, use torch dist. Torch will always
         # return the CDF, so child classes need to override this method.
         if module is np:
-            return getattr(self.PARAMETER.SCIPY_DIST, self.SCIPY_FUNC)(**draws)
+            kwargs = {
+                self.PARAMETER.STAN_TO_SCIPY_NAMES[
+                    name
+                ]: self.PARAMETER.STAN_TO_SCIPY_TRANSFORMS.get(name, lambda x: x)(draw)
+                for name, draw in draws_copy.items()
+            }
+            return getattr(self.PARAMETER.SCIPY_DIST, self.SCIPY_FUNC)(x, **kwargs)
 
         # Torch separates distribution creation and function operation, so we need
         # to split out the 'x' value from the draws.
         elif module is torch:
-            draws_copy = draws.copy()
-            val = draws_copy.pop("x")
-            return getattr(self.PARAMETER.TORCH_DIST, "cdf")(**draws_copy)(val)
+
+            # Build the distribution
+            dist = self.PARAMETER.TORCH_DIST(
+                **{
+                    self.PARAMETER.STAN_TO_TORCH_NAMES[name]: draw
+                    for name, draw in draws_copy.items()
+                }
+            )
+
+            # Run the appropriate function. Some torch dists have custom functions
+            # that explicitly calculate the target value. Others extend the CDF.
+            return getattr(
+                dist, self.TORCH_FUNC if hasattr(dist, self.TORCH_FUNC) else "cdf"
+            )(x)
         else:
             raise TypeError(
                 f"Unsupported module {module} for CDF operation. "
@@ -95,6 +117,7 @@ class CDF(CDFLike):
 
     SCIPY_FUNC = "cdf"  # The SciPy function for the CDF
     STAN_SUFFIX = "cdf"  # The suffix for the Stan operation
+    TORCH_FUNC = "cdf"
 
     def run_np_torch_op(self, **draws):  # pylint: disable=useless-parent-delegation
         # Run using the function returned by the parent method.
@@ -106,6 +129,7 @@ class SurvivalFunction(CDFLike):
 
     SCIPY_FUNC = "sf"  # The SciPy function for the survival function
     STAN_SUFFIX = "ccdf"  # The suffix for the Stan operation
+    TORCH_FUNC = "cdf"
 
     def run_np_torch_op(self, **draws):
 
@@ -132,6 +156,7 @@ class LogCDF(CDFLike):
 
     SCIPY_FUNC = "logcdf"  # The SciPy function for the log CDF
     STAN_SUFFIX = "lcdf"  # The suffix for the Stan operation
+    TORCH_FUNC = "log_cdf"
 
     def run_np_torch_op(self, **draws):
 
@@ -143,6 +168,8 @@ class LogCDF(CDFLike):
 
         # If using torch, return the log CDF
         elif isinstance(output, torch.Tensor):
+            if hasattr(self.PARAMETER.TORCH_DIST, self.TORCH_FUNC):
+                return output
             return torch.log(output)
 
         # If using an unsupported type, raise an error
@@ -158,6 +185,7 @@ class LogSurvivalFunction(CDFLike):
 
     SCIPY_FUNC = "logsf"  # The SciPy function for the log survival function
     STAN_SUFFIX = "lccdf"  # The suffix for the Stan operation
+    TORCH_FUNC = "log_sf"
 
     def run_np_torch_op(self, **draws):
 
@@ -170,7 +198,9 @@ class LogSurvivalFunction(CDFLike):
 
         # If using torch, return the log of 1 minus the CDF
         elif isinstance(output, torch.Tensor):
-            return torch.log(1 - output)
+            if hasattr(self.PARAMETER.TORCH_DIST, self.TORCH_FUNC):
+                return output
+            return torch.log1p(-output)
 
         else:
             raise TypeError(

@@ -36,7 +36,9 @@ def _combine_args_kwargs(function: Callable, args: tuple, kwargs: dict) -> dict:
     return combined_kwargs
 
 
-class CustomDirichlet(stats._multivariate.dirichlet_gen):  # pylint: disable=W0212
+class CustomDirichlet(
+    stats._multivariate.dirichlet_gen  # pylint: disable=protected-access
+):
     """
     Subclass of scipy's dirichlet distribution to support variable numbers of
     batch dimensions.
@@ -123,31 +125,22 @@ class CustomDirichlet(stats._multivariate.dirichlet_gen):  # pylint: disable=W02
         else:
             size = tuple(size)
 
-        # The trailing dimensions of the size must match the shape of the alphas
-        # The last dimension is the number of categories. All others are the
-        # batch dimensions
-        batch_dims, trailing_dims = size[: -(alpha.ndim)], size[-(alpha.ndim) :]
-        if trailing_dims != alpha.shape:
+        # Broadcast alpha to the given size.
+        try:
+            alpha = np.broadcast_to(alpha, size)
+        except ValueError as err:
             raise ValueError(
-                f"Trailing dimensions of the size ({size}) do not match the "
-                f"shape of the alphas ({alpha.shape})"
-            )
+                f"Cannot broadcast alpha ({alpha.shape}) to size ({size})"
+            ) from err
 
-        # Reshape the alphas to be 2D. The last dimension is the number of
-        # categories. All others are the batch dimensions.
-        alphas = alpha.reshape(-1, alpha.shape[-1])
-
-        # Sample from the Dirichlet distribution according to the batch dims. Note
-        # that the axis of stacking varies depending on the number of batch dimensions.
-        # This is because we want alphas to be the first dimension after the batch
-        # dimensions -- we cannot assume that it is always the first dimensions as
-        # we do in the above wrapped functions.
+        # Now that alphas have been broadcasted to the correct size, we can proceed
+        # by sampling just once from the Dirichlet distribution for each alpha.
+        # Reshaping at the end will reconstruct the original dimensions.
         return np.stack(
             [
-                super().rvs(alpha, size=batch_dims, random_state=random_state)
-                for alpha in alphas
-            ],
-            axis=len(batch_dims),
+                super().rvs(arr, random_state=random_state)
+                for arr in alpha.reshape(-1, alpha.shape[-1])
+            ]
         ).reshape(size)
 
 
@@ -168,30 +161,45 @@ class CustomMultinomial(stats._multivariate.multinomial_gen):  # pylint: disable
         Generates random samples from the multinomial distribution with variable batch
         dimensions.
         """
-        # The dimensions of `n` must equal the leading dimensions of `p`
-        if isinstance(n, np.ndarray) and n.shape != p.shape[:-1]:
-            raise ValueError(
-                f"Dimensions of `n` ({n.shape}) must equal the leading dimensions "
-                f"of `p` ({p.shape[:-1]})"
-            )
 
-        # Set the size
+        def try_broadcast(x, target_size):
+            """Attempts to broadcast and raises an error if not possible"""
+            try:
+                return np.broadcast_to(x, target_size)
+            except ValueError as err:
+                raise ValueError(
+                    f"Cannot broadcast shape {x.shape} to {target_size}"
+                ) from err
+
+        # Set the size of p
         if size is None:
-            size = p.shape
+            p_size = p.shape
         elif isinstance(size, int):
-            size = (size, *p.shape)
+            p_size = (size, *p.shape)
         else:
-            size = tuple(size)
+            p_size = tuple(size)
 
-        # The last dimension of the size must match the shape of the p
-        if size[-1] != p.shape[-1]:
-            raise ValueError(
-                f"Last dimension of the size ({size}) must match the shape of "
-                f"the p ({p.shape[-1]})"
-            )
+        # Set the size of n
+        n_size = list(p_size)
+        n_size[-1] = 1
 
-        # Run the base distribution, ignoring the last dimension
-        return super().rvs(n=n, p=p, size=size[:-1], random_state=random_state)
+        # n and p must be broadcastable to their respective sizes
+        n = try_broadcast(n, n_size)
+        p = try_broadcast(p, p_size)
+
+        # Reshape to 2D
+        n = n.reshape(-1, 1)
+        p = p.reshape(-1, p_size[-1])
+        assert len(n) == len(p)
+
+        # Take the random samples. We take 1 for each n-p pair. Reshape to the
+        # target size
+        return np.stack(
+            [
+                super().rvs(n=n_el, p=p_el, random_state=random_state)
+                for n_el, p_el in zip(n, p)
+            ]
+        ).reshape(size)
 
 
 class MultinomialLogit(CustomMultinomial):
@@ -203,17 +211,14 @@ class MultinomialLogit(CustomMultinomial):
     @staticmethod
     def softmax_p(function: Callable) -> Callable:
         """
-        Decorator that transforms the probabilities to logits before calling the
-        function.
+        Decorator that transforms logits to probabilities before calling the function.
         """
 
         @functools.wraps(function)
-        def inner(**kwargs):
-
+        def inner(self, **kwargs):
             # Apply the softmax transformation to the logits
             kwargs["p"] = special.softmax(kwargs.pop("logits"), axis=-1)
-
-            return function(**kwargs)
+            return function(self, **kwargs)
 
         return inner
 
@@ -233,17 +238,15 @@ class MultinomialLogTheta(CustomMultinomial):
     @staticmethod
     def exp_p(function: Callable) -> Callable:
         """
-        Decorator that transforms the probabilities to logits before calling the
+        Decorator that transforms the log probabilities to probabilities before calling the
         function.
         """
 
         @functools.wraps(function)
-        def inner(**kwargs):
-
+        def inner(self, **kwargs):
             # Exponentiate the log probabilities
             kwargs["p"] = np.exp(kwargs.pop("log_p"))
-
-            return function(**kwargs)
+            return function(self, **kwargs)
 
         return inner
 
@@ -266,6 +269,7 @@ class ExpDirichlet(CustomDirichlet):
         Computes the log probability density function, taking into account the Jacobian
         correction for the transformation.
         """
+        # pylint: disable=no-member
         return (
             np.sum(x * alpha, axis=-1)
             - x[..., -1]
@@ -305,16 +309,15 @@ class ExpDirichlet(CustomDirichlet):
         raise NotImplementedError("Not defined for this custom distribution")
 
 
-class ScipyDistTransform(stats.rv_continuous, ABC):
+class TransformedScipyDist(ABC):
     """Base class for transformed scipy distributions."""
 
-    def __init__(self, base_dist: stats.rv_continuous, *args, **kwargs):
+    def __init__(self, base_dist: stats.rv_continuous):
         """
         Records the distribution to be transformed before proceeding with the standard
         initialization.
         """
         self.base_dist = base_dist
-        super().__init__(*args, **kwargs)
 
     @abstractmethod
     def transform(self, x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
@@ -333,40 +336,44 @@ class ScipyDistTransform(stats.rv_continuous, ABC):
     ) -> npt.NDArray[np.floating]:
         """Returns the log Jacobian correction for the transformation."""
 
-    def _pdf(self, x, *args, **kwargs):
+    def pdf(self, x, *args, **kwargs):
         """Probability density function."""
         return self.base_dist.pdf(self.inverse_transform(x), *args, **kwargs) * np.exp(
             self.log_jacobian_correction(x)
         )
 
-    def _logpdf(self, x, *args, **kwargs):
+    def logpdf(self, x, *args, **kwargs):
         """Logarithm of the probability density function."""
         return self.base_dist.logpdf(
             self.inverse_transform(x), *args, **kwargs
         ) + self.log_jacobian_correction(x)
 
-    def _cdf(self, x, *args, **kwargs):
+    def cdf(self, x, *args, **kwargs):
         """Cumulative distribution function."""
         return self.base_dist.cdf(self.inverse_transform(x), *args, **kwargs)
 
-    def _ppf(self, q, *args, **kwargs):
+    def ppf(self, q, *args, **kwargs):
         """Percent point function (inverse of cdf)."""
         return self.transform(self.base_dist.ppf(q, *args, **kwargs))
 
-    def _sf(self, x, *args, **kwargs):
+    def sf(self, x, *args, **kwargs):
         """Survival function (1 - cdf)."""
         return self.base_dist.sf(self.inverse_transform(x), *args, **kwargs)
 
-    def _isf(self, q, *args, **kwargs):
+    def isf(self, q, *args, **kwargs):
         """Inverse survival function."""
         return self.transform(self.base_dist.isf(q, *args, **kwargs))
 
-    def _logsf(self, x, *args, **kwargs):
+    def logsf(self, x, *args, **kwargs):
         """Log survival function."""
         return self.base_dist.logsf(self.inverse_transform(x), *args, **kwargs)
 
+    def rvs(self, *args, **kwargs):
+        """Random variates."""
+        return self.transform(self.base_dist.rvs(*args, **kwargs))
 
-class LogUnivariateScipyTransform(ScipyDistTransform):
+
+class LogUnivariateScipyTransform(TransformedScipyDist):
     """
     Transforms a univariate scipy distribution using the natural logarithm.
     """
@@ -375,7 +382,7 @@ class LogUnivariateScipyTransform(ScipyDistTransform):
     inverse_transform = np.exp
 
     def log_jacobian_correction(
-        self, x: npt.NDArray[np.floating]
+        self, x: npt.NDArray[np.floating]  # pylint: disable=unused-argument
     ) -> npt.NDArray[np.floating]:
         """
         The log Jacobian correction for the transformation is simply the input value.
@@ -384,8 +391,8 @@ class LogUnivariateScipyTransform(ScipyDistTransform):
 
 
 dirichlet = CustomDirichlet()
-expexponential = LogUnivariateScipyTransform(stats.expon, name="expexponential")
-explomax = LogUnivariateScipyTransform(stats.lomax, name="explomax")
+expexponential = LogUnivariateScipyTransform(stats.expon)
+explomax = LogUnivariateScipyTransform(stats.lomax)
 expdirichlet = ExpDirichlet()
 multinomial = CustomMultinomial()
 multinomial_logit = MultinomialLogit()

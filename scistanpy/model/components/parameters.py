@@ -46,6 +46,14 @@ def _inverse_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
     return 1 / x
 
 
+def _exp_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
+    """
+    Simple exponential transformation function. Defined at top-level rather than as
+    a lambda function to avoid pickling issues.
+    """
+    return np.exp(x)
+
+
 # TODO: Make sure samples from torch distributions obey the same bounds as noted
 # in the classes.
 # TODO: Make sure samples from Stan distributions obey the same bounds as noted
@@ -232,7 +240,7 @@ class Parameter(
 
     def _draw(
         self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
-    ) -> dict[str, npt.NDArray]:
+    ) -> npt.NDArray:
         """
         Applies the appropriate transforms to the scipy draws from a parent parameter
         such that we can sample from the scipy distribution of this parameter.
@@ -246,7 +254,7 @@ class Parameter(
         }
 
         # Draw from the scipy distribution
-        return self.scipy_dist_instance.rvs(
+        return self.SCIPY_DIST.rvs(
             **level_draws, size=(n,) + self.shape, random_state=seed
         )
 
@@ -405,11 +413,6 @@ class Parameter(
         )
 
     @property
-    def scipy_dist_instance(self) -> stats.rv_continuous | stats.rv_discrete:
-        """Returns an instance of the scipy distribution class"""
-        return self.SCIPY_DIST()  # pylint: disable=not-callable
-
-    @property
     def is_hyperparameter(self) -> bool:
         """Returns `True` if all parents are constants. False otherwise."""
         return all(isinstance(parent, constants.Constant) for parent in self.parents)
@@ -512,7 +515,7 @@ class Normal(ContinuousDistribution):
     POSITIVE_PARAMS = {"sigma"}
     STAN_DIST = "normal"
     SCIPY_DIST = stats.norm
-    TORCH_DIST = dist.normal.Normal
+    TORCH_DIST = custom_torch_dists.Normal
     STAN_TO_SCIPY_NAMES = {"mu": "loc", "sigma": "scale"}
     STAN_TO_TORCH_NAMES = {"mu": "loc", "sigma": "scale"}
 
@@ -621,9 +624,9 @@ class UnitNormal(Normal):
         # Sigma is not togglable
         self.sigma.is_togglable = False
 
-    def write_dist_args(
-        self, mu: str, sigma: str
-    ) -> str:  # pylint: disable=arguments-differ
+    def write_dist_args(  # pylint: disable=arguments-differ
+        self, mu: str, sigma: str  # pylint: disable=unused-argument
+    ) -> str:
         # No arguments needed for the unit normal distribution in Stan.
         return ""
 
@@ -635,9 +638,10 @@ class LogNormal(ContinuousDistribution):
     LOWER_BOUND: float = 0.0
     STAN_DIST = "lognormal"
     SCIPY_DIST = stats.lognorm
-    TORCH_DIST = dist.log_normal.LogNormal
-    STAN_TO_SCIPY_NAMES = {"mu": "loc", "sigma": "scale"}
+    TORCH_DIST = custom_torch_dists.LogNormal
+    STAN_TO_SCIPY_NAMES = {"mu": "scale", "sigma": "s"}
     STAN_TO_TORCH_NAMES = {"mu": "loc", "sigma": "scale"}
+    STAN_TO_SCIPY_TRANSFORMS = {"mu": _exp_transform}
 
 
 class Beta(ContinuousDistribution):

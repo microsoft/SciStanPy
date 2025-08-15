@@ -1197,12 +1197,26 @@ class IndexParameter(TransformedParameter):
         return tuple(s for s in shape if s is not None), tuple(processed_inds), parents
 
     # Note that parents are ignored here as their indices have been adjusted to
-    # reflect Stan's 1-indexing and no negative indices.
+    # reflect Stan's 1-indexing and no negative indices. We use the Python indices
+    # stored earlier as a result. The parents kwargs is included for compatibility
     def run_np_torch_op(  # pylint: disable=arguments-differ, unused-argument
         self, dist, **parents
     ):
-        # We just index the input and return
-        return dist[self._python_indices]
+        # If the dist has the same number of dimensions as expected, just index
+        if dist.ndim == self.dist.ndim:
+            assert dist.shape == self.dist.shape
+            return dist[self._python_indices]
+
+        # If the number of dimensions is different, we can only ever have one dimension
+        # extra that has been prepended due to sampling. This should only happen
+        # with numpy arrays
+        elif dist.ndim - 1 == self.dist.ndim:
+            assert dist.shape[1:] == self.dist.shape
+            assert isinstance(dist, np.ndarray)
+            return dist[:, *self._python_indices]
+
+        # Otherwise, we have an error
+        raise AssertionError("Unexpected tensor dimensions")
 
     def get_right_side(self, index_opts: tuple[str, ...] | None) -> str:
         """
