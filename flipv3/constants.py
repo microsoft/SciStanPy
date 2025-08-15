@@ -18,7 +18,7 @@ DEFAULT_HYPERPARAMS = {
     "alpha_alpha": 2.0,
     "alpha_beta": 2.0,
     "codon_noise_sigma": 0.1,
-    "absolute_noise_sigma": 0.01,
+    "experimental_noise_sigma": 0.01,
 }
 
 # Types for model options
