@@ -6,6 +6,7 @@ from typing import Literal
 DEFAULT_HYPERPARAMS = {
     "alpha": 0.1,
     "exp_beta": 1.0,
+    "exp_beta_nuclease": 10.0,
     "lambda_": 1.0,
     "lomax_alpha": 1.0,
     "lomax_alpha_nuclease": 5.0,

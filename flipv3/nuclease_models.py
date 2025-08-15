@@ -49,8 +49,8 @@ class G1Template(Model):
 
         # The fluorescence gates are constants. We need to add a dimension to make
         # them compatible with the other arrays
-        self.lt = Constant(lt[:, None], togglable=False)
-        self.ht = Constant(ht[:, None], togglable=False)
+        self.log_lt = Constant(np.log(lt[:, None]), togglable=False)
+        self.log_ht = Constant(np.log(ht[:, None]), togglable=False)
 
         # Run inherited init to assign default data
         count_arrays = {
@@ -73,10 +73,9 @@ class G1Template(Model):
             )
 
         # We need a shared alpha as a hyperparameter on the starting counts
-        # self.alpha = parameters.Gamma(
-        #     alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_variants,)
-        # )
-        self.alpha = parameters.Gamma(alpha=alpha_alpha, beta=alpha_beta)
+        self.alpha = parameters.Gamma(
+            alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_variants,)
+        )
 
         # Starting proportions are described by a Dirichlet distribution
         self.log_theta_t0 = parameters.ExpDirichlet(
@@ -87,7 +86,9 @@ class G1Template(Model):
         # conditions and another that results naturally from varying levels of
         # protein expression due to differing codon usage
         self.experimental_noise = parameters.HalfNormal(sigma=experimental_noise_sigma)
-        self.codon_noise = parameters.HalfNormal(sigma=codon_noise_sigma)
+        self.codon_noise = parameters.HalfNormal(
+            sigma=codon_noise_sigma, shape=(self.n_variants,)
+        )
 
         # All variants are each described by a mean log fluorescence
         # pylint: disable=no-member
@@ -110,8 +111,8 @@ class G1Template(Model):
         # survival function of the log normal distribution that describes the distribution
         # at the fluorescence value of the threshold
         self.updated_low_unnorm = (
-            parameters.LogNormal.log_ccdf(
-                x=self.lt,
+            parameters.Normal.log_ccdf(
+                x=self.log_lt,
                 mu=self.experimental_mean_log_fluorescence,
                 sigma=self.codon_noise,
                 shape=self.experimental_mean_log_fluorescence.shape,
@@ -119,8 +120,8 @@ class G1Template(Model):
             + self.log_theta_t0
         )
         self.updated_high_unnorm = (
-            parameters.LogNormal.log_ccdf(
-                x=self.ht,
+            parameters.Normal.log_ccdf(
+                x=self.log_ht,
                 mu=self.experimental_mean_log_fluorescence,
                 sigma=self.codon_noise,
                 shape=self.experimental_mean_log_fluorescence.shape,
@@ -184,7 +185,7 @@ class ExpFluorescenceMixIn:
 
     def _set_mean_log_fluorescence(  # pylint: disable=unused-argument
         self,
-        beta: float = DEFAULT_HYPERPARAMS["exp_beta"],
+        beta: float = DEFAULT_HYPERPARAMS["exp_beta_nuclease"],
         **kwargs,
     ):
         # pylint: disable = no-member
