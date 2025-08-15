@@ -431,7 +431,7 @@ def load_nuclease_data(
         # Compile the data into a dictionary
         dataset = {
             "variants": df["mutations"].tolist(),
-            "ic1": df[["read_count_0_input_g3"]].to_numpy(dtype=int),
+            "ic1": df["read_count_0_input_g3"].to_numpy(dtype=int),
             "oc1": df[
                 [
                     "read_count_1_59_g3",
@@ -439,7 +439,9 @@ def load_nuclease_data(
                     "read_count_2_95_g3",
                     "read_count_2_99_g3",
                 ]
-            ].to_numpy(dtype=int),
+            ]
+            .to_numpy(dtype=int)
+            .T,
             "ft": np.array([0.118, 0.217, 0.285, 0.346]),
         }
 
@@ -453,7 +455,7 @@ def load_nuclease_data(
         # Compile the data into a dictionary
         dataset = {
             "variants": df["mutations"].tolist(),
-            "ic1": df[["read_count_0_input_g4"]].to_numpy(dtype=int),
+            "ic1": df["read_count_0_input_g4"].to_numpy(dtype=int),
             "oc1": df[
                 [
                     "read_count_1_70_g4",
@@ -461,7 +463,9 @@ def load_nuclease_data(
                     "read_count_3_98_g4",
                     "read_count_4_99.5_g4",
                 ]
-            ].to_numpy(dtype=int),
+            ]
+            .to_numpy(dtype=int)
+            .T,
             "ft": np.array([0.124, 0.199, 0.306, 0.384]),
         }
 

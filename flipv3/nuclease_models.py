@@ -278,6 +278,83 @@ class G2Template(Model):
             )
 
 
+class G3G4Template(Model):
+    """Template model for G3 and G4"""
+
+    def __init__(
+        self,
+        ic1: npt.NDArray[np.int64],
+        oc1: npt.NDArray[np.int64],
+        ft: npt.NDArray[np.floating],
+        alpha: float = DEFAULT_HYPERPARAMS["alpha"],
+        codon_noise_sigma: float = DEFAULT_HYPERPARAMS["codon_noise_sigma"],
+        **kwargs,
+    ):
+
+        # Check shapes
+        assert ic1.ndim == ft.ndim == 1
+        assert oc1.ndim == 2
+        assert ic1.shape[-1] == oc1.shape[-1]
+
+        # Get number of variants
+        self.n_variants = ic1.shape[-1]
+
+        # Record default data values
+        count_arrays = {"ic1": ic1, "oc1": oc1}
+        super().__init__(default_data=count_arrays)
+
+        # Add total counts and log-fluorescence
+        for name, val in count_arrays.items():
+            setattr(
+                self,
+                f"total_{name}",
+                Constant(np.sum(val, axis=-1, keepdims=True), togglable=False),
+            )
+        self.log_thresholds = Constant(np.log(ft[:, None]), togglable=False)
+
+        # No prior on the alpha parameter for this model as there is only one input
+        # population
+        self.log_theta_t0 = parameters.ExpDirichlet(
+            alpha=alpha, shape=(self.n_variants,)
+        )
+
+        # Set log-fluorescence
+        # pylint: disable=no-member
+        self.log_fluorescence = self._set_base_log_fluorescence(**kwargs)
+        # pylint: enable=no-member
+
+        # Set codon noise
+        self.codon_noise = parameters.HalfNormal(
+            sigma=codon_noise_sigma, shape=(self.n_variants,)
+        )
+
+        # Pass through the survival function
+        self.log_theta_filtered = operations.normalize_log(
+            parameters.Normal.log_ccdf(
+                x=self.log_thresholds,
+                mu=self.log_fluorescence,
+                sigma=self.codon_noise,
+                shape=(
+                    self.log_thresholds.shape[0],
+                    self.n_variants,
+                ),
+            )
+            + self.log_theta_t0
+        )
+
+        # Model counts
+        self.ic1 = parameters.MultinomialLogTheta(
+            log_theta=self.log_theta_t0,
+            N=self.total_ic1,  # pylint: disable=no-member
+            shape=ic1.shape,
+        )
+        self.oc1 = parameters.MultinomialLogTheta(
+            log_theta=self.log_theta_filtered,
+            N=self.total_oc1,  # pylint: disable=no-member
+            shape=oc1.shape,
+        )
+
+
 class LomaxFluorescenceMixIn:
     """Mix in class defining the log-fluorescence as ExpLomax distributed"""
 
@@ -319,3 +396,11 @@ class G2Lomax(G2Template, LomaxFluorescenceMixIn):
 
 class G2Exponential(G2Template, ExpFluorescenceMixIn):
     """Describes the G2 phase with exponentially-distributed fluorescence"""
+
+
+class G3G4Lomax(G3G4Template, LomaxFluorescenceMixIn):
+    """Describes the G3/G4 phase with lomax-distributed fluorescence"""
+
+
+class G3G4Exponential(G3G4Template, ExpFluorescenceMixIn):
+    """Describes the G3/G4 phase with exponentially-distributed fluorescence"""
