@@ -245,7 +245,16 @@ class MultinomialLogTheta(CustomMultinomial):
         @functools.wraps(function)
         def inner(self, **kwargs):
             # Exponentiate the log probabilities
-            kwargs["p"] = np.exp(kwargs.pop("log_p"))
+            p = np.exp(kwargs.pop("log_p"))
+
+            # The rows of `p` must sum to 1 within a threshold
+            p_sum = p.sum(axis=-1, keepdims=True)
+            if not np.allclose(p_sum, 1, atol=1e-6):
+                raise ValueError(f"Rows of `p` must sum to 1, but got {p_sum.max()}")
+
+            # Ensure total normalization
+            kwargs["p"] = p / p_sum
+
             return function(self, **kwargs)
 
         return inner
