@@ -256,7 +256,7 @@ class Model:
 
         # Check sizes of all observables and record the dimension names. Dimensions
         # of size '1' are not named as we do not need to distinguish them in an xarray
-        for observable in self.observables:
+        for observable in self.named_model_components:
             for dimkey in enumerate(observable.shape[::-1]):
                 if dimkey not in dims and dimkey[1] > 1:
                     dims[dimkey] = allowed_dim_names[len(dims)]
