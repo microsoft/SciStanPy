@@ -314,12 +314,7 @@ class AbstractModelComponent(ABC):
 
             # Add the parent draw to the level draws. Expand the number of dimensions
             # if necessary to account for the addition of "n" draws.
-            dims_to_add = (
-                self.ndim + 1
-            ) - parent_draw.ndim  # Implicit prepended dimensions
-            assert (
-                dims_to_add >= 0
-            ), f"{self.ndim} {parent_draw.ndim} {self.model_varname} {parent.model_varname}"
+            dims_to_add = max(0, (self.ndim + 1) - parent_draw.ndim)
             level_draws[paramname] = np.expand_dims(
                 parent_draw, axis=tuple(range(1, dims_to_add + 1))
             )
