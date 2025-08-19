@@ -425,18 +425,18 @@ class MetaEnrichment(type):
 
         def init_exp_lomax_rate_growth_noise(
             self,
-            r_sigma_sigma: float = 0.01,
+            r_sigma_sigma: float = 0.05,
             **kwargs,  # pylint: disable=unused-argument
         ) -> None:
             """Builds 'r' from 'log_r_mean'"""
 
             # Get the sigma for the log fold-change
-            self.r_sigma = parameters.HalfNormal(sigma=r_sigma_sigma)
+            # self.r_sigma = parameters.HalfNormal(sigma=r_sigma_sigma)
 
             # Calculate r
             self.r = parameters.Normal(
                 mu=scops.exp(self.log_r_mean),
-                sigma=self.r_sigma,
+                sigma=r_sigma_sigma,
                 shape=self.r_shape,
             )
 

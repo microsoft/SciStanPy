@@ -8,7 +8,9 @@ import os.path
 from typing import TYPE_CHECKING
 
 from scistanpy.model.results import SampleResults
-from flipv3.flip_dsets import pdz3_instance_factory, trpb_instance_factory
+from flipv3.trpb_models import get_trpb_instance
+from flipv3.pdz3_models import get_pdz3_instance
+
 
 if TYPE_CHECKING:
     from scistanpy.model import Model
@@ -28,12 +30,6 @@ VALID_COMBINATIONS = {
         "four-site",
     },
     "pdz": {"cript-c", "cript-n", "cis", "trans-1", "trans-2"},
-}
-
-# Map dataset names to their loading functions and file extensions
-FACTORY_MAP = {
-    "trpb": (trpb_instance_factory, ".csv"),
-    "pdz": (pdz3_instance_factory, ".tsv"),
 }
 
 
@@ -58,14 +54,14 @@ def define_base_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--rate_dist",
+        "--growth_rate",
         type=str,
         choices=["exponential", "gamma", "lomax"],
         required=True,
         help="Distribution that defines the mean rate of the model.",
     )
     parser.add_argument(
-        "--growth_func",
+        "--growth_curve",
         type=str,
         choices=["exponential", "logistic"],
         required=True,
@@ -199,17 +195,20 @@ def prep_run(args: argparse.Namespace) -> "Model":
     os.makedirs(args.output_dir, exist_ok=True)
 
     # Build the model instance
-    instance_factory, file_ext = FACTORY_MAP[args.dataset]
     instance_kwargs = {
-        "filepath": os.path.join(
-            args.flip_data, "counts", args.dataset, f"{args.subset}{file_ext}"
-        ),
-        "libname": args.subset,
-        "growth_func": args.growth_func,
-        "rate_dist": args.rate_dist,
+        "filepath": os.path.join(args.flip_data, "counts", args.dataset, args.subset),
+        "growth_curve": args.growth_curve,
+        "growth_rate": args.growth_rate,
     }
     if args.dataset == "trpb":
-        instance_kwargs["include_od"] = args.include_od
+        instance_factory = get_trpb_instance
+        instance_kwargs["filepath"] += ".csv"
+        instance_kwargs["lib"] = args.subset
+    elif args.dataset == "pdz":
+        instance_factory = get_pdz3_instance
+        instance_kwargs["filepath"] += ".tsv"
+    else:
+        raise ValueError(f"Unsupported dataset: {args.dataset}")
 
     return instance_factory(**instance_kwargs)
 
@@ -218,7 +217,7 @@ def run_hmc(args: argparse.Namespace) -> None:
     """Run HMC for the specified dataset and model."""
     # Prepare the run
     model = prep_run(args)
-    model_name = f"{args.dataset}_{args.subset}_{args.rate_dist}_{args.growth_func}"
+    model_name = f"{args.dataset}_{args.subset}_{args.growth_rate}_{args.growth_curve}"
 
     # Run HMC unless we are catching up due to a failed csv-to-nc conversion
     if args.conversion_catchup:
