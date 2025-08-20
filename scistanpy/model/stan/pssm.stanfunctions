@@ -1,0 +1,30 @@
+real convolve(array[] vector weights, array[] int seq) {
+    // Convolves a sequence. The weights should be L x N, where `N` is the size
+    // of the alphabet (e.g., 20 for amino acids) and `L` is the length of the
+    // sequence. The sequence should be an array of L integers, where each position
+    // gives the index of an amino acid.
+
+    real out = 0.0;
+    for (i in 1:num_elements(seq)) {
+        out += weights[i][seq[i]];  // Fixed: array of vectors uses [] indexing
+    }
+    return out;
+}
+
+vector conv1d(array[] vector weights, array[] int seq) {
+    // Performs a 1D convolution on a sequence. The weights should be K x N, where
+    // `K` is the kernel size and `N` is the alphabet size. The sequence should
+    // be ordinally encoded and have shape L. The convolution will work by looping
+    // over the sequence and applying `convolve` repeatedly.
+
+    // Get dimensions
+    int K = dims(weights)[1];
+    int outlen = num_elements(seq) - K + 1;
+
+    // Convolve using the determined kernel size
+    vector[outlen] result;
+    for (i in 1:outlen) {
+        result[i] = convolve(weights, seq[i:(i + K - 1)]);
+    }
+    return result;
+}
