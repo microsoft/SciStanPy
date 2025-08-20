@@ -1,3 +1,5 @@
+"""Holds model for the dataset presented by Tsuboyama et al."""
+
 import numpy as np
 import numpy.typing as npt
 
@@ -6,8 +8,12 @@ from scistanpy.model.components.transformations.transformed_parameters import (
     TransformedParameter,
 )
 
+# pylint: disable=invalid-name
+
 
 class K50Model(Model):
+    """Model of the K50 dataset"""
+
     def __init__(
         self,
         *,
@@ -27,10 +33,12 @@ class K50Model(Model):
         v4_counts_c0: npt.NDArray[np.int64],
         v4_counts_cg0: npt.NDArray[np.int64],
         ordinal_seqs: npt.NDArray[np.int64],
+        alpha_alpha: float = 2.0,
+        alpha_beta: float = 2.0,
         log_kmax_t_mu: float = 0.0,
         log_kmax_t_sigma: float = 1.0,
-        log_K50_mu: float = -7.5,
-        log_K50_sigma: float = 1.5,
+        log_K50_mu_qpcr: float = -7.5,
+        log_K50_sigma_qpcr: float = 1.5,
         protease_dg_sigma_sigma: float = 0.1,
         protease_conc_sigma_sigma: float = 0.1,
         expected_dg_unfolding: float = -1.0,
@@ -46,7 +54,7 @@ class K50Model(Model):
         log_K50f_mu: npt.NDArray[np.float64] | None = None,
         log_K50f_sigma: float = 0.5,
     ):
-        """"""
+        """Initializes all parameters and defines model graph"""
         # Set default values if they are not set
         if pssm_mus is None:
             pssm_mus = np.ones((2, 9, 21)) * -0.3
@@ -123,7 +131,7 @@ class K50Model(Model):
         self.ordinal_seqs = Constant(ordinal_seqs, togglable=False)
 
         # Record default data
-        self.__init__(
+        super().__init__(
             default_data={
                 "qpcr_log2_survival": qpcr_log2_survival,
                 "v1_counts_c0": v1_counts_c0,
@@ -135,6 +143,14 @@ class K50Model(Model):
                 "v4_counts_c0": v4_counts_c0,
                 "v4_counts_cg0": v4_counts_cg0,
             }
+        )
+
+        # Define the distributions that model the input data at concentration 0
+        self.c0_alphas = parameters.Gamma(
+            alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_seq_ids)
+        )
+        self.log_theta_c0 = parameters.ExpDirichlet(
+            alpha=self.c0_alphas, shape=(2, self.n_seq_ids)
         )
 
         # Define the protease concentrations. We assume some degree of noise across
@@ -168,6 +184,12 @@ class K50Model(Model):
             mu=self.mean_dg, sigma=self.protease_dg_noise, shape=(2, self.n_seq_ids)
         )
 
+        # We expect a universal kmaxt for all proteins for a given protease. We
+        # have 2 proteases.
+        self.log_kmax_t = parameters.Normal(
+            mu=log_kmax_t_mu, sigma=log_kmax_t_sigma, shape=(2, 1, 1)
+        )
+
         # Get K50u for all sequences. shape = (2, self.n_seq_ids)
         self.log_K50u = self._def_K50u(
             pssm_mus=pssm_mus,
@@ -185,13 +207,33 @@ class K50Model(Model):
             mu=log_K50f_mu, sigma=log_K50f_sigma, shape=(2, 1)
         )
 
-        # Modeling the qpcr workflow gets us the value for log_kmax_t
-        # shape = (2, 1, 1)
+        # Get K50. This is calculated using the values for dG, K50u, and K50f
+        self.log_K50 = self._def_K50()
+
+        # Using K50, kmaxt, and the protease concentrations, we can calculate survival
+        self.log_survival = self.calculate_log_survival(
+            log_kmax_t=self.log_kmax_t,
+            log_K50=self.log_K50,
+            log_conc=self.log_protease_conc,
+        )
+
+        # Using the log survival calculation, determine the proportions of sequences
+        # we expect to remain after protease treatment
+        self.log_theta_cg0_unnorm = self.log_survival + self.log_theta_c0
+        self.log_theta_cg0 = operations.logsumexp(self.log_theta_cg0_unnorm)
+
+        # Now onto modeling the observables. First, we model the qpcr workflow,
+        # which helps us assign the value for log_kmax_t.
         self._model_qpcr(
-            log_kmax_t_mu=log_kmax_t_mu,
-            log_kmax_t_sigma=log_kmax_t_sigma,
-            log_K50_mu=log_K50_mu,
-            log_K50_sigma=log_K50_sigma,
+            log_K50_mu_qpcr=log_K50_mu_qpcr, log_K50_sigma_qpcr=log_K50_sigma_qpcr
+        )
+
+        # Now we model the counts data
+        self._model_counts(
+            v1_seq_ids=v1_seq_ids,
+            v2_seq_ids=v2_seq_ids,
+            v3_seq_ids=v3_seq_ids,
+            v4_seq_ids=v4_seq_ids,
         )
 
     def _def_K50u(
@@ -249,26 +291,25 @@ class K50Model(Model):
             self.log_maxK50u - (self.log_maxK50u - self.log_minK50u) * self.activations
         )
 
-    def _model_qpcr(
-        self,
-        *,
-        log_kmax_t_mu: float,
-        log_kmax_t_sigma: float,
-        log_K50_mu: float,
-        log_K50_sigma: float,
-    ) -> None:
-        """Defines the piece of the generative model in charge of the qPCR data"""
+    def _def_K50(self):
+        """Defines the K50 value as a transformed parameter"""
+        # Calculate -dG/RT
+        neg_dGRT = -self.protease_dg / (298 * 0.001987)
 
-        # We expect a universal kmaxt for all proteins for a given protease. We
-        # have 2 proteases.
-        self.log_kmax_t = parameters.Normal(
-            mu=log_kmax_t_mu, sigma=log_kmax_t_sigma, shape=(2, 1, 1)
+        # Now calculate K50
+        return (
+            operations.log1p_exp(neg_dGRT)
+            - self.log_K50f
+            - operations.log1p_exp(self.log_K50f + neg_dGRT - self.log_K50u)
         )
+
+    def _model_qpcr(self, *, log_K50_mu_qpcr: float, log_K50_sigma_qpcr: float) -> None:
+        """Defines the piece of the generative model in charge of the qPCR data"""
 
         # Each protein will have its own K50 for each protease depending on how
         # well it's folded. 2 proteases x concentration dim x 8 qpcr proteins
-        self.log_K50 = parameters.Normal(
-            mu=log_K50_mu, sigma=log_K50_sigma, shape=(2, 1, 8)
+        self.log_K50_qpcr = parameters.Normal(
+            mu=log_K50_mu_qpcr, sigma=log_K50_sigma_qpcr, shape=(2, 1, 8)
         )
 
         # Calculate the log survival. The qPCR values are reported in log-2 space
@@ -276,28 +317,62 @@ class K50Model(Model):
         # to convert between the two.
         self.qpcr_log2_survival = self.calculate_log_survival(
             log_kmax_t=self.log_kmax_t,
-            log_K50=self.log_K50,
+            log_K50=self.log_K50_qpcr,
             log_conc=self.qpcr_log_protease_conc,
         )
 
-    def _step1(
+    def _model_counts(
         self,
-        protease_conc_sigma_sigma: float,
-        log_expected_protease_conc: npt.NDArray[np.float64],
+        *,
+        v1_seq_ids: npt.NDArray[np.int64],
+        v2_seq_ids: npt.NDArray[np.int64],
+        v3_seq_ids: npt.NDArray[np.int64],
+        v4_seq_ids: npt.NDArray[np.int64],
     ) -> None:
-        """
-        Calculates the effective protease concentrations for the different libraries.
-        Note that this differs slightly from the original work, as we are not assuming
-        an "effective protease" concentration, but rather than there is an inferable
-        distinct protease concentration for each library resulting from the underlying
-        biological variability.
-        """
 
-    def calculate_ssk(self, ordinal_seqs) -> TransformedParameter:
-        """Initializes SSk, which is the saturation of the cutting rate at site P1=k"""
-        # Run convolution over all ordinal sequences followed by passage through
-        # the logistic function
-        return
+        # Now we model the counts data
+        for lib, ind_array in (
+            ("v1", v1_seq_ids),
+            ("v2", v2_seq_ids),
+            ("v3", v3_seq_ids),
+            ("v4", v4_seq_ids),
+        ):
+
+            # Names for the attributes
+            counts_c0 = f"{lib}_counts_c0"
+            counts_cg0 = f"{lib}_counts_cg0"
+            total_counts_c0 = f"total_{counts_c0}"
+            total_counts_cg0 = f"total_{counts_cg0}"
+
+            # Set the total counts as constants
+            setattr(
+                self,
+                total_counts_c0,
+                Constant(self.default_data[counts_c0].sum(axis=-1), togglable=False),
+            )
+            setattr(
+                self,
+                total_counts_cg0,
+                Constant(self.default_data[counts_cg0].sum(axis=-1), togglable=False),
+            )
+
+            # Model counts as a multinomial distribution
+            setattr(
+                self,
+                counts_c0,
+                parameters.MultinomialLogTheta(
+                    theta=self.log_theta_c0[..., ind_array],
+                    N=getattr(self, total_counts_c0),
+                ),
+            )
+            setattr(
+                self,
+                counts_cg0,
+                parameters.MultinomialLogTheta(
+                    theta=self.log_theta_cg0[..., ind_array],
+                    N=getattr(self, total_counts_cg0),
+                ),
+            )
 
     @staticmethod
     def calculate_log_survival(
@@ -313,14 +388,3 @@ class K50Model(Model):
 
         # Log survival is the negative exponentiation of the log rate
         return -operations.exp(log_rate)
-
-    @staticmethod
-    def K50_model():
-        """
-        Defines the K50 model used in the original paper, only beginning from dG
-        rather than K50.
-        """
-
-
-# Rather than defining an "effetive" protease concentration, we can just sample
-# from a distribution of concentrations centered on the expected
