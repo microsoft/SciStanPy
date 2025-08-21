@@ -84,7 +84,12 @@ class Constant(abstract_model_component.AbstractModelComponent):
         # Repeat the value n times
         return np.broadcast_to(self.value[None], (n,) + self.value.shape)
 
-    def get_right_side(self, index_opts: tuple[str, ...] | None) -> str:
+    def get_right_side(
+        self,
+        index_opts: tuple[str, ...] | None,
+        start_dims: dict[str, int] | None = None,
+        end_dims: dict[str, int] | None = None,
+    ) -> str:
         """Return the Stan code for this component (there is none)."""
         return ""
 

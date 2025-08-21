@@ -329,11 +329,19 @@ class Parameter(
         """
         return ", ".join(to_format[name] for name in self.STAN_TO_SCIPY_NAMES)
 
-    def get_right_side(
-        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
+    def get_right_side(  # pylint: disable=arguments-differ
+        self,
+        index_opts: tuple[str, ...] | None,
+        start_dims: dict[str, int] | None = None,
+        end_dims: dict[str, int] | None = None,
+        dist_suffix: str = "",
     ) -> str:
         # Get the formattables
-        formattables = super().get_right_side(index_opts=index_opts)
+        formattables = super().get_right_side(
+            index_opts=index_opts,
+            start_dims=start_dims,
+            end_dims=end_dims,
+        )
 
         # Build the distribution argument and format the Stan code
         suffix = "" if dist_suffix == "" else f"_{dist_suffix}"
@@ -574,11 +582,20 @@ class Normal(ContinuousDistribution):
         return parent_incrementation.replace(f"{default_name} ~", f"{new_name} ~")
 
     def get_right_side(
-        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
+        self,
+        index_opts: tuple[str, ...] | None,
+        start_dims: dict[str, int] | None = None,
+        end_dims: dict[str, int] | None = None,
+        dist_suffix: str = "",
     ) -> str:
         # If not noncentered, run the parent method
         if not self.is_noncentered:
-            return super().get_right_side(index_opts, dist_suffix=dist_suffix)
+            return super().get_right_side(
+                index_opts,
+                start_dims=start_dims,
+                end_dims=end_dims,
+                dist_suffix=dist_suffix,
+            )
 
         # Otherwise, make sure we do not have the suffix set and return the standard
         # normal distribution
@@ -844,7 +861,11 @@ class ExpDirichlet(Dirichlet):
         return f"{transformed_varname} = inv_ilr_log_simplex_constrain_jacobian({raw_varname})"
 
     def get_right_side(
-        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
+        self,
+        index_opts: tuple[str, ...] | None,
+        start_dims: dict[str, int] | None = None,
+        end_dims: dict[str, int] | None = None,
+        dist_suffix: str = "",
     ) -> str:
         # If no suffix is provided, determine whether we are using the normalized
         # or unnormalized version of the distribution. We use unnormalized when
@@ -853,7 +874,12 @@ class ExpDirichlet(Dirichlet):
             dist_suffix = "unnorm" if self.is_hyperparameter else "norm"
 
         # Now we just run the parent method
-        return super().get_right_side(index_opts, dist_suffix=dist_suffix)
+        return super().get_right_side(
+            index_opts,
+            start_dims=start_dims,
+            end_dims=end_dims,
+            dist_suffix=dist_suffix,
+        )
 
     @property
     def raw_stan_parameter_declaration(self) -> str:
@@ -1015,13 +1041,22 @@ class MultinomialLogTheta(_MultinomialBase):
         return f"{log_theta}, {N}"
 
     def get_right_side(
-        self, index_opts: tuple[str, ...] | None, dist_suffix: str = ""
+        self,
+        index_opts: tuple[str, ...] | None,
+        start_dims: dict[str, int] | None = None,
+        end_dims: dict[str, int] | None = None,
+        dist_suffix: str = "",
     ) -> str:
         """
         Override the right side to use the log softmax transformation.
         """
         # Get the formattables
-        formattables = super(Parameter, self).get_right_side(index_opts)
+        formattables = super(Parameter, self).get_right_side(
+            index_opts,
+            start_dims=start_dims,
+            end_dims=end_dims,
+            dist_suffix=dist_suffix,
+        )
 
         # If no suffix is provided and this is an observable, we want to add the
         # coefficient to the set of formattables and use manual normalization.

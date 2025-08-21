@@ -95,26 +95,29 @@ def build_operation(
 
 # Define our operations
 abs_ = build_operation(transformed_parameters.AbsParameter)
+binary_exponential_growth = build_operation(
+    transformed_parameters.BinaryExponentialGrowth
+)
+binary_log_exponential_growth = build_operation(
+    transformed_parameters.BinaryLogExponentialGrowth
+)
 exp = build_operation(transformed_parameters.ExpParameter)
+exponential_growth = build_operation(transformed_parameters.ExponentialGrowth)
+
 log = build_operation(transformed_parameters.LogParameter)
+log1p_exp = build_operation(transformed_parameters.Log1pExpParameter)
+log_exponential_growth = build_operation(transformed_parameters.LogExponentialGrowth)
+log_sigmoid = build_operation(transformed_parameters.LogSigmoidParameter)
+log_sigmoid_growth = build_operation(transformed_parameters.LogSigmoidGrowth)
+log_sigmoid_growth_init_param = build_operation(
+    transformed_parameters.LogSigmoidGrowthInitParametrization
+)
 logsumexp = build_operation(transformed_parameters.LogSumExpParameter)
 normalize = build_operation(transformed_parameters.NormalizeParameter)
 normalize_log = build_operation(transformed_parameters.NormalizeLogParameter)
 sigmoid = build_operation(transformed_parameters.SigmoidParameter)
-log_sigmoid = build_operation(transformed_parameters.LogSigmoidParameter)
-exponential_growth = build_operation(transformed_parameters.ExponentialGrowth)
-binary_exponential_growth = build_operation(
-    transformed_parameters.BinaryExponentialGrowth
-)
-log_exponential_growth = build_operation(transformed_parameters.LogExponentialGrowth)
-binary_log_exponential_growth = build_operation(
-    transformed_parameters.BinaryLogExponentialGrowth
-)
 sigmoid_growth = build_operation(transformed_parameters.SigmoidGrowth)
-log_sigmoid_growth = build_operation(transformed_parameters.LogSigmoidGrowth)
 sigmoid_growth_init_param = build_operation(
     transformed_parameters.SigmoidGrowthInitParametrization
 )
-log_sigmoid_growth_init_param = build_operation(
-    transformed_parameters.LogSigmoidGrowthInitParametrization
-)
+sum_ = build_operation(transformed_parameters.SumParameter)

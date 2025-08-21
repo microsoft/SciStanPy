@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Optional, overload, TYPE_CHECKING
+from typing import Callable, Optional, overload, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -77,12 +77,13 @@ class Transformation(abstract_model_component.AbstractModelComponent):
     def write_stan_operation(self, **to_format: str) -> str:
         """Write the operation in Stan code."""
 
-    def get_right_side(self, index_opts: tuple[str, ...] | None) -> str:
+    def get_right_side(self, index_opts: tuple[str, ...] | None, start_dims: dict[str, int] | None = None,
+        end_dims: dict[str, int] | None = None) -> str:
         """Gets the right-hand-side of the assignment operation for this parameter."""
         # Call the inherited method to get a dictionary mapping parent names to
         # either their indexed variable names (if they are named) or the thread
         # of operations that define them (if they are not named).
-        components = super().get_right_side(index_opts)
+        components = super().get_right_side(index_opts, start_dims = start_dims, end_dims=end_dims)
 
         # Wrap the declaration for any unnamed parents in parentheses. This is to
         # ensure that the order of operations is correct in Stan.
@@ -353,14 +354,14 @@ class NormalizeLogParameter(UnaryTransformedParameter):
         return f"{dist1} - log_sum_exp({dist1})"
 
 
-class LogSumExpParameter(UnaryTransformedParameter):
+class Reduction(UnaryTransformedParameter):
     """
-    Defines a parameter that computes the log of the sum of exponentials of another.
-    This can only be applied over the last dimension and occurs with or without
-    `keepdims` set to True.
+    Base class for any operations that reduce dimensionality
     """
 
     SHAPE_CHECK = False
+    TORCH_FUNC: Callable[[npt.NDArray], npt.NDArray]
+    NP_FUNC: Callable[[npt.NDArray], npt.NDArray]
 
     def __init__(
         self,
@@ -369,9 +370,8 @@ class LogSumExpParameter(UnaryTransformedParameter):
         **kwargs,
     ):
         """
-        Initializes the LogSumExpParameter. This applies the log-sum-exp operation
-        over the last dimension of the input parameter, either with or without
-        keeping the last dimension.
+        Initializes the reduction. This applies the reduction over the last dimension
+        of the input parameter, either with or without keeping the last dimension.
         """
         # Record whether to keep the last dimension
         self.keepdims = keepdims
@@ -399,12 +399,48 @@ class LogSumExpParameter(UnaryTransformedParameter):
             keepdim = self.keepdims
 
         if isinstance(dist1, torch.Tensor):
-            return torch.logsumexp(dist1, keepdim=keepdim, dim=-1)
+            return self.TORCH_FUNC(dist1, keepdim=keepdim, dim=-1)
         else:
-            return sp.logsumexp(dist1, keepdims=keepdim, axis=-1)
+            return self.NP_FUNC(dist1, keepdims=keepdim, axis=-1)
+
+
+class LogSumExpParameter(Reduction):
+    """
+    Defines a parameter that computes the log of the sum of exponentials of another.
+    This can only be applied over the last dimension and occurs with or without
+    `keepdims` set to True.
+    """
+    TORCH_FUNC = torch.logsumexp
+    NP_FUNC = sp.logsumexp
 
     def write_stan_operation(self, dist1: str) -> str:
         return f"log_sum_exp({dist1})"
+
+class SumParameter(Reduction):
+    """
+    Defines a parameter that computes the sum over the final axis of another
+    parameter.
+    """
+    TORCH_FUNC = torch.sum
+    NP_FUNC = np.sum
+
+    def write_stan_operation(self, dist1: str) -> str:
+        return f"sum({dist1})"
+
+class Log1pExpParameter(UnaryTransformedParameter):
+    """
+    Defines a parameter that takes the logarithm of one plus the natural exponentiation
+    of another parameter. This uses numerically stable alternatives to writing the
+    option explicitly.
+    """
+    def run_np_torch_op(self, dist1):
+        if isinstance(dist1, torch.Tensor):
+            return torch.logaddexp(0.0, dist1)
+        else:
+            return np.logaddexp(0.0, dist1)
+
+    def write_stan_operation(self, dist1: str) -> str:
+        return f"log1p_exp({dist1})"
 
 
 class SigmoidParameter(UnaryTransformedParameter):
@@ -949,6 +985,94 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
         """Calculate using Stan's log1p_exp function."""
         return f"{log_x0} + log1p_exp({r} .* {c}) - log1p_exp({r} .* ({c} - {t}))"
 
+class ConvolveSequence(TransformedParameter):
+    """
+    Using a matrix of provided weights, performs a convolution operation on an
+    ordinally-encoded array of sequences. For broadcasting purposes, the last two
+    dimensions of the weights matrix and the last dimension of the seqence array
+    are ignored.
+    """
+    # Do not check the shape
+    SHAPE_CHECK=False
+
+    # We must rest the loops to define this parameter
+    FORCE_LOOP_RESET=True
+
+    # Parents must be named
+    FORCE_PARENT_NAME=True
+
+    def __init__(
+        self,
+        *,
+        weights: "custom_types.CombinableParameterType",
+        seq: "custom_types.CombinableParameterType",
+        **kwargs
+    ):
+        # Weights must be 2D.
+        if weights.ndim != 2:
+            raise ValueError("Weights must be a 2D parameter.")
+
+        # Sequence must be at least 1D
+        if seq.ndim < 1:
+            raise ValueError("Sequence must be at least a 1D parameter.")
+
+        # Note features of the weights
+        self.kernel_size, self.alphabet_size = weights.shape
+
+        # Init using inherited method. # The output shape will be that of the sequences
+        # adjusted by the convolution
+        super().__init__(weights=weights, seq=seq, shape=seq.shape[:-1] + (seq.shape[-1] - weights.shape[0] + 1,), **kwargs)
+
+    def run_np_torch_op(self, weights, seq): # pylint: disable=arguments-differ
+        """Performs the convolution"""
+        # Decide on the kwargs for the summation operation
+        sumkwargs = {("dim" if isinstance(weights, torch.tensor) else "axis"): -1}
+
+        # We need an array for indexing the filter as we slide across
+        filter_indices = np.arange(self.kernel_size)
+
+        # Sliding window across the sequence dimension
+        out = np.zeros(self.shape)
+        for outind, upper in enumerate(range(self.kernel_size, seq.shape[-1])):
+
+            # Get the lower bound
+            lower = upper - self.kernel_size
+
+            # Slice the sequence and pull the appropriate weights
+            seq_slice = seq[..., lower:upper]
+            weights_slice = weights[filter_indices, seq_slice]
+
+            # Record the summation over the filters
+            out[..., outind] = weights_slice.sum(**sumkwargs)
+
+        # Run some checks on final indices
+        assert outind == self.shape[-1] - 1
+        assert upper == seq.shape[-1]
+
+        return out
+
+    def get_right_side(self, index_opts: tuple[str, ...] | None, start_dims: dict[str, int] | None = None,
+        end_dims: dict[str, int] | None = None) -> str:
+
+        # Different default for end dims here
+        end_dims = end_dims or {"weights": 1}
+
+        # Run the AbstractModelParameter version of the method to get each model
+        # component formatted appropriately. Note that we ignore the last dimension
+        # of the weights. This is because we need both dimensions in the Stan code.
+        return super().get_right_side(index_opts, end_dims=end_dims)
+
+    def write_stan_operation(self, weights: str, seq: str) -> str: # pylint: disable=arguments_differ
+        """
+        We need weights with no indexing. Indexing for sequence should be the standard
+        (as we automatically assume that the last dimension is vectorized)
+        """
+        # This runs a custom function
+        return f"convolve_sequence({weights}, {seq})"
+
+    def get_supporting_functions(self) -> list[str]:
+        return super().get_supporting_functions() + ["#include pssm.stanfunctions"]
+
 
 class IndexParameter(TransformedParameter):
     """
@@ -990,7 +1114,11 @@ class IndexParameter(TransformedParameter):
     ```
     """
 
+    # Do not check shapes
     SHAPE_CHECK = False
+
+    # Parents of this parameter must be named
+    FORCE_PARENT_NAME = True
 
     def __init__(
         self,

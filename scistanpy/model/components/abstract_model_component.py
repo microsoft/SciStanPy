@@ -44,6 +44,12 @@ class AbstractModelComponent(ABC):
     IS_SIMPLEX: bool = False
     IS_LOG_SIMPLEX: bool = False
 
+    # Do we force parents of this parameter to be named in Stan code?
+    FORCE_PARENT_NAME: bool = False
+
+    # Do we want the loop to be reset in Stan code?
+    FORCE_LOOP_RESET: bool = False
+
     def __init__(  # pylint: disable=unused-argument
         self,
         *,
@@ -230,6 +236,8 @@ class AbstractModelComponent(ABC):
         self,
         index_opts: tuple[str, ...] | None,
         offset: int = 0,
+        first_dim: int = 0,
+        last_dim: int = -1,
         _name_override: str = "",
     ) -> str:
         """
@@ -243,6 +251,12 @@ class AbstractModelComponent(ABC):
                 singleton dimensions are implicitly added when broadcasting from
                 this parameter to a child. Thus, we need to offset indexing to account
                 for these implicit singletons depending on the child.
+            first_dim (int): The first dimensions to include in the variable name.
+                For example, if the parameter has N dims and `first_dim = 1`, then
+                we index only the last N - 1 dims.
+            last_dim (int): The last index to include in the variable name.
+                For example, if the parameter has N dims and `last_dim = -2`,
+                then we index only the first N - 1 dims.
 
         Returns:
             str: The variable name with the appropriate indices (if any).
@@ -258,10 +272,17 @@ class AbstractModelComponent(ABC):
         if self.ndim == 0 or index_opts is None:
             return base_name
 
+        # First and last dim must be positive integers
+        first_dim = first_dim if first_dim >= 0 else self.ndim + first_dim
+        last_dim = last_dim if last_dim >= 0 else self.ndim + last_dim + 1
+        assert last_dim > first_dim
+
         # Singleton dimensions get a "1" index. All others get the index options.
         indices = [
             "1" if dimsize == 1 else index_opts[i]
-            for i, dimsize in enumerate(self.shape, start=offset)
+            for i, dimsize in enumerate(
+                self.shape[first_dim:last_dim], start=offset + first_dim
+            )
         ]
 
         # If the last dimension is vectorized, then we don't need to index it. We
@@ -450,7 +471,12 @@ class AbstractModelComponent(ABC):
         return ""
 
     @abstractmethod
-    def get_right_side(self, index_opts: tuple[str, ...] | None) -> dict[str, str]:
+    def get_right_side(
+        self,
+        index_opts: tuple[str, ...] | None,
+        start_dims: dict[str, int] | None = None,
+        end_dims: dict[str, int] | None = None,
+    ) -> dict[str, str]:
         """
         Gets the right side of any statement (i.e., Stan code to the right of an
         assignment or distribution statement) for the parameter. Note that if index
@@ -471,6 +497,10 @@ class AbstractModelComponent(ABC):
         The dictionary is then used to format the Stan code for the right-hand-side
         of the statement in the get_right_side method of the child class.
         """
+        # Get default values for start and end dims
+        start_dims = start_dims or {}
+        end_dims = end_dims or {}
+
         # Get variables that make up the right side of the statement. These will
         # be the parent parameters of the current parameter.
         model_components: dict[str, str] = {}
@@ -486,7 +516,10 @@ class AbstractModelComponent(ABC):
                 or param.is_named
             ):
                 model_components[name] = param.get_indexed_varname(
-                    index_opts, offset=self.ndim - param.ndim
+                    index_opts,
+                    offset=self.ndim - param.ndim,
+                    start_dim=start_dims.get(name, 0),
+                    end_dim=end_dims.get(name, -1),
                 )
 
             # Otherwise, we need to get the thread of operations that make up the
@@ -735,12 +768,10 @@ class AbstractModelComponent(ABC):
         return False
 
     @property
-    def is_indexed(self) -> bool:
+    def force_name(self) -> bool:
         """
-        Returns `True` if the parameter is transformed via an indexing operation.
-        This means we will force the compiler to define this variable in the Stan
-        code.
+        Returns `True` if we wish to force the compiler to define this variable
+        in the Stan code. This occurs when any child has a `FORCE_PARENT_NAME` class
+        variable set to `True`
         """
-        return any(
-            child is transformed_parameters.IndexParameter for child in self._children
-        )
+        return any(child.FORCE_PARENT_NAME for child in self._children)

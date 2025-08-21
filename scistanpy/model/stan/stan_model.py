@@ -639,7 +639,11 @@ class StanProgram(StanCodeBase):
             # If the current or previous component is defined a depth 0, then the
             # program is the target loop. We will need to add as many for-loops
             # as we have levels of indentation in the current component.
-            if component.assign_depth == 0 or previous_component.assign_depth == 0:
+            if (
+                component.assign_depth == 0
+                or previous_component.assign_depth == 0
+                or component.FORCE_LOOP_RESET
+            ):
                 target_loop = self
                 n_loops = component.assign_depth
 
@@ -832,7 +836,7 @@ class StanProgram(StanCodeBase):
             for component in self.recurse_model_components()
             if (
                 isinstance(component, transformed_parameters.TransformedParameter)
-                and (component.is_named or component.is_indexed)
+                and (component.is_named or component.force_name)
             )
             or (
                 isinstance(component, parameters.Parameter)
