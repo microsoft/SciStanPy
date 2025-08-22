@@ -382,12 +382,14 @@ class Reduction(UnaryTransformedParameter):
 
         # The shape is the leading dimensions of the input parameter plus a singleton
         # dimension if keepdims is True.
-        shape = dist1.shape[:-1]
-        if keepdims:
-            shape += (1,)
+        if "shape" not in kwargs:
+            shape = dist1.shape[:-1]
+            if keepdims:
+                shape += (1,)
+            kwargs["shape"] = shape
 
         # Init as normal
-        super().__init__(dist1=dist1, shape=shape, **kwargs)
+        super().__init__(dist1=dist1, **kwargs)
 
     def run_np_torch_op(self, dist1, keepdim: bool | None = None):
 
@@ -999,7 +1001,7 @@ class ConvolveSequence(TransformedParameter):
     # Do not check the shape
     SHAPE_CHECK=False
 
-    # We must rest the loops to define this parameter
+    # We must reset the loops to define this parameter
     FORCE_LOOP_RESET=True
 
     # Parents must be named
@@ -1012,53 +1014,129 @@ class ConvolveSequence(TransformedParameter):
         ordinals: "custom_types.CombinableParameterType",
         **kwargs
     ):
-        # Weights must be 2D.
-        if weights.ndim != 2:
-            raise ValueError("Weights must be a 2D parameter.")
+        # Weights must be at least 2D.
+        if weights.ndim < 2:
+            raise ValueError("Weights must be at least a 2D parameter.")
 
         # Sequence must be at least 1D
         if ordinals.ndim < 1:
             raise ValueError("Sequence must be at least a 1D parameter.")
 
-        # Note features of the weights
-        self.kernel_size, self.alphabet_size = weights.shape
+        # Note features of the weights. This is the last two dimensions.
+        self.kernel_size, self.alphabet_size = weights.shape[-2:]
 
-        # Init using inherited method. # The output shape will be that of the sequences
-        # adjusted by the convolution
-        super().__init__(
-            weights=weights,
-            ordinals=ordinals,
-            shape=ordinals.shape[:-1] + (ordinals.shape[-1] - weights.shape[0] + 1,),
-            **kwargs
-        )
+        # The first N - 2 dimensions of the weights must align with the first
+        # N - 1 dimensions of the ordinals
+        try:
+            batch_dims = np.broadcast_shapes(weights.shape[:-2], ordinals.shape[:-1])
+        except ValueError as err:
+            raise ValueError(
+                "Incompatible shapes between weights and ordinals. The shapes must "
+                "be broadcastable in the batch dimensions (all but last two for "
+                "the weights and all but the last for the ordinals). Got "
+                f"weights: {weights.shape}, ordinals: {ordinals.shape}"
+                ) from err
+
+        # The final dimension has the size of the sequence length adjusted by the
+        # convolution
+        shape = batch_dims + (ordinals.shape[-1] - self.kernel_size + 1,)
+
+        # Init using inherited method.
+        super().__init__(weights=weights, ordinals=ordinals, shape=shape, **kwargs)
 
     def run_np_torch_op(self, weights, ordinals): # pylint: disable=arguments-differ
         """Performs the convolution"""
         # Decide on the kwargs for the summation operation
-        sumkwargs = {("dim" if isinstance(weights, torch.tensor) else "axis"): -1}
+        module = utils.choose_module(weights)
 
-        # We need an array for indexing the filter as we slide across
-        filter_indices = np.arange(self.kernel_size)
+        # Create a set of indices for the filters
+        filter_indices = module.arange(self.kernel_size)
 
-        # Sliding window across the sequence dimension
-        out = np.zeros(self.shape)
-        for outind, upper in enumerate(range(self.kernel_size, ordinals.shape[-1])):
+        # Determine the number of dimensions to prepend to each array
+        weights_n_prepends = len(self.shape[:-1]) - len(weights.shape[:-2])
+        ordinal_n_prepends = len(self.shape[:-1]) - len(ordinals.shape[:-1])
 
-            # Get the lower bound
-            lower = upper - self.kernel_size
+        # Get the padded shapes
+        padded_weights_shape = (None,) * weights_n_prepends + weights.shape[:-2]
+        padded_ordinals_shape = (None,) * ordinal_n_prepends + ordinals.shape[:-1]
+        assert len(padded_weights_shape) == len(padded_ordinals_shape)
 
-            # Slice the sequence and pull the appropriate weights
-            ordinals_slice = ordinals[..., lower:upper]
-            weights_slice = weights[filter_indices, ordinals_slice]
+        # Set output array
+        output_arr = module.full(self.shape, np.nan)
 
-            # Record the summation over the filters
-            out[..., outind] = weights_slice.sum(**sumkwargs)
+        # If torch, send arrays to appropriate device
+        if module is torch:
+            filter_indices = filter_indices.to(weights.device)
+            output_arr = output_arr.to(weights.device)
 
-        # Run some checks on final indices
-        assert outind == self.shape[-1] - 1
-        assert upper == ordinals.shape[-1]
+        # Loop over the different weights
+        for weights_inds in np.ndindex(weights.shape[:-2]):
 
-        return out
+            # Prepend `None` to the weight indices if needed
+            weights_inds = (None,) * weights_n_prepends + weights_inds
+
+            # Determine the ordinal and output indices. If weights or ordinals are a singleton,
+            # slice all for the ordinal indices.
+            ordinal_inds = []
+            output_inds = []
+            for dim, (weight_dim_size, ord_dim_size) in enumerate(
+                zip(padded_weights_shape, padded_ordinals_shape)
+            ):
+
+                # We can never have both weight and ord dim sizes be `None`
+                assert not (weight_dim_size is None and ord_dim_size is None)
+
+                # If the ordinal dimension is `None`, then the output dimension is whatever
+                # the weight dimension is. We do not record an ordinal index.
+                weight_ind = weights_inds[dim]
+                if ord_dim_size is None:
+                    output_inds.append(weight_ind)
+                    continue
+
+                # If the weight dimension is a singleton we slice all for the ordinal and
+                # the output
+                if weight_dim_size == 1 or weight_dim_size is None:
+                    ordinal_inds.append(slice(None))
+                    output_inds.append(slice(None))
+
+                # If the ordinal dimension is a singleton, add "0" to the indices for the
+                # ordinals and the weights ind for the output
+                elif ord_dim_size == 1:
+                    ordinal_inds.append(0)
+                    output_inds.append(weight_ind)
+
+                # Otherwise, identical index to the weights for both
+                else:
+                    ordinal_inds.append(weight_ind)
+                    output_inds.append(weight_ind)
+
+            # Convert indices to tuples
+            ordinal_inds = tuple(ordinal_inds)
+            output_inds = tuple(output_inds)
+            assert len(output_inds) == len(self.shape) - 1
+
+            # Get the matrix and set of sequences to which it will be applied
+            weights_matrix = weights[weights_inds]
+            ordinal_matrix = ordinals[ordinal_inds]
+            assert weights_matrix.ndim == 2
+
+            # Run convolution for this batch by sliding over the sequence length
+            for convind, upper_slice in enumerate(
+                range(self.kernel_size, ordinal_matrix.shape[-1] + 1)
+            ):
+
+                # Get the lower bound
+                lower = upper_slice - self.kernel_size
+
+                # Slice the sequence and pull the appropriate weights. Sum the weights.
+                output_arr[output_inds + (convind,)] = weights_matrix[
+                    filter_indices, ordinal_matrix[..., lower:upper_slice]
+                ].sum(**{"dim" if module is torch else "axis": -1})
+
+        # No Nan's in output
+        assert not module.any(module.isnan(output_arr))
+
+        return output_arr
 
     def get_right_side(
         self,
@@ -1280,7 +1358,7 @@ class IndexParameter(TransformedParameter):
                 raise AssertionError("Should not get here")
 
             # Ensure the array contains integers
-            if ind.dtype is not np.int64:
+            if ind.dtype != np.int64:
                 raise TypeError(
                     f"Indexing with non-integer arrays is not supported. Got dtype "
                     f"{ind.dtype}."
@@ -1322,7 +1400,7 @@ class IndexParameter(TransformedParameter):
                 shape_ind += process_ellipsis()
 
             # Process slices
-            if isinstance(ind, slice):
+            elif isinstance(ind, slice):
                 process_slice()
                 shape_ind += 1
 
@@ -1344,6 +1422,7 @@ class IndexParameter(TransformedParameter):
             else:
                 raise TypeError(
                     "Indexing supported by slicing, numpy arrays, and integers only."
+                    f"Got {type(ind)}"
                 )
 
         # Remove None values from the shape

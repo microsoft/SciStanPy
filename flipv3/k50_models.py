@@ -52,6 +52,7 @@ class K50Model(Model):
         log_kmax_t_sigma: "custom_types.Float" = 1.0,
         log_K50_mu_qpcr: "custom_types.Float" = -7.5,
         log_K50_sigma_qpcr: "custom_types.Float" = 1.5,
+        qpcr_log2_survival_sigma_sigma: "custom_types.Float" = 0.1,
         protease_dg_sigma_sigma: "custom_types.Float" = 0.1,
         protease_conc_sigma_sigma: "custom_types.Float" = 0.1,
         expected_dg_unfolding: "custom_types.Float" = 5.0,  # Assume stable for non-scrambled
@@ -75,7 +76,7 @@ class K50Model(Model):
         if K50u_thresh_mus is None:
             K50u_thresh_mus = np.linspace(0, 20, 10)
         if log_K50f_mu is None:
-            log_K50f_mu = np.array([1.75, 2.25])
+            log_K50f_mu = np.array([[1.75], [2.25]])
 
         # Check shapes
         assert qpcr_log_protease_conc.shape == (11,)
@@ -115,10 +116,10 @@ class K50Model(Model):
         assert ordinal_seqs.ndim == 2
         assert ordinal_seqs.shape[-1] == 86
         assert scrambled_inds.shape == (64238,)
-        assert pssm_mus.shape == (2, 9, 21)
-        assert pssm_sigmas.shape == (2, 9, 21)
+        assert pssm_mus.shape == (2, 1, 9, 21)
+        assert pssm_sigmas.shape == (2, 1, 9, 21)
         assert K50u_thresh_mus.shape == (10,)
-        assert log_K50f_mu.shape == (2,)
+        assert log_K50f_mu.shape == (2, 1)
 
         # Get the number of unique sequence IDs.
         self.n_seqids = (
@@ -216,7 +217,9 @@ class K50Model(Model):
 
         # We also model the qpcr workflow, which helps us assign the value for log_kmax_t
         self._model_qpcr(
-            log_K50_mu_qpcr=log_K50_mu_qpcr, log_K50_sigma_qpcr=log_K50_sigma_qpcr
+            log_K50_mu_qpcr=log_K50_mu_qpcr,
+            log_K50_sigma_qpcr=log_K50_sigma_qpcr,
+            qpcr_log2_survival_sigma_sigma=qpcr_log2_survival_sigma_sigma,
         )
 
     def _set_pssm_mus(
@@ -226,7 +229,7 @@ class K50Model(Model):
         # If provided, make sure it is the right shape, then return
         if pssm_mus is not None:
             assert pssm_mus.shape == (2, 9, 21)
-            return pssm_mus
+            return pssm_mus[:, None]
 
         # Otherwise, set
         pssm_mus = np.ones((2, 9, 21)) * -0.3
@@ -241,7 +244,7 @@ class K50Model(Model):
         pssm_mus[1, :, T_ACTIVATOR_INDS] = 3.7  # 1 stdev from -0.3
         pssm_mus[1, 4, T_ACTIVATOR_INDS] = 7.7  # 2 stdev from -0.3
 
-        return pssm_mus
+        return pssm_mus[:, None]
 
     def _set_pssm_sigmas(
         self, pssm_sigmas: npt.NDArray[np.float64] | None
@@ -249,7 +252,7 @@ class K50Model(Model):
         # If provided, make sure it is the right shape, then return
         if pssm_sigmas is not None:
             assert pssm_sigmas.shape == (2, 9, 21)
-            return pssm_sigmas
+            return pssm_sigmas[:, None]
 
         # Otherwise, set
         pssm_sigmas = np.ones((2, 9, 21)) * 0.1
@@ -260,7 +263,7 @@ class K50Model(Model):
         pssm_sigmas[0, :, C_ACTIVATOR_INDS] = 4.0
         pssm_sigmas[1, :, T_ACTIVATOR_INDS] = 4.0
 
-        return pssm_sigmas
+        return pssm_sigmas[:, None]
 
     def _def_K50u(
         self,
@@ -282,11 +285,11 @@ class K50Model(Model):
             mu=log_minK50u_mu, sigma=log_minK50u_sigma, shape=(2, 1)  # one per protease
         )
 
-        # Initialize the position-specific scoring matrix
+        # Initialize the position-specific scoring matrices
         self.pssm = parameters.Normal(
             mu=pssm_mus,
             sigma=pssm_sigmas,
-            shape=(2, 9, 21),  # 2 proteases by 9 positions by 21 amino acids
+            shape=(2, 1, 9, 21),  # nprot x dummy x npos x n amino acids
         )
 
         # Calculate the sum of ssks
@@ -416,7 +419,7 @@ class K50Model(Model):
                 self,
                 total_counts_c0,
                 Constant(
-                    self.default_data[counts_c0].sum(axis=-1, keepdim=True),
+                    self.default_data[counts_c0].sum(axis=-1, keepdims=True),
                     togglable=False,
                 ),
             )  # nrep x nprot x 1 x 1
@@ -424,7 +427,7 @@ class K50Model(Model):
                 self,
                 total_counts_cg0,
                 Constant(
-                    self.default_data[counts_cg0].sum(axis=-1, keepdim=True),
+                    self.default_data[counts_cg0].sum(axis=-1, keepdims=True),
                     togglable=False,
                 ),
             )  # nrep x nprot x conc x 1
@@ -449,7 +452,13 @@ class K50Model(Model):
                 ),
             )
 
-    def _model_qpcr(self, *, log_K50_mu_qpcr: float, log_K50_sigma_qpcr: float) -> None:
+    def _model_qpcr(
+        self,
+        *,
+        log_K50_mu_qpcr: float,
+        log_K50_sigma_qpcr: float,
+        qpcr_log2_survival_sigma_sigma: float,
+    ) -> None:
         """Defines the piece of the generative model in charge of the qPCR data"""
 
         # Each protein will have its own K50 for each protease depending on how
@@ -461,11 +470,19 @@ class K50Model(Model):
         # Calculate the log survival. The qPCR values are reported in log-2 space
         # while we are performing our calculations in natural log space, so we need
         # to convert between the two.
-        self.qpcr_log2_survival = self.calculate_log_survival(
+        self.qpcr_log2_survival_mean = self.calculate_log_survival(
             log_kmax_t=self.log_kmax_t,  # nprot x 1 x 1
             log_K50=self.log_K50_qpcr,  # nprot x 1 x nseq
             log_conc=self.qpcr_log_protease_conc,  # 1 x nconc x 1
         )  # nprot x nconc x nseq
+
+        # The observables are assumed to be normally distributed about the mean
+        self.qpcr_log2_survival_sigma = parameters.HalfNormal(
+            sigma=qpcr_log2_survival_sigma_sigma
+        )
+        self.qpcr_log2_survival = parameters.Normal(
+            mu=self.qpcr_log2_survival_mean, sigma=self.qpcr_log2_survival_sigma
+        )
 
     @staticmethod
     def calculate_log_survival(
