@@ -1,5 +1,6 @@
 """Holds utilities for integrating SciStanPy with Pytorch"""
 
+import contextlib
 import warnings
 
 from typing import Optional, TYPE_CHECKING, Union
@@ -115,6 +116,7 @@ class PyTorchModel(nn.Module):
                 torch.Tensor, npt.NDArray, "custom_types.Float", "custom_types.Integer"
             ],
         ],
+        mixed_precision: bool = False,
     ) -> torch.Tensor:
         """Optimizes the parameters of the model."""
         # Any observed data that is not a tensor is converted to a tensor
@@ -122,6 +124,9 @@ class PyTorchModel(nn.Module):
             k: torch.tensor(v) if not isinstance(v, torch.Tensor) else v
             for k, v in data.items()
         }
+
+        # Note the device
+        device = self.learnable_params[0].device
 
         # Check the observed data
         check_observable_data(self.model, data)
@@ -131,6 +136,10 @@ class PyTorchModel(nn.Module):
 
         # Build the optimizer
         optim = torch.optim.Adam(self.parameters(), lr=lr)
+
+        # If using mixed precision, we also need a scaler
+        if mixed_precision:
+            scaler = torch.amp.GradScaler()
 
         # Set up for optimization
         best_loss = float("inf")  # Records the best loss
@@ -142,12 +151,18 @@ class PyTorchModel(nn.Module):
             for epoch in range(epochs):
 
                 # Get the loss
-                log_loss = -1 * self(**data)
+                with torch.autocast(device_type=device.type, enabled=mixed_precision):
+                    log_loss = -1 * self(**data)
 
                 # Step the optimizer
                 optim.zero_grad()
-                log_loss.backward()
-                optim.step()
+                if mixed_precision:
+                    scaler.scale(log_loss).backward()
+                    scaler.step(optim)
+                    scaler.update()
+                else:
+                    log_loss.backward()
+                    optim.step()
 
                 # Record loss
                 log_loss = log_loss.item()

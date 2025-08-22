@@ -459,6 +459,7 @@ class Model:
         data: Optional[dict[str, Union[torch.Tensor, npt.NDArray]]] = None,
         device: "custom_types.Integer" | str = "cpu",
         seed: Optional["custom_types.Integer"] = None,
+        mixed_precision: bool = False,
     ) -> "mle_module.MLE":
         """
         Approximate the maximum likelihood (MLE) estimate of the model parameters.
@@ -489,6 +490,7 @@ class Model:
             early_stop=early_stop,
             lr=lr,
             data=data,
+            mixed_precision=mixed_precision,
         )
 
         # Get the MLE estimate for all model parameters

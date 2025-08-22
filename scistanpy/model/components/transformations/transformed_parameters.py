@@ -441,7 +441,7 @@ class Log1pExpParameter(UnaryTransformedParameter):
     """
     def run_np_torch_op(self, dist1):
         if isinstance(dist1, torch.Tensor):
-            return torch.logaddexp(0.0, dist1)
+            return torch.logaddexp(torch.tensor(0.0, device=dist1.device), dist1)
         else:
             return np.logaddexp(0.0, dist1)
 
@@ -1057,8 +1057,8 @@ class ConvolveSequence(TransformedParameter):
         ordinal_n_prepends = len(self.shape[:-1]) - len(ordinals.shape[:-1])
 
         # Get the padded shapes
-        padded_weights_shape = (None,) * weights_n_prepends + weights.shape[:-2]
-        padded_ordinals_shape = (None,) * ordinal_n_prepends + ordinals.shape[:-1]
+        padded_weights_shape = (None,) * weights_n_prepends + tuple(weights.shape)[:-2]
+        padded_ordinals_shape = (None,) * ordinal_n_prepends + tuple(ordinals.shape)[:-1]
         assert len(padded_weights_shape) == len(padded_ordinals_shape)
 
         # Set output array
