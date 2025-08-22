@@ -57,12 +57,17 @@ class AbstractModelComponent(ABC):
         **model_params: "custom_types.CombinableParameterType",
     ):
         """Builds a parameter instance with the given shape."""
+        # Convert shape to the appropriate type
+        try:
+            len(shape)
+        except TypeError:
+            shape = (shape,)
 
         # Define placeholder variables
         self._model_varname: str = ""  # SciStanPy Model variable name
         self._parents: dict[str, AbstractModelComponent]
         self._component_to_paramname: dict[AbstractModelComponent, str]
-        self._shape: tuple["custom_types.Integer", ...]
+        self._shape: tuple["custom_types.Integer", ...] = shape
         self._children: list[AbstractModelComponent] = []  # Children of the component
 
         # Validate incoming parameters
@@ -76,7 +81,7 @@ class AbstractModelComponent(ABC):
             val._record_child(self)
 
         # Set the shape
-        self._set_shape(shape)
+        self._set_shape()
 
     def _validate_parameters(
         self,
@@ -175,31 +180,26 @@ class AbstractModelComponent(ABC):
         # Record the child
         self._children.append(child)
 
-    def _set_shape(self, shape: "custom_types.Integer") -> None:
+    def _set_shape(self) -> None:
         """Sets the shape of the draws for the parameter."""
-        # Convert shape to the appropriate type
-        try:
-            len(shape)
-        except TypeError:
-            shape = (shape,)
 
         # The shape must be broadcastable to the shapes of the parameters.
         try:
             parent_shapes = [param.shape for param in self.parents]
-            broadcasted_shape = np.broadcast_shapes(shape, *parent_shapes)
+            broadcasted_shape = np.broadcast_shapes(self._shape, *parent_shapes)
         except ValueError as error:
             raise ValueError(
                 f"Shape is not broadcastable to parent shapes while initializing instance "
                 f"of {self.__class__.__name__}: {','.join(map(str, parent_shapes))} "
-                f"not broadcastable to {shape}"
+                f"not broadcastable to {self._shape}"
             ) from error
 
         # The broadcasted shape must be the same as the shape of the parameter if
         # it is not 0-dimensional.
-        if broadcasted_shape != shape and shape != ():
+        if broadcasted_shape != self._shape and self._shape != ():
             raise ValueError(
                 "Provided shape does not match broadcasted shapes of parents while "
-                f"initializing instance of {self.__class__.__name__}. {shape} "
+                f"initializing instance of {self.__class__.__name__}. {self._shape} "
                 f"!= {broadcasted_shape}"
             )
 
