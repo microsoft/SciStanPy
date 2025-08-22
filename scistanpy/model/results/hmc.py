@@ -1386,12 +1386,22 @@ class SampleResults(mle.MLEInferenceRes):
 
     @overload
     def plot_variable_failure_quantile_traces(
-        self, *, display: Literal[True], width: custom_types.Integer, height: custom_types.Integer, plot_quantiles: bool
+        self,
+        *,
+        display: Literal[True],
+        width: custom_types.Integer,
+        height: custom_types.Integer,
+        plot_quantiles: bool
     ) -> VariableAnalyzer: ...
 
     @overload
     def plot_variable_failure_quantile_traces(
-        self, *, display: Literal[False], width: custom_types.Integer, height: custom_types.Integer, plot_quantiles: bool
+        self,
+        *,
+        display: Literal[False],
+        width: custom_types.Integer,
+        height: custom_types.Integer,
+        plot_quantiles: bool
     ) -> pn.pane.HoloViews: ...
 
     def plot_variable_failure_quantile_traces(

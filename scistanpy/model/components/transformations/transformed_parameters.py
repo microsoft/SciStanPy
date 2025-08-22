@@ -80,8 +80,8 @@ class Transformation(abstract_model_component.AbstractModelComponent):
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
-        start_dims: dict[str, custom_types.Integer] | None = None,
-        end_dims: dict[str, custom_types.Integer] | None = None
+        start_dims: dict[str, "custom_types.Integer"] | None = None,
+        end_dims: dict[str, "custom_types.Integer"] | None = None
     ) -> str:
         """Gets the right-hand-side of the assignment operation for this parameter."""
         # Call the inherited method to get a dictionary mapping parent names to
@@ -128,9 +128,9 @@ class TransformedParameter(Transformation, TransformableParameter):
 
     def _draw(
         self,
-        n: custom_types.Integer,
+        n: "custom_types.Integer",
         level_draws: dict[str, npt.NDArray],
-        seed: Optional[custom_types.Integer],  # pylint: disable=unused-argument
+        seed: Optional["custom_types.Integer"],  # pylint: disable=unused-argument
     ) -> npt.NDArray:
         """Sample from this parameter's distribution `n` times."""
         # Perform the operation on the draws
@@ -289,7 +289,7 @@ class NegateParameter(UnaryTransformedParameter):
 class AbsParameter(UnaryTransformedParameter):
     """Defines a parameter that is the absolute value of another."""
 
-    LOWER_BOUND: custom_types.Float = 0.0
+    LOWER_BOUND: "custom_types.Float" = 0.0
 
     def run_np_torch_op(self, dist1):
         return utils.choose_module(dist1).abs(dist1)
@@ -314,7 +314,7 @@ class LogParameter(UnaryTransformedParameter):
 class ExpParameter(UnaryTransformedParameter):
     """Defines a parameter that is the exponential of another."""
 
-    LOWER_BOUND: custom_types.Float = 0.0
+    LOWER_BOUND: "custom_types.Float" = 0.0
 
     def run_np_torch_op(self, dist1):
 
@@ -327,8 +327,8 @@ class ExpParameter(UnaryTransformedParameter):
 class NormalizeParameter(UnaryTransformedParameter):
     """Defines a parameter that is normalized to sum to 1."""
 
-    LOWER_BOUND: custom_types.Float = 0.0
-    UPPER_BOUND: custom_types.Float = 1.0
+    LOWER_BOUND: "custom_types.Float" = 0.0
+    UPPER_BOUND: "custom_types.Float" = 1.0
 
     def run_np_torch_op(self, dist1):
         if isinstance(dist1, torch.Tensor):
@@ -346,7 +346,7 @@ class NormalizeLogParameter(UnaryTransformedParameter):
     this assumes that the input is log-transformed.
     """
 
-    UPPER_BOUND: custom_types.Float = 0.0
+    UPPER_BOUND: "custom_types.Float" = 0.0
 
     def run_np_torch_op(self, dist1):
         if isinstance(dist1, torch.Tensor):
@@ -450,8 +450,8 @@ class Log1pExpParameter(UnaryTransformedParameter):
 class SigmoidParameter(UnaryTransformedParameter):
     """Defines a parameter that is the sigmoid of another."""
 
-    UPPER_BOUND: custom_types.Float = 1.0
-    LOWER_BOUND: custom_types.Float = 0.0
+    UPPER_BOUND: "custom_types.Float" = 1.0
+    LOWER_BOUND: "custom_types.Float" = 0.0
 
     def run_np_torch_op(self, dist1):
         """
@@ -480,7 +480,7 @@ class SigmoidParameter(UnaryTransformedParameter):
 class LogSigmoidParameter(UnaryTransformedParameter):
     """Defines a parameter that is the log of the sigmoid of another."""
 
-    UPPER_BOUND: custom_types.Float = 0.0
+    UPPER_BOUND: "custom_types.Float" = 0.0
 
     def run_np_torch_op(self, dist1):
         if isinstance(dist1, torch.Tensor):
@@ -723,7 +723,7 @@ class SigmoidGrowth(SigmoidParameter):
     $$
     """
 
-    LOWER_BOUND: custom_types.Float = 0.0
+    LOWER_BOUND: "custom_types.Float" = 0.0
     UPPER_BOUND: None = None
 
     def __init__(  # pylint: disable=useless-parent-delegation
@@ -857,7 +857,7 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
     in terms of starting abundances rather than the maximum abundances.
     """
 
-    LOWER_BOUND: custom_types.Float = 0.0
+    LOWER_BOUND: "custom_types.Float" = 0.0
     UPPER_BOUND: None = None
 
     def __init__(  # pylint: disable=useless-parent-delegation
@@ -1063,8 +1063,8 @@ class ConvolveSequence(TransformedParameter):
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
-        start_dims: dict[str, custom_types.Integer] | None = None,
-        end_dims: dict[str, custom_types.Integer] | None = None
+        start_dims: dict[str, "custom_types.Integer"] | None = None,
+        end_dims: dict[str, "custom_types.Integer"] | None = None
         ) -> str:
 
         # Different default for end dims here
@@ -1161,11 +1161,15 @@ class IndexParameter(TransformedParameter):
         super().__init__(dist=dist, shape=shape, **parents)
 
     @overload
-    def neg_to_pos(self, neg_ind: custom_types.Integer, dim: custom_types.Integer) -> custom_types.Integer: ...
+    def neg_to_pos(
+        self,
+        neg_ind: "custom_types.Integer",
+        dim: "custom_types.Integer"
+    ) -> "custom_types.Integer": ...
 
     @overload
     def neg_to_pos(
-        self, neg_ind: npt.NDArray[np.int64], dim: custom_types.Integer
+        self, neg_ind: npt.NDArray[np.int64], dim: "custom_types.Integer"
     ) -> npt.NDArray[np.int64]: ...
 
     def neg_to_pos(self, neg_ind, dim):
@@ -1379,8 +1383,8 @@ class IndexParameter(TransformedParameter):
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
-        start_dims: dict[str, custom_types.Integer] | None = None,
-        end_dims: dict[str, custom_types.Integer] | None = None
+        start_dims: dict[str, "custom_types.Integer"] | None = None,
+        end_dims: dict[str, "custom_types.Integer"] | None = None
     ) -> str:
         """
         Gets the name of the variable that is being indexed, then passes it to
