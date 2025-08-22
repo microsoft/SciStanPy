@@ -1,10 +1,15 @@
 """Holds models for the nuclease dataset"""
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import numpy.typing as npt
 
 from scistanpy import Constant, Model, operations, parameters
 from .constants import DEFAULT_HYPERPARAMS
+
+if TYPE_CHECKING:
+    from scistanpy import custom_types
 
 
 # These have biological replicates, so they should have a shared gamma distribution
@@ -24,10 +29,12 @@ class G1Template(Model):
         hc3: npt.NDArray[np.int64],
         lt: npt.NDArray[np.float64],
         ht: npt.NDArray[np.float64],
-        alpha_alpha: float = DEFAULT_HYPERPARAMS["alpha_alpha"],
-        alpha_beta: float = DEFAULT_HYPERPARAMS["alpha_beta"],
-        codon_noise_sigma: float = DEFAULT_HYPERPARAMS["codon_noise_sigma"],
-        experimental_noise_sigma: float = DEFAULT_HYPERPARAMS[
+        alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
+        alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
+        codon_noise_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS[
+            "codon_noise_sigma"
+        ],
+        experimental_noise_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS[
             "experimental_noise_sigma"
         ],
         **kwargs,
@@ -175,9 +182,11 @@ class G2Template(Model):
         c93: npt.NDArray[np.int64],
         c975: npt.NDArray[np.int64],
         ft: npt.NDArray[np.floating],
-        alpha_alpha: float = DEFAULT_HYPERPARAMS["alpha_alpha"],
-        alpha_beta: float = DEFAULT_HYPERPARAMS["alpha_beta"],
-        codon_noise_sigma: float = DEFAULT_HYPERPARAMS["codon_noise_sigma"],
+        alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
+        alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
+        codon_noise_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS[
+            "codon_noise_sigma"
+        ],
         **kwargs,
     ):
         # Check shapes
@@ -286,8 +295,10 @@ class G3G4Template(Model):
         ic1: npt.NDArray[np.int64],
         oc1: npt.NDArray[np.int64],
         ft: npt.NDArray[np.floating],
-        alpha: float = DEFAULT_HYPERPARAMS["alpha"],
-        codon_noise_sigma: float = DEFAULT_HYPERPARAMS["codon_noise_sigma"],
+        alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"],
+        codon_noise_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS[
+            "codon_noise_sigma"
+        ],
         **kwargs,
     ):
 
@@ -360,8 +371,8 @@ class LomaxFluorescenceMixIn:
 
     def _set_base_log_fluorescence(  # pylint: disable=unused-argument
         self,
-        lambda_: float = DEFAULT_HYPERPARAMS["lambda_"],
-        lomax_alpha: float = DEFAULT_HYPERPARAMS["lomax_alpha_nuclease"],
+        lambda_: "custom_types.Float" = DEFAULT_HYPERPARAMS["lambda_"],
+        lomax_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["lomax_alpha_nuclease"],
         **kwargs,
     ):
         # pylint: disable = no-member
@@ -375,7 +386,7 @@ class ExpFluorescenceMixIn:
 
     def _set_base_log_fluorescence(  # pylint: disable=unused-argument
         self,
-        beta: float = DEFAULT_HYPERPARAMS["exp_beta_nuclease"],
+        beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["exp_beta_nuclease"],
         **kwargs,
     ):
         # pylint: disable = no-member

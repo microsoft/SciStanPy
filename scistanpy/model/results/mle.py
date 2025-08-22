@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Generator, Literal, Optional, overload, Sequence, Union
+from typing import (
+    Generator,
+    Literal,
+    Optional,
+    overload,
+    Sequence,
+    TYPE_CHECKING,
+    Union,
+)
 
 import arviz as az
 import holoviews as hv
@@ -15,6 +23,9 @@ import xarray as xr
 from scipy import stats
 
 from scistanpy import plotting
+
+if TYPE_CHECKING:
+    from scistanpy import custom_types
 
 
 def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
@@ -94,12 +105,12 @@ class MLEInferenceRes:
         var_names: list[str] | None = None,
         filter_vars: Literal[None, "like", "regex"] = None,
         kind: Literal["all", "stats", "diagnostics"] = "stats",
-        round_to: int = 2,
+        round_to: "custom_types.Integer" = 2,
         circ_var_names: list[str] | None = None,
         stat_focus: str = "mean",
         stat_funcs: Optional[Union[dict[str, callable], callable]] = None,
         extend: bool = True,
-        hdi_prob: float = 0.94,
+        hdi_prob: "custom_types.Float" = 0.94,
         skipna: bool = False,
     ) -> xr.Dataset:
         """
@@ -181,8 +192,8 @@ class MLEInferenceRes:
         *,
         return_deviance: Literal[False],
         display: Literal[True],
-        width: int,
-        height: int,
+        width: "custom_types.Integer",
+        height: "custom_types.Integer",
     ) -> hv.Layout: ...
 
     @overload
@@ -191,8 +202,8 @@ class MLEInferenceRes:
         *,
         return_deviance: Literal[False],
         display: Literal[False],
-        width: int,
-        height: int,
+        width: "custom_types.Integer",
+        height: "custom_types.Integer",
     ) -> dict[str, hv.Overlay]: ...
 
     @overload
@@ -201,8 +212,8 @@ class MLEInferenceRes:
         *,
         return_deviance: Literal[True],
         display: Literal[False],
-        width: int,
-        height: int,
+        width: "custom_types.Integer",
+        height: "custom_types.Integer",
     ) -> tuple[dict[str, hv.Overlay], dict[str, float]]: ...
 
     def check_calibration(
@@ -245,7 +256,7 @@ class MLEInferenceRes:
 
         # Loop over the posterior predictive samples
         plots: dict[str, hv.Overlay] = {}
-        deviances: dict[str, float] = {}
+        deviances: dict[str, "custom_types.Float"] = {}
         for varname, reference, observed in self._iter_pp_obs():
 
             # Build calibration plots and record deviance
@@ -286,24 +297,24 @@ class MLEInferenceRes:
     def plot_posterior_predictive_samples(
         self,
         *,
-        quantiles: Sequence[float],
+        quantiles: Sequence["custom_types.Float"],
         use_ranks: bool,
         logy: bool,
         display: Literal[True],
-        width: int,
-        height: int,
+        width: "custom_types.Integer",
+        height: "custom_types.Integer",
     ) -> hv.Layout: ...
 
     @overload
     def plot_posterior_predictive_samples(
         self,
         *,
-        quantiles: Sequence[float],
+        quantiles: Sequence["custom_types.Float"],
         use_ranks: bool,
         logy: bool,
         display: Literal[False],
-        width: int,
-        height: int,
+        width: "custom_types.Integer",
+        height: "custom_types.Integer",
     ) -> dict[str, hv.Overlay]: ...
 
     def plot_posterior_predictive_samples(
@@ -406,9 +417,9 @@ class MLEInferenceRes:
         *,
         use_ranks: bool,
         display: Literal[True],
-        width: int,
-        height: int,
-        windowsize: Optional[int],
+        width: "custom_types.Integer",
+        height: "custom_types.Integer",
+        windowsize: Optional["custom_types.Integer"],
     ) -> hv.Layout: ...
 
     @overload
@@ -417,9 +428,9 @@ class MLEInferenceRes:
         *,
         use_ranks: bool,
         display: Literal[False],
-        width: int,
-        height: int,
-        windowsize: Optional[int],
+        width: "custom_types.Integer",
+        height: "custom_types.Integer",
+        windowsize: Optional["custom_types.Integer"],
     ) -> dict[str, hv.Overlay]: ...
 
     def plot_observed_quantiles(
@@ -484,11 +495,11 @@ class MLEInferenceRes:
         use_ranks: bool,
         display: Literal[True],
         square_ecdf: bool,
-        windowsize: Optional[int],
-        quantiles: Sequence[float],
+        windowsize: Optional["custom_types.Integer"],
+        quantiles: Sequence["custom_types.Float"],
         logy_ppc_samples: bool,
-        subplot_width: int,
-        subplot_height: int,
+        subplot_width: "custom_types.Integer",
+        subplot_height: "custom_types.Integer",
     ) -> pn.Column: ...
 
     @overload
@@ -498,11 +509,11 @@ class MLEInferenceRes:
         use_ranks: bool,
         display: Literal[False],
         square_ecdf: bool,
-        windowsize: Optional[int],
-        quantiles: Sequence[float],
+        windowsize: Optional["custom_types.Integer"],
+        quantiles: Sequence["custom_types.Float"],
         logy_ppc_samples: bool,
-        subplot_width: int,
-        subplot_height: int,
+        subplot_width: "custom_types.Integer",
+        subplot_height: "custom_types.Integer",
     ) -> list[dict[str, hv.Overlay]]: ...
 
     def run_ppc(

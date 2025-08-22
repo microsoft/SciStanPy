@@ -95,7 +95,7 @@ class StanCodeBase(ABC, list):
                 yield component
 
     @abstractmethod
-    def get_parent_loop(self, n: int) -> "StanCodeBase":
+    def get_parent_loop(self, n: custom_types.Integer) -> "StanCodeBase":
         """
         If rolling out the ancestry of the loop, starting from the progenitor and
         ending with this loop, return the nth loop in that list (i.e., if n = 0,
@@ -291,7 +291,9 @@ class StanCodeBase(ABC, list):
         """Returns the Stan code for the transformed data assignment."""
         return self._write_block("transformed_data", declarations=declarations)
 
-    def finalize_line(self, text: str, indendation_level: Optional[int] = None) -> str:
+    def finalize_line(
+        self, text: str, indendation_level: Optional[custom_types.Integer] = None
+    ) -> str:
         """Indents a block of text by a specified number of spaces and adds semicolons."""
 
         # Get the indentation level
@@ -309,7 +311,7 @@ class StanCodeBase(ABC, list):
         return formatted
 
     def combine_lines(
-        self, lines: list[str], indentation_level: Optional[int] = None
+        self, lines: list[str], indentation_level: Optional[custom_types.Integer] = None
     ) -> str:
         """Combine a list of Stan code lines into a single string."""
 
@@ -401,7 +403,7 @@ class StanForLoop(StanCodeBase):
         # Otherwise, we have the parent loop and all of its ancestors
         return self.parent_loop.ancestry + [self.parent_loop]
 
-    def get_parent_loop(self, n: int) -> StanCodeBase:
+    def get_parent_loop(self, n: custom_types.Integer) -> StanCodeBase:
         # Clip n to the number of ancestors
         n = min(n, len(self.ancestry))
 
@@ -554,7 +556,9 @@ class StanProgram(StanCodeBase):
         to the tree roots.
         """
         # We need a mapping from each node to its maximum depth in the tree.
-        node_to_depth: dict[abstract_model_component.AbstractModelComponent, int] = {}
+        node_to_depth: dict[
+            abstract_model_component.AbstractModelComponent, custom_types.Integer
+        ] = {}
 
         # Get all constants, named or otherwise
         model_constants = list(
@@ -610,7 +614,7 @@ class StanProgram(StanCodeBase):
 
         return all_varnames, all_paramnames, auto_gathered_data, user_provided_varnames
 
-    def get_parent_loop(self, n: int) -> StanCodeBase:
+    def get_parent_loop(self, n: custom_types.Integer) -> StanCodeBase:
         # Can only get self
         assert n == -1 or n == 0
         return self
@@ -1083,7 +1087,7 @@ class StanModel(CmdStanModel):
         return self.program.code
 
     def _get_sample_init(
-        self, *, chains: int, seed: Optional[int]
+        self, *, chains: custom_types.Integer, seed: Optional[custom_types.Integer]
     ) -> list[dict[str, Union[npt.NDArray[np.floating], np.floating]]]:
         """
         Draws from the prior distribution of the model to initialize the MCMC sampler.
@@ -1140,7 +1144,7 @@ class StanModel(CmdStanModel):
         self,
         *args,
         precision: Literal["double", "single", "half"] = "single",
-        mib_per_chunk: int | None = None,
+        mib_per_chunk: custom_types.Integer | None = None,
         use_dask: bool = False,
         **kwargs,
     ) -> "results.SampleResults":

@@ -206,7 +206,7 @@ class Parameter(
     def init_pytorch(
         self,
         init_val: Optional[Union[npt.NDArray, torch.Tensor]] = None,
-        seed: Optional[int] = None,
+        seed: Optional[custom_types.Integer] = None,
     ) -> None:
         """Sets up the parameters needed for training a Pytorch model."""
         # This cannot be called if the parameter is an observable
@@ -239,7 +239,10 @@ class Parameter(
         self._torch_parametrization = nn.Parameter(init_val)
 
     def _draw(
-        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+        self,
+        n: custom_types.Integer,
+        level_draws: dict[str, npt.NDArray],
+        seed: Optional[custom_types.Integer],
     ) -> npt.NDArray:
         """
         Applies the appropriate transforms to the scipy draws from a parent parameter
@@ -314,7 +317,9 @@ class Parameter(
             observed if self.observable else self.torch_parametrization
         ).sum()
 
-    def get_rng(self, seed: Optional[int] = None) -> np.random.Generator:
+    def get_rng(
+        self, seed: Optional[custom_types.Integer] = None
+    ) -> np.random.Generator:
         """Return the random number generator"""
         # Return the global random number generator if no seed is provided. Otherwise,
         # return a new random number generator with the provided seed.
@@ -332,8 +337,8 @@ class Parameter(
     def get_right_side(  # pylint: disable=arguments-differ
         self,
         index_opts: tuple[str, ...] | None,
-        start_dims: dict[str, int] | None = None,
-        end_dims: dict[str, int] | None = None,
+        start_dims: dict[str, custom_types.Integer] | None = None,
+        end_dims: dict[str, custom_types.Integer] | None = None,
         dist_suffix: str = "",
     ) -> str:
         # Get the formattables
@@ -514,7 +519,7 @@ class DiscreteDistribution(Parameter):
     """Base class for parameters represented by discrete distributions"""
 
     BASE_STAN_DTYPE: str = "int"
-    LOWER_BOUND: int = 0
+    LOWER_BOUND: custom_types.Integer = 0
 
 
 class Normal(ContinuousDistribution):
@@ -584,8 +589,8 @@ class Normal(ContinuousDistribution):
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
-        start_dims: dict[str, int] | None = None,
-        end_dims: dict[str, int] | None = None,
+        start_dims: dict[str, custom_types.Integer] | None = None,
+        end_dims: dict[str, custom_types.Integer] | None = None,
         dist_suffix: str = "",
     ) -> str:
         # If not noncentered, run the parent method
@@ -619,7 +624,7 @@ class Normal(ContinuousDistribution):
 class HalfNormal(ContinuousDistribution):
     """Parameter that is represented by the half-normal distribution."""
 
-    LOWER_BOUND: float = 0.0
+    LOWER_BOUND: custom_types.Float = 0.0
     STAN_DIST = "normal"
     SCIPY_DIST = stats.halfnorm
     TORCH_DIST = dist.half_normal.HalfNormal
@@ -652,7 +657,7 @@ class LogNormal(ContinuousDistribution):
     """Parameter that is represented by the log-normal distribution."""
 
     POSITIVE_PARAMS = {"sigma"}
-    LOWER_BOUND: float = 0.0
+    LOWER_BOUND: custom_types.Float = 0.0
     STAN_DIST = "lognormal"
     SCIPY_DIST = stats.lognorm
     TORCH_DIST = custom_torch_dists.LogNormal
@@ -665,8 +670,8 @@ class Beta(ContinuousDistribution):
     """Defines the beta distribution."""
 
     POSITIVE_PARAMS = {"alpha", "beta"}
-    LOWER_BOUND: float = 0.0
-    UPPER_BOUND: float = 1.0
+    LOWER_BOUND: custom_types.Float = 0.0
+    UPPER_BOUND: custom_types.Float = 1.0
     STAN_DIST = "beta"
     SCIPY_DIST = stats.beta
     TORCH_DIST = dist.beta.Beta
@@ -678,7 +683,7 @@ class Gamma(ContinuousDistribution):
     """Defines the gamma distribution."""
 
     POSITIVE_PARAMS = {"alpha", "beta"}
-    LOWER_BOUND: float = 0.0
+    LOWER_BOUND: custom_types.Float = 0.0
     STAN_DIST = "gamma"
     SCIPY_DIST = stats.gamma
     TORCH_DIST = dist.gamma.Gamma
@@ -693,7 +698,7 @@ class InverseGamma(ContinuousDistribution):
     """Defines the inverse gamma distribution."""
 
     POSITIVE_PARAMS = {"alpha", "beta"}
-    LOWER_BOUND: float = 0.0
+    LOWER_BOUND: custom_types.Float = 0.0
     STAN_DIST = "inv_gamma"
     SCIPY_DIST = stats.invgamma
     TORCH_DIST = dist.inverse_gamma.InverseGamma
@@ -705,7 +710,7 @@ class Exponential(ContinuousDistribution):
     """Defines the exponential distribution."""
 
     POSITIVE_PARAMS = {"beta"}
-    LOWER_BOUND: float = 0.0
+    LOWER_BOUND: custom_types.Float = 0.0
     STAN_DIST = "exponential"
     SCIPY_DIST = stats.expon
     TORCH_DIST = dist.exponential.Exponential
@@ -863,8 +868,8 @@ class ExpDirichlet(Dirichlet):
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
-        start_dims: dict[str, int] | None = None,
-        end_dims: dict[str, int] | None = None,
+        start_dims: dict[str, custom_types.Integer] | None = None,
+        end_dims: dict[str, custom_types.Integer] | None = None,
         dist_suffix: str = "",
     ) -> str:
         # If no suffix is provided, determine whether we are using the normalized
@@ -1043,8 +1048,8 @@ class MultinomialLogTheta(_MultinomialBase):
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
-        start_dims: dict[str, int] | None = None,
-        end_dims: dict[str, int] | None = None,
+        start_dims: dict[str, custom_types.Integer] | None = None,
+        end_dims: dict[str, custom_types.Integer] | None = None,
         dist_suffix: str = "",
     ) -> str:
         """
@@ -1052,10 +1057,7 @@ class MultinomialLogTheta(_MultinomialBase):
         """
         # Get the formattables
         formattables = super(Parameter, self).get_right_side(
-            index_opts,
-            start_dims=start_dims,
-            end_dims=end_dims,
-            dist_suffix=dist_suffix,
+            index_opts, start_dims=start_dims, end_dims=end_dims
         )
 
         # If no suffix is provided and this is an observable, we want to add the

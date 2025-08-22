@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from scistanpy.model.components.custom_distributions import custom_torch_dists
     from scistanpy.model.components.transformations import transformed_parameters
 
+# Scalar types
+Integer = Union[int, "np.integer"]
+Float = Union[float, "np.floating"]
 
 # Parameter types
 SampleType = Union[int, float, "npt.NDArray"]
@@ -44,4 +47,4 @@ ProcessedTestRes = dict[str, tuple[tuple["npt.NDArray", ...], int]]
 StrippedTestRes = dict[str, tuple["npt.NDArray", ...]]
 
 # Type for indexing
-IndexType = Union["npt.NDArray[np.integer]", slice, int]
+IndexType = Union["npt.NDArray[np.integer]", slice, int, Ellipsis, None]

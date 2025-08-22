@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, TYPE_CHECKING, Union
 
 import numpy as np
 import numpy.typing as npt
 import torch
 
 from scistanpy.model.components import abstract_model_component
+
+if TYPE_CHECKING:
+    from scistanpy import custom_types
 
 
 class Constant(abstract_model_component.AbstractModelComponent):
@@ -18,10 +21,16 @@ class Constant(abstract_model_component.AbstractModelComponent):
 
     def __init__(
         self,
-        value: Union[int, float, npt.NDArray, np.integer, np.floating],
+        value: Union[
+            "custom_types.Integer",
+            "custom_types.Float",
+            npt.NDArray,
+            np.integer,
+            np.floating,
+        ],
         *,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        lower_bound: Optional["custom_types.Float"] = None,
+        upper_bound: Optional["custom_types.Float"] = None,
         togglable: Optional[bool] = None,
         enforce_uniformity: bool = False,
         **kwargs,
@@ -75,7 +84,10 @@ class Constant(abstract_model_component.AbstractModelComponent):
 
     # We need a draw method
     def _draw(
-        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+        self,
+        n: "custom_types.Integer",
+        level_draws: dict[str, npt.NDArray],
+        seed: Optional["custom_types.Integer"],
     ) -> npt.NDArray:
         """Draw values for this component."""
         # Level draws should be empty
@@ -87,13 +99,15 @@ class Constant(abstract_model_component.AbstractModelComponent):
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
-        start_dims: dict[str, int] | None = None,
-        end_dims: dict[str, int] | None = None,
+        start_dims: dict[str, "custom_types.Integer"] | None = None,
+        end_dims: dict[str, "custom_types.Integer"] | None = None,
     ) -> str:
         """Return the Stan code for this component (there is none)."""
         return ""
 
-    def _get_lim(self, lim_type: Literal["low", "high"]) -> tuple[float, float]:
+    def _get_lim(
+        self, lim_type: Literal["low", "high"]
+    ) -> tuple["custom_types.Float", "custom_types.Float"]:
         """Order of magnitude of the value."""
         # Get the largest absolute value
         maxval = np.abs(self.value).max()

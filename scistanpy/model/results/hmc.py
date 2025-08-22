@@ -56,7 +56,7 @@ _NP_TYPE_MAP = {
 }
 
 
-def _symmetrize_quantiles(quantiles: Sequence[float]) -> list[float]:
+def _symmetrize_quantiles(quantiles: Sequence[custom_types.Float]) -> list[custom_types.Float]:
     """
     Symmetrizes a list of quantiles by adding the complementary quantiles and the
     median. For example, if the input is [0.1, 0.2], the output will be
@@ -92,8 +92,8 @@ class VariableAnalyzer:
     def __init__(
         self,
         sample_results: "SampleResults",
-        plot_width: int = 800,
-        plot_height: int = 400,
+        plot_width: custom_types.Integer = 800,
+        plot_height: custom_types.Integer = 400,
         plot_quantiles: bool = False,
     ):
 
@@ -451,7 +451,7 @@ class CmdStanMCMCToNetCDFConverter:
         self,
         filename: str | None = None,
         precision: Literal["double", "single", "half"] = "single",
-        mib_per_chunk: int | None = None,
+        mib_per_chunk: custom_types.Integer | None = None,
     ) -> str:
         """
         Write the HDF5 file to disk.
@@ -735,7 +735,7 @@ def cmdstan_csv_to_netcdf(
     data: dict[str, Any] | None = None,
     output_filename: str | None = None,
     precision: Literal["double", "single", "half"] = "single",
-    mib_per_chunk: int | None = None,
+    mib_per_chunk: custom_types.Integer | None = None,
 ) -> str:
     """
     Converts a set of cmdstan csv files to a single hdf5 file. This is particularly
@@ -822,7 +822,7 @@ class SampleResults(mle.MLEInferenceRes):
         data: dict[str, npt.NDArray] | None = None,
         precision: Literal["double", "single", "half"] = "single",
         inference_obj: Optional[az.InferenceData | str] = None,
-        mib_per_chunk: int | None = None,
+        mib_per_chunk: custom_types.Integer | None = None,
         use_dask: bool = False,
     ):
         # Store the CmdStanMCMC object
@@ -872,12 +872,12 @@ class SampleResults(mle.MLEInferenceRes):
         var_names: list[str] | None = None,
         filter_vars: Literal[None, "like", "regex"] = None,
         kind: Literal["all", "stats", "diagnostics"] = "all",
-        round_to: int = 2,
+        round_to: custom_types.Integer = 2,
         circ_var_names: list[str] | None = None,
         stat_focus: str = "mean",
         stat_funcs: Optional[Union[dict[str, callable], callable]] = None,
         extend: bool = True,
-        hdi_prob: float = 0.94,
+        hdi_prob: custom_types.Float = 0.94,
         skipna: bool = False,
         diagnostic_varnames: Sequence[str] = (
             "mcse_mean",
@@ -965,8 +965,8 @@ class SampleResults(mle.MLEInferenceRes):
 
     def evaluate_sample_stats(
         self,
-        max_tree_depth: int | None = None,
-        ebfmi_thresh: float = DEFAULT_EBFMI_THRESH,
+        max_tree_depth: custom_types.Integer | None = None,
+        ebfmi_thresh: custom_types.Float = DEFAULT_EBFMI_THRESH,
     ) -> xr.Dataset:
         """
         This evaluates the sample statistics for the samples. This is done by
@@ -1009,7 +1009,7 @@ class SampleResults(mle.MLEInferenceRes):
         return sample_tests
 
     def evaluate_variable_diagnostic_stats(
-        self, r_hat_thresh: float = DEFAULT_RHAT_THRESH, ess_thresh=DEFAULT_ESS_THRESH
+        self, r_hat_thresh: custom_types.Float = DEFAULT_RHAT_THRESH, ess_thresh=DEFAULT_ESS_THRESH
     ) -> xr.Dataset:
         """
         This identifies variables that fail the diagnostic tests. The output dataset
@@ -1200,10 +1200,10 @@ class SampleResults(mle.MLEInferenceRes):
 
     def diagnose(
         self,
-        max_tree_depth: int | None = None,
-        ebfmi_thresh: float = DEFAULT_EBFMI_THRESH,
-        r_hat_thresh: float = DEFAULT_RHAT_THRESH,
-        ess_thresh: float = DEFAULT_ESS_THRESH,
+        max_tree_depth: custom_types.Integer | None = None,
+        ebfmi_thresh: custom_types.Float = DEFAULT_EBFMI_THRESH,
+        r_hat_thresh: custom_types.Float = DEFAULT_RHAT_THRESH,
+        ess_thresh: custom_types.Float = DEFAULT_ESS_THRESH,
         silent: bool = False,
     ) -> tuple[
         "custom_types.StrippedTestRes", dict[str, "custom_types.StrippedTestRes"]
@@ -1232,12 +1232,12 @@ class SampleResults(mle.MLEInferenceRes):
 
     @overload
     def plot_sample_failure_quantile_traces(
-        self, display: Literal[True], width: int, height: int
+        self, display: Literal[True], width: custom_types.Integer, height: custom_types.Integer
     ) -> hv.HoloMap: ...
 
     @overload
     def plot_sample_failure_quantile_traces(
-        self, display: Literal[False], width: int, height: int
+        self, display: Literal[False], width: custom_types.Integer, height: custom_types.Integer
     ) -> dict[str, hv.Overlay]: ...
 
     def plot_sample_failure_quantile_traces(
@@ -1386,12 +1386,12 @@ class SampleResults(mle.MLEInferenceRes):
 
     @overload
     def plot_variable_failure_quantile_traces(
-        self, *, display: Literal[True], width: int, height: int, plot_quantiles: bool
+        self, *, display: Literal[True], width: custom_types.Integer, height: custom_types.Integer, plot_quantiles: bool
     ) -> VariableAnalyzer: ...
 
     @overload
     def plot_variable_failure_quantile_traces(
-        self, *, display: Literal[False], width: int, height: int, plot_quantiles: bool
+        self, *, display: Literal[False], width: custom_types.Integer, height: custom_types.Integer, plot_quantiles: bool
     ) -> pn.pane.HoloViews: ...
 
     def plot_variable_failure_quantile_traces(

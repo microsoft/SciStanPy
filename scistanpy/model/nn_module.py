@@ -15,6 +15,7 @@ from scistanpy.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
 from scistanpy.model.components import constants, parameters
 
 if TYPE_CHECKING:
+    from scistanpy import custom_types
     from scistanpy import model as ssp_model
 
 
@@ -57,7 +58,9 @@ class PyTorchModel(nn.Module):
     `scistanpy.model.Model` instance.
     """
 
-    def __init__(self, model: "ssp_model.Model", seed: Optional[int] = None):
+    def __init__(
+        self, model: "ssp_model.Model", seed: Optional["custom_types.Integer"] = None
+    ):
         """
         Args:
             model: The `scistanpy.model.Model` instance to convert to PyTorch.
@@ -103,10 +106,15 @@ class PyTorchModel(nn.Module):
     def fit(
         self,
         *,
-        epochs: int = DEFAULT_N_EPOCHS,
-        early_stop: int = DEFAULT_EARLY_STOP,
-        lr: float = DEFAULT_LR,
-        data: dict[str, Union[torch.Tensor, npt.NDArray, float, int]],
+        epochs: "custom_types.Integer" = DEFAULT_N_EPOCHS,
+        early_stop: "custom_types.Integer" = DEFAULT_EARLY_STOP,
+        lr: "custom_types.Float" = DEFAULT_LR,
+        data: dict[
+            str,
+            Union[
+                torch.Tensor, npt.NDArray, "custom_types.Float", "custom_types.Integer"
+            ],
+        ],
     ) -> torch.Tensor:
         """Optimizes the parameters of the model."""
         # Any observed data that is not a tensor is converted to a tensor

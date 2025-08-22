@@ -1,5 +1,7 @@
 """Holds model for the dataset presented by Tsuboyama et al."""
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import numpy.typing as npt
 
@@ -8,7 +10,17 @@ from scistanpy.model.components.transformations.transformed_parameters import (
     TransformedParameter,
 )
 
+from flipv3.flip_dsets import AA_TO_ORDINAL
+
+if TYPE_CHECKING:
+    from scistanpy import custom_types
+
 # pylint: disable=invalid-name
+
+# Define indices of amino acids that inhibit and activate the different proteases
+INHIBITOR_INDS = np.array([AA_TO_ORDINAL[aa] for aa in "DEP"])
+C_ACTIVATOR_INDS = np.array([AA_TO_ORDINAL[aa] for aa in "FWY"])
+T_ACTIVATOR_INDS = np.array([AA_TO_ORDINAL[aa] for aa in "KR"])
 
 
 class K50Model(Model):
@@ -20,47 +32,46 @@ class K50Model(Model):
         qpcr_log_protease_conc: npt.NDArray[np.float64],
         qpcr_log2_survival: npt.NDArray[np.float64],
         log_expected_protease_conc: npt.NDArray[np.float64],
-        v1_seq_ids: npt.NDArray[np.int64],
+        v1_seqids: npt.NDArray[np.int64],
         v1_counts_c0: npt.NDArray[np.int64],
         v1_counts_cg0: npt.NDArray[np.int64],
-        v2_seq_ids: npt.NDArray[np.int64],
+        v2_seqids: npt.NDArray[np.int64],
         v2_counts_c0: npt.NDArray[np.int64],
         v2_counts_cg0: npt.NDArray[np.int64],
-        v3_seq_ids: npt.NDArray[np.int64],
+        v3_seqids: npt.NDArray[np.int64],
         v3_counts_c0: npt.NDArray[np.int64],
         v3_counts_cg0: npt.NDArray[np.int64],
-        v4_seq_ids: npt.NDArray[np.int64],
+        v4_seqids: npt.NDArray[np.int64],
         v4_counts_c0: npt.NDArray[np.int64],
         v4_counts_cg0: npt.NDArray[np.int64],
         ordinal_seqs: npt.NDArray[np.int64],
-        alpha_alpha: float = 2.0,
-        alpha_beta: float = 2.0,
-        log_kmax_t_mu: float = 0.0,
-        log_kmax_t_sigma: float = 1.0,
-        log_K50_mu_qpcr: float = -7.5,
-        log_K50_sigma_qpcr: float = 1.5,
-        protease_dg_sigma_sigma: float = 0.1,
-        protease_conc_sigma_sigma: float = 0.1,
-        expected_dg_unfolding: float = -1.0,
-        dg_unfolding_sigma: float = 3.0,
+        scrambled_inds: npt.NDArray[np.int64],
+        alpha_alpha: "custom_types.Float" = 2.0,
+        alpha_beta: "custom_types.Float" = 2.0,
+        log_kmax_t_mu: "custom_types.Float" = 0.0,
+        log_kmax_t_sigma: "custom_types.Float" = 1.0,
+        log_K50_mu_qpcr: "custom_types.Float" = -7.5,
+        log_K50_sigma_qpcr: "custom_types.Float" = 1.5,
+        protease_dg_sigma_sigma: "custom_types.Float" = 0.1,
+        protease_conc_sigma_sigma: "custom_types.Float" = 0.1,
+        expected_dg_unfolding: "custom_types.Float" = 5.0,  # Assume stable for non-scrambled
+        expected_dg_unfolding_scrambled: "custom_types.Float" = -5.0,  # Assume unstable for scrambled
+        dg_unfolding_sigma: "custom_types.Float" = 5.0,
         pssm_mus: npt.NDArray[np.float64] | None = None,
         pssm_sigmas: npt.NDArray[np.float64] | None = None,
-        log_maxK50u_mu: float = 2.0,
-        log_maxK50u_sigma: float = 1.0,
-        log_minK50u_mu: float = -4.0,
-        log_minK50u_sigma: float = 1.0,
+        log_maxK50u_mu: "custom_types.Float" = 2.0,
+        log_maxK50u_sigma: "custom_types.Float" = 1.0,
+        log_minK50u_mu: "custom_types.Float" = -4.0,
+        log_minK50u_sigma: "custom_types.Float" = 1.0,
         K50u_thresh_mus: npt.NDArray[np.float64] | None = None,
-        K50u_thresh_sigma: float = 2.0,
+        K50u_thresh_sigma: "custom_types.Float" = 2.0,
         log_K50f_mu: npt.NDArray[np.float64] | None = None,
-        log_K50f_sigma: float = 0.5,
+        log_K50f_sigma: "custom_types.Float" = 0.5,
     ):
         """Initializes all parameters and defines model graph"""
         # Set default values if they are not set
-        if pssm_mus is None:
-            pssm_mus = np.ones((2, 9, 21)) * -0.3
-        if pssm_sigmas is None:
-            # TODO: Note that these vary by amino acid
-            raise NotImplementedError
+        pssm_mus = self._set_pssm_mus(pssm_mus)
+        pssm_sigmas = self._set_pssm_sigmas(pssm_sigmas)
         if K50u_thresh_mus is None:
             K50u_thresh_mus = np.linspace(0, 20, 10)
         if log_K50f_mu is None:
@@ -70,13 +81,7 @@ class K50Model(Model):
         assert qpcr_log_protease_conc.shape == (11,)
         assert qpcr_log2_survival.shape == (2, 11, 8)
         assert log_expected_protease_conc.shape == (2, 11)
-        assert (
-            v1_seq_ids.ndim
-            == v2_seq_ids.ndim
-            == v3_seq_ids.ndim
-            == v4_seq_ids.ndim
-            == 1
-        )
+        assert v1_seqids.ndim == v2_seqids.ndim == v3_seqids.ndim == v4_seqids.ndim == 1
         assert (
             v1_counts_c0.ndim
             == v2_counts_c0.ndim
@@ -108,18 +113,18 @@ class K50Model(Model):
         assert v3_counts_c0.shape[-1] == v3_counts_cg0.shape[-1]
         assert v4_counts_c0.shape[-1] == v4_counts_cg0.shape[-1]
         assert ordinal_seqs.ndim == 2
-        assert ordinal_seqs.shape[-1] == 21
+        assert ordinal_seqs.shape[-1] == 86
+        assert scrambled_inds.shape == (64238,)
         assert pssm_mus.shape == (2, 9, 21)
         assert pssm_sigmas.shape == (2, 9, 21)
         assert K50u_thresh_mus.shape == (10,)
         assert log_K50f_mu.shape == (2,)
 
         # Get the number of unique sequence IDs.
-        self.n_seq_ids = (
-            max(v1_seq_ids.max(), v2_seq_ids.max(), v3_seq_ids.max(), v4_seq_ids.max())
-            + 1
+        self.n_seqids = (
+            max(v1_seqids.max(), v2_seqids.max(), v3_seqids.max(), v4_seqids.max()) + 1
         )
-        assert len(ordinal_seqs) == self.n_seq_ids
+        assert len(ordinal_seqs) == self.n_seqids
 
         # Record constants
         self.qpcr_log_protease_conc = Constant(
@@ -148,31 +153,29 @@ class K50Model(Model):
             sigma=protease_conc_sigma_sigma
         )
         self.log_protease_conc = parameters.Normal(
-            mean=Constant(
-                log_expected_protease_conc[None, :, None, :, None], togglable=False
-            ),
+            mu=Constant(log_expected_protease_conc[None, :, None, :], togglable=False),
             sigma=self.protease_conc_noise,
             shape=(
                 4,
                 2,
                 2,
                 11,
-            ),  # 4 libraries x 2 replicates x 2 proteases x 11 concentrations x 1
+            ),  # 4 libraries x 2 replicates x 2 proteases x 11 concentrations
         )
 
         # Each sequence has a mean dG that combines information from both proteases.
-        # We're modeling dG of *unfolding*, and we expect proteins to be less stable
-        # than otherwise, so we use a Normal distribution with a negative mean
-        # TODO: We need a stronger prior on this. Scrambled sequences should have
-        # higher dG than folded sequences.
+        # We give different priors to scrambled vs non-scrambled sequences. Scrambled
+        # sequences should have a lower dG unfolding, indicating they are less stable.
+        mean_dg_unfolding = np.full((self.n_seqids,), expected_dg_unfolding)
+        mean_dg_unfolding[scrambled_inds] = expected_dg_unfolding_scrambled
         self.mean_dg = parameters.Normal(
-            mu=expected_dg_unfolding, sigma=dg_unfolding_sigma, shape=(self.n_seq_ids,)
+            mu=mean_dg_unfolding, sigma=dg_unfolding_sigma, shape=(self.n_seqids,)
         )
 
         # There are different dGs for each protein treated by each protease.
         self.protease_dg_noise = parameters.HalfNormal(sigma=protease_dg_sigma_sigma)
         self.protease_dg = parameters.Normal(
-            mu=self.mean_dg, sigma=self.protease_dg_noise, shape=(2, self.n_seq_ids)
+            mu=self.mean_dg, sigma=self.protease_dg_noise, shape=(2, self.n_seqids)
         )
 
         # We expect a universal kmaxt for all proteins for a given protease. We
@@ -181,7 +184,7 @@ class K50Model(Model):
             mu=log_kmax_t_mu, sigma=log_kmax_t_sigma, shape=(2, 1, 1)
         )
 
-        # Get K50u for all sequences. shape = (2, self.n_seq_ids)
+        # Get K50u for all sequences. shape = (2, self.n_seqids)
         self.log_K50u = self._def_K50u(
             pssm_mus=pssm_mus,
             pssm_sigmas=pssm_sigmas,
@@ -202,13 +205,13 @@ class K50Model(Model):
         self.log_K50 = self._def_K50()  # n protease x n seq
 
         # Using K50, kmaxt, and the protease concentrations, we can calculate survival
-        self._model_survival(
+        self._model_counts(
             alpha_alpha=alpha_alpha,
             alpha_beta=alpha_beta,
-            v1_seq_ids=v1_seq_ids,
-            v2_seq_ids=v2_seq_ids,
-            v3_seq_ids=v3_seq_ids,
-            v4_seq_ids=v4_seq_ids,
+            v1_seqids=v1_seqids,
+            v2_seqids=v2_seqids,
+            v3_seqids=v3_seqids,
+            v4_seqids=v4_seqids,
         )
 
         # We also model the qpcr workflow, which helps us assign the value for log_kmax_t
@@ -216,16 +219,59 @@ class K50Model(Model):
             log_K50_mu_qpcr=log_K50_mu_qpcr, log_K50_sigma_qpcr=log_K50_sigma_qpcr
         )
 
+    def _set_pssm_mus(
+        self, pssm_mus: npt.NDArray[np.float64] | None
+    ) -> npt.NDArray[np.float64]:
+        """Sets default values for the position-specific scoring matrix means."""
+        # If provided, make sure it is the right shape, then return
+        if pssm_mus is not None:
+            assert pssm_mus.shape == (2, 9, 21)
+            return pssm_mus
+
+        # Otherwise, set
+        pssm_mus = np.ones((2, 9, 21)) * -0.3
+
+        # Inhibitory amino acids have lower influence
+        pssm_mus[..., INHIBITOR_INDS] = -2.3  # 1 stdev from -0.3
+        pssm_mus[:, 4, INHIBITOR_INDS] = -4.3  # 2 stdev from -0.3
+
+        # Known cleavable amino acids have higher influence
+        pssm_mus[0, :, C_ACTIVATOR_INDS] = 3.7  # 1 stdev from -0.3
+        pssm_mus[0, 4, C_ACTIVATOR_INDS] = 7.7  # 2 stdev from -0.3
+        pssm_mus[1, :, T_ACTIVATOR_INDS] = 3.7  # 1 stdev from -0.3
+        pssm_mus[1, 4, T_ACTIVATOR_INDS] = 7.7  # 2 stdev from -0.3
+
+        return pssm_mus
+
+    def _set_pssm_sigmas(
+        self, pssm_sigmas: npt.NDArray[np.float64] | None
+    ) -> npt.NDArray[np.float64]:
+        # If provided, make sure it is the right shape, then return
+        if pssm_sigmas is not None:
+            assert pssm_sigmas.shape == (2, 9, 21)
+            return pssm_sigmas
+
+        # Otherwise, set
+        pssm_sigmas = np.ones((2, 9, 21)) * 0.1
+
+        # Wider range for center, inhibitors, and cleavables alike
+        pssm_sigmas[:, 4] = 2.0
+        pssm_sigmas[..., INHIBITOR_INDS] = 2.0
+        pssm_sigmas[0, :, C_ACTIVATOR_INDS] = 4.0
+        pssm_sigmas[1, :, T_ACTIVATOR_INDS] = 4.0
+
+        return pssm_sigmas
+
     def _def_K50u(
         self,
         pssm_mus: npt.NDArray[np.float64],
         pssm_sigmas: npt.NDArray[np.float64],
-        log_maxK50u_mu: float,
-        log_maxK50u_sigma: float,
-        log_minK50u_mu: float,
-        log_minK50u_sigma: float,
+        log_maxK50u_mu: "custom_types.Float",
+        log_maxK50u_sigma: "custom_types.Float",
+        log_minK50u_mu: "custom_types.Float",
+        log_minK50u_sigma: "custom_types.Float",
         K50u_thresh_mus: npt.NDArray[np.float64],
-        K50u_thresh_sigma: float,
+        K50u_thresh_sigma: "custom_types.Float",
     ) -> TransformedParameter:
 
         # Define the min and max K50u. We define one per protease.
@@ -244,13 +290,14 @@ class K50Model(Model):
         )
 
         # Calculate the sum of ssks
-        self.sum_ssk = operations.sum(
+        self.sum_ssk = operations.sum_(
             operations.sigmoid(
-                operations.convseq(weights=self.pssm),
-                ordinals=self.ordinal_seqs,  # n_seqs x padded length
-            ),
+                operations.convolve_sequence(
+                    weights=self.pssm, ordinals=self.ordinal_seqs
+                )
+            ),  # n_seqs x padded length
             keepdims=True,
-            shape=(2, self.n_seq_ids, 1),  # n proteases x n_seqs
+            shape=(2, self.n_seqids, 1),  # n proteases x n_seqs
         )
 
         # Now the activation thresholds. We use 10 of them and make sure that they
@@ -261,9 +308,9 @@ class K50Model(Model):
         )
 
         # Apply thresholds and logistic functions, then sum over thresholds
-        self.activation = operations.sum(
+        self.activation = operations.sum_(
             operations.sigmoid(self.sum_ssk - self.thresholds),
-            shape=(2, self.n_seq_ids),  # n proteases x n_seqs
+            shape=(2, self.n_seqids),  # n proteases x n_seqs
         )
 
         # Calculate K50u for each protease and protein
@@ -286,21 +333,21 @@ class K50Model(Model):
     def _model_counts(
         self,
         *,
-        alpha_alpha: float,
-        alpha_beta: float,
-        v1_seq_ids: npt.NDArray[np.int64],
-        v2_seq_ids: npt.NDArray[np.int64],
-        v3_seq_ids: npt.NDArray[np.int64],
-        v4_seq_ids: npt.NDArray[np.int64],
+        alpha_alpha: "custom_types.Float",
+        alpha_beta: "custom_types.Float",
+        v1_seqids: npt.NDArray[np.int64],
+        v2_seqids: npt.NDArray[np.int64],
+        v3_seqids: npt.NDArray[np.int64],
+        v4_seqids: npt.NDArray[np.int64],
     ) -> None:
 
         # Now we model the counts data
         for lib_ind, (lib, ind_array) in enumerate(
             (
-                ("v1", v1_seq_ids),
-                ("v2", v2_seq_ids),
-                ("v3", v3_seq_ids),
-                ("v4", v4_seq_ids),
+                ("v1", v1_seqids),
+                ("v2", v2_seqids),
+                ("v3", v3_seqids),
+                ("v4", v4_seqids),
             )
         ):
 

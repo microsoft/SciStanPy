@@ -3,7 +3,7 @@ Defines code needed for building models in Stan for evaluating deep mutational s
 data.
 """
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from typeguard import install_import_hook
 
@@ -19,8 +19,12 @@ install_import_hook("scistanpy")
 # Define the global random number generator
 RNG: np.random.Generator
 
+# Get custom types if TYPE_CHECKING is True
+if TYPE_CHECKING:
+    from scistanpy import custom_types
 
-def manual_seed(seed: Optional[int] = None):
+
+def manual_seed(seed: Optional["custom_types.Integer"] = None):
     """Set the seed for the global random number generator."""
     global RNG  # pylint: disable=global-statement
     RNG = np.random.default_rng(seed)

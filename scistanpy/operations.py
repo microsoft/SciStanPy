@@ -101,6 +101,7 @@ binary_exponential_growth = build_operation(
 binary_log_exponential_growth = build_operation(
     transformed_parameters.BinaryLogExponentialGrowth
 )
+convolve_sequence = build_operation(transformed_parameters.ConvolveSequence)
 exp = build_operation(transformed_parameters.ExpParameter)
 exponential_growth = build_operation(transformed_parameters.ExponentialGrowth)
 

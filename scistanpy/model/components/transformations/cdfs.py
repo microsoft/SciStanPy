@@ -36,7 +36,7 @@ class CDFLike(transformed_parameters.TransformedParameter):
     def __init__(
         self,
         x: "custom_types.CombinableParameterType",
-        shape: tuple[int, ...] | int = (),
+        shape: tuple[custom_types.Integer, ...] | custom_types.Integer = (),
         **params: "custom_types.CombinableParameterType",
     ):
 

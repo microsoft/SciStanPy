@@ -36,7 +36,11 @@ class MLEParam:
         self.distribution = distribution
 
     def draw(
-        self, n: int, *, seed: Optional[int] = None, batch_size: Optional[int] = None
+        self,
+        n: int,
+        *,
+        seed: Optional[custom_types.Integer] = None,
+        batch_size: Optional[custom_types.Integer] = None,
     ) -> npt.NDArray:
         """
         Sample from the MLE estimate.
@@ -131,25 +135,25 @@ class MLE:
     @overload
     def draw(
         self,
-        n: int,
+        n: custom_types.Integer,
         *,
-        seed: Optional[int],
+        seed: Optional[custom_types.Integer],
         as_xarray: Literal[True],
         as_inference_data: Literal[False],
-        batch_size: Optional[int] = None,
+        batch_size: Optional[custom_types.Integer] = None,
     ) -> xr.Dataset: ...
 
     @overload
     def draw(
         self,
-        n: int,
+        n: custom_types.Integer,
         *,
-        seed: Optional[int],
+        seed: Optional[custom_types.Integer],
         as_xarray: Literal[False],
-        batch_size: Optional[int] = None,
+        batch_size: Optional[custom_types.Integer] = None,
     ) -> dict[str, npt.NDArray]: ...
 
-    def draw(self, n: int, *, seed=None, as_xarray=False, batch_size=None):
+    def draw(self, n, *, seed=None, as_xarray=False, batch_size=None):
         """Draws samples from the MLE estimate.
 
         Args:
@@ -187,10 +191,10 @@ class MLE:
 
     def get_inference_obj(
         self,
-        n: int = 1000,
+        n: custom_types.Integer = 1000,
         *,
-        seed: Optional[int] = None,
-        batch_size: Optional[int] = None,
+        seed: Optional[custom_types.Integer] = None,
+        batch_size: Optional[custom_types.Integer] = None,
     ) -> results.MLEInferenceRes:
         """Builds an inference data object from the MLE estimate."""
         # Get the samples from the posterior

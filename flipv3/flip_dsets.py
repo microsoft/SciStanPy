@@ -1,5 +1,6 @@
 """Holds code relevant for the TrpB datasets."""
 
+import os.path
 import re
 
 from typing import Literal, TypedDict
@@ -90,6 +91,9 @@ TRPB_OD600 = {
         ),
     ),
 }
+
+# Map from amino acid to ordinal
+AA_TO_ORDINAL = dict(zip("ACDEFGHIKLMNPQRSTVWXY", range(0, 21)))
 
 
 def load_trpb_dataset(
@@ -288,6 +292,8 @@ def reformat_pdz_zenodo_dset(infile: str, outfile: str) -> None:
 
 # Types for the nuclease data
 class PDZDatasetType(TypedDict):
+    """Type for nuclease data"""
+
     dataset: pd.DataFrame
     data_indices: np.ndarray[np.int64]
     fiducial_indices: dict[str, np.ndarray[np.int64]]
@@ -298,8 +304,10 @@ def load_nuclease_data(
     processed_fiducial_data_dir: str,
     gen: Literal["G1", "G2", "G3", "G4"],
 ):
-    """Loads the Nuclease dataset. The data is described in [this](https://www.cell.com/cell-systems/fulltext/S2405-4712(25)00069-9?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS2405471225000699%3Fshowall%3Dtrue)
-    paper and was downloaded using its associated GitHub repository.
+    """
+    Loads the Nuclease dataset. The data is described in
+    [this](https://doi.org/10.1016/j.cels.2025.101236) paper and was downloaded
+    using its associated GitHub repository.
     """
 
     def load_basis_data(
@@ -488,3 +496,155 @@ def load_nuclease_data(
         )
 
     raise ValueError(f"Unknown generation: {gen}")
+
+
+def load_k50_data(
+    count_filedir: str, scramble_filepath: str, qpcr_raw_filepath: str
+) -> dict:
+    """Loads the data from Tsuboyama et al."""
+
+    def load_raw() -> tuple[
+        list[pd.DataFrame],
+        npt.NDArray[np.int64],
+        npt.NDArray[np.int64],
+        dict[str, int],
+    ]:
+        """Loads the raw datasets"""
+
+        # Read in the count dataframes, remove duplicate sequences, and assign unique
+        # sequence identities
+        seqids = {}
+        seqid = 0
+        dfs = []
+        ordinals = []
+        for df_ind in range(1, 5):
+
+            # Load the dataframe, remove unnecessary columns, and combine duplicates
+            df = (
+                pd.read_csv(os.path.join(count_filedir, f"NGS_count_lib{df_ind}.csv"))
+                .drop(columns=["name", "dna_seq"])
+                .groupby("aa_seq", as_index=False)
+                .sum()
+            )
+
+            # Remove dummy seqs
+            df = df[df.aa_seq != "-"]
+
+            # Assign unique sequence IDs and ordinally encode with padding
+            ids = [None] * len(df)
+            for df_ind, seq in enumerate(df.aa_seq.tolist()):
+
+                # Only process if we haven't seen before
+                if seq not in seqids:
+
+                    # Set ID
+                    seqids[seq] = seqid
+                    seqid += 1
+
+                    # Determine how much padding we need
+                    total_pad = 80 - len(seq)
+                    front_pad = total_pad // 2
+                    back_pad = total_pad - front_pad
+
+                    # Apply padding and ordinally encode
+                    ordinals.append(
+                        [
+                            AA_TO_ORDINAL[aa]
+                            for aa in (
+                                "X" * front_pad + "GGG" + seq + "GGG" + "X" * back_pad
+                            )
+                        ]
+                    )
+
+                # Note the sequence ID
+                ids[df_ind] = seqids[seq]
+
+            # Record sequence IDs as part of the dataframe
+            df["seq_id"] = ids
+
+            # Record
+            dfs.append(df)
+
+        # Get the scrambled sequence indices
+        scrambled_inds = np.unique(
+            pd.read_csv(scramble_filepath).aa_seq_experimental.map(seqids).to_numpy()
+        )
+        assert not np.isnan(scrambled_inds).any()
+
+        return dfs, np.stack(ordinals), scrambled_inds, seqids
+
+    def gather_counts() -> dict[str, npt.NDArray]:
+        """Gathers count data for each library in the dataset"""
+        # Convert the dataframes to numpy arrays of counts
+        libdata = {}
+        for lib_ind, df in enumerate(dfs, 1):
+
+            # Get the columns for each replicate
+            stringdices1 = [str(j).rjust(2, "0") for j in range(1, 13)]
+            stringdices2 = [str(j) for j in range(13, 25)]
+
+            # Get counts for each protease
+            protease_counts = []
+            for protease in ("C", "T"):
+                protease_counts.append(
+                    np.stack(
+                        [
+                            df[
+                                [
+                                    f"v{lib_ind}_{protease}{stringdex}"
+                                    for stringdex in stringdices
+                                ]
+                            ]
+                            .to_numpy(dtype=int)
+                            .T
+                            for stringdices in (stringdices1, stringdices2)
+                        ]
+                    )
+                )
+
+            # Record for the libraries
+            key = f"v{lib_ind}"
+            protease_counts = np.stack(protease_counts)
+            libdata[f"{key}_counts_cg0"] = protease_counts[:, :, 1:]
+            libdata[f"{key}_counts_c0"] = protease_counts[:, :, 0]
+            libdata[f"{key}_seqids"] = df["seq_id"].to_numpy()
+
+        return libdata
+
+    def load_qpcr() -> dict[str, npt.NDArray]:
+        """Loads raw qpcr data"""
+
+        # Load qpcr data and separate trypsin from chymotrypsin
+        qpcr = pd.read_csv(qpcr_raw_filepath)
+        tryp = qpcr[qpcr.protease == "trypsin"]
+        chymo = qpcr[qpcr.protease == "chymotrypsin"]
+
+        # Get protease concentrations
+        protease_conc = chymo.protease_con.to_numpy()
+        assert np.all(protease_conc == tryp.protease_con.to_numpy())
+
+        # Get survival data for each protein
+        tryp_survival = tryp.iloc[1:, 1:9].to_numpy()
+        chymo_survival = chymo.iloc[1:, 1:9].to_numpy()
+
+        return {
+            "qpcr_log_protease_conc": np.log(protease_conc[1:]),
+            "qpcr_log2_survival": np.stack([chymo_survival, tryp_survival]),
+        }
+
+    # Get count data and ordinally encoded sequences
+    dfs, ordinals, scrambled_inds, seqids = load_raw()
+    libdata = gather_counts()
+    libdata.update(
+        {"ordinal_seqs": ordinals, "scrambled_inds": scrambled_inds, "seq_ids": seqids}
+    )
+
+    # Define the expected protease concentrations
+    conc1 = np.log(25) - np.arange(10, -1, -1) * np.log(3)
+    conc2 = 0.5 * np.log(3) + conc1
+    libdata["log_expected_protease_conc"] = np.stack([conc1, conc2])
+
+    # Add qpcr data
+    libdata.update(load_qpcr())
+
+    return libdata

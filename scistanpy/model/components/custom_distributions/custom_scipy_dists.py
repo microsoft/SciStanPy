@@ -6,13 +6,16 @@ import functools
 import inspect
 
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
 from scipy import special
 from scipy import stats
+
+if TYPE_CHECKING:
+    from scistanpy import custom_types
 
 
 def _combine_args_kwargs(function: Callable, args: tuple, kwargs: dict) -> dict:
@@ -113,8 +116,8 @@ class CustomDirichlet(
     def rvs(
         self,
         alpha: npt.NDArray[np.floating],
-        size: tuple[int, ...] | int | None = 1,
-        random_state: int | np.random.Generator | None = None,
+        size: tuple["custom_types.Integer", ...] | "custom_types.Integer" | None = 1,
+        random_state: "custom_types.Integer" | np.random.Generator | None = None,
     ) -> npt.NDArray[np.floating]:
 
         # Set the size
@@ -152,10 +155,10 @@ class CustomMultinomial(stats._multivariate.multinomial_gen):  # pylint: disable
 
     def rvs(
         self,
-        n: int | npt.NDArray[np.integer],
+        n: "custom_types.Integer" | npt.NDArray[np.integer],
         p: npt.NDArray[np.floating],
-        size: tuple[int, ...] | int | None = 1,
-        random_state: int | np.random.Generator | None = None,
+        size: tuple["custom_types.Integer", ...] | "custom_types.Integer" | None = 1,
+        random_state: "custom_types.Integer" | np.random.Generator | None = None,
     ) -> npt.NDArray[np.integer]:
         """
         Generates random samples from the multinomial distribution with variable batch
@@ -296,8 +299,8 @@ class ExpDirichlet(CustomDirichlet):
     def rvs(
         self,
         alpha: npt.NDArray[np.floating],
-        size: tuple[int, ...] | int | None = 1,
-        random_state: int | np.random.Generator | None = None,
+        size: tuple["custom_types.Integer", ...] | "custom_types.Integer" | None = 1,
+        random_state: "custom_types.Integer" | np.random.Generator | None = None,
     ) -> npt.NDArray[np.floating]:
         """
         Generates random samples from the ExpDirichlet distribution.

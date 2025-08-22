@@ -36,6 +36,7 @@ from scistanpy.model.components.transformations import (
 )
 
 if TYPE_CHECKING:
+    from scistanpy import custom_types
     from scistanpy.model.results import hmc as hmc_results
 
 mle_module = utils.lazy_import("scistanpy.model.mle")
@@ -238,14 +239,16 @@ class Model:
 
         return model_varname_to_object
 
-    def get_dimname_map(self) -> dict[tuple[int, int], str]:
+    def get_dimname_map(
+        self,
+    ) -> dict[tuple["custom_types.Integer", "custom_types.Integer"], str]:
         """
         Retrieves a dictionary that maps from the level and size of a dimension
         to the name of that dimension. This is used to build xarray datasets.
         """
 
         # Set up variables
-        dims: dict[tuple[int, int], str] = {}
+        dims: dict[tuple["custom_types.Integer", "custom_types.Integer"], str] = {}
 
         # The list of dimension options cannot overlap with variable names
         allowed_dim_names = [
@@ -366,41 +369,41 @@ class Model:
     @overload
     def draw(
         self,
-        n: int,
+        n: "custom_types.Integer",
         *,
         named_only: Literal[True],
         as_xarray: Literal[False],
-        seed: Optional[int],
+        seed: Optional["custom_types.Integer"],
     ) -> dict[str, npt.NDArray]: ...
 
     @overload
     def draw(
         self,
-        n: int,
+        n: "custom_types.Integer",
         *,
         named_only: Literal[False],
         as_xarray: Literal[False],
-        seed: Optional[int],
+        seed: Optional["custom_types.Integer"],
     ) -> dict[abstract_model_component.AbstractModelComponent, npt.NDArray]: ...
 
     @overload
     def draw(
         self,
-        n: int,
+        n: "custom_types.Integer",
         *,
         named_only: Literal[True],
         as_xarray: Literal[True],
-        seed: Optional[int],
+        seed: Optional["custom_types.Integer"],
     ) -> xr.Dataset: ...
 
     @overload
     def draw(
         self,
-        n: int,
+        n: "custom_types.Integer",
         *,
         named_only: Literal[False],
         as_xarray: Literal[True],
-        seed: Optional[int],
+        seed: Optional["custom_types.Integer"],
     ) -> xr.Dataset: ...
 
     def draw(self, n, *, named_only=True, as_xarray=False, seed=None):
@@ -434,7 +437,9 @@ class Model:
             return {k.model_varname: v for k, v in draws.items()}
         return draws
 
-    def to_pytorch(self, seed: Optional[int] = None) -> "nn_module.PyTorchModel":
+    def to_pytorch(
+        self, seed: Optional["custom_types.Integer"] = None
+    ) -> "nn_module.PyTorchModel":
         """
         Compiles the model to a trainable PyTorch model.
         """
@@ -448,12 +453,12 @@ class Model:
 
     def mle(
         self,
-        epochs: int = DEFAULT_N_EPOCHS,
-        early_stop: int = DEFAULT_EARLY_STOP,
-        lr: float = DEFAULT_LR,
+        epochs: "custom_types.Integer" = DEFAULT_N_EPOCHS,
+        early_stop: "custom_types.Integer" = DEFAULT_EARLY_STOP,
+        lr: "custom_types.Float" = DEFAULT_LR,
         data: Optional[dict[str, Union[torch.Tensor, npt.NDArray]]] = None,
-        device: int | str = "cpu",
-        seed: Optional[int] = None,
+        device: "custom_types.Integer" | str = "cpu",
+        seed: Optional["custom_types.Integer"] = None,
     ) -> "mle_module.MLE":
         """
         Approximate the maximum likelihood (MLE) estimate of the model parameters.
@@ -504,7 +509,9 @@ class Model:
             data={k: v.detach().cpu().numpy() for k, v in data.items()},
         )
 
-    def _get_simulation_data(self, seed: Optional[int]) -> dict[str, npt.NDArray]:
+    def _get_simulation_data(
+        self, seed: Optional["custom_types.Integer"]
+    ) -> dict[str, npt.NDArray]:
         """Draws observable data from the model prior."""
         data = self.draw(1, named_only=True, as_xarray=False, seed=seed)
         return {

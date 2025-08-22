@@ -3,7 +3,17 @@
 from __future__ import annotations
 
 from functools import partial, wraps
-from typing import Any, Callable, Optional, overload, Literal, ParamSpec, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Optional,
+    overload,
+    Literal,
+    ParamSpec,
+    TYPE_CHECKING,
+    TypeVar,
+    Union,
+)
 
 import holoviews as hv
 import hvplot.interactive
@@ -15,6 +25,9 @@ import panel.widgets as pnw
 import torch
 
 from scipy import stats
+
+if TYPE_CHECKING:
+    from scistanpy import custom_types
 
 # Types
 P = ParamSpec("P")
@@ -185,7 +198,7 @@ def plot_relationship(plotting_df, /, paramname, datashade=True):
 
 
 def choose_plotting_function(
-    independent_dim: Optional[int],
+    independent_dim: Optional["custom_types.Integer"],
     independent_labels: Optional[npt.NDArray],
     datashade: bool = True,
 ) -> Callable:
@@ -207,7 +220,7 @@ def choose_plotting_function(
 def build_plotting_df(
     samples: npt.NDArray,
     paramname: str = "param",
-    independent_dim: Optional[int] = None,
+    independent_dim: Optional["custom_types.Integer"] = None,
     independent_labels: Optional[npt.NDArray] = None,
 ) -> pd.DataFrame:
     """
@@ -279,7 +292,7 @@ def plot_distribution(
     samples: Union[npt.NDArray, torch.Tensor],
     overlay: Optional[npt.NDArray] = None,
     paramname: str = "param",
-    independent_dim: Optional[int] = None,
+    independent_dim: Optional["custom_types.Integer"] = None,
     independent_labels: Optional[npt.NDArray] = None,
 ) -> Union[HVType, list[HVType]]:
     """Plots a distribution of samples with an optional ground truth overlay."""
@@ -709,7 +722,7 @@ def hexgrid_with_mean(
     x: npt.NDArray[np.floating],
     y: npt.NDArray[np.floating],
     *,
-    mean_windowsize: int | None = None,
+    mean_windowsize: "custom_types.Integer" | None = None,
     hex_kwargs: dict[str, Any] | None = None,
     mean_kwargs: dict[str, Any] | None = None,
 ) -> hv.Overlay:

@@ -39,8 +39,8 @@ class AbstractModelComponent(ABC):
     BASE_STAN_DTYPE: Literal["real", "int", "simplex"] = "real"
 
     # Define the bounds for this parameter
-    LOWER_BOUND: Optional[float | int] = None
-    UPPER_BOUND: Optional[float | int] = None
+    LOWER_BOUND: Optional["custom_types.Float" | "custom_types.Integer"] = None
+    UPPER_BOUND: Optional["custom_types.Float" | "custom_types.Integer"] = None
     IS_SIMPLEX: bool = False
     IS_LOG_SIMPLEX: bool = False
 
@@ -53,7 +53,7 @@ class AbstractModelComponent(ABC):
     def __init__(  # pylint: disable=unused-argument
         self,
         *,
-        shape: tuple[int, ...] | int = (),
+        shape: tuple["custom_types.Integer", ...] | "custom_types.Integer" = (),
         **model_params: "custom_types.CombinableParameterType",
     ):
         """Builds a parameter instance with the given shape."""
@@ -62,7 +62,7 @@ class AbstractModelComponent(ABC):
         self._model_varname: str = ""  # SciStanPy Model variable name
         self._parents: dict[str, AbstractModelComponent]
         self._component_to_paramname: dict[AbstractModelComponent, str]
-        self._shape: tuple[int, ...] = (shape,) if isinstance(shape, int) else shape
+        self._shape: tuple["custom_types.Integer", ...]
         self._children: list[AbstractModelComponent] = []  # Children of the component
 
         # Validate incoming parameters
@@ -76,7 +76,7 @@ class AbstractModelComponent(ABC):
             val._record_child(self)
 
         # Set the shape
-        self._set_shape()
+        self._set_shape(shape)
 
     def _validate_parameters(
         self,
@@ -175,25 +175,31 @@ class AbstractModelComponent(ABC):
         # Record the child
         self._children.append(child)
 
-    def _set_shape(self) -> None:
+    def _set_shape(self, shape: "custom_types.Integer") -> None:
         """Sets the shape of the draws for the parameter."""
+        # Convert shape to the appropriate type
+        try:
+            len(shape)
+        except TypeError:
+            shape = (shape,)
+
         # The shape must be broadcastable to the shapes of the parameters.
         try:
             parent_shapes = [param.shape for param in self.parents]
-            broadcasted_shape = np.broadcast_shapes(self._shape, *parent_shapes)
+            broadcasted_shape = np.broadcast_shapes(shape, *parent_shapes)
         except ValueError as error:
             raise ValueError(
                 f"Shape is not broadcastable to parent shapes while initializing instance "
                 f"of {self.__class__.__name__}: {','.join(map(str, parent_shapes))} "
-                f"not broadcastable to {self._shape}"
+                f"not broadcastable to {shape}"
             ) from error
 
         # The broadcasted shape must be the same as the shape of the parameter if
         # it is not 0-dimensional.
-        if broadcasted_shape != self._shape and self._shape != ():
+        if broadcasted_shape != shape and shape != ():
             raise ValueError(
                 "Provided shape does not match broadcasted shapes of parents while "
-                f"initializing instance of {self.__class__.__name__}. {self._shape} "
+                f"initializing instance of {self.__class__.__name__}. {shape} "
                 f"!= {broadcasted_shape}"
             )
 
@@ -235,9 +241,9 @@ class AbstractModelComponent(ABC):
     def get_indexed_varname(
         self,
         index_opts: tuple[str, ...] | None,
-        offset: int = 0,
-        first_dim: int = 0,
-        last_dim: int = -1,
+        offset: "custom_types.Integer" = 0,
+        start_dim: "custom_types.Integer" = 0,
+        end_dim: "custom_types.Integer" = -1,
         _name_override: str = "",
     ) -> str:
         """
@@ -251,11 +257,11 @@ class AbstractModelComponent(ABC):
                 singleton dimensions are implicitly added when broadcasting from
                 this parameter to a child. Thus, we need to offset indexing to account
                 for these implicit singletons depending on the child.
-            first_dim (int): The first dimensions to include in the variable name.
-                For example, if the parameter has N dims and `first_dim = 1`, then
+            start_dim (int): The first dimensions to include in the variable name.
+                For example, if the parameter has N dims and `start_dim = 1`, then
                 we index only the last N - 1 dims.
-            last_dim (int): The last index to include in the variable name.
-                For example, if the parameter has N dims and `last_dim = -2`,
+            end_dim (int): The last index to include in the variable name.
+                For example, if the parameter has N dims and `end_dim = -2`,
                 then we index only the first N - 1 dims.
 
         Returns:
@@ -273,15 +279,15 @@ class AbstractModelComponent(ABC):
             return base_name
 
         # First and last dim must be positive integers
-        first_dim = first_dim if first_dim >= 0 else self.ndim + first_dim
-        last_dim = last_dim if last_dim >= 0 else self.ndim + last_dim + 1
-        assert last_dim > first_dim
+        start_dim = start_dim if start_dim >= 0 else self.ndim + start_dim
+        end_dim = end_dim if end_dim >= 0 else self.ndim + end_dim + 1
+        assert end_dim > start_dim
 
         # Singleton dimensions get a "1" index. All others get the index options.
         indices = [
             "1" if dimsize == 1 else index_opts[i]
             for i, dimsize in enumerate(
-                self.shape[first_dim:last_dim], start=offset + first_dim
+                self.shape[start_dim:end_dim], start=offset + start_dim
             )
         ]
 
@@ -301,16 +307,19 @@ class AbstractModelComponent(ABC):
 
     @abstractmethod
     def _draw(
-        self, n: int, level_draws: dict[str, npt.NDArray], seed: Optional[int]
+        self,
+        n: "custom_types.Integer",
+        level_draws: dict[str, npt.NDArray],
+        seed: Optional["custom_types.Integer"],
     ) -> npt.NDArray:
         """Sample from the distribution that represents the parameter"""
 
     def draw(
         self,
-        n: int,
+        n: "custom_types.Integer",
         *,
         _drawn: Optional[dict["AbstractModelComponent", npt.NDArray]] = None,
-        seed: Optional[int] = None,
+        seed: Optional["custom_types.Integer"] = None,
     ) -> tuple[npt.NDArray, dict["AbstractModelComponent", npt.NDArray]]:
         """
         Recursively draws from the parameter and its parents. The draws for this
@@ -375,7 +384,7 @@ class AbstractModelComponent(ABC):
         return draws, _drawn
 
     def walk_tree(
-        self, walk_down: bool = True, _recursion_depth: int = 1
+        self, walk_down: bool = True, _recursion_depth: "custom_types.Integer" = 1
     ) -> list[tuple[int, "AbstractModelComponent", "AbstractModelComponent"]]:
         """
         Walks the tree of parameters, either up or down. "up" means walking from
@@ -474,8 +483,8 @@ class AbstractModelComponent(ABC):
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
-        start_dims: dict[str, int] | None = None,
-        end_dims: dict[str, int] | None = None,
+        start_dims: dict[str, "custom_types.Integer"] | None = None,
+        end_dims: dict[str, "custom_types.Integer"] | None = None,
     ) -> dict[str, str]:
         """
         Gets the right side of any statement (i.e., Stan code to the right of an

@@ -1,5 +1,7 @@
 """Holds models for the PDZ datasets"""
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import numpy.typing as npt
 
@@ -7,6 +9,9 @@ from scistanpy import parameters
 from .base_models import BaseEnrichmentTemplate, HierarchicalEnrichmentMeta
 from .constants import DEFAULT_HYPERPARAMS, GrowthCurve, GrowthRate
 from .flip_dsets import load_pdz_dataset
+
+if TYPE_CHECKING:
+    import scistanpy.custom_types as custom_types
 
 
 class BasePDZ3(BaseEnrichmentTemplate):  # pylint: disable=abstract-method
@@ -16,8 +21,8 @@ class BasePDZ3(BaseEnrichmentTemplate):  # pylint: disable=abstract-method
         self,
         starting_counts: npt.NDArray[np.int64],
         timepoint_counts: npt.NDArray[np.int64],
-        alpha_alpha: float = DEFAULT_HYPERPARAMS["alpha_alpha"],
-        alpha_beta: float = DEFAULT_HYPERPARAMS["alpha_beta"],
+        alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
+        alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
         **kwargs
     ):
 
@@ -38,8 +43,8 @@ class BasePDZ3(BaseEnrichmentTemplate):  # pylint: disable=abstract-method
 
     def _set_starting_props(
         self,
-        alpha_alpha: float = DEFAULT_HYPERPARAMS["alpha_alpha"],
-        alpha_beta: float = DEFAULT_HYPERPARAMS["alpha_beta"],
+        alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
+        alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
         **kwargs
     ):
 

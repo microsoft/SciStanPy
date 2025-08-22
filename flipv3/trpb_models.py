@@ -1,6 +1,6 @@
 """Code for building TrpB models for the three- and four-site libraries."""
 
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -13,6 +13,9 @@ from .base_models import (
 )
 from .constants import DEFAULT_HYPERPARAMS, GrowthCurve, GrowthRate
 from .flip_dsets import load_trpb_dataset
+
+if TYPE_CHECKING:
+    from scistanpy import custom_types
 
 TrpBLibrary = Literal[
     "libA", "libB", "libC", "libD", "libE", "libF", "libG", "libH", "libI", "four-site"
@@ -27,7 +30,7 @@ class BaseTrpBTemplate(BaseEnrichmentTemplate):  # pylint: disable=abstract-meth
         starting_counts: npt.NDArray[np.int64],
         timepoint_counts: npt.NDArray[np.int64],
         times: npt.NDArray[np.float64],
-        alpha: float = DEFAULT_HYPERPARAMS["alpha"],
+        alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"],
         **kwargs,
     ):
 
@@ -52,7 +55,7 @@ class BaseTrpBTemplate(BaseEnrichmentTemplate):  # pylint: disable=abstract-meth
         )
 
     def _set_starting_props(
-        self, alpha: float = DEFAULT_HYPERPARAMS["alpha"], **kwargs
+        self, alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"], **kwargs
     ):
         """Sets the starting proportions using an exponential Dirichlet prior."""
         return parameters.ExpDirichlet(
@@ -71,7 +74,7 @@ class TemplateThreeSiteModelFlat(BaseTrpBTemplate):  # pylint: disable=abstract-
         starting_counts: npt.NDArray[np.int64],
         timepoint_counts: npt.NDArray[np.int64],
         times: npt.NDArray[np.float64],
-        alpha: float = DEFAULT_HYPERPARAMS["alpha"],
+        alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"],
         **kwargs,
     ):
         # Make sure the starting counts are 1D and the timepoint counts are 2D
@@ -100,7 +103,7 @@ class TemplateThreeSiteModelHierarchical(
         starting_counts: npt.NDArray[np.int64],
         timepoint_counts: npt.NDArray[np.int64],
         times: npt.NDArray[np.float64],
-        alpha: float = DEFAULT_HYPERPARAMS["alpha"],
+        alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"],
         **kwargs,
     ):
 
@@ -129,7 +132,7 @@ class TemplateFourSiteModel(BaseTrpBTemplate):  # pylint: disable=abstract-metho
         starting_counts: npt.NDArray[np.int64],
         timepoint_counts: npt.NDArray[np.int64],
         times: npt.NDArray[np.float64],
-        alpha: float = DEFAULT_HYPERPARAMS["alpha"],
+        alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"],
         **kwargs,
     ):
         """

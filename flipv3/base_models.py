@@ -1,12 +1,16 @@
 """Holds base models shared by all FLIP datasets"""
 
 from abc import ABCMeta, abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
 from scistanpy import Constant, Model, operations, parameters
 from .constants import DEFAULT_HYPERPARAMS
+
+if TYPE_CHECKING:
+    from scistanpy import custom_types
 
 
 class BaseEnrichmentMeta(ABCMeta):
@@ -52,19 +56,19 @@ class FlatEnrichmentMeta(BaseEnrichmentMeta):
         """Sets the growth rate for the model based on the growth rate type."""
 
         def exponential_growth_rate(  # pylint: disable=unused-argument
-            self, beta: float = DEFAULT_HYPERPARAMS["exp_beta"], **kwargs
+            self, beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["exp_beta"], **kwargs
         ):
             """Set the growth rate to exponential."""
-            return parameters.Exponential(beta=beta, shape=self.n_variants)
+            return parameters.ExpExponential(beta=beta, shape=self.n_variants)
 
         def lomax_growth_rate(  # pylint: disable=unused-argument
             self,
-            lambda_: float = DEFAULT_HYPERPARAMS["lambda_"],
-            lomax_alpha: float = DEFAULT_HYPERPARAMS["lomax_alpha"],
+            lambda_: "custom_types.Float" = DEFAULT_HYPERPARAMS["lambda_"],
+            lomax_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["lomax_alpha"],
             **kwargs,
         ):
             """Set the growth rate to Lomax."""
-            return parameters.Lomax(
+            return parameters.ExpLomax(
                 lambda_=lambda_, alpha=lomax_alpha, shape=self.n_variants
             )
 
@@ -95,8 +99,8 @@ class FlatEnrichmentMeta(BaseEnrichmentMeta):
 
         def sigmoid_growth(  # pylint: disable=unused-argument
             self,
-            c_alpha: float = DEFAULT_HYPERPARAMS["c_alpha"],
-            c_beta: float = DEFAULT_HYPERPARAMS["c_beta"],
+            c_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["c_alpha"],
+            c_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["c_beta"],
             **kwargs,
         ):
             """Grow the initial proportions to the time tg0 using sigmoid growth."""
@@ -136,27 +140,31 @@ class HierarchicalEnrichmentMeta(FlatEnrichmentMeta):
         gr_func = super()._def_growth_rate()
 
         def lomax_exp_growth_rate(
-            self, r_sigma_sigma: float = DEFAULT_HYPERPARAMS["r_sigma_sigma"], **kwargs
+            self,
+            r_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS["r_sigma_sigma"],
+            **kwargs,
         ):
             """
             The returned function is the mean growth rate. We add noise for the
             hierarchical models.
             """
             # Assign the mean growth rate
-            self.r_mean = gr_func(self, **kwargs)
+            self.log_r_mean = gr_func(self, **kwargs)
 
             # Set the standard deviation for the growth rate
-            self.r_sigma = parameters.HalfNormal(sigma=r_sigma_sigma)
-            return parameters.Normal(
-                mu=self.r_mean,
-                sigma=self.r_sigma,
-                shape=(self.n_replicates, self.n_variants),
+            # self.r_sigma = parameters.HalfNormal(sigma=r_sigma_sigma)
+            return operations.exp(
+                parameters.Normal(
+                    mu=self.log_r_mean,
+                    sigma=r_sigma,
+                    shape=(self.n_replicates, self.n_variants),
+                )
             )
 
         def gamma_inv_growth_rate(  # pylint: disable=unused-argument
             self,
-            inv_r_alpha: float = DEFAULT_HYPERPARAMS["inv_r_alpha"],
-            inv_r_beta: float = DEFAULT_HYPERPARAMS["inv_r_beta"],
+            inv_r_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["inv_r_alpha"],
+            inv_r_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["inv_r_beta"],
             **kwargs,
         ):
             """

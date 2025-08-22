@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Optional, ParamSpec
+from typing import Optional, ParamSpec, TYPE_CHECKING
 
 import torch
 import torch.distributions as dist
 
+if TYPE_CHECKING:
+    from scistanpy import custom_types
 
 # Define a type variable for the parameters of a distribution
 P = ParamSpec("P")
@@ -25,7 +27,7 @@ class Multinomial(CustomDistribution):
 
     def __init__(
         self,
-        total_count: int | torch.Tensor = 1,
+        total_count: "custom_types.Integer" | torch.Tensor = 1,
         probs: Optional[torch.Tensor] = None,
         logits: Optional[torch.Tensor] = None,
         validate_args: Optional[bool] = None,
@@ -115,7 +117,7 @@ class MultinomialProb(Multinomial, CustomDistribution):
 
     def __init__(
         self,
-        total_count: int | torch.Tensor = 1,
+        total_count: "custom_types.Integer" | torch.Tensor = 1,
         probs: Optional[torch.Tensor] = None,
         validate_args: Optional[bool] = None,
     ) -> None:
@@ -134,7 +136,7 @@ class MultinomialLogit(Multinomial, CustomDistribution):
 
     def __init__(
         self,
-        total_count: int | torch.Tensor = 1,
+        total_count: "custom_types.Integer" | torch.Tensor = 1,
         logits: Optional[torch.Tensor] = None,
         validate_args: Optional[bool] = None,
     ) -> None:
@@ -153,7 +155,7 @@ class MultinomialLogTheta(MultinomialLogit):
 
     def __init__(
         self,
-        total_count: int | torch.Tensor = 1,
+        total_count: "custom_types.Integer" | torch.Tensor = 1,
         log_probs: Optional[torch.Tensor] = None,
         validate_args: Optional[bool] = None,
     ) -> None:

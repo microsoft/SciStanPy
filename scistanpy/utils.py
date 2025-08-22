@@ -158,11 +158,11 @@ def stable_sigmoid(exponent):
 
 
 def get_chunk_shape(
-    array_shape: tuple[int, ...],
+    array_shape: tuple[custom_types.Integer, ...],
     array_precision: Literal["double", "single", "half"],
-    mib_per_chunk: int | None = None,
-    frozen_dims: Collection[int] = (),
-) -> tuple[int, ...]:
+    mib_per_chunk: custom_types.Integer | None = None,
+    frozen_dims: Collection[custom_types.Integer] = (),
+) -> tuple[custom_types.Integer, ...]:
     """
     Get the shape of chunks for a dask array based on the shape of the array and
     the desired chunk size in MB.
