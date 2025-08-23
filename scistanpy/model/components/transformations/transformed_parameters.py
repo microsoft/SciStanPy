@@ -1071,15 +1071,14 @@ class ConvolveSequence(TransformedParameter):
         padded_ordinals_shape = (None,) * ordinal_n_prepends + self.ordinals.shape[:-1]
         assert len(padded_weights_shape) == len(padded_ordinals_shape)
 
-        # Create a set of indices for the filters. If torch, send arrays to
-        # appropriate device
+        # Set output array and build a set of filter indices
+        output_arr = module.full(self.shape, np.nan)
         filter_indices = module.arange(self.kernel_size)
+
+        # If torch, send arrays to appropriate device
         if module is torch:
             filter_indices = filter_indices.to(weights.device)
             output_arr = output_arr.to(weights.device)
-
-        # Set output array
-        output_arr = module.full(self.shape, np.nan)
 
         # Loop over the different weights
         for weights_inds in np.ndindex(weights.shape[:-2]):
