@@ -81,13 +81,15 @@ class Transformation(abstract_model_component.AbstractModelComponent):
         self,
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
-        end_dims: dict[str, "custom_types.Integer"] | None = None
+        end_dims: dict[str, "custom_types.Integer"] | None = None,
     ) -> str:
         """Gets the right-hand-side of the assignment operation for this parameter."""
         # Call the inherited method to get a dictionary mapping parent names to
         # either their indexed variable names (if they are named) or the thread
         # of operations that define them (if they are not named).
-        components = super().get_right_side(index_opts, start_dims = start_dims, end_dims=end_dims)
+        components = super().get_right_side(
+            index_opts, start_dims=start_dims, end_dims=end_dims
+        )
 
         # Wrap the declaration for any unnamed parents in parentheses. This is to
         # ensure that the order of operations is correct in Stan.
@@ -407,7 +409,6 @@ class Reduction(UnaryTransformedParameter):
         if isinstance(dist1, torch.Tensor):
             return self.__class__.TORCH_FUNC(dist1, keepdim=keepdim, dim=-1)
         else:
-            print(dist1)
             return self.__class__.NP_FUNC(dist1, keepdims=keepdim, axis=-1)
 
 
@@ -417,22 +418,26 @@ class LogSumExpParameter(Reduction):
     This can only be applied over the last dimension and occurs with or without
     `keepdims` set to True.
     """
+
     TORCH_FUNC = torch.logsumexp
     NP_FUNC = sp.logsumexp
 
     def write_stan_operation(self, dist1: str) -> str:
         return f"log_sum_exp({dist1})"
 
+
 class SumParameter(Reduction):
     """
     Defines a parameter that computes the sum over the final axis of another
     parameter.
     """
+
     TORCH_FUNC = torch.sum
     NP_FUNC = np.sum
 
     def write_stan_operation(self, dist1: str) -> str:
         return f"sum({dist1})"
+
 
 class Log1pExpParameter(UnaryTransformedParameter):
     """
@@ -440,6 +445,7 @@ class Log1pExpParameter(UnaryTransformedParameter):
     of another parameter. This uses numerically stable alternatives to writing the
     option explicitly.
     """
+
     def run_np_torch_op(self, dist1):
         if isinstance(dist1, torch.Tensor):
             return torch.logaddexp(torch.tensor(0.0, device=dist1.device), dist1)
@@ -992,6 +998,7 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
         """Calculate using Stan's log1p_exp function."""
         return f"{log_x0} + log1p_exp({r} .* {c}) - log1p_exp({r} .* ({c} - {t}))"
 
+
 class ConvolveSequence(TransformedParameter):
     """
     Using a matrix of provided weights, performs a convolution operation on an
@@ -999,21 +1006,22 @@ class ConvolveSequence(TransformedParameter):
     dimensions of the weights matrix and the last dimension of the seqence array
     are ignored.
     """
+
     # Do not check the shape
-    SHAPE_CHECK=False
+    SHAPE_CHECK = False
 
     # We must reset the loops to define this parameter
-    FORCE_LOOP_RESET=True
+    FORCE_LOOP_RESET = True
 
     # Parents must be named
-    FORCE_PARENT_NAME=True
+    FORCE_PARENT_NAME = True
 
     def __init__(
         self,
         *,
         weights: "custom_types.CombinableParameterType",
         ordinals: "custom_types.CombinableParameterType",
-        **kwargs
+        **kwargs,
     ):
         # Weights must be at least 2D.
         if weights.ndim < 2:
@@ -1036,7 +1044,7 @@ class ConvolveSequence(TransformedParameter):
                 "be broadcastable in the batch dimensions (all but last two for "
                 "the weights and all but the last for the ordinals). Got "
                 f"weights: {weights.shape}, ordinals: {ordinals.shape}"
-                ) from err
+            ) from err
 
         # The final dimension has the size of the sequence length adjusted by the
         # convolution
@@ -1045,117 +1053,149 @@ class ConvolveSequence(TransformedParameter):
         # Init using inherited method.
         super().__init__(weights=weights, ordinals=ordinals, shape=shape, **kwargs)
 
-    def run_np_torch_op(self, weights, ordinals): # pylint: disable=arguments-differ
+    def run_np_torch_op(self, weights, ordinals):  # pylint: disable=arguments-differ
         """Performs the convolution"""
-        # Decide on the kwargs for the summation operation
-        module = utils.choose_module(weights)
 
-        # Create a set of indices for the filters
-        filter_indices = module.arange(self.kernel_size)
+        @overload
+        def process_single(
+            single_weights: npt.NDArray[np.float64],
+            single_ordinals: [npt.NDArray[np.int64]],
+        ) -> npt.NDArray[np.float64]: ...
+
+        @overload
+        def process_single(
+            single_weights: torch.Tensor, single_ordinals: torch.Tensor
+        ) -> torch.Tensor: ...
+
+        def process_single(single_weights, single_ordinals):
+            """
+            Processes a single sample. For torch, this is used directly. For numpy,
+            we loop over the sampling dimension and apply repeatedly.
+            """
+            # Set output array
+            output_arr = module.full(self.shape, np.nan)
+
+            # Create a set of indices for the filters. If torch, send arrays to
+            # appropriate device
+            filter_indices = module.arange(self.kernel_size)
+            if module is torch:
+                filter_indices = filter_indices.to(single_weights.device)
+                output_arr = output_arr.to(single_weights.device)
+
+            # Loop over the different weights
+            for weights_inds in np.ndindex(single_weights.shape[:-2]):
+
+                # Prepend `None` to the weight indices if needed
+                weights_inds = (None,) * weights_n_prepends + weights_inds
+
+                # Determine the ordinal and output indices. If weights or ordinals
+                # are a singleton, slice all for the ordinal indices.
+                ordinal_inds = []
+                output_inds = []
+                for dim, (weight_dim_size, ord_dim_size) in enumerate(
+                    zip(padded_weights_shape, padded_ordinals_shape)
+                ):
+
+                    # We can never have both weight and ord dim sizes be `None`
+                    assert not (weight_dim_size is None and ord_dim_size is None)
+
+                    # If the ordinal dimension is `None`, then the output dimension is whatever
+                    # the weight dimension is. We do not record an ordinal index.
+                    weight_ind = weights_inds[dim]
+                    if ord_dim_size is None:
+                        output_inds.append(weight_ind)
+                        continue
+
+                    # If the weight dimension is a singleton we slice all for the ordinal and
+                    # the output
+                    if weight_dim_size == 1 or weight_dim_size is None:
+                        ordinal_inds.append(slice(None))
+                        output_inds.append(slice(None))
+
+                    # If the ordinal dimension is a singleton, add "0" to the indices for the
+                    # ordinals and the weights ind for the output
+                    elif ord_dim_size == 1:
+                        ordinal_inds.append(0)
+                        output_inds.append(weight_ind)
+
+                    # Otherwise, identical index to the weights for both
+                    else:
+                        ordinal_inds.append(weight_ind)
+                        output_inds.append(weight_ind)
+
+                # Convert indices to tuples
+                ordinal_inds = tuple(ordinal_inds)
+                output_inds = tuple(output_inds)
+                assert len(output_inds) == len(self.shape) - 1
+
+                # Get the matrix and set of sequences to which it will be applied
+                weights_matrix = single_weights[weights_inds]
+                ordinal_matrix = single_ordinals[ordinal_inds]
+                assert weights_matrix.ndim == 2
+
+                # Run convolution for this batch by sliding over the sequence length
+                for convind, upper_slice in enumerate(
+                    range(self.kernel_size, ordinal_matrix.shape[-1] + 1)
+                ):
+
+                    # Get the lower bound
+                    lower = upper_slice - self.kernel_size
+
+                    # Slice the sequence and pull the appropriate weights. Sum the weights.
+                    output_arr[output_inds + (convind,)] = weights_matrix[
+                        filter_indices, ordinal_matrix[..., lower:upper_slice]
+                    ].sum(**{"dim" if module is torch else "axis": -1})
+
+            # No Nan's in output
+            assert not module.any(module.isnan(output_arr))
+
+            return output_arr
+
+        # Decide on the module for the operation
+        module = utils.choose_module(weights)
 
         # Determine the number of dimensions to prepend to each array
         weights_n_prepends = len(self.shape[:-1]) - len(self.weights.shape[:-2])
         ordinal_n_prepends = len(self.shape[:-1]) - len(self.ordinals.shape[:-1])
 
-        # Get the padded shapes. They are different for pytorch and numpy. This
-        # is because numpy is used with an added leading dimension for the draw
+        # Get the padded shapes. This is just aligning the shapes for broadcasting.
         padded_weights_shape = (None,) * weights_n_prepends + self.weights.shape[:-2]
         padded_ordinals_shape = (None,) * ordinal_n_prepends + self.ordinals.shape[:-1]
-        if module is np:
-            padded_weights_shape = (weights.shape[0], ) + padded_weights_shape
-            padded_ordinals_shape = (ordinals.shape[0], ) + padded_ordinals_shape
-            assert padded_weights_shape[0] == padded_ordinals_shape[0]
-        else:
-            raise ValueError("Unsupported module type.")
         assert len(padded_weights_shape) == len(padded_ordinals_shape)
 
-        # Set output array
-        outshape = self.shape if module is torch else (padded_weights_shape[0], *self.shape)
-        output_arr = module.full(outshape, np.nan)
-
-        # If torch, send arrays to appropriate device
+        # If torch, apply the inner function directly
         if module is torch:
-            filter_indices = filter_indices.to(weights.device)
-            output_arr = output_arr.to(weights.device)
+            return process_single(single_weights=weights, single_ordinals=ordinals)
 
-        # Loop over the different weights
-        for weights_inds in np.ndindex(weights.shape[:-2]):
+        # A quirk of having a matrix input with the weights is that a dimension
+        # will be added to the ordinals that should not be there (see the `draw`
+        # function of the abstract model component.) If we add more functions like
+        # this one, longer term, we will want to add a class variable or similar
+        # for handling things like this. As it's the only one right now, we add
+        # the below patch:
+        assert module is np
+        assert ordinals.shape[1] == 1
+        ordinals = ordinals[:, 0]
 
-            # Prepend `None` to the weight indices if needed
-            if module is torch:
-                weights_inds = (None,) * weights_n_prepends + weights_inds
-            else:
-                weights_inds = (weights_inds[0],) + (None,) * weights_n_prepends + weights_inds[1:]
-
-            # Determine the ordinal and output indices. If weights or ordinals are a singleton,
-            # slice all for the ordinal indices.
-            ordinal_inds = []
-            output_inds = []
-            for dim, (weight_dim_size, ord_dim_size) in enumerate(
-                zip(padded_weights_shape, padded_ordinals_shape)
-            ):
-
-                # We can never have both weight and ord dim sizes be `None`
-                assert not (weight_dim_size is None and ord_dim_size is None)
-
-                # If the ordinal dimension is `None`, then the output dimension is whatever
-                # the weight dimension is. We do not record an ordinal index.
-                weight_ind = weights_inds[dim]
-                if ord_dim_size is None:
-                    output_inds.append(weight_ind)
-                    continue
-
-                # If the weight dimension is a singleton we slice all for the ordinal and
-                # the output
-                if weight_dim_size == 1 or weight_dim_size is None:
-                    ordinal_inds.append(slice(None))
-                    output_inds.append(slice(None))
-
-                # If the ordinal dimension is a singleton, add "0" to the indices for the
-                # ordinals and the weights ind for the output
-                elif ord_dim_size == 1:
-                    ordinal_inds.append(0)
-                    output_inds.append(weight_ind)
-
-                # Otherwise, identical index to the weights for both
-                else:
-                    ordinal_inds.append(weight_ind)
-                    output_inds.append(weight_ind)
-
-            # Convert indices to tuples
-            ordinal_inds = tuple(ordinal_inds)
-            output_inds = tuple(output_inds)
-            assert len(output_inds) == len(outshape) - 1
-
-            # Get the matrix and set of sequences to which it will be applied
-            weights_matrix = weights[weights_inds]
-            ordinal_matrix = ordinals[ordinal_inds]
-            assert weights_matrix.ndim == 2
-
-            # Run convolution for this batch by sliding over the sequence length
-            for convind, upper_slice in enumerate(
-                range(self.kernel_size, ordinal_matrix.shape[-1] + 1)
-            ):
-
-                # Get the lower bound
-                lower = upper_slice - self.kernel_size
-
-                # Slice the sequence and pull the appropriate weights. Sum the weights.
-                output_arr[output_inds + (convind,)] = weights_matrix[
-                    filter_indices, ordinal_matrix[..., lower:upper_slice]
-                ].sum(**{"dim" if module is torch else "axis": -1})
-
-        # No Nan's in output
-        assert not module.any(module.isnan(output_arr))
-
-        return output_arr
+        # If numpy, loop over the leading dimension
+        assert weights.shape[1:] == self.weights.shape
+        assert ordinals.shape[1:] == self.ordinals.shape
+        assert weights.shape[0] == ordinals.shape[0]
+        return np.stack(
+            [
+                process_single(
+                    single_weights=weights_sample, single_ordinals=ordinals_sample
+                )
+                for weights_sample, ordinals_sample in zip(weights, ordinals)
+            ]
+        )
 
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
-        end_dims: dict[str, "custom_types.Integer"] | None = None
-        ) -> str:
+        end_dims: dict[str, "custom_types.Integer"] | None = None,
+    ) -> str:
 
         # Different default for end dims here
         end_dims = end_dims or {"weights": 1}
@@ -1165,7 +1205,9 @@ class ConvolveSequence(TransformedParameter):
         # of the weights. This is because we need both dimensions in the Stan code.
         return super().get_right_side(index_opts, end_dims=end_dims)
 
-    def write_stan_operation(self, weights: str, ordinals: str) -> str: # pylint: disable=arguments-differ
+    def write_stan_operation(  # pylint: disable=arguments-differ
+        self, weights: str, ordinals: str
+    ) -> str:
         """
         We need weights with no indexing. Indexing for sequence should be the standard
         (as we automatically assume that the last dimension is vectorized)
@@ -1252,9 +1294,7 @@ class IndexParameter(TransformedParameter):
 
     @overload
     def neg_to_pos(
-        self,
-        neg_ind: "custom_types.Integer",
-        dim: "custom_types.Integer"
+        self, neg_ind: "custom_types.Integer", dim: "custom_types.Integer"
     ) -> "custom_types.Integer": ...
 
     @overload
@@ -1320,6 +1360,7 @@ class IndexParameter(TransformedParameter):
         Processes the indices provided to the IndexParameter transformation to unify
         their format and determine the output shape.
         """
+
         def process_ellipsis() -> int:
             """Helper function to process Ellipses"""
             # We can only have one ellipsis
@@ -1327,12 +1368,14 @@ class IndexParameter(TransformedParameter):
                 raise ValueError("Only one ellipsis is allowed in indexing.")
 
             # Add slices to the processed dimensions
-            n_real_dims = sum(1 for ind in indices if ind is not Ellipsis and ind is not None)
+            n_real_dims = sum(
+                1 for ind in indices if ind is not Ellipsis and ind is not None
+            )
             n_to_add = len(self._dist_shape) - n_real_dims
             processed_inds.extend([slice(None) for _ in range(n_to_add)])
 
             # The shape is extended by the number added
-            shape.extend(self._dist_shape[shape_ind: shape_ind + n_to_add])
+            shape.extend(self._dist_shape[shape_ind : shape_ind + n_to_add])
 
             # Return the number of added dimensions
             return n_to_add
@@ -1365,7 +1408,9 @@ class IndexParameter(TransformedParameter):
 
             # Must be a 1D array
             if ind.ndim > 1:
-                raise IndexError("Cannot index with numpy array with more than 1 dimension")
+                raise IndexError(
+                    "Cannot index with numpy array with more than 1 dimension"
+                )
             elif ind.ndim == 0:
                 raise AssertionError("Should not get here")
 
@@ -1398,11 +1443,11 @@ class IndexParameter(TransformedParameter):
             return arrlen
 
         # Set up for recording
-        shape = [] # This parameter's shape
-        processed_inds = [] # Indices processed for use in Stan
-        shape_ind = 0 # Current dimension in the indexed parameter
-        parents: dict[str, constants.Constant] = {} # Constants for arrays
-        int_arr_len = 0 # Length of integer arrays
+        shape = []  # This parameter's shape
+        processed_inds = []  # Indices processed for use in Stan
+        shape_ind = 0  # Current dimension in the indexed parameter
+        parents: dict[str, constants.Constant] = {}  # Constants for arrays
+        int_arr_len = 0  # Length of integer arrays
 
         # Process indices
         for ind in indices:
@@ -1446,36 +1491,35 @@ class IndexParameter(TransformedParameter):
     def run_np_torch_op(  # pylint: disable=arguments-differ, unused-argument
         self, dist, **parents
     ):
-        # If torch, numpy arrays must go to torch
-        if utils.choose_module(dist) is torch:
+        # If torch, numpy arrays must go to torch. If numpy, we will have an
+        # additional leading index for sampling
+        module = utils.choose_module(dist)
+        if module is torch:
             inds = tuple(
-                torch.from_numpy(ind).to(dist.device) if isinstance(ind, np.ndarray)
-                else ind for ind in self._python_indices
+                (
+                    torch.from_numpy(ind).to(dist.device)
+                    if isinstance(ind, np.ndarray)
+                    else ind
+                )
+                for ind in self._python_indices
             )
         else:
-            inds = self._python_indices
+            inds = (slice(None), *self._python_indices)
 
-        # If the dist has the same number of dimensions as expected, just index
-        if dist.ndim == self.dist.ndim:
-            assert dist.shape == self.dist.shape
-            return dist[inds]
+        # Index and check shape
+        indexed = dist[inds]
+        if module is torch:
+            assert indexed.shape == self.shape
+        else:
+            assert indexed.shape[1:] == self.shape
 
-        # If the number of dimensions is different, we can only ever have one dimension
-        # extra that has been prepended due to sampling. This should only happen
-        # with numpy arrays
-        elif dist.ndim - 1 == self.dist.ndim:
-            assert dist.shape[1:] == self.dist.shape
-            assert isinstance(dist, np.ndarray)
-            return dist[:, *inds]
-
-        # Otherwise, we have an error
-        raise AssertionError("Unexpected tensor dimensions")
+        return indexed
 
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
-        end_dims: dict[str, "custom_types.Integer"] | None = None
+        end_dims: dict[str, "custom_types.Integer"] | None = None,
     ) -> str:
         """
         Gets the name of the variable that is being indexed, then passes it to
@@ -1499,7 +1543,7 @@ class IndexParameter(TransformedParameter):
             if isinstance(ind, slice):
                 start = "" if ind.start is None else str(ind.start)
                 end = "" if ind.stop is None else str(ind.stop)
-                index_pos += 1 # We keep a dimension with this operation
+                index_pos += 1  # We keep a dimension with this operation
                 current_component.append(f"{start}:{end}")
 
             # Handle integers
@@ -1525,8 +1569,8 @@ class IndexParameter(TransformedParameter):
                 )
 
                 # Update counters
-                index_pos += 1 # We keep a dimension with this operation
-                array_counter += 1 # Note finding another array
+                index_pos += 1  # We keep a dimension with this operation
+                array_counter += 1  # Note finding another array
 
             # Error with anything else
             else:
