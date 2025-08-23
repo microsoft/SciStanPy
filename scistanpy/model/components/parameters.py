@@ -6,7 +6,7 @@ import functools
 import re
 
 from abc import ABCMeta
-from typing import Callable, Optional, TYPE_CHECKING, Union
+from typing import Callable, Optional, overload, TYPE_CHECKING, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -38,12 +38,28 @@ if TYPE_CHECKING:
 # pylint: disable=too-many-lines
 
 
-def _inverse_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
+@overload
+def _inverse_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]: ...
+
+
+@overload
+def _inverse_transform(x: "custom_types.Float") -> "custom_types.Float": ...
+
+
+def _inverse_transform(x):
     """
     Simple inverse transformation function. Defined at top-level rather than as
     a lambda function to avoid pickling issues.
     """
     return 1 / x
+
+
+@overload
+def _exp_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]: ...
+
+
+@overload
+def _exp_transform(x: "custom_types.Float") -> "custom_types.Float": ...
 
 
 def _exp_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
@@ -240,10 +256,9 @@ class Parameter(
 
     def _draw(
         self,
-        n: custom_types.Integer,
-        level_draws: dict[str, npt.NDArray],
+        level_draws: dict[str, Union[npt.NDArray, "custom_types.Float"]],
         seed: Optional[custom_types.Integer],
-    ) -> npt.NDArray:
+    ) -> Union[npt.NDArray, "custom_types.Float", "custom_types.Integer"]:
         """
         Applies the appropriate transforms to the scipy draws from a parent parameter
         such that we can sample from the scipy distribution of this parameter.
@@ -258,8 +273,8 @@ class Parameter(
 
         # Draw from the scipy distribution
         return self.__class__.SCIPY_DIST.rvs(
-            **level_draws, size=(n,) + self.shape, random_state=seed
-        )
+            **level_draws, size=(1,) + self.shape, random_state=seed
+        )[0]
 
     def as_observable(self) -> "Parameter":
         """Redefines the parameter as an observable variable (i.e., data)"""

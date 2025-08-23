@@ -85,16 +85,15 @@ class Constant(abstract_model_component.AbstractModelComponent):
     # We need a draw method
     def _draw(
         self,
-        n: "custom_types.Integer",
-        level_draws: dict[str, npt.NDArray],
+        level_draws: dict[str, Union[npt.NDArray, "custom_types.Float"]],
         seed: Optional["custom_types.Integer"],
-    ) -> npt.NDArray:
+    ) -> Union[npt.NDArray, "custom_types.Float", "custom_types.Integer"]:
         """Draw values for this component."""
         # Level draws should be empty
         assert not level_draws
 
-        # Repeat the value n times
-        return np.broadcast_to(self.value[None], (n,) + self.value.shape)
+        # Just return the value
+        return self.value
 
     def get_right_side(
         self,

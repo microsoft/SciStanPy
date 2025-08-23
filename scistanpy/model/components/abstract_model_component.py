@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Literal, Optional, overload, TYPE_CHECKING
+from typing import Literal, Optional, overload, TYPE_CHECKING, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -308,10 +308,9 @@ class AbstractModelComponent(ABC):
     @abstractmethod
     def _draw(
         self,
-        n: "custom_types.Integer",
-        level_draws: dict[str, npt.NDArray],
+        level_draws: dict[str, Union[npt.NDArray, "custom_types.Float"]],
         seed: Optional["custom_types.Integer"],
-    ) -> npt.NDArray:
+    ) -> Union[npt.NDArray, "custom_types.Float", "custom_types.Integer"]:
         """Sample from the distribution that represents the parameter"""
 
     def draw(
@@ -342,16 +341,20 @@ class AbstractModelComponent(ABC):
                 parent_draw, _ = parent.draw(n, _drawn=_drawn, seed=seed)
                 _drawn[parent] = parent_draw
 
-            # Add the parent draw to the level draws. Expand the number of dimensions
-            # if necessary to account for the addition of "n" draws.
-            dims_to_add = max(0, (self.ndim + 1) - parent_draw.ndim)
-            level_draws[paramname] = np.expand_dims(
-                parent_draw, axis=tuple(range(1, dims_to_add + 1))
-            )
+            # Record the parent draw for this level
+            level_draws[paramname] = parent_draw
 
         # Now draw from the current parameter
         try:
-            draws = self._draw(n, level_draws, seed=seed)
+            draws = np.stack(
+                [
+                    self._draw(
+                        {k: v[i] for k, v in level_draws.items()},
+                        seed=(None if seed is None else seed + i),
+                    )
+                    for i in range(n)
+                ]
+            )
         except ValueError as error:
             raise NumpySampleError(
                 f"Error encountered when trying to sample from {self.model_varname}: {error}"
