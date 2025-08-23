@@ -48,12 +48,18 @@ class CDFLike(transformed_parameters.TransformedParameter):
     def check_parameters(self, kwargset: set[str]) -> None:
         """Checks if the parameters passed are the ones required for the CDF."""
         # Make sure that these are the only parameters passed
-        if additional_params := kwargset - self.PARAMETER.STAN_TO_SCIPY_NAMES.keys():
+        if (
+            additional_params := kwargset
+            - self.__class__.PARAMETER.STAN_TO_SCIPY_NAMES.keys()
+        ):
             raise TypeError(
                 f"Unexpected parameters {additional_params} passed to "
                 f"{self.__class__.__name__}."
             )
-        if missing_params := self.PARAMETER.STAN_TO_SCIPY_NAMES.keys() - kwargset:
+        if (
+            missing_params := self.__class__.PARAMETER.STAN_TO_SCIPY_NAMES.keys()
+            - kwargset
+        ):
             raise TypeError(
                 f"Missing parameters {missing_params} for {self.__class__.__name__}."
             )
@@ -73,21 +79,27 @@ class CDFLike(transformed_parameters.TransformedParameter):
         # return the CDF, so child classes need to override this method.
         if module is np:
             kwargs = {
-                self.PARAMETER.STAN_TO_SCIPY_NAMES[
+                self.__class__.PARAMETER.STAN_TO_SCIPY_NAMES[
                     name
-                ]: self.PARAMETER.STAN_TO_SCIPY_TRANSFORMS.get(name, lambda x: x)(draw)
+                ]: self.__class__.PARAMETER.STAN_TO_SCIPY_TRANSFORMS.get(
+                    name, lambda x: x
+                )(
+                    draw
+                )
                 for name, draw in draws_copy.items()
             }
-            return getattr(self.PARAMETER.SCIPY_DIST, self.SCIPY_FUNC)(x, **kwargs)
+            return getattr(self.__class__.PARAMETER.SCIPY_DIST, self.SCIPY_FUNC)(
+                x, **kwargs
+            )
 
         # Torch separates distribution creation and function operation, so we need
         # to split out the 'x' value from the draws.
         elif module is torch:
 
             # Build the distribution
-            dist = self.PARAMETER.TORCH_DIST(
+            dist = self.__class__.PARAMETER.TORCH_DIST(
                 **{
-                    self.PARAMETER.STAN_TO_TORCH_NAMES[name]: draw
+                    self.__class__.PARAMETER.STAN_TO_TORCH_NAMES[name]: draw
                     for name, draw in draws_copy.items()
                 }
             )
@@ -95,7 +107,12 @@ class CDFLike(transformed_parameters.TransformedParameter):
             # Run the appropriate function. Some torch dists have custom functions
             # that explicitly calculate the target value. Others extend the CDF.
             return getattr(
-                dist, self.TORCH_FUNC if hasattr(dist, self.TORCH_FUNC) else "cdf"
+                dist,
+                (
+                    self.__class__.TORCH_FUNC
+                    if hasattr(dist, self.__class__.TORCH_FUNC)
+                    else "cdf"
+                ),
             )(x)
         else:
             raise TypeError(
@@ -106,8 +123,10 @@ class CDFLike(transformed_parameters.TransformedParameter):
     def write_stan_operation(self, **kwargs) -> str:
 
         # Get the function and arguments for the operation
-        func = f"{self.PARAMETER.STAN_DIST}_{self.STAN_SUFFIX}"
-        args = ", ".join(kwargs[name] for name in self.PARAMETER.STAN_TO_SCIPY_NAMES)
+        func = f"{self.__class__.PARAMETER.STAN_DIST}_{self.STAN_SUFFIX}"
+        args = ", ".join(
+            kwargs[name] for name in self.__class__.PARAMETER.STAN_TO_SCIPY_NAMES
+        )
 
         return f"{func}({kwargs['x']} | {args})"
 
@@ -168,7 +187,7 @@ class LogCDF(CDFLike):
 
         # If using torch, return the log CDF
         elif isinstance(output, torch.Tensor):
-            if hasattr(self.PARAMETER.TORCH_DIST, self.TORCH_FUNC):
+            if hasattr(self.__class__.PARAMETER.TORCH_DIST, self.__class__.TORCH_FUNC):
                 return output
             return torch.log(output)
 
@@ -198,7 +217,7 @@ class LogSurvivalFunction(CDFLike):
 
         # If using torch, return the log of 1 minus the CDF
         elif isinstance(output, torch.Tensor):
-            if hasattr(self.PARAMETER.TORCH_DIST, self.TORCH_FUNC):
+            if hasattr(self.__class__.PARAMETER.TORCH_DIST, self.__class__.TORCH_FUNC):
                 return output
             return torch.log1p(-output)
 

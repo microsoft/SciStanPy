@@ -257,7 +257,7 @@ class Parameter(
         }
 
         # Draw from the scipy distribution
-        return self.SCIPY_DIST.rvs(
+        return self.__class__.SCIPY_DIST.rvs(
             **level_draws, size=(n,) + self.shape, random_state=seed
         )
 
@@ -416,7 +416,7 @@ class Parameter(
     @property
     def torch_dist_instance(self) -> "custom_types.SciStanPyDistribution":
         """Returns an instance of the torch distribution class"""
-        return self.TORCH_DIST(  # pylint: disable=not-callable
+        return self.__class__.TORCH_DIST(  # pylint: disable=not-callable
             **{
                 self.STAN_TO_TORCH_NAMES[name]: torch.broadcast_to(
                     param.torch_parametrization, self.shape

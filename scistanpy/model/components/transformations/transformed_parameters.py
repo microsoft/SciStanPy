@@ -405,9 +405,10 @@ class Reduction(UnaryTransformedParameter):
             keepdim = self.keepdims
 
         if isinstance(dist1, torch.Tensor):
-            return self.TORCH_FUNC(dist1, keepdim=keepdim, dim=-1)
+            return self.__class__.TORCH_FUNC(dist1, keepdim=keepdim, dim=-1)
         else:
-            return self.NP_FUNC(dist1, keepdims=keepdim, axis=-1)
+            print(dist1)
+            return self.__class__.NP_FUNC(dist1, keepdims=keepdim, axis=-1)
 
 
 class LogSumExpParameter(Reduction):
@@ -1053,16 +1054,24 @@ class ConvolveSequence(TransformedParameter):
         filter_indices = module.arange(self.kernel_size)
 
         # Determine the number of dimensions to prepend to each array
-        weights_n_prepends = len(self.shape[:-1]) - len(weights.shape[:-2])
-        ordinal_n_prepends = len(self.shape[:-1]) - len(ordinals.shape[:-1])
+        weights_n_prepends = len(self.shape[:-1]) - len(self.weights.shape[:-2])
+        ordinal_n_prepends = len(self.shape[:-1]) - len(self.ordinals.shape[:-1])
 
-        # Get the padded shapes
-        padded_weights_shape = (None,) * weights_n_prepends + tuple(weights.shape)[:-2]
-        padded_ordinals_shape = (None,) * ordinal_n_prepends + tuple(ordinals.shape)[:-1]
+        # Get the padded shapes. They are different for pytorch and numpy. This
+        # is because numpy is used with an added leading dimension for the draw
+        padded_weights_shape = (None,) * weights_n_prepends + self.weights.shape[:-2]
+        padded_ordinals_shape = (None,) * ordinal_n_prepends + self.ordinals.shape[:-1]
+        if module is np:
+            padded_weights_shape = (weights.shape[0], ) + padded_weights_shape
+            padded_ordinals_shape = (ordinals.shape[0], ) + padded_ordinals_shape
+            assert padded_weights_shape[0] == padded_ordinals_shape[0]
+        else:
+            raise ValueError("Unsupported module type.")
         assert len(padded_weights_shape) == len(padded_ordinals_shape)
 
         # Set output array
-        output_arr = module.full(self.shape, np.nan)
+        outshape = self.shape if module is torch else (padded_weights_shape[0], *self.shape)
+        output_arr = module.full(outshape, np.nan)
 
         # If torch, send arrays to appropriate device
         if module is torch:
@@ -1073,7 +1082,10 @@ class ConvolveSequence(TransformedParameter):
         for weights_inds in np.ndindex(weights.shape[:-2]):
 
             # Prepend `None` to the weight indices if needed
-            weights_inds = (None,) * weights_n_prepends + weights_inds
+            if module is torch:
+                weights_inds = (None,) * weights_n_prepends + weights_inds
+            else:
+                weights_inds = (weights_inds[0],) + (None,) * weights_n_prepends + weights_inds[1:]
 
             # Determine the ordinal and output indices. If weights or ordinals are a singleton,
             # slice all for the ordinal indices.
@@ -1113,7 +1125,7 @@ class ConvolveSequence(TransformedParameter):
             # Convert indices to tuples
             ordinal_inds = tuple(ordinal_inds)
             output_inds = tuple(output_inds)
-            assert len(output_inds) == len(self.shape) - 1
+            assert len(output_inds) == len(outshape) - 1
 
             # Get the matrix and set of sequences to which it will be applied
             weights_matrix = weights[weights_inds]
