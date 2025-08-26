@@ -290,7 +290,7 @@ class AbstractModelComponent(ABC):
         # Skip singleton dimensions. All others get the index options.
         indices = [
             index_opts[index_ind]
-            for index_ind, dimsize in enumerate(self.shape[start_dim:end_dim])
+            for index_ind, dimsize in enumerate(self.shape[start_dim:end_dim], offset)
             if dimsize != 1
         ]
 
@@ -520,9 +520,13 @@ class AbstractModelComponent(ABC):
         model_components: dict[str, str] = {}
         for name, param in self._parents.items():
 
+            # What's the current parameter in the loop?
+            current_offset = offset.get(name, self.ndim - param.ndim)
+
             # If the parameter is a constant or another parameter OR it is a named
             # transformed parameter OR the assignment depth changes, we get its
-            # indexed variable name
+            # indexed variable name offset by the appropriate amount to account
+            # for implicit singleton dimensions
             if (
                 isinstance(
                     param,
@@ -533,7 +537,7 @@ class AbstractModelComponent(ABC):
             ):
                 model_components[name] = param.get_indexed_varname(
                     index_opts,
-                    offset=offset.get(name, self.ndim - param.ndim),
+                    offset=current_offset,
                     start_dim=start_dims.get(name, 0),
                     end_dim=end_dims.get(name, -1),
                 )
@@ -542,7 +546,16 @@ class AbstractModelComponent(ABC):
             # transformation for the parameter. This is equivalent to calling the
             # get_right_side method of the parameter.
             elif isinstance(param, transformed_parameters.TransformedParameter):
-                model_components[name] = param.get_right_side(index_opts)
+
+                # We need to propogate the offset of the current parameter in the
+                # loop to ITS parents
+                model_components[name] = param.get_right_side(
+                    index_opts,
+                    offset={
+                        gparent_name: param.ndim - gparent.ndim + current_offset
+                        for gparent_name, gparent in param._parents.items()  # pylint: disable=protected-access
+                    },
+                )
 
             # Otherwise, raise an error
             else:
