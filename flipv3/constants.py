@@ -5,7 +5,7 @@ from typing import Literal
 # Default values for hyperparameters
 DEFAULT_HYPERPARAMS = {
     "alpha": 0.1,
-    "exp_beta": 0.5,
+    "exp_beta": 4.0,
     "exp_beta_nuclease": 10.0,
     "lambda_": 1.0,
     "lomax_alpha": 1.0,
