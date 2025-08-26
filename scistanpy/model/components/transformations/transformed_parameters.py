@@ -67,10 +67,21 @@ class Transformation(abstract_model_component.AbstractModelComponent):
 
     SHAPE_CHECK: bool = True
 
-    def _transformation(self, index_opts: tuple[str, ...]) -> str:
+    def _transformation(
+        self,
+        index_opts: tuple[str, ...] | None,
+        assignment_kwargs: dict | None = None,
+        right_side_kwargs: dict | None = None,
+    ) -> str:
         """Return the transformation for the parameter."""
-        return f"{self.get_indexed_varname(index_opts)} = " + self.get_right_side(
-            index_opts
+        # Set defaults
+        assignment_kwargs = assignment_kwargs or {}
+        right_side_kwargs = right_side_kwargs or {}
+
+        # Build assignment
+        return (
+            f"{self.get_indexed_varname(index_opts, **assignment_kwargs)} = "
+            + self.get_right_side(index_opts, **right_side_kwargs)
         )
 
     @abstractmethod
@@ -82,13 +93,14 @@ class Transformation(abstract_model_component.AbstractModelComponent):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
         end_dims: dict[str, "custom_types.Integer"] | None = None,
+        offset: dict[str, "custom_types.Integer"] | None = None,
     ) -> str:
         """Gets the right-hand-side of the assignment operation for this parameter."""
         # Call the inherited method to get a dictionary mapping parent names to
         # either their indexed variable names (if they are named) or the thread
         # of operations that define them (if they are not named).
         components = super().get_right_side(
-            index_opts, start_dims=start_dims, end_dims=end_dims
+            index_opts, start_dims=start_dims, end_dims=end_dims, offset=offset
         )
 
         # Wrap the declaration for any unnamed parents in parentheses. This is to
@@ -409,6 +421,43 @@ class Reduction(UnaryTransformedParameter):
             return self.__class__.TORCH_FUNC(dist1, keepdim=keepdim, dim=-1)
         else:
             return self.__class__.NP_FUNC(dist1, keepdims=keepdim, axis=-1)
+
+    def get_right_side(
+        self,
+        index_opts: tuple[str, ...] | None,
+        start_dims: dict[str, "custom_types.Integer"] | None = None,
+        end_dims: dict[str, "custom_types.Integer"] | None = None,
+        offset: dict[str, "custom_types.Integer"] | None = None,
+    ) -> str:
+
+        # Offset is always going to be zero for reductions by default
+        if offset is None:
+            offset = {"dist1": 0}
+
+        return super().get_right_side(
+            index_opts=index_opts,
+            start_dims=start_dims,
+            end_dims=end_dims,
+            offset=offset,
+        )
+
+    def get_assign_depth(self) -> int:
+        """One level higher than the shape would suggest"""
+        return super().get_assign_depth() + 1
+
+    def get_transformation_assignment(self, index_opts: tuple[str, ...] | None) -> str:
+        """
+        Gets the name of the variable that is being indexed, then passes it to
+        the `write_stan_operation` method to get the full Stan code for the transformation
+        """
+        # If we are losing a dimension, then assignment should not trim off a dim
+        # pylint: disable=no-value-for-parameter
+        if self.keepdims:
+            return super().get_transformation_assignment(index_opts)
+
+        return super().get_transformation_assignment(
+            index_opts, assignment_kwargs={"end_dim": None}
+        )
 
 
 class LogSumExpParameter(Reduction):
@@ -1154,15 +1203,17 @@ class ConvolveSequence(TransformedParameter):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
         end_dims: dict[str, "custom_types.Integer"] | None = None,
+        offset: dict[str, "custom_types.Integer"] | None = None,
     ) -> str:
 
-        # Different default for end dims here
-        end_dims = end_dims or {"weights": 1}
+        # Different default for end dims and offset here
+        end_dims = end_dims or {"weights": -2}
+        offset = offset or {"weights": self.ndim - self.weights.ndim + 1}
 
         # Run the AbstractModelParameter version of the method to get each model
         # component formatted appropriately. Note that we ignore the last dimension
         # of the weights. This is because we need both dimensions in the Stan code.
-        return super().get_right_side(index_opts, end_dims=end_dims)
+        return super().get_right_side(index_opts, end_dims=end_dims, offset=offset)
 
     def write_stan_operation(  # pylint: disable=arguments-differ
         self, weights: str, ordinals: str
@@ -1320,7 +1371,7 @@ class IndexParameter(TransformedParameter):
         their format and determine the output shape.
         """
 
-        def process_ellipsis() -> int:
+        def process_ellipsis() -> "custom_types.Integer":
             """Helper function to process Ellipses"""
             # We can only have one ellipsis
             if sum(1 for ind in indices if ind is Ellipsis) > 1:
@@ -1362,7 +1413,7 @@ class IndexParameter(TransformedParameter):
             shape.append(stop - start)
             processed_inds.append(slice(start + 1, stop))
 
-        def process_array() -> int:
+        def process_array() -> "custom_types.Integer":
             """Helper function to process numpy arrays and constants."""
 
             # Must be a 1D array
@@ -1475,6 +1526,7 @@ class IndexParameter(TransformedParameter):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
         end_dims: dict[str, "custom_types.Integer"] | None = None,
+        offset: dict[str, "custom_types.Integer"] | None = None,
     ) -> str:
         """
         Gets the name of the variable that is being indexed, then passes it to
@@ -1537,7 +1589,21 @@ class IndexParameter(TransformedParameter):
         # Join all components
         return dist + "[" + "][".join(",".join(c) for c in components) + "]"
 
+    def get_transformation_assignment(  # pylint: disable=unused-argument
+        self, index_opts: tuple[str, ...] | None
+    ) -> str:
+        """
+        Gets the name of the variable that is being indexed, then passes it to
+        the `write_stan_operation` method to get the full Stan code for the transformation
+        """
+        # pylint: disable=no-value-for-parameter
+        return super().get_transformation_assignment(None)  # Assigned directly
+
     # The definition depth is always 0 for this transformation
-    @property
-    def assign_depth(self) -> int:  # pylint: disable=C0116
+    def get_assign_depth(self) -> "custom_types.Integer":  # pylint: disable=C0116
         return 0
+
+    @property
+    def force_name(self) -> bool:
+        """Force naming of indexed parameters"""
+        return True

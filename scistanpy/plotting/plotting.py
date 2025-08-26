@@ -447,7 +447,7 @@ def plot_calibration(
     # pylint: disable=line-too-long
     def calculate_deviance(
         x: npt.NDArray[np.floating], y: npt.NDArray[np.floating]
-    ) -> float:
+    ) -> "custom_types.Float":
         r"""
         Calculates the absolute difference in area between the observed ECDF and the
         ideal ECDF. We can calculate this by subtracting the area under the curve

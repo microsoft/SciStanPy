@@ -100,6 +100,7 @@ class Constant(abstract_model_component.AbstractModelComponent):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
         end_dims: dict[str, "custom_types.Integer"] | None = None,
+        offset: dict[str, "custom_types.Integer"] | None = None,
     ) -> str:
         """Return the Stan code for this component (there is none)."""
         return ""
@@ -135,7 +136,7 @@ class Constant(abstract_model_component.AbstractModelComponent):
         return f"{self.model_varname} = {self.value}"
 
     @property
-    def slider_start(self) -> float:
+    def slider_start(self) -> "custom_types.Float":
         """Starting values for sliders in prior predictive checks."""
         # Lower bound if we have one
         if self.LOWER_BOUND is not None:
@@ -145,7 +146,7 @@ class Constant(abstract_model_component.AbstractModelComponent):
         return self._get_lim("low")[0]
 
     @property
-    def slider_end(self) -> float:
+    def slider_end(self) -> "custom_types.Float":
         """Ending values for sliders in prior predictive checks."""
         # Upper bound if we have one
         if self.UPPER_BOUND is not None:
@@ -155,7 +156,7 @@ class Constant(abstract_model_component.AbstractModelComponent):
         return self._get_lim("high")[0]
 
     @property
-    def slider_step_size(self) -> float:
+    def slider_step_size(self) -> "custom_types.Float":
         """We allow 100 steps between the start and end values"""
         # Get the order of magnitude of the value. We want to round to 2 orders
         return (self.slider_end - self.slider_start) / 100

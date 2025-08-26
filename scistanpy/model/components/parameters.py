@@ -230,7 +230,7 @@ class Parameter(
             raise ValueError("Observables do not have a torch parametrization")
 
         # If no initialization value is provided, then we create one on the range
-        # of -1 to 1. This is done by drawing from the distribution.
+        # of -1 to 1.
         if init_val is None:
             init_val = np.squeeze(
                 self.get_rng(seed=seed).uniform(
@@ -354,6 +354,7 @@ class Parameter(
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, custom_types.Integer] | None = None,
         end_dims: dict[str, custom_types.Integer] | None = None,
+        offset: dict[str, "custom_types.Integer"] | None = None,
         dist_suffix: str = "",
     ) -> str:
         # Get the formattables
@@ -361,6 +362,7 @@ class Parameter(
             index_opts=index_opts,
             start_dims=start_dims,
             end_dims=end_dims,
+            offset=offset,
         )
 
         # Build the distribution argument and format the Stan code
@@ -372,6 +374,21 @@ class Parameter(
     def get_transformed_data_declaration(self) -> str:
         """Returns the Stan code for the transformed data block if there is any"""
         # None by default
+        return ""
+
+    def get_generated_quantity_declaration(self, force_basetype: bool = True) -> str:
+        """Returns the Stan generated quantity declaration for this parameter."""
+        return self.declare_stan_variable(
+            self.generated_varname, force_basetype=force_basetype
+        )
+
+    def get_raw_stan_parameter_declaration(self, force_basetype: bool = False) -> str:
+        """Declares the raw Stan parameter for this parameter."""
+        if self.HAS_RAW_VARNAME:
+            return self.declare_stan_variable(
+                self.raw_varname, force_basetype=force_basetype
+            )
+
         return ""
 
     # pylint: disable=no-self-argument
@@ -496,11 +513,6 @@ class Parameter(
         return f"{self.model_varname}_ppc"
 
     @property
-    def stan_generated_quantity_declaration(self) -> str:
-        """Returns the Stan generated quantity declaration for this parameter."""
-        return self.declare_stan_variable(self.generated_varname)
-
-    @property
     def observable(self) -> bool:
         """Observable if the parameter has no children or it is set as such."""
         return self._observable or all(
@@ -516,14 +528,6 @@ class Parameter(
         indicating no raw variable name.
         """
         return f"{self.stan_model_varname}_raw" if self.HAS_RAW_VARNAME else ""
-
-    @property
-    def raw_stan_parameter_declaration(self) -> str:
-        """Declares the raw Stan parameter for this parameter."""
-        if self.HAS_RAW_VARNAME:
-            return self.declare_stan_variable(self.raw_varname)
-
-        return ""
 
 
 class ContinuousDistribution(Parameter, transformed_parameters.TransformableParameter):
@@ -606,6 +610,7 @@ class Normal(ContinuousDistribution):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, custom_types.Integer] | None = None,
         end_dims: dict[str, custom_types.Integer] | None = None,
+        offset: dict[str, "custom_types.Integer"] | None = None,
         dist_suffix: str = "",
     ) -> str:
         # If not noncentered, run the parent method
@@ -614,6 +619,7 @@ class Normal(ContinuousDistribution):
                 index_opts,
                 start_dims=start_dims,
                 end_dims=end_dims,
+                offset=offset,
                 dist_suffix=dist_suffix,
             )
 
@@ -885,6 +891,7 @@ class ExpDirichlet(Dirichlet):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, custom_types.Integer] | None = None,
         end_dims: dict[str, custom_types.Integer] | None = None,
+        offset: dict[str, "custom_types.Integer"] | None = None,
         dist_suffix: str = "",
     ) -> str:
         # If no suffix is provided, determine whether we are using the normalized
@@ -898,18 +905,20 @@ class ExpDirichlet(Dirichlet):
             index_opts,
             start_dims=start_dims,
             end_dims=end_dims,
+            offset=offset,
             dist_suffix=dist_suffix,
         )
 
-    @property
-    def raw_stan_parameter_declaration(self) -> str:
+    def get_raw_stan_parameter_declaration(self, force_basetype: bool = False) -> str:
         """
         Declares the raw Stan parameter for this parameter. We must account for
         the fact that the raw parameter has K - 1 dimensions, where K is the number
         of categories in the Dirichlet distribution.
         """
         # Run the parent method to get the raw variable name
-        raw_varname = super().raw_stan_parameter_declaration
+        raw_varname = super().get_raw_stan_parameter_declaration(
+            force_basetype=force_basetype
+        )
 
         # We should always have a raw variable name if we are using the Exp-Dirichlet
         assert raw_varname, "Raw variable name should not be empty for Exp-Dirichlet"
@@ -1065,6 +1074,7 @@ class MultinomialLogTheta(_MultinomialBase):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, custom_types.Integer] | None = None,
         end_dims: dict[str, custom_types.Integer] | None = None,
+        offset: dict[str, "custom_types.Integer"] | None = None,
         dist_suffix: str = "",
     ) -> str:
         """
@@ -1072,7 +1082,7 @@ class MultinomialLogTheta(_MultinomialBase):
         """
         # Get the formattables
         formattables = super(Parameter, self).get_right_side(
-            index_opts, start_dims=start_dims, end_dims=end_dims
+            index_opts, start_dims=start_dims, end_dims=end_dims, offset=offset
         )
 
         # If no suffix is provided and this is an observable, we want to add the

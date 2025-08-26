@@ -143,7 +143,7 @@ class StanCodeBase(ABC, list):
                 isinstance(
                     nested_component, transformed_parameters.TransformedParameter
                 )
-                and nested_component.is_named
+                and (nested_component.is_named or nested_component.force_name)
             )
 
         def filter_transformed_data(
@@ -179,6 +179,8 @@ class StanCodeBase(ABC, list):
 
                 # If this is a for loop, perform a series of checks to see if we can
                 # combine it with the previous loop (if there was one).
+                # TODO: This does not combine when we have singletons -- fix
+                # TODO: This does not combine when we have a reduction -- fix
                 if isinstance(current_component, StanForLoop):
 
                     # Combine with the previous for-loop if it is compatible
@@ -342,7 +344,7 @@ class StanCodeBase(ABC, list):
 
     @property
     @abstractmethod
-    def depth(self) -> int:
+    def depth(self) -> "custom_types.Integer":
         """Returns the depth of the object."""
 
     @property
@@ -449,7 +451,7 @@ class StanForLoop(StanCodeBase):
         return new_loop
 
     @property
-    def end(self) -> int:
+    def end(self) -> "custom_types.Integer":
         """
         The end value of the loop. This is the size of all non-loop contents at
         the index level.
@@ -486,7 +488,7 @@ class StanForLoop(StanCodeBase):
         return self.program.allowed_index_names
 
     @property
-    def depth(self) -> int:
+    def depth(self) -> "custom_types.Integer":
         """Returns the depth of the loop, which is the number of ancestors."""
         n_ancestors = len(self.ancestry)
         assert n_ancestors > 0
@@ -715,7 +717,7 @@ class StanProgram(StanCodeBase):
         super().append(component)
 
     @property
-    def depth(self) -> int:
+    def depth(self) -> "custom_types.Integer":
         """Returns the depth of the program, which is always 0."""
         return 0
 
@@ -769,7 +771,7 @@ class StanProgram(StanCodeBase):
         # Get the declarations for the data block. This is all observables and all
         # constants.
         declarations = [
-            component.stan_parameter_declaration
+            component.get_stan_parameter_declaration()
             for component in self.model.all_model_components
             if (isinstance(component, parameters.Parameter) and component.observable)
             or isinstance(component, constants.Constant)
@@ -785,7 +787,7 @@ class StanProgram(StanCodeBase):
         """Returns the Stan code for the transformed data block."""
         # Check parameters for any transformed data.
         declarations = [
-            component.stan_parameter_declaration
+            component.get_stan_parameter_declaration()
             for component in self.model.all_model_components
             if isinstance(component, transformed_data.TransformedData)
         ]
@@ -810,11 +812,11 @@ class StanProgram(StanCodeBase):
             # If the component is defined in raw form, we declare the raw variable.
             # The true variable will be defined in the transformed parameters block.
             if component.HAS_RAW_VARNAME:
-                declarations.append(component.raw_stan_parameter_declaration)
+                declarations.append(component.get_raw_stan_parameter_declaration())
 
             # Otherwise, add regular declarations for parameters.
             else:
-                declarations.append(component.stan_parameter_declaration)
+                declarations.append(component.get_stan_parameter_declaration())
 
         # Combine the lines and enclose in the parameters block
         return (
@@ -836,7 +838,7 @@ class StanProgram(StanCodeBase):
         # that are named or indexed. We also take any Parameter that transforms
         # a raw to a real parameter
         declarations = [
-            component.stan_parameter_declaration
+            component.get_stan_parameter_declaration()
             for component in self.recurse_model_components()
             if (
                 isinstance(component, transformed_parameters.TransformedParameter)
@@ -860,7 +862,7 @@ class StanProgram(StanCodeBase):
         # Get declarations for the generated quantities block. This is all observables
         # in the program.
         declarations = [
-            component.stan_generated_quantity_declaration
+            component.get_generated_quantity_declaration()
             for component in self.recurse_model_components()
             if isinstance(component, parameters.Parameter) and component.observable
         ]
@@ -1078,6 +1080,12 @@ class StanModel(CmdStanModel):
 
         # Pull the hyperparameters from the model and add them to the inputs
         observables.update(self.autogathered_data)
+
+        # Squeeze all numpy arrays
+        observables = {
+            name: obs.squeeze() if isinstance(obs, np.ndarray) else obs
+            for name, obs in observables.items()
+        }
 
         # All dots in the names must be replaced with double underscores
         return {name.replace(".", "__"): obs for name, obs in observables.items()}

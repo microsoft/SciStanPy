@@ -243,7 +243,7 @@ class AbstractModelComponent(ABC):
         index_opts: tuple[str, ...] | None,
         offset: "custom_types.Integer" = 0,
         start_dim: "custom_types.Integer" = 0,
-        end_dim: "custom_types.Integer" = -1,
+        end_dim: Optional["custom_types.Integer"] = -1,
         _name_override: str = "",
     ) -> str:
         """
@@ -260,8 +260,8 @@ class AbstractModelComponent(ABC):
             start_dim (int): The first dimensions to include in the variable name.
                 For example, if the parameter has N dims and `start_dim = 1`, then
                 we index only the last N - 1 dims.
-            end_dim (int): The last index to include in the variable name.
-                For example, if the parameter has N dims and `end_dim = -2`,
+            end_dim (int): The end of the range for the variable name.
+                For example, if the parameter has N dims and `end_dim = -1`,
                 then we index only the first N - 1 dims.
 
         Returns:
@@ -269,7 +269,11 @@ class AbstractModelComponent(ABC):
             bool: Whether the variable is a vector.
         """
         # Offset must be >= 0
-        assert offset >= 0
+        assert offset >= 0, self.model_varname
+
+        # If end dim is not provided, set it to the number of dimensions
+        if end_dim is None:
+            end_dim = self.ndim
 
         # If the name override is provided, then we use that name
         base_name = _name_override or self.stan_model_varname
@@ -280,21 +284,15 @@ class AbstractModelComponent(ABC):
 
         # First and last dim must be positive integers
         start_dim = start_dim if start_dim >= 0 else self.ndim + start_dim
-        end_dim = end_dim if end_dim >= 0 else self.ndim + end_dim + 1
-        assert end_dim > start_dim
+        end_dim = end_dim if end_dim >= 0 else self.ndim + end_dim
+        assert end_dim >= start_dim
 
-        # Singleton dimensions get a "1" index. All others get the index options.
+        # Skip singleton dimensions. All others get the index options.
         indices = [
-            "1" if dimsize == 1 else index_opts[i]
-            for i, dimsize in enumerate(
-                self.shape[start_dim:end_dim], start=offset + start_dim
-            )
+            index_opts[index_ind]
+            for index_ind, dimsize in enumerate(self.shape[start_dim:end_dim])
+            if dimsize != 1
         ]
-
-        # If the last dimension is vectorized, then we don't need to index it. We
-        # assume that the last dimension is always vectorized.
-        if indices[-1] != "1":
-            indices = indices[:-1]
 
         # If there are no indices, then we just return the variable name
         if len(indices) == 0:
@@ -423,7 +421,9 @@ class AbstractModelComponent(ABC):
 
         return to_return
 
-    def get_shared_leading(self, other: "AbstractModelComponent") -> int:
+    def get_shared_leading(
+        self, other: "AbstractModelComponent"
+    ) -> "custom_types.Integer":
         """
         Determines the extent to which the shapes of this and the other components
         are compatible. This is the number of shared leading dimensions between
@@ -488,6 +488,7 @@ class AbstractModelComponent(ABC):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
         end_dims: dict[str, "custom_types.Integer"] | None = None,
+        offset: dict[str, "custom_types.Integer"] | None = None,
     ) -> dict[str, str]:
         """
         Gets the right side of any statement (i.e., Stan code to the right of an
@@ -509,9 +510,10 @@ class AbstractModelComponent(ABC):
         The dictionary is then used to format the Stan code for the right-hand-side
         of the statement in the get_right_side method of the child class.
         """
-        # Get default values for start and end dims
+        # Get default values for start and end dims plus the offset
         start_dims = start_dims or {}
         end_dims = end_dims or {}
+        offset = offset or {}
 
         # Get variables that make up the right side of the statement. These will
         # be the parent parameters of the current parameter.
@@ -519,17 +521,19 @@ class AbstractModelComponent(ABC):
         for name, param in self._parents.items():
 
             # If the parameter is a constant or another parameter OR it is a named
-            # transformed parameter, we get its indexed variable name
+            # transformed parameter OR the assignment depth changes, we get its
+            # indexed variable name
             if (
                 isinstance(
                     param,
                     (constants_module.Constant, parameters.Parameter),
                 )
                 or param.is_named
+                or param.force_name
             ):
                 model_components[name] = param.get_indexed_varname(
                     index_opts,
-                    offset=self.ndim - param.ndim,
+                    offset=offset.get(name, self.ndim - param.ndim),
                     start_dim=start_dims.get(name, 0),
                     end_dim=end_dims.get(name, -1),
                 )
@@ -546,9 +550,73 @@ class AbstractModelComponent(ABC):
 
         return model_components
 
-    def declare_stan_variable(self, varname: str) -> str:
+    def declare_stan_variable(self, varname: str, force_basetype: bool = False) -> str:
         """Declares a variable in Stan code."""
-        return f"{self.stan_dtype} {varname}"
+        return f"{self.get_stan_dtype(force_basetype)} {varname}"
+
+    def get_assign_depth(self) -> int:
+        """
+        The level (index of the for-loop block) at which the parameter is DEFINED
+        in the Stan code. This is the number of dimensions, excluding trailing singleton
+        dimensions, of the parameter minus one, clipped at zero. Note that the
+        parameter might be manipulated at a different level in the code than the
+        level at which it is defined.
+        """
+        # Default is number of dimensions minus one. We subtract one because the
+        # last dimension is always vectorized.
+        level = self.ndim - 1
+
+        # Subtract off trailing singleton dimensions ignoring the last dimension
+        # (again, always vectorized)
+        for dimsize in reversed(self.shape[:-1]):
+            if dimsize > 1:
+                break
+            level -= 1
+
+        # Clip at zero
+        return max(level, 0)
+
+    def get_stan_dtype(self, force_basetype: bool = False) -> str:
+        """Return the Stan data type for this parameter"""
+
+        # Get the base datatype
+        dtype = self.BASE_STAN_DTYPE
+
+        # Convert shape to strings
+        string_shape = [str(dim) for dim in self.shape if dim > 1]
+        ndim = len(string_shape)
+
+        # Base data type for 0-dimensional parameters. If the parameter is 0-dimensional,
+        # then we can only have real or int as the data type.
+        if ndim == 0:
+            assert dtype in {"real", "int"}
+            return f"{dtype}{self.stan_bounds}"
+
+        # Handle different data types for different dimensions
+        if dtype == "int" or force_basetype:
+            return (
+                f"array[{','.join(string_shape)}] "
+                + ("int" if dtype == "int" else "real")
+                + self.stan_bounds
+            )
+        if dtype == "real":  # Becomes vector or array of vectors
+            dtype = f"vector{self.stan_bounds}[{string_shape[-1]}]"
+        elif dtype == "simplex":  # Becomes array of simplexes
+            dtype = f"simplex[{string_shape[-1]}]"
+        else:
+            raise AssertionError(f"Unknown data type {dtype}")
+
+        # Convert to an array of vectors or simplexes if necessary
+        if ndim > 1:
+            return f"array[{','.join(string_shape[:-1])}] {dtype}"
+
+        return dtype
+
+    def get_stan_parameter_declaration(self, force_basetype: bool = False) -> str:
+        """Returns the Stan parameter declaration for this parameter."""
+        return self.declare_stan_variable(
+            self.stan_model_varname, force_basetype=force_basetype
+        )
 
     @abstractmethod
     def __str__(self) -> str:
@@ -610,7 +678,7 @@ class AbstractModelComponent(ABC):
         return self._shape
 
     @property
-    def ndim(self) -> int:
+    def ndim(self) -> "custom_types.Integer":
         """Return the number of dimensions of the parameter"""
         return len(self.shape)
 
@@ -640,42 +708,7 @@ class AbstractModelComponent(ABC):
         return f"<{bounds}>"
 
     @property
-    def stan_dtype(self) -> str:
-        """Return the Stan data type for this parameter"""
-
-        # Get the base datatype
-        dtype = self.BASE_STAN_DTYPE
-
-        # Base data type for 0-dimensional parameters. If the parameter is 0-dimensional,
-        # then we can only have real or int as the data type.
-        if self.ndim == 0:
-            assert dtype in {"real", "int"}
-            return f"{dtype}{self.stan_bounds}"
-
-        # Convert shape to strings
-        string_shape = [str(dim) for dim in self.shape]
-
-        # Handle different data types for different dimensions
-        check_array = False
-        if dtype == "real":  # Becomes vector or array of vectors
-            dtype = f"vector{self.stan_bounds}[{string_shape[-1]}]"
-            check_array = True
-        elif dtype == "int":  # Becomes array
-            dtype = f"array[{','.join(string_shape)}] int{self.stan_bounds}"
-        elif dtype == "simplex":  # Becomes array of simplexes
-            dtype = f"simplex[{string_shape[-1]}]"
-            check_array = True
-        else:
-            raise AssertionError(f"Unknown data type {dtype}")
-
-        # Convert to an array of vectors or simplexes if necessary
-        if check_array and self.ndim > 1:
-            dtype = f"array[{','.join(string_shape[:-1])}] {dtype}"
-
-        return dtype
-
-    @property
-    def assign_depth(self) -> int:
+    def assign_depth(self) -> "custom_types.Integer":
         """
         The level (index of the for-loop block) at which the parameter is DEFINED
         in the Stan code. This is the number of dimensions, excluding trailing singleton
@@ -683,24 +716,7 @@ class AbstractModelComponent(ABC):
         parameter might be manipulated at a different level in the code than the
         level at which it is defined.
         """
-        # Default is number of dimensions minus one. We subtract one because the
-        # last dimension is always vectorized.
-        level = self.ndim - 1
-
-        # Subtract off trailing singleton dimensions ignoring the last dimension
-        # (again, always vectorized)
-        for dimsize in reversed(self.shape[:-1]):
-            if dimsize > 1:
-                break
-            level -= 1
-
-        # Clip at zero
-        return max(level, 0)
-
-    @property
-    def stan_parameter_declaration(self) -> str:
-        """Returns the Stan parameter declaration for this parameter."""
-        return self.declare_stan_variable(self.stan_model_varname)
+        return self.get_assign_depth()
 
     @property
     def model_varname(self) -> str:
@@ -783,7 +799,13 @@ class AbstractModelComponent(ABC):
     def force_name(self) -> bool:
         """
         Returns `True` if we wish to force the compiler to define this variable
-        in the Stan code. This occurs when any child has a `FORCE_PARENT_NAME` class
-        variable set to `True`
+        in the Stan code. This occurs when...
+        1. Any child has a `FORCE_PARENT_NAME` class variable set to `True`
+        2. The assignment depth of this parameter is different from the child's
         """
-        return any(child.FORCE_PARENT_NAME for child in self._children)
+        # TODO: This might be overkill for reductions of the last dimension, as
+        # we are assuming vectorization anyway (i.e., losing 1 depth has no impact)
+        return any(
+            child.FORCE_PARENT_NAME or self.assign_depth != child.assign_depth
+            for child in self._children
+        )
