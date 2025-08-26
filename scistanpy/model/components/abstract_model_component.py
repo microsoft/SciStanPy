@@ -837,11 +837,5 @@ class AbstractModelComponent(ABC):
         Returns `True` if we wish to force the compiler to define this variable
         in the Stan code. This occurs when...
         1. Any child has a `FORCE_PARENT_NAME` class variable set to `True`
-        2. The assignment depth of this parameter is different from the child's
         """
-        # TODO: This might be overkill for reductions of the last dimension, as
-        # we are assuming vectorization anyway (i.e., losing 1 depth has no impact)
-        return any(
-            child.FORCE_PARENT_NAME or self.assign_depth != child.assign_depth
-            for child in self._children
-        )
+        return any(child.FORCE_PARENT_NAME for child in self._children)
