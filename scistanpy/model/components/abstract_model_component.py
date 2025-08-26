@@ -482,13 +482,38 @@ class AbstractModelComponent(ABC):
         """
         return ""
 
+    def get_index_offset(
+        self, query: Union[str, "AbstractModelComponent"], offset_adjustment: int = 0
+    ) -> int:
+        """
+        Gives the number of leading indices to skip when deciding on the indexed
+        variable name. We need to skip some indices when we have implicitly prepended
+        singleton dimensions due to broadcasting.
+
+        Parameters
+        ----------
+        query: Union[str, "AbstractModelComponent"]
+            Index offset is calculated for this object relative to the current object.
+            If provided as a string, it is assumed to be a parent parameter. An
+            error is raised if no such parent exists.
+        offset_adjustment: int
+            An optional offset adjustment to apply to the index offset. This is
+            primarily used for propagating offsets between chained parameters.
+        """
+        # Get the query if we need to
+        if isinstance(query, str):
+            query = self._parents[query]
+
+        # Calculate offset
+        return self.ndim - query.ndim + offset_adjustment
+
     @abstractmethod
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
         end_dims: dict[str, "custom_types.Integer"] | None = None,
-        offset: dict[str, "custom_types.Integer"] | None = None,
+        offset_adjustment: int = 0,
     ) -> dict[str, str]:
         """
         Gets the right side of any statement (i.e., Stan code to the right of an
@@ -510,18 +535,20 @@ class AbstractModelComponent(ABC):
         The dictionary is then used to format the Stan code for the right-hand-side
         of the statement in the get_right_side method of the child class.
         """
-        # Get default values for start and end dims plus the offset
+        # Get default values for start and end dims
         start_dims = start_dims or {}
         end_dims = end_dims or {}
-        offset = offset or {}
 
         # Get variables that make up the right side of the statement. These will
         # be the parent parameters of the current parameter.
         model_components: dict[str, str] = {}
         for name, param in self._parents.items():
 
-            # What's the current parameter in the loop?
-            current_offset = offset.get(name, self.ndim - param.ndim)
+            # What's the offset between the current parameter in the loop and THIS
+            # parameter
+            current_offset = self.get_index_offset(
+                param, offset_adjustment=offset_adjustment
+            )
 
             # If the parameter is a constant or another parameter OR it is a named
             # transformed parameter OR the assignment depth changes, we get its
@@ -550,11 +577,7 @@ class AbstractModelComponent(ABC):
                 # We need to propogate the offset of the current parameter in the
                 # loop to ITS parents
                 model_components[name] = param.get_right_side(
-                    index_opts,
-                    offset={
-                        gparent_name: param.ndim - gparent.ndim + current_offset
-                        for gparent_name, gparent in param._parents.items()  # pylint: disable=protected-access
-                    },
+                    index_opts, offset_adjustment=current_offset
                 )
 
             # Otherwise, raise an error

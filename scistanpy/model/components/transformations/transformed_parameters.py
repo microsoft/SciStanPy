@@ -93,26 +93,26 @@ class Transformation(abstract_model_component.AbstractModelComponent):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
         end_dims: dict[str, "custom_types.Integer"] | None = None,
-        offset: dict[str, "custom_types.Integer"] | None = None,
+        offset_adjustment: int = 0,
     ) -> str:
         """Gets the right-hand-side of the assignment operation for this parameter."""
         # Call the inherited method to get a dictionary mapping parent names to
         # either their indexed variable names (if they are named) or the thread
         # of operations that define them (if they are not named).
         components = super().get_right_side(
-            index_opts, start_dims=start_dims, end_dims=end_dims, offset=offset
+            index_opts,
+            start_dims=start_dims,
+            end_dims=end_dims,
+            offset_adjustment=offset_adjustment,
         )
 
-        # Wrap the declaration for any unnamed parents in parentheses. This is to
-        # ensure that the order of operations is correct in Stan.
-        components = {
-            name: (value if self._parents[name].is_named else f"( {value} )")
-            for name, value in components.items()
-        }
-
-        # Format the right-hand side of the operation. Exactly how formatting is
-        # done depends on the child class.
-        return self.write_stan_operation(**components)
+        # Format the right-hand side of the operation. The declaration for any operation
+        # with multiple parents that is not named should be wrapped in parentheses.
+        # Otherwise, exactly how formatting is done depends on the child class.
+        stan_op = self.write_stan_operation(**components)
+        if len(self._parents) > 1 and not self.is_named:
+            stan_op = f"({stan_op})"
+        return stan_op
 
     def _set_shape(self) -> None:
         """
@@ -422,24 +422,16 @@ class Reduction(UnaryTransformedParameter):
         else:
             return self.__class__.NP_FUNC(dist1, keepdims=keepdim, axis=-1)
 
-    def get_right_side(
+    def get_index_offset(
         self,
-        index_opts: tuple[str, ...] | None,
-        start_dims: dict[str, "custom_types.Integer"] | None = None,
-        end_dims: dict[str, "custom_types.Integer"] | None = None,
-        offset: dict[str, "custom_types.Integer"] | None = None,
-    ) -> str:
-
-        # Offset is always going to be zero for reductions by default
-        if offset is None:
-            offset = {"dist1": 0}
-
-        return super().get_right_side(
-            index_opts=index_opts,
-            start_dims=start_dims,
-            end_dims=end_dims,
-            offset=offset,
-        )
+        query: Union[str, "abstract_model_component.AbstractModelComponent"],
+        offset_adjustment: int = 0,
+    ) -> int:
+        """
+        For reductions, the index offset is always 0. All inputs to this function
+        are ignored. It will always return 0.
+        """
+        return 0
 
     def get_assign_depth(self) -> int:
         """One level higher than the shape would suggest"""
@@ -1198,22 +1190,41 @@ class ConvolveSequence(TransformedParameter):
 
         return output_arr
 
+    def get_index_offset(
+        self,
+        query: Union[str, "abstract_model_component.AbstractModelComponent"],
+        offset_adjustment: int = 0,
+    ) -> int:
+        """
+        We ignore an extra dimension of the weights, so if the query is the `weights`
+        parent parameter, we add 1 to the offset relative to other parameters.
+        """
+        # Run the inherited method
+        offset = super().get_index_offset(query, offset_adjustment)
+
+        # Adjust if needed
+        if query == "weights" or query is self.weights:
+            offset += 1
+
+        return offset
+
     def get_right_side(
         self,
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
         end_dims: dict[str, "custom_types.Integer"] | None = None,
-        offset: dict[str, "custom_types.Integer"] | None = None,
+        offset_adjustment: int = 0,
     ) -> str:
 
-        # Different default for end dims and offset here
+        # Different default for end dims here
         end_dims = end_dims or {"weights": -2}
-        offset = offset or {"weights": self.ndim - self.weights.ndim + 1}
 
         # Run the AbstractModelParameter version of the method to get each model
         # component formatted appropriately. Note that we ignore the last dimension
         # of the weights. This is because we need both dimensions in the Stan code.
-        return super().get_right_side(index_opts, end_dims=end_dims, offset=offset)
+        return super().get_right_side(
+            index_opts, end_dims=end_dims, offset_adjustment=offset_adjustment
+        )
 
     def write_stan_operation(  # pylint: disable=arguments-differ
         self, weights: str, ordinals: str
@@ -1526,7 +1537,7 @@ class IndexParameter(TransformedParameter):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
         end_dims: dict[str, "custom_types.Integer"] | None = None,
-        offset: dict[str, "custom_types.Integer"] | None = None,
+        offset_adjustment: int = 0,
     ) -> str:
         """
         Gets the name of the variable that is being indexed, then passes it to

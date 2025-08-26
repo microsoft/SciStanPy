@@ -354,7 +354,7 @@ class Parameter(
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, custom_types.Integer] | None = None,
         end_dims: dict[str, custom_types.Integer] | None = None,
-        offset: dict[str, "custom_types.Integer"] | None = None,
+        offset_adjustment: int = 0,
         dist_suffix: str = "",
     ) -> str:
         # Get the formattables
@@ -362,7 +362,7 @@ class Parameter(
             index_opts=index_opts,
             start_dims=start_dims,
             end_dims=end_dims,
-            offset=offset,
+            offset_adjustment=offset_adjustment,
         )
 
         # Build the distribution argument and format the Stan code
@@ -610,7 +610,7 @@ class Normal(ContinuousDistribution):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, custom_types.Integer] | None = None,
         end_dims: dict[str, custom_types.Integer] | None = None,
-        offset: dict[str, "custom_types.Integer"] | None = None,
+        offset_adjustment: int = 0,
         dist_suffix: str = "",
     ) -> str:
         # If not noncentered, run the parent method
@@ -619,7 +619,7 @@ class Normal(ContinuousDistribution):
                 index_opts,
                 start_dims=start_dims,
                 end_dims=end_dims,
-                offset=offset,
+                offset_adjustment=offset_adjustment,
                 dist_suffix=dist_suffix,
             )
 
@@ -891,7 +891,7 @@ class ExpDirichlet(Dirichlet):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, custom_types.Integer] | None = None,
         end_dims: dict[str, custom_types.Integer] | None = None,
-        offset: dict[str, "custom_types.Integer"] | None = None,
+        offset_adjustment: int = 0,
         dist_suffix: str = "",
     ) -> str:
         # If no suffix is provided, determine whether we are using the normalized
@@ -905,7 +905,7 @@ class ExpDirichlet(Dirichlet):
             index_opts,
             start_dims=start_dims,
             end_dims=end_dims,
-            offset=offset,
+            offset_adjustment=offset_adjustment,
             dist_suffix=dist_suffix,
         )
 
@@ -1074,7 +1074,7 @@ class MultinomialLogTheta(_MultinomialBase):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, custom_types.Integer] | None = None,
         end_dims: dict[str, custom_types.Integer] | None = None,
-        offset: dict[str, "custom_types.Integer"] | None = None,
+        offset_adjustment: int = 0,
         dist_suffix: str = "",
     ) -> str:
         """
@@ -1082,7 +1082,10 @@ class MultinomialLogTheta(_MultinomialBase):
         """
         # Get the formattables
         formattables = super(Parameter, self).get_right_side(
-            index_opts, start_dims=start_dims, end_dims=end_dims, offset=offset
+            index_opts,
+            start_dims=start_dims,
+            end_dims=end_dims,
+            offset_adjustment=offset_adjustment,
         )
 
         # If no suffix is provided and this is an observable, we want to add the

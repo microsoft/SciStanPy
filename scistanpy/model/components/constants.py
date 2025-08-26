@@ -100,7 +100,7 @@ class Constant(abstract_model_component.AbstractModelComponent):
         index_opts: tuple[str, ...] | None,
         start_dims: dict[str, "custom_types.Integer"] | None = None,
         end_dims: dict[str, "custom_types.Integer"] | None = None,
-        offset: dict[str, "custom_types.Integer"] | None = None,
+        offset_adjustment: int = 0,
     ) -> str:
         """Return the Stan code for this component (there is none)."""
         return ""
