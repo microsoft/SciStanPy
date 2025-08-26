@@ -188,7 +188,6 @@ class StanCodeBase(ABC, list):
                         prev_loop is not None
                         and current_component.end == prev_loop.end
                         and current_component.depth == prev_loop.depth
-                        and current_component.parent_loop is prev_loop.parent_loop
                     ):
 
                         # Extend a copy of the previous loop with the current component
@@ -391,9 +390,6 @@ class StanForLoop(StanCodeBase):
         if record_in_parent:
             self.parent_loop.append(self)
 
-        # Get the ancestry of the loop
-        self.ancestry = self._get_ancestry()
-
     def _get_ancestry(self) -> list[StanCodeBase]:
         """Retrieves the ancestry of the loop."""
 
@@ -411,18 +407,6 @@ class StanForLoop(StanCodeBase):
 
         # Get the appropriate loop
         return (self.ancestry + [self])[n]
-
-    def squash(self) -> None:
-        """
-        If this is a singleton loop, it is removed from the lineage. This is done
-        by moving the nested loops to the parent loop and removing this loop.
-        """
-        # If the end is 1, we are a singleton loop. Move the contents of this loop
-        # to the parent loop and then remove this loop from the parent loop.
-        if self.end == 1:
-            self.parent_loop.extend(self)
-            self.parent_loop.remove(self)
-            self.parent_loop = None
 
     def append(
         self,
@@ -449,6 +433,22 @@ class StanForLoop(StanCodeBase):
         new_loop.extend(self)
 
         return new_loop
+
+    def squash(self) -> None:
+        """
+        If this is a singleton loop, it is removed from the lineage. This is done
+        by moving the nested loops to the parent loop and removing this loop.
+        """
+        # If the end is 1, we are a singleton loop. Move the contents of this loop
+        # to the parent loop and then remove this loop from the parent loop.
+        if self.end == 1:
+            self.parent_loop.extend(self)
+            self.parent_loop.remove(self)
+
+    @property
+    def ancestry(self):
+        """See documentation for `_get_ancestry`."""
+        return self._get_ancestry()
 
     @property
     def end(self) -> "custom_types.Integer":
@@ -662,6 +662,7 @@ class StanProgram(StanCodeBase):
                 # and previous components are compatible. This is the number of
                 # shared leading dimensions between the two components' shapes.
                 compat_level = previous_component.get_shared_leading(component)
+                assert compat_level >= 0
 
                 # Get the parent loop of the current component that is compatible
                 # with the the current component. Note that we also update our referenced
