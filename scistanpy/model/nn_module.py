@@ -1,6 +1,31 @@
-"""Holds utilities for integrating SciStanPy with Pytorch"""
+"""PyTorch integration utilities for SciStanPy models.
 
-import contextlib
+This module provides integration between SciStanPy probabilistic models
+and PyTorch's automatic differentiation and optimization framework. It enables
+maximum likelihood estimation, variational inference, and other gradient-based
+learning procedures on SciStanPy models.
+
+The module's core functionality centers around converting SciStanPy models into
+PyTorch nn.Module instances that preserve the probabilistic structure while
+enabling efficient gradient computation and optimization. This allows users to
+leverage PyTorch's ecosystem of optimizers, learning rate schedulers, and other
+training utilities.
+
+Key Features:
+    - Automatic conversion of SciStanPy models to PyTorch modules
+    - Gradient-based parameter optimization with various optimizers
+    - Mixed precision training support for improved performance
+    - Early stopping and convergence monitoring
+    - GPU acceleration and device management
+
+The module handles the complex details of parameter initialization, gradient
+computation, and device management, providing a simple interface for fitting
+Bayesian models using modern deep learning techniques.
+
+Performance Considerations:
+    - GPU acceleration significantly improves training speed for large models
+"""
+
 import warnings
 
 from typing import Optional, TYPE_CHECKING, Union
@@ -21,7 +46,30 @@ if TYPE_CHECKING:
 
 
 def check_observable_data(model: "ssp_model.Model", data: dict[str, torch.Tensor]):
-    """Makes sure that the correct observables are provided for a givne model."""
+    """Validate that provided data matches model observable specifications.
+
+    This function performs comprehensive validation to ensure that the observed
+    data dictionary contains exactly the expected observables with correct
+    shapes and types. It prevents common errors during model fitting by
+    catching data mismatches early.
+
+    :param model: SciStanPy model containing observable specifications
+    :type model: ssp_model.Model
+    :param data: Dictionary mapping observable names to their tensor data
+    :type data: dict[str, torch.Tensor]
+
+    :raises ValueError: If observable names don't match expected set
+    :raises ValueError: If data shapes don't match observable shapes
+
+    The validation checks:
+    - Perfect correspondence between provided and expected observable names
+    - Exact shape matching between data tensors and observable specifications
+    - Proper tensor formatting for PyTorch computation
+
+    Example:
+        >>> data = {'y': torch.randn(100), 'x': torch.randn(100, 5)}
+        >>> check_observable_data(model, data)  # Validates or raises error
+    """
     # There must be perfect overlap between the keys of the provided data and the
     # expected observations
     expected_set = set(model.observable_dict.keys())
@@ -53,10 +101,43 @@ def check_observable_data(model: "ssp_model.Model", data: dict[str, torch.Tensor
 
 
 class PyTorchModel(nn.Module):
-    """
-    A PyTorch-trainable version of a `scistanpy.model.Model`. This should not be
-    used directly, but instead accessed by calling the `to_pytorch` method on a
-    `scistanpy.model.Model` instance.
+    """PyTorch-trainable version of a SciStanPy Model.
+
+    This class converts SciStanPy probabilistic models into PyTorch nn.Module
+    instances that can be optimized using standard PyTorch training procedures.
+    It preserves the probabilistic structure while enabling gradient-based
+    parameter estimation and other machine learning techniques.
+
+    :param model: SciStanPy model to convert to PyTorch
+    :type model: ssp_model.Model
+    :param seed: Random seed for reproducible parameter initialization. Defaults to None.
+    :type seed: Optional[custom_types.Integer]
+
+    :ivar model: Reference to the original SciStanPy model
+    :ivar learnable_params: PyTorch ParameterList containing optimizable parameters
+
+    The conversion process:
+    - Initializes all model parameters for PyTorch optimization
+    - Sets up proper gradient computation graphs
+    - Configures device placement and memory management
+    - Preserves probabilistic model structure and relationships
+
+    The resulting PyTorch model can be:
+    - Optimized using any PyTorch optimizer
+    - Moved between devices (CPU/GPU)
+    - Integrated with PyTorch training pipelines
+    - Used for both maximum likelihood and variational inference
+
+    Note:
+        This class should not be instantiated directly. Instead, use the
+        `to_pytorch()` method on a SciStanPy Model instance.
+
+    Example:
+        >>> pytorch_model = model.to_pytorch(seed=42)
+        >>> optimizer = torch.optim.Adam(pytorch_model.parameters(), lr=0.01)
+        >>> loss = -pytorch_model(**observed_data)
+        >>> loss.backward()
+        >>> optimizer.step()
     """
 
     def __init__(
@@ -81,12 +162,33 @@ class PyTorchModel(nn.Module):
         self.learnable_params = nn.ParameterList(learnable_params)
 
     def forward(self, **data: torch.Tensor) -> torch.Tensor:
-        """
-        Each observation is passed in as a keyword argument whose name matches the
-        name of the corresponding observable distribution in the `scistanpy.model.Model`
-        instance. This will calculate the log probability of the observed data given
-        the parameters of the model. Stress: this is the log-probability, not the
-        log loss, which is the negative log-probability.
+        """Compute log probability of observed data given current parameters.
+
+        This method calculates the total log probability (log-likelihood) of
+        the observed data under the current model parameters. It forms the
+        core objective function for maximum likelihood estimation and other
+        gradient-based inference procedures.
+
+        :param data: Observed data tensors keyed by observable parameter names
+        :type data: dict[str, torch.Tensor]
+
+        :returns: Total log probability of the observed data
+        :rtype: torch.Tensor
+
+        The computation includes:
+        - Log probabilities of all observable parameters given data
+        - Log probabilities of all latent parameters given their priors
+        - Proper handling of different distribution types and shapes
+        - Gradient computation for backpropagation
+
+        Note:
+            This returns log probability, *not* log loss (negative log probability).
+            For optimization, negate the result to get the loss function.
+
+        Example:
+            >>> log_prob = pytorch_model(y=observed_y, x=observed_x)
+            >>> loss = -log_prob  # Negative for minimization
+            >>> loss.backward()
         """
         # Sum the log-probs of the observables and parameters
         log_prob = 0.0
@@ -118,7 +220,55 @@ class PyTorchModel(nn.Module):
         ],
         mixed_precision: bool = False,
     ) -> torch.Tensor:
-        """Optimizes the parameters of the model."""
+        """Optimize model parameters using gradient-based maximum likelihood estimation.
+
+        This method performs complete model training using the Adam optimizer
+        with configurable early stopping, learning rate, and mixed precision
+        support. It automatically handles device placement, gradient computation,
+        and convergence monitoring.
+
+        :param epochs: Maximum number of training epochs. Defaults to 100000.
+        :type epochs: custom_types.Integer
+        :param early_stop: Epochs without improvement before stopping. Defaults to 10.
+        :type early_stop: custom_types.Integer
+        :param lr: Learning rate for Adam optimizer. Defaults to 0.001.
+        :type lr: custom_types.Float
+        :param data: Observed data for model observables
+        :type data: dict[str, Union[torch.Tensor, npt.NDArray, custom_types.Float,
+            custom_types.Integer]]
+        :param mixed_precision: Whether to use automatic mixed precision. Defaults to False.
+        :type mixed_precision: bool
+
+        :returns: Tensor containing loss trajectory throughout training
+        :rtype: torch.Tensor
+
+        :raises UserWarning: If early stopping is not triggered within epoch limit
+
+        Training Features:
+        - Adam optimization with configurable learning rate
+        - Early stopping based on loss plateau detection
+        - Mixed precision training for memory efficiency and speed
+        - Progress monitoring with real-time loss display
+        - Automatic device placement and tensor conversion
+        - Convergence tracking
+
+        The training loop:
+        1. Converts input data to appropriate tensor format
+        2. Validates data compatibility with model observables
+        3. Iteratively optimizes parameters using gradient descent
+        4. Monitors convergence and applies early stopping
+        5. Returns complete loss trajectory for analysis
+
+        Example:
+            >>> loss_history = pytorch_model.fit(
+            ...     data={'y': observed_data},
+            ...     epochs=5000,
+            ...     lr=0.01,
+            ...     early_stop=50,
+            ...     mixed_precision=True
+            ... )
+            >>> final_loss = loss_history[-1]
+        """
         # Any observed data that is not a tensor is converted to a tensor
         data = {
             k: torch.tensor(v) if not isinstance(v, torch.Tensor) else v
@@ -199,12 +349,28 @@ class PyTorchModel(nn.Module):
         return torch.tensor(loss_trajectory[: epoch + 2], dtype=torch.float32)
 
     def export_params(self) -> dict[str, torch.Tensor]:
-        """
-        Exports all parameters from the SciStanPy model used to construct the PyTorch
-        model. This is primarily used once the model has been fit. Note that we
-        do not gather observations for parameters that are marked as observables
-        (as this is just the data). We also do not gather "observables" for transformations
-        as they are implicit in the parameters.
+        """Export optimized parameter values from the fitted model.
+
+        This method extracts the current parameter values after optimization,
+        providing access to the maximum likelihood estimates or other fitted
+        parameter values. It excludes observable parameters (which represent
+        data) and focuses on the learnable model parameters.
+
+        :returns: Dictionary mapping parameter names to their current tensor values
+        :rtype: dict[str, torch.Tensor]
+
+        Excluded from export:
+        - Observable parameters (representing data, not learnable parameters)
+        - Unnamed parameters
+        - Intermediate computational results from transformations
+
+        This is typically used after model fitting to extract the estimated
+        parameter values for further analysis or model comparison.
+
+        Example:
+            >>> fitted_params = pytorch_model.export_params()
+            >>> mu_estimate = fitted_params['mu']
+            >>> sigma_estimate = fitted_params['sigma']
         """
         return {
             name: param.torch_parametrization
@@ -212,9 +378,31 @@ class PyTorchModel(nn.Module):
         }
 
     def export_distributions(self) -> dict[str, torch.distributions.Distribution]:
-        """
-        Exports all distributions from the SciStanPy model used to construct the
-        PyTorch model. This is primarily used once the model has been fit.
+        """Export fitted probability distributions for all model components.
+
+        This method returns the complete set of probability distributions
+        from the fitted model, including both parameter distributions (priors)
+        and observable distributions (likelihoods) with their current
+        parameter values.
+
+        :returns: Dictionary mapping component names to their distribution objects
+        :rtype: dict[str, torch.distributions.Distribution]
+
+        The exported distributions include:
+        - Parameter distributions with updated hyperparameter values
+        - Observable distributions with fitted parameter values
+        - All distributions in their PyTorch format for further computation
+
+        This is useful for:
+        - Posterior predictive sampling
+        - Model diagnostics and validation
+        - Uncertainty quantification
+        - Distribution comparison and analysis
+
+        Example:
+            >>> distributions = pytorch_model.export_distributions()
+            >>> fitted_normal = distributions['mu']  # torch.distributions.Normal
+            >>> samples = fitted_normal.sample((1000,))  # Sample from fit distribution
         """
         return {
             name: param.torch_dist_instance
@@ -224,9 +412,20 @@ class PyTorchModel(nn.Module):
         }
 
     def _move_model(self, funcname: str, *args, **kwargs):
-        """
-        Eliminates the need for repeating the same code for `cuda`, `to`, and
-        `cpu`.
+        """Internal method for device placement operations.
+
+        This method handles the task of moving both PyTorch parameters
+        and SciStanPy constant tensors to different devices or data types.
+        It ensures that all model components remain synchronized during
+        device transfers.
+
+        :param funcname: Name of the PyTorch method to apply ('cuda', 'cpu', 'to')
+        :type funcname: str
+        :param args: Positional arguments for the device operation
+        :param kwargs: Keyword arguments for the device operation
+
+        :returns: Self reference for method chaining
+        :rtype: PyTorchModel
         """
         # Apply to the model
         getattr(super(), funcname)(*args, **kwargs)
@@ -245,13 +444,56 @@ class PyTorchModel(nn.Module):
         return self
 
     def cuda(self, *args, **kwargs):
-        """See `torch.nn.Module.cuda`."""
+        """Move model to CUDA device.
+
+        This method transfers the entire model (including SciStanPy constants)
+        to a CUDA-enabled GPU device for accelerated computation.
+
+        :param args: Arguments passed to torch.nn.Module.cuda()
+        :param kwargs: Keyword arguments passed to torch.nn.Module.cuda()
+
+        :returns: Self reference for method chaining
+        :rtype: PyTorchModel
+
+        Example:
+            >>> pytorch_model = pytorch_model.cuda()  # Move to default GPU
+            >>> pytorch_model = pytorch_model.cuda(1)  # Move to GPU 1
+        """
         return self._move_model("cuda", *args, **kwargs)
 
     def cpu(self, *args, **kwargs):
-        """See `torch.nn.Module.cpu`."""
+        """Move model to CPU device.
+
+        This method transfers the entire model (including SciStanPy constants)
+        back to CPU memory, useful for inference or when GPU memory is limited.
+
+        :param args: Arguments passed to torch.nn.Module.cpu()
+        :param kwargs: Keyword arguments passed to torch.nn.Module.cpu()
+
+        :returns: Self reference for method chaining
+        :rtype: PyTorchModel
+
+        Example:
+            >>> pytorch_model = pytorch_model.cpu()  # Move to CPU
+        """
         return self._move_model("cpu", *args, **kwargs)
 
     def to(self, *args, **kwargs):
-        """See `torch.nn.Module.to`."""
+        """Move model to specified device or data type.
+
+        This method provides flexible device and dtype conversion for the
+        entire model, including both PyTorch parameters and SciStanPy
+        constant tensors.
+
+        :param args: Arguments passed to torch.nn.Module.to()
+        :param kwargs: Keyword arguments passed to torch.nn.Module.to()
+
+        :returns: Self reference for method chaining
+        :rtype: PyTorchModel
+
+        Example:
+            >>> pytorch_model = pytorch_model.to('cuda:0')  # Move to specific GPU
+            >>> pytorch_model = pytorch_model.to(torch.float64)  # Change precision
+            >>> pytorch_model = pytorch_model.to('cpu', dtype=torch.float32)
+        """
         return self._move_model("to", *args, **kwargs)

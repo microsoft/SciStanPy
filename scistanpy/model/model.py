@@ -1,4 +1,26 @@
-"""Contains the Model base class, which is used to define all SciStanPy models."""
+"""Core Model class for SciStanPy Bayesian modeling framework.
+
+This module contains the fundamental Model class that serves as the primary
+interface for building, compiling, and executing Bayesian models in SciStanPy.
+The Model class orchestrates the composition of model components (parameters,
+constants, transformations) and provides methods for sampling, compilation,
+and analysis.
+
+The Model class uses a metaclass pattern to automatically register model
+components defined as instance attributes, enabling intuitive model construction
+through simple attribute assignment. It supports multiple backends including
+Stan for MCMC sampling and PyTorch for maximum likelihood estimation.
+
+Key Features:
+    - Automatic component registration and validation
+    - Multiple sampling backends (Stan MCMC, PyTorch MLE)
+    - Prior and posterior predictive checking
+    - Efficient compilation with caching
+    - Comprehensive model introspection and diagnostics
+    - xarray integration for structured data handling
+"""
+
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -48,18 +70,48 @@ stan_model = utils.lazy_import("scistanpy.model.stan.stan_model")
 def model_comps_to_dict(
     model_comps: Iterable[abstract_model_component.AbstractModelComponent],
 ) -> dict[str, abstract_model_component.AbstractModelComponent]:
-    """
-    Converts a list of components to a dictionary where the keys are the model variable
-    names of the components.
+    """Convert an iterable of model components to a dictionary keyed by variable names.
+
+    This utility function creates a dictionary mapping from model variable names
+    to their corresponding component objects, facilitating easy lookup and
+    access to model components by name.
+
+    :param model_comps: Iterable of model components to convert
+    :type model_comps: Iterable[abstract_model_component.AbstractModelComponent]
+
+    :returns: Dictionary mapping variable names to components
+    :rtype: dict[str, abstract_model_component.AbstractModelComponent]
+
+    Example:
+        >>> components = [param1, param2, observable1]
+        >>> comp_dict = model_comps_to_dict(components)
+        >>> # Access by name: comp_dict['param1']
     """
     return {comp.model_varname: comp for comp in model_comps}
 
 
 def run_delayed_mcmc(filepath: str) -> "hmc_results.SampleResults":
-    """
-    Runs a delayed MCMC run created by calling `Model.mcmc()` with `delay_run=True`.
-    The filepath should be the path to the pickled object that resulted from this
-    function call.
+    """Execute a delayed MCMC run from a pickled configuration file.
+
+    This function loads and executes MCMC sampling that was previously
+    configured with `Model.mcmc(delay_run=True)`. It's useful for
+    running computationally intensive sampling jobs in batch systems
+    or separate processes.
+
+    :param filepath: Path to the pickled MCMC configuration file
+    :type filepath: str
+
+    :returns: MCMC sampling results with posterior draws and diagnostics
+    :rtype: hmc_results.SampleResults
+
+    The function automatically enables console output to provide progress
+    feedback during the potentially long-running sampling process.
+
+    Example:
+        >>> # First, create delayed run
+        >>> model.mcmc(output_dir = ".", delay_run=True, chains=4, iter_sampling=2000)
+        >>> # Later, execute the run
+        >>> results = run_delayed_mcmc(f"{model.stan_executable_path}-delay.pkl")
     """
     # Load the pickled object
     with open(filepath, "rb") as f:
@@ -77,11 +129,53 @@ def run_delayed_mcmc(filepath: str) -> "hmc_results.SampleResults":
 
 
 class Model:
-    """
-    A metaclass that modifies the __init__ method of a class to register all instance
-    variables that are instances of the `parameters_module.Parameter` class
-    and observables in the `_observables` attribute and all that are not observables
-    in the `_parameters` attribute.
+    """Primary interface for Bayesian model construction and analysis in SciStanPy.
+
+    The Model class provides a declarative interface for building Bayesian models
+    by composing parameters, constants, and transformations. It automatically
+    handles component registration, validation, and provides methods for sampling,
+    compilation, and analysis across multiple backends.
+
+    :param args: Positional arguments (unused, for subclass compatibility)
+    :param default_data: Default observed data for model observables. When provided,
+        any instance method requiring data will use these if not otherwise provided.
+        Defaults to None.
+    :type default_data: Optional[dict[str, npt.NDArray]]
+    :param kwargs: Additional keyword arguments (unused, for subclass compatibility)
+
+    :ivar _default_data: Stored default data for observables
+    :ivar _named_model_components: Tuple of components that have explicit names
+    :ivar _model_varname_to_object: Mapping from variable names to components
+    :ivar _init_complete: Flag indicating initialization completion
+
+    The class uses a metaclass pattern that automatically registers model
+    components defined as instance attributes. Components are validated
+    for naming conventions and automatically assigned model variable names.
+
+    Model Construction:
+        Models are built by subclassing Model and defining components as
+        instance attributes in the __init__ method. The metaclass automatically
+        discovers and registers these components.
+
+    Supported Operations:
+        - Prior and posterior sampling
+        - Maximum likelihood estimation using PyTorch
+        - MCMC sampling using Stan
+        - Model compilation and caching
+        - Prior predictive checking with interactive visualization
+        - Model simulation and validation
+
+    Example:
+        >>> class MyModel(Model):
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.mu = ssp.parameters.Normal(0, 1)
+        ...         self.sigma = ssp.parameters.HalfNormal(1)
+        ...         self.y = ssp.parameters.Normal(self.mu, self.sigma, observable=True)
+        >>>
+        >>> model = MyModel()
+        >>> prior_samples = model.draw(n=1000)
+        >>> mle_result = model.mle()
     """
 
     def __init__(
@@ -105,7 +199,21 @@ class Model:
         self._init_complete: bool = getattr(self, "_init_complete", False)
 
     def __init_subclass__(cls, **kwargs):
-        """"""
+        """Configure automatic component registration for Model subclasses.
+
+        This method is called when a class inherits from Model and sets up
+        the metaclass behavior that automatically discovers and registers
+        model components defined as instance attributes.
+
+        :param kwargs: Keyword arguments passed to the subclass
+
+        :raises ValueError: If forbidden attribute names are used or naming
+                           conventions are violated
+
+        The method wraps the subclass __init__ to add component discovery
+        and registration logic while preserving the original initialization
+        behavior.
+        """
         # The old __init__ method of the class is renamed to '_wrapped_init'
         if "_wrapped_init" in cls.__dict__:
             raise ValueError(
@@ -185,7 +293,25 @@ class Model:
     def _build_model_varname_to_object(
         self,
     ) -> dict[str, abstract_model_component.AbstractModelComponent]:
-        """Builds a mapping between model varnames and objects for easy access."""
+        """Build comprehensive mapping from variable names to model components.
+
+        This method constructs a complete dictionary mapping model variable
+        names to their corresponding component objects. It walks the component
+        dependency tree starting from observables to ensure all referenced
+        components are included.
+
+        :returns: Dictionary mapping variable names to components
+        :rtype: dict[str, abstract_model_component.AbstractModelComponent]
+
+        The mapping includes:
+        - All observable parameters and their dependencies
+        - Transformed data components
+        - Constants and hyperparameters
+        - Transformed parameters used in the model
+
+        The method ensures no duplicate variable names exist and validates
+        the integrity of the component dependency graph.
+        """
 
         def build_initial_mapping() -> (
             dict[str, abstract_model_component.AbstractModelComponent]
@@ -242,11 +368,22 @@ class Model:
     def get_dimname_map(
         self,
     ) -> dict[tuple["custom_types.Integer", "custom_types.Integer"], str]:
-        """
-        Retrieves a dictionary that maps from the level and size of a dimension
-        to the name of that dimension. This is used to build xarray datasets.
-        """
+        """Generate mapping from dimension specifications to dimension names.
 
+        This method creates a dictionary that maps dimension level and size
+        tuples to appropriate dimension names for xarray dataset construction.
+        It ensures dimension names don't conflict with model variable names.
+
+        :returns: Dictionary mapping (level, size) tuples to dimension names
+        :rtype: dict[tuple[custom_types.Integer, custom_types.Integer], str]
+
+        The mapping is used to create consistent dimension naming across
+        all xarray datasets generated from model samples, ensuring proper
+        coordinate alignment and data structure.
+
+        Only dimensions with size > 1 are assigned names, as singleton
+        dimensions are typically squeezed during xarray construction.
+        """
         # Set up variables
         dims: dict[tuple["custom_types.Integer", "custom_types.Integer"], str] = {}
 
@@ -271,9 +408,28 @@ class Model:
         *arrays: npt.NDArray,
         include_sample_dim: bool = False,
     ) -> list[tuple[tuple[str, ...], npt.NDArray]]:
-        """
-        Retrieves a tuple of dimension names for the given shapes. This is used to
-        build xarray datasets.
+        """Process arrays for xarray dataset construction with proper dimension naming.
+
+        This method transforms numpy arrays into the format required for xarray
+        dataset construction, including appropriate dimension naming and
+        singleton dimension handling.
+
+        :param arrays: Arrays to process for xarray construction
+        :type arrays: npt.NDArray
+        :param include_sample_dim: Whether to include sample dimension in naming.
+                                  Defaults to False.
+        :type include_sample_dim: bool
+
+        :returns: List of (dimension_names, processed_array) tuples
+        :rtype: list[tuple[tuple[str, ...], npt.NDArray]]
+
+        :raises ValueError: If array dimensions don't match expected model structure
+
+        The method:
+        - Identifies and removes singleton dimensions
+        - Assigns appropriate dimension names based on model structure
+        - Handles sample dimensions for drawn data (e.g., from prior predictive checks)
+        - Ensures dimensional consistency across all processed arrays
         """
         # Get a mapping from dimension keys to dimension names
         dims = self.get_dimname_map()
@@ -317,10 +473,22 @@ class Model:
         self,
         draws: dict[abstract_model_component.AbstractModelComponent, npt.NDArray],
     ) -> xr.Dataset:
-        """
-        Builds the kwargs for the xarray dataset. The data values are the
-        draws and the coordinates are inputs to transformed parameters that
-        are constants and that have a shape.
+        """Convert model component draws dictionary to structured xarray Dataset.
+
+        This method transforms a dictionary of model component draws into a
+        properly structured xarray Dataset with appropriate coordinates
+        and dimension names for analysis and visualization.
+
+        :param draws: Dictionary mapping components to their sampled values
+        :type draws: dict[abstract_model_component.AbstractModelComponent, npt.NDArray]
+
+        :returns: Structured dataset with draws and coordinates
+        :rtype: xr.Dataset
+
+        The resulting dataset includes:
+        - Data variables for all non-constant components
+        - Coordinates for multi-dimensional constants
+        - Proper dimension naming and alignment
         """
         # Split into components and draws and components and values
         model_comps, unpacked_draws = zip(
@@ -407,16 +575,35 @@ class Model:
     ) -> xr.Dataset: ...
 
     def draw(self, n, *, named_only=True, as_xarray=False, seed=None):
-        """Draws from the model. By default, this will draw from the observable
-        values of the model. If a parameter is specified, then it will draw from
-        the distribution of that parameter.
+        """Draw samples from the model's prior distribution.
 
-        Args:
-            n (int): The number of samples to draw.
+        This method generates samples from all observable parameters in the
+        model by traversing the dependency graph and sampling from each
+        component's distribution in topological order.
 
-        Returns:
-            dict[str, npt.NDArray]: A dictionary where the keys are the names of
-                the model components and the values are the samples drawn.
+        :param n: Number of samples to draw from each observable
+        :type n: custom_types.Integer
+        :param named_only: Whether to return only named components. Defaults to True.
+        :type named_only: bool
+        :param as_xarray: Whether to return results as xarray Dataset. Defaults to False.
+        :type as_xarray: bool
+        :param seed: Random seed for reproducible sampling. Defaults to None.
+        :type seed: Optional[custom_types.Integer]
+
+        :returns: Sampled values in requested format
+        :rtype: Union[dict[str, npt.NDArray], dict[AbstractModelComponent, npt.NDArray], xr.Dataset]
+
+        The method automatically handles:
+        - Dependency resolution between model components
+        - Consistent random number generation with optional seeding
+        - Efficient sampling by reusing intermediate results
+        - Format conversion based on return type preferences
+
+        Example:
+            >>> # Draw 1000 samples as dictionary
+            >>> samples = model.draw(1000)
+            >>> # Draw 1000 samples as an xarray Dataset
+            >>> dataset = model.draw(1000, as_xarray=True)
         """
         # Draw from all observables
         draws: dict[abstract_model_component.AbstractModelComponent, npt.NDArray] = {}
@@ -440,14 +627,38 @@ class Model:
     def to_pytorch(
         self, seed: Optional["custom_types.Integer"] = None
     ) -> "nn_module.PyTorchModel":
-        """
-        Compiles the model to a trainable PyTorch model.
+        """Compile the model to a trainable PyTorch module.
+
+        This method converts the SciStanPy model into a PyTorch module that
+        can be optimized using standard PyTorch training procedures for
+        maximum likelihood estimation or variational inference. The inputs to this
+        module (i.e., the inputs to its `forward` method) are all observed data;
+        the output is the likelihood of that data given the current model parameters.
+
+        :param seed: Random seed for reproducible compilation. Defaults to None.
+        :type seed: Optional[custom_types.Integer]
+
+        :returns: Compiled PyTorch model ready for training
+        :rtype: nn_module.PyTorchModel
+
+        The compiled model preserves the probabilistic structure while
+        enabling gradient-based optimization of model parameters. It's
+        particularly useful for maximum likelihood estimation and can
+        leverage GPU acceleration for large models.
         """
         return nn_module.PyTorchModel(self, seed=seed)
 
     def to_stan(self, **kwargs) -> "stan_model.StanModel":
-        """
-        Compiles the model to a Stan model.
+        """Compile the model to Stan code for MCMC sampling.
+
+        This method automatically generates Stan probabilistic programming
+        language code from the SciStanPy model specification and compiles
+        it for Hamilitonian Monte-Carlo sampling.
+
+        :param kwargs: Additional compilation options passed to StanModel
+
+        :returns: Compiled Stan model ready for MCMC sampling
+        :rtype: stan_model.StanModel
         """
         return stan_model.StanModel(self, **kwargs)
 
@@ -461,11 +672,45 @@ class Model:
         seed: Optional["custom_types.Integer"] = None,
         mixed_precision: bool = False,
     ) -> "mle_module.MLE":
-        """
-        Approximate the maximum likelihood (MLE) estimate of the model parameters.
-        Under the hood, this fits a PyTorch model to the data that minimizes the
-        sum of `log_pdf` and `log_pmf` for all distributions. The parameter values
-        that minimize this loss are then returned.
+        """Compute maximum likelihood estimates of model parameters.
+
+        This method fits a PyTorch model to observed data by minimizing
+        the negative log-likelihood, providing point estimates of all
+        model parameters along with optimization diagnostics.
+
+        :param epochs: Maximum number of training epochs. Note that one step is one
+            epoch as the model must be evaluated over all observable data to calculate
+            loss. Defaults to 100000.
+        :type epochs: custom_types.Integer
+        :param early_stop: Epochs without improvement before stopping. Defaults to 10.
+        :type early_stop: custom_types.Integer
+        :param lr: Learning rate for optimization. Defaults to 0.001.
+        :type lr: custom_types.Float
+        :param data: Observed data for observables. Uses default_data provided at
+            initialization if not provided.
+        :type data: Optional[dict[str, Union[torch.Tensor, npt.NDArray]]]
+        :param device: Computation device ('cpu', 'cuda', or device index). Defaults to 'cpu'.
+        :type device: Union[custom_types.Integer, str]
+        :param seed: Random seed for reproducible optimization. Defaults to None.
+        :type seed: Optional[custom_types.Integer]
+        :param mixed_precision: Whether to use mixed precision training. Defaults to False.
+        :type mixed_precision: bool
+
+        :returns: MLE results with parameter estimates and diagnostics
+        :rtype: mle_module.MLE
+
+        The optimization process:
+        - Converts model to PyTorch and moves to specified device
+        - Trains for `epochs` number of epochs or until there has been no improvement
+          for `early_stop` number epochs.
+        - Tracks loss trajectory for convergence assessment
+        - Returns parameter estimates and fitted distributions
+
+        Example:
+            >>> # Basic MLE with default settings
+            >>> mle_result = model.mle(data=observed_data)
+            >>> # GPU-accelerated with custom settings
+            >>> mle_result = model.mle(data=obs, device='cuda', epochs=50000, lr=0.01)
         """
         # Set the default value for observed data
         data = self.default_data if data is None else data
@@ -514,7 +759,18 @@ class Model:
     def _get_simulation_data(
         self, seed: Optional["custom_types.Integer"]
     ) -> dict[str, npt.NDArray]:
-        """Draws observable data from the model prior."""
+        """Generate simulated observable data from model prior.
+
+        This internal method draws a single realization from each observable
+        parameter in the model using the current prior specification. It is
+        used by simulation methods to generate synthetic datasets.
+
+        :param seed: Random seed for reproducible simulation
+        :type seed: Optional[custom_types.Integer]
+
+        :returns: Dictionary mapping observable names to simulated values
+        :rtype: dict[str, npt.NDArray]
+        """
         data = self.draw(1, named_only=True, as_xarray=False, seed=seed)
         return {
             observable.model_varname: data[observable.model_varname][0]
@@ -522,18 +778,28 @@ class Model:
         }
 
     def simulate_mle(self, **kwargs) -> tuple[dict[str, npt.NDArray], "mle_module.MLE"]:
-        """
-        Samples data from the model prior, then fits a PyTorch model to this sampled
-        data. This is useful for debugging, mainly for checking that any peculiarities
-        observed during MLE approximation are not due to the data.
-        Args:
-            **kwargs: Keyword arguments to pass to the `mle` method, excepting `data`.
+        """Simulate data from model prior and fit via maximum likelihood.
 
-        Returns:
-            dict[str, npt.NDArray]: A dictionary where the keys are the names of
-                the observable parameters and the values are the samples drawn.
-            mle_module.MLE: The mle_module.MLE object resulting from the fit to
-                the simulated data.
+        This method performs a complete simulation study by first generating
+        synthetic data from the model's prior distribution, then fitting
+        the model to this simulated data using maximum likelihood estimation.
+
+        :param kwargs: Keyword arguments passed to mle() method (except 'data')
+
+        :returns: Tuple of (simulated_data, mle_results)
+        :rtype: tuple[dict[str, npt.NDArray], mle_module.MLE]
+
+        This is particularly useful for:
+        - Model validation and debugging
+        - Assessing parameter identifiability (e.g. by running multiple simulations)
+        - Verifying implementation correctness
+
+        The simulated data is automatically passed to the MLE fitting
+        procedure, overriding any data specification in kwargs.
+
+        Example:
+            >>> # Simulate and fit with custom settings
+            >>> sim_data, mle_fit = model.simulate_mle(epochs=10000, lr=0.01)
         """
         # TODO: This and the other simulate method should include non-observables
         # in the returned MLE as well.
@@ -588,8 +854,59 @@ class Model:
         delay_run=False,
         **sample_kwargs,
     ):
-        """Samples from the model using MCMC. This is a wrapper around the `sample`
-        method of the `StanModel` class.
+        """Perform Hamiltonia Monte Carlo sampling using Stan backend.
+
+        This method compiles the model to Stan and executes Hamiltonian
+        Monte Carlo sampling to generate posterior samples. It supports
+        both immediate execution and delayed runs for batch processing.
+
+        :param output_dir: Directory for compilation and output files. Defaults to None,
+            in which case all raw outputs will be saved to a temporary directory and
+            be accessible only for the lifetime of this Python process.
+        :type output_dir: Optional[str]
+        :param force_compile: Whether to force recompilation of Stan model. Defaults
+            to False.
+        :type force_compile: bool
+        :param stanc_options: Options for Stan compiler. Defaults to None (uses
+            DEFAULT_STANC_OPTIONS).
+        :type stanc_options: Optional[dict[str, Any]]
+        :param cpp_options: Options for C++ compilation. Defaults to None (uses
+            DEFAULT_CPP_OPTIONS).
+        :type cpp_options: Optional[dict[str, Any]]
+        :param user_header: Custom C++ header code. Defaults to None.
+        :type user_header: Optional[str]
+        :param model_name: Name for compiled model. Defaults to 'model'.
+        :type model_name: Optional[str]
+        :param inits: Initialization strategy. See `stan_model.StanModel`
+            for options. Defaults to None.
+        :type inits: Optional[str]
+        :param data: Observed data for observables. Uses default_data defined during
+            initialization if not provided.
+        :type data: Optional[dict[str, npt.NDArray]]
+        :param delay_run: Whether to delay execution. If `True`, a pickle file that
+            can be used for delayed execution will be saved to `output_dir`. A string
+            can also be provided to save the pickle file to an alternate location.
+            Defaults to False (meaning immediate execution).
+        :type delay_run: Union[bool, str]
+        :param sample_kwargs: Additional arguments passed to Stan sampling. See
+            the `cmdstanpy.CmdStanModel.sample` for options.
+
+
+        :returns: MCMC results if delay_run=False, None if delayed
+        :rtype: Union[hmc_results.SampleResults, None]
+
+        :raises ValueError: If delay_run is True but output_dir is None
+
+        Delayed Execution:
+        When delay_run=True, the method saves sampling configuration to a
+        pickle file instead of executing immediately. This enables batch
+        processing and distributed computing workflows.
+
+        Example:
+            >>> # Immediate MCMC sampling
+            >>> results = model.mcmc(chains=4, iter_sampling=2000)
+            >>> # Delayed execution for batch processing
+            >>> model.mcmc(delay_run='batch_job.pkl', chains=8, iter_sampling=5000)
         """
         # Get the default observed data and cpp options
         data = self.default_data if data is None else data
@@ -647,10 +964,33 @@ class Model:
     def simulate_mcmc(self, delay_run: Literal[True], **kwargs) -> None: ...
 
     def simulate_mcmc(self, delay_run=False, **kwargs):
-        """
-        Simulates data from the model and then runs MCMC on that data. This is useful
-        for debugging, mainly for checking that any peculiarities observed during
-        MCMC are not due to the data.
+        """Simulate data from model prior and perform Hamiltonian Monte Carlo sampling.
+
+        This method generates synthetic data from the model's prior
+        distribution and then performs full Bayesian inference via MCMC.
+        It's extremely helpful for model validation and posterior recovery testing.
+
+        :param delay_run: Whether to delay MCMC execution. Defaults to False.
+        :type delay_run: bool
+        :param kwargs: Additional keyword arguments passed to mcmc() method
+
+        :returns: Tuple of (simulated_data, mcmc_results) if delay_run=False,
+                 None if delay_run=True
+        :rtype: Union[tuple[dict[str, npt.NDArray], hmc_results.SampleResults], None]
+
+        The method automatically updates the model name to indicate
+        simulation when using the default name, helping distinguish
+        simulated from real data analyses.
+
+        This is crucial for:
+        - Validating MCMC implementation correctness
+        - Testing posterior recovery in known-truth scenarios
+        - Assessing sampler efficiency and convergence
+        - Debugging model specification issues
+
+        Example:
+            >>> # Simulate and sample with immediate execution
+            >>> sim_data, mcmc_results = model.simulate_mcmc(chains=4, iter_sampling=1000)
         """
         # Update the model name
         if kwargs.get("model_name") == DEFAULT_MODEL_NAME:
@@ -663,10 +1003,38 @@ class Model:
         return kwargs["data"], self.mcmc(delay_run=delay_run, **kwargs)
 
     def prior_predictive(self, *, copy_model: bool = False) -> pn.Row:
-        """
-        Creates an interactive plot of the prior predictive distribution of the
-        model. The plot can be used to update the model's parameters dynamically.
-        See `scistanpy.prior_predictive.PriorPredictiveCheck` for more details.
+        """Create interactive prior predictive check visualization.
+
+        This method generates an interactive dashboard for exploring the
+        model's prior predictive distribution. Users can adjust model
+        hyperparameters via sliders and immediately see how changes
+        affect prior predictions.
+
+        :param copy_model: Whether to copy model to avoid modifying original. Defaults
+            to False, meaning the calling model is updated in place by changing
+            slider values and clicking "update model".
+        :type copy_model: bool
+
+        :returns: Panel dashboard with interactive prior predictive visualization
+        :rtype: pn.Row
+
+        The dashboard includes:
+        - Sliders for all adjustable model hyperparameters
+        - Multiple visualization modes (ECDF, KDE, violin, relationship plots)
+        - Real-time updates as parameters are modified
+        - Options for different grouping and display configurations
+
+        This is useful for:
+        - Prior specification and calibration
+        - Understanding model behavior before data fitting
+        - Identifying unrealistic prior assumptions
+
+        Example:
+            >>> # Create interactive dashboard
+            >>> dashboard = model.prior_predictive()
+            >>> dashboard.servable()  # For web deployment
+            >>> # Or display in Jupyter notebook
+            >>> dashboard
         """
         # Create the prior predictive object
         pp = prior_predictive_module.PriorPredictiveCheck(self, copy_model=copy_model)
@@ -675,7 +1043,20 @@ class Model:
         return pp.display()
 
     def __str__(self) -> str:
-        """Returns a string representation of the model."""
+        """Return comprehensive string representation of the model.
+
+        :returns: Formatted string showing all model components organized by type
+        :rtype: str
+
+        The representation includes organized sections for:
+        - Constants and hyperparameters
+        - Transformed parameters
+        - Regular parameters
+        - Observable parameters
+
+        Each section lists components with their specifications and
+        current values, providing a complete overview of model structure.
+        """
         # Get all model components
         model_comps = {
             "Constants": [
@@ -696,19 +1077,53 @@ class Model:
         )
 
     def __contains__(self, paramname: str) -> bool:
-        """Checks if the model contains a parameter or observable with the given name."""
+        """Check if model contains a component with the given name.
+
+        :param paramname: Name of the model component to check
+        :type paramname: str
+
+        :returns: True if component exists, False otherwise
+        :rtype: bool
+
+        Example:
+            >>> 'mu' in model  # Check if parameter 'mu' exists
+            True
+        """
         return paramname in self._model_varname_to_object
 
     def __getitem__(
         self, paramname: str
     ) -> abstract_model_component.AbstractModelComponent:
-        """Returns the parameter or observable with the given name."""
+        """Retrieve model component by name.
+
+        :param paramname: Name of the model component to retrieve
+        :type paramname: str
+
+        :returns: The requested model component
+        :rtype: abstract_model_component.AbstractModelComponent
+
+        :raises KeyError: If component name doesn't exist
+
+        Example:
+            >>> mu_param = model['mu']  # Get parameter named 'mu'
+            >>> print(mu_param.distribution)
+        """
         return self._model_varname_to_object[paramname]
 
     def __setattr__(self, name: str, value: Any) -> None:
-        """
-        Sets the attribute of the model. We cannot set attributes that are model
-        components, as this will break the model
+        """Set model attribute with protection for model components.
+
+        :param name: Attribute name to set
+        :type name: str
+        :param value: Value to assign to the attribute
+        :type value: Any
+
+        :raises AttributeError: If attempting to modify existing model component
+            or add a new model component after initialization.
+
+        This method prevents modification of model components after
+        initialization to maintain model integrity and prevent
+        accidental corruption of the dependency graph.
         """
         # We cannot set attributes that are model components
         if (
@@ -724,7 +1139,16 @@ class Model:
 
     @property
     def default_data(self) -> dict[str, npt.NDArray] | None:
-        """Returns the default data for the model. Errors if it is not set."""
+        """Get the default observed data for model observables.
+
+        :returns: Dictionary mapping observable names to their default data
+        :rtype: dict[str, npt.NDArray] | None
+
+        :raises ValueError: If default data has not been set
+
+        Default data is used automatically by methods like mle() and mcmc()
+        when no explicit data is provided, streamlining common workflows.
+        """
         if getattr(self, "_default_data", None) is None:
             raise ValueError(
                 "Default data is not set. Please set the default data using "
@@ -734,9 +1158,15 @@ class Model:
 
     @default_data.setter
     def default_data(self, data: dict[str, npt.NDArray] | None) -> None:
-        """
-        Sets the default data for the model. The dictionary must contain data for
-        all observables in the model.
+        """Set default observed data for model observables.
+
+        :param data: Dictionary mapping observable names to their data, or None to clear
+        :type data: dict[str, npt.NDArray] | None
+
+        :raises ValueError: If data is missing required observable keys or contains extra keys
+
+        The data dictionary must contain entries for all observable parameters
+        in the model. Setting to None clears the default data.
         """
         # Reset the default data if `None` is passed
         if data is None:
@@ -762,28 +1192,58 @@ class Model:
 
     @property
     def has_default_data(self) -> bool:
-        """Returns True if the model has default data."""
+        """Check whether the model has default data configured.
+
+        :returns: True if default data is set, False otherwise
+        :rtype: bool
+
+        This property is useful for conditional logic that depends on
+        whether default data is available for automatic use in methods.
+        """
         return getattr(self, "_default_data", None) is not None
 
     @property
     def named_model_components(
         self,
     ) -> tuple[abstract_model_component.AbstractModelComponent, ...]:
-        """Returns the named model components sorted by the model variable name."""
+        """Get all named model components.
+
+        :returns: Tuple of named components
+        :rtype: tuple[abstract_model_component.AbstractModelComponent, ...]
+
+        Named components are those explicitly assigned as instance attributes
+        during model construction, as opposed to intermediate components
+        created automatically during dependency resolution.
+        """
         return self._named_model_components
 
     @property
     def named_model_components_dict(
         self,
     ) -> dict[str, abstract_model_component.AbstractModelComponent]:
-        """Returns the named model components as a dictionary."""
+        """Get named model components as a dictionary.
+
+        :returns: Dictionary mapping variable names to named components
+        :rtype: dict[str, abstract_model_component.AbstractModelComponent]
+
+        This provides convenient access to named components by their
+        string names for programmatic model inspection and manipulation.
+        """
         return model_comps_to_dict(self.named_model_components)
 
     @property
     def all_model_components(
         self,
     ) -> tuple[abstract_model_component.AbstractModelComponent, ...]:
-        """Returns all model components sorted by the model variable name."""
+        """Get all model components including unnamed intermediate components.
+
+        :returns: Tuple of all components sorted by variable name
+        :rtype: tuple[abstract_model_component.AbstractModelComponent, ...]
+
+        This includes both explicitly named components and any intermediate
+        components created during dependency resolution, providing complete
+        visibility into the model's computational graph.
+        """
         return tuple(
             sorted(
                 self._model_varname_to_object.values(), key=lambda x: x.model_varname
@@ -794,12 +1254,26 @@ class Model:
     def all_model_components_dict(
         self,
     ) -> dict[str, abstract_model_component.AbstractModelComponent]:
-        """Returns all model components as a dictionary."""
+        """Get all model components as a dictionary.
+
+        :returns: Dictionary mapping variable names to all components
+        :rtype: dict[str, abstract_model_component.AbstractModelComponent]
+
+        This comprehensive mapping includes both named and intermediate
+        components, enabling full programmatic access to the model structure.
+        """
         return self._model_varname_to_object
 
     @property
     def parameters(self) -> tuple[parameters_module.Parameter, ...]:
-        """Returns the parameters of the model."""
+        """Get all non-observable parameters in the model.
+
+        :returns: Tuple of parameter components that are not observables
+        :rtype: tuple[parameters_module.Parameter, ...]
+
+        These are the latent variables and hyperparameters that will be
+        inferred during MCMC sampling or optimized during MLE fitting.
+        """
         return tuple(
             filter(
                 lambda x: isinstance(x, parameters_module.Parameter)
@@ -810,22 +1284,38 @@ class Model:
 
     @property
     def parameter_dict(self) -> dict[str, parameters_module.Parameter]:
-        """Returns the parameters of the model as a dictionary."""
+        """Get non-observable parameters as a dictionary.
+
+        :returns: Dictionary mapping names to non-observable parameters
+        :rtype: dict[str, parameters_module.Parameter]
+
+        Provides convenient named access to the model's latent parameters
+        for inspection and programmatic manipulation.
+        """
         return model_comps_to_dict(self.parameters)
 
     @property
     def hyperparameters(self) -> tuple[parameters_module.Parameter, ...]:
-        """
-        Returns the hyperparameters of the model. These are `parameters_module.Parameter`
-        instances whose parents are constants.
+        """Get hyperparameters (parameters with only constant parents).
+
+        :returns: Tuple of parameters that depend only on constants
+        :rtype: tuple[parameters_module.Parameter, ...]
+
+        Hyperparameters are the highest-level parameters in the model
+        hierarchy, typically representing prior distribution parameters
+        that are not derived from other random variables.
         """
         return tuple(filter(lambda x: x.is_hyperparameter, self.parameters))
 
     @property
     def hyperparameter_dict(self) -> dict[str, parameters_module.Parameter]:
-        """
-        Returns the hyperparameters of the model as a dictionary. These are
-        `parameters_module.Parameter` instances whose parents are constants.
+        """Get hyperparameters as a dictionary.
+
+        :returns: Dictionary mapping names to hyperparameters
+        :rtype: dict[str, parameters_module.Parameter]
+
+        Provides convenient access to the model's hyperparameters by name
+        for prior specification and sensitivity analysis.
         """
         return model_comps_to_dict(self.hyperparameters)
 
@@ -833,7 +1323,15 @@ class Model:
     def transformed_parameters(
         self,
     ) -> tuple[transformed_parameters_module.TransformedParameter, ...]:
-        """Returns the transformed parameters of the model."""
+        """Get all named transformed parameters in the model.
+
+        :returns: Tuple of transformed parameter components
+        :rtype: tuple[transformed_parameters_module.TransformedParameter, ...]
+
+        Transformed parameters are deterministic functions of other model
+        components, representing computed quantities like sums, products,
+        or other mathematical transformations.
+        """
         return tuple(
             filter(
                 lambda x: isinstance(
@@ -847,12 +1345,26 @@ class Model:
     def transformed_parameter_dict(
         self,
     ) -> dict[str, transformed_parameters_module.TransformedParameter]:
-        """Returns the transformed parameters of the model as a dictionary."""
+        """Get named transformed parameters as a dictionary.
+
+        :returns: Dictionary mapping names to transformed parameters
+        :rtype: dict[str, transformed_parameters_module.TransformedParameter]
+
+        Enables convenient access to transformed parameters for model
+        inspection and derived quantity analysis.
+        """
         return model_comps_to_dict(self.transformed_parameters)
 
     @property
     def constants(self) -> tuple[constants_module.Constant, ...]:
-        """Returns named constants of the model"""
+        """Get all named constants in the model.
+
+        :returns: Tuple of constant components
+        :rtype: tuple[constants_module.Constant, ...]
+
+        Constants represent fixed values and hyperparameter specifications
+        that do not change during inference or optimization procedures.
+        """
         return tuple(
             filter(
                 lambda x: isinstance(x, constants_module.Constant),
@@ -862,15 +1374,27 @@ class Model:
 
     @property
     def constant_dict(self) -> dict[str, constants_module.Constant]:
-        """
-        Returns the hyperparameters of the model. These are explicitly defined
-        constants and constants implicit to the model based on parameter definitions.
+        """Get named constants as a dictionary.
+
+        :returns: Dictionary mapping names to constant components
+        :rtype: dict[str, constants_module.Constant]
+
+        Provides convenient access to model constants for hyperparameter
+        inspection and sensitivity analysis workflows.
         """
         return model_comps_to_dict(self.constants)
 
     @property
     def observables(self) -> tuple[parameters_module.Parameter, ...]:
-        """Returns the observables of the model."""
+        """Get all observable parameters in the model (observables are always named).
+
+        :returns: Tuple of parameters marked as observable
+        :rtype: tuple[parameters_module.Parameter, ...]
+
+        Observable parameters represent the data-generating components
+        of the model - the variables for which observed data will be
+        provided during inference procedures.
+        """
         return tuple(
             filter(
                 lambda x: isinstance(x, parameters_module.Parameter) and x.observable,
@@ -880,5 +1404,12 @@ class Model:
 
     @property
     def observable_dict(self) -> dict[str, parameters_module.Parameter]:
-        """Returns the observables of the model as a dictionary."""
+        """Get observable parameters as a dictionary.
+
+        :returns: Dictionary mapping names to observable parameters
+        :rtype: dict[str, parameters_module.Parameter]
+
+        Enables convenient access to observable parameters for data
+        specification and model validation workflows.
+        """
         return model_comps_to_dict(self.observables)

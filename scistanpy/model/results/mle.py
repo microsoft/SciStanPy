@@ -1,4 +1,33 @@
-"""Holds code for the maximum likelihood (MLE) estimation of the model parameters."""
+"""Maximum likelihood estimation results analysis and visualization.
+
+This module provides analysis tools for maximum likelihood estimation
+results from SciStanPy models. It offers diagnostic plots, calibration
+checks, and posterior predictive analysis tools designed specifically for MLE-based
+inference workflows.
+
+The module centers around the MLEInferenceRes class, which wraps ArviZ InferenceData
+objects with specialized methods for MLE result analysis. It provides both individual
+diagnostic tools and analysis workflows that combine multiple checks
+into unified reporting interfaces.
+
+Key Features:
+    - Posterior predictive checking workflows
+    - Model calibration analysis with quantitative metrics
+    - Interactive visualization with customizable display options
+    - Integration with ArviZ for standardized Bayesian workflows
+    - Memory-efficient handling of large posterior predictive samples
+    - Flexible output formats for different analysis needs
+
+Visualization Capabilities:
+    - Posterior predictive sample plotting with confidence intervals
+    - Calibration plots with deviation metrics
+    - Quantile-quantile plots for model validation
+    - Interactive layouts with customizable dimensions
+
+The module is designed to work with SciStanPy's MLE estimation workflow,
+providing immediate access to model diagnostics and validation tools
+once MLE fitting is complete.
+"""
 
 from __future__ import annotations
 
@@ -29,11 +58,31 @@ if TYPE_CHECKING:
 
 
 def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
-    """
-    Identify the minimum value across all arrays. Then, use that single value (i.e.,
-    even if 30 arrays were passed, we find the absolute minimum across all 30 to
-    get a single value) to shift the arrays such that the absolute minimum is 1.
-    Finally, apply log10 to the shifted arrays.
+    """Apply log10 transformation with automatic shifting for non-positive values.
+
+    This utility function handles logarithmic transformation of arrays that may
+    contain non-positive values by finding the global minimum across all arrays
+    and shifting them to ensure all values are positive before applying log10.
+
+    :param args: Arrays to transform with log10 after shifting
+    :type args: npt.NDArray
+
+    :returns: Tuple of log10-transformed arrays after appropriate shifting
+    :rtype: tuple[npt.NDArray, ...]
+
+    The function:
+    1. Finds the absolute minimum value across all input arrays
+    2. Shifts all arrays by (1 - min_value) to ensure minimum becomes 1
+    3. Applies log10 transformation to all shifted arrays
+
+    This ensures logarithmic scaling is possible even when data contains
+    zero or negative values, which is common in certain statistical contexts.
+
+    Example:
+        >>> arr1 = np.array([-5, 0, 5])
+        >>> arr2 = np.array([-2, 3, 8])
+        >>> log_arr1, log_arr2 = _log10_shift(arr1, arr2)
+        >>> # All values are now log10-transformed with proper scaling
     """
     # Get the minimum value across all arrays
     min_val = min(np.min(arg) for arg in args)
@@ -42,13 +91,38 @@ def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
     return tuple(np.log10(arg - min_val + 1) for arg in args)
 
 
-# def dask_enabled_summary_stats(inference_obj: az.InferenceData) ->
-
-
 class MLEInferenceRes:
-    """
-    Holds results from a CmdStanMCMC object and an ArviZ object. This should never
-    be instantiated directly. Instead, use the `from_disk` method to load the object.
+    """Analysis interface for maximum likelihood estimation results.
+
+    This class provides tools for analyzing and visualizing MLE
+    results from SciStanPy models. It wraps ArviZ InferenceData objects with
+    specialized methods for posterior predictive checking, calibration analysis,
+    and model validation.
+
+    :param inference_obj: ArviZ InferenceData object or path to saved results
+    :type inference_obj: Union[az.InferenceData, str]
+
+    :ivar inference_obj: Stored ArviZ InferenceData object with all results
+
+    :raises ValueError: If inference_obj is neither string nor InferenceData
+    :raises ValueError: If required groups (posterior, posterior_predictive) are missing
+
+    The class expects the InferenceData object to contain:
+    - **posterior**: Samples from fitted parameter distributions
+    - **posterior_predictive**: Samples from observable distributions
+    - **observed_data**: Original observed data used for fitting
+
+    Key Capabilities:
+    - Posterior predictive checking with multiple visualization modes
+    - Quantitative model calibration assessment
+    - Interactive diagnostic dashboards
+    - Summary statistics computation and caching
+
+    Example:
+        >>> # Load from MLE result
+        >>> mle_analysis = mle_result.get_inference_obj()
+        >>> # Run comprehensive diagnostics
+        >>> dashboard = mle_analysis.run_ppc()
     """
 
     def __init__(self, inference_obj: az.InferenceData | str):
@@ -79,15 +153,35 @@ class MLEInferenceRes:
             )
 
     def save_netcdf(self, filename: str) -> None:
-        """
-        Saves the ArViz object to a netcdf file.
+        """Save the ArviZ InferenceData object to NetCDF format.
+
+        :param filename: Path where to save the NetCDF file
+        :type filename: str
+
+        This method provides persistent storage of analysis results.
+
+        Example:
+            >>> mle_analysis.save_netcdf('my_mle_results.nc')
+            >>> # Later: reload with MLEInferenceRes('my_mle_results.nc')
         """
         self.inference_obj.to_netcdf(filename)
 
     def _update_group(
         self, attrname: str, new_group: xr.Dataset, force_del: bool = False
     ) -> None:
-        """Either adds or updates a group in the ArviZ object"""
+        """Update or add a group to the ArviZ InferenceData object.
+
+        :param attrname: Name of the group to update or create
+        :type attrname: str
+        :param new_group: New dataset to add or use for updating
+        :type new_group: xr.Dataset
+        :param force_del: Whether to force deletion before adding. Defaults to False.
+        :type force_del: bool
+
+        This internal method manages the ArviZ object structure, enabling
+        addition of computed statistics and derived quantities while
+        maintaining data integrity.
+        """
         # If the group already exists and we are not forcing a delete, we just update
         # the group.
         if hasattr(self.inference_obj, attrname) and not force_del:
@@ -113,15 +207,49 @@ class MLEInferenceRes:
         hdi_prob: "custom_types.Float" = 0.94,
         skipna: bool = False,
     ) -> xr.Dataset:
-        """
-        This is a wrapper around `az.summary`. See that function for details. There
-        is one important difference: This function will add the group 'variable_summary_stats',
-        which contains summary statistics for the samples.
+        """Compute summary statistics for MLE results.
 
-        Note that a full `xr.DataSet` is returned containing all metrics.
+        This method wraps ArviZ's summary functionality while adding the computed
+        statistics to the InferenceData object for persistence and reuse. See
+        `az.summary` for detailed descriptions of arguments.
 
-        This function will update any existing groups in the ArviZ object with
-        the same name.
+        :param var_names: Variable names to include in summary. Defaults to None (all variables).
+        :type var_names: Optional[list[str]]
+        :param filter_vars: Variable filtering method. Defaults to None.
+        :type filter_vars: Optional[Literal[None, "like", "regex"]]
+        :param kind: Type of statistics to compute. Defaults to "stats".
+        :type kind: Literal["all", "stats", "diagnostics"]
+        :param round_to: Number of decimal places for rounding. Defaults to 2.
+        :type round_to: custom_types.Integer
+        :param circ_var_names: Names of circular variables. Defaults to None.
+        :type circ_var_names: Optional[list[str]]
+        :param stat_focus: Primary statistic for focus. Defaults to "mean".
+        :type stat_focus: str
+        :param stat_funcs: Custom statistic functions. Defaults to None.
+        :type stat_funcs: Optional[Union[dict[str, callable], callable]]
+        :param extend: Use functions provided by `stat_funcs`. Defaults to True.
+            Only meaningful when `stat_funcs` is provided.
+        :type extend: bool
+        :param hdi_prob: Probability for highest density interval. Defaults to 0.94.
+        :type hdi_prob: custom_types.Float
+        :param skipna: Whether to skip NaN values. Defaults to False.
+        :type skipna: bool
+
+        :returns: Dataset containing computed summary statistics
+        :rtype: xr.Dataset
+
+        :raises ValueError: If diagnostics requested without chain dimension existing
+            in `self.inference_obj.posterior.dims`
+        :raises ValueError: If diagnostics requested with single chain.
+
+        The computed statistics are automatically added to the InferenceData
+        object under the 'variable_summary_stats' group for persistence.
+
+        Example:
+            >>> # Compute basic statistics
+            >>> stats = mle_analysis.calculate_summaries()
+            >>> # Compute diagnostics for multi-chain results
+            >>> diag = mle_analysis.calculate_summaries(kind="diagnostics")
         """
         # If there is no chain and draw dimension, we cannot run diagnostics
         if "chain" not in self.inference_obj.posterior.dims:
@@ -159,9 +287,21 @@ class MLEInferenceRes:
     def _iter_pp_obs(
         self,
     ) -> Generator[tuple[str, npt.NDArray, npt.NDArray], None, None]:
-        """
-        Iterates over the posterior predictive samples and observed variables, converting
-        the samples to 2D arrays and the observations to 1D arrays.
+        """Iterate over posterior predictive samples and corresponding observations.
+
+        :yields: Tuples of (variable_name, reference_samples, observed_data)
+        :rtype: Generator[tuple[str, npt.NDArray, npt.NDArray], None, None]
+
+        This internal method provides a standardized interface for accessing
+        posterior predictive samples and observed data, handling dimension
+        reshaping and alignment automatically.
+
+        The yielded arrays are formatted as:
+        - reference_samples: 2D array (n_samples, n_features)
+        - observed_data: 1D array (n_features,)
+
+        This standardization enables consistent processing across all
+        diagnostic and visualization methods.
         """
         # Loop over the posterior predictive samples
         for varname, reference in self.inference_obj.posterior_predictive.items():
@@ -219,34 +359,49 @@ class MLEInferenceRes:
     def check_calibration(
         self, *, return_deviance=False, display=True, width=600, height=600
     ):
-        """
-        This method checks how well the observed data matches the sampled posterior
-        predictive samples. The procedure is as follows:
+        """Assess model calibration through posterior predictive quantile analysis.
 
-        1.  Calculate the (inclusive) quantiles of the observed data relative to
-            the posterior predictive samples.
-        2.  Plot an ECDF of the observed quantiles. A perfectly calibrated model
-            will produce a straight line from (0, 0) to (1, 1). This is because
-            the at the xth percentile, x% of samples should be less than the observed
-            value.
-        3.  Calculate the absolute difference in area between the observed ECDF
-            and the idealized ECDF. This is the calibration score. A perfectly calibrated
-            model will have a calibration score of 0. A perfectly miscalibrated
-            model will have a calibration score of 0.5.
+        This method evaluates how well the model's posterior predictive distribution
+        matches the observed data by analyzing the distribution of quantiles. Well-
+        calibrated models should produce observed data that are uniformly distributed
+        across the quantiles of the posterior predictive distribution.
 
-        Returns:
-            If `display` is `True`, a holoviews.Layout object containing the ECDF
-            plots for each observed variable. The plots will be displayed in a single
-            column.
+        :param return_deviance: Whether to return quantitative deviance metrics.
+            Defaults to False.
+        :type return_deviance: bool
+        :param display: Whether to return formatted layout for display. Defaults to True.
+        :type display: bool
+        :param width: Width of individual plots in pixels. Defaults to 600.
+        :type width: custom_types.Integer
+        :param height: Height of individual plots in pixels. Defaults to 600.
+        :type height: custom_types.Integer
 
-            If `display` is `False`, a list of holoviews.Overlay objects containing
-            the ECDF plots for each observed variable.
+        :returns: Calibration plots and optionally deviance metrics
+        :rtype: Union[hv.Layout, dict[str, hv.Overlay], tuple[dict[str, hv.Overlay],
+            dict[str, float]]]
 
-            If `return_deviance` is `True`, a tuple containing the list of
-            holoviews.Overlay objects and a dictionary mapping from the variable
-            names to the calibration scores. The calibration scores are the absolute
-            difference in area between the observed ECDF and the idealized ECDF.
-            Note that `display` cannot be `True` if `return_deviance` is `True`.
+        :raises ValueError: If both display and return_deviance are True
+
+        Calibration Assessment Process:
+        1. Calculate quantiles of observed data relative to posterior predictive samples
+        2. Plot empirical CDF of these quantiles
+        3. Compare to ideal diagonal line (perfect calibration)
+        4. Compute absolute deviance as area difference between curves
+
+        Interpretation:
+        - Diagonal line indicates perfect calibration
+        - Curves above diagonal suggest model overconfidence or poor fit
+        - Curves below diagonal suggest model underconfidence or poor fit
+        - Deviance score of 0 indicates perfect calibration
+
+        Example:
+            >>> # Visual assessment
+            >>> cal_layout = mle_analysis.check_calibration()
+            >>> # Quantitative assessment
+            >>> plots, deviances = mle_analysis.check_calibration(
+            ...     return_deviance=True, display=False
+            ... )
+            >>> print(f"Mean deviance: {np.mean(list(deviances.values())):.3f}")
         """
         # We cannot have both `display` and `return_deviance` set to True
         if display and return_deviance:
@@ -327,33 +482,49 @@ class MLEInferenceRes:
         width=600,
         height=400,
     ):
-        """
-        Plots observed data against the corresponding posterior predictive samples.
-        The posterior predictive samples are plotted as a series of confidence intervals.
+        """Visualize observed data against posterior predictive uncertainty intervals.
 
-        Args:
-            quantiles (Sequence[float]): The quantiles defining the plotted confidence
-                intervals. Note that the median will always be included and the
-                quantiles will be symmetrized (e.g., if passing in 0.025 as a quantile,
-                0.975 will be added automatically to the list). Defaults to
-                (0.025, 0.25, 0.5).
-            use_ranks (bool): If `True`, the ranks of the observed values will be
-                plotted on the x-axis instead of their raw values. This is useful
-                when the observed values are not symmetrically distributed. Defaults
-                to `True`.
-            logy (bool): If `True`, the y-axis will be plotted on a logarithmic
-                scale. Note that, due to a bug in the underlying holoviews library,
-                y-values will be shifted to have a minimum of 1 before the log is
-                applied and the log will be applied *before* plotting. This means
-                that, from the perspective of the holoviews library, the y-axis
-                will be plotted on a linear scale. Defaults to `False`.
+        This method creates plots showing how observed data relates to the uncertainty
+        quantified by posterior predictive samples. The posterior predictive samples
+        are displayed as confidence intervals, with observed data overlaid as points.
 
-        Returns:
-            If `display` is `True`, a holoviews.Layout object containing the plots
-            for each observed variable. The plots will be displayed in a single
-            column.
-            If `display` is `False`, a list of holoviews.Overlay objects containing
-            the plots for each observed variable.
+        :param quantiles: Quantiles defining confidence intervals. Defaults to
+            (0.025, 0.25, 0.5). Note: quantiles are automatically symmetrized and
+            median is always included.
+        :type quantiles: Sequence[custom_types.Float]
+        :param use_ranks: Whether to use ranks instead of raw values for x-axis.
+            Defaults to True.
+        :type use_ranks: bool
+        :param logy: Whether to use logarithmic y-axis scaling. Defaults to False.
+        :type logy: bool
+        :param display: Whether to return formatted layout for display. Defaults to True.
+        :type display: bool
+        :param width: Width of individual plots in pixels. Defaults to 600.
+        :type width: custom_types.Integer
+        :param height: Height of individual plots in pixels. Defaults to 400.
+        :type height: custom_types.Integer
+
+        :returns: Posterior predictive plots in requested format
+        :rtype: Union[hv.Layout, dict[str, hv.Overlay]]
+
+        Visualization Features:
+        - Confidence intervals shown as nested colored regions
+        - Observed data displayed as scatter points
+        - Optional rank transformation for better visualization of skewed data
+        - Logarithmic scaling with automatic shifting for non-positive values
+        - Interactive hover labels showing data point identifiers
+
+        The rank transformation is particularly useful when observed values have
+        highly skewed distributions, as it emphasizes the ordering rather than
+        the absolute magnitudes.
+
+        Example:
+            >>> # Standard posterior predictive plot
+            >>> pp_layout = mle_analysis.plot_posterior_predictive_samples()
+            >>> # Custom quantiles with logarithmic scaling
+            >>> pp_plots = mle_analysis.plot_posterior_predictive_samples(
+            ...     quantiles=(0.05, 0.5, 0.95), logy=True, display=False
+            ... )
         """
         # Process each observed variable
         plots: dict[str, hv.Overlay] = {}
@@ -436,27 +607,47 @@ class MLEInferenceRes:
     def plot_observed_quantiles(
         self, *, use_ranks=True, display=True, width=600, height=400, windowsize=None
     ):
-        """
-        Plots the quantiles of the observed data relative to the posterior predictive
-        samples. The x-axis is either the values of the observed data or their ranks.
-        The y-axis is the quantiles of the observed data relative to the posterior
-        predictive samples. A sliding window is used to calculate a rolling mean
-        of the quantiles.
+        """Visualize systematic patterns in observed data quantiles.
 
-        Args:
-            use_ranks (bool): If `True`, the ranks of the observed values will be
-                plotted on the x-axis instead of their raw values. This is useful
-                when the observed values are not symmetrically distributed. Defaults
-                to `True`.
-            display (bool): If `True`, the plots will be displayed. Defaults to `True`.
-            width (int): The width of the plots. Defaults to 600.
-            height (int): The height of the plots. Defaults to 400.
-        Returns:
-            If `display` is `True`, a holoviews.Layout object containing the plots
-            for each observed variable. The plots will be displayed in a single
-            column.
-            If `display` is `False`, a list of holoviews.Overlay objects containing
-            the plots for each observed variable.
+        This method creates hexagonal density plots showing the relationship between
+        observed data values (or their ranks) and their corresponding quantiles
+        within the posterior predictive distribution. A rolling mean overlay
+        highlights systematic trends.
+
+        :param use_ranks: Whether to use ranks instead of raw values for x-axis. Defaults to True.
+        :type use_ranks: bool
+        :param display: Whether to return formatted layout for display. Defaults to True.
+        :type display: bool
+        :param width: Width of individual plots in pixels. Defaults to 600.
+        :type width: custom_types.Integer
+        :param height: Height of individual plots in pixels. Defaults to 400.
+        :type height: custom_types.Integer
+        :param windowsize: Size of rolling window for trend line. Defaults to None (automatic).
+        :type windowsize: Optional[custom_types.Integer]
+
+        :returns: Quantile plots in requested format
+        :rtype: Union[hv.Layout, dict[str, hv.Overlay]]
+
+        Visualization Components:
+        - Hexagonal binning showing density of (value, quantile) pairs
+        - Rolling mean trend line highlighting systematic patterns
+        - Colormap indicating point density for pattern identification
+
+        Pattern Interpretation:
+        - Horizontal trend line around 0.5 with uniformly distributed points indicates
+          good calibration
+        - Systematic deviations suggest model bias or miscalibration
+
+        The hexagonal binning is particularly effective for visualizing large
+        datasets where individual points would create overplotting issues.
+
+        Example:
+            >>> # Standard quantile analysis
+            >>> quant_layout = mle_analysis.plot_observed_quantiles()
+            >>> # Custom window size for trend analysis
+            >>> quant_plots = mle_analysis.plot_observed_quantiles(
+            ...     windowsize=50, use_ranks=False, display=False
+            ... )
         """
         # Loop over quantiles for different observed variables
         plots: dict[str, hv.Overlay] = {}
@@ -528,34 +719,62 @@ class MLEInferenceRes:
         subplot_width=600,
         subplot_height=400,
     ):
-        """
-        Runs all posterior predictive checks. This includes running the following
-        methods:
+        """Execute comprehensive posterior predictive checking analysis.
 
-            1. `plot_posterior_predictive_samples`
-            2. `plot_observed_quantiles`
-            3. `check_calibration`
+        This method provides a complete posterior predictive checking workflow by
+        combining multiple diagnostic approaches into a unified analysis. It runs
+        three complementary diagnostic procedures and presents them in an organized,
+        interactive dashboard.
 
-        Args:
-            use_ranks (bool): If `True`, the ranks of the observed values will be
-                plotted on the x-axis instead of their raw values. This is useful
-                when the observed values are not symmetrically distributed. Defaults
-                to `True`.
-            display (bool): If `True`, the plots will be displayed. Otherwise, a
-                list of outputs from each of the called subfunctions (in the order
-                listed above) will be returned. Defaults to `True`.
-            square_ecdf (bool): If `True`, the ECDF plots will be made square by
-                using the width for both width and height dimensions of the plot.
-                Defaults to `True`.
-            windowsize (int): The size of the rolling window for the ECDF plots.
-                Defaults to None.
-            quantiles (Sequence[float]): The quantiles defining the plotted confidence
-                intervals. Note that the median will always be included and the
-                quantiles will be symmetrized (e.g., if passing in 0.025 as a quantile,
-                0.975 will be added automatically to the list). Defaults to
-                (0.025, 0.25, 0.5).
-            logy_ppc_samples (bool): If `True`, the y-axis of the posterior predictive
-                samples plot will be logarithmic. Defaults to False.
+        :param use_ranks: Whether to use ranks instead of raw values for x-axes.
+            Defaults to True.
+        :type use_ranks: bool
+        :param display: Whether to return interactive dashboard layout. Defaults to True.
+        :type display: bool
+        :param square_ecdf: Whether to make ECDF plots square (width=height). Defaults
+            to True.
+        :type square_ecdf: bool
+        :param windowsize: Size of rolling window for trend analysis. Defaults to
+            None (automatic).
+        :type windowsize: Optional[custom_types.Integer]
+        :param quantiles: Quantiles for confidence intervals. Defaults to (0.025,
+            0.25, 0.5).
+        :type quantiles: Sequence[custom_types.Float]
+        :param logy_ppc_samples: Whether to use log scale for posterior predictive
+            plots. Defaults to False.
+        :type logy_ppc_samples: bool
+        :param subplot_width: Width of individual subplots in pixels. Defaults to 600.
+        :type subplot_width: custom_types.Integer
+        :param subplot_height: Height of individual subplots in pixels. Defaults to 400.
+        :type subplot_height: custom_types.Integer
+
+        :returns: Interactive dashboard or list of plot dictionaries
+        :rtype: Union[pn.Column, list[dict[str, hv.Overlay]]]
+
+        Comprehensive Analysis Components:
+        1. **Posterior Predictive Samples**: Shows observed data against uncertainty intervals
+        2. **Observed Quantiles**: Reveals systematic patterns in model calibration
+        3. **Calibration Assessment**: Quantifies overall model calibration quality
+
+        Dashboard Features:
+        - Interactive variable selection across all diagnostic types
+        - Consistent formatting and scaling across related plots
+        - Automatic layout optimization for comparison and analysis
+        - Widget-based navigation for multi-variable models
+
+        Analysis Workflow:
+        The method integrates three diagnostic perspectives:
+        - **Predictive accuracy**: How well do predictions match observations?
+        - **Calibration quality**: Are prediction intervals properly calibrated?
+        - **Systematic bias**: Are there patterns indicating model inadequacy?
+
+        Example:
+            >>> # Complete interactive analysis
+            >>> dashboard = mle_analysis.run_ppc()
+            >>> dashboard  # Display in notebook
+            >>>
+            >>> # Programmatic access to individual components
+            >>> ppc_plots, quant_plots, cal_plots = mle_analysis.run_ppc(display=False)
         """
         # Get ecdf widths and heights
         if square_ecdf:
@@ -620,8 +839,22 @@ class MLEInferenceRes:
 
     @classmethod
     def from_disk(cls, path: str) -> "MLEInferenceRes":
-        """
-        Loads an MLEInferenceRes object from disk. The path should point to a netcdf
-        file containing the inference data.
+        """Load MLEInferenceRes object from saved NetCDF file.
+
+        :param path: Path to NetCDF file containing saved InferenceData
+        :type path: str
+
+        :returns: Reconstructed MLEInferenceRes object with all analysis capabilities
+        :rtype: MLEInferenceRes
+
+        This class method enables loading of previously saved analysis results,
+        preserving all computed statistics and enabling continued analysis from
+        where previous sessions left off.
+
+        Example:
+            >>> # Load previously saved results
+            >>> mle_analysis = MLEInferenceRes.from_disk('saved_results.nc')
+            >>> # Continue analysis with full functionality
+            >>> dashboard = mle_analysis.run_ppc()
         """
         return cls(az.from_netcdf(path))

@@ -1,4 +1,14 @@
-"""Utility functions for the SciStanPy package."""
+"""Utility functions and classes for the SciStanPy package.
+
+This module provides various utility functions and classes that support
+the core functionality of SciStanPy, including:
+
+- Lazy importing mechanisms for performance optimization
+- Mathematical utility functions for numerical stability
+- Array chunking utilities for efficient memory management
+- Context managers for external library integration
+- Optimized statistical computation functions
+"""
 
 from __future__ import annotations
 
@@ -21,15 +31,28 @@ if TYPE_CHECKING:
 
 
 def lazy_import(name: str):
-    """
-    Used for importing a module only when it is needed. This is for speeding up
-    the import time of the package.
+    """Import a module only when it is first needed.
 
-    Args:
-        name: The module name to import (e.g., 'scistanpy.model.components.constants')
+    This function implements lazy module importing to improve package import
+    performance by deferring module loading until actual use.
 
-    Returns:
-        The imported module
+    :param name: The fully qualified module name to import
+    :type name: str
+
+    :returns: The imported module
+    :rtype: module
+
+    :raises ImportError: If the specified module cannot be found
+
+    Example:
+        >>> # Module is not loaded until first use
+        >>> numpy_module = lazy_import('numpy')
+        >>> # Now numpy is actually imported
+        >>> array = numpy_module.array([1, 2, 3])
+
+    Note:
+        If the module is already imported, returns the cached version
+        from sys.modules for efficiency.
     """
     # Check if the module is already imported
     if name in sys.modules:
@@ -55,7 +78,28 @@ def lazy_import(name: str):
 
 
 class LazyObjectProxy:
-    """A proxy that delays importing a module and accessing an object until first use."""
+    """A proxy that delays importing a module and accessing an object until first use.
+
+    This class provides a lazy loading mechanism for specific objects within
+    modules, allowing fine-grained control over when imports occur. The proxy
+    forwards all method calls and attribute access to the actual object once
+    it's loaded.
+
+    :param module_name: The fully qualified name of the module containing the object
+    :type module_name: str
+    :param obj_name: The name of the object to import from the module
+    :type obj_name: str
+
+    :ivar _module_name: Stored module name for lazy loading
+    :ivar _obj_name: Stored object name for lazy loading
+    :ivar _cached_obj: Cached reference to the imported object (None until first use)
+
+    Example:
+        >>> # Create a proxy for numpy.array
+        >>> array_proxy = LazyObjectProxy('numpy', 'array')
+        >>> # numpy is not imported yet
+        >>> my_array = array_proxy([1, 2, 3])  # Now numpy is imported
+    """
 
     def __init__(self, module_name: str, obj_name: str):
         self._module_name = module_name
@@ -63,7 +107,11 @@ class LazyObjectProxy:
         self._cached_obj = None
 
     def _get_object(self):
-        """Import the module and get the object if not already cached."""
+        """Import the module and get the object if not already cached.
+
+        :returns: The imported object
+        :raises ImportError: If the module or object cannot be imported
+        """
         if self._cached_obj is None:
             module = lazy_import(self._module_name)
             try:
@@ -75,31 +123,51 @@ class LazyObjectProxy:
         return self._cached_obj
 
     def __call__(self, *args, **kwargs):
-        """Forward calls to the actual object."""
+        """Forward calls to the actual object.
+
+        :param args: Positional arguments to forward
+        :param kwargs: Keyword arguments to forward
+        :returns: Result of calling the proxied object
+        """
         return self._get_object()(*args, **kwargs)
 
     def __getattr__(self, name):
-        """Forward attribute access to the actual object."""
+        """Forward attribute access to the actual object.
+
+        :param name: Name of the attribute to access
+        :returns: The requested attribute from the proxied object
+        """
         return getattr(self._get_object(), name)
 
     def __repr__(self):
-        """Return a representation of the proxy."""
+        """Return a representation of the proxy.
+
+        :returns: String representation of the proxy or proxied object
+        :rtype: str
+        """
         if self._cached_obj is not None:
             return repr(self._cached_obj)
         return f"<LazyObjectProxy for {self._module_name}.{self._obj_name}>"
 
 
 def lazy_import_from(module_name: str, obj_name: str):
-    """
-    Return a proxy that will lazily import a specific object from a module only when first used.
-    Equivalent to 'from module_name import obj_name' but delayed until actual use.
+    """Create a lazy import proxy for a specific object from a module.
 
-    Args:
-        module_name: The module name to import from (e.g., 'scistanpy.model.components.constants')
-        obj_name: The object name to import (e.g., 'Constant')
+    This function provides a convenient way to create lazy import proxies,
+    equivalent to 'from module_name import obj_name' but with deferred loading.
 
-    Returns:
-        LazyObjectProxy: A proxy that will import and return the object when first accessed
+    :param module_name: The fully qualified module name to import from
+    :type module_name: str
+    :param obj_name: The name of the object to import from the module
+    :type obj_name: str
+
+    :returns: A proxy that will import and return the object when first accessed
+    :rtype: LazyObjectProxy
+
+    Example:
+        >>> # Equivalent to 'from numpy import array' but lazy
+        >>> array = lazy_import_from('numpy', 'array')
+        >>> my_array = array([1, 2, 3])  # numpy imported here
     """
     return LazyObjectProxy(module_name, obj_name)
 
@@ -113,8 +181,24 @@ def choose_module(dist: "custom_types.SampleType") -> np: ...
 
 
 def choose_module(dist):
-    """
-    Choose the module to use for the operation based on the type of the distribution.
+    """Choose the appropriate computational module based on input type.
+
+    This function provides automatic backend selection between NumPy and
+    PyTorch based on the type of the input data.
+
+    :param dist: Input data whose type determines the module choice
+    :type dist: Union[torch.Tensor, np.ndarray, custom_types.SampleType]
+
+    :returns: The appropriate module (torch for tensors, numpy for arrays)
+    :rtype: Union[torch, np]
+
+    :raises TypeError: If the input type is not supported
+
+    Example:
+        >>> import torch
+        >>> tensor = torch.tensor([1.0, 2.0])
+        >>> module = choose_module(tensor)  # Returns torch module
+        >>> result = module.exp(tensor)
     """
     if isinstance(dist, torch.Tensor):
         return torch
@@ -133,8 +217,29 @@ def stable_sigmoid(exponent: torch.Tensor) -> torch.Tensor: ...
 
 
 def stable_sigmoid(exponent):
-    """
-    Stable sigmoid function to avoid overflow.
+    """Compute sigmoid function in a numerically stable way.
+
+    This function implements a numerically stable version of the sigmoid
+    function that avoids overflow issues by using different computational
+    approaches for positive and negative inputs.
+
+    :param exponent: Input values for sigmoid computation
+    :type exponent: Union[torch.Tensor, npt.NDArray[np.floating]]
+
+    :returns: Sigmoid values with the same type and shape as input
+    :rtype: Union[torch.Tensor, npt.NDArray[np.floating]]
+
+    The function uses the identity:
+    - For x >= 0: sigmoid(x) = 1 / (1 + exp(-x))
+    - For x < 0: sigmoid(x) = exp(x) / (1 + exp(x))
+
+    This approach prevents overflow in the exponential function regardless
+    of the sign and magnitude of the input.
+
+    Example:
+        >>> import numpy as np
+        >>> x = np.array([-1000, 0, 1000])  # Extreme values
+        >>> stable_result = stable_sigmoid(x)  # No overflow
     """
     # Are we working with torch or numpy?
     module = choose_module(exponent)
@@ -146,11 +251,11 @@ def stable_sigmoid(exponent):
     mask = exponent >= 0
 
     # Calculate the sigmoid function for the positives
-    pos_calc = module.exp(exponent[~mask])
-    sigma_exponent[~mask] = pos_calc / (1 + pos_calc)
+    sigma_exponent[mask] = 1 / (1 + module.exp(-exponent[mask]))
 
     # Calculate the sigmoid function for the negatives
-    sigma_exponent[mask] = 1 / (1 + module.exp(-exponent[mask]))
+    neg_calc = module.exp(exponent[~mask])
+    sigma_exponent[~mask] = neg_calc / (1 + neg_calc)
 
     # We should have no NaN values in the result
     assert not module.any(module.isnan(sigma_exponent))
@@ -163,23 +268,41 @@ def get_chunk_shape(
     mib_per_chunk: custom_types.Integer | None = None,
     frozen_dims: Collection[custom_types.Integer] = (),
 ) -> tuple[custom_types.Integer, ...]:
-    """
-    Get the shape of chunks for a dask array based on the shape of the array and
-    the desired chunk size in MB.
+    """Calculate optimal chunk shape for Dask arrays based on memory constraints.
 
-    Parameters
-    ----------
-    array_shape (tuple[int, ...]): Shape of the array that will be chunked.
-    array_precision (Literal["double", "single", "half"]): Precision of the array
-        that will be chunked.
-    mib_per_chunk (int): Desired chunk size in MiB. Default is to use the default
-        chunk size of Dask.
-    frozen_dims (tuple[int, ...]): Dimensions that should not be chunked. Note that
-        the target chunk size may be exceeded if the frozen dimensions are large.
+    This function determines the optimal chunking strategy for large arrays
+    processed with Dask, balancing memory usage with computational efficiency.
+    It respects frozen dimensions that should not be chunked.
 
-    Returns
-    -------
-    tuple[int, ...]: Shape of the chunks.
+    :param array_shape: Shape of the array to be chunked
+    :type array_shape: tuple[custom_types.Integer, ...]
+    :param array_precision: Precision of array elements affecting memory usage
+    :type array_precision: Literal["double", "single", "half"]
+    :param mib_per_chunk: Target chunk size in MiB. If None, uses Dask default
+    :type mib_per_chunk: Union[custom_types.Integer, None]
+    :param frozen_dims: Dimensions that should not be chunked
+    :type frozen_dims: Collection[custom_types.Integer]
+
+    :returns: Optimal chunk shape for the array
+    :rtype: tuple[custom_types.Integer, ...]
+
+    :raises ValueError: If mib_per_chunk is negative
+    :raises IndexError: If frozen_dims contains invalid dimension indices
+
+    The algorithm:
+    1. Calculates memory usage per array element based on precision
+    2. Sets frozen dimensions to their full size
+    3. Iteratively determines chunk sizes for remaining dimensions
+    4. Ensures total chunk memory stays within the specified limit (or as close to
+       it as possible if frozen dimensions result in a smallest possible size above
+       the limit)
+
+    Example:
+        >>> # Chunk a (1000, 2000, 100) array, keeping last dim intact
+        >>> shape = get_chunk_shape(
+        ...     (1000, 2000, 100), "double",
+        ...     mib_per_chunk=64, frozen_dims=(2,)
+        ... )
     """
     mib_per_chunk = mib_per_chunk or int(
         dask.config.get("array.chunk-size").removesuffix("MiB")
@@ -251,7 +374,29 @@ def get_chunk_shape(
 
 
 class az_dask:  # pylint: disable=invalid-name
-    """Context manager to enable Dask with ArviZ."""
+    """Context manager for enabling Dask integration with ArviZ.
+
+    This context manager provides a convenient way to enable Dask-based
+    parallel computation within ArviZ operations, automatically handling
+    the setup and teardown of Dask configuration.
+
+    :param dask_type: Type of Dask computation to enable
+    :type dask_type: str
+    :param output_dtypes: Expected output data types for Dask operations
+    :type output_dtypes: Union[list[object], None]
+
+    :ivar dask_type: Stored Dask computation type
+    :ivar output_dtypes: Stored output data types configuration
+
+    Example:
+        >>> with az_dask("parallelized", [float]) as dask_ctx:
+        ...     # ArviZ operations here will use Dask parallelization
+        ...     result = az.summary(trace_data)
+
+    Note:
+        The context manager automatically disables Dask when exiting,
+        ensuring clean state management.
+    """
 
     def __init__(
         self, dask_type: str = "parallelized", output_dtypes: list[object] | None = None
@@ -262,22 +407,55 @@ class az_dask:  # pylint: disable=invalid-name
         self.output_dtypes = output_dtypes or [float]
 
     def __enter__(self):
-        """Enable Dask with ArviZ."""
+        """Enable Dask with ArviZ.
+
+        :returns: Self for use in with statement
+        :rtype: az_dask
+        """
         Dask.enable_dask(
             dask_kwargs={"dask": self.dask_type, "output_dtypes": self.output_dtypes}
         )
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """Disable Dask when exiting the context.
+
+        :param exc_type: Exception type if an exception occurred
+        :param exc_value: Exception value if an exception occurred
+        :param traceback: Exception traceback if an exception occurred
+        """
         Dask.disable_dask()
 
 
 def faster_autocorrelation(x):
-    """
-    Faster version of scipy.stats.spearmanr when x and y might contain NaNs. `x`
-    is assumed to be a 2D array with shape (n, m), where `n` is the number of
-    samples and `m` is the number of features (i.e., like scipy's `spearmanr` but
-    with `axis=1`.)
+    """Compute Spearman rank correlation matrix with optimized NaN handling.
+
+    This function provides a faster implementation of Spearman rank correlation
+    computation for 2D arrays that may contain NaN values. It's optimized for
+    cases where missing data patterns vary across samples.
+
+    :param x: Input array with shape (n, m) where n is samples and m is features
+    :type x: npt.NDArray[np.floating]
+
+    :returns: Spearman rank correlation matrix of shape (n, n)
+    :rtype: npt.NDArray[np.floating]
+
+    The function:
+    1. Builds masks for non-NaN values in each row
+    2. Computes pairwise correlations using only overlapping valid data
+    3. Uses matrix symmetry to avoid redundant calculations
+    4. Provides progress tracking for long computations
+
+    Example:
+        >>> import numpy as np
+        >>> # Data with some NaN values
+        >>> data = np.random.randn(100, 50)
+        >>> data[data < -1] = np.nan  # Introduce some NaNs
+        >>> corr_matrix = faster_autocorrelation(data)
+
+    Note:
+        This function assumes the input follows scipy.stats.spearmanr
+        conventions but with axis=1 behavior and NaN-aware computation.
     """
     # Build a mask for the non-NaN values in each row
     nonnan_mask = ~np.isnan(x)

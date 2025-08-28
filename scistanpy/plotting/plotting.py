@@ -1,4 +1,27 @@
-"""Holds objects used for plotting."""
+"""Core plotting functions for SciStanPy visualization and analysis.
+
+This module implements the primary plotting functionality for SciStanPy,
+providing specialized visualization tools for Bayesian analysis, model
+diagnostics, and statistical relationships.
+
+The module leverages HoloViews and hvplot for flexible, interactive
+visualizations that can be easily customized and extended. All plotting
+functions support both standard NumPy arrays and interactive widgets
+for dynamic exploration of model results.
+
+Key Features:
+    - ECDF and KDE plots for distribution visualization
+    - Quantile plots with confidence intervals
+    - Model calibration diagnostics
+    - Hexagonal binning for large datasets
+    - Interactive plotting with widget support
+    - Customizable styling and overlays
+
+Functions are organized by visualization type and complexity, from simple
+distribution plots to sophisticated multi-panel diagnostic displays.
+"""
+
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -38,16 +61,33 @@ HVType = Union[hv.element.raster.RGB, hv.element.raster.Overlay]
 def aggregate_data(
     data: npt.NDArray, independent_dim: Optional[int] = None
 ) -> npt.NDArray:
-    """
-    Aggregates data from a numpy array. Here are the rules:
+    """Aggregate multi-dimensional data for plotting purposes.
 
-    1.  If the independent dimension is not provided, the data array is flattened.
-        In this case, the `independent_labels` parameter is ignored.
-    2.  If the independent dimension is provided and the independent labels
-        are not provided, then the data array is flattened along all dimensions
-        except for the independent dimension. That is, a 2D array is returned
-        with shape (-1, n_independent), where "-1" indicates the product of
-        all other dimensions.
+    This function reshapes multi-dimensional arrays according to specified
+    aggregation rules, preparing data for visualization functions that
+    expect specific array structures.
+
+    :param data: Input data array to aggregate
+    :type data: npt.NDArray
+    :param independent_dim: Dimension to preserve during aggregation.
+                           If None, flattens entire array. (Default: None)
+    :type independent_dim: Optional[int]
+
+    :returns: Aggregated data array
+    :rtype: npt.NDArray
+
+    Aggregation Rules:
+        - If independent_dim is None: Returns flattened 1D array
+        - If independent_dim is specified: Returns 2D array with shape
+          (-1, n_independent) where -1 represents the product of all
+          other dimensions
+
+    Example:
+        >>> data = np.random.randn(10, 5, 3)
+        >>> # Flatten completely
+        >>> flat = aggregate_data(data)  # Shape: (150,)
+        >>> # Preserve last dimension
+        >>> agg = aggregate_data(data, independent_dim=2)  # Shape: (50, 3)
     """
     # Flatten the data if the independent dimension is not provided.
     if independent_dim is None:
@@ -62,9 +102,29 @@ def aggregate_data(
 
 
 def allow_interactive(plotting_func: Callable[P, T]) -> Callable[P, T]:
-    """
-    A decorator that allows the plotting function to be interactive. This assumes
-    that the first argument is a dataframe or a hvplot interactive object.
+    """Decorator to enable interactive plotting capabilities.
+
+    This decorator modifies plotting functions to handle both static
+    DataFrames and interactive hvplot objects, automatically configuring
+    the appropriate display options for each case.
+
+    :param plotting_func: The plotting function to make interactive
+    :type plotting_func: Callable[P, T]
+
+    :returns: Enhanced function with interactive capabilities
+    :rtype: Callable[P, T]
+
+    The decorator handles:
+        - Static DataFrames: Returns plot directly
+        - Interactive objects: Configures framewise options
+        - Plot lists: Combines multiple plots into column layout
+
+    Example:
+        >>> @allow_interactive
+        ... def my_plot(df, param):
+        ...     return df.hvplot.line(y=param)
+        >>> # Works with both static and interactive data
+        >>> plot = my_plot(dataframe, 'column_name')
     """
 
     @wraps(plotting_func)
@@ -102,8 +162,32 @@ def plot_ecdf_kde(
 
 @allow_interactive
 def plot_ecdf_kde(plotting_df, /, paramname):
-    """Renders the plots for 1D data."""
+    """Create empirical CDF and kernel density estimate plots.
 
+    This function generates complementary ECDF and KDE visualizations
+    for univariate data, providing both cumulative and density perspectives
+    on the data distribution.
+
+    :param plotting_df: DataFrame containing the data to plot
+    :type plotting_df: Union[pd.DataFrame, hvplot.interactive.Interactive]
+    :param paramname: Name of the parameter/column to visualize
+    :type paramname: Union[str, pnw.Select]
+
+    :returns: List containing KDE and ECDF plots, or interactive plot
+    :rtype: Union[list[HVType], hvplot.interactive.Interactive]
+
+    The function creates:
+        - KDE plot: Smooth density estimate with automatic bandwidth
+        - ECDF plot: Step function showing cumulative probabilities
+
+    Both plots are configured with consistent styling and appropriate
+    axis labels for scientific presentation.
+
+    Example:
+        >>> df = pd.DataFrame({'param': np.random.normal(0, 1, 1000)})
+        >>> plots = plot_ecdf_kde(df, 'param')
+        >>> # plots[0] is KDE, plots[1] is ECDF
+    """
     # Build the plots, combine, and return
     ecdf_plot = plotting_df.hvplot.line(
         x=paramname, y="Cumulative Probability", title="ECDF", width=600, height=400
@@ -127,8 +211,29 @@ def plot_ecdf_violin(
 
 @allow_interactive
 def plot_ecdf_violin(plotting_df, /, paramname):
-    """
-    Renders the plots for 2D data treating the second dimension elements as independent.
+    """Create ECDF and violin plots for multi-group data comparison.
+
+    This function visualizes distributions across multiple groups or
+    categories, combining empirical CDFs with violin plots to show
+    both cumulative and density information simultaneously.
+
+    :param plotting_df: DataFrame with grouped data including 'Independent Label' column
+    :type plotting_df: Union[pd.DataFrame, hvplot.interactive.Interactive]
+    :param paramname: Name of the parameter/column to visualize
+    :type paramname: Union[str, pnw.Select]
+
+    :returns: Combined ECDF and violin plot overlay
+    :rtype: Union[list[HVType], hvplot.interactive.Interactive]
+
+    The visualization includes:
+        - Multi-line ECDF plot: One curve per group with color coding
+        - Violin plot: Density distributions by group with colorbar
+
+    Groups are automatically colored using the Inferno colormap.
+
+    Example:
+        >>> # DataFrame with 'param' values and 'Independent Label' grouping
+        >>> plots = plot_ecdf_violin(grouped_df, 'param')
     """
     ecdfplot = plotting_df.hvplot.line(
         x=paramname,
@@ -172,9 +277,32 @@ def plot_relationship(
 
 @allow_interactive
 def plot_relationship(plotting_df, /, paramname, datashade=True):
-    """
-    Renders the plots for 2D data treating the second dimension elements as dependent
-    on a provided label.
+    """Visualize relationships between parameters and independent variables.
+
+    This function creates line plots showing how parameters vary with
+    respect to independent variables, with optional datashading for
+    large datasets to improve performance and readability.
+
+    :param plotting_df: DataFrame with 'Independent Label' and parameter columns
+    :type plotting_df: Union[pd.DataFrame, hvplot.interactive.Interactive]
+    :param paramname: Name of the dependent parameter to plot
+    :type paramname: Union[str, pnw.Select]
+    :param datashade: Whether to use datashading for large datasets (Default: True)
+    :type datashade: bool
+
+    :returns: Line plot showing parameter relationships
+    :rtype: Union[HVType, hvplot.interactive.Interactive]
+
+    Datashading options:
+        - True: Uses count aggregation with Inferno colormap (large data)
+        - False: Uses dynamic line plotting with lime color (small data)
+
+    The function automatically optimizes visualization based on data size
+    and user preferences for performance versus detail.
+
+    Example:
+        >>> # Plot parameter evolution over time/conditions
+        >>> plot = plot_relationship(time_series_df, 'param', datashade=True)
     """
     # Different kwargs for datashade
     if datashade:
@@ -202,12 +330,29 @@ def choose_plotting_function(
     independent_labels: Optional[npt.NDArray],
     datashade: bool = True,
 ) -> Callable:
-    """
-    Chooses the plotting function based on the independent dimension and labels.
-    If we just have the initial view, then we will plot an ECDF and KDE. If we have
-    an independent dimension but no labels, then we will plot a series of ECDFs
-    and violin plots. If we have an independent dimension and labels, then we will
-    plot lines describing those relationships.
+    """Select appropriate plotting function based on data characteristics.
+
+    This function implements intelligent plot type selection based on
+    the structure of the data and available metadata.
+
+    :param independent_dim: Dimension index for independent variable, if any
+    :type independent_dim: Optional[custom_types.Integer]
+    :param independent_labels: Labels for independent variable values
+    :type independent_labels: Optional[npt.NDArray]
+    :param datashade: Whether to enable datashading for large datasets (Default: True)
+    :type datashade: bool
+
+    :returns: Appropriate plotting function for the data structure
+    :rtype: Callable
+
+    Selection Logic:
+        - No independent_dim: Returns plot_ecdf_kde (univariate analysis)
+        - Independent_dim but no labels: Returns plot_ecdf_violin (multi-group)
+        - Both independent_dim and labels: Returns plot_relationship (dependency)
+
+    Example:
+        >>> plotter = choose_plotting_function(None, None)  # ECDF/KDE
+        >>> plotter = choose_plotting_function(1, time_labels)  # Relationship
     """
     if independent_dim is None:
         return plot_ecdf_kde
@@ -223,9 +368,35 @@ def build_plotting_df(
     independent_dim: Optional["custom_types.Integer"] = None,
     independent_labels: Optional[npt.NDArray] = None,
 ) -> pd.DataFrame:
-    """
-    Builds the dataframes that will be used for plotting the prior predictive
-    check. The dataframes are built from the samples drawn from the model.
+    """Construct DataFrame optimized for plotting functions.
+
+    This function transforms raw sample arrays into structured DataFrames
+    with appropriate columns and formatting for visualization functions.
+    It handles various data structures and automatically generates
+    necessary metadata for plotting.
+
+    :param samples: Raw sample data to structure for plotting
+    :type samples: npt.NDArray
+    :param paramname: Column name to assign for the parameter values (Default: "param")
+    :type paramname: str
+    :param independent_dim: Dimension representing independent variable (Default: None)
+    :type independent_dim: Optional[custom_types.Integer]
+    :param independent_labels: Labels for independent variable values (Default: None)
+    :type independent_labels: Optional[npt.NDArray]
+
+    :returns: Structured DataFrame ready for plotting functions
+    :rtype: pd.DataFrame
+
+    The function handles:
+        - Data aggregation according to independent dimension
+        - Automatic label generation when not provided
+        - ECDF calculation for cumulative plots
+        - Trace separation with NaN boundaries for line plots
+        - Proper sorting for visualization functions
+
+    Example:
+        >>> samples = np.random.randn(100, 50, 10)  # 100 traces, 50 time points, 10 params
+        >>> df = build_plotting_df(samples, 'measurement', independent_dim=1)
     """
     # Aggregate the data
     data = aggregate_data(data=samples, independent_dim=independent_dim)
@@ -295,8 +466,40 @@ def plot_distribution(
     independent_dim: Optional["custom_types.Integer"] = None,
     independent_labels: Optional[npt.NDArray] = None,
 ) -> Union[HVType, list[HVType]]:
-    """Plots a distribution of samples with an optional ground truth overlay."""
+    """Create comprehensive distribution plots with optional overlays.
 
+    This is the main distribution plotting function that automatically
+    selects appropriate visualization types based on data structure
+    and provides optional ground truth or reference overlays.
+
+    :param samples: Sample data from model simulations or posterior draws
+    :type samples: Union[npt.NDArray, torch.Tensor]
+    :param overlay: Optional reference data to overlay on the plot (Default: None)
+    :type overlay: Optional[npt.NDArray]
+    :param paramname: Name to assign for the parameter being plotted (Default: "param")
+    :type paramname: str
+    :param independent_dim: Dimension index for independent variable (Default: None)
+    :type independent_dim: Optional[custom_types.Integer]
+    :param independent_labels: Labels for independent variable values (Default: None)
+    :type independent_labels: Optional[npt.NDArray]
+
+    :returns: Plot or list of plots showing data distribution
+    :rtype: Union[HVType, list[HVType]]
+
+    :raises ValueError: If overlay dimensions don't match sample dimensions
+
+    The function automatically:
+        - Converts PyTorch tensors to NumPy arrays
+        - Selects appropriate plot type based on data structure
+        - Overlays reference data with distinct styling
+        - Handles both single plots and multi-panel layouts
+
+    Example:
+        >>> # Simple distribution plot
+        >>> plot = plot_distribution(posterior_samples, paramname='mu')
+        >>> # With ground truth overlay
+        >>> plot = plot_distribution(samples, overlay=true_values, paramname='sigma')
+    """
     # Samples must be a numpy array
     samples = (
         samples.detach().cpu().numpy() if isinstance(samples, torch.Tensor) else samples
@@ -361,24 +564,37 @@ def plot_distribution(
 def calculate_relative_quantiles(
     reference: npt.NDArray, observed: npt.NDArray
 ) -> npt.NDArray:
-    """
-    Given a set of reference observations and a set of observed values, this function
-    calculates the quantiles of the observed values relative to the reference.
-    More specifically, for each value in "observed," we find the number of values
-    in an equivalent position in the reference that are less than or equal to the
-    observed value. This is then returned as a numpy array.
-    Args:
-        reference (npt.NDArray): The reference observations. This must have shape
-            (n_samples, feat1, feat2, ..., featn). The first dimensions is the number
-            of samples and the rest are the feature dimensions.
-        observed (npt.NDArray): The observed values. This must have the same number
-            of dimensions as the reference. Each dimension must be the same size
-            as the corresponding dimension of the reference except for the first
-            dimension, which gives the number of observations.
+    """Calculate quantiles of observed values relative to reference distribution.
 
-    Returns:
-        npt.NDArray: The quantiles of the observed values relative to the reference.
-            This has shape (n_observations, feat1, feat2, ..., featn).
+    For each observed value, this function computes the quantile (percentile)
+    it would occupy within the corresponding reference distribution. This is
+    essential for calibration analysis and model validation.
+
+    :param reference: Reference observations with shape (n_samples, feat1, ..., featN).
+                     First dimension is samples, remaining are feature dimensions.
+    :type reference: npt.NDArray
+    :param observed: Observed values with shape (n_obs, feat1, ..., featN).
+                    Feature dimensions must match reference.
+    :type observed: npt.NDArray
+
+    :returns: Quantiles of observed values relative to reference
+    :rtype: npt.NDArray
+
+    :raises ValueError: If arrays have incompatible dimensions
+
+    The calculation determines, for each observed value, what fraction of
+    reference values in the corresponding position are less than or equal
+    to the observed value. This produces values between 0 and 1.
+
+    Mathematical Definition:
+        For observed value x_ij and reference distribution R_j:
+        quantile_ij = P(R_j <= x_ij) = (1/n) * sum(R_kj <= x_ij for k=1..n)
+
+    Example:
+        >>> ref = np.random.normal(0, 1, (1000, 10))  # 1000 samples, 10 features
+        >>> obs = np.random.normal(0.5, 1, (5, 10))   # 5 observations, 10 features
+        >>> quantiles = calculate_relative_quantiles(ref, obs)
+        >>> # quantiles.shape == (5, 10), values between 0 and 1
     """
     # Check shapes
     if reference.ndim < 2:
@@ -392,18 +608,32 @@ def calculate_relative_quantiles(
         )
 
     # Now we calculate the quantiles that the observations fall into relative to
-    # the reference. The produced array has shape (n_observations, n_features)
+    # the reference. The produced array has shape (n_observations, ...)
     return (reference[None] <= observed[:, None]).mean(axis=1)
 
 
 def _set_defaults(
     kwargs: dict[str, Any] | None, default_values: tuple[tuple[str, Any], ...]
 ) -> dict[str, Any]:
-    """
-    Provides a set of default values for kwargs that are different from the function
-    defaults.
-    """
+    """Apply default values to kwargs dictionary without overwriting existing keys.
 
+    This utility function provides a clean way to set default plotting
+    parameters while respecting user-provided customizations.
+
+    :param kwargs: User-provided keyword arguments (may be None)
+    :type kwargs: Union[dict[str, Any], None]
+    :param default_values: Tuple of (key, value) pairs for defaults
+    :type default_values: tuple[tuple[str, Any], ...]
+
+    :returns: Dictionary with defaults applied for missing keys
+    :rtype: dict[str, Any]
+
+    Example:
+        >>> defaults = (('color', 'blue'), ('alpha', 0.5))
+        >>> user_kwargs = {'color': 'red'}
+        >>> final = _set_defaults(user_kwargs, defaults)
+        >>> # final == {'color': 'red', 'alpha': 0.5}
+    """
     # Convert none to empty dict if needed
     kwargs = kwargs or {}
     for k, v in default_values:
@@ -420,28 +650,42 @@ def plot_calibration(
     observed: npt.NDArray,
     **kwargs,
 ) -> tuple[hv.Overlay, npt.NDArray[np.floating]]:
-    """
-    Given a set of reference observations and a set of observed values, this function
-    plots an ECDF of the quantiles of the observed values relative to the reference.
-    More specifically, for each value in "observed," we find the number of values
-    in an equivalent position in the reference that are less than or equal to the
-    observed value. This is then plotted as a cumulative distribution function.
+    """Generate calibration plots for model validation.
 
-    Args:
-        reference (npt.NDArray): The reference observations. See `calculate_relative_quantiles`
-            for details.
-        observed (npt.NDArray): The observed values. See `calculate_relative_quantiles`
-            for details.
-        return_deviance (bool): If True, the function will return the deviance
-            statistics for each observation, where the deviance is defined as the
-            absolute difference between the observed ECDF and the idealized ECDF,
-            which is a straight line from (0, 0) to (1, 1). Default is False.
-        **kwargs: Additional keyword arguments to pass to the plotting function.
-            These will be passed to the `hvplot.Curve` function.
+    This function creates empirical cumulative distribution plots of
+    relative quantiles to assess model calibration. Well-calibrated
+    models should produce observed values that are uniformly distributed
+    across quantiles of the reference distribution.
 
-    Returns:
-        hv.Overlay: The ECDF plot.
-        npt.NDArray (Optional): The deviance statistics for each observation.
+    :param reference: Reference observations for calibration assessment
+    :type reference: npt.NDArray
+    :param observed: Observed values to assess against reference
+    :type observed: npt.NDArray
+    :param kwargs: Additional styling options passed to hvplot.Curve
+
+    :returns: Tuple of (calibration plot overlay, deviance statistics)
+    :rtype: tuple[hv.Overlay, npt.NDArray[np.floating]]
+
+    The calibration plot shows:
+        - ECDF curves for each observation set
+        - Ideal calibration line (diagonal from (0,0) to (1,1))
+        - Deviation areas highlighting calibration errors
+
+    Deviance Calculation:
+        For each observation, computes the absolute difference in area
+        between the observed ECDF and the ideal uniform ECDF using
+        the trapezoidal rule for numerical integration.
+
+    Interpretation:
+        - Points near diagonal: Well-calibrated
+        - Points above diagonal: Model underconfident OR bad fit
+        - Points below diagonal: Model overconfident OR bad fit
+
+    Example:
+        >>> ref_data = posterior_predictive_samples  # Shape: (1000, 100)
+        >>> obs_data = actual_observations          # Shape: (10, 100)
+        >>> plot, deviances = plot_calibration(ref_data, obs_data)
+        >>> print(f"Mean deviance: {deviances.mean():.3f}")
     """
 
     # pylint: disable=line-too-long
@@ -560,40 +804,64 @@ def quantile_plot(
     observed_kwargs=None,
     allow_nan=False,
 ):
+    """Create quantile plots with confidence intervals and optional overlays.
+
+    This function generates area plots showing quantile ranges of reference
+    data along with optional median lines and observed data overlays.
+    It's particularly useful for visualizing uncertainty bands around
+    model predictions.
+
+    :param x: X-axis values (independent variable)
+    :type x: npt.NDArray
+    :param reference: Reference data with shape (n_samples, n_points)
+    :type reference: npt.NDArray
+    :param quantiles: Quantile values to calculate and plot (0 < q < 1)
+    :type quantiles: npt.ArrayLike
+    :param observed: Optional observed data to overlay. Must be 1D or 2D with last
+        dimension matching that of the reference data (Default: None).
+    :type observed: Optional[npt.ArrayLike]
+    :param labels: Optional labels for hover tooltips (Default: None).
+    :type labels: Optional[dict[str, npt.ArrayLike]]
+    :param include_median: Whether to include median line (Default: True)
+    :type include_median: bool
+    :param overwrite_input: Whether to overwrite reference array during calculations.
+        This can help save memory by avoiding the creation of intermediate copies.
+        (Default: False)
+    :type overwrite_input: bool
+    :param return_quantiles: Whether to return calculated quantiles along with plot.
+        (Default: False)
+    :type return_quantiles: bool
+    :param observed_type: Type of overlay plot ('line' or 'scatter') (Default: 'line')
+    :type observed_type: Literal["line", "scatter"]
+    :param area_kwargs: Styling options for quantile areas. See `hv.opts.Area`.
+    :type area_kwargs: Optional[dict[str, Any]]
+    :param median_kwargs: Styling options for median line. See `hv.opts.Line`.
+    :type median_kwargs: Optional[dict[str, Any]]
+    :param observed_kwargs: Styling options for observed overlay. See `hv.opts.Curve`
+        or `hv.opts.Scatter` depending on choice of `observed_type`.
+    :type observed_kwargs: Optional[dict[str, Any]]
+    :param allow_nan: If True, uses `np.nanquantile` for quantile calculation. Otherwise,
+        uses `np.quantile` (Default: False).
+    :type allow_nan: bool
+
+    :returns: Quantile plot overlay, optionally with calculated quantiles
+    :rtype: Union[hv.Overlay, tuple[hv.Overlay, npt.NDArray[np.floating]]]
+
+    :raises ValueError: If quantiles are not between 0 and 1, or if array dimensions
+        are invalid
+
+    Features:
+        - Automatic quantile symmetrization (adds complement quantiles)
+        - Nested confidence intervals with graduated transparency
+        - Customizable styling for all plot components
+        - Optional hover labels for interactive exploration
+
+    Example:
+        >>> x = np.linspace(0, 10, 100)
+        >>> ref = np.random.normal(np.sin(x), 0.1, (1000, 100))
+        >>> obs = np.sin(x) + 0.05 * np.random.randn(100)
+        >>> plot = quantile_plot(x, ref, [0.025, 0.25], observed=obs)
     """
-    Given a 2D array of data, calculates the quantiles over the first axis and plots
-    the results as an area chart. Optionally, the median is also plotted as a line.
-
-    Args:
-        x: The x-axis labels.
-        reference: The data to plot. Must be 2D.
-        quantiles: The quantiles to calculate. Note that these will be symmetrized
-            and the median will be added if it is not already in the list. For example,
-            if [0.025, 0.25] is passed in, the following will be calculated and
-            returned: [0.025, 0.25, 0.5, 0.75, 0.975].
-        observed: An optional observed to plot on top of the quantile plot. The last
-            dimension of the observed must match the last dimension of the plot data.
-        include_median: Whether to include the median line.
-        overwrite_input: Passed to `np.quantile`. If True, memory will be saved
-            by overwriting components of the `reference` array during quantile
-            calculation. The array contents will be undefined after such an operation.
-            Default is False.
-        return_quantiles: Whether to return the calculated quantiles. If True, a tuple
-            is returned with the quantile plot as the first element and the quantiles
-            as the second element.
-        sort_by_range: Whether to sort the quantiles by range. If True, the quantiles
-            will be sorted by the difference between the upper and lower bounds.
-            In this case, the x-axis labels will be ignored and replaced with a
-            range of integers.
-        observed_type: The type of observed to plot. Either "line" or "scatter".
-        area_kwargs: Additional plotting options for the area plots.
-        ovrlay_kwargs: Additional plotting options for the observed.
-
-    Returns:
-        hv.Overlay: The quantile plot.
-        npt.NDArray (Optional): The calculated quantiles.
-    """
-
     # Set the default kwargs
     area_kwargs = _set_defaults(
         area_kwargs,
@@ -726,21 +994,44 @@ def hexgrid_with_mean(
     hex_kwargs: dict[str, Any] | None = None,
     mean_kwargs: dict[str, Any] | None = None,
 ) -> hv.Overlay:
-    """Creates a hexgrid plot out of the provided x and y data. Additionally, plots
-    a rolling mean of the data across the x-axis.
+    """Create hexagonal binning plot with rolling mean overlay.
 
-    Args:
-        x (npt.NDArray[np.floating]): x-axis data.
-        y (npt.NDArray[np.floating]): y-axis data.
-        mean_windowsize (int | None, optional): The windowsize to use when calculating
-            the rolling average. Defaults to None, in which case it is set to `x.size // 100`.
-        hex_kwargs (dict[str, Any] | None, optional): Additional keyword arguments
-            to pass to the options of `hv.HexTiles`. Defaults to None.
-        mean_kwargs (dict[str, Any] | None, optional): Additional keyword arguments
-            to pass to the options of `hv.Curve`. Defaults to None.
+    This function generates a hexagonal heatmap showing data density
+    combined with a rolling mean trend line, useful for visualizing
+    large datasets with underlying trends.
 
-    Returns:
-        hv.Overlay: The hexgrid plot with the rolling mean.
+    :param x: X-axis data values
+    :type x: npt.NDArray[np.floating]
+    :param y: Y-axis data values
+    :type y: npt.NDArray[np.floating]
+    :param mean_windowsize: Window size for rolling mean calculation.
+                           Defaults to x.size // 100 if not specified.
+    :type mean_windowsize: Optional[custom_types.Integer]
+    :param hex_kwargs: Styling options for hexagonal tiles. See `hv.opts.HexTiles`.
+    :type hex_kwargs: Optional[dict[str, Any]]
+    :param mean_kwargs: Styling options for rolling mean line. See `hv.opts.Line`.
+    :type mean_kwargs: Optional[dict[str, Any]]
+
+    :returns: Overlay combining hexagonal heatmap and rolling mean
+    :rtype: hv.Overlay
+
+    :raises ValueError: If x and y arrays have different shapes or are not 1D
+
+    The hexagonal binning:
+        - Aggregates points into hexagonal cells
+        - Colors cells by point density using viridis colormap
+        - Includes colorbar for density interpretation
+
+    The rolling mean:
+        - Computed over sorted x values to show trend
+        - Window size automatically scaled to data size
+        - Styled for clear visibility over density plot
+
+    Example:
+        >>> # Large dataset with trend
+        >>> x = np.random.randn(10000)
+        >>> y = 2*x + 0.5*np.random.randn(10000)
+        >>> plot = hexgrid_with_mean(x, y, mean_windowsize=200)
     """
     # x and y must be 1D arrays
     if x.ndim != 1 or y.ndim != 1:
