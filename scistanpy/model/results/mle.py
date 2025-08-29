@@ -43,7 +43,11 @@ including model comparison, uncertainty quantification, and as initialization fo
 more sophisticated inference procedures like MCMC sampling.
 """
 
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
+
+import warnings
 
 from typing import (
     Generator,
@@ -60,7 +64,9 @@ import holoviews as hv
 import hvplot.pandas  # pylint: disable=unused-import
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 import panel as pn
+import torch
 import xarray as xr
 
 from scipy import stats
@@ -69,6 +75,7 @@ from scistanpy import plotting
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
+    from scistanpy import model as ssp_model
 
 
 def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
@@ -874,26 +881,6 @@ class MLEInferenceRes:
         return cls(az.from_netcdf(path))
 
 
-from __future__ import annotations
-
-import warnings
-
-from typing import Literal, Optional, overload, TYPE_CHECKING
-
-import arviz as az
-import numpy as np
-import numpy.typing as npt
-import pandas as pd
-import torch
-import xarray as xr
-
-from scistanpy.model import results
-
-if TYPE_CHECKING:
-    from scistanpy import custom_types
-    from scistanpy import model as ssp_model
-
-
 class MLEParam:
     """Container for maximum likelihood estimate of a single model parameter.
 
@@ -1206,7 +1193,7 @@ class MLE:
         *,
         seed: Optional[custom_types.Integer] = None,
         batch_size: Optional[custom_types.Integer] = None,
-    ) -> results.MLEInferenceRes:
+    ) -> MLEInferenceRes:
         """Create ArviZ-compatible inference data object from MLE results.
 
         This method constructs a comprehensive inference data structure that
@@ -1287,4 +1274,4 @@ class MLE:
                 ]
             ],
         )
-        return results.MLEInferenceRes(inference_data)
+        return MLEInferenceRes(inference_data)

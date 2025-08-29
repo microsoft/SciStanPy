@@ -1,4 +1,14 @@
-"""Holds code for working with constant values in a SciStanPy model."""
+"""Constant value components for SciStanPy models.
+
+This module provides the Constant class for representing fixed values in SciStanPy
+models. Constants serve as the foundational building blocks for model hierarchies,
+providing fixed hyperparameters, unmodeled data values, and other numerical
+components that don't change during inference.
+
+The Constant class integrates with SciStanPy's model component hierarchy while
+providing specialized functionality for fixed-value components. It is particularly
+important for interactive model manipulation during prior predictive checks.
+"""
 
 from __future__ import annotations
 
@@ -15,8 +25,57 @@ if TYPE_CHECKING:
 
 
 class Constant(abstract_model_component.AbstractModelComponent):
-    """
-    Abstract class for components that pass through the values of their children.
+    """Represents a constant value component in SciStanPy models.
+
+    This class wraps fixed numerical values to integrate them into the SciStanPy
+    model component hierarchy. Constants provide the foundation for model
+    construction by supplying fixed hyperparameters, unmodeled data, and other
+    numerical values that remain unchanged during inference.
+
+    :param value: The constant value to wrap
+    :type value: Union[custom_types.Integer, custom_types.Float, npt.NDArray, np.integer,
+        np.floating]
+    :param lower_bound: Optional lower bound for value validation. Defaults to None.
+    :type lower_bound: Optional[custom_types.Float]
+    :param upper_bound: Optional upper bound for value validation. Defaults to None.
+    :type upper_bound: Optional[custom_types.Float]
+    :param togglable: Whether value can be toggled in interactive interfaces. Auto-detected
+        if None. Defaults to None.
+    :type togglable: Optional[bool]
+    :param enforce_uniformity: Whether to require all array elements to be identical.
+        Defaults to False.
+    :type enforce_uniformity: bool
+    :param kwargs: Additional keyword arguments passed to parent class
+
+    :ivar value: The stored constant value as a NumPy array
+    :ivar BASE_STAN_DTYPE: Stan data type ("real" or "int") inferred from value
+    :ivar LOWER_BOUND: Lower bound constraint (if specified)
+    :ivar UPPER_BOUND: Upper bound constraint (if specified)
+    :ivar is_togglable: Whether the constant can be modified in interactive contexts
+
+    :raises ValueError: If value violates specified bounds
+    :raises ValueError: If enforce_uniformity=True but array has non-uniform values
+
+    Key Features:
+    - **Automatic Type Inference**: Determines appropriate Stan data types
+    - **Bound Checking**: Validates values against optional constraints
+    - **Interactive Support**: Configures sliders for model exploration
+
+    The class automatically handles:
+    - Conversion of Python scalars to NumPy arrays
+    - Shape inference from array inputs
+    - Data type detection for Stan code generation
+    - Bound validation at initialization
+
+    Example:
+        >>> # Scalar constant
+        >>> mu_prior = Constant(0.0)
+        >>> # Array constant with bounds
+        >>> design_matrix = Constant(X_data, lower_bound=0.0)
+        >>> # Integer constant
+        >>> n_obs = Constant(100)
+        >>> # Uniform array (enforced)
+        >>> alpha_symmetric = Constant([1.0, 1.0, 1.0], enforce_uniformity=True)
     """
 
     def __init__(
@@ -35,8 +94,14 @@ class Constant(abstract_model_component.AbstractModelComponent):
         enforce_uniformity: bool = False,
         **kwargs,
     ):
-        """
-        Wraps the value in a Constant instance. Any numerical type is legal.
+        """Initialize a constant value component with validation and type inference.
+
+        The initialization process:
+        1. Converts input values to NumPy arrays
+        2. Infers appropriate Stan data types
+        3. Validates bounds if specified
+        4. Sets up PyTorch tensor representations
+        5. Configures interactive properties
         """
         # If the value is a numpy array, get the shape
         if isinstance(value, np.ndarray):
@@ -82,13 +147,26 @@ class Constant(abstract_model_component.AbstractModelComponent):
         # Initialize the parent class
         super().__init__(**kwargs)
 
-    # We need a draw method
     def _draw(
         self,
         level_draws: dict[str, Union[npt.NDArray, "custom_types.Float"]],
         seed: Optional["custom_types.Integer"],
     ) -> Union[npt.NDArray, "custom_types.Float", "custom_types.Integer"]:
-        """Draw values for this component."""
+        """Draw values for this constant component (returns the fixed value).
+
+        :param level_draws: Parent component draws (should be empty for constants)
+        :type level_draws: dict[str, Union[npt.NDArray, custom_types.Float]]
+        :param seed: Random seed (unused for constants)
+        :type seed: Optional[custom_types.Integer]
+
+        :returns: The constant value
+        :rtype: Union[npt.NDArray, custom_types.Float, custom_types.Integer]
+
+        :raises AssertionError: If level_draws is not empty (constants have no parents)
+
+        Since constants represent fixed values, this method simply returns
+        the stored value without any random sampling.
+        """
         # Level draws should be empty
         assert not level_draws
 
@@ -102,13 +180,42 @@ class Constant(abstract_model_component.AbstractModelComponent):
         end_dims: dict[str, "custom_types.Integer"] | None = None,
         offset_adjustment: int = 0,
     ) -> str:
-        """Return the Stan code for this component (there is none)."""
+        """Return Stan code for right-hand side (empty for constants).
+
+        :param index_opts: Indexing options (unused for constants)
+        :type index_opts: Optional[tuple[str, ...]]
+        :param start_dims: Starting dimensions (unused for constants)
+        :type start_dims: Optional[dict[str, custom_types.Integer]]
+        :param end_dims: Ending dimensions (unused for constants)
+        :type end_dims: Optional[dict[str, custom_types.Integer]]
+        :param offset_adjustment: Index offset (unused for constants)
+        :type offset_adjustment: int
+
+        :returns: Empty string (constants don't have right-hand side expressions)
+        :rtype: str
+
+        Constants don't participate in Stan probability statements as they
+        represent fixed data values, so this method returns an empty string.
+        """
         return ""
 
     def _get_lim(
         self, lim_type: Literal["low", "high"]
     ) -> tuple["custom_types.Float", "custom_types.Float"]:
-        """Order of magnitude of the value."""
+        """Calculate appropriate limits for interactive sliders.
+
+        :param lim_type: Type of limit to calculate ("low" or "high")
+        :type lim_type: Literal["low", "high"]
+
+        :returns: Tuple of (limit_value, order_of_magnitude)
+        :rtype: tuple[custom_types.Float, custom_types.Float]
+
+        :raises ValueError: If lim_type is not "low" or "high"
+
+        This method calculates reasonable bounds for interactive sliders
+        based on the order of magnitude of the constant value. It provides
+        a range that allows meaningful exploration around the current value.
+        """
         # Get the largest absolute value
         maxval = np.abs(self.value).max()
 
@@ -133,11 +240,26 @@ class Constant(abstract_model_component.AbstractModelComponent):
             raise ValueError("Invalid limit type.")
 
     def __str__(self) -> str:
+        """Return human-readable string representation.
+
+        :returns: String showing constant assignment
+        :rtype: str
+
+        Creates a readable representation showing the constant name and value,
+        useful for model inspection and debugging.
+        """
         return f"{self.model_varname} = {self.value}"
 
     @property
     def slider_start(self) -> "custom_types.Float":
-        """Starting values for sliders in prior predictive checks."""
+        """Get starting value for interactive sliders.
+
+        :returns: Appropriate starting value for sliders
+        :rtype: custom_types.Float
+
+        Returns the lower bound if specified, otherwise calculates a reasonable
+        lower limit based on the value's order of magnitude.
+        """
         # Lower bound if we have one
         if self.LOWER_BOUND is not None:
             return self.LOWER_BOUND
@@ -147,7 +269,14 @@ class Constant(abstract_model_component.AbstractModelComponent):
 
     @property
     def slider_end(self) -> "custom_types.Float":
-        """Ending values for sliders in prior predictive checks."""
+        """Get ending value for interactive sliders.
+
+        :returns: Appropriate ending value for sliders
+        :rtype: custom_types.Float
+
+        Returns the upper bound if specified, otherwise calculates a reasonable
+        upper limit based on the value's order of magnitude.
+        """
         # Upper bound if we have one
         if self.UPPER_BOUND is not None:
             return self.UPPER_BOUND
@@ -157,19 +286,41 @@ class Constant(abstract_model_component.AbstractModelComponent):
 
     @property
     def slider_step_size(self) -> "custom_types.Float":
-        """We allow 100 steps between the start and end values"""
-        # Get the order of magnitude of the value. We want to round to 2 orders
+        """Get step size for interactive sliders.
+
+        :returns: Appropriate step size for sliders
+        :rtype: custom_types.Float
+
+        Calculates a step size that provides approximately 100 steps between
+        the slider start and end values, enabling fine-grained control.
+        """
+        # We allow 100 steps between the start and end values
         return (self.slider_end - self.slider_start) / 100
 
     @property
     def torch_parametrization(self) -> torch.Tensor:
+        """Get PyTorch tensor representation of the constant.
+
+        :returns: PyTorch tensor containing the constant value
+        :rtype: torch.Tensor
+
+        Provides a tensor representation for PyTorch-based computations,
+        enabling integration with gradient-based operations.
+        """
         return self._torch_parametrization
 
     @property
     def enforce_uniformity(self) -> bool:
-        """
-        Whether to enforce uniformity in the value. If True, makes sure that value
-        is indeed a single value.
+        """Check if uniformity enforcement is enabled.
+
+        :returns: True if uniformity is enforced
+        :rtype: bool
+
+        :raises ValueError: If uniformity is enforced but value is not uniform
+
+        When enabled, this property ensures that all elements of array-valued
+        constants have the same value, which is useful for symmetric priors
+        and other modeling contexts requiring uniform parameters.
         """
         if self._enforce_uniformity and np.unique(self.value).size > 1:
             raise ValueError(
@@ -179,9 +330,15 @@ class Constant(abstract_model_component.AbstractModelComponent):
 
     @enforce_uniformity.setter
     def enforce_uniformity(self, value: bool) -> None:
-        """
-        Checks to be sure that the values are uniform, then updates the private
-        attribute `_enforce_uniformity` if they are.
+        """Set uniformity enforcement with validation.
+
+        :param value: Whether to enforce uniformity
+        :type value: bool
+
+        :raises ValueError: If enabling uniformity but current value is not uniform
+
+        When enabling uniformity enforcement, validates that the current value
+        satisfies the uniformity constraint before updating the setting.
         """
         if value and np.unique(self.value).size > 1:
             raise ValueError(

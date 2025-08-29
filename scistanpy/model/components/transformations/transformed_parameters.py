@@ -1,4 +1,47 @@
-"""Holds parameter transformations for SciStanPy models."""
+"""Parameter transformation components for SciStanPy models.
+
+This module provides a comprehensive library of mathematical transformations that
+can be applied to model parameters. These transformations enable complex model
+construction through composition of simple mathematical operations while maintaining
+automatic differentiation capabilities and Stan code generation.
+
+The transformation system supports:
+
+Transformation Categories:
+    - **Arithmetic Operations**: Addition, subtraction, multiplication, division, powers
+    - **Mathematical Functions**: Logarithms, exponentials, absolute values, sigmoids
+    - **Statistical Operations**: Normalization, log-sum-exp, reductions
+    - **Growth Models**: Exponential and sigmoid growth parameterizations
+    - **Array Operations**: Indexing, slicing, convolution
+
+Key Features:
+    - **Multi-Backend Support**: Works with NumPy, PyTorch, and Stan
+    - **Automatic Differentiation**: Maintains gradient flow for PyTorch optimization
+    - **Stan Code Generation**: Automatic translation to Stan programming language
+    - **Operator Overloading**: Natural mathematical syntax through Python operators
+    - **Shape Broadcasting**: Automatic handling of multi-dimensional operations
+    - **Type Safety**: Comprehensive validation and error checking
+
+Transformation Architecture:
+    The module provides several base classes that establish the transformation framework:
+    - **TransformableParameter**: Mixin enabling operator overloading
+    - **Transformation**: Base class for all transformation types
+    - **TransformedParameter**: Foundation for parameter transformations
+    - **BinaryTransformedParameter**: Two-operand mathematical operations
+    - **UnaryTransformedParameter**: Single-operand mathematical operations
+
+Advanced Transformations:
+    Beyond basic arithmetic, the module includes specialized transformations for:
+    - Growth modeling (exponential, sigmoid) with multiple parameterizations
+    - Sequence processing (convolution operations)
+    - Array manipulation (indexing with NumPy-compatible syntax)
+    - Numerical stability (log-space operations, stable sigmoid)
+    - Statistical operations (normalization, reductions)
+
+Note that these will not typically be instantiated directly. Instead, use Python's
+inbuilt operators between other model components or else use SciStanPy's `operations`
+submodule.
+"""
 
 from __future__ import annotations
 
@@ -21,8 +64,31 @@ if TYPE_CHECKING:
 
 
 class TransformableParameter:
-    """
-    Mixin class for parameters that can be transformed using mathematical operations.
+    """Mixin class enabling mathematical operator overloading for parameters.
+
+    This mixin class provides Python operator overloading capabilities that allow
+    parameters to be combined using natural mathematical syntax. Each operator
+    creates an appropriate TransformedParameter instance that represents the
+    mathematical operation.
+
+    The mixin supports all standard arithmetic operators:
+    - Addition (+), subtraction (-)
+    - Multiplication (*), division (/)
+    - Exponentiation (**)
+    - Unary negation (-)
+
+    Each operation supports both left and right operand positioning, enabling
+    flexible mathematical expressions with mixed parameter and constant types.
+
+    Example:
+        >>> param1 = Normal(mu=0, sigma=1)
+        >>> param2 = Normal(mu=1, sigma=0.5)
+        >>> # All of these create TransformedParameter instances
+        >>> sum_param = param1 + param2
+        >>> scaled_param = 2 * param1
+        >>> ratio_param = param1 / param2
+        >>> power_param = param1 ** 2
+        >>> negated_param = -param1
     """
 
     def __add__(self, other: "custom_types.CombinableParameterType"):
@@ -60,9 +126,28 @@ class TransformableParameter:
 
 
 class Transformation(abstract_model_component.AbstractModelComponent):
-    """
-    Base class for transformations, including `transformed parameters` and
-    `transformed data`.
+    """Base class for all parameter transformations in SciStanPy.
+
+    This abstract base class provides the foundational infrastructure for
+    creating transformations that can be used in both the transformed parameters
+    and transformed data blocks of Stan models. It handles the common aspects
+    of transformation operations including shape validation and Stan code generation.
+
+    :cvar SHAPE_CHECK: Whether to perform automatic shape checking. Defaults to True.
+
+    Key Responsibilities:
+    - Coordinate transformation assignment code generation
+    - Manage shape validation for transformation outputs
+    - Provide abstract interface for Stan operation writing
+    - Handle index options and assignment formatting
+
+    The class provides methods for generating Stan code assignments and manages
+    the interaction between transformation inputs and outputs. Subclasses must
+    implement the write_stan_operation method to define their specific
+    mathematical operations.
+
+    Shape handling can be disabled for transformations that perform reductions
+    or other operations that fundamentally change dimensionality.
     """
 
     SHAPE_CHECK: bool = True
@@ -73,7 +158,22 @@ class Transformation(abstract_model_component.AbstractModelComponent):
         assignment_kwargs: dict | None = None,
         right_side_kwargs: dict | None = None,
     ) -> str:
-        """Return the transformation for the parameter."""
+        """Generate complete transformation assignment code.
+
+        :param index_opts: Index variable names for multi-dimensional operations
+        :type index_opts: Optional[tuple[str, ...]]
+        :param assignment_kwargs: Keyword arguments for assignment formatting. Defaults to None.
+        :type assignment_kwargs: Optional[dict]
+        :param right_side_kwargs: Keyword arguments for right-side formatting. Defaults to None.
+        :type right_side_kwargs: Optional[dict]
+
+        :returns: Complete Stan assignment statement
+        :rtype: str
+
+        This method combines the left-hand side variable name with the right-hand
+        side operation to create a complete Stan assignment statement suitable
+        for use in transformed parameters or transformed data blocks.
+        """
         # Set defaults
         assignment_kwargs = assignment_kwargs or {}
         right_side_kwargs = right_side_kwargs or {}
@@ -86,7 +186,18 @@ class Transformation(abstract_model_component.AbstractModelComponent):
 
     @abstractmethod
     def write_stan_operation(self, **to_format: str) -> str:
-        """Write the operation in Stan code."""
+        """Generate Stan code for the specific transformation operation.
+
+        :param to_format: Formatted parameter strings for Stan code
+        :type to_format: str
+
+        :returns: Stan code representing the mathematical operation
+        :rtype: str
+
+        This abstract method must be implemented by all concrete transformation
+        classes to define how their specific mathematical operation is represented
+        in Stan code.
+        """
 
     def get_right_side(
         self,
@@ -95,7 +206,24 @@ class Transformation(abstract_model_component.AbstractModelComponent):
         end_dims: dict[str, "custom_types.Integer"] | None = None,
         offset_adjustment: int = 0,
     ) -> str:
-        """Gets the right-hand-side of the assignment operation for this parameter."""
+        """Generate right-hand side of transformation assignment.
+
+        :param index_opts: Index options for multi-dimensional operations
+        :type index_opts: Optional[tuple[str, ...]]
+        :param start_dims: First indexable dimension of parent parameters. Defaults to None.
+        :type start_dims: Optional[dict[str, custom_types.Integer]]
+        :param end_dims: Last indexable dimension of parent parameters. Defaults to None.
+        :type end_dims: Optional[dict[str, custom_types.Integer]]
+        :param offset_adjustment: Index offset adjustment. Defaults to 0.
+        :type offset_adjustment: int
+
+        :returns: Stan code for the right-hand side of the assignment
+        :rtype: str
+
+        This method coordinates the formatting of parent parameters and applies
+        the transformation operation. It automatically adds parentheses around
+        operations when the transformation is not named.
+        """
         # Call the inherited method to get a dictionary mapping parent names to
         # either their indexed variable names (if they are named) or the thread
         # of operations that define them (if they are not named).
@@ -107,22 +235,33 @@ class Transformation(abstract_model_component.AbstractModelComponent):
         )
 
         # Format the right-hand side of the operation. The declaration for any operation
-        # with multiple parents that is not named should be wrapped in parentheses.
-        # Otherwise, exactly how formatting is done depends on the child class.
+        # that is not named should be wrapped in parentheses. Otherwise, exactly
+        # how formatting is done depends on the child class.
         stan_op = self.write_stan_operation(**components)
-        if len(self._parents) > 1 and not self.is_named:
+        if not self.is_named:
             stan_op = f"({stan_op})"
         return stan_op
 
     def _set_shape(self) -> None:
-        """
-        Some transformations are reductions. When they are reductions, we skip
-        checking the shape
+        """Set component shape with optional shape checking bypass.
+
+        Some transformations perform reductions or other operations that change
+        dimensionality. When SHAPE_CHECK is False, automatic shape validation
+        is bypassed to allow these operations.
         """
         if self.SHAPE_CHECK:
             super()._set_shape()
 
     def __str__(self) -> str:
+        """Return human-readable string representation of the transformation.
+
+        :returns: String showing transformation assignment
+        :rtype: str
+
+        Creates a readable representation of the transformation for debugging
+        and model inspection, showing the assignment operation with cleaned
+        formatting.
+        """
         right_side = (
             self.get_right_side(None).replace("[start:end]", "").replace("__", ".")
         )
@@ -130,12 +269,34 @@ class Transformation(abstract_model_component.AbstractModelComponent):
 
 
 class TransformedParameter(Transformation, TransformableParameter):
-    """
-    Base class representing a parameter that is the result of combining other
-    parameters using mathematical operations.
+    """Base class for transformed parameters that can be used in parameter blocks.
+
+    This class provides the foundation for parameters that result from mathematical
+    operations on other parameters. It handles both the computational aspects
+    (sampling, PyTorch operations) and code generation aspects (Stan assignments).
+
+    :cvar STAN_OPERATOR: Stan operator string for simple operations
+
+    Transformed parameters support:
+    - Sampling through parent parameter sampling and operation application
+    - PyTorch operations with automatic differentiation
+    - Stan code generation for transformed parameters block
+    - Further transformation through operator overloading
+
+    The class provides the infrastructure for creating complex mathematical
+    expressions while maintaining compatibility with all SciStanPy backends.
+
+    Subclasses must implement:
+    - run_np_torch_op: The core mathematical operation
+    - write_stan_operation: Stan code generation for the operation
+
+    Example Usage:
+        TransformedParameter subclasses are typically created through operator
+        overloading or the `operations` submodule rather than direct instantiation,
+        but can be used directly for custom operations.
     """
 
-    STAN_OPERATOR: str = ""  # Operator for the operation in Stan
+    STAN_OPERATOR: str = ""
 
     # The transformation is renamed to be more specific in the child classes
     get_transformation_assignment = Transformation._transformation
@@ -145,7 +306,19 @@ class TransformedParameter(Transformation, TransformableParameter):
         level_draws: dict[str, Union[npt.NDArray, "custom_types.Float"]],
         seed: Optional["custom_types.Integer"],  # pylint: disable=unused-argument
     ) -> Union[npt.NDArray, "custom_types.Float"]:
-        """Sample from this parameter's distribution `n` times."""
+        """Draw samples by applying transformation to parent samples.
+
+        :param level_draws: Samples from parent parameters
+        :type level_draws: dict[str, Union[npt.NDArray, custom_types.Float]]
+        :param seed: Random seed (unused for deterministic transformations)
+        :type seed: Optional[custom_types.Integer]
+
+        :returns: Transformed samples
+        :rtype: Union[npt.NDArray, custom_types.Float]
+
+        This method applies the mathematical transformation to samples drawn
+        from parent parameters, enabling sampling from transformed distributions.
+        """
         # Perform the operation on the draws
         return self.run_np_torch_op(**level_draws)
 
@@ -157,23 +330,64 @@ class TransformedParameter(Transformation, TransformableParameter):
 
     @abstractmethod
     def run_np_torch_op(self, **draws):
-        """Perform the operation on the draws or torch parameters."""
+        """Execute the mathematical operation using NumPy or PyTorch.
+
+        :param draws: Input values for the operation
+        :type draws: Union[torch.Tensor, custom_types.SampleType]
+
+        :returns: Result of the mathematical operation
+        :rtype: Union[torch.Tensor, npt.NDArray]
+
+        This abstract method defines the core computational logic for the
+        transformation. It must handle both NumPy and PyTorch inputs
+        appropriately to maintain backend compatibility.
+        """
 
     @abstractmethod
     def write_stan_operation(self, **to_format: str) -> str:
-        """Write the operation in Stan code."""
+        """Generate Stan code for the transformation operation.
+
+        :param to_format: Formatted parameter strings
+        :type to_format: str
+
+        :returns: Stan code for the operation
+        :rtype: str
+
+        :raises NotImplementedError: If STAN_OPERATOR is not defined for simple operations
+
+        This method must be implemented to provide appropriate Stan code
+        for the mathematical operation represented by this transformation.
+        """
         # The Stan operator must be defined in the child class
         if self.STAN_OPERATOR == "":
             raise NotImplementedError("The STAN_OPERATOR must be defined.")
 
         return ""
 
-    # Calling this class should return the result of the operation.
     def __call__(self, *args, **kwargs):
+        """Enable calling transformed parameters as functions.
+
+        :param args: Positional arguments passed to run_np_torch_op
+        :param kwargs: Keyword arguments passed to run_np_torch_op
+
+        :returns: Result of the operation
+
+        This allows transformed parameters to be used as callable functions,
+        providing a convenient interface for applying operations directly.
+        """
         return self.run_np_torch_op(*args, **kwargs)
 
     @property
     def torch_parametrization(self) -> torch.Tensor:
+        """Get PyTorch representation with transformations applied.
+
+        :returns: PyTorch tensor with operation applied to parent tensors
+        :rtype: torch.Tensor
+
+        This property applies the transformation operation to the PyTorch
+        parameterizations of all parent parameters, maintaining gradient
+        flow for optimization.
+        """
         # This is just the operation performed on the torch parameters of the parents
         return self.run_np_torch_op(
             **{
@@ -184,9 +398,24 @@ class TransformedParameter(Transformation, TransformableParameter):
 
 
 class BinaryTransformedParameter(TransformedParameter):
-    """
-    Identical to the TransformedParameter class, but only for operations involving
-    two parameters. In other words, two parameters must be passed to the class.
+    """Base class for transformations involving exactly two parameters.
+
+    This class provides a specialized interface for binary mathematical operations
+    such as addition, subtraction, multiplication, and division. It enforces the
+    two-parameter constraint and provides appropriate method signatures.
+
+    :param dist1: First parameter for the operation
+    :type dist1: custom_types.CombinableParameterType
+    :param dist2: Second parameter for the operation
+    :type dist2: custom_types.CombinableParameterType
+    :param kwargs: Additional arguments passed to parent class
+
+    Binary operations are the foundation for arithmetic expressions and provide
+    the building blocks for more complex mathematical relationships between
+    parameters.
+
+    Subclasses must implement run_np_torch_op with the (dist1, dist2) signature
+    and can optionally override write_stan_operation for custom Stan formatting.
     """
 
     def __init__(
@@ -209,9 +438,32 @@ class BinaryTransformedParameter(TransformedParameter):
     ) -> npt.NDArray: ...
 
     @abstractmethod
-    def run_np_torch_op(self, dist1, dist2): ...
+    def run_np_torch_op(self, dist1, dist2):
+        """Execute binary operation on two inputs.
+
+        :param dist1: First operand
+        :param dist2: Second operand
+
+        :returns: Result of binary operation
+
+        This method implements the core binary mathematical operation
+        for both NumPy and PyTorch backends.
+        """
 
     def write_stan_operation(self, dist1: str, dist2: str) -> str:
+        """Generate Stan code for binary operations using STAN_OPERATOR.
+
+        :param dist1: Formatted string for first parameter
+        :type dist1: str
+        :param dist2: Formatted string for second parameter
+        :type dist2: str
+
+        :returns: Stan code with infix operator
+        :rtype: str
+
+        Generates Stan code in the format "dist1 OPERATOR dist2" for
+        standard binary operations.
+        """
         super().write_stan_operation()
         return f"{dist1} {self.STAN_OPERATOR} {dist2}"
 
@@ -219,7 +471,22 @@ class BinaryTransformedParameter(TransformedParameter):
 
 
 class UnaryTransformedParameter(TransformedParameter):
-    """Transformed parameter that only requires one parameter."""
+    """Base class for transformations involving exactly one parameter.
+
+    This class provides a specialized interface for unary mathematical operations
+    such as negation, absolute value, logarithms, and exponentials. It enforces
+    the single-parameter constraint and provides appropriate method signatures.
+
+    :param dist1: Parameter for the operation
+    :type dist1: custom_types.CombinableParameterType
+    :param kwargs: Additional arguments passed to parent class
+
+    Unary operations are essential for mathematical transformations and provide
+    common functions needed in statistical modeling and parameter reparameterization.
+
+    Subclasses must implement run_np_torch_op with the single-parameter signature
+    and can optionally override write_stan_operation for custom Stan formatting.
+    """
 
     def __init__(
         self,
@@ -236,96 +503,292 @@ class UnaryTransformedParameter(TransformedParameter):
     def run_np_torch_op(self, dist1: "custom_types.SampleType") -> npt.NDArray: ...
 
     @abstractmethod
-    def run_np_torch_op(self, dist1): ...
+    def run_np_torch_op(self, dist1):
+        """Execute unary operation on single input.
+
+        :param dist1: Input operand
+
+        :returns: Result of unary operation
+
+        This method implements the core unary mathematical operation
+        for both NumPy and PyTorch backends.
+        """
 
     def write_stan_operation(self, dist1: str) -> str:
+        """Generate Stan code for unary operations using STAN_OPERATOR.
+
+        :param dist1: Formatted string for the parameter
+        :type dist1: str
+
+        :returns: Stan code with prefix operator
+        :rtype: str
+
+        Generates Stan code in the format "OPERATOR dist1" for
+        standard unary operations.
+        """
         super().write_stan_operation()
         return f"{self.STAN_OPERATOR}{dist1}"
 
     # pylint: enable=arguments-differ
 
 
+# Basic arithmetic operations
 class AddParameter(BinaryTransformedParameter):
-    """Defines a parameter that is the sum of two other parameters."""
+    """Addition transformation for two parameters.
+
+    Implements element-wise addition of two parameters: result = dist1 + dist2
+
+    Mathematical Properties:
+    - Commutative: a + b = b + a
+    - Associative: (a + b) + c = a + (b + c)
+    - Identity element: 0
+
+    This transformation preserves the shape through broadcasting and is commonly
+    used for combining effects, offsets, and linear combinations of parameters.
+    """
 
     STAN_OPERATOR: str = "+"
 
     def run_np_torch_op(self, dist1, dist2):
+        """Perform element-wise addition.
+
+        :param dist1: First addend
+        :param dist2: Second addend
+
+        :returns: Sum of the two inputs
+        """
         return dist1 + dist2
 
 
 class SubtractParameter(BinaryTransformedParameter):
-    """Defines a parameter that is the difference of two other parameters."""
+    """Subtraction transformation for two parameters.
+
+    Implements element-wise subtraction of two parameters: result = dist1 - dist2
+
+    Mathematical Properties:
+    - Non-commutative: a - b ≠ b - a (generally)
+    - Non-associative: (a - b) - c ≠ a - (b - c) (generally)
+    - Identity element: 0 (for right operand)
+
+    This transformation is commonly used for computing differences, residuals,
+    and relative measures between parameters.
+    """
 
     STAN_OPERATOR: str = "-"
 
     def run_np_torch_op(self, dist1, dist2):
+        """Perform element-wise subtraction.
+
+        :param dist1: Minuend
+        :param dist2: Subtrahend
+
+        :returns: Difference of the two inputs
+        """
         return dist1 - dist2
 
 
 class MultiplyParameter(BinaryTransformedParameter):
-    """Defines a parameter that is the product of two other parameters."""
+    """Element-wise multiplication transformation for two parameters.
+
+    Implements element-wise multiplication of two parameters: result = dist1 * dist2
+
+    Mathematical Properties:
+    - Commutative: a * b = b * a
+    - Associative: (a * b) * c = a * (b * c)
+    - Identity element: 1
+
+    This transformation is fundamental for scaling, interaction effects, and
+    product relationships between parameters.
+    """
 
     STAN_OPERATOR: str = ".*"
 
     def run_np_torch_op(self, dist1, dist2):
+        """Perform element-wise multiplication.
+
+        :param dist1: First factor
+        :param dist2: Second factor
+
+        :returns: Product of the two inputs
+        """
         return dist1 * dist2
 
 
 class DivideParameter(BinaryTransformedParameter):
-    """Defines a parameter that is the quotient of two other parameters."""
+    """Element-wise division transformation for two parameters.
+
+    Implements element-wise division of two parameters: result = dist1 / dist2
+
+    Mathematical Properties:
+    - Non-commutative: a / b ≠ b / a (generally)
+    - Non-associative: (a / b) / c ≠ a / (b / c) (generally)
+    - Identity element: 1 (for right operand)
+
+    This transformation is used for ratios, rates, normalized quantities,
+    and relative measures. Care must be taken to avoid division by zero.
+    """
 
     STAN_OPERATOR: str = "./"
 
     def run_np_torch_op(self, dist1, dist2):
+        """Perform element-wise division.
+
+        :param dist1: Dividend
+        :param dist2: Divisor
+
+        :returns: Quotient of the two inputs
+        """
         return dist1 / dist2
 
 
 class PowerParameter(BinaryTransformedParameter):
-    """Defines a parameter raised to the power of another parameter."""
+    """Element-wise exponentiation transformation for two parameters.
+
+    Implements element-wise exponentiation: result = dist1 ^ dist2
+
+    Mathematical Properties:
+    - Non-commutative: a^b ≠ b^a (generally)
+    - Non-associative: (a^b)^c ≠ a^(b^c) (generally)
+    - Identity element: 1 (for exponent), any base^1 = base
+
+    This transformation is used for power relationships, polynomial terms,
+    and exponential scaling effects.
+    """
 
     STAN_OPERATOR: str = ".^"
 
     def run_np_torch_op(self, dist1, dist2):
+        """Perform element-wise exponentiation.
+
+        :param dist1: Base
+        :param dist2: Exponent
+
+        :returns: dist1 raised to the power of dist2
+        """
         return dist1**dist2
 
 
 class NegateParameter(UnaryTransformedParameter):
-    """Defines a parameter that is the negative of another parameter."""
+    """Unary negation transformation for parameters.
+
+    Implements element-wise negation of a parameter: result = -dist1
+
+    Mathematical Properties:
+    - Involutory: -(-a) = a
+    - Distributive over addition: -(a + b) = -a + -b
+    - Anti-distributive over multiplication: -(a * b) = (-a) * b = a * (-b)
+
+    This transformation is used for sign changes, directional effects,
+    and creating opposite relationships.
+    """
 
     STAN_OPERATOR: str = "-"
 
     def run_np_torch_op(self, dist1):
+        """Perform element-wise negation.
+
+        :param dist1: Input parameter
+
+        :returns: Negated input
+        """
         return -dist1
 
 
 class AbsParameter(UnaryTransformedParameter):
-    """Defines a parameter that is the absolute value of another."""
+    """Absolute value transformation for parameters.
+
+    Implements element-wise absolute value: result = |dist1|
+
+    :cvar LOWER_BOUND: Absolute values are always non-negative (0.0)
+
+    Mathematical Properties:
+    - Non-negative output: |a| ≥ 0
+    - Idempotent for non-negative inputs: ||a|| = |a|
+    - Triangle inequality: |a + b| ≤ |a| + |b|
+
+    This transformation ensures non-negative values and is commonly used
+    for magnitudes, distances, and ensuring positive parameters.
+    """
 
     LOWER_BOUND: "custom_types.Float" = 0.0
 
     def run_np_torch_op(self, dist1):
+        """Compute element-wise absolute value.
+
+        :param dist1: Input parameter
+
+        :returns: Absolute value of input
+        """
         return utils.choose_module(dist1).abs(dist1)
 
     def write_stan_operation(self, dist1: str) -> str:
+        """Generate Stan absolute value function call.
+
+        :param dist1: Formatted parameter string
+        :type dist1: str
+
+        :returns: Stan abs() function call
+        :rtype: str
+        """
         return f"abs({dist1})"
 
 
 class LogParameter(UnaryTransformedParameter):
-    """Defines a parameter that is the natural logarithm of another."""
+    """Natural logarithm transformation for parameters.
 
-    # The distribution must be positive
+    Implements element-wise natural logarithm: result = ln(dist1)
+
+    :cvar POSITIVE_PARAMS: Input must be positive ({"dist1"})
+
+    Mathematical Properties:
+    - Domain: (0, ∞)
+    - Range: (-∞, ∞)
+    - Logarithm laws: ln(ab) = ln(a) + ln(b), ln(a^b) = b*ln(a)
+    - Inverse: exp(ln(a)) = a for a > 0
+
+    This transformation is fundamental for log-scale modeling, multiplicative
+    effects on additive scales, and ensuring positive-valued parameters.
+    """
+
     POSITIVE_PARAMS = {"dist1"}
 
     def run_np_torch_op(self, dist1):
+        """Compute element-wise natural logarithm.
+
+        :param dist1: Input parameter (must be positive)
+
+        :returns: Natural logarithm of input
+        """
         return utils.choose_module(dist1).log(dist1)
 
     def write_stan_operation(self, dist1: str) -> str:
+        """Generate Stan logarithm function call.
+
+        :param dist1: Formatted parameter string
+        :type dist1: str
+
+        :returns: Stan log() function call
+        :rtype: str
+        """
         return f"log({dist1})"
 
 
 class ExpParameter(UnaryTransformedParameter):
-    """Defines a parameter that is the exponential of another."""
+    """Exponential transformation for parameters.
+
+    Implements element-wise exponential function: result = exp(dist1)
+
+    :cvar LOWER_BOUND: Exponential values are always positive (0.0)
+
+    Mathematical Properties:
+    - Domain: (-∞, ∞)
+    - Range: (0, ∞)
+    - Exponential laws: exp(a+b) = exp(a)*exp(b), exp(a*b) ≠ exp(a)*exp(b)
+    - Inverse: ln(exp(a)) = a
+
+    This transformation is used for ensuring positive values, exponential
+    growth models, and converting from log-scale to natural scale.
+    """
 
     LOWER_BOUND: "custom_types.Float" = 0.0
 
@@ -334,46 +797,162 @@ class ExpParameter(UnaryTransformedParameter):
         return utils.choose_module(dist1).exp(dist1)
 
     def write_stan_operation(self, dist1: str) -> str:
+        """Generate Stan exponential function call.
+
+        :param dist1: Formatted parameter string
+        :type dist1: str
+
+        :returns: Stan exp() function call
+        :rtype: str
+        """
         return f"exp({dist1})"
 
 
 class NormalizeParameter(UnaryTransformedParameter):
-    """Defines a parameter that is normalized to sum to 1."""
+    """Normalization transformation that scales values to sum to 1 in the last dimension
+    of the input.
+
+    Implements element-wise normalization where each vector is divided by its sum,
+    creating probability vectors or normalized weights that sum to unity.
+
+    :cvar LOWER_BOUND: Normalized values are non-negative (0.0)
+    :cvar UPPER_BOUND: Normalized values are bounded above by 1.0
+
+    Mathematical Properties:
+    - Domain: [0, ∞)^n (non-negative input required)
+    - Range: Probability simplex {x : Σxᵢ = 1, xᵢ ≥ 0}
+    - Operation: xᵢ' = xᵢ / Σⱼ xⱼ
+    - Preserves ratios between elements
+
+    This transformation is essential for:
+    - Converting counts to proportions
+    - Creating probability vectors from non-negative weights
+    - Normalizing attention weights or mixture components
+    - Ensuring categorical probabilities sum to one
+
+    The normalization is applied along the last dimension only, making it suitable
+    for batch processing of multiple probability vectors.
+    """
 
     LOWER_BOUND: "custom_types.Float" = 0.0
     UPPER_BOUND: "custom_types.Float" = 1.0
 
     def run_np_torch_op(self, dist1):
-        if isinstance(dist1, torch.Tensor):
-            return dist1 / dist1.sum(dim=-1, keepdim=True)
-        else:
+        """Compute normalization by dividing by sum along last dimension.
+
+        :param dist1: Input parameter (must be non-negative)
+
+        :returns: Normalized values that sum to 1 along last dimension
+        """
+        if isinstance(dist1, np.ndarray):
             return dist1 / np.sum(dist1, keepdims=True, axis=-1)
+        elif isinstance(dist1, torch.Tensor):
+            return dist1 / dist1.sum(dim=-1, keepdim=True)
+        # Error if the type is not supported
+        else:
+            raise TypeError(
+                "Unsupported type for dist1. Expected torch.Tensor or np.ndarray."
+            )
 
     def write_stan_operation(self, dist1: str) -> str:
+        """Generate Stan normalization code.
+
+        :param dist1: Formatted parameter string
+        :type dist1: str
+
+        :returns: Stan code dividing by sum
+        :rtype: str
+        """
         return f"{dist1} / sum({dist1})"
 
 
 class NormalizeLogParameter(UnaryTransformedParameter):
-    """
-    Defines a parameter that is normalized such that exp(x) sums to 1. By extension,
-    this assumes that the input is log-transformed.
+    """Log-space normalization transformation for log-probability vectors over the
+    last dimension of the input.
+
+    Implements normalization in log-space where log-probabilities are adjusted
+    so that their exponentiated values sum to 1. This is equivalent to
+    subtracting the log-sum-exp from each element.
+
+    :cvar UPPER_BOUND: Log-probabilities are bounded above by 0.0
+
+    Mathematical Properties:
+    - Domain: (-∞, ∞)^n
+    - Range: Log-simplex {x : Σexp(xᵢ) = 1}
+    - Operation: xᵢ' = xᵢ - log(Σⱼ exp(xⱼ))
+    - Numerically stable for extreme log-probabilities
+
+    This transformation is crucial for:
+    - Normalizing log-probabilities without exponentiation
+    - Stable computation with very small probabilities
+    - Log-space categorical distributions
+    - Attention mechanisms in log-space
+
+    The log-sum-exp operation provides numerical stability by avoiding
+    overflow/underflow issues common with direct exponentiation. As with the `NormalizeParameter`,
+    this is performed over the last dimension only.
     """
 
     UPPER_BOUND: "custom_types.Float" = 0.0
 
     def run_np_torch_op(self, dist1):
+        """Compute log-space normalization using log-sum-exp.
+
+        :param dist1: Input log-probabilities
+
+        :returns: Normalized log-probabilities
+        """
         if isinstance(dist1, torch.Tensor):
             return dist1 - torch.logsumexp(dist1, keepdims=True, dim=-1)
-        else:
+        elif isinstance(dist1, np.ndarray):
             return dist1 - sp.logsumexp(dist1, keepdims=True, axis=-1)
+        else:
+            raise TypeError(
+                "Unsupported type for dist1. Expected torch.Tensor or np.ndarray."
+            )
 
     def write_stan_operation(self, dist1: str) -> str:
-        return f"{dist1} - log_sum_exp({dist1})"
+        """Generate Stan log-space normalization code.
+
+        :param dist1: Formatted parameter string
+        :type dist1: str
+
+        :returns: Stan code using log_sum_exp function
+        :rtype: str
+        """
+        return f"{dist1} - log_sum_exp({dist1}"
 
 
 class Reduction(UnaryTransformedParameter):
-    """
-    Base class for any operations that reduce dimensionality
+    """Base class for operations that reduce dimensionality.
+
+    This abstract base class provides infrastructure for transformations that
+    reduce the size of the last dimension through operations like sum, mean,
+    or log-sum-exp. It handles shape management and provides specialized
+    indexing behavior for reductions.
+
+    :cvar SHAPE_CHECK: Disabled for reductions (False)
+    :cvar TORCH_FUNC: PyTorch function for the reduction operation
+    :cvar NP_FUNC: NumPy function for the reduction operation
+
+    :param dist1: Parameter to reduce
+    :type dist1: custom_types.CombinableParameterType
+    :param keepdims: Whether to keep the reduced dimension as size 1. Defaults to False.
+    :type keepdims: bool
+    :param kwargs: Additional arguments passed to parent class
+
+    Key Features:
+    - Automatic shape calculation for reduced dimensions
+    - Specialized index offset handling (always returns 0)
+    - Increased assignment depth for proper Stan loop structure
+    - Support for keepdims option to preserve dimensionality
+
+    Subclasses must define TORCH_FUNC and NP_FUNC class variables that
+    point to the appropriate reduction functions in each library.
+
+    Example:
+        Subclasses like SumParameter and LogSumExpParameter inherit from
+        this base class and define their specific reduction operations.
     """
 
     SHAPE_CHECK = False
@@ -386,9 +965,17 @@ class Reduction(UnaryTransformedParameter):
         keepdims: bool = False,
         **kwargs,
     ):
-        """
-        Initializes the reduction. This applies the reduction over the last dimension
-        of the input parameter, either with or without keeping the last dimension.
+        """Initialize reduction with automatic shape calculation. Reduction is always
+        over the last dimension.
+
+        :param dist1: Parameter to reduce
+        :type dist1: custom_types.CombinableParameterType
+        :param keepdims: Whether to keep reduced dimension. Defaults to False.
+        :type keepdims: bool
+        :param kwargs: Additional arguments for parent initialization
+
+        The initialization automatically calculates the output shape by
+        removing the last dimension (or keeping it as size 1 if keepdims=True).
         """
         # Record whether to keep the last dimension
         self.keepdims = keepdims
@@ -405,7 +992,19 @@ class Reduction(UnaryTransformedParameter):
         super().__init__(dist1=dist1, **kwargs)
 
     def run_np_torch_op(self, dist1, keepdim: bool | None = None):
+        """Execute reduction operation with backend-appropriate function.
 
+        :param dist1: Input parameter to reduce
+        :param keepdim: Whether to keep dimensions (static method only)
+        :type keepdim: Optional[bool]
+
+        :returns: Reduced parameter values
+
+        :raises ValueError: If keepdim is provided for instance method calls
+
+        The method automatically selects between PyTorch and NumPy reduction
+        functions and applies them along the last dimension.
+        """
         # Keepdim can only be provided if called as a static method
         if self is None:
             keepdim = bool(keepdim)
@@ -427,85 +1026,211 @@ class Reduction(UnaryTransformedParameter):
         query: Union[str, "abstract_model_component.AbstractModelComponent"],
         offset_adjustment: int = 0,
     ) -> int:
-        """
-        For reductions, the index offset is always 0. All inputs to this function
-        are ignored. It will always return 0.
+        """Return zero offset for all reduction operations.
+
+        :param query: Component or parameter name (ignored)
+        :param offset_adjustment: Offset adjustment (ignored)
+
+        :returns: Always returns 0
+        :rtype: int
+
+        Reductions always return zero offset because they operate on the
+        last dimension and don't require complex indexing adjustments.
         """
         return 0
 
     def get_assign_depth(self) -> int:
-        """One level higher than the shape would suggest"""
+        """Return assignment depth one level higher than normal.
+
+        :returns: Assignment depth + 1
+        :rtype: int
+
+        Reductions require one additional level of loop nesting to properly
+        iterate over the dimension being reduced.
+        """
         return super().get_assign_depth() + 1
-
-    def get_transformation_assignment(self, index_opts: tuple[str, ...] | None) -> str:
-        """
-        Gets the name of the variable that is being indexed, then passes it to
-        the `write_stan_operation` method to get the full Stan code for the transformation
-        """
-        # If we are losing a dimension, then assignment should not trim off a dim
-        # pylint: disable=no-value-for-parameter
-        if self.keepdims:
-            return super().get_transformation_assignment(index_opts)
-
-        return super().get_transformation_assignment(
-            index_opts, assignment_kwargs={"end_dim": None}
-        )
 
 
 class LogSumExpParameter(Reduction):
-    """
-    Defines a parameter that computes the log of the sum of exponentials of another.
-    This can only be applied over the last dimension and occurs with or without
-    `keepdims` set to True.
+    """Log-sum-exp reduction transformation.
+
+    Computes the logarithm of the sum of exponentials along the last dimension,
+    providing a numerically stable way to compute log(Σᵢ exp(xᵢ)).
+
+    :cvar TORCH_FUNC: torch.logsumexp
+    :cvar NP_FUNC: scipy.special.logsumexp
+
+    Mathematical Properties:
+    - Operation: log(Σᵢ exp(xᵢ))
+    - Numerically stable for extreme values
+    - Maintains precision in log-space
+    - Essential for probabilistic computations
+
+    This transformation is fundamental for:
+    - Normalizing log-probabilities
+    - Computing partition functions
+    - Stable softmax computations
+    - Log-space mixture models
+
+    The log-sum-exp function is the smooth maximum approximation and
+    appears frequently in machine learning and statistics.
+
+    Example:
+        >>> log_weights = LogParameter(weights)
+        >>> log_partition = LogSumExpParameter(log_weights)
+        >>> normalized_log_weights = log_weights - log_partition
     """
 
     TORCH_FUNC = torch.logsumexp
     NP_FUNC = sp.logsumexp
 
     def write_stan_operation(self, dist1: str) -> str:
+        """Generate Stan log_sum_exp function call.
+
+        :param dist1: Formatted parameter string
+        :type dist1: str
+
+        :returns: Stan log_sum_exp function call
+        :rtype: str
+        """
         return f"log_sum_exp({dist1})"
 
 
 class SumParameter(Reduction):
-    """
-    Defines a parameter that computes the sum over the final axis of another
-    parameter.
+    """Sum reduction transformation.
+
+    Computes the sum of values along the last dimension: Σᵢ xᵢ
+
+    :cvar TORCH_FUNC: torch.sum
+    :cvar NP_FUNC: numpy.sum
+
+    Mathematical Properties:
+    - Operation: Σᵢ xᵢ
+    - Linear operation
+    - Preserves units and scale
+    - Fundamental aggregation operation
+
+    This transformation is used for:
+    - Computing totals and aggregates
+    - Reducing dimensionality through summation
+    - Calculating marginal quantities
+    - Creating scalar summaries from vectors
+
+    Example:
+        >>> category_counts = Poisson(lambda_=rates)
+        >>> total_count = SumParameter(category_counts)
     """
 
     TORCH_FUNC = torch.sum
     NP_FUNC = np.sum
 
     def write_stan_operation(self, dist1: str) -> str:
+        """Generate Stan sum function call.
+
+        :param dist1: Formatted parameter string
+        :type dist1: str
+
+        :returns: Stan sum function call
+        :rtype: str
+        """
         return f"sum({dist1})"
 
 
 class Log1pExpParameter(UnaryTransformedParameter):
-    """
-    Defines a parameter that takes the logarithm of one plus the natural exponentiation
-    of another parameter. This uses numerically stable alternatives to writing the
-    option explicitly.
+    """Log(1 + exp(x)) transformation with numerical stability.
+
+    Computes log(1 + exp(x)) using numerically stable implementations that
+    avoid overflow for large positive values and underflow for large negative values.
+
+    Mathematical Properties:
+    - Domain: (-∞, ∞)
+    - Range: [0, ∞)
+    - Smooth approximation to max(0, x)
+    - Also known as "softplus" function
+
+    This transformation is essential for:
+    - Numerical stability in probabilistic models
+    - Log-space computations avoiding direct exponentiation
+
+    Example:
+        >>> log_odds = Normal(mu=0, sigma=1)
+        >>> log_prob = Log1pExpParameter(log_odds)
     """
 
     def run_np_torch_op(self, dist1):
+        """Compute log(1 + exp(x)) with numerical stability.
+
+        :param dist1: Input parameter
+
+        :returns: log(1 + exp(dist1))
+
+        Uses logaddexp(0, x) for numerical stability, which handles
+        both overflow (large positive x) and underflow (large negative x).
+        """
+        # If using torch, use the logaddexp function directly.
         if isinstance(dist1, torch.Tensor):
             return torch.logaddexp(torch.tensor(0.0, device=dist1.device), dist1)
-        else:
+        # If using numpy, use the logaddexp function from scipy.
+        elif isinstance(dist1, np.ndarray):
             return np.logaddexp(0.0, dist1)
+        # Error if the type is not supported
+        else:
+            raise TypeError(
+                "Unsupported type for dist1. Expected torch.Tensor or np.ndarray."
+            )
 
     def write_stan_operation(self, dist1: str) -> str:
+        """Generate Stan log1p_exp function call.
+
+        :param dist1: Formatted parameter string
+        :type dist1: str
+
+        :returns: Stan log1p_exp function call
+        :rtype: str
+        """
         return f"log1p_exp({dist1})"
 
 
 class SigmoidParameter(UnaryTransformedParameter):
-    """Defines a parameter that is the sigmoid of another."""
+    """Sigmoid (logistic) transformation for parameters.
+
+    Implements the sigmoid function: result = 1 / (1 + exp(-dist1))
+
+    :cvar LOWER_BOUND: Sigmoid values are bounded below by 0.0
+    :cvar UPPER_BOUND: Sigmoid values are bounded above by 1.0
+
+    Mathematical Properties:
+    - Domain: (-∞, ∞)
+    - Range: (0, 1)
+    - S-shaped curve with inflection point at x=0, y=0.5
+    - Inverse: logit function ln(p/(1-p))
+
+    The sigmoid function is essential for:
+    - Converting unbounded values to probabilities
+    - Logistic regression and classification
+    - Smooth transitions between bounds
+    - Activation functions in neural networks
+
+    This implementation uses numerically stable computation methods to
+    avoid overflow/underflow issues.
+    """
 
     UPPER_BOUND: "custom_types.Float" = 1.0
     LOWER_BOUND: "custom_types.Float" = 0.0
 
     def run_np_torch_op(self, dist1):
-        """
-        Calculates the inverse logit (sigmoid) function in a numerically stable
-        way.
+        """Compute sigmoid function with numerical stability.
+
+        :param dist1: Input parameter (logits)
+
+        :returns: Sigmoid-transformed values in (0, 1)
+        :rtype: Union[torch.Tensor, np.ndarray]
+
+        :raises TypeError: If input type is not supported
+
+        Uses numerically stable implementations:
+        - PyTorch: Built-in torch.sigmoid function
+        - NumPy: Custom stable implementation from utils
         """
         # If using torch, use the sigmoid function directly.
         if isinstance(dist1, torch.Tensor):
@@ -523,6 +1248,14 @@ class SigmoidParameter(UnaryTransformedParameter):
             )
 
     def write_stan_operation(self, dist1: str) -> str:
+        """Generate Stan inverse logit function call.
+
+        :param dist1: Formatted parameter string
+        :type dist1: str
+
+        :returns: Stan inv_logit() function call
+        :rtype: str
+        """
         return f"inv_logit({dist1})"
 
 
@@ -555,7 +1288,7 @@ class ExponentialGrowth(ExpParameter):
     $$
     """
 
-    def __init__(  # pylint: disable=useless-parent-delegation
+    def __init__(
         self,
         *,
         t: "custom_types.CombinableParameterType",
@@ -563,17 +1296,12 @@ class ExponentialGrowth(ExpParameter):
         r: "custom_types.CombinableParameterType",
         **kwargs,
     ):
-        """Initializes the LogExponentialGrowth distribution.
+        """Initialize exponential growth model.
 
-        Args:
-            t ("custom_types.SampleType"): The time parameter.
-
-            A ("custom_types.SampleType"): The amplitude parameter.
-
-            r ("custom_types.SampleType"): The rate parameter.
-
-            shape (tuple[int, ...], optional): The shape of the distribution. In
-                most cases, this can be ignored as it will be calculated automatically.
+        :param t: Time parameter
+        :param A: Amplitude parameter
+        :param r: Rate parameter
+        :param kwargs: Additional arguments
         """
         super(UnaryTransformedParameter, self).__init__(t=t, A=A, r=r, **kwargs)
 
@@ -592,6 +1320,14 @@ class ExponentialGrowth(ExpParameter):
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, A, r):
+        """Compute exponential growth: A * exp(r * t).
+
+        :param t: Time values
+        :param A: Amplitude values
+        :param r: Rate values
+
+        :returns: Exponential growth values
+        """
         return A * ExpParameter.run_np_torch_op(self, r * t)
 
     # pylint: enable=arguments-differ
@@ -604,15 +1340,33 @@ class ExponentialGrowth(ExpParameter):
 
 
 class BinaryExponentialGrowth(ExpParameter):
-    """
-    Special case of `ExponentialGrowth` used for modeling when only two timepoints
-    are available. In this case, we assume that t0 = 0 and t1 = 1, reducing the
-    operation to:
+    """Binary exponential growth for two time points.
 
-    $$
-    x = A\textrm{e}^{r}
-    $$
+    Special case of exponential growth for modeling with only two time points,
+    assuming t₀ = 0 and t₁ = 1. This reduces to: x = A * exp(r)
 
+    :param A: Amplitude parameter (value at t=0)
+    :type A: custom_types.CombinableParameterType
+    :param r: Growth rate parameter
+    :type r: custom_types.CombinableParameterType
+    :param kwargs: Additional arguments passed to parent class
+
+    Mathematical Properties:
+    - Simplified exponential model for binary time points
+    - A represents initial value
+    - exp(r) represents fold-change from t=0 to t=1
+    - r is log-fold-change
+
+    This transformation is useful for:
+    - Before/after comparisons
+    - Treatment effect modeling
+    - Two-timepoint studies
+    - Fold-change analysis
+
+    Example:
+        >>> baseline = Normal(mu=100, sigma=10)
+        >>> log_fold_change = Normal(mu=0, sigma=0.5)
+        >>> final_value = BinaryExponentialGrowth(A=baseline, r=log_fold_change)
     """
 
     def __init__(
@@ -621,15 +1375,11 @@ class BinaryExponentialGrowth(ExpParameter):
         r: "custom_types.CombinableParameterType",
         **kwargs,
     ):
-        """Initializes the BinaryExponentialGrowth distribution.
+        """Initialize binary exponential growth.
 
-        Args:
-            A ("custom_types.SampleType"): The amplitude parameter.
-
-            r ("custom_types.SampleType"): The rate parameter.
-
-            shape (tuple[int, ...], optional): The shape of the distribution. In
-                most cases, this can be ignored as it will be calculated automatically.
+        :param A: Amplitude parameter
+        :param r: Rate parameter
+        :param kwargs: Additional arguments
         """
         super(UnaryTransformedParameter, self).__init__(A=A, r=r, **kwargs)
 
@@ -643,31 +1393,66 @@ class BinaryExponentialGrowth(ExpParameter):
         r: "custom_types.SampleType",
     ) -> npt.NDArray: ...
     def run_np_torch_op(self, *, A, r):
+        """Compute binary exponential growth: A * exp(r).
+
+        :param A: Amplitude values
+        :param r: Rate values
+
+        :returns: A * exp(r)
+        """
         return A * ExpParameter.run_np_torch_op(self, r)
 
     def write_stan_operation(self, A: str, r: str) -> str:
-        return f"{A} .* {super().write_stan_operation(r)}"
+        """Generate Stan code for binary exponential growth.
 
-    # pylint: enable=arguments-differ
+        :param A: Formatted amplitude parameter
+        :type A: str
+        :param r: Formatted rate parameter
+        :type r: str
+
+        :returns: Stan code for A .* exp(r)
+        :rtype: str
+        """
+        return f"{A} .* {super().write_stan_operation(r)}"
 
 
 class LogExponentialGrowth(TransformedParameter):
+    """Log-scale exponential growth model transformation.
+
+    Implements the logarithm of exponential growth: log(x) = log_A + r * t
+
+    :param t: Time parameter
+    :type t: custom_types.CombinableParameterType
+    :param log_A: Log-amplitude parameter (log of initial value)
+    :type log_A: custom_types.CombinableParameterType
+    :param r: Growth rate parameter
+    :type r: custom_types.CombinableParameterType
+    :param kwargs: Additional arguments passed to parent class
+
+    Mathematical Properties:
+    - Linear in log-space: log(x) = log_A + r * t
+    - Guaranteed positive output: x = exp(log_A + r * t) > 0
+    - Growth rate r directly additive in log-space
+    - Natural for multiplicative processes
+
+    This transformation is particularly useful for:
+    - Population modeling where values must be positive
+    - Multiplicative growth processes
+    - Log-scale regression models
+    - Ensuring positive-valued outcomes
+
+    The log-scale parameterization avoids issues with negative values
+    and provides numerical stability for extreme growth rates.
+
+    Example:
+        >>> time_points = Constant([0, 1, 2, 3])
+        >>> log_initial_pop = Normal(mu=4.6, sigma=0.1)  # log(100) ≈ 4.6
+        >>> growth_rate = Normal(mu=0.1, sigma=0.02)
+        >>> log_population = LogExponentialGrowth(t=time_points, log_A=log_initial_pop,
+        >>>                                         r=growth_rate)
     """
-    A distribution that models the natural log of the `ExponentialGrowth` distribution.
-    Specifically, parameters `t`, `log_A`, and `r` are used to calculate the log
-    of the exponential growth model as follows:
 
-    $$
-    log(x) = log_A + rt
-    $$
-
-    Note that, with this parametrization, we guarantee that $x > 0$.
-
-    This parametrization is particularly useful for modeling the proportions of
-    different populations as is done in SciStanPy, as proportions are always positive.
-    """
-
-    def __init__(  # pylint: disable=useless-parent-delegation
+    def __init__(
         self,
         *,
         t: "custom_types.CombinableParameterType",
@@ -675,17 +1460,12 @@ class LogExponentialGrowth(TransformedParameter):
         r: "custom_types.CombinableParameterType",
         **kwargs,
     ):
-        """Initializes the LogExponentialGrowth distribution.
+        """Initialize log-exponential growth model.
 
-        Args:
-            t ("custom_types.SampleType"): The time parameter.
-
-            log_A ("custom_types.SampleType"): The log of the amplitude parameter.
-
-            r ("custom_types.SampleType"): The rate parameter.
-
-            shape (tuple[int, ...], optional): The shape of the distribution. In
-                most cases, this can be ignored as it will be calculated automatically.
+        :param t: Time parameter
+        :param log_A: Log-amplitude parameter
+        :param r: Rate parameter
+        :param kwargs: Additional arguments
         """
         super().__init__(t=t, log_A=log_A, r=r, **kwargs)
 
@@ -704,6 +1484,14 @@ class LogExponentialGrowth(TransformedParameter):
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, log_A, r):
+        """Compute log-exponential growth: log_A + r * t.
+
+        :param t: Time values
+        :param log_A: Log-amplitude values
+        :param r: Rate values
+
+        :returns: Log-exponential growth values
+        """
         return log_A + r * t
 
     # pylint: enable=arguments-differ
@@ -715,15 +1503,33 @@ class LogExponentialGrowth(TransformedParameter):
 
 
 class BinaryLogExponentialGrowth(TransformedParameter):
-    """
-    Special case of `LogExponentialGrowth` used for modeling when only two timepoints
-    are available. In this case, we assume that t0 = 0 and t1 = 1, reducing the
-    operation to:
+    """Binary log-exponential growth for two time points.
 
-    $$
-    log(x) = log_A + r
-    $$
+    Special case of log-exponential growth for two time points,
+    reducing to: log(x) = log_A + r
 
+    :param log_A: Log-amplitude parameter (log of initial value)
+    :type log_A: custom_types.CombinableParameterType
+    :param r: Growth rate parameter
+    :type r: custom_types.CombinableParameterType
+    :param kwargs: Additional arguments passed to parent class
+
+    Mathematical Properties:
+    - Simple additive model in log-space
+    - r represents log-fold-change
+    - Guaranteed positive output when exponentiated
+    - Linear relationship in log-scale
+
+    This transformation is ideal for:
+    - Binary treatment effects in log-space
+    - Fold-change modeling
+    - Two-timepoint growth analysis
+    - Log-scale before/after comparisons
+
+    Example:
+        >>> log_baseline = Normal(mu=4.6, sigma=0.1)  # log(100)
+        >>> log_fold_change = Normal(mu=0, sigma=0.5)
+        >>> log_final = BinaryLogExponentialGrowth(log_A=log_baseline, r=log_fold_change)
     """
 
     def __init__(
@@ -732,15 +1538,11 @@ class BinaryLogExponentialGrowth(TransformedParameter):
         r: "custom_types.CombinableParameterType",
         **kwargs,
     ):
-        """Initializes the BinaryLogExponentialGrowth distribution.
+        """Initialize binary log-exponential growth.
 
-        Args:
-            log_A ("custom_types.SampleType"): The log of the amplitude parameter.
-
-            r ("custom_types.SampleType"): The rate parameter.
-
-            shape (tuple[int, ...], optional): The shape of the distribution. In
-                most cases, this can be ignored as it will be calculated automatically.
+        :param log_A: Log-amplitude parameter
+        :param r: Rate parameter
+        :param kwargs: Additional arguments
         """
         super().__init__(log_A=log_A, r=r, **kwargs)
 
@@ -754,28 +1556,72 @@ class BinaryLogExponentialGrowth(TransformedParameter):
         r: "custom_types.SampleType",
     ) -> npt.NDArray: ...
     def run_np_torch_op(self, *, log_A, r):
+        """Compute binary log-exponential growth: log_A + r.
+
+        :param log_A: Log-amplitude values
+        :param r: Rate values
+
+        :returns: log_A + r
+        """
         return log_A + r
 
     def write_stan_operation(self, log_A: str, r: str) -> str:
-        return f"{log_A} + {r}"
+        """Generate Stan code for binary log-exponential growth.
 
-    # pylint: enable=arguments-differ
+        :param log_A: Formatted log-amplitude parameter
+        :type log_A: str
+        :param r: Formatted rate parameter
+        :type r: str
+
+        :returns: Stan code for log_A + r
+        :rtype: str
+        """
+        return f"{log_A} + {r}"
 
 
 class SigmoidGrowth(SigmoidParameter):
-    r"""
-    A transformed parameter that models sigmoid growth. Specifically, parameters
-    `t`, `A`, `r`, and `c` are used to calculate the sigmoid growth model as follows:
+    """Sigmoid growth model transformation.
 
-    $$
-    x = \frac{A}{1 + \textrm{e}^{-r(t - c)}}
-    $$
+    Implements sigmoid growth: x = A / (1 + exp(-r*(t - c)))
+    This models S-shaped growth curves with carrying capacity A.
+
+    :param t: Time parameter
+    :type t: custom_types.CombinableParameterType
+    :param A: Amplitude parameter (carrying capacity)
+    :type A: custom_types.CombinableParameterType
+    :param r: Growth rate parameter
+    :type r: custom_types.CombinableParameterType
+    :param c: Inflection point parameter (time of fastest growth)
+    :type c: custom_types.CombinableParameterType
+    :param kwargs: Additional arguments passed to parent class
+
+    :cvar LOWER_BOUND: Values are bounded below by 0.0
+    :cvar UPPER_BOUND: No upper bound (None) as A can be any positive value
+
+    Mathematical Properties:
+    - S-shaped growth curve
+    - A represents carrying capacity (maximum value)
+    - c represents inflection point (time of fastest growth)
+    - r controls steepness of growth
+    - Approaches 0 as t → -∞ and A as t → +∞
+
+    This transformation is essential for:
+    - Population growth with carrying capacity
+    - Any growth process with saturation
+
+    Example:
+        >>> time_points = Constant(np.linspace(0, 10, 100))
+        >>> carrying_capacity = Normal(mu=1000, sigma=50)
+        >>> growth_rate = Normal(mu=1.0, sigma=0.1)
+        >>> inflection_time = Normal(mu=5.0, sigma=0.5)
+        >>> population = SigmoidGrowth(t=time_points, A=carrying_capacity,
+        >>>                             r=growth_rate, c=inflection_time)
     """
 
     LOWER_BOUND: "custom_types.Float" = 0.0
     UPPER_BOUND: None = None
 
-    def __init__(  # pylint: disable=useless-parent-delegation
+    def __init__(
         self,
         *,
         t: "custom_types.CombinableParameterType",
@@ -784,21 +1630,13 @@ class SigmoidGrowth(SigmoidParameter):
         c: "custom_types.CombinableParameterType",
         **kwargs,
     ):
-        """Initializes the LogSigmoidGrowth distribution.
+        """Initialize sigmoid growth model.
 
-        Args:
-            t ("custom_types.SampleType"): The time parameter.
-
-            A ("custom_types.SampleType"): The amplitude parameter. Specifically,
-                this is the maximum value of the sigmoid function.
-
-            r ("custom_types.SampleType"): The rate parameter.
-
-            c ("custom_types.SampleType"): The offset parameter. This is the
-                inflection point of the sigmoid function.
-
-            shape (tuple[int, ...], optional): The shape of the distribution. In
-                most cases, this can be ignored as it will be calculated automatically.
+        :param t: Time parameter
+        :param A: Amplitude/carrying capacity parameter
+        :param r: Rate parameter
+        :param c: Inflection point parameter
+        :param kwargs: Additional arguments
         """
         super(UnaryTransformedParameter, self).__init__(t=t, A=A, r=r, c=c, **kwargs)
 
@@ -818,6 +1656,15 @@ class SigmoidGrowth(SigmoidParameter):
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, A, r, c):
+        """Compute sigmoid growth: A * sigmoid(r * (t - c)).
+
+        :param t: Time values
+        :param A: Amplitude values
+        :param r: Rate values
+        :param c: Inflection point values
+
+        :returns: Sigmoid growth values
+        """
         return A * SigmoidParameter.run_np_torch_op(self, r * (t - c))
 
     # pylint: enable=arguments-differ
@@ -830,23 +1677,43 @@ class SigmoidGrowth(SigmoidParameter):
 
 
 class LogSigmoidGrowth(LogSigmoidParameter):
-    r"""
-    A distribution that models the natural log of the `SigmoidGrowth` distribution.
-    Specifically, parameters `t`, `log_A`, `r`, and `c` are used to calculate
-    the log of the sigmoid growth model as follows:
+    """Log-scale sigmoid growth model transformation.
 
-    $$
-    log(x) = log_A - log(1 + \textrm{e}^{-r(t - c)})
-    $$
+    Implements the logarithm of sigmoid growth: log(x) = log_A + log_sigmoid(r*(t - c))
+    This provides numerical stability and ensures positive values.
 
-    As with the `LogExponentialGrowth` distribution, this parametrization guarantees
-    that $x > 0$.
+    :param t: Time parameter
+    :type t: custom_types.CombinableParameterType
+    :param log_A: Log-amplitude parameter (log of carrying capacity)
+    :type log_A: custom_types.CombinableParameterType
+    :param r: Growth rate parameter
+    :type r: custom_types.CombinableParameterType
+    :param c: Inflection point parameter
+    :type c: custom_types.CombinableParameterType
+    :param kwargs: Additional arguments passed to parent class
+
+    :cvar LOWER_BOUND: No lower bound (None)
+    :cvar UPPER_BOUND: No upper bound (None)
+
+    This parameterization is ideal for:
+    - Extreme parameter regimes
+    - Log-scale statistical modeling
+    - When initial conditions are naturally in log-space
+    - Maximum numerical precision requirements
+
+    Example:
+        >>> time_points = Constant(np.linspace(0, 10, 100))
+        >>> log_carrying_capacity = Normal(mu=6.9, sigma=0.1)  # log(1000)
+        >>> growth_rate = Normal(mu=1.0, sigma=0.1)
+        >>> inflection_time = Normal(mu=5.0, sigma=0.5)
+        >>> log_population = LogSigmoidGrowth(t=time_points, log_A=log_carrying_capacity,
+        >>>                                     r=growth_rate, c=inflection_time)
     """
 
     LOWER_BOUND: None = None
     UPPER_BOUND: None = None
 
-    def __init__(  # pylint: disable=useless-parent-delegation
+    def __init__(
         self,
         *,
         t: "custom_types.CombinableParameterType",
@@ -855,19 +1722,13 @@ class LogSigmoidGrowth(LogSigmoidParameter):
         c: "custom_types.CombinableParameterType",
         **kwargs,
     ):
-        """Initializes the LogSigmoidGrowth distribution.
+        """Initialize log-sigmoid growth model.
 
-        Args:
-            exp_t ("custom_types.SampleType"): The exponentiated time parameter.
-
-            log_A ("custom_types.SampleType"): The log of the amplitude parameter.
-
-            r ("custom_types.SampleType"): The rate parameter.
-
-            c ("custom_types.SampleType"): The offset parameter.
-
-            shape (tuple[int, ...], optional): The shape of the distribution. In
-                most cases, this can be ignored as it will be calculated automatically.
+        :param t: Time parameter
+        :param log_A: Log-amplitude parameter
+        :param r: Rate parameter
+        :param c: Inflection point parameter
+        :param kwargs: Additional arguments
         """
         super(UnaryTransformedParameter, self).__init__(
             t=t, log_A=log_A, r=r, c=c, **kwargs
@@ -889,6 +1750,15 @@ class LogSigmoidGrowth(LogSigmoidParameter):
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, log_A, r, c):
+        """Compute log-sigmoid growth: log_A + log_sigmoid(r * (t - c)).
+
+        :param t: Time values
+        :param log_A: Log-amplitude values
+        :param r: Rate values
+        :param c: Inflection point values
+
+        :returns: Log-sigmoid growth values
+        """
         return log_A + LogSigmoidParameter.run_np_torch_op(self, r * (t - c))
 
     # pylint: enable=arguments-differ
@@ -901,34 +1771,60 @@ class LogSigmoidGrowth(LogSigmoidParameter):
 
 
 class SigmoidGrowthInitParametrization(TransformedParameter):
-    r"""
-    An alternative parametrization of the sigmoid growth function that parametrizes
-    in terms of starting abundances rather than the maximum abundances.
+    """Sigmoid growth with initial value parameterization.
+
+    Alternative parameterization of sigmoid growth in terms of initial abundances
+    rather than carrying capacity. Uses numerically stable log-add-exp computation.
+
+    :param t: Time parameter
+    :type t: custom_types.CombinableParameterType
+    :param x0: Initial abundance parameter
+    :type x0: custom_types.CombinableParameterType
+    :param r: Growth rate parameter
+    :type r: custom_types.CombinableParameterType
+    :param c: Offset parameter (related to carrying capacity)
+    :type c: custom_types.CombinableParameterType
+    :param kwargs: Additional arguments passed to parent class
+
+    :cvar LOWER_BOUND: Values are bounded below by 0.0
+    :cvar UPPER_BOUND: No upper bound (None)
+
+    Mathematical Properties:
+    - Parameterizes sigmoid growth by initial value x0
+    - Uses log-add-exp trick for numerical stability
+    - Avoids direct computation of large exponentials
+    - Maintains sigmoid growth dynamics
+
+    This parameterization is useful when:
+    - Initial conditions are better known than carrying capacity
+    - Numerical stability is crucial
+    - Working with extreme parameter values
+    - Modeling relative growth from baseline
+
+    The transformation uses the identity:
+    x(t) = x0 * exp(log(1+exp(r*c)) - log(1+exp(r*(c-t))))
     """
 
     LOWER_BOUND: "custom_types.Float" = 0.0
     UPPER_BOUND: None = None
 
-    def __init__(  # pylint: disable=useless-parent-delegation
+    def __init__(
         self,
         *,
         t: "custom_types.CombinableParameterType",
-        x0: "custom_types.CombinableParameterType",  # pylint: disable=invalid-name
+        x0: "custom_types.CombinableParameterType",
         r: "custom_types.CombinableParameterType",
         c: "custom_types.CombinableParameterType",
         **kwargs,
     ):
-        """Initializes the SigmoidGrowthInitParametrization distribution.
+        """Initialize sigmoid growth with initial value parameterization.
 
-        Args:
-            t (custom_types.CombinableParameterType): The time parameter.
-            x0 (custom_types.CombinableParameterType): Initial abundances.
-            r (custom_types.CombinableParameterType): Growth rate.
-            c (custom_types.CombinableParameterType): Offset parameter.
-            shape (tuple[int, ...], optional): The shape of the distribution. Defaults
-            to ().
+        :param t: Time parameter
+        :param x0: Initial abundance parameter
+        :param r: Growth rate parameter
+        :param c: Offset parameter
+        :param kwargs: Additional arguments
         """
-        # Initialize using the base transformed parameter class
         super().__init__(t=t, x0=x0, r=r, c=c, **kwargs)
 
     # pylint: disable=arguments-renamed, arguments-differ
@@ -941,13 +1837,24 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
     def run_np_torch_op(
         self,
         t: "custom_types.SampleType",
-        x0: "custom_types.SampleType",  # pylint: disable=invalid-name
+        x0: "custom_types.SampleType",
         r: "custom_types.SampleType",
         c: "custom_types.SampleType",
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, t, x0, r, c):
-        """We use a log-add-exp trick to calculate in a numerically stable way."""
+        """Compute sigmoid growth with initial parameterization using log-add-exp.
+
+        :param t: Time values
+        :param x0: Initial abundance values
+        :param r: Rate values
+        :param c: Offset values
+
+        :returns: Sigmoid growth values
+
+        Uses log-add-exp for numerical stability in computing:
+        x0 * exp(log(1+exp(r*c)) - log(1+exp(r*(c-t))))
+        """
         # Get the module
         mod = utils.choose_module(x0)
 
@@ -971,35 +1878,65 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
 
 
 class LogSigmoidGrowthInitParametrization(TransformedParameter):
-    r"""
-    An alternative parametrization of the log sigmoid growth function that
-    parametrizes in terms of starting abundances rather than the maximum abundances.
+    """Log-scale sigmoid growth with initial value parameterization.
+
+    Log-space version of sigmoid growth parameterized by initial values,
+    providing numerical stability and guaranteed positive outputs.
+
+    :param t: Time parameter
+    :type t: custom_types.CombinableParameterType
+    :param log_x0: Log of initial abundance parameter
+    :type log_x0: custom_types.CombinableParameterType
+    :param r: Growth rate parameter
+    :type r: custom_types.CombinableParameterType
+    :param c: Offset parameter
+    :type c: custom_types.CombinableParameterType
+    :param kwargs: Additional arguments passed to parent class
+
+    :cvar LOWER_BOUND: No lower bound (None)
+    :cvar UPPER_BOUND: No upper bound (None)
+
+    Mathematical Properties:
+    - Fully operates in log-space for numerical stability
+    - Parameterized by log of initial conditions
+    - Uses log-add-exp computations throughout
+    - Maintains sigmoid growth dynamics
+
+    This parameterization is ideal for:
+    - Extreme parameter regimes
+    - Log-scale statistical modeling
+    - When initial conditions are naturally in log-space
+    - Maximum numerical precision requirements
+
+    Example:
+        >>> time_points = Constant(np.linspace(0, 10, 100))
+        >>> log_initial = Normal(mu=4.6, sigma=0.1)  # log(100)
+        >>> growth_rate = Normal(mu=1.0, sigma=0.1)
+        >>> offset = Normal(mu=5.0, sigma=0.5)
+        >>> log_abundance = LogSigmoidGrowthInitParametrization(t=time_points,
+        >>>                 log_x0=log_initial, r=growth_rate, c=offset)
     """
 
     LOWER_BOUND: None = None
     UPPER_BOUND: None = None
 
-    def __init__(  # pylint: disable=useless-parent-delegation
+    def __init__(
         self,
         *,
         t: "custom_types.CombinableParameterType",
-        log_x0: "custom_types.CombinableParameterType",  # pylint: disable=invalid-name
+        log_x0: "custom_types.CombinableParameterType",
         r: "custom_types.CombinableParameterType",
         c: "custom_types.CombinableParameterType",
         **kwargs,
     ):
-        """Initializes the LogSigmoidGrowthInitParametrization distribution.
+        """Initialize log-sigmoid growth with initial value parameterization.
 
-        Args:
-            t (custom_types.CombinableParameterType): The time parameter.
-            log_x0 (custom_types.CombinableParameterType): Logarithm of initial
-                abundances.
-            r (custom_types.CombinableParameterType): Growth rate.
-            c (custom_types.CombinableParameterType): Offset parameter.
-            shape (tuple[int, ...], optional): The shape of the distribution. Defaults
-            to ().
+        :param t: Time parameter
+        :param log_x0: Log of initial abundance parameter
+        :param r: Growth rate parameter
+        :param c: Offset parameter
+        :param kwargs: Additional arguments
         """
-        # Initialize using the base transformed parameter class
         super().__init__(t=t, log_x0=log_x0, r=r, c=c, **kwargs)
 
     # pylint: disable=arguments-renamed, arguments-differ
@@ -1007,7 +1944,7 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
     def run_np_torch_op(
         self,
         t: torch.Tensor,
-        log_x0: torch.Tensor,  # pylint: disable=invalid-name
+        log_x0: torch.Tensor,
         r: torch.Tensor,
         c: torch.Tensor,
     ) -> torch.Tensor: ...
@@ -1016,13 +1953,24 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
     def run_np_torch_op(
         self,
         t: "custom_types.SampleType",
-        log_x0: "custom_types.SampleType",  # pylint: disable=invalid-name
+        log_x0: "custom_types.SampleType",
         r: "custom_types.SampleType",
         c: "custom_types.SampleType",
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, t, log_x0, r, c):
-        """We use a log-add-exp trick to calculate in a numerically stable way."""
+        """Compute log-sigmoid growth with initial parameterization.
+
+        :param t: Time values
+        :param log_x0: Log initial abundance values
+        :param r: Rate values
+        :param c: Offset values
+
+        :returns: Log-sigmoid growth values
+
+        Computes: log_x0 + log(1+exp(r*c)) - log(1+exp(r*(c-t)))
+        using numerically stable log-add-exp operations.
+        """
         # Get the module
         mod = utils.choose_module(log_x0)
 
@@ -1040,20 +1988,47 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
 
 
 class ConvolveSequence(TransformedParameter):
-    """
-    Using a matrix of provided weights, performs a convolution operation on an
-    ordinally-encoded array of sequences. For broadcasting purposes, the last two
-    dimensions of the weights matrix and the last dimension of the seqence array
-    are ignored.
+    """Sequence convolution transformation using weight matrices.
+
+    Performs convolution operation on ordinally-encoded sequences using provided
+    weight matrices. This is commonly used for sequence modeling and pattern
+    recognition in biological sequences or text data.
+
+    :param weights: Weight matrix for convolution (at least 2D)
+    :type weights: custom_types.CombinableParameterType
+    :param ordinals: Ordinally-encoded sequence array (at least 1D)
+    :type ordinals: custom_types.CombinableParameterType
+    :param kwargs: Additional arguments passed to parent class
+
+    :cvar SHAPE_CHECK: Disabled for complex shape operations (False)
+    :cvar FORCE_LOOP_RESET: Forces loop reset in Stan code (True)
+    :cvar FORCE_PARENT_NAME: Forces parent naming in Stan code (True)
+
+    Shape Requirements:
+    - Weights: (..., kernel_size, alphabet_size)
+    - Ordinals: (..., sequence_length)
+    - Output: (..., sequence_length - kernel_size + 1)
+
+    The transformation applies convolution by:
+    1. Sliding a kernel of size kernel_size over the sequence
+    2. Using ordinal values to index into the weight matrix
+    3. Summing weighted values for each position
+
+    This is commonly used for:
+    - DNA/RNA sequence analysis
+    - Protein sequence modeling
+    - Text processing with character-level models
+    - Pattern recognition in discrete sequences
+
+    Example:
+        >>> # DNA sequence convolution
+        >>> weights = Normal(mu=0, sigma=1, shape=(motif_length, 4))  # 4 nucleotides
+        >>> dna_sequence = Constant(encoded_dna)  # 0,1,2,3 for A,C,G,T
+        >>> motif_scores = ConvolveSequence(weights=weights, ordinals=dna_sequence)
     """
 
-    # Do not check the shape
     SHAPE_CHECK = False
-
-    # We must reset the loops to define this parameter
     FORCE_LOOP_RESET = True
-
-    # Parents must be named
     FORCE_PARENT_NAME = True
 
     def __init__(
@@ -1063,6 +2038,16 @@ class ConvolveSequence(TransformedParameter):
         ordinals: "custom_types.CombinableParameterType",
         **kwargs,
     ):
+        """Initialize sequence convolution with shape validation.
+
+        :param weights: Weight matrix (kernel_size × alphabet_size in last 2 dims)
+        :param ordinals: Ordinal sequence array
+        :param kwargs: Additional arguments
+
+        :raises ValueError: If weights is not at least 2D
+        :raises ValueError: If ordinals is not at least 1D
+        :raises ValueError: If shapes are incompatible for broadcasting
+        """
         # Weights must be at least 2D.
         if weights.ndim < 2:
             raise ValueError("Weights must be at least a 2D parameter.")
@@ -1195,9 +2180,17 @@ class ConvolveSequence(TransformedParameter):
         query: Union[str, "abstract_model_component.AbstractModelComponent"],
         offset_adjustment: int = 0,
     ) -> int:
-        """
-        We ignore an extra dimension of the weights, so if the query is the `weights`
-        parent parameter, we add 1 to the offset relative to other parameters.
+        """Calculate index offset with special handling for weights.
+
+        :param query: Component or parameter name to query
+        :param offset_adjustment: Base offset adjustment
+
+        :returns: Index offset (adjusted +1 for weights parameter)
+        :rtype: int
+
+        The weights parameter requires special offset handling because
+        its last two dimensions are used directly in the convolution
+        rather than being broadcast.
         """
         # Run the inherited method
         offset = super().get_index_offset(query, offset_adjustment)
@@ -1215,8 +2208,11 @@ class ConvolveSequence(TransformedParameter):
         end_dims: dict[str, "custom_types.Integer"] | None = None,
         offset_adjustment: int = 0,
     ) -> str:
+        """Generate right-side code with proper dimension handling.
 
-        # Different default for end dims here
+        Sets default end_dims to exclude the last weight dimension (-2),
+        ensuring both kernel_size and alphabet_size dimensions are preserved.
+        """
         end_dims = end_dims or {"weights": -2}
 
         # Run the AbstractModelParameter version of the method to get each model
@@ -1229,61 +2225,64 @@ class ConvolveSequence(TransformedParameter):
     def write_stan_operation(  # pylint: disable=arguments-differ
         self, weights: str, ordinals: str
     ) -> str:
-        """
-        We need weights with no indexing. Indexing for sequence should be the standard
-        (as we automatically assume that the last dimension is vectorized)
+        """Generate Stan convolution function call.
+
+        :param weights: Formatted weights parameter name
+        :type weights: str
+        :param ordinals: Formatted ordinals parameter name
+        :type ordinals: str
+
+        :returns: Stan function call for sequence convolution
+        :rtype: str
         """
         # This runs a custom function
         return f"convolve_sequence({weights}, {ordinals})"
 
     def get_supporting_functions(self) -> list[str]:
+        """Return required Stan function includes.
+
+        :returns: List including pssm.stanfunctions for convolution support
+        :rtype: list[str]
+        """
         return super().get_supporting_functions() + ["#include pssm.stanfunctions"]
 
 
 class IndexParameter(TransformedParameter):
-    """
-    Used for indexing one parameter to create another with a different shape. Currently
-    supports slicing, indexing with scalars, and indexing with single-dimension
-    arrays. Multi-dimensional indexing is not supported. Boolean indexing is not
-    supported.
+    """Array indexing transformation with NumPy-compatible semantics.
 
-    IMPORTANT: Indexing follows the same rules as NUMPY, not Stan. This means that
-    the following:
+    Creates indexed subsets of parameters using slicing, scalar indexing,
+    and array indexing. Follows NumPy indexing conventions rather than
+    Stan conventions for consistency with Python data manipulation.
 
-    ```python
-    test = np.array([
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9]
-    ])
-    ind1 = [0, 2, 1]
-    ind2 = [1, 0, 2]
-    ```
+    :param dist: Parameter to index
+    :type dist: custom_types.CombinableParameterType
+    :param indices: Indexing specifications (slices, integers, arrays)
+    :type indices: custom_types.IndexType
 
-    will yield
+    :cvar SHAPE_CHECK: Disabled for complex indexing operations (False)
+    :cvar FORCE_PARENT_NAME: Forces parent naming in Stan code (True)
 
-    ```python
-    test[ind1, ind2]
+    Supported Index Types:
+    - **slice**: Standard Python slicing with start:stop (step=1 only)
+    - **int**: Single element selection
+    - **np.ndarray**: Advanced indexing with integer arrays. 1D only. Follows numpy convention.
+    - **Ellipsis**: Automatic dimension filling
+    - **None**: New axis insertion
 
-    >>   array([2, 7, 6])
-    ```
+    Important Differences from Stan:
+    - Uses 0-based indexing (Python convention)
+    - Advanced indexing follows NumPy broadcasting rules
+    - Negative indices are supported and converted appropriately
 
-    which is different from Stan's indexing rules. Using Stan's rules (and adjusting
-    for Stan's use of 1-indexing rather than 0-indexing), this would yield
-    ```stan
-    test[ind1, ind2]
-    >>   array([
-        [2, 1, 3],
-        [8, 7, 9],
-        [5, 4, 6]
-    ])
-    ```
+    Example:
+        >>> data = Normal(mu=0, sigma=1, shape=(10, 5))
+        >>> # Slice first 5 rows
+        >>> subset = IndexParameter(data, slice(0, 5))
+        >>> # Select specific elements
+        >>> selected = IndexParameter(data, [0, 2, 4], [1, 3, 0])  # NumPy-style
     """
 
-    # Do not check shapes
     SHAPE_CHECK = False
-
-    # Parents of this parameter must be named
     FORCE_PARENT_NAME = True
 
     def __init__(
@@ -1291,14 +2290,14 @@ class IndexParameter(TransformedParameter):
         dist: "custom_types.CombinableParameterType",
         *indices: "custom_types.IndexType",
     ):
-        """
-        Initializes the IndexParameter transformation.
+        """Initialize indexing transformation.
 
-        Args:
-            dist ("custom_types.SampleType"): The parameter to index.
-            *indices ("custom_types.IndexType"): The indices to use for indexing the
-                parameter. These can be a mix of `slice`, `np.ndarray`, or `int`.
-                The indices must be compatible with the shape of the distribution.
+        :param dist: Parameter to index
+        :param indices: Indexing specifications
+
+        The initialization processes all index types, converts negative
+        indices to positive, validates array dimensions, and creates
+        appropriate constant parameters for array indices.
         """
         # We need the shape of what we're indexing to prep for parent init
         self._dist_shape = dist.shape
@@ -1324,7 +2323,18 @@ class IndexParameter(TransformedParameter):
     ) -> npt.NDArray[np.int64]: ...
 
     def neg_to_pos(self, neg_ind, dim):
-        """Converts negative indices to positive indices in Python format"""
+        """Convert negative indices to positive indices.
+
+        :param neg_ind: Negative index or array of indices
+        :param dim: Dimension size for conversion
+
+        :returns: Positive indices
+
+        :raises ValueError: If indices are out of bounds
+
+        Handles both scalar and array indices, performing bounds checking
+        and conversion from Python's negative indexing convention.
+        """
         # If a numpy array, we update negative positions only
         if isinstance(neg_ind, np.ndarray):
             out = neg_ind.copy()
@@ -1377,9 +2387,18 @@ class IndexParameter(TransformedParameter):
         tuple["custom_types.IndexType", ...],
         dict[str, constants.Constant],
     ]:
-        """
-        Processes the indices provided to the IndexParameter transformation to unify
-        their format and determine the output shape.
+        """Process and validate all indexing specifications.
+
+        :param indices: Raw indexing specifications
+
+        :returns: Tuple of (output_shape, processed_indices, constant_parents)
+
+        This method handles the complex logic of:
+        - Processing different index types (slices, integers, arrays, ellipsis)
+        - Calculating output shapes
+        - Converting to Stan-compatible 1-based indexing
+        - Creating constant parameters for array indices
+        - Validating consistency across multiple array indices
         """
 
         def process_ellipsis() -> "custom_types.Integer":
@@ -1539,7 +2558,11 @@ class IndexParameter(TransformedParameter):
         end_dims: dict[str, "custom_types.Integer"] | None = None,
         offset_adjustment: int = 0,
     ) -> str:
-        """
+        """Generate Stan indexing code.
+
+        :returns: Stan indexing expression
+        :rtype: str
+
         Gets the name of the variable that is being indexed, then passes it to
         the `write_stan_operation` method to get the full Stan code for the transformation
         """
@@ -1548,7 +2571,20 @@ class IndexParameter(TransformedParameter):
     def write_stan_operation(  # pylint: disable=arguments-differ
         self, dist: str
     ) -> str:
+        """Generate complete Stan indexing expression.
 
+        :param dist: Variable name to index
+        :type dist: str
+
+        :returns: Stan indexing expression with bracket notation
+        :rtype: str
+
+        Handles complex indexing patterns including:
+        - Multiple array indices (creates separate bracket groups)
+        - Mixed slicing and array indexing
+        - Proper 1-based index conversion for Stan
+        - Colon notation for full dimension slicing
+        """
         # Compile all indices. Every time we encounter an array index, we start
         # a new indexing operation. This allows us to mimic numpy behavior in Stan.
         components = []
@@ -1603,9 +2639,16 @@ class IndexParameter(TransformedParameter):
     def get_transformation_assignment(  # pylint: disable=unused-argument
         self, index_opts: tuple[str, ...] | None
     ) -> str:
-        """
-        Gets the name of the variable that is being indexed, then passes it to
-        the `write_stan_operation` method to get the full Stan code for the transformation
+        """Generate transformation assignment without index options.
+
+        :param index_opts: Index options (ignored for direct assignment)
+
+        :returns: Stan assignment statement
+        :rtype: str
+
+        Indexing parameters are assigned directly without loop indexing
+        since they represent specific element selection rather than
+        computed transformations.
         """
         # pylint: disable=no-value-for-parameter
         return super().get_transformation_assignment(None)  # Assigned directly
@@ -1616,5 +2659,12 @@ class IndexParameter(TransformedParameter):
 
     @property
     def force_name(self) -> bool:
-        """Force naming of indexed parameters"""
+        """Force explicit naming for indexed parameters.
+
+        :returns: Always True
+        :rtype: bool
+
+        Indexed parameters must be explicitly named in Stan code to
+        enable proper variable reference and assignment.
+        """
         return True
