@@ -920,7 +920,7 @@ class NormalizeLogParameter(UnaryTransformedParameter):
         :returns: Stan code using log_sum_exp function
         :rtype: str
         """
-        return f"{dist1} - log_sum_exp({dist1}"
+        return f"{dist1} - log_sum_exp({dist1})"
 
 
 class Reduction(UnaryTransformedParameter):
