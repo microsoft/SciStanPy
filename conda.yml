@@ -17,6 +17,7 @@ dependencies:
   - pocl
   - python=3.12
   - pyviz::datashader
+  - sphinx
   - watchfiles
   - pip:
     - torch --index-url https://download.pytorch.org/whl/cu128
