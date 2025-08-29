@@ -61,7 +61,7 @@ if TYPE_CHECKING:
     from scistanpy import custom_types
     from scistanpy.model.results import hmc as hmc_results
 
-mle_module = utils.lazy_import("scistanpy.model.mle")
+mle_module = utils.lazy_import("scistanpy.model.results.mle")
 nn_module = utils.lazy_import("scistanpy.model.nn_module")
 prior_predictive_module = utils.lazy_import("scistanpy.plotting.prior_predictive")
 stan_model = utils.lazy_import("scistanpy.model.stan.stan_model")
