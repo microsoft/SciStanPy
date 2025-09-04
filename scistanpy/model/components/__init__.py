@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Core model components for SciStanPy probabilistic modeling framework.
 
 This submodule contains the fundamental building blocks for constructing

@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Custom type definitions for SciStanPy models.
 
 This module provides type aliases and unions for various components used throughout

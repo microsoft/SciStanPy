@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Same layout as `mcmc_flip.py` but with the `mle` pipeline."""
 
 import argparse

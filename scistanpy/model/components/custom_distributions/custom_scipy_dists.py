@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Custom SciPy distribution implementations for SciStanPy models.
 
 This module provides extended and custom SciPy distribution classes that address

@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Model construction and management for SciStanPy.
 
 This module provides the core infrastructure for building, compiling, and

@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Custom distribution implementations for SciStanPy models.
 
 This submodule provides enhanced and custom distribution implementations that

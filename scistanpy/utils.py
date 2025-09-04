@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Utility functions and classes for the SciStanPy package.
 
 This module provides various utility functions and classes that support

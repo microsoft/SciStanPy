@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 real expexponential_lpdf(real y, real beta) {
     // If exp(y) is exponentially distributed, then y is exp-exponential distributed.
     // Equivalently, if y is exponentially distributed, then log(y) is exp-exponential

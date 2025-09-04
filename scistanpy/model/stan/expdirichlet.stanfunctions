@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 real vectorized_lbeta(vector alpha) {
     // Computes the log of the beta function for a vector of parameters alpha.
     // This is used in the exp-dirichlet distribution to calculate the normalization

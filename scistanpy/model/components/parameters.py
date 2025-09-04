@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Parameter classes for defining probabilistic model components in SciStanPy.
 
 This module provides the core parameter classes that serve as building blocks for

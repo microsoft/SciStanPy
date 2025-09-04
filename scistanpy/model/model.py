@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Core Model class for SciStanPy Bayesian modeling framework.
 
 This module contains the fundamental Model class that serves as the primary

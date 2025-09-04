@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Prior predictive check functionality for SciStanPy models.
 
 This module provides interactive widgets and visualizations for conducting

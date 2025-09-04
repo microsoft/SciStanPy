@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Model results analysis and visualization for SciStanPy.
 
 This submodule provides comprehensive tools for analyzing and visualizing results

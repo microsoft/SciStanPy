@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Hamiltonian Monte Carlo (HMC) sampling results analysis and diagnostics.
 
 This module provides tools for analyzing and diagnosing HMC sampling results from

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 real log_multinomial_coeff(array[] int n) {
     // Computes the log of the multinomial coefficient for a vector n.
 

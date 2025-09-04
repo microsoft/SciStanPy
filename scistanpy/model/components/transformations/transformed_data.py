@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Transformed data components for Stan model generation.
 
 This module provides specialized transformation classes for components that

@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """
 SciStanPy: Probabilistic modeling for scientific applications with Stan and PyTorch.
 

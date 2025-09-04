@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Maximum likelihood estimation results analysis and visualization for SciStanPy
 models.
 

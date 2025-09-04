@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Transformation components for mathematical operations on SciStanPy model parameters.
 
 This submodule provides a comprehensive framework for mathematical transformations

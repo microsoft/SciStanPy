@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 real explomax_lpdf(real y, real lambda, real alpha) {
     // If exp(y) is Lomax distributed, then y is exp-lomax distributed.
     // Equivalently, if y is Lomax distributed, then log(y) is exp-lomax distributed.

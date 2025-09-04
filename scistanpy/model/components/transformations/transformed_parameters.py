@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Parameter transformation components for SciStanPy models.
 
 This module provides a comprehensive library of mathematical transformations that

@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Runs Hamiltonian Monte Carlo (HMC) for FLIP datasets."""
 
 from __future__ import annotations

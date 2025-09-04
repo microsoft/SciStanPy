@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Core plotting functions for SciStanPy visualization and analysis.
 
 This module implements the primary plotting functionality for SciStanPy,

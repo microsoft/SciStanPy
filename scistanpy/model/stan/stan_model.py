@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Stan probabilistic programming language integration and code generation.
 
 This module provides the core functionality for translating SciStanPy models into

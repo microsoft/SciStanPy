@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Constant value components for SciStanPy models.
 
 This module provides the Constant class for representing fixed values in SciStanPy

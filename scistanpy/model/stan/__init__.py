@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Stan probabilistic programming language integration for SciStanPy.
 
 This submodule provides comprehensive integration between SciStanPy models and

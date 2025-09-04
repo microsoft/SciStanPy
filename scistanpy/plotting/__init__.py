@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Plotting utilities for SciStanPy visualization and analysis.
 
 This subpackage provides a comprehensive suite of plotting functions designed

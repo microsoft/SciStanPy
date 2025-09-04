@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Abstract base classes for SciStanPy model components.
 
 This module defines the foundational abstract class that forms the core

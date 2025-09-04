@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Default configuration values for SciStanPy package components.
 
 This module centralizes default values used across various components of the
@@ -7,7 +11,7 @@ as needed for specific use cases.
 
 The module is organized into logical groups covering:
 - Model fitting and optimization defaults
-- Variable and dimension naming conventions  
+- Variable and dimension naming conventions
 - Stan model compilation and execution settings
 - Diagnostic thresholds for model validation
 """

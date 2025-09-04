@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Runs the `Model.mcmc` method using a delayed object file."""
 
 import argparse

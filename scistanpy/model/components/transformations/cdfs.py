@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """
 Cumulative distribution function transformations for SciStanPy parameters.
 

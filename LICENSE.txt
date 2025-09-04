@@ -1,3 +1,5 @@
+SciStanPy
+
 Copyright (c) Microsoft Corporation.
 
 MIT License

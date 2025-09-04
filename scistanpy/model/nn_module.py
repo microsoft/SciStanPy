@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """PyTorch integration utilities for SciStanPy models.
 
 This module provides integration between SciStanPy probabilistic models

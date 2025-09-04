@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 real convolve(array[] vector weights, array[] int seq) {
     // Convolves a sequence. The weights should be L x N, where `N` is the size
     // of the alphabet (e.g., 20 for amino acids) and `L` is the length of the

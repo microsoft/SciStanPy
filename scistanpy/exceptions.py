@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Custom exception classes for the SciStanPy package.
 
 This module defines a hierarchy of custom exceptions used throughout the

@@ -1,3 +1,7 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+
 """Custom operations for use in SciStanPy Stan models.
 
 This module provides a framework for adding mathematical operations to the model
@@ -9,6 +13,7 @@ The module uses a metaclass pattern to dynamically create operation classes that
 maintain proper documentation inheritance and provide flexible parameter handling.
 Operations can work with both raw numerical data and SciStanPy model components.
 """
+
 
 from __future__ import annotations
 

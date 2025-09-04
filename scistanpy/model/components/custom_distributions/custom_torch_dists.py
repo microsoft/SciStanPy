@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 """Custom PyTorch distribution implementations for SciStanPy models.
 
 This module provides specialized PyTorch distribution classes that extend or
