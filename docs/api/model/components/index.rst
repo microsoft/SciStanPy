@@ -11,12 +11,12 @@ Model Components Submodule Overview
 The model components submodule consists of several key areas:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    abstract_model_component
-   parameters
    constants
    custom_distributions/index
+   parameters
    transformations/index
 
 
@@ -24,6 +24,7 @@ Component Architecture
 ---------------------
 
 .. automodule:: scistanpy.model.components
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

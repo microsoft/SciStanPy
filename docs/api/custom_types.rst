@@ -7,6 +7,7 @@ Custom Types Module
 -------------------
 
 .. automodule:: scistanpy.custom_types
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

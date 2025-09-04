@@ -7,6 +7,7 @@ Exceptions Module
 ----------------
 
 .. automodule:: scistanpy.exceptions
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -20,6 +21,7 @@ Base Exception
 ~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.exceptions.SciStanPyError
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -44,6 +46,7 @@ Sample Validation Errors
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.exceptions.NumpySampleError
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

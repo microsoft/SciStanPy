@@ -9,7 +9,7 @@ Custom Distributions Submodule Overview
 The custom distributions submodule provides specialized probability distributions that extend the standard library for scientific modeling applications:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    custom_torch_dists
    custom_scipy_dists
@@ -18,6 +18,7 @@ Custom Distributions Framework
 -----------------------------
 
 .. automodule:: scistanpy.model.components.custom_distributions
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

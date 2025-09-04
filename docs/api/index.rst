@@ -16,6 +16,7 @@ Top-Level Package
 The root package exposes core entry points:
 
 .. automodule:: scistanpy
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

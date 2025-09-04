@@ -1,5 +1,5 @@
 Transformed Parameters API Reference
-=====================================
+====================================
 
 This reference covers the transformed parameter framework that enables mathematical operations and operator overloading in SciStanPy.
 
@@ -7,17 +7,19 @@ Transformed Parameters Module
 -----------------------------
 
 .. automodule:: scistanpy.model.components.transformations.transformed_parameters
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 Core Transformation Classes
-----------------------------
+---------------------------
 
 Abstract Base Class
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.TransformedParameter
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -42,9 +44,10 @@ Binary and Unary Operations
 ---------------------------
 
 BinaryTransformedParameter
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -61,9 +64,10 @@ BinaryTransformedParameter
       combined = x + y
 
 UnaryTransformedParameter
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -78,27 +82,31 @@ UnaryTransformedParameter
       abs_x = ssp.operations.abs(x)        # Shape remains (3, 4)
 
 Arithmetic Operations
---------------------
+---------------------
 
 Basic Arithmetic
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.AddParameter
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.SubtractParameter
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.DivideParameter
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -117,19 +125,22 @@ Basic Arithmetic
       division = a / b          # DivideParameter
 
 Power and Unary Operations
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.PowerParameter
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.NegateParameter
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.AbsParameter
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -147,7 +158,7 @@ Power and Unary Operations
       absolute = ssp.operations.abs(x)     # AbsParameter
 
 Mathematical Functions
----------------------
+----------------------
 
 The transformed parameters framework enables complex mathematical expressions:
 
@@ -178,10 +189,10 @@ The transformed parameters framework enables complex mathematical expressions:
    population = initial_pop * ssp.operations.exp(growth_rate * time_points)
 
 Advanced Transformation Features
--------------------------------
+--------------------------------
 
 Shape Broadcasting
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -195,7 +206,7 @@ Shape Broadcasting
    result2 = vector_param + matrix_param    # Shape: (3, 5)
 
 Stan Code Generation
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -209,7 +220,7 @@ Stan Code Generation
    complex_expr.model_varname = "complex_transformation"
 
 Custom Transformations
----------------------
+----------------------
 
 **Creating Custom Binary Operations:**
 
@@ -243,7 +254,7 @@ Custom Transformations
            return f"custom_transform({components['operand']})"
 
 Indexing and Array Operations
-----------------------------
+-----------------------------
 
 **Array Indexing Support:**
 
@@ -273,7 +284,7 @@ Indexing and Array Operations
    variance = ssp.operations.var(vector_param)
 
 Integration with Stan
---------------------
+---------------------
 
 **Automatic Stan Translation:**
 
@@ -297,7 +308,7 @@ Integration with Stan
    sum_vectors = vector_x + vector_y
 
 Performance Considerations
--------------------------
+--------------------------
 
 **Efficient Expression Building:**
 
@@ -331,7 +342,7 @@ Performance Considerations
    # - Proper variable scoping and memory management
 
 Best Practices
--------------
+--------------
 
 1. **Use natural mathematical syntax** for clear model expression
 2. **Name complex transformations** for better model interpretation

@@ -7,6 +7,7 @@ Model Module
 ------------
 
 .. automodule:: scistanpy.model.model
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,6 +16,8 @@ Core Model Class
 ---------------
 
 .. autoclass:: scistanpy.model.model.Model
+   :no-index:
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

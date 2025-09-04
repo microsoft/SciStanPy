@@ -7,6 +7,7 @@ Plotting Module
 ---------------
 
 .. automodule:: scistanpy.plotting.plotting
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

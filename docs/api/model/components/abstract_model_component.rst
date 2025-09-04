@@ -7,6 +7,7 @@ Abstract Model Component Module
 -------------------------------
 
 .. automodule:: scistanpy.model.components.abstract_model_component
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -18,6 +19,7 @@ AbstractModelComponent
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.abstract_model_component.AbstractModelComponent
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

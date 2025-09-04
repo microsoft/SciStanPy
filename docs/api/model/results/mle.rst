@@ -7,6 +7,7 @@ MLE Results Module
 ------------------
 
 .. automodule:: scistanpy.model.results.mle
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -18,6 +19,7 @@ MLE Inference Results
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.results.mle.MLEInferenceRes
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -64,6 +66,7 @@ Individual Parameter Results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.results.mle.MLEParam
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -86,6 +89,7 @@ Complete MLE Results Container
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.results.mle.MLE
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

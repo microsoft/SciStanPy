@@ -1,5 +1,5 @@
 Transformed Data API Reference
-===============================
+==============================
 
 This reference covers the transformed data functionality for efficient data preprocessing in SciStanPy.
 
@@ -7,14 +7,16 @@ Transformed Data Module
 -----------------------
 
 .. automodule:: scistanpy.model.components.transformations.transformed_data
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 TransformedData Class
---------------------
+---------------------
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_data.TransformedData
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -50,7 +52,7 @@ TransformedData Class
       # Instead of computing the inverse at every MCMC iteration
 
 Key Features
------------
+------------
 
 **One-Time Computation:**
 
@@ -127,7 +129,7 @@ Automatic Usage in SciStanPy
    # Could be moved to transformed data for efficiency
 
 Custom Transformed Data
-----------------------
+-----------------------
 
 **Creating Custom Transformed Data:**
 
@@ -168,7 +170,7 @@ Custom Transformed Data
    )
 
 Performance Benefits
--------------------
+--------------------
 
 **Computational Efficiency:**
 
@@ -202,7 +204,7 @@ TransformedData operations can also help with memory management by preprocessing
    )
 
 Stan Code Generation Details
----------------------------
+----------------------------
 
 **Variable Declaration:**
 
@@ -233,7 +235,7 @@ Stan Code Generation Details
    # }
 
 Integration Patterns
--------------------
+--------------------
 
 **With Model Components:**
 
@@ -265,7 +267,7 @@ Integration Patterns
    )
 
 Best Practices
--------------
+--------------
 
 1. **Identify expensive operations** that don't depend on parameters
 2. **Use for preprocessing** that can be done once before sampling

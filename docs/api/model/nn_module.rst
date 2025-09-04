@@ -7,6 +7,7 @@ Neural Network Module
 ----------------------
 
 .. automodule:: scistanpy.model.nn_module
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,6 +16,7 @@ Core PyTorch Integration
 -----------------------
 
 .. autoclass:: scistanpy.model.nn_module.PyTorchModel
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

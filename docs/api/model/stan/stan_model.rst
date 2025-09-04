@@ -7,6 +7,7 @@ Stan Model Module
 -----------------
 
 .. automodule:: scistanpy.model.stan.stan_model
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -18,6 +19,7 @@ Abstract Base Class
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.stan.stan_model.StanCodeBase
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -41,6 +43,7 @@ For-Loop Management
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.stan.stan_model.StanForLoop
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -62,6 +65,7 @@ Stan Program Generation
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.stan.stan_model.StanProgram
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -93,6 +97,7 @@ Enhanced Stan Model Class
 -------------------------
 
 .. autoclass:: scistanpy.model.stan.stan_model.StanModel
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

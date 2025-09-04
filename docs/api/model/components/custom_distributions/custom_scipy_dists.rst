@@ -1,20 +1,22 @@
 Custom SciPy Distributions API Reference
-=========================================
+========================================
 
 This reference covers the custom SciPy-based probability distributions in SciStanPy.
 
 Custom SciPy Distributions Module
-----------------------------------
+---------------------------------
 
 .. automodule:: scistanpy.model.components.custom_distributions.custom_scipy_dists
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
-ExpDirichlet SciPy Implementation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+expdirichlet Implementation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichletSciPy
+.. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.expdirichlet
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,9 +25,9 @@ ExpDirichlet SciPy Implementation
 
    .. code-block:: python
 
-      # ExpDirichlet distribution with SciPy backend (symmetric to PyTorch implementation)
+      # expdirichlet distribution with SciPy backend (symmetric to PyTorch implementation)
       alpha = np.ones(4)
-      exp_dirichlet_scipy = ssp.ExpDirichletSciPy(alpha=alpha)
+      exp_dirichlet_scipy = ssp.expdirichlet(alpha=alpha)
 
       # Generate samples and evaluate densities
       samples = exp_dirichlet_scipy.rvs(size=100)
@@ -42,10 +44,11 @@ ExpDirichlet SciPy Implementation
    - Constraint: sum(exp(y)) = 1
    - Dense evaluation using SciPy's statistical framework
 
-ExpLomax SciPy Implementation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+explomax Implementation
+~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpLomaxSciPy
+.. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.explomax
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -57,7 +60,7 @@ ExpLomax SciPy Implementation
       # SciPy backend for exp-Lomax distribution
       lambda_param = 1.0
       alpha = 1.5
-      exp_lomax_scipy = ssp.ExpLomaxSciPy(lambda_=lambda_param, alpha=alpha)
+      exp_lomax_scipy = ssp.explomax(lambda_=lambda_param, alpha=alpha)
 
       # Statistical analysis using SciPy
       samples = exp_lomax_scipy.rvs(size=1000)
@@ -81,38 +84,11 @@ ExpLomax SciPy Implementation
       threshold = exp_lomax_scipy.ppf(0.95)  # 95th percentile
       extreme_events = samples[samples > threshold]
 
-Lomax SciPy Implementation
-~~~~~~~~~~~~~~~~~~~~~~~~~
+multinomial_logit Implementation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.LomaxSciPy
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-   **Power-Law Distribution (SciPy):**
-
-   .. code-block:: python
-
-      # Standard Lomax distribution with SciPy
-      lambda_param = 1000.0  # Scale parameter
-      alpha = 1.2            # Shape parameter
-      lomax_scipy = ssp.LomaxSciPy(lambda_=lambda_param, alpha=alpha)
-
-      # Generate insurance claim data
-      claims = lomax_scipy.rvs(size=10000)
-
-      # Analyze tail behavior
-      percentiles = [90, 95, 99, 99.9]
-      thresholds = [lomax_scipy.ppf(p/100) for p in percentiles]
-
-      # Fit assessment
-      theoretical_cdf = lomax_scipy.cdf(sorted_claims)
-      empirical_cdf = np.arange(1, len(sorted_claims) + 1) / len(sorted_claims)
-
-MultinomialLogit SciPy Implementation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogitSciPy
+.. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial_logit
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -124,7 +100,7 @@ MultinomialLogit SciPy Implementation
       # Multinomial with logit parameterization
       logits = np.array([0.5, -0.2, 0.8, -0.1])
       total_trials = 100
-      multinomial_logit_scipy = ssp.MultinomialLogitSciPy(
+      multinomial_logit_scipy = ssp.multinomial_logit(
           gamma=logits, N=total_trials
       )
 
@@ -136,10 +112,11 @@ MultinomialLogit SciPy Implementation
       probabilities = multinomial_logit_scipy.get_probabilities()
       assert np.allclose(probabilities.sum(), 1.0)
 
-MultinomialLogTheta SciPy Implementation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+multinomial_log_theta Implementation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogThetaSciPy
+.. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial_log_theta
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -151,7 +128,7 @@ MultinomialLogTheta SciPy Implementation
       # Multinomial with log-probability parameterization
       log_probs = np.log([0.2, 0.3, 0.1, 0.4])
       total_trials = 500
-      multinomial_logtheta_scipy = ssp.MultinomialLogThetaSciPy(
+      multinomial_logtheta_scipy = ssp.multinomial_log_theta(
           log_theta=log_probs, N=total_trials
       )
 
@@ -163,7 +140,7 @@ MultinomialLogTheta SciPy Implementation
       log_likelihood = multinomial_logtheta_scipy.logpmf(observed_counts)
 
 Backend Comparison and Integration
----------------------------------
+----------------------------------
 
 **SciPy vs PyTorch Implementations:**
 
@@ -173,11 +150,11 @@ Backend Comparison and Integration
    alpha = np.array([2.0, 3.0, 1.5])
 
    # SciPy backend
-   exp_dir_scipy = ssp.ExpDirichletSciPy(alpha=alpha)
+   exp_dir_scipy = ssp.expdirichlet(alpha=alpha)
    scipy_samples = exp_dir_scipy.rvs(size=1000)
 
    # PyTorch backend
-   exp_dir_torch = ssp.ExpDirichlet(alpha=torch.tensor(alpha))
+   exp_dir_torch = ssp.expdirichlet(alpha=torch.tensor(alpha))
    torch_samples = exp_dir_torch.sample((1000,)).detach().numpy()
 
    # Statistical comparison
@@ -202,7 +179,7 @@ Backend Comparison and Integration
    # - Integration with neural networks
 
 Performance Characteristics
---------------------------
+---------------------------
 
 **CPU Performance:**
 
@@ -210,7 +187,7 @@ Performance Characteristics
 
    # SciPy optimized for CPU statistical computing
    large_alpha = np.ones(1000)
-   exp_dir = ssp.ExpDirichletSciPy(alpha=large_alpha)
+   exp_dir = ssp.expdirichlet(alpha=large_alpha)
 
    # Efficient sampling
    samples = exp_dir.rvs(size=10000)  # Fast CPU sampling
@@ -254,7 +231,7 @@ Performance Characteristics
    upper = lomax_scipy.ppf(1 - alpha_level / 2)
 
 Integration with SciStanPy Models
---------------------------------
+---------------------------------
 
 **Automatic Backend Selection:**
 
@@ -264,7 +241,7 @@ Integration with SciStanPy Models
    alpha = [1.0, 1.0, 1.0]
 
    # This uses PyTorch backend for model building
-   exp_dir_param = ssp.parameters.ExpDirichlet(alpha=alpha)
+   exp_dir_param = ssp.parameters.expdirichlet(alpha=alpha)
 
    # But can use SciPy backend for analysis
    samples, _ = exp_dir_param.draw(n=1000)  # Uses SciPy for sampling
@@ -318,7 +295,7 @@ Integration with SciStanPy Models
        print("✓ Implementations are consistent")
 
 Numerical Considerations
------------------------
+------------------------
 
 **Precision and Stability:**
 
@@ -328,7 +305,7 @@ Numerical Considerations
 
    # Handle extreme parameter values
    extreme_alpha = np.array([1e-6, 1e6, 1e-3])
-   stable_dist = ssp.ExpDirichletSciPy(alpha=extreme_alpha)
+   stable_dist = ssp.expdirichlet(alpha=extreme_alpha)
 
    # Numerical stability in log-space
    very_small_probs = stable_dist.logpdf(extreme_samples)
@@ -342,7 +319,7 @@ Numerical Considerations
 
    # Comprehensive parameter validation
    try:
-       invalid_dist = ssp.LomaxSciPy(lambda_=-1.0, alpha=1.5)
+       invalid_dist = ssp.Lomax(lambda_=-1.0, alpha=1.5)
    except ValueError as e:
        print(f"Parameter validation: {e}")
 
@@ -353,7 +330,7 @@ Numerical Considerations
        print(f"Sample validation: {e}")
 
 Best Practices
--------------
+--------------
 
 1. **Use SciPy backend** for statistical analysis and exploratory work
 2. **Leverage PyTorch backend** for gradient-based optimization

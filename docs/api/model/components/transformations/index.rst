@@ -1,17 +1,17 @@
 Transformations API Reference
-==============================
+=============================
 
 This reference covers the mathematical transformations and operator overloading framework in SciStanPy.
 
 The transformations submodule provides the foundation for mathematical operations on model components, enabling complex model construction through operator overloading and automatic dependency tracking.
 
 Transformations Submodule Overview
------------------------------------
+----------------------------------
 
 The transformations submodule consists of several key components:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    cdfs
    transformed_data
@@ -19,23 +19,25 @@ The transformations submodule consists of several key components:
 
 
 Transformations Module
----------------------
+----------------------
 
 .. automodule:: scistanpy.model.components.transformations
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 Transformed Parameters
----------------------
+----------------------
 
 .. automodule:: scistanpy.model.components.transformations.transformed_parameters
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 Mathematical Transformations
----------------------------
+----------------------------
 
 The transformations system allows you to create complex mathematical relationships:
 
@@ -56,12 +58,12 @@ The transformations system allows you to create complex mathematical relationshi
    concentration = initial_conc * ssp.operations.exp(-rate * time)
 
 Transformation Types
--------------------
+--------------------
 
 SciStanPy provides several types of transformations:
 
 - **Unary transformations**: Operations on single parameters (exp, log, abs, etc.)
-- **Binary transformations**: Operations between parameters (+, -, *, /, etc.)
+- **Binary transformations**: Operations between parameters (+, -, \*, /, etc.)
 - **Specialized transformations**: Domain-specific mathematical functions
 
 All transformations:
@@ -72,7 +74,7 @@ All transformations:
 - **Validate inputs**: Check mathematical constraints
 
 Stan Code Generation
--------------------
+--------------------
 
 Transformations automatically generate appropriate Stan code:
 
