@@ -1,10 +1,10 @@
 Custom PyTorch Distributions API Reference
-===========================================
+==========================================
 
 This reference covers the custom PyTorch-based probability distributions in SciStanPy.
 
 Custom Torch Distributions Module
-----------------------------------
+---------------------------------
 
 .. automodule:: scistanpy.model.components.custom_distributions.custom_torch_dists
    :no-index:
@@ -13,10 +13,10 @@ Custom Torch Distributions Module
    :show-inheritance:
 
 Distribution Architecture
-------------------------
+-------------------------
 
 Base Classes
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution
    :no-index:
@@ -49,7 +49,7 @@ Log-Transformed Distributions
 -----------------------------
 
 ExpExponential Distribution
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.ExpExponential
    :no-index:
@@ -85,7 +85,7 @@ ExpExponential Distribution
    - **Applications**: Log-transformed waiting times, multiplicative processes
 
 ExpDirichlet Distribution
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.ExpDirichlet
    :no-index:
@@ -121,7 +121,7 @@ ExpDirichlet Distribution
    - **Constraint**: log(exp(Y).sum()) = 0 (log-simplex constraint)
 
 ExpLomax Distribution
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.ExpLomax
    :no-index:
@@ -157,10 +157,10 @@ ExpLomax Distribution
    - **Internet**: Log-file sizes, log-connection times
 
 Heavy-Tailed Distributions
--------------------------
+--------------------------
 
 Lomax Distribution
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.Lomax
    :no-index:
@@ -214,10 +214,10 @@ Lomax Distribution
 - **Tail index**: α (lower values = heavier tails)
 
 Multinomial Variants
--------------------
+--------------------
 
 MultinomialLogit Distribution
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit
    :no-index:
@@ -265,7 +265,7 @@ MultinomialLogit Distribution
       optimizer = torch.optim.Adam(model.parameters())
 
 MultinomialLogTheta Distribution
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogTheta
    :no-index:
@@ -306,7 +306,7 @@ MultinomialLogTheta Distribution
       # in transformed data block for efficiency
 
 PyTorch Integration Features
----------------------------
+----------------------------
 
 **Automatic Differentiation:**
 
@@ -360,7 +360,7 @@ PyTorch Integration Features
    gpu_log_probs = gpu_dist.log_prob(gpu_samples)
 
 Numerical Stability Features
----------------------------
+----------------------------
 
 **Log-Space Arithmetic:**
 
@@ -390,7 +390,7 @@ Numerical Stability Features
    log_prob.backward()  # Stable gradients
 
 Performance Optimization
------------------------
+------------------------
 
 **Efficient Sampling:**
 
@@ -414,7 +414,7 @@ Performance Optimization
    log_probs = large_dist.log_prob(large_data)  # Efficient computation
 
 Best Practices
--------------
+--------------
 
 1. **Use appropriate distributions** for your data characteristics
 2. **Leverage log-space parameterizations** for numerical stability

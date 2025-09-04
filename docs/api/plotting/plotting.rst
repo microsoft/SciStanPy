@@ -1,5 +1,5 @@
 Plotting API Reference
-=======================
+======================
 
 This reference covers the visualization and plotting functionality in SciStanPy.
 
@@ -13,7 +13,7 @@ Plotting Module
    :show-inheritance:
 
 Data Preparation Functions
----------------------------
+--------------------------
 
 DataFrame Construction
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -35,7 +35,7 @@ DataFrame Construction
       )
 
 Data Aggregation
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.plotting.plotting.aggregate_data
    :noindex:
@@ -52,10 +52,10 @@ Data Aggregation
       agg = ssp.plotting.plotting.aggregate_data(data, independent_dim=2)  # Shape: (50, 3)
 
 Distribution Visualization
--------------------------
+--------------------------
 
 Main Distribution Plotting
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.plotting.plotting.plot_distribution
    :noindex:
@@ -75,7 +75,7 @@ Main Distribution Plotting
       )
 
 ECDF and KDE Plots
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.plotting.plotting.plot_ecdf_kde
    :noindex:
@@ -91,7 +91,7 @@ ECDF and KDE Plots
       # plots[0] is KDE, plots[1] is ECDF
 
 Multi-Group Visualization
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.plotting.plotting.plot_ecdf_violin
    :noindex:
@@ -104,7 +104,7 @@ Multi-Group Visualization
       plots = ssp.plotting.plotting.plot_ecdf_violin(grouped_df, 'param')
 
 Relationship Plots
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.plotting.plotting.plot_relationship
    :noindex:
@@ -122,7 +122,7 @@ Model Validation Plots
 ----------------------
 
 Calibration Analysis
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.plotting.plotting.plot_calibration
    :noindex:
@@ -150,7 +150,7 @@ Calibration Analysis
       quantiles = ssp.plotting.plotting.calculate_relative_quantiles(ref, obs)
 
 Quantile Plots
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.plotting.plotting.quantile_plot
    :noindex:
@@ -168,10 +168,10 @@ Quantile Plots
       )
 
 Large Dataset Visualization
---------------------------
+---------------------------
 
 Hexagonal Binning
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.plotting.plotting.hexgrid_with_mean
    :noindex:
@@ -186,7 +186,7 @@ Hexagonal Binning
       plot = ssp.plotting.plotting.hexgrid_with_mean(x, y, mean_windowsize=200)
 
 Utility Functions
-----------------
+-----------------
 
 Interactive Support
 ~~~~~~~~~~~~~~~~~~~
@@ -203,7 +203,7 @@ Interactive Support
           return df.hvplot.line(y=param)
 
 Plot Function Selection
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.plotting.plotting.choose_plotting_function
    :noindex:

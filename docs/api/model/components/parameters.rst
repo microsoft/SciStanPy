@@ -1,5 +1,5 @@
 Parameters API Reference
-=========================
+========================
 
 This reference covers the parameter components and probability distributions available in SciStanPy.
 
@@ -13,10 +13,10 @@ Parameters Module
    :show-inheritance:
 
 Core Parameter Infrastructure
-----------------------------
+-----------------------------
 
 ParameterMeta
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.ParameterMeta
    :no-index:
@@ -40,7 +40,7 @@ ParameterMeta
       log_survival_transform = normal_param.log_ccdf(x=data_points)
 
 ClassOrInstanceMethod
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.ClassOrInstanceMethod
    :no-index:
@@ -60,10 +60,10 @@ ClassOrInstanceMethod
       cdf = ssp.parameters.Normal.cdf(mu=0, sigma=1, x=np.array([0, 1, 2]))
 
 Base Parameter Classes
----------------------
+----------------------
 
 Parameter
-~~~~~~~~
+~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Parameter
    :no-index:
@@ -103,7 +103,7 @@ Parameter
       log_prob = param.get_torch_logprob()
 
 ContinuousDistribution
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.ContinuousDistribution
    :no-index:
@@ -125,7 +125,7 @@ ContinuousDistribution
       log_param = ssp.operations.log(x)
 
 DiscreteDistribution
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.DiscreteDistribution
    :no-index:
@@ -142,10 +142,10 @@ DiscreteDistribution
       successes = ssp.parameters.Binomial(N=10, theta=0.3)
 
 Continuous Distributions
------------------------
+------------------------
 
 Normal Distribution
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Normal
    :no-index:
@@ -187,7 +187,7 @@ Normal Distribution
       # - noncentered=True (default)
 
 HalfNormal Distribution
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.HalfNormal
    :no-index:
@@ -207,7 +207,7 @@ HalfNormal Distribution
       local_scales = ssp.parameters.HalfNormal(sigma=global_scale)
 
 UnitNormal Distribution
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.UnitNormal
    :no-index:
@@ -227,7 +227,7 @@ UnitNormal Distribution
       x = mu + sigma * z_raw  # Conceptual transformation
 
 LogNormal Distribution
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.LogNormal
    :no-index:
@@ -246,7 +246,7 @@ LogNormal Distribution
       growth_factor = ssp.parameters.LogNormal(mu=np.log(1.1), sigma=0.1)
 
 Beta Distribution
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Beta
    :no-index:
@@ -268,7 +268,7 @@ Beta Distribution
       p_informed = ssp.parameters.Beta(alpha=7, beta=3)
 
 Gamma Distribution
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Gamma
    :no-index:
@@ -287,7 +287,7 @@ Gamma Distribution
       waiting_time = ssp.parameters.Gamma(alpha=shape, beta=rate)
 
 InverseGamma Distribution
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.InverseGamma
    :no-index:
@@ -306,7 +306,7 @@ InverseGamma Distribution
       tau_squared = ssp.parameters.InverseGamma(alpha=a_prior, beta=b_prior)
 
 Exponential Distribution
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Exponential
    :no-index:
@@ -325,7 +325,7 @@ Exponential Distribution
       event_time = ssp.parameters.Exponential(beta=hazard_rate)
 
 Custom Continuous Distributions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.ExpExponential
    :no-index:
@@ -359,10 +359,10 @@ Custom Continuous Distributions
       log_waiting_time = ssp.parameters.ExpExponential(beta=1.0)
 
 Simplex Distributions
---------------------
+---------------------
 
 Dirichlet Distribution
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Dirichlet
    :no-index:
@@ -385,7 +385,7 @@ Dirichlet Distribution
       p = ssp.parameters.Dirichlet(alpha=alpha_vec)
 
 ExpDirichlet Distribution
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.ExpDirichlet
    :no-index:
@@ -406,10 +406,10 @@ ExpDirichlet Distribution
       # Constraint: exp(log_p).sum() == 1
 
 Discrete Distributions
----------------------
+----------------------
 
 Binomial Distribution
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Binomial
    :no-index:
@@ -430,7 +430,7 @@ Binomial Distribution
       ).as_observable()
 
 Poisson Distribution
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Poisson
    :no-index:
@@ -449,10 +449,10 @@ Poisson Distribution
       observed_counts = ssp.parameters.Poisson(lambda_=fitted_rate).as_observable()
 
 Multinomial Distributions
-------------------------
+-------------------------
 
 Standard Multinomial
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Multinomial
    :no-index:
@@ -471,7 +471,7 @@ Standard Multinomial
       )
 
 MultinomialLogit
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.MultinomialLogit
    :no-index:
@@ -491,7 +491,7 @@ MultinomialLogit
       )
 
 MultinomialLogTheta
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.MultinomialLogTheta
    :no-index:
@@ -517,7 +517,7 @@ MultinomialLogTheta
       # Multinomial coefficient pre-computed for efficiency
 
 Advanced Parameter Features
---------------------------
+---------------------------
 
 **Non-Centered Parameterization:**
 
@@ -589,7 +589,7 @@ Advanced Parameter Features
    stan_results = model.mcmc(chains=4, iter_sampling=1000)
 
 Parameter Constraints and Bounds
--------------------------------
+--------------------------------
 
 **Automatic Constraint Handling:**
 
@@ -623,7 +623,7 @@ Parameter Constraints and Bounds
    stan_type = param_vector.get_stan_dtype()  # "vector<lower=0.0>[5]"
 
 Model Building Patterns
-----------------------
+-----------------------
 
 **Hierarchical Model Construction:**
 
@@ -699,7 +699,7 @@ Model Building Patterns
        }
 
 Performance Optimization Tips
-----------------------------
+-----------------------------
 
 **Efficient Parameter Specification:**
 
@@ -738,7 +738,7 @@ Performance Optimization Tips
    # - Optimal loop structure for multi-dimensional parameters
 
 Best Practices
--------------
+--------------
 
 1. **Use appropriate parameterizations** for your modeling context
 2. **Leverage automatic non-centering** for hierarchical models

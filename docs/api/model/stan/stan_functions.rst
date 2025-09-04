@@ -1,5 +1,5 @@
 Stan Functions Library Reference
-=================================
+================================
 
 This reference covers the Stan function libraries that provide specialized probability distributions and mathematical operations for SciStanPy models.
 
@@ -65,7 +65,7 @@ The multinomial distribution with log-theta parameterization uses:
 where :math:`\theta_i = \exp(\log\theta_i)` and :math:`N = \sum_i n_i`.
 
 Exp-Exponential Distribution
----------------------------
+----------------------------
 
 **File**: ``expexponential.stanfunctions``
 
@@ -98,7 +98,7 @@ If :math:`X \sim \text{Exponential}(\beta)`, then :math:`Y = \log(X)` follows th
    p(y | \beta) = \beta \exp(y - \beta e^y)
 
 Exp-Dirichlet Distribution
--------------------------
+--------------------------
 
 **File**: ``expdirichlet.stanfunctions``
 
@@ -136,7 +136,7 @@ If :math:`X \sim \text{Dirichlet}(\alpha)`, then :math:`Y = \log(X)` follows the
    p(y | \alpha) = \frac{\Gamma(\sum_i \alpha_i)}{\prod_i \Gamma(\alpha_i)} \exp\left(\sum_i (\alpha_i - 1) y_i\right)
 
 Exp-Lomax Distribution
----------------------
+----------------------
 
 **File**: ``explomax.stanfunctions``
 
@@ -177,7 +177,7 @@ If :math:`X \sim \text{Lomax}(\lambda, \alpha)`, then :math:`Y = \log(X)` follow
    p(y | \lambda, \alpha) = \frac{\alpha \lambda^\alpha \exp(y)}{(\lambda + \exp(y))^{\alpha + 1}}
 
 Sequence Convolution Functions
------------------------------
+------------------------------
 
 **File**: ``pssm.stanfunctions``
 
@@ -215,7 +215,7 @@ Sequence Convolution Functions
 where :math:`K` is the kernel size and the sequence is ordinally encoded.
 
 Function Integration Process
----------------------------
+----------------------------
 
 **Automatic Inclusion:**
 
@@ -251,7 +251,7 @@ Functions are automatically included based on model components:
 - **Vectorization**: Functions support both scalar and vector operations for efficiency
 
 Numerical Stability Features
----------------------------
+----------------------------
 
 **Log-Space Computations:**
 
@@ -278,7 +278,7 @@ Functions are implemented to provide stable gradients for:
 - **Optimization**: Reliable convergence properties
 
 Custom Function Development
---------------------------
+---------------------------
 
 **Adding New Functions:**
 
@@ -317,7 +317,7 @@ To add new Stan functions to SciStanPy:
 6. **Document mathematical background** and usage patterns
 
 Performance Considerations
--------------------------
+--------------------------
 
 **Vectorization Benefits:**
 

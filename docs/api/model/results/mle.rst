@@ -1,5 +1,5 @@
 Maximum Likelihood Estimation Results API Reference
-====================================================
+===================================================
 
 This reference covers the analysis and visualization tools for Maximum Likelihood Estimation results in SciStanPy.
 
@@ -13,7 +13,7 @@ MLE Results Module
    :show-inheritance:
 
 Core MLE Analysis Classes
---------------------------
+-------------------------
 
 MLE Inference Results
 ~~~~~~~~~~~~~~~~~~~~~
@@ -63,7 +63,7 @@ MLE Inference Results
       )
 
 Individual Parameter Results
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.results.mle.MLEParam
    :no-index:
@@ -86,7 +86,7 @@ Individual Parameter Results
       log_prob = fitted_dist.log_prob(torch.tensor([0.5]))
 
 Complete MLE Results Container
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.results.mle.MLE
    :no-index:
@@ -108,10 +108,10 @@ Complete MLE Results Container
       inference_obj = mle_result.get_inference_obj(n=2000)
 
 Diagnostic Capabilities
-----------------------
+-----------------------
 
 Model Calibration Assessment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Quantitative Calibration Analysis:**
 
@@ -136,7 +136,7 @@ Model Calibration Assessment
 - **Deviance > 0.2**: Poor calibration requiring model revision
 
 Posterior Predictive Checking
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Multi-Modal Analysis:**
 
@@ -169,10 +169,10 @@ Posterior Predictive Checking
 - **Calibration Plots**: Assess overall model reliability
 
 Utility Functions
-----------------
+-----------------
 
 Log Transformation Utilities
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.model.results.mle._log10_shift
    :noindex:
@@ -192,7 +192,7 @@ Advanced Analysis Workflows
 ---------------------------
 
 Model Comparison Using MLE
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -213,7 +213,7 @@ Model Comparison Using MLE
        print(f"{name}: final loss = {final_loss:.3f}")
 
 Uncertainty Quantification
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -236,7 +236,7 @@ Uncertainty Quantification
    pred_std = predictions.std(axis=0)
 
 Bootstrap Analysis Integration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -261,7 +261,7 @@ Bootstrap Analysis Integration
        return bootstrap_estimates
 
 Integration with ArviZ Ecosystem
--------------------------------
+--------------------------------
 
 **Seamless ArviZ Integration:**
 
@@ -283,7 +283,7 @@ Integration with ArviZ Ecosystem
                'model2': inference_obj2.inference_obj})
 
 Interactive Dashboard Features
------------------------------
+------------------------------
 
 **Complete Analysis Dashboard:**
 
@@ -315,7 +315,7 @@ The dashboard provides interactive widgets for:
 - **Export Options**: Save plots and analysis results
 
 Memory Management
-----------------
+-----------------
 
 **Efficient Large Dataset Handling:**
 
@@ -348,7 +348,7 @@ Memory Management
    additional_diagnostics = reloaded_analysis.check_calibration()
 
 Best Practices
--------------
+--------------
 
 1. **Always run posterior predictive checks** before trusting MLE results
 2. **Use calibration analysis** to assess model reliability quantitatively

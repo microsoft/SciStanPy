@@ -4,7 +4,7 @@ Exceptions API Reference
 This reference covers the custom exception classes used throughout SciStanPy for error handling.
 
 Exceptions Module
-----------------
+-----------------
 
 .. automodule:: scistanpy.exceptions
    :no-index:
@@ -18,7 +18,7 @@ Exception Hierarchy
 SciStanPy defines a hierarchy of custom exception classes to provide clear error reporting:
 
 Base Exception
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.exceptions.SciStanPyError
    :no-index:
@@ -40,7 +40,7 @@ Base Exception
           print(f"SciStanPy error occurred: {e}")
 
 Specific Exception Types
------------------------
+------------------------
 
 Sample Validation Errors
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,7 +66,7 @@ Sample Validation Errors
           print(f"Invalid sample data: {e}")
 
 Error Handling Best Practices
-----------------------------
+-----------------------------
 
 **Catching Specific Exceptions:**
 
@@ -95,15 +95,3 @@ Error Handling Best Practices
    except Exception:
        # Handle other exceptions
        pass
-
-See Also
---------
-
-- :doc:`model` - Model construction that may raise exceptions
-- :doc:`parameters` - Parameter validation and error conditions
-- :doc:`utils` - Utility functions that use exception handling
-   except ssp.exceptions.ShapeError as e:
-       print(f"Shape mismatch: {e}")
-       print(f"Parameter 1 shape: {e.shape1}")
-       print(f"Parameter 2 shape: {e.shape2}")
-       print(f"Suggested fix: {e.suggestion}")

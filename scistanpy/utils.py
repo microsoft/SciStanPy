@@ -290,6 +290,7 @@ def get_chunk_shape(
     :raises IndexError: If frozen_dims contains invalid dimension indices
 
     The algorithm:
+
     1. Calculates memory usage per array element based on precision
     2. Sets frozen dimensions to their full size
     3. Iteratively determines chunk sizes for remaining dimensions

@@ -1,5 +1,5 @@
 Hamiltonian Monte Carlo Results API Reference
-==============================================
+=============================================
 
 This reference covers the analysis and diagnostic tools for Hamiltonian Monte Carlo sampling results in SciStanPy.
 
@@ -71,10 +71,10 @@ Variable Failure Analyzer
       # - Real-time trace plot updates
 
 Efficient Data Processing
-------------------------
+-------------------------
 
 CSV to NetCDF Conversion
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter
    :no-index:
@@ -115,7 +115,7 @@ CSV to NetCDF Conversion
       )
 
 Utility Functions
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. autofunction:: scistanpy.model.results.hmc.fit_from_csv_noload
    :noindex:
@@ -133,7 +133,7 @@ Comprehensive Diagnostic Framework
 ----------------------------------
 
 Complete Diagnostic Pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -159,7 +159,7 @@ Complete Diagnostic Pipeline
    sample_failures, var_failures = results.identify_failed_diagnostics()
 
 Diagnostic Test Categories
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Sample-Level Diagnostics:**
 
@@ -195,10 +195,10 @@ Diagnostic Test Categories
    poor_mixing = var_tests.sel(metric='ess_bulk')
 
 Advanced Visualization Tools
----------------------------
+----------------------------
 
 Failure Pattern Analysis
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -220,7 +220,7 @@ Failure Pattern Analysis
    # - Individual failure traces and typical patterns
 
 Interactive Variable Analysis
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -238,10 +238,10 @@ Interactive Variable Analysis
    # - Real-time plot updates with chain-specific coloring
 
 Memory-Efficient Processing
---------------------------
+---------------------------
 
 Dask Integration
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -261,7 +261,7 @@ Dask Integration
    # - Parallel processing
 
 Chunking Strategies
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -279,10 +279,10 @@ Chunking Strategies
    # - Parallel processing efficiency
 
 Scientific Workflow Integration
-------------------------------
+-------------------------------
 
 Model Validation Pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -326,7 +326,7 @@ Model Validation Pipeline
            return results, None
 
 Simulation-Based Validation
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -369,10 +369,10 @@ Simulation-Based Validation
        return recovery_results
 
 Performance Optimization
------------------------
+------------------------
 
 Loading Strategies
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -398,7 +398,7 @@ Loading Strategies
    )
 
 Precision Management
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -420,10 +420,10 @@ Precision Management
    )
 
 Integration with External Tools
-------------------------------
+-------------------------------
 
 ArviZ Ecosystem
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -447,7 +447,7 @@ ArviZ Ecosystem
    })
 
 Stan Ecosystem Compatibility
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -465,7 +465,7 @@ Stan Ecosystem Compatibility
    results = SampleResults.from_disk(netcdf_path)
 
 Best Practices
--------------
+--------------
 
 1. **Always run complete diagnostics** before interpreting MCMC results
 2. **Use interactive analyzers** to understand the nature of sampling problems

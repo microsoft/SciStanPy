@@ -16,7 +16,7 @@ Stan Code Organization Classes
 ------------------------------
 
 Abstract Base Class
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.stan.stan_model.StanCodeBase
    :no-index:
@@ -40,7 +40,7 @@ Abstract Base Class
               print(f"  Component: {component.model_varname}")
 
 For-Loop Management
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.stan.stan_model.StanForLoop
    :no-index:
@@ -62,7 +62,7 @@ For-Loop Management
       # Loops with only one iteration are removed for cleaner code
 
 Stan Program Generation
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.stan.stan_model.StanProgram
    :no-index:
@@ -194,7 +194,7 @@ Automatic Data Gathering
        print(f"Missing observables: {e}")
 
 Stan Code Generation Process
----------------------------
+----------------------------
 
 **Code Generation Pipeline:**
 
@@ -233,7 +233,7 @@ Stan Code Generation Process
    generated_quantities = program.generated_quantities_block
 
 Stan Function Libraries
-----------------------
+-----------------------
 
 **Automatic Function Integration:**
 
@@ -373,7 +373,7 @@ Error Handling and Debugging
    print(f"Variable dimensions: {varname_mapping}")
 
 Best Practices
--------------
+--------------
 
 1. **Use output directories** for Stan file caching and debugging
 2. **Enable prior initialization** for better MCMC convergence

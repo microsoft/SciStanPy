@@ -93,7 +93,9 @@ _NP_TYPE_MAP = {
 }
 
 
-def _symmetrize_quantiles(quantiles: Sequence[custom_types.Float]) -> list[custom_types.Float]:
+def _symmetrize_quantiles(
+    quantiles: Sequence[custom_types.Float],
+) -> list[custom_types.Float]:
     """Symmetrize and validate quantile sequences for plotting.
 
     This utility function takes a sequence of quantiles and creates a symmetric
@@ -1397,7 +1399,9 @@ class SampleResults(mle.MLEInferenceRes):
         return sample_tests
 
     def evaluate_variable_diagnostic_stats(
-        self, r_hat_thresh: custom_types.Float = DEFAULT_RHAT_THRESH, ess_thresh=DEFAULT_ESS_THRESH
+        self,
+        r_hat_thresh: custom_types.Float = DEFAULT_RHAT_THRESH,
+        ess_thresh=DEFAULT_ESS_THRESH,
     ) -> xr.Dataset:
         """Evaluate variable-level diagnostic statistics for convergence assessment.
 
@@ -1687,12 +1691,18 @@ class SampleResults(mle.MLEInferenceRes):
 
     @overload
     def plot_sample_failure_quantile_traces(
-        self, display: Literal[True], width: custom_types.Integer, height: custom_types.Integer
+        self,
+        display: Literal[True],
+        width: custom_types.Integer,
+        height: custom_types.Integer,
     ) -> hv.HoloMap: ...
 
     @overload
     def plot_sample_failure_quantile_traces(
-        self, display: Literal[False], width: custom_types.Integer, height: custom_types.Integer
+        self,
+        display: Literal[False],
+        width: custom_types.Integer,
+        height: custom_types.Integer,
     ) -> dict[str, hv.Overlay]: ...
 
     def plot_sample_failure_quantile_traces(
@@ -1717,6 +1727,7 @@ class SampleResults(mle.MLEInferenceRes):
         helps identify systematic patterns in sampling failures.
 
         Plot Structure:
+
         - **X-axis**: Cumulative fraction of parameters (0 to 1, sorted by typical quantile
             of failed samples)
         - **Y-axis**: Quantiles of failed samples relative to passing samples
@@ -1725,6 +1736,7 @@ class SampleResults(mle.MLEInferenceRes):
         - **Reference line**: Diagonal indicating perfect calibration
 
         The plots reveal:
+
         - Whether failures are systematic across parameters
         - Patterns in how failed samples deviate from typical behavior
         - The severity and consistency of sampling problems
@@ -1879,7 +1891,7 @@ class SampleResults(mle.MLEInferenceRes):
         display: Literal[True],
         width: custom_types.Integer,
         height: custom_types.Integer,
-        plot_quantiles: bool
+        plot_quantiles: bool,
     ) -> VariableAnalyzer: ...
 
     @overload
@@ -1889,7 +1901,7 @@ class SampleResults(mle.MLEInferenceRes):
         display: Literal[False],
         width: custom_types.Integer,
         height: custom_types.Integer,
-        plot_quantiles: bool
+        plot_quantiles: bool,
     ) -> pn.pane.HoloViews: ...
 
     def plot_variable_failure_quantile_traces(
@@ -2084,6 +2096,7 @@ def fit_from_csv_noload(path: str | list[str] | os.PathLike) -> CmdStanMCMC:
         >>> # Use for conversion without memory loading
         >>> netcdf_path = cmdstan_csv_to_netcdf(fit, model)
     """
+
     def identify_files() -> list[str]:
         """Identifies CSV files from the given path."""
         csvfiles = []

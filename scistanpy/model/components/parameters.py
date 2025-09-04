@@ -146,10 +146,12 @@ class ParameterMeta(ABCMeta):
     generation of probabilistic transforms and survival functions.
 
     The metaclass creates four transform classes for each parameter:
+
     - CDF: Cumulative distribution function
     - SF: Survival function (complementary CDF)
     - LOG_CDF: Logarithmic CDF
     - LOG_SF: Logarithmic survival function
+
     """
 
     def __init__(cls, name, bases, attrs):
@@ -262,20 +264,32 @@ class Parameter(
     mapping between Python model specifications and Stan code generation while
     providing integration with SciPy and PyTorch ecosystems.
 
-    :param kwargs: Distribution parameters as keyword arguments
-
-    Class Attributes:
-        STAN_DIST: Stan distribution name for code generation
-        HAS_RAW_VARNAME: Whether parameter uses a raw/transformed parameterization
-        SCIPY_DIST: Corresponding SciPy distribution class
-        TORCH_DIST: Corresponding PyTorch distribution class
-        STAN_TO_SCIPY_NAMES: Parameter name mapping for SciPy interface
-        STAN_TO_TORCH_NAMES: Parameter name mapping for PyTorch interface
-        STAN_TO_SCIPY_TRANSFORMS: Parameter transformation functions converting between
-            Stan and SciPy parametrizations
-        CDF, SF, LOG_CDF, LOG_SF: Automatically generated transform classes
+    :cvar STAN_DIST: Stan distribution name for code generation
+    :type STAN_DIST: str
+    :cvar HAS_RAW_VARNAME: Whether parameter uses a raw/transformed parameterization
+    :type HAS_RAW_VARNAME: bool
+    :cvar SCIPY_DIST: Corresponding SciPy distribution class
+    :type SCIPY_DIST: Optional[Union[type[stats.rv_continuous], type[stats.rv_discrete]]]
+    :cvar TORCH_DIST: Corresponding PyTorch distribution class
+    :type TORCH_DIST: Optional[Union[type[dist.distribution.Distribution], type[custom_torch_dists.CustomDistribution]]]
+    :cvar STAN_TO_SCIPY_NAMES: Parameter name mapping for SciPy interface
+    :type STAN_TO_SCIPY_NAMES: dict[str, str]
+    :cvar STAN_TO_TORCH_NAMES: Parameter name mapping for PyTorch interface
+    :type STAN_TO_TORCH_NAMES: dict[str, str]
+    :cvar STAN_TO_SCIPY_TRANSFORMS: Parameter transformation functions converting between
+        Stan and SciPy parametrizations
+    :type STAN_TO_SCIPY_TRANSFORMS: dict[str, Callable[[npt.NDArray], npt.NDArray]]
+    :cvar CDF: Automatically generated CDF transform class
+    :type CDF: type[cdfs.CDF]
+    :cvar SF: Automatically generated SF transform class
+    :type SF: type[cdfs.SurvivalFunction]
+    :cvar LOG_CDF: Automatically generated log CDF transform class
+    :type LOG_CDF: type[cdfs.LogCDF]
+    :cvar LOG_SF: Automatically generated log SF transform class
+    :type LOG_SF: type[cdfs.LogSurvivalFunction]
 
     The class automatically handles:
+
     - Parameter validation and type checking
     - Stan code generation for all model blocks
     - PyTorch parameter initialization and management
@@ -283,6 +297,7 @@ class Parameter(
     - Bound enforcement and constraint handling
 
     Key Capabilities:
+
     - **Multi-Backend Integration**: Works with SciPy, PyTorch, and Stan
     - **Automatic Code Generation**: Generates appropriate Stan syntax
     - **Type Safety**: Validates parameter types and constraints
@@ -669,7 +684,7 @@ class Parameter(
         """Generate Stan parameter declaration for raw (untransformed) variables.
 
         :param force_basetype: Whether to force base type declaration. See
-        `get_generated_quantity_declaration` for more information. Defaults to False.
+            `get_generated_quantity_declaration` for more information. Defaults to False.
         :type force_basetype: bool
 
         :returns: Stan parameter declaration for raw variables
@@ -1503,14 +1518,14 @@ class Lomax(ContinuousDistribution):
     def write_dist_args(  # pylint: disable=arguments-differ
         self, lambda_: str, alpha: str
     ) -> str:
-        """Format arguments for Stan pareto_type_2 distribution.
+        r"""Format arguments for Stan pareto_type_2 distribution.
 
-        :param lambda_: Formatted lambda parameter string
-        :type lambda_: str
+        :param lambda\_: Formatted lambda parameter string
+        :type lambda\_: str
         :param alpha: Formatted alpha parameter string
         :type alpha: str
 
-        :returns: "0.0, lambda_, alpha" for Stan distribution call
+        :returns: "0.0, lambda\_, alpha" for Stan distribution call
         :rtype: str
 
         The Lomax distribution is implemented in Stan as Pareto Type II
@@ -1672,11 +1687,13 @@ class ExpDirichlet(Dirichlet):
         where Σexp(Yᵢ) = 1 (log-simplex constraint)
 
     Properties:
+
     - Support: Log-simplex {y : Σexp(yᵢ) = 1}
     - Raw parameterization uses K-1 dimensions with constraint transformation
     - More numerically stable for extreme concentrations
 
     Stan Implementation:
+
     - Uses custom constraint functions for log-simplex transformation
     - Raw parameter has K-1 dimensions (reduced for constraint)
     - Special thanks to Sean Pinkney for assistance with deriving the log probability
@@ -2014,11 +2031,13 @@ class MultinomialLogTheta(_MultinomialBase):
         X ~ Multinomial(N, θ)
 
     Properties:
+
     - Log-simplex parameterization
     - Numerically stable for small probabilities
     - Optional multinomial coefficient pre-computation
 
     Special Features:
+
     - Automatic multinomial coefficient calculation when used as observable. This
       results in improved computational efficiency by eliminating redundant calculations.
     - Coefficient removed when parameter has other children

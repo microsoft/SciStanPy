@@ -13,7 +13,7 @@ Defaults Module
    :show-inheritance:
 
 Default Configuration Values
----------------------------
+----------------------------
 
 The defaults module provides centralized configuration for SciStanPy behavior. This module should contain default values for various aspects of the framework:
 
@@ -45,7 +45,7 @@ The defaults module provides centralized configuration for SciStanPy behavior. T
    # )
 
 Common Default Values
---------------------
+---------------------
 
 Based on typical Bayesian modeling practices, the defaults module likely includes:
 
@@ -88,7 +88,7 @@ Based on typical Bayesian modeling practices, the defaults module likely include
    # DEFAULT_CHECK_FINITE = True     # Finite value checking
 
 Customizing Defaults
--------------------
+--------------------
 
 **Modifying Defaults:**
 
@@ -108,7 +108,7 @@ Customizing Defaults
    # # Reverts to original defaults after context
 
 Integration with Components
---------------------------
+---------------------------
 
 **Automatic Default Usage:**
 
@@ -150,7 +150,7 @@ Configuration Management
    # ssp.defaults.save_config('current_config.yaml')
 
 Environment Variables
---------------------
+---------------------
 
 **Environment-Based Configuration:**
 
@@ -173,19 +173,8 @@ Configuration precedence (typical pattern):
 4. Configuration files
 5. Built-in defaults (lowest priority)
 
-.. todo::
-
-   Update this documentation once the actual `scistanpy/defaults.py` file is available with:
-
-   - Exact default value names and values
-   - Available configuration methods
-   - Environment variable support details
-   - Configuration file format (if supported)
-   - Context manager implementation (if available)
-
 See Also
 --------
 
 - :doc:`exceptions` - Error handling for invalid configuration
 - :doc:`utils` - Utility functions that may use defaults
-- :doc:`model` - Model class that uses default values

@@ -14,7 +14,17 @@ release = "Alpha"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.autodoc"]
+
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",  # add links to source code
+    "sphinx.ext.intersphinx",  # optional cross-references
+]
+
+autosummary_generate = True
+autoclass_content = "both"  # include class and __init__ docstrings
+autodoc_mock_imports = ["torch"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

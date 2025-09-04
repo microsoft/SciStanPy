@@ -13,10 +13,9 @@ Model Module
    :show-inheritance:
 
 Core Model Class
----------------
+----------------
 
 .. autoclass:: scistanpy.model.model.Model
-   :no-index:
    :no-index:
    :members:
    :undoc-members:
@@ -63,7 +62,7 @@ Core Model Class
       # Display in Jupyter notebook or serve as web app
 
 Model Utilities
---------------
+---------------
 
 .. autofunction:: scistanpy.model.model.model_comps_to_dict
    :noindex:
@@ -96,7 +95,7 @@ Model Utilities
       results = run_delayed_mcmc("./mcmc_output/model-delay.pkl")
 
 Model Properties and Methods
----------------------------
+----------------------------
 
 **Component Access Properties:**
 
@@ -144,7 +143,7 @@ The Model class provides several properties for accessing different types of com
    sim_data, mcmc_result = model.simulate_mcmc(chains=4, iter_sampling=1000)
 
 Model Introspection
-------------------
+-------------------
 
 **Component Inspection:**
 
@@ -188,7 +187,7 @@ Model Introspection
    mcmc_result = model.mcmc()  # Uses default_data
 
 Advanced Features
-----------------
+-----------------
 
 **Custom Model Classes:**
 
@@ -245,7 +244,7 @@ Advanced Features
    )
 
 Best Practices
--------------
+--------------
 
 1. **Use descriptive component names** that reflect their scientific meaning
 2. **Set default data** for models with fixed datasets to streamline workflows

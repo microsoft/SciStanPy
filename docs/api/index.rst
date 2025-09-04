@@ -35,7 +35,7 @@ Quick Navigation
 ----------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
 
    custom_types
    defaults

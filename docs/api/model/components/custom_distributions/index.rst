@@ -1,10 +1,10 @@
 Custom Distributions API Reference
-===================================
+==================================
 
 This reference covers the custom probability distributions available in SciStanPy for specialized modeling needs.
 
 Custom Distributions Submodule Overview
-----------------------------------------
+---------------------------------------
 
 The custom distributions submodule provides specialized probability distributions that extend the standard library for scientific modeling applications:
 
@@ -15,7 +15,7 @@ The custom distributions submodule provides specialized probability distribution
    custom_scipy_dists
 
 Custom Distributions Framework
------------------------------
+------------------------------
 
 .. automodule:: scistanpy.model.components.custom_distributions
    :no-index:
@@ -24,7 +24,7 @@ Custom Distributions Framework
    :show-inheritance:
 
 Distribution Categories
-----------------------
+-----------------------
 
 **Log-Transformed Distributions**
    Distributions defined on the logarithm of standard distributions for improved numerical stability and parameterization flexibility
@@ -39,7 +39,7 @@ Distribution Categories
    Domain-specific distributions commonly used in scientific applications
 
 Key Features
------------
+------------
 
 **Multi-Backend Support**
    All custom distributions provide implementations for both PyTorch and SciPy backends, enabling seamless integration across different computational contexts
@@ -54,7 +54,7 @@ Key Features
    Implementations emphasize numerical stability through log-space arithmetic and careful handling of extreme values
 
 Available Custom Distributions
------------------------------
+------------------------------
 
 **Log-Space Distributions:**
 
@@ -100,7 +100,7 @@ Available Custom Distributions
    )
 
 Scientific Applications
-----------------------
+-----------------------
 
 **Survival Analysis:**
 
@@ -159,7 +159,7 @@ Scientific Applications
    )
 
 Implementation Details
----------------------
+----------------------
 
 **PyTorch Integration:**
 
@@ -199,7 +199,7 @@ Implementation Details
    stable_lomax = ssp.parameters.ExpLomax(lambda_=extreme_lambda, alpha=0.5)
 
 Performance Considerations
--------------------------
+--------------------------
 
 **Efficient Parameterizations:**
 
@@ -228,7 +228,7 @@ Performance Considerations
    # Generates efficient vectorized Stan sampling
 
 Integration Patterns
--------------------
+--------------------
 
 **With Standard Distributions:**
 
@@ -286,7 +286,7 @@ Integration Patterns
            return ["#include <mycustom.stanfunctions>"]
 
 Best Practices
--------------
+--------------
 
 1. **Choose appropriate parameterizations** for your modeling context
 2. **Use log-space distributions** for improved numerical stability

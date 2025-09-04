@@ -650,11 +650,13 @@ class MLEInferenceRes:
         :rtype: Union[hv.Layout, dict[str, hv.Overlay]]
 
         Visualization Components:
+
         - Hexagonal binning showing density of (value, quantile) pairs
         - Rolling mean trend line highlighting systematic patterns
         - Colormap indicating point density for pattern identification
 
         Pattern Interpretation:
+
         - Horizontal trend line around 0.5 with uniformly distributed points indicates
           good calibration
         - Systematic deviations suggest model bias or miscalibration

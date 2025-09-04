@@ -4,7 +4,7 @@ Operations API Reference
 This reference covers the mathematical operations and transformations available in SciStanPy.
 
 Operations Module
-----------------
+-----------------
 
 .. automodule:: scistanpy.operations
    :no-index:
@@ -13,7 +13,7 @@ Operations Module
    :show-inheritance:
 
 Operation Framework
-------------------
+-------------------
 
 The operations module provides a framework for creating mathematical operations that work with both SciStanPy model components and raw numerical data.
 
@@ -37,10 +37,10 @@ The operations module provides a framework for creating mathematical operations 
    :noindex:
 
 Available Operations
--------------------
+--------------------
 
 Mathematical Functions
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autodata:: scistanpy.operations.abs_
    :annotation:
@@ -100,7 +100,7 @@ Mathematical Functions
    Numerically stable computation of log(sigmoid(x)).
 
 Statistical Operations
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autodata:: scistanpy.operations.normalize
    :annotation:
@@ -135,7 +135,7 @@ Statistical Operations
    Numerically stable computation of log(sum(exp(x))).
 
 Growth Model Operations
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autodata:: scistanpy.operations.exponential_growth
    :annotation:
@@ -211,7 +211,7 @@ Growth Model Operations
    Log-space version of initial-population-parameterized sigmoid growth.
 
 Specialized Operations
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autodata:: scistanpy.operations.convolve_sequence
    :annotation:
@@ -265,7 +265,7 @@ Operation Usage Patterns
    data_result = my_function(np.array([1, 2, 3]))
 
 Creating Custom Operations
--------------------------
+--------------------------
 
 **Using build_operation:**
 
@@ -293,7 +293,7 @@ Creating Custom Operations
    transformed = my_operation(param)
 
 Best Practices
--------------
+--------------
 
 1. **Use descriptive variable names** when chaining operations
 2. **Prefer log-space operations** for numerical stability when dealing with extreme values

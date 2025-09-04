@@ -1,5 +1,5 @@
 Constants API Reference
-========================
+=======================
 
 This reference covers the constant value components used in SciStanPy models.
 
@@ -70,7 +70,7 @@ Constant Properties and Methods
 -------------------------------
 
 Type Inference and Validation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Constants automatically infer Stan data types and validate values:
 
@@ -144,7 +144,7 @@ Usage Patterns
 --------------
 
 Model Hyperparameters
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 Constants are commonly used for model hyperparameters:
 
@@ -180,7 +180,7 @@ Constants are commonly used for model hyperparameters:
            super().__init__(self.observations)
 
 Design Matrices and Fixed Data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Constants handle experimental design and fixed data:
 
@@ -201,7 +201,7 @@ Constants handle experimental design and fixed data:
    )
 
 Prior Predictive Simulation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Constants enable prior predictive checks by providing fixed reference values:
 
@@ -246,10 +246,10 @@ Constants with slider support enable interactive model exploration:
    # Users can adjust explore_sigma and see effects on model
 
 Validation and Error Handling
-------------------------------
+-----------------------------
 
 Comprehensive Validation
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Constants perform extensive validation during construction:
 
@@ -275,7 +275,7 @@ Constants perform extensive validation during construction:
        print(f"Uniformity error: {e}")
 
 Type Safety
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 Constants ensure type safety in model construction:
 
@@ -304,6 +304,9 @@ Best Practices
 7. **Group related constants** in model construction for clarity
 
 Constants provide the foundation for robust, interpretable Bayesian models by ensuring that fixed values are properly handled throughout the modeling workflow.
+
+.. code-block:: python
+
    prior_precision = ssp.constants.Constant(
        1.0,
        lower_bound=0.1,
@@ -347,7 +350,7 @@ Constants provide the foundation for robust, interpretable Bayesian models by en
        return linear_pred, coefficients
 
 Memory and Performance Considerations
-------------------------------------
+-------------------------------------
 
 **Efficient Constant Sharing:**
 
@@ -413,7 +416,7 @@ Error Handling and Validation
            return None
 
 Interactive Model Building
--------------------------
+--------------------------
 
 **Dynamic Constant Modification:**
 
@@ -465,7 +468,7 @@ Interactive Model Building
    }
 
 Best Practices
--------------
+--------------
 
 1. **Use appropriate bounds** to constrain constants to valid ranges
 2. **Enable togglability** for hyperparameters you want to explore interactively

@@ -13,7 +13,7 @@ Abstract Model Component Module
    :show-inheritance:
 
 Core Abstract Classes
---------------------
+---------------------
 
 AbstractModelComponent
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -81,7 +81,7 @@ AbstractModelComponent
           print(f"{component.model_varname}: shape {draws.shape}")
 
 Component Relationships
-----------------------
+-----------------------
 
 **Parent-Child Architecture:**
 
@@ -118,7 +118,7 @@ Component Relationships
    show_dependencies(observations)
 
 Shape and Broadcasting System
-----------------------------
+-----------------------------
 
 **Automatic Shape Inference:**
 
@@ -158,7 +158,7 @@ Shape and Broadcasting System
    element = matrix_param[3, 4]      # Single element
 
 Stan Integration Framework
--------------------------
+--------------------------
 
 **Variable Declaration System:**
 
@@ -240,7 +240,7 @@ Error Handling and Validation
        print(f"Bound violation: {e}")
 
 Tree Traversal and Analysis
---------------------------
+---------------------------
 
 **Model Structure Analysis:**
 
@@ -300,7 +300,7 @@ Tree Traversal and Analysis
        return not has_cycle(component)
 
 Advanced Usage Patterns
-----------------------
+-----------------------
 
 **Custom Component Development:**
 
@@ -354,7 +354,7 @@ Advanced Usage Patterns
        return sliders
 
 Performance Considerations
--------------------------
+--------------------------
 
 **Efficient Sampling:**
 
@@ -388,7 +388,7 @@ Performance Considerations
        children.append(child)
 
 Best Practices
--------------
+--------------
 
 1. **Understand the component hierarchy** before building complex models
 2. **Use shape broadcasting** to avoid manual shape specification

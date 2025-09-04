@@ -695,16 +695,16 @@ class NegateParameter(UnaryTransformedParameter):
 
 
 class AbsParameter(UnaryTransformedParameter):
-    """Absolute value transformation for parameters.
+    r"""Absolute value transformation for parameters.
 
-    Implements element-wise absolute value: result = |dist1|
+    Implements element-wise absolute value: result = \|dist1\|
 
     :cvar LOWER_BOUND: Absolute values are always non-negative (0.0)
 
     Mathematical Properties:
-    - Non-negative output: |a| ≥ 0
-    - Idempotent for non-negative inputs: ||a|| = |a|
-    - Triangle inequality: |a + b| ≤ |a| + |b|
+    - Non-negative output: \|a\| ≥ 0
+    - Idempotent for non-negative inputs: \|\|a\|\| = \|a\|
+    - Triangle inequality: \|a + b\| ≤ \|a\| + \|b\|
 
     This transformation ensures non-negative values and is commonly used
     for magnitudes, distances, and ensuring positive parameters.

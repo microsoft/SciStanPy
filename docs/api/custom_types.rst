@@ -1,5 +1,5 @@
 Custom Types API Reference
-===========================
+==========================
 
 This reference covers the type definitions and type aliases used throughout SciStanPy.
 
@@ -13,7 +13,7 @@ Custom Types Module
    :show-inheritance:
 
 Scalar Types
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. autodata:: scistanpy.custom_types.Integer
    :annotation:
@@ -26,7 +26,7 @@ Scalar Types
    Type alias for floating-point values, accepting both Python float and NumPy floating types.
 
 Parameter Types
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. autodata:: scistanpy.custom_types.SampleType
    :annotation:
@@ -54,7 +54,7 @@ Parameter Types
    Type alias for parameters that can be combined in operations.
 
 Distribution Types
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. autodata:: scistanpy.custom_types.SciStanPyDistribution
    :annotation:
@@ -62,7 +62,7 @@ Distribution Types
    Type alias for PyTorch-compatible distributions used in SciStanPy.
 
 Diagnostic Types
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. autodata:: scistanpy.custom_types.ProcessedTestRes
    :annotation:
@@ -75,7 +75,7 @@ Diagnostic Types
    Type alias for simplified diagnostic test results.
 
 Utility Types
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 .. autodata:: scistanpy.custom_types.IndexType
    :annotation:
@@ -83,7 +83,7 @@ Utility Types
    Type alias for array indexing operations.
 
 Usage Examples
--------------
+--------------
 
 **Type Checking in Functions:**
 

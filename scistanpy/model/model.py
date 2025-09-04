@@ -700,6 +700,7 @@ class Model:
         :rtype: mle_module.MLE
 
         The optimization process:
+
         - Converts model to PyTorch and moves to specified device
         - Trains for `epochs` number of epochs or until there has been no improvement
           for `early_stop` number epochs.

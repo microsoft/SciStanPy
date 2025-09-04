@@ -1,12 +1,12 @@
 Model Components API Reference
-===============================
+==============================
 
 This reference covers the comprehensive model component framework in SciStanPy.
 
 The model components submodule provides the foundational building blocks for constructing probabilistic models. It includes abstract interfaces, concrete parameter implementations, mathematical transformations, and specialized probability distributions.
 
 Model Components Submodule Overview
-------------------------------------
+-----------------------------------
 
 The model components submodule consists of several key areas:
 
@@ -21,7 +21,7 @@ The model components submodule consists of several key areas:
 
 
 Component Architecture
----------------------
+----------------------
 
 .. automodule:: scistanpy.model.components
    :no-index:
@@ -45,7 +45,7 @@ Component Hierarchy
    Custom distributions and domain-specific components for advanced modeling
 
 Key Design Principles
---------------------
+---------------------
 
 **Compositional Design:**
 
@@ -91,7 +91,7 @@ All components work consistently across NumPy, PyTorch, and Stan backends:
    stan_model = ssp.Model(likelihood).to_stan()        # Stan backend
 
 Component Types
---------------
+---------------
 
 **Parameters:**
    Probability distributions representing unknown quantities to be inferred
@@ -136,7 +136,7 @@ Component Types
    counts = ssp.parameters.MultinomialLogit(gamma=logits, N=100)   # Unconstrained
 
 Component Relationships
-----------------------
+-----------------------
 
 **Parent-Child Dependencies:**
 
@@ -183,7 +183,7 @@ Components automatically handle shape broadcasting following NumPy conventions:
    result = vector_param + matrix_param  # Result shape: (3, 5)
 
 Stan Code Generation
--------------------
+--------------------
 
 **Automatic Code Generation:**
 
@@ -245,7 +245,7 @@ Multi-dimensional components generate optimized Stan loops:
    # }
 
 Advanced Component Features
---------------------------
+---------------------------
 
 **Observable Parameters:**
 
@@ -295,7 +295,7 @@ Constants can be made interactive for model exploration:
    )
 
 Component Validation
--------------------
+--------------------
 
 **Automatic Validation:**
 
@@ -338,7 +338,7 @@ Components automatically enforce distributional constraints:
    assert np.allclose(simplex_samples.sum(axis=-1), 1)
 
 Performance Considerations
--------------------------
+--------------------------
 
 **Efficient Construction:**
 
@@ -383,7 +383,7 @@ Performance Considerations
    stan_results = model.mcmc()
 
 Best Practices
--------------
+--------------
 
 1. **Use appropriate component types** for your modeling needs
 2. **Leverage automatic shape broadcasting** instead of manual management

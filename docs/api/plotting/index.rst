@@ -12,7 +12,7 @@ Plotting Submodule Overview
 ---------------------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
 
    plotting
    prior_predictive

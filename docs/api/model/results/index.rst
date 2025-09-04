@@ -1,12 +1,12 @@
 Model Results API Reference
-============================
+===========================
 
 This reference covers the comprehensive analysis and visualization tools for SciStanPy model results.
 
 The results submodule provides specialized analysis capabilities for both Maximum Likelihood Estimation (MLE) and Hamiltonian Monte Carlo (MCMC) inference methods, with a focus on model validation, diagnostic assessment, and scientific interpretation.
 
 Results Submodule Overview
----------------------------
+--------------------------
 
 The results submodule consists of two main analysis frameworks:
 
@@ -17,7 +17,7 @@ The results submodule consists of two main analysis frameworks:
    hmc
 
 Results Module
--------------
+--------------
 
 .. automodule:: scistanpy.model.results
    :no-index:
@@ -35,7 +35,7 @@ Core Analysis Frameworks
    Advanced diagnostic capabilities for MCMC results including convergence assessment, sample quality evaluation, and interactive failure analysis
 
 Unified Analysis Interface
--------------------------
+--------------------------
 
 **Common Analysis Capabilities:**
 
@@ -74,7 +74,7 @@ Each framework provides method-specific tools:
    convergence_analyzer = mcmc_result.plot_variable_failure_quantile_traces()
 
 Key Features
------------
+------------
 
 **Comprehensive Model Validation**
    Systematic approaches to assess model adequacy and identify potential issues
@@ -95,7 +95,7 @@ Analysis Workflow Patterns
 --------------------------
 
 Standard MLE Analysis Pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -130,7 +130,7 @@ Standard MLE Analysis Pipeline
        }
 
 Standard MCMC Analysis Pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -166,7 +166,7 @@ Standard MCMC Analysis Pipeline
        }
 
 Comparative Analysis
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -205,10 +205,10 @@ Comparative Analysis
        }
 
 Data Management and Persistence
-------------------------------
+-------------------------------
 
 Efficient Storage Solutions
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -231,7 +231,7 @@ Efficient Storage Solutions
    mcmc_reloaded = SampleResults.from_disk(netcdf_path, use_dask=True)
 
 Cross-Platform Compatibility
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -253,7 +253,7 @@ Advanced Analysis Patterns
 --------------------------
 
 Model Selection and Comparison
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -296,7 +296,7 @@ Model Selection and Comparison
        return results
 
 Uncertainty Quantification Studies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -352,10 +352,10 @@ Uncertainty Quantification Studies
        }
 
 Integration with Scientific Workflows
-------------------------------------
+-------------------------------------
 
 Automated Reporting
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -406,7 +406,7 @@ Automated Reporting
                f.write("✅ All MCMC diagnostics passed\n")
 
 Batch Processing
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -451,7 +451,7 @@ Batch Processing
        return results
 
 Best Practices
--------------
+--------------
 
 1. **Always validate models** using posterior predictive checks before scientific interpretation
 2. **Use appropriate inference methods** - MLE for speed, MCMC for uncertainty quantification

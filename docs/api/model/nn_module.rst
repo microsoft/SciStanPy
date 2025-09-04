@@ -1,10 +1,10 @@
 Neural Network Module API Reference
-====================================
+===================================
 
 This reference covers the PyTorch neural network integration for SciStanPy models.
 
 Neural Network Module
-----------------------
+---------------------
 
 .. automodule:: scistanpy.model.nn_module
    :no-index:
@@ -13,7 +13,7 @@ Neural Network Module
    :show-inheritance:
 
 Core PyTorch Integration
------------------------
+------------------------
 
 .. autoclass:: scistanpy.model.nn_module.PyTorchModel
    :no-index:
@@ -85,7 +85,7 @@ Core PyTorch Integration
       )
 
 Validation Functions
--------------------
+--------------------
 
 .. autofunction:: scistanpy.model.nn_module.check_observable_data
    :noindex:
@@ -108,7 +108,7 @@ Validation Functions
           print(f"Data validation failed: {e}")
 
 Training and Optimization
-------------------------
+-------------------------
 
 **Advanced Training Options:**
 
@@ -152,7 +152,7 @@ Training and Optimization
        scheduler.step(loss)
 
 Parameter and Distribution Export
--------------------------------
+---------------------------------
 
 **Extracting Fitted Parameters:**
 
@@ -176,7 +176,7 @@ Parameter and Distribution Export
    posterior_samples = fitted_normal.sample((1000,))
 
 Device Management
-----------------
+-----------------
 
 **Multi-GPU Training:**
 
@@ -210,7 +210,7 @@ Device Management
            optimizer.zero_grad()
 
 Integration Patterns
--------------------
+--------------------
 
 **SciStanPy to PyTorch Workflow:**
 
@@ -279,7 +279,7 @@ Integration Patterns
            return log_likelihood - kl_divergence
 
 Performance Considerations
--------------------------
+--------------------------
 
 **Optimization Tips:**
 
@@ -306,7 +306,7 @@ Performance Considerations
        torch.cuda.empty_cache()
 
 Error Handling and Debugging
----------------------------
+----------------------------
 
 **Common Issues and Solutions:**
 
@@ -343,7 +343,7 @@ Error Handling and Debugging
        print("Warning: Large gradients detected")
 
 Best Practices
--------------
+--------------
 
 1. **Validate data format** before training to catch shape mismatches early
 2. **Use reproducible seeds** for debugging and development
