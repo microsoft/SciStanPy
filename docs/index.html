@@ -1,13 +1,317 @@
-
 <!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta http-equiv="refresh" content="0; url=html/index.html">
-	<link rel="canonical" href="html/index.html">
-	<title>Redirecting...</title>
-</head>
-<body>
-	<p>If you are not redirected automatically, follow this <a href="html/index.html">link to documentation</a>.</p>
-</body>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>SciStanPy: Intuitive Bayesian Modeling for Scientists &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=6b921976"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SciStanPy API Reference" href="api/index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="scistanpy-intuitive-bayesian-modeling-for-scientists">
+<h1>SciStanPy: Intuitive Bayesian Modeling for Scientists<a class="headerlink" href="#scistanpy-intuitive-bayesian-modeling-for-scientists" title="Link to this heading">¶</a></h1>
+<p>Welcome to SciStanPy, a Python framework that makes Bayesian statistical modeling accessible to scientists and researchers. Whether you’re analyzing experimental data, building predictive models, or exploring uncertainty in your research, SciStanPy provides an intuitive interface that bridges the gap between scientific thinking and advanced statistical computation. Express your scientific models naturally in Python while SciStanPy automatically handles the computational complexity of model fitting and sampling via <a class="reference external" href="https://pytorch.org/">PyTorch</a> and <a class="reference external" href="https://mc-stan.org/">Stan</a>.</p>
+<section id="why-scistanpy">
+<h2>Why SciStanPy?<a class="headerlink" href="#why-scistanpy" title="Link to this heading">¶</a></h2>
+<p>Bayesian modeling often requires deep statistical programming knowledge. SciStanPy changes this by letting you express your scientific models naturally in Python, while automatically handling the complex computational details behind the scenes.</p>
+<dl class="simple">
+<dt>🔬 <strong>Scientific Focus</strong></dt><dd><p>Designed specifically for scientific applications and research workflows</p>
+</dd>
+<dt>🐍 <strong>Intuitive Python Interface</strong></dt><dd><p>Express hypotheses using familiar Python syntax and scientific thinking</p>
+</dd>
+<dt>🎯 <strong>Uncertainty Quantification</strong></dt><dd><p>Natural handling of measurement uncertainty and parameter estimation</p>
+</dd>
+<dt>📊 <strong>Rich Diagnostics</strong></dt><dd><p>Comprehensive model checking and convergence diagnostics</p>
+</dd>
+<dt>⚡ <strong>Multi-Backend Performance</strong></dt><dd><p>Automatic compilation to Stan code and PyTorch modules</p>
+</dd>
+<dt>🛡️ <strong>Built-in Validation</strong></dt><dd><p>Comprehensive error checking catches modeling mistakes early</p>
+</dd>
+</dl>
+</section>
+<section id="key-concepts">
+<h2>Key Concepts<a class="headerlink" href="#key-concepts" title="Link to this heading">¶</a></h2>
+<p><strong>Parameters vs Observations</strong>: In SciStanPy, parameters represent unknown quantities you want to learn about (“infer”), while observations are your measured data.</p>
+<p><strong>Distributions</strong>: These encode your knowledge and uncertainty. Use them to express:
+- Prior knowledge about parameters
+- Expected relationships between variables
+- Measurement uncertainty and noise
+In SciStanPy, parameters and observations are defined using distributions.</p>
+<p><strong>Model Building</strong>: Parameters can depend on one another and/or be transformed using standard mathematical operations. Combine and transform parameters to build a SciStanPy model.</p>
+<p><strong>Inference</strong>: Once your model is built, SciStanPy handles compilation to Stan code or PyTorch modules, allowing for inference of parameter values.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>SciStanPy is designed for scientists with basic Python knowledge who want to incorporate uncertainty quantification and Bayesian analysis into their research
+without needing deep statistical programming expertise. For an introduction to Bayesian modeling, the <a class="reference external" href="https://bebi103b.github.io/">BE/Bi 103b class</a> developed
+and taught by Justin Bois at Caltech is an excellent resource.</p>
+</div>
+</section>
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
+<p>To start, clone SciStanPy from GitHub:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/microsoft/SciStanPy.git
+</pre></div>
+</div>
+<p>Then, you can either install into your current active environment with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+<p>or build a SciStanPy-specific environment using conda, mamba, or micromamba with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>conda.yml
+conda<span class="w"> </span>activate<span class="w"> </span>scistanpy
+</pre></div>
+</div>
+<p>Once installed, you can start modeling! All SciStanPy models are built by inheriting from a base class that handles the underlying complexities of modeling–if you work with PyTorch, this will feel quite familiar.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Define/import experimental data</span>
+<span class="n">temperatures</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">20</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">35</span><span class="p">,</span> <span class="mi">40</span><span class="p">])</span>  <span class="c1"># °C</span>
+<span class="n">reaction_rates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">2.1</span><span class="p">,</span> <span class="mf">5.2</span><span class="p">])</span>  <span class="c1"># units/sec</span>
+
+<span class="c1"># Define the model. Here we&#39;re modeling the effect of temperature on reaction</span>
+<span class="c1"># rates</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyModel</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+   <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">temperatures</span><span class="p">,</span> <span class="n">reaction_rates</span><span class="p">):</span>
+
+      <span class="c1"># Record default data</span>
+      <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">default_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;reaction_rates&quot;</span><span class="p">:</span> <span class="n">reaction_rates</span><span class="p">})</span>
+
+      <span class="c1"># Define priors</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">baseline_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Rates are always positive</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">temperature_effect</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># Effect of temperature</span>
+
+      <span class="c1"># Model the relationship (Arrhenius-like behavior with noise)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">reaction_rates</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseline_rate</span> <span class="o">*</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">temperature_effect</span> <span class="o">*</span> <span class="n">temperatures</span><span class="p">),</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="mf">0.1</span>
+      <span class="p">)</span>
+
+<span class="c1"># Build the model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">MyModel</span><span class="p">(</span><span class="n">temperatures</span><span class="p">,</span> <span class="n">reaction_rates</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Compehensive documentation for the SciStanPy API can be found <a class="reference internal" href="api/index.html"><span class="doc">here</span></a>. For starting quickly, however, the most important modules and objects are <a class="reference internal" href="api/model/model.html"><span class="doc">model</span></a>, <a class="reference internal" href="api/model/components/parameters.html"><span class="doc">parameters</span></a>, and <a class="reference internal" href="api/operations.html"><span class="doc">operations</span></a>. Less frequently used, but also important, is the <a class="reference internal" href="api/model/components/constants.html"><span class="doc">constants</span></a> module. Follow the links for detailed API references. In short, however, the <a class="reference internal" href="api/model/model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> object forms the backbone of all SciStanPy models, distributions defined in <a class="reference internal" href="api/model/components/parameters.html"><span class="doc">parameters</span></a> define those models’ variables, <a class="reference internal" href="api/operations.html"><span class="doc">operations</span></a> define transformations of those variables, and <a class="reference internal" href="api/model/components/constants.html"><span class="doc">constants</span></a> provide fixed values used throughout the model.</p>
+<p>Once a model is defined, there are multiple ways to use it. First, you may wish to explore the effects of different hyperparameter values. This can be done through an interactive interface as below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># If you are in a Jupyter notebook, you can create an interactive dashboard to</span>
+<span class="c1"># explore prior predictive distributions. Just run:</span>
+<span class="n">model</span><span class="o">.</span><span class="n">prior_predictive</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Additional information on the dashboard can be found <a class="reference internal" href="api/plotting/prior_predictive.html"><span class="doc">here</span></a>.</p>
+<p>You can also directly draw from the prior distribution with the below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Draw 100 samples from the prior distribution</span>
+<span class="n">prior_samples</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The returned dictionary will contain draws from all model parameters, each conditioned on one another as appropriate. See <a class="reference internal" href="api/model/model.html#scistanpy.model.model.Model.draw" title="scistanpy.model.model.Model.draw"><code class="xref py py-meth docutils literal notranslate"><span class="pre">draw()</span></code></a> for more details.</p>
+<p>SciStanPy models are also fully compatible with PyTorch, and can be compiled to a <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html">PyTorch Module</a> using the <a class="reference internal" href="api/model/model.html#scistanpy.model.model.Model.to_pytorch" title="scistanpy.model.model.Model.to_pytorch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_pytorch()</span></code></a> method as below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert to PyTorch module</span>
+<span class="n">torch_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_pytorch</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The returned PyTorch Module will have a forward method defined that takes observed data as input (using keyword arguments named according to the observables defined in the SciStanPy model – “reaction_rates” in the example above case) and returns the log-likelihood of the data given the model. Parameter values for the returned model will initially be random, but can be optimized using standard PyTorch techniques. Compiling to a PyTorch module like this also allows SciStanPy models to be dropped in to other frameworks that rely on or extend PyTorch.</p>
+<p>As a convenience method, SciStanPy models can be converted to PyTorch Modules and optimized in a single step using the <a class="reference internal" href="api/model/model.html#scistanpy.model.model.Model.mle" title="scistanpy.model.model.Model.mle"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mle()</span></code></a> method:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Perform maximum likelihood estimation (MLE) using PyTorch backend</span>
+<span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that if default data was provided during model initialization, then no data needs to be provided to this method call–the registered defaults will be used automatically. Also note that, because this is a PyTorch-based method, GPU accelerattion can be used, which is a particularly useful feature for larger models.</p>
+<p>The <a class="reference internal" href="api/model/results/mle.html#scistanpy.model.results.mle.MLE" title="scistanpy.model.results.mle.MLE"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLE</span></code></a> object returned by <a class="reference internal" href="api/model/model.html#scistanpy.model.model.Model.mle" title="scistanpy.model.model.Model.mle"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mle()</span></code></a> method contains the optimized parameter values (accessible as instance variables or via the <cite>model_to_varname</cite> dictionary) and utility methods for evaluating the fit. Extensive details can be found in the <a class="reference internal" href="api/model/results/mle.html#scistanpy.model.results.mle.MLE" title="scistanpy.model.results.mle.MLE"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLE</span> <span class="pre">documentation</span></code></a>, but one to highlight is <code class="xref py py-meth docutils literal notranslate"><span class="pre">scistanpy.model.results.mle.MLE.get_inference_obj()</span></code>, which bootstraps samples from the optimized model, providing a cheap (relative to full MCMC sampling) alternative for uncertainty quantification. It can also be particularly helpful during the early stages of model development for assessing model validity before committing to MCMC sampling, especially for large models. Indeed, evaluating model fit with the returned <a class="reference internal" href="api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes" title="scistanpy.model.results.mle.MLEInferenceRes"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLEInferenceRes</span></code></a> instance is as straightforward as below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get inference object from MLE result</span>
+<span class="n">mle_inference</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># Evaluate model fit with posterior predictive checks</span>
+<span class="n">mle_inference</span><span class="o">.</span><span class="n">run_ppc</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Additional methods exposed by the <a class="reference internal" href="api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes" title="scistanpy.model.results.mle.MLEInferenceRes"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLEInferenceRes</span></code></a> can be found in its <a class="reference internal" href="api/model/results/mle.html"><span class="doc">associated documentation</span></a>. Note that the MLEInferenceRes class also exposes the <cite>inference_obj</cite> instance variable, which is an <cite>arviz.InferenceData &lt;https://python.arviz.org/en/latest/api/generated/arviz.InferenceData.html&gt;_</cite> object containing the samples drawn from the model. This can be used to interface directly with the <cite>ArviZ ecosystem &lt;https://python.arviz.org/en/latest/index.html&gt;_</cite> for analysis of Bayesian models.</p>
+<p>The most notable feature of SciStanPy–and, indeed, the inspiration for its name–is its ability to automatically write and execute <a class="reference external" href="https://mc-stan.org/">Stan</a> programs. As with SciStanPy’s PyTorch’s integration, Stan functionality can be accessed at both the model and inference levels. To access an object representing a Stan model, run the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert to a StanModel</span>
+<span class="n">stan_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_stan</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The returned <a class="reference internal" href="api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel" title="scistanpy.model.stan.stan_model.StanModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">StanModel</span></code></a> object is an extension of <a class="reference external" href="https://mc-stan.org/cmdstanpy/">cmdstanpy’s</a> <a class="reference external" href="https://mc-stan.org/cmdstanpy/api.html#cmdstanmodel">CmdStanModel</a> class. When instantiated, it will automatically write and compile a Stan program to sample from the model defined in SciStanPy. The resulting StanModel instance will use this Stan program for subsequent operations. Currently, the <code class="xref py py-meth docutils literal notranslate"><span class="pre">sample()</span></code> method has full support, while other <a class="reference external" href="https://mc-stan.org/cmdstanpy/api.html#cmdstanmodel">CmdStanModel</a> methods have experimental support. See the <a class="reference internal" href="api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel" title="scistanpy.model.stan.stan_model.StanModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">StanModel</span></code></a> documentation for more details.</p>
+<p>To write, compile, and sample from a SciStanPy model directly, run the below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run Hamiltonian Monte Carlo sampling</span>
+<span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>As with the PyTorch model, if the “default_data” argument was provided to the parent class on initialization, that data will be used for sampling. Otherwise, it should be provided as the “data” kwarg to <cite>model.mcmc()</cite>.</p>
+<p>The <a class="reference internal" href="api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults" title="scistanpy.model.results.hmc.SampleResults"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleResults</span></code></a> instance that is returned by the <a class="reference internal" href="api/model/model.html#scistanpy.model.model.Model.mcmc" title="scistanpy.model.model.Model.mcmc"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mcmc()</span></code></a> method contains the samples drawn during sampling. The <cite>SampleResults</cite> class is an extension of the <a class="reference internal" href="api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes" title="scistanpy.model.results.mle.MLEInferenceRes"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLEInferenceRes</span></code></a> class introduced above. It shares the same methods and properties, plus some others. Most notable among the additional methods are <code class="xref py py-meth docutils literal notranslate"><span class="pre">diagnose()</span></code>, which runs diagnostic checks on MCMC samples (see <a class="reference external" href="https://mc-stan.org/learn-stan/diagnostics-warnings.html">Stan’s documentation</a> for a review of the different diagnostics), <code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_sample_failure_quantile_traces()</span></code>, which provides an interactive dashboard for visualizing <em>samples</em> that failed diagnostic  checks, and <code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_variable_failure_quantile_traces()</span></code>, which provides an interactive dashboard for visualizing <em>variables</em> (i.e., parameters) that failed diagnostic checks.</p>
+<p>Additional examples demonstrating usage of the above features can be found in the <a class="reference internal" href="examples/index.html"><span class="doc">Examples</span></a> section of the documentation.</p>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+<section id="api-documentation">
+<h1>API Documentation<a class="headerlink" href="#api-documentation" title="Link to this heading">¶</a></h1>
+<section id="essential-components">
+<h2>Essential Components<a class="headerlink" href="#essential-components" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default" id="id3">
+<caption><span class="caption-text">Essential Components of SciStanPy</span><a class="headerlink" href="#id3" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Component</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="api/model/model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></p></td>
+<td><p>Parent class for all SciStanPy models, handling data management, model building, and inference.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/model/components/constants.html#scistanpy.model.components.constants.Constant" title="scistanpy.model.components.constants.Constant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Constant</span></code></a></p></td>
+<td><p>Describes constant values used in SciStanPy models.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/model/components/parameters.html#module-scistanpy.model.components.parameters" title="scistanpy.model.components.parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">parameters</span></code></a></p></td>
+<td><p>Contains objects that describe latent and observed parameters in SciStanPy models as probability distributions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/operations.html#module-scistanpy.operations" title="scistanpy.operations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">operations</span></code></a></p></td>
+<td><p>Contains operations for transforming parameters and building relationships between them.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="all-submodules">
+<h2>All Submodules<a class="headerlink" href="#all-submodules" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">SciStanPy API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#top-level-package">Top-Level Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#module-overview">Module Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#quick-navigation">Quick Navigation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/model/index.html">Model API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/operations.html">Operations API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#usage-notes">Usage Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#missing-something">Missing Something?</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="copyright-and-license">
+<h1>Copyright and License<a class="headerlink" href="#copyright-and-license" title="Link to this heading">¶</a></h1>
+<p>Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the MIT License.</p>
+</section>
+<section id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading">¶</a></h1>
+<p>This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit <a class="reference external" href="https://cla.microsoft.com">https://cla.microsoft.com</a>.</p>
+<p>When you submit a pull request, a CLA-bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repositories using our CLA.</p>
+<p>This project has adopted the <a class="reference external" href="https://opensource.microsoft.com/codeofconduct/">Microsoft Open Source Code of Conduct</a>. For more information see the <a class="reference external" href="https://opensource.microsoft.com/codeofconduct/faq/">Code of Conduct FAQ</a> or contact <a class="reference external" href="mailto:opencode&#37;&#52;&#48;microsoft&#46;com">opencode<span>&#64;</span>microsoft<span>&#46;</span>com</a> with any additional questions or comments.</p>
+</section>
+<section id="trademarks">
+<h1>Trademarks<a class="headerlink" href="#trademarks" title="Link to this heading">¶</a></h1>
+<p>This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow <a class="reference external" href="https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks">Microsoft’s Trademark &amp; Brand Guidelines</a>. Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship. Any use of third-party trademarks or logos are subject to those third-party’s policies.</p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">SciStanPy API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="api/index.html" title="next chapter">SciStanPy API Reference</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
 </html>
