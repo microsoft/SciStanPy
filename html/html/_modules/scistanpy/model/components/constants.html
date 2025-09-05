@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scistanpy.model.components.constants &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for scistanpy.model.components.constants</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Constant value components for SciStanPy models.</span>
+
+<span class="sd">This module provides the Constant class for representing fixed values in SciStanPy</span>
+<span class="sd">models. Constants serve as the foundational building blocks for model hierarchies,</span>
+<span class="sd">providing fixed hyperparameters, unmodeled data values, and other numerical</span>
+<span class="sd">components that don&#39;t change during inference.</span>
+
+<span class="sd">The Constant class integrates with SciStanPy&#39;s model component hierarchy while</span>
+<span class="sd">providing specialized functionality for fixed-value components. It is particularly</span>
+<span class="sd">important for interactive model manipulation during prior predictive checks.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstract_model_component</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
+
+
+<div class="viewcode-block" id="Constant">
+<a class="viewcode-back" href="../../../../docs/api/model/components/constants.html#scistanpy.model.components.constants.Constant">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Constant</span><span class="p">(</span><span class="n">abstract_model_component</span><span class="o">.</span><span class="n">AbstractModelComponent</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a constant value component in SciStanPy models.</span>
+
+<span class="sd">    This class wraps fixed numerical values to integrate them into the SciStanPy</span>
+<span class="sd">    model component hierarchy. Constants provide the foundation for model</span>
+<span class="sd">    construction by supplying fixed hyperparameters, unmodeled data, and other</span>
+<span class="sd">    numerical values that remain unchanged during inference.</span>
+
+<span class="sd">    :param value: The constant value to wrap</span>
+<span class="sd">    :type value: Union[custom_types.Integer, custom_types.Float, npt.NDArray, np.integer,</span>
+<span class="sd">        np.floating]</span>
+<span class="sd">    :param lower_bound: Optional lower bound for value validation. Defaults to None.</span>
+<span class="sd">    :type lower_bound: Optional[custom_types.Float]</span>
+<span class="sd">    :param upper_bound: Optional upper bound for value validation. Defaults to None.</span>
+<span class="sd">    :type upper_bound: Optional[custom_types.Float]</span>
+<span class="sd">    :param togglable: Whether value can be toggled in interactive interfaces. Auto-detected</span>
+<span class="sd">        if None. Defaults to None.</span>
+<span class="sd">    :type togglable: Optional[bool]</span>
+<span class="sd">    :param enforce_uniformity: Whether to require all array elements to be identical.</span>
+<span class="sd">        Defaults to False.</span>
+<span class="sd">    :type enforce_uniformity: bool</span>
+<span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
+
+<span class="sd">    :ivar value: The stored constant value as a NumPy array</span>
+<span class="sd">    :ivar BASE_STAN_DTYPE: Stan data type (&quot;real&quot; or &quot;int&quot;) inferred from value</span>
+<span class="sd">    :ivar LOWER_BOUND: Lower bound constraint (if specified)</span>
+<span class="sd">    :ivar UPPER_BOUND: Upper bound constraint (if specified)</span>
+<span class="sd">    :ivar is_togglable: Whether the constant can be modified in interactive contexts</span>
+
+<span class="sd">    :raises ValueError: If value violates specified bounds</span>
+<span class="sd">    :raises ValueError: If enforce_uniformity=True but array has non-uniform values</span>
+
+<span class="sd">    Key Features:</span>
+<span class="sd">    - **Automatic Type Inference**: Determines appropriate Stan data types</span>
+<span class="sd">    - **Bound Checking**: Validates values against optional constraints</span>
+<span class="sd">    - **Interactive Support**: Configures sliders for model exploration</span>
+
+<span class="sd">    The class automatically handles:</span>
+<span class="sd">    - Conversion of Python scalars to NumPy arrays</span>
+<span class="sd">    - Shape inference from array inputs</span>
+<span class="sd">    - Data type detection for Stan code generation</span>
+<span class="sd">    - Bound validation at initialization</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Scalar constant</span>
+<span class="sd">        &gt;&gt;&gt; mu_prior = Constant(0.0)</span>
+<span class="sd">        &gt;&gt;&gt; # Array constant with bounds</span>
+<span class="sd">        &gt;&gt;&gt; design_matrix = Constant(X_data, lower_bound=0.0)</span>
+<span class="sd">        &gt;&gt;&gt; # Integer constant</span>
+<span class="sd">        &gt;&gt;&gt; n_obs = Constant(100)</span>
+<span class="sd">        &gt;&gt;&gt; # Uniform array (enforced)</span>
+<span class="sd">        &gt;&gt;&gt; alpha_symmetric = Constant([1.0, 1.0, 1.0], enforce_uniformity=True)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">,</span>
+            <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">lower_bound</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Float&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">upper_bound</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Float&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">togglable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">enforce_uniformity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a constant value component with validation and type inference.</span>
+
+<span class="sd">        The initialization process:</span>
+<span class="sd">        1. Converts input values to NumPy arrays</span>
+<span class="sd">        2. Infers appropriate Stan data types</span>
+<span class="sd">        3. Validates bounds if specified</span>
+<span class="sd">        4. Sets up PyTorch tensor representations</span>
+<span class="sd">        5. Configures interactive properties</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># If the value is a numpy array, get the shape</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">BASE_STAN_DTYPE</span> <span class="o">=</span> <span class="p">(</span>  <span class="c1"># pylint: disable=invalid-name</span>
+                <span class="s2">&quot;real&quot;</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;int&quot;</span>
+            <span class="p">)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;shape&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="c1"># Otherwise, convert to a numpy array</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">BASE_STAN_DTYPE</span> <span class="o">=</span> <span class="s2">&quot;real&quot;</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;int&quot;</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+        <span class="c1"># Check bounds if provided</span>
+        <span class="k">if</span> <span class="n">lower_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">minimum</span> <span class="o">:=</span> <span class="n">value</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">&lt;</span> <span class="n">lower_bound</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Value </span><span class="si">{</span><span class="n">minimum</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">}</span><span class="s2"> is less than lower bound </span><span class="si">{</span><span class="n">lower_bound</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">upper_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">maximum</span> <span class="o">:=</span> <span class="n">value</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">&gt;</span> <span class="n">upper_bound</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Value </span><span class="si">{</span><span class="n">maximum</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">}</span><span class="s2"> is greater than upper bound </span><span class="si">{</span><span class="n">upper_bound</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># If enforcing uniformity, there can only be one value. Every time this</span>
+        <span class="c1"># attribute is checked, it will be checked that the value is a single value.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enforce_uniformity</span> <span class="o">=</span> <span class="n">enforce_uniformity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enforce_uniformity</span>  <span class="c1"># Runs check, pylint: disable=pointless-statement</span>
+
+        <span class="c1"># Set upper and lower bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOWER_BOUND</span> <span class="o">=</span> <span class="n">lower_bound</span>  <span class="c1"># pylint: disable=invalid-name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">UPPER_BOUND</span> <span class="o">=</span> <span class="n">upper_bound</span>  <span class="c1"># pylint: disable=invalid-name</span>
+
+        <span class="c1"># Set the value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_torch_parametrization</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="c1"># Set whether the value is togglable. By default, it is for floats and</span>
+        <span class="c1"># is not for integers.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_togglable</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">BASE_STAN_DTYPE</span> <span class="o">==</span> <span class="s2">&quot;real&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">togglable</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">togglable</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Initialize the parent class</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_draw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">level_draws</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">]],</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">,</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw values for this constant component (returns the fixed value).</span>
+
+<span class="sd">        :param level_draws: Parent component draws (should be empty for constants)</span>
+<span class="sd">        :type level_draws: dict[str, Union[npt.NDArray, custom_types.Float]]</span>
+<span class="sd">        :param seed: Random seed (unused for constants)</span>
+<span class="sd">        :type seed: Optional[custom_types.Integer]</span>
+
+<span class="sd">        :returns: The constant value</span>
+<span class="sd">        :rtype: Union[npt.NDArray, custom_types.Float, custom_types.Integer]</span>
+
+<span class="sd">        :raises AssertionError: If level_draws is not empty (constants have no parents)</span>
+
+<span class="sd">        Since constants represent fixed values, this method simply returns</span>
+<span class="sd">        the stored value without any random sampling.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Level draws should be empty</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">level_draws</span>
+
+        <span class="c1"># Just return the value</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+
+<div class="viewcode-block" id="Constant.get_right_side">
+<a class="viewcode-back" href="../../../../docs/api/model/components/constants.html#scistanpy.model.components.constants.Constant.get_right_side">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">start_dims</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">end_dims</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">offset_adjustment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return Stan code for right-hand side (empty for constants).</span>
+
+<span class="sd">        :param index_opts: Indexing options (unused for constants)</span>
+<span class="sd">        :type index_opts: Optional[tuple[str, ...]]</span>
+<span class="sd">        :param start_dims: Starting dimensions (unused for constants)</span>
+<span class="sd">        :type start_dims: Optional[dict[str, custom_types.Integer]]</span>
+<span class="sd">        :param end_dims: Ending dimensions (unused for constants)</span>
+<span class="sd">        :type end_dims: Optional[dict[str, custom_types.Integer]]</span>
+<span class="sd">        :param offset_adjustment: Index offset (unused for constants)</span>
+<span class="sd">        :type offset_adjustment: int</span>
+
+<span class="sd">        :returns: Empty string (constants don&#39;t have right-hand side expressions)</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        Constants don&#39;t participate in Stan probability statements as they</span>
+<span class="sd">        represent fixed data values, so this method returns an empty string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_lim</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">lim_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;low&quot;</span><span class="p">,</span> <span class="s2">&quot;high&quot;</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;custom_types.Float&quot;</span><span class="p">,</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate appropriate limits for interactive sliders.</span>
+
+<span class="sd">        :param lim_type: Type of limit to calculate (&quot;low&quot; or &quot;high&quot;)</span>
+<span class="sd">        :type lim_type: Literal[&quot;low&quot;, &quot;high&quot;]</span>
+
+<span class="sd">        :returns: Tuple of (limit_value, order_of_magnitude)</span>
+<span class="sd">        :rtype: tuple[custom_types.Float, custom_types.Float]</span>
+
+<span class="sd">        :raises ValueError: If lim_type is not &quot;low&quot; or &quot;high&quot;</span>
+
+<span class="sd">        This method calculates reasonable bounds for interactive sliders</span>
+<span class="sd">        based on the order of magnitude of the constant value. It provides</span>
+<span class="sd">        a range that allows meaningful exploration around the current value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the largest absolute value</span>
+        <span class="n">maxval</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+        <span class="c1"># If the value is zero, order of magnitude is 0</span>
+        <span class="k">if</span> <span class="n">maxval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Otherwise, calculate the order of magnitude</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">maxval</span><span class="p">)</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="k">if</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+
+        <span class="c1"># Minimum order is 0</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+
+        <span class="c1"># Add or subtract one order of magnitude to get the limit</span>
+        <span class="k">if</span> <span class="n">lim_type</span> <span class="o">==</span> <span class="s2">&quot;high&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">maxval</span> <span class="o">+</span> <span class="mi">10</span><span class="o">**</span><span class="n">order</span><span class="p">,</span> <span class="n">order</span>
+        <span class="k">elif</span> <span class="n">lim_type</span> <span class="o">==</span> <span class="s2">&quot;low&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">maxval</span> <span class="o">-</span> <span class="mi">10</span><span class="o">**</span><span class="n">order</span><span class="p">,</span> <span class="n">order</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid limit type.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return human-readable string representation.</span>
+
+<span class="sd">        :returns: String showing constant assignment</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        Creates a readable representation showing the constant name and value,</span>
+<span class="sd">        useful for model inspection and debugging.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">slider_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get starting value for interactive sliders.</span>
+
+<span class="sd">        :returns: Appropriate starting value for sliders</span>
+<span class="sd">        :rtype: custom_types.Float</span>
+
+<span class="sd">        Returns the lower bound if specified, otherwise calculates a reasonable</span>
+<span class="sd">        lower limit based on the value&#39;s order of magnitude.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Lower bound if we have one</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">LOWER_BOUND</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">LOWER_BOUND</span>
+
+        <span class="c1"># Otherwise, retrieve lower limit</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_lim</span><span class="p">(</span><span class="s2">&quot;low&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">slider_end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get ending value for interactive sliders.</span>
+
+<span class="sd">        :returns: Appropriate ending value for sliders</span>
+<span class="sd">        :rtype: custom_types.Float</span>
+
+<span class="sd">        Returns the upper bound if specified, otherwise calculates a reasonable</span>
+<span class="sd">        upper limit based on the value&#39;s order of magnitude.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Upper bound if we have one</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">UPPER_BOUND</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">UPPER_BOUND</span>
+
+        <span class="c1"># Otherwise, retrieve upper limit</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_lim</span><span class="p">(</span><span class="s2">&quot;high&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">slider_step_size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get step size for interactive sliders.</span>
+
+<span class="sd">        :returns: Appropriate step size for sliders</span>
+<span class="sd">        :rtype: custom_types.Float</span>
+
+<span class="sd">        Calculates a step size that provides approximately 100 steps between</span>
+<span class="sd">        the slider start and end values, enabling fine-grained control.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># We allow 100 steps between the start and end values</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slider_end</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">slider_start</span><span class="p">)</span> <span class="o">/</span> <span class="mi">100</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">torch_parametrization</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get PyTorch tensor representation of the constant.</span>
+
+<span class="sd">        :returns: PyTorch tensor containing the constant value</span>
+<span class="sd">        :rtype: torch.Tensor</span>
+
+<span class="sd">        Provides a tensor representation for PyTorch-based computations,</span>
+<span class="sd">        enabling integration with gradient-based operations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_torch_parametrization</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enforce_uniformity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if uniformity enforcement is enabled.</span>
+
+<span class="sd">        :returns: True if uniformity is enforced</span>
+<span class="sd">        :rtype: bool</span>
+
+<span class="sd">        :raises ValueError: If uniformity is enforced but value is not uniform</span>
+
+<span class="sd">        When enabled, this property ensures that all elements of array-valued</span>
+<span class="sd">        constants have the same value, which is useful for symmetric priors</span>
+<span class="sd">        and other modeling contexts requiring uniform parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enforce_uniformity</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;If enforcing uniformity, the value must be a single value.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enforce_uniformity</span>
+
+    <span class="nd">@enforce_uniformity</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enforce_uniformity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set uniformity enforcement with validation.</span>
+
+<span class="sd">        :param value: Whether to enforce uniformity</span>
+<span class="sd">        :type value: bool</span>
+
+<span class="sd">        :raises ValueError: If enabling uniformity but current value is not uniform</span>
+
+<span class="sd">        When enabling uniformity enforcement, validates that the current value</span>
+<span class="sd">        satisfies the uniformity constraint before updating the setting.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;If enforcing uniformity, the value must be a single value.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enforce_uniformity</span> <span class="o">=</span> <span class="n">value</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  <li><a href="../../../scistanpy.html">scistanpy</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

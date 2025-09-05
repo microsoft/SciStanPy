@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scistanpy.model.results.mle &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for scistanpy.model.results.mle</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Maximum likelihood estimation results analysis and visualization for SciStanPy</span>
+<span class="sd">models.</span>
+
+<span class="sd">This module provides analysis tools for maximum likelihood estimation</span>
+<span class="sd">results from SciStanPy models. It offers diagnostic plots, calibration</span>
+<span class="sd">checks, and posterior predictive analysis tools designed specifically for MLE-based</span>
+<span class="sd">inference workflows.</span>
+
+<span class="sd">The module centers around three main classes: MLEParam for individual parameter</span>
+<span class="sd">estimates, MLE for complete model results, and MLEInferenceRes class, which wraps</span>
+<span class="sd">ArviZ InferenceData objects with specialized methods for MLE result analysis. Together,</span>
+<span class="sd">these classes provide the estimated parameter values and the fitted probability</span>
+<span class="sd">distributions resulting from MLE analysis, and allow for downstream analysis including</span>
+<span class="sd">uncertainty quantification and posterior predictive sampling. It provides both individual</span>
+<span class="sd">diagnostic tools and analysis workflows that combine multiple checks</span>
+<span class="sd">into unified reporting interfaces.</span>
+
+<span class="sd">Key Features:</span>
+<span class="sd">    - Individual parameter MLE estimates with associated distributions</span>
+<span class="sd">    - Complete model MLE results with loss tracking and diagnostics</span>
+<span class="sd">    - Posterior predictive checking workflows</span>
+<span class="sd">    - Model calibration analysis with quantitative metrics</span>
+<span class="sd">    - Interactive visualization with customizable display options</span>
+<span class="sd">    - Integration with ArviZ for standardized Bayesian workflows</span>
+<span class="sd">    - Memory-efficient handling of large posterior predictive samples</span>
+<span class="sd">    - Flexible output formats for different analysis needs</span>
+
+<span class="sd">Visualization Capabilities:</span>
+<span class="sd">    - Posterior predictive sample plotting with confidence intervals</span>
+<span class="sd">    - Calibration plots with deviation metrics</span>
+<span class="sd">    - Quantile-quantile plots for model validation</span>
+<span class="sd">    - Interactive layouts with customizable dimensions</span>
+
+
+<span class="sd">Performance Considerations:</span>
+<span class="sd">    - Batch sampling prevents memory overflow for large sample requests</span>
+<span class="sd">    - GPU acceleration is preserved through PyTorch distribution objects</span>
+
+<span class="sd">The module is designed to work with SciStanPy&#39;s MLE estimation workflow,</span>
+<span class="sd">providing immediate access to model diagnostics and validation tools</span>
+<span class="sd">once MLE fitting is complete. The MLE results can be used for various purposes</span>
+<span class="sd">including model comparison, uncertainty quantification, and as initialization for</span>
+<span class="sd">more sophisticated inference procedures like MCMC sampling.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># pylint: disable=too-many-lines</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Generator</span><span class="p">,</span>
+    <span class="n">Literal</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">overload</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
+    <span class="n">TYPE_CHECKING</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">holoviews</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hvplot.pandas</span>  <span class="c1"># pylint: disable=unused-import</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">panel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">plotting</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">model</span> <span class="k">as</span> <span class="n">ssp_model</span>
+
+
+<div class="viewcode-block" id="_log10_shift">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle._log10_shift">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_log10_shift</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply log10 transformation with automatic shifting for non-positive values.</span>
+
+<span class="sd">    This utility function handles logarithmic transformation of arrays that may</span>
+<span class="sd">    contain non-positive values by finding the global minimum across all arrays</span>
+<span class="sd">    and shifting them to ensure all values are positive before applying log10.</span>
+
+<span class="sd">    :param args: Arrays to transform with log10 after shifting</span>
+<span class="sd">    :type args: npt.NDArray</span>
+
+<span class="sd">    :returns: Tuple of log10-transformed arrays after appropriate shifting</span>
+<span class="sd">    :rtype: tuple[npt.NDArray, ...]</span>
+
+<span class="sd">    The function:</span>
+<span class="sd">    1. Finds the absolute minimum value across all input arrays</span>
+<span class="sd">    2. Shifts all arrays by (1 - min_value) to ensure minimum becomes 1</span>
+<span class="sd">    3. Applies log10 transformation to all shifted arrays</span>
+
+<span class="sd">    This ensures logarithmic scaling is possible even when data contains</span>
+<span class="sd">    zero or negative values, which is common in certain statistical contexts.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; arr1 = np.array([-5, 0, 5])</span>
+<span class="sd">        &gt;&gt;&gt; arr2 = np.array([-2, 3, 8])</span>
+<span class="sd">        &gt;&gt;&gt; log_arr1, log_arr2 = _log10_shift(arr1, arr2)</span>
+<span class="sd">        &gt;&gt;&gt; # All values are now log10-transformed with proper scaling</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get the minimum value across all arrays</span>
+    <span class="n">min_val</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+
+    <span class="c1"># Shift the arrays and apply log10</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">arg</span> <span class="o">-</span> <span class="n">min_val</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MLEInferenceRes">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MLEInferenceRes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analysis interface for maximum likelihood estimation results.</span>
+
+<span class="sd">    This class provides tools for analyzing and visualizing MLE</span>
+<span class="sd">    results from SciStanPy models. It wraps ArviZ InferenceData objects with</span>
+<span class="sd">    specialized methods for posterior predictive checking, calibration analysis,</span>
+<span class="sd">    and model validation.</span>
+
+<span class="sd">    :param inference_obj: ArviZ InferenceData object or path to saved results</span>
+<span class="sd">    :type inference_obj: Union[az.InferenceData, str]</span>
+
+<span class="sd">    :ivar inference_obj: Stored ArviZ InferenceData object with all results</span>
+
+<span class="sd">    :raises ValueError: If inference_obj is neither string nor InferenceData</span>
+<span class="sd">    :raises ValueError: If required groups (posterior, posterior_predictive) are missing</span>
+
+<span class="sd">    The class expects the InferenceData object to contain:</span>
+<span class="sd">    - **posterior**: Samples from fitted parameter distributions</span>
+<span class="sd">    - **posterior_predictive**: Samples from observable distributions</span>
+<span class="sd">    - **observed_data**: Original observed data used for fitting</span>
+
+<span class="sd">    Key Capabilities:</span>
+<span class="sd">    - Posterior predictive checking with multiple visualization modes</span>
+<span class="sd">    - Quantitative model calibration assessment</span>
+<span class="sd">    - Interactive diagnostic dashboards</span>
+<span class="sd">    - Summary statistics computation and caching</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Load from MLE result</span>
+<span class="sd">        &gt;&gt;&gt; mle_analysis = mle_result.get_inference_obj()</span>
+<span class="sd">        &gt;&gt;&gt; # Run comprehensive diagnostics</span>
+<span class="sd">        &gt;&gt;&gt; dashboard = mle_analysis.run_ppc()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inference_obj</span><span class="p">:</span> <span class="n">az</span><span class="o">.</span><span class="n">InferenceData</span> <span class="o">|</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Base class just initializes the ArviZ object.&quot;&quot;&quot;</span>
+        <span class="c1"># If the ArviZ object is a string, we assume it is a path to a netcdf file</span>
+        <span class="c1"># and load it from there</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inference_obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">from_netcdf</span><span class="p">(</span><span class="n">inference_obj</span><span class="p">)</span>
+
+        <span class="c1"># If the ArviZ object is an inference data object, we assume it is already</span>
+        <span class="c1"># built and just assign it to the class</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inference_obj</span><span class="p">,</span> <span class="n">az</span><span class="o">.</span><span class="n">InferenceData</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span> <span class="o">=</span> <span class="n">inference_obj</span>
+
+        <span class="c1"># Otherwise, we raise an error</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;inference_obj must be either a string or an InferenceData object&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># The arviz object must have a posterior, a posterior_predictive, and</span>
+        <span class="c1"># an observed_data group</span>
+        <span class="k">if</span> <span class="n">missing_groups</span> <span class="o">:=</span> <span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;posterior&quot;</span><span class="p">,</span> <span class="s2">&quot;posterior_predictive&quot;</span><span class="p">}</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">groups</span><span class="p">())</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;ArviZ object is missing the following groups: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_groups</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="MLEInferenceRes.save_netcdf">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.save_netcdf">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save the ArviZ InferenceData object to NetCDF format.</span>
+
+<span class="sd">        :param filename: Path where to save the NetCDF file</span>
+<span class="sd">        :type filename: str</span>
+
+<span class="sd">        This method provides persistent storage of analysis results.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; mle_analysis.save_netcdf(&#39;my_mle_results.nc&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; # Later: reload with MLEInferenceRes(&#39;my_mle_results.nc&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_group</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">attrname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_group</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">force_del</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update or add a group to the ArviZ InferenceData object.</span>
+
+<span class="sd">        :param attrname: Name of the group to update or create</span>
+<span class="sd">        :type attrname: str</span>
+<span class="sd">        :param new_group: New dataset to add or use for updating</span>
+<span class="sd">        :type new_group: xr.Dataset</span>
+<span class="sd">        :param force_del: Whether to force deletion before adding. Defaults to False.</span>
+<span class="sd">        :type force_del: bool</span>
+
+<span class="sd">        This internal method manages the ArviZ object structure, enabling</span>
+<span class="sd">        addition of computed statistics and derived quantities while</span>
+<span class="sd">        maintaining data integrity.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># If the group already exists and we are not forcing a delete, we just update</span>
+        <span class="c1"># the group.</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="p">,</span> <span class="n">attrname</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force_del</span><span class="p">:</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="p">,</span> <span class="n">attrname</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_group</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Otherwise, if we are forcing a delete, we delete the group before adding</span>
+        <span class="c1"># the new one</span>
+        <span class="k">if</span> <span class="n">force_del</span><span class="p">:</span>
+            <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="p">,</span> <span class="n">attrname</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">add_groups</span><span class="p">({</span><span class="n">attrname</span><span class="p">:</span> <span class="n">new_group</span><span class="p">})</span>
+
+<div class="viewcode-block" id="MLEInferenceRes.calculate_summaries">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.calculate_summaries">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_summaries</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">var_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">filter_vars</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;like&quot;</span><span class="p">,</span> <span class="s2">&quot;regex&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;stats&quot;</span><span class="p">,</span> <span class="s2">&quot;diagnostics&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;stats&quot;</span><span class="p">,</span>
+        <span class="n">round_to</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">circ_var_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stat_focus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span>
+        <span class="n">stat_funcs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">callable</span><span class="p">],</span> <span class="nb">callable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">extend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">hdi_prob</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.94</span><span class="p">,</span>
+        <span class="n">skipna</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute summary statistics for MLE results.</span>
+
+<span class="sd">        This method wraps ArviZ&#39;s summary functionality while adding the computed</span>
+<span class="sd">        statistics to the InferenceData object for persistence and reuse. See</span>
+<span class="sd">        `az.summary` for detailed descriptions of arguments.</span>
+
+<span class="sd">        :param var_names: Variable names to include in summary. Defaults to None (all variables).</span>
+<span class="sd">        :type var_names: Optional[list[str]]</span>
+<span class="sd">        :param filter_vars: Variable filtering method. Defaults to None.</span>
+<span class="sd">        :type filter_vars: Optional[Literal[None, &quot;like&quot;, &quot;regex&quot;]]</span>
+<span class="sd">        :param kind: Type of statistics to compute. Defaults to &quot;stats&quot;.</span>
+<span class="sd">        :type kind: Literal[&quot;all&quot;, &quot;stats&quot;, &quot;diagnostics&quot;]</span>
+<span class="sd">        :param round_to: Number of decimal places for rounding. Defaults to 2.</span>
+<span class="sd">        :type round_to: custom_types.Integer</span>
+<span class="sd">        :param circ_var_names: Names of circular variables. Defaults to None.</span>
+<span class="sd">        :type circ_var_names: Optional[list[str]]</span>
+<span class="sd">        :param stat_focus: Primary statistic for focus. Defaults to &quot;mean&quot;.</span>
+<span class="sd">        :type stat_focus: str</span>
+<span class="sd">        :param stat_funcs: Custom statistic functions. Defaults to None.</span>
+<span class="sd">        :type stat_funcs: Optional[Union[dict[str, callable], callable]]</span>
+<span class="sd">        :param extend: Use functions provided by `stat_funcs`. Defaults to True.</span>
+<span class="sd">            Only meaningful when `stat_funcs` is provided.</span>
+<span class="sd">        :type extend: bool</span>
+<span class="sd">        :param hdi_prob: Probability for highest density interval. Defaults to 0.94.</span>
+<span class="sd">        :type hdi_prob: custom_types.Float</span>
+<span class="sd">        :param skipna: Whether to skip NaN values. Defaults to False.</span>
+<span class="sd">        :type skipna: bool</span>
+
+<span class="sd">        :returns: Dataset containing computed summary statistics</span>
+<span class="sd">        :rtype: xr.Dataset</span>
+
+<span class="sd">        :raises ValueError: If diagnostics requested without chain dimension existing</span>
+<span class="sd">            in `self.inference_obj.posterior.dims`</span>
+<span class="sd">        :raises ValueError: If diagnostics requested with single chain.</span>
+
+<span class="sd">        The computed statistics are automatically added to the InferenceData</span>
+<span class="sd">        object under the &#39;variable_summary_stats&#39; group for persistence.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Compute basic statistics</span>
+<span class="sd">            &gt;&gt;&gt; stats = mle_analysis.calculate_summaries()</span>
+<span class="sd">            &gt;&gt;&gt; # Compute diagnostics for multi-chain results</span>
+<span class="sd">            &gt;&gt;&gt; diag = mle_analysis.calculate_summaries(kind=&quot;diagnostics&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># If there is no chain and draw dimension, we cannot run diagnostics</span>
+        <span class="k">if</span> <span class="s2">&quot;chain&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot run diagnostics on a dataset without chain and draw dimensions.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># If there is only one chain, we cannot run diagnostics</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">!=</span> <span class="s2">&quot;stats&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s2">&quot;chain&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot run diagnostics on a dataset run using a single chain&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Get the summary statistics</span>
+        <span class="n">summaries</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="p">,</span>
+            <span class="n">var_names</span><span class="o">=</span><span class="n">var_names</span><span class="p">,</span>
+            <span class="n">filter_vars</span><span class="o">=</span><span class="n">filter_vars</span><span class="p">,</span>
+            <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;xarray&quot;</span><span class="p">,</span>
+            <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span>
+            <span class="n">round_to</span><span class="o">=</span><span class="n">round_to</span><span class="p">,</span>
+            <span class="n">circ_var_names</span><span class="o">=</span><span class="n">circ_var_names</span><span class="p">,</span>
+            <span class="n">stat_focus</span><span class="o">=</span><span class="n">stat_focus</span><span class="p">,</span>
+            <span class="n">stat_funcs</span><span class="o">=</span><span class="n">stat_funcs</span><span class="p">,</span>
+            <span class="n">extend</span><span class="o">=</span><span class="n">extend</span><span class="p">,</span>
+            <span class="n">hdi_prob</span><span class="o">=</span><span class="n">hdi_prob</span><span class="p">,</span>
+            <span class="n">skipna</span><span class="o">=</span><span class="n">skipna</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Build or update the group</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_group</span><span class="p">(</span><span class="s2">&quot;variable_summary_stats&quot;</span><span class="p">,</span> <span class="n">summaries</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">summaries</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_iter_pp_obs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over posterior predictive samples and corresponding observations.</span>
+
+<span class="sd">        :yields: Tuples of (variable_name, reference_samples, observed_data)</span>
+<span class="sd">        :rtype: Generator[tuple[str, npt.NDArray, npt.NDArray], None, None]</span>
+
+<span class="sd">        This internal method provides a standardized interface for accessing</span>
+<span class="sd">        posterior predictive samples and observed data, handling dimension</span>
+<span class="sd">        reshaping and alignment automatically.</span>
+
+<span class="sd">        The yielded arrays are formatted as:</span>
+<span class="sd">        - reference_samples: 2D array (n_samples, n_features)</span>
+<span class="sd">        - observed_data: 1D array (n_features,)</span>
+
+<span class="sd">        This standardization enables consistent processing across all</span>
+<span class="sd">        diagnostic and visualization methods.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Loop over the posterior predictive samples</span>
+        <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">reference</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior_predictive</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+            <span class="c1"># Get the observed data and convert reference and observed to numpy</span>
+            <span class="c1"># arrays.</span>
+            <span class="n">observed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">observed_data</span><span class="p">[</span>  <span class="c1"># pylint: disable=no-member</span>
+                <span class="n">varname</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+            <span class="n">reference</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span>
+                <span class="n">reference</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+                    <span class="n">samples</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;chain&quot;</span><span class="p">,</span> <span class="s2">&quot;draw&quot;</span><span class="p">],</span> <span class="n">features</span><span class="o">=</span><span class="p">[],</span> <span class="n">create_index</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span>
+                <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                <span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Dims must align</span>
+            <span class="k">assert</span> <span class="n">observed</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">reference</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+            <span class="k">yield</span> <span class="n">varname</span><span class="p">,</span> <span class="n">reference</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">reference</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">observed</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                <span class="o">-</span><span class="mi">1</span>
+            <span class="p">)</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_calibration</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">return_deviance</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">display</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">width</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">height</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hv</span><span class="o">.</span><span class="n">Layout</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_calibration</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">return_deviance</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">display</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">width</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">height</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_calibration</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">return_deviance</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">display</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">width</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">height</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="MLEInferenceRes.check_calibration">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.check_calibration">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_calibration</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">return_deviance</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">600</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assess model calibration through posterior predictive quantile analysis.</span>
+
+<span class="sd">        This method evaluates how well the model&#39;s posterior predictive distribution</span>
+<span class="sd">        matches the observed data by analyzing the distribution of quantiles. Well-</span>
+<span class="sd">        calibrated models should produce observed data that are uniformly distributed</span>
+<span class="sd">        across the quantiles of the posterior predictive distribution.</span>
+
+<span class="sd">        :param return_deviance: Whether to return quantitative deviance metrics.</span>
+<span class="sd">            Defaults to False.</span>
+<span class="sd">        :type return_deviance: bool</span>
+<span class="sd">        :param display: Whether to return formatted layout for display. Defaults to True.</span>
+<span class="sd">        :type display: bool</span>
+<span class="sd">        :param width: Width of individual plots in pixels. Defaults to 600.</span>
+<span class="sd">        :type width: custom_types.Integer</span>
+<span class="sd">        :param height: Height of individual plots in pixels. Defaults to 600.</span>
+<span class="sd">        :type height: custom_types.Integer</span>
+
+<span class="sd">        :returns: Calibration plots and optionally deviance metrics</span>
+<span class="sd">        :rtype: Union[hv.Layout, dict[str, hv.Overlay], tuple[dict[str, hv.Overlay],</span>
+<span class="sd">            dict[str, float]]]</span>
+
+<span class="sd">        :raises ValueError: If both display and return_deviance are True</span>
+
+<span class="sd">        Calibration Assessment Process:</span>
+<span class="sd">        1. Calculate quantiles of observed data relative to posterior predictive samples</span>
+<span class="sd">        2. Plot empirical CDF of these quantiles</span>
+<span class="sd">        3. Compare to ideal diagonal line (perfect calibration)</span>
+<span class="sd">        4. Compute absolute deviance as area difference between curves</span>
+
+<span class="sd">        Interpretation:</span>
+<span class="sd">        - Diagonal line indicates perfect calibration</span>
+<span class="sd">        - Curves above diagonal suggest model overconfidence or poor fit</span>
+<span class="sd">        - Curves below diagonal suggest model underconfidence or poor fit</span>
+<span class="sd">        - Deviance score of 0 indicates perfect calibration</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Visual assessment</span>
+<span class="sd">            &gt;&gt;&gt; cal_layout = mle_analysis.check_calibration()</span>
+<span class="sd">            &gt;&gt;&gt; # Quantitative assessment</span>
+<span class="sd">            &gt;&gt;&gt; plots, deviances = mle_analysis.check_calibration(</span>
+<span class="sd">            ...     return_deviance=True, display=False</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; print(f&quot;Mean deviance: {np.mean(list(deviances.values())):.3f}&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># We cannot have both `display` and `return_deviance` set to True</span>
+        <span class="k">if</span> <span class="n">display</span> <span class="ow">and</span> <span class="n">return_deviance</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot have both `display` and `return_deviance` set to True.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Loop over the posterior predictive samples</span>
+        <span class="n">plots</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">deviances</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">observed</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_pp_obs</span><span class="p">():</span>
+
+            <span class="c1"># Build calibration plots and record deviance</span>
+            <span class="n">plot</span><span class="p">,</span> <span class="n">dev</span> <span class="o">=</span> <span class="n">plotting</span><span class="o">.</span><span class="n">plot_calibration</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">observed</span><span class="p">[</span><span class="kc">None</span><span class="p">])</span>
+            <span class="n">dev</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">deviances</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span> <span class="o">=</span> <span class="n">dev</span>
+
+            <span class="c1"># Finalize the plot with a text annotation and updates to the axes</span>
+            <span class="n">plots</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">plot</span>
+                <span class="o">*</span> <span class="n">hv</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span>
+                    <span class="mf">0.95</span><span class="p">,</span>
+                    <span class="mf">0.0</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;Absolute Deviance: </span><span class="si">{</span><span class="n">dev</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">halign</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span>
+                    <span class="n">valign</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span>
+                <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;ECDF of Quantiles: </span><span class="si">{</span><span class="n">varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Quantiles&quot;</span><span class="p">,</span>
+                <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Cumulative Probability&quot;</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># If requested, display the plots</span>
+        <span class="k">if</span> <span class="n">display</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hv</span><span class="o">.</span><span class="n">Layout</span><span class="p">(</span><span class="n">plots</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="o">.</span><span class="n">cols</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># If requested, return the plots and the deviance</span>
+        <span class="k">if</span> <span class="n">return_deviance</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">plots</span><span class="p">,</span> <span class="n">deviances</span>
+
+        <span class="c1"># Otherwise, just return the plots</span>
+        <span class="k">return</span> <span class="n">plots</span></div>
+
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_posterior_predictive_samples</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">quantiles</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="s2">&quot;custom_types.Float&quot;</span><span class="p">],</span>
+        <span class="n">use_ranks</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">logy</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">display</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">width</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">height</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hv</span><span class="o">.</span><span class="n">Layout</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_posterior_predictive_samples</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">quantiles</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="s2">&quot;custom_types.Float&quot;</span><span class="p">],</span>
+        <span class="n">use_ranks</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">logy</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">display</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">width</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">height</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="MLEInferenceRes.plot_posterior_predictive_samples">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.plot_posterior_predictive_samples">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_posterior_predictive_samples</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">quantiles</span><span class="o">=</span><span class="p">(</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="n">use_ranks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">logy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">display</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Visualize observed data against posterior predictive uncertainty intervals.</span>
+
+<span class="sd">        This method creates plots showing how observed data relates to the uncertainty</span>
+<span class="sd">        quantified by posterior predictive samples. The posterior predictive samples</span>
+<span class="sd">        are displayed as confidence intervals, with observed data overlaid as points.</span>
+
+<span class="sd">        :param quantiles: Quantiles defining confidence intervals. Defaults to</span>
+<span class="sd">            (0.025, 0.25, 0.5). Note: quantiles are automatically symmetrized and</span>
+<span class="sd">            median is always included.</span>
+<span class="sd">        :type quantiles: Sequence[custom_types.Float]</span>
+<span class="sd">        :param use_ranks: Whether to use ranks instead of raw values for x-axis.</span>
+<span class="sd">            Defaults to True.</span>
+<span class="sd">        :type use_ranks: bool</span>
+<span class="sd">        :param logy: Whether to use logarithmic y-axis scaling. Defaults to False.</span>
+<span class="sd">        :type logy: bool</span>
+<span class="sd">        :param display: Whether to return formatted layout for display. Defaults to True.</span>
+<span class="sd">        :type display: bool</span>
+<span class="sd">        :param width: Width of individual plots in pixels. Defaults to 600.</span>
+<span class="sd">        :type width: custom_types.Integer</span>
+<span class="sd">        :param height: Height of individual plots in pixels. Defaults to 400.</span>
+<span class="sd">        :type height: custom_types.Integer</span>
+
+<span class="sd">        :returns: Posterior predictive plots in requested format</span>
+<span class="sd">        :rtype: Union[hv.Layout, dict[str, hv.Overlay]]</span>
+
+<span class="sd">        Visualization Features:</span>
+<span class="sd">        - Confidence intervals shown as nested colored regions</span>
+<span class="sd">        - Observed data displayed as scatter points</span>
+<span class="sd">        - Optional rank transformation for better visualization of skewed data</span>
+<span class="sd">        - Logarithmic scaling with automatic shifting for non-positive values</span>
+<span class="sd">        - Interactive hover labels showing data point identifiers</span>
+
+<span class="sd">        The rank transformation is particularly useful when observed values have</span>
+<span class="sd">        highly skewed distributions, as it emphasizes the ordering rather than</span>
+<span class="sd">        the absolute magnitudes.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Standard posterior predictive plot</span>
+<span class="sd">            &gt;&gt;&gt; pp_layout = mle_analysis.plot_posterior_predictive_samples()</span>
+<span class="sd">            &gt;&gt;&gt; # Custom quantiles with logarithmic scaling</span>
+<span class="sd">            &gt;&gt;&gt; pp_plots = mle_analysis.plot_posterior_predictive_samples(</span>
+<span class="sd">            ...     quantiles=(0.05, 0.5, 0.95), logy=True, display=False</span>
+<span class="sd">            ... )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Process each observed variable</span>
+        <span class="n">plots</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">observed</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_pp_obs</span><span class="p">():</span>
+
+            <span class="c1"># Get the x-axis data</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">rankdata</span><span class="p">(</span><span class="n">observed</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;ordinal&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">use_ranks</span> <span class="k">else</span> <span class="n">observed</span>
+
+            <span class="c1"># If using a log-y axis, shift the y-data</span>
+            <span class="k">if</span> <span class="n">logy</span><span class="p">:</span>
+                <span class="n">reference</span><span class="p">,</span> <span class="n">observed</span> <span class="o">=</span> <span class="n">_log10_shift</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span>
+
+            <span class="c1"># Get labels</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">indices</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">indices</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">observed_data</span><span class="p">[</span>  <span class="c1"># pylint: disable=no-member</span>
+                            <span class="n">varname</span>
+                        <span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Sort data for plotting the areas and lines</span>
+            <span class="n">sorted_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">x</span><span class="p">[</span><span class="n">sorted_inds</span><span class="p">],</span>
+                <span class="n">reference</span><span class="p">[:,</span> <span class="n">sorted_inds</span><span class="p">],</span>
+                <span class="n">observed</span><span class="p">[</span><span class="n">sorted_inds</span><span class="p">],</span>
+                <span class="n">labels</span><span class="p">[</span><span class="n">sorted_inds</span><span class="p">],</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Build the plot</span>
+            <span class="n">plots</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span> <span class="o">=</span> <span class="n">plotting</span><span class="o">.</span><span class="n">quantile_plot</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+                <span class="n">reference</span><span class="o">=</span><span class="n">reference</span><span class="p">,</span>
+                <span class="n">quantiles</span><span class="o">=</span><span class="n">quantiles</span><span class="p">,</span>
+                <span class="n">observed</span><span class="o">=</span><span class="n">observed</span><span class="p">,</span>
+                <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="n">varname</span><span class="p">:</span> <span class="n">labels</span><span class="p">},</span>
+                <span class="n">include_median</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">overwrite_input</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">observed_type</span><span class="o">=</span><span class="s2">&quot;scatter&quot;</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span>
+                <span class="n">xlabel</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Observed Value </span><span class="si">{</span><span class="s1">&#39;Rank&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">use_ranks</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">ylabel</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Value</span><span class="si">{</span><span class="s1">&#39; log10&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">logy</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Posterior Predictive Samples: </span><span class="si">{</span><span class="n">varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># If requested, display the plots</span>
+        <span class="k">if</span> <span class="n">display</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hv</span><span class="o">.</span><span class="n">Layout</span><span class="p">(</span><span class="n">plots</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="o">.</span><span class="n">cols</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="n">shared_axes</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">plots</span></div>
+
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_observed_quantiles</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">use_ranks</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">display</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">width</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">height</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">windowsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hv</span><span class="o">.</span><span class="n">Layout</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_observed_quantiles</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">use_ranks</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">display</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">width</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">height</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">windowsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="MLEInferenceRes.plot_observed_quantiles">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.plot_observed_quantiles">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_observed_quantiles</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">use_ranks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">windowsize</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Visualize systematic patterns in observed data quantiles.</span>
+
+<span class="sd">        This method creates hexagonal density plots showing the relationship between</span>
+<span class="sd">        observed data values (or their ranks) and their corresponding quantiles</span>
+<span class="sd">        within the posterior predictive distribution. A rolling mean overlay</span>
+<span class="sd">        highlights systematic trends.</span>
+
+<span class="sd">        :param use_ranks: Whether to use ranks instead of raw values for x-axis. Defaults to True.</span>
+<span class="sd">        :type use_ranks: bool</span>
+<span class="sd">        :param display: Whether to return formatted layout for display. Defaults to True.</span>
+<span class="sd">        :type display: bool</span>
+<span class="sd">        :param width: Width of individual plots in pixels. Defaults to 600.</span>
+<span class="sd">        :type width: custom_types.Integer</span>
+<span class="sd">        :param height: Height of individual plots in pixels. Defaults to 400.</span>
+<span class="sd">        :type height: custom_types.Integer</span>
+<span class="sd">        :param windowsize: Size of rolling window for trend line. Defaults to None (automatic).</span>
+<span class="sd">        :type windowsize: Optional[custom_types.Integer]</span>
+
+<span class="sd">        :returns: Quantile plots in requested format</span>
+<span class="sd">        :rtype: Union[hv.Layout, dict[str, hv.Overlay]]</span>
+
+<span class="sd">        Visualization Components:</span>
+
+<span class="sd">        - Hexagonal binning showing density of (value, quantile) pairs</span>
+<span class="sd">        - Rolling mean trend line highlighting systematic patterns</span>
+<span class="sd">        - Colormap indicating point density for pattern identification</span>
+
+<span class="sd">        Pattern Interpretation:</span>
+
+<span class="sd">        - Horizontal trend line around 0.5 with uniformly distributed points indicates</span>
+<span class="sd">          good calibration</span>
+<span class="sd">        - Systematic deviations suggest model bias or miscalibration</span>
+
+<span class="sd">        The hexagonal binning is particularly effective for visualizing large</span>
+<span class="sd">        datasets where individual points would create overplotting issues.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Standard quantile analysis</span>
+<span class="sd">            &gt;&gt;&gt; quant_layout = mle_analysis.plot_observed_quantiles()</span>
+<span class="sd">            &gt;&gt;&gt; # Custom window size for trend analysis</span>
+<span class="sd">            &gt;&gt;&gt; quant_plots = mle_analysis.plot_observed_quantiles(</span>
+<span class="sd">            ...     windowsize=50, use_ranks=False, display=False</span>
+<span class="sd">            ... )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Loop over quantiles for different observed variables</span>
+        <span class="n">plots</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">observed</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_pp_obs</span><span class="p">():</span>
+
+            <span class="c1"># Get the quantiles of the observed data relative to the reference</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">plotting</span><span class="o">.</span><span class="n">calculate_relative_quantiles</span><span class="p">(</span>
+                <span class="n">reference</span><span class="p">,</span> <span class="n">observed</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="k">if</span> <span class="n">observed</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">observed</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Flatten the data and update x to use rankings if requested</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">observed</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">y</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">rankdata</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;ordinal&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">use_ranks</span> <span class="k">else</span> <span class="n">x</span>
+
+            <span class="c1"># Build the plot</span>
+            <span class="n">plots</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span> <span class="o">=</span> <span class="n">plotting</span><span class="o">.</span><span class="n">hexgrid_with_mean</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">mean_windowsize</span><span class="o">=</span><span class="n">windowsize</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span>
+                <span class="n">xlabel</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Observed Value </span><span class="si">{</span><span class="s1">&#39;Rank&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">use_ranks</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">ylabel</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Observed Quantile: </span><span class="si">{</span><span class="n">varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Observed Quantiles: </span><span class="si">{</span><span class="n">varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># If requested, display the plots</span>
+        <span class="k">if</span> <span class="n">display</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hv</span><span class="o">.</span><span class="n">Layout</span><span class="p">(</span><span class="n">plots</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="o">.</span><span class="n">cols</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="n">shared_axes</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">plots</span></div>
+
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_ppc</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">use_ranks</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">display</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">square_ecdf</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">windowsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">],</span>
+        <span class="n">quantiles</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="s2">&quot;custom_types.Float&quot;</span><span class="p">],</span>
+        <span class="n">logy_ppc_samples</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">subplot_width</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">subplot_height</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_ppc</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">use_ranks</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">display</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">square_ecdf</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">windowsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">],</span>
+        <span class="n">quantiles</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="s2">&quot;custom_types.Float&quot;</span><span class="p">],</span>
+        <span class="n">logy_ppc_samples</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">subplot_width</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+        <span class="n">subplot_height</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]]:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="MLEInferenceRes.run_ppc">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.run_ppc">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_ppc</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">use_ranks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">display</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">square_ecdf</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">windowsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">quantiles</span><span class="o">=</span><span class="p">(</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="n">logy_ppc_samples</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">subplot_width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
+        <span class="n">subplot_height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute comprehensive posterior predictive checking analysis.</span>
+
+<span class="sd">        This method provides a complete posterior predictive checking workflow by</span>
+<span class="sd">        combining multiple diagnostic approaches into a unified analysis. It runs</span>
+<span class="sd">        three complementary diagnostic procedures and presents them in an organized,</span>
+<span class="sd">        interactive dashboard.</span>
+
+<span class="sd">        :param use_ranks: Whether to use ranks instead of raw values for x-axes.</span>
+<span class="sd">            Defaults to True.</span>
+<span class="sd">        :type use_ranks: bool</span>
+<span class="sd">        :param display: Whether to return interactive dashboard layout. Defaults to True.</span>
+<span class="sd">        :type display: bool</span>
+<span class="sd">        :param square_ecdf: Whether to make ECDF plots square (width=height). Defaults</span>
+<span class="sd">            to True.</span>
+<span class="sd">        :type square_ecdf: bool</span>
+<span class="sd">        :param windowsize: Size of rolling window for trend analysis. Defaults to</span>
+<span class="sd">            None (automatic).</span>
+<span class="sd">        :type windowsize: Optional[custom_types.Integer]</span>
+<span class="sd">        :param quantiles: Quantiles for confidence intervals. Defaults to (0.025,</span>
+<span class="sd">            0.25, 0.5).</span>
+<span class="sd">        :type quantiles: Sequence[custom_types.Float]</span>
+<span class="sd">        :param logy_ppc_samples: Whether to use log scale for posterior predictive</span>
+<span class="sd">            plots. Defaults to False.</span>
+<span class="sd">        :type logy_ppc_samples: bool</span>
+<span class="sd">        :param subplot_width: Width of individual subplots in pixels. Defaults to 600.</span>
+<span class="sd">        :type subplot_width: custom_types.Integer</span>
+<span class="sd">        :param subplot_height: Height of individual subplots in pixels. Defaults to 400.</span>
+<span class="sd">        :type subplot_height: custom_types.Integer</span>
+
+<span class="sd">        :returns: Interactive dashboard or list of plot dictionaries</span>
+<span class="sd">        :rtype: Union[pn.Column, list[dict[str, hv.Overlay]]]</span>
+
+<span class="sd">        Comprehensive Analysis Components:</span>
+<span class="sd">        1. **Posterior Predictive Samples**: Shows observed data against uncertainty intervals</span>
+<span class="sd">        2. **Observed Quantiles**: Reveals systematic patterns in model calibration</span>
+<span class="sd">        3. **Calibration Assessment**: Quantifies overall model calibration quality</span>
+
+<span class="sd">        Dashboard Features:</span>
+<span class="sd">        - Interactive variable selection across all diagnostic types</span>
+<span class="sd">        - Consistent formatting and scaling across related plots</span>
+<span class="sd">        - Automatic layout optimization for comparison and analysis</span>
+<span class="sd">        - Widget-based navigation for multi-variable models</span>
+
+<span class="sd">        Analysis Workflow:</span>
+<span class="sd">        The method integrates three diagnostic perspectives:</span>
+<span class="sd">        - **Predictive accuracy**: How well do predictions match observations?</span>
+<span class="sd">        - **Calibration quality**: Are prediction intervals properly calibrated?</span>
+<span class="sd">        - **Systematic bias**: Are there patterns indicating model inadequacy?</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Complete interactive analysis</span>
+<span class="sd">            &gt;&gt;&gt; dashboard = mle_analysis.run_ppc()</span>
+<span class="sd">            &gt;&gt;&gt; dashboard  # Display in notebook</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; # Programmatic access to individual components</span>
+<span class="sd">            &gt;&gt;&gt; ppc_plots, quant_plots, cal_plots = mle_analysis.run_ppc(display=False)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get ecdf widths and heights</span>
+        <span class="k">if</span> <span class="n">square_ecdf</span><span class="p">:</span>
+            <span class="n">ecdf_width</span> <span class="o">=</span> <span class="n">subplot_width</span>
+            <span class="n">ecdf_height</span> <span class="o">=</span> <span class="n">ecdf_width</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ecdf_width</span> <span class="o">=</span> <span class="n">subplot_width</span>
+            <span class="n">ecdf_height</span> <span class="o">=</span> <span class="n">subplot_height</span>
+
+        <span class="c1"># Get the different plots</span>
+        <span class="n">plots</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plot_posterior_predictive_samples</span><span class="p">(</span>
+                <span class="n">quantiles</span><span class="o">=</span><span class="n">quantiles</span><span class="p">,</span>
+                <span class="n">use_ranks</span><span class="o">=</span><span class="n">use_ranks</span><span class="p">,</span>
+                <span class="n">logy</span><span class="o">=</span><span class="n">logy_ppc_samples</span><span class="p">,</span>
+                <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=</span><span class="n">subplot_width</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">subplot_height</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plot_observed_quantiles</span><span class="p">(</span>
+                <span class="n">use_ranks</span><span class="o">=</span><span class="n">use_ranks</span><span class="p">,</span>
+                <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=</span><span class="n">subplot_width</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">subplot_height</span><span class="p">,</span>
+                <span class="n">windowsize</span><span class="o">=</span><span class="n">windowsize</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">check_calibration</span><span class="p">(</span>
+                <span class="n">return_deviance</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=</span><span class="n">ecdf_width</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">ecdf_height</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+
+        <span class="c1"># If not displaying, return the plots</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">display</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">plots</span>
+
+        <span class="c1"># Otherwise, display the plots</span>
+        <span class="n">plots</span><span class="p">,</span> <span class="n">widget</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">panel</span><span class="p">(</span>
+            <span class="n">hv</span><span class="o">.</span><span class="n">Layout</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">hv</span><span class="o">.</span><span class="n">HoloMap</span><span class="p">(</span><span class="n">plots</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">kdims</span><span class="o">=</span><span class="s2">&quot;Variable&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span>
+                        <span class="n">hv</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">framewise</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                        <span class="n">hv</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">Area</span><span class="p">(</span><span class="n">framewise</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">hv</span><span class="o">.</span><span class="n">HoloMap</span><span class="p">(</span><span class="n">plots</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">kdims</span><span class="o">=</span><span class="s2">&quot;Variable&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span>
+                        <span class="n">hv</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">HexTiles</span><span class="p">(</span><span class="n">framewise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">axiswise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">min_count</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                        <span class="n">hv</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">Curve</span><span class="p">(</span><span class="n">framewise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkgray&quot;</span><span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">hv</span><span class="o">.</span><span class="n">HoloMap</span><span class="p">(</span><span class="n">plots</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">kdims</span><span class="o">=</span><span class="s2">&quot;Variable&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span>
+                        <span class="n">hv</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">Curve</span><span class="p">(</span><span class="n">framewise</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="n">shared_axes</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">cols</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">align</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">plots</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MLEInferenceRes.from_disk">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.from_disk">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_disk</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MLEInferenceRes&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load MLEInferenceRes object from saved NetCDF file.</span>
+
+<span class="sd">        :param path: Path to NetCDF file containing saved InferenceData</span>
+<span class="sd">        :type path: str</span>
+
+<span class="sd">        :returns: Reconstructed MLEInferenceRes object with all analysis capabilities</span>
+<span class="sd">        :rtype: MLEInferenceRes</span>
+
+<span class="sd">        This class method enables loading of previously saved analysis results,</span>
+<span class="sd">        preserving all computed statistics and enabling continued analysis from</span>
+<span class="sd">        where previous sessions left off.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Load previously saved results</span>
+<span class="sd">            &gt;&gt;&gt; mle_analysis = MLEInferenceRes.from_disk(&#39;saved_results.nc&#39;)</span>
+<span class="sd">            &gt;&gt;&gt; # Continue analysis with full functionality</span>
+<span class="sd">            &gt;&gt;&gt; dashboard = mle_analysis.run_ppc()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">az</span><span class="o">.</span><span class="n">from_netcdf</span><span class="p">(</span><span class="n">path</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MLEParam">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEParam">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MLEParam</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for maximum likelihood estimate of a single model parameter.</span>
+
+<span class="sd">    This class encapsulates the MLE result for an individual parameter,</span>
+<span class="sd">    including the estimated value and the corresponding fitted probability</span>
+<span class="sd">    distribution. It provides methods for sampling from the fitted distribution</span>
+<span class="sd">    and accessing parameter properties.</span>
+
+<span class="sd">    :param name: Name of the parameter in the model</span>
+<span class="sd">    :type name: str</span>
+<span class="sd">    :param value: Maximum likelihood estimate of the parameter value.</span>
+<span class="sd">                 Can be None for some distribution types.</span>
+<span class="sd">    :type value: Optional[npt.NDArray]</span>
+<span class="sd">    :param distribution: Fitted probability distribution object</span>
+<span class="sd">    :type distribution: custom_types.SciStanPyDistribution</span>
+
+<span class="sd">    :ivar name: Parameter name identifier</span>
+<span class="sd">    :ivar mle: Stored maximum likelihood estimate</span>
+<span class="sd">    :ivar distribution: Fitted distribution for sampling and analysis</span>
+
+<span class="sd">    The class maintains both point estimates and distributional representations,</span>
+<span class="sd">    enabling both point-based analysis and uncertainty quantification through</span>
+<span class="sd">    sampling from the fitted distribution.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; param = MLEParam(&#39;mu&#39;, np.array([2.5]), fitted_normal_dist)</span>
+<span class="sd">        &gt;&gt;&gt; samples = param.draw(1000, seed=42)</span>
+<span class="sd">        &gt;&gt;&gt; print(f&quot;MLE estimate: {param.mle}&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span>
+        <span class="n">distribution</span><span class="p">:</span> <span class="s2">&quot;custom_types.SciStanPyDistribution&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+
+        <span class="c1"># Store the inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mle</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span>
+
+<div class="viewcode-block" id="MLEParam.draw">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEParam.draw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample from the fitted parameter distribution.</span>
+
+<span class="sd">        This method generates samples from the parameter&#39;s fitted probability</span>
+<span class="sd">        distribution using batch processing to handle large sample requests.</span>
+
+<span class="sd">        :param n: Total number of samples to generate</span>
+<span class="sd">        :type n: int</span>
+<span class="sd">        :param seed: Random seed for reproducible sampling. Defaults to None.</span>
+<span class="sd">        :type seed: Optional[custom_types.Integer]</span>
+<span class="sd">        :param batch_size: Size of batches for memory-efficient sampling.</span>
+<span class="sd">                          Defaults to None (uses n as batch size).</span>
+<span class="sd">        :type batch_size: Optional[custom_types.Integer]</span>
+
+<span class="sd">        :returns: Array of samples from the fitted distribution</span>
+<span class="sd">        :rtype: npt.NDArray</span>
+
+<span class="sd">        Batch processing prevents memory overflow when requesting large numbers</span>
+<span class="sd">        of samples from complex distributions, particularly important when</span>
+<span class="sd">        working with GPU-based computations.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Generate 10000 samples in batches of 1000</span>
+<span class="sd">            &gt;&gt;&gt; samples = param.draw(10000, batch_size=1000, seed=42)</span>
+<span class="sd">            &gt;&gt;&gt; print(f&quot;Sample mean: {samples.mean()}&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Set the seed if provided</span>
+        <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+        <span class="c1"># If the batch size is not provided, we set it to `n`</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="ow">or</span> <span class="n">n</span>
+
+        <span class="c1"># Calculate the batch sizes for each sampling iteration</span>
+        <span class="n">batch_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">batch_size</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">//</span> <span class="n">batch_size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">n_remaining</span> <span class="o">:=</span> <span class="n">n</span> <span class="o">%</span> <span class="n">batch_size</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">batch_sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n_remaining</span><span class="p">)</span>
+
+        <span class="c1"># Sample from the distribution</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="n">batch_size</span><span class="p">,))</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">batch_size</span> <span class="ow">in</span> <span class="n">batch_sizes</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MLE">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLE">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MLE</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete maximum likelihood estimation results for a SciStanPy model.</span>
+
+<span class="sd">    This class encapsulates the full results of MLE parameter estimation,</span>
+<span class="sd">    including parameter estimates, fitted distributions, optimization</span>
+<span class="sd">    diagnostics, and utilities for further analysis. It provides a</span>
+<span class="sd">    comprehensive interface for working with MLE results.</span>
+
+<span class="sd">    :param model: Original SciStanPy model</span>
+<span class="sd">    :type model: ssp_model.Model</span>
+<span class="sd">    :param mle_estimate: Dictionary of parameter names to their MLE values</span>
+<span class="sd">    :type mle_estimate: dict[str, npt.NDArray]</span>
+<span class="sd">    :param distributions: Dictionary of parameter names to fitted distributions</span>
+<span class="sd">    :type distributions: dict[str, torch.distributions.Distribution]</span>
+<span class="sd">    :param losses: Array of loss values throughout optimization</span>
+<span class="sd">    :type losses: npt.NDArray</span>
+<span class="sd">    :param data: Observed data used for parameter estimation</span>
+<span class="sd">    :type data: dict[str, npt.NDArray]</span>
+
+<span class="sd">    :ivar model: Reference to the original model</span>
+<span class="sd">    :ivar data: Observed data used for fitting</span>
+<span class="sd">    :ivar model_varname_to_mle: Mapping from parameter names to MLEParam objects</span>
+<span class="sd">    :ivar losses: DataFrame containing loss trajectory and diagnostics</span>
+
+<span class="sd">    :raises ValueError: If MLE estimate keys are not subset of distribution keys</span>
+<span class="sd">    :raises ValueError: If parameter names conflict with existing attributes</span>
+
+<span class="sd">    The class automatically creates attributes for each parameter, allowing</span>
+<span class="sd">    direct access like `mle_result.mu` for a parameter named &#39;mu&#39;. It also</span>
+<span class="sd">    provides comprehensive utilities for visualization, sampling, and</span>
+<span class="sd">    integration with Bayesian analysis workflows.</span>
+
+<span class="sd">    Key Features:</span>
+<span class="sd">    - Direct attribute access to individual parameter results</span>
+<span class="sd">    - Comprehensive loss trajectory tracking and visualization</span>
+<span class="sd">    - Efficient sampling from fitted parameter distributions</span>
+<span class="sd">    - Integration with ArviZ for Bayesian workflow compatibility</span>
+<span class="sd">    - Memory-efficient batch processing for large sample requests</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; mle_result = model.mle(data=observed_data)</span>
+<span class="sd">        &gt;&gt;&gt; mu_samples = mle_result.mu.draw(1000)  # Direct parameter access</span>
+<span class="sd">        &gt;&gt;&gt; loss_plot = mle_result.plot_loss_curve()</span>
+<span class="sd">        &gt;&gt;&gt; inference_data = mle_result.get_inference_obj()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;ssp_model.Model&quot;</span><span class="p">,</span>
+        <span class="n">mle_estimate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span>
+        <span class="n">distributions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span><span class="p">],</span>
+        <span class="n">losses</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span>
+    <span class="p">):</span>
+
+        <span class="c1"># The keys of the mle estimate should be a subset of the keys of the distributions</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">mle_estimate</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">distributions</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Keys of mle estimate should be a subset of the keys of the distributions&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Record the model and data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+
+        <span class="c1"># Store inputs. Each key in the mle estimate will be mapped to an instance</span>
+        <span class="c1"># variable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_varname_to_mle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MLEParam</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">MLEParam</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">mle_estimate</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">distribution</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">distributions</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Set an attribute for all MLE parameters</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_varname_to_mle</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;MLE parameter </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> already exists in the model. Please rename it.&quot;</span>
+                <span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+        <span class="c1"># Record the loss trajectory as a pandas dataframe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">losses</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;-log pdf/pmf&quot;</span><span class="p">:</span> <span class="n">losses</span><span class="p">,</span>
+                <span class="s2">&quot;iteration&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">losses</span><span class="p">)),</span>
+                <span class="s2">&quot;shifted log(-log pdf/pmf)&quot;</span><span class="p">:</span> <span class="n">losses</span> <span class="o">-</span> <span class="n">losses</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="MLE.plot_loss_curve">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLE.plot_loss_curve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_loss_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate interactive plot of the optimization loss trajectory.</span>
+
+<span class="sd">        This method creates a visualization of how the loss function evolved</span>
+<span class="sd">        during the optimization process, providing insights into convergence</span>
+<span class="sd">        behavior and optimization effectiveness.</span>
+
+<span class="sd">        :param logy: Whether to use logarithmic y-axis scaling. Defaults to True.</span>
+<span class="sd">        :type logy: bool</span>
+
+<span class="sd">        :returns: Interactive HoloViews plot of the loss curve</span>
+
+<span class="sd">        The plot automatically handles:</span>
+<span class="sd">        - Logarithmic scaling with proper handling of negative/zero values</span>
+<span class="sd">        - Appropriate axis labels and titles based on scaling choice</span>
+<span class="sd">        - Interactive features for detailed examination of convergence</span>
+<span class="sd">        - Warning messages for problematic loss trajectories</span>
+
+<span class="sd">        For logarithmic scaling with non-positive loss values, the method</span>
+<span class="sd">        automatically switches to a shifted logarithmic scale to maintain</span>
+<span class="sd">        visualization quality while issuing appropriate warnings.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Standard logarithmic loss plot</span>
+<span class="sd">            &gt;&gt;&gt; loss_plot = mle_result.plot_loss_curve()</span>
+<span class="sd">            &gt;&gt;&gt; # Linear scale loss plot</span>
+<span class="sd">            &gt;&gt;&gt; linear_plot = mle_result.plot_loss_curve(logy=False)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get y-label and title</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="s2">&quot;-log pdf/pmf&quot;</span>
+        <span class="k">if</span> <span class="n">logy</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="p">[</span><span class="s2">&quot;-log pdf/pmf&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Negative values in loss curve. Using shifted log10.&quot;</span><span class="p">)</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="s2">&quot;shifted log(-log pdf/pmf)&quot;</span>
+                <span class="n">ylabel</span> <span class="o">=</span> <span class="n">y</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ylabel</span> <span class="o">=</span> <span class="s2">&quot;log(-log pdf/pmf)&quot;</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Log Loss Curve&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ylabel</span> <span class="o">=</span> <span class="s2">&quot;-log pdf/pmf&quot;</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Loss Curve&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">hvplot</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="s2">&quot;iteration&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">logy</span><span class="o">=</span><span class="n">logy</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="n">ylabel</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">],</span>
+        <span class="n">as_xarray</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+        <span class="n">as_inference_data</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">],</span>
+        <span class="n">as_xarray</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="MLE.draw">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLE.draw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">as_xarray</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate samples from all fitted parameter distributions.</span>
+
+<span class="sd">        This method draws samples from the fitted distributions of all model</span>
+<span class="sd">        parameters. It supports multiple output formats for integration with</span>
+<span class="sd">        different analysis workflows.</span>
+
+<span class="sd">        :param n: Number of samples to draw from each parameter distribution</span>
+<span class="sd">        :type n: custom_types.Integer</span>
+<span class="sd">        :param seed: Random seed for reproducible sampling. Defaults to None.</span>
+<span class="sd">        :type seed: Optional[custom_types.Integer]</span>
+<span class="sd">        :param as_xarray: Whether to return results as xarray Dataset. Defaults to False.</span>
+<span class="sd">        :type as_xarray: bool</span>
+<span class="sd">        :param batch_size: Batch size for memory-efficient sampling. Defaults to None.</span>
+<span class="sd">        :type batch_size: Optional[custom_types.Integer]</span>
+
+<span class="sd">        :returns: Sampled parameter values in requested format</span>
+<span class="sd">        :rtype: Union[dict[str, npt.NDArray], xr.Dataset]</span>
+
+<span class="sd">        Output Formats:</span>
+<span class="sd">        - Dictionary (default): Keys are parameter names, values are sample arrays</span>
+<span class="sd">        - xarray Dataset: Structured dataset with proper dimension labels and coordinates</span>
+
+<span class="sd">        This is particularly useful for:</span>
+<span class="sd">        - Uncertainty propagation through model predictions</span>
+<span class="sd">        - Bayesian model comparison and validation</span>
+<span class="sd">        - Posterior predictive checking with MLE-based approximations</span>
+<span class="sd">        - Sensitivity analysis of parameter estimates</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Draw samples as dictionary</span>
+<span class="sd">            &gt;&gt;&gt; samples = mle_result.draw(1000, seed=42)</span>
+<span class="sd">            &gt;&gt;&gt; # Draw as structured xarray Dataset</span>
+<span class="sd">            &gt;&gt;&gt; dataset = mle_result.draw(1000, as_xarray=True, batch_size=100)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Set the seed if provided</span>
+        <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+        <span class="c1"># Draw samples</span>
+        <span class="n">draws</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">all_model_components_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span> <span class="n">v</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_varname_to_mle</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="c1"># If returning as an xarray or InferenceData object, convert the draws to</span>
+        <span class="c1"># an xarray format.</span>
+        <span class="k">if</span> <span class="n">as_xarray</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_dict_to_xarray</span><span class="p">(</span><span class="n">draws</span><span class="p">)</span>  <span class="c1"># pylint: disable=protected-access</span>
+
+        <span class="c1"># If we make it here, we are not returning as an xarray or InferenceData</span>
+        <span class="c1"># object, so we need to convert the parameters to their original names</span>
+        <span class="c1"># and return them as a dictionary</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">model_varname</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">draws</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+
+
+<div class="viewcode-block" id="MLE.get_inference_obj">
+<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLE.get_inference_obj">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_inference_obj</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MLEInferenceRes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create ArviZ-compatible inference data object from MLE results.</span>
+
+<span class="sd">        This method constructs a comprehensive inference data structure that</span>
+<span class="sd">        integrates MLE results with the ArviZ ecosystem for Bayesian analysis.</span>
+<span class="sd">        It organizes parameter samples, observed data, and posterior predictive</span>
+<span class="sd">        samples into a standardized format.</span>
+
+<span class="sd">        :param n: Number of samples to generate for the inference object. Defaults to 1000.</span>
+<span class="sd">        :type n: custom_types.Integer</span>
+<span class="sd">        :param seed: Random seed for reproducible sample generation. Defaults to None.</span>
+<span class="sd">        :type seed: Optional[custom_types.Integer]</span>
+<span class="sd">        :param batch_size: Batch size for memory-efficient sampling. Defaults to None.</span>
+<span class="sd">        :type batch_size: Optional[custom_types.Integer]</span>
+
+<span class="sd">        :returns: Structured inference data object with all MLE results</span>
+<span class="sd">        :rtype: results.MLEInferenceRes</span>
+
+<span class="sd">        The resulting inference object contains:</span>
+<span class="sd">        - **Posterior samples**: Draws from fitted parameter distributions</span>
+<span class="sd">        - **Observed data**: Original data used for parameter estimation</span>
+<span class="sd">        - **Posterior predictive**: Samples from observable distributions</span>
+
+<span class="sd">        Data Organization:</span>
+<span class="sd">        - Latent parameters are stored in the main posterior group</span>
+<span class="sd">        - Observable parameters become posterior predictive samples</span>
+<span class="sd">        - Observed data is stored separately for comparison</span>
+<span class="sd">        - All data maintains proper dimensional structure and labeling</span>
+
+<span class="sd">        This enables:</span>
+<span class="sd">        - Integration with ArviZ plotting and diagnostic functions</span>
+<span class="sd">        - Model comparison</span>
+<span class="sd">        - Posterior predictive checking workflows</span>
+<span class="sd">        - Standardized reporting and visualization</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Create inference object with default settings</span>
+<span class="sd">            &gt;&gt;&gt; inference_obj = mle_result.get_inference_obj()</span>
+<span class="sd">            &gt;&gt;&gt; # Generate larger sample with custom batch size</span>
+<span class="sd">            &gt;&gt;&gt; inference_obj = mle_result.get_inference_obj(</span>
+<span class="sd">            ...     n=5000, batch_size=500, seed=42</span>
+<span class="sd">            ... )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the samples from the posterior</span>
+        <span class="n">draws</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span> <span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+
+        <span class="c1"># Otherwise, we also are going to want to attach the observed data</span>
+        <span class="c1"># to the InferenceData object. First, rename the &quot;n&quot; dimension to &quot;sample&quot;</span>
+        <span class="c1"># and add a dummy &quot;chain&quot; dimension</span>
+        <span class="n">draws</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">rename_dims</span><span class="p">({</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="s2">&quot;draw&quot;</span><span class="p">})</span>
+        <span class="n">draws</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="s2">&quot;chain&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Now separate out the observables from the latent variables. Build</span>
+        <span class="c1"># the initial inference data object with the latent variables</span>
+        <span class="n">inference_data</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">convert_to_inference_data</span><span class="p">(</span>
+            <span class="n">draws</span><span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="n">varname</span>
+                    <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">mle_param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_varname_to_mle</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">all_model_components_dict</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span><span class="o">.</span><span class="n">observable</span>
+                <span class="p">]</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Add the observables and the observed data to the inference data object</span>
+        <span class="c1"># pylint: disable=protected-access</span>
+        <span class="n">inference_data</span><span class="o">.</span><span class="n">add_groups</span><span class="p">(</span>
+            <span class="n">observed_data</span><span class="o">=</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+                <span class="n">data_vars</span><span class="o">=</span><span class="p">{</span>
+                    <span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_compress_for_xarray</span><span class="p">(</span><span class="n">v</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">}</span>
+            <span class="p">),</span>
+            <span class="n">posterior_predictive</span><span class="o">=</span><span class="n">draws</span><span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="n">varname</span>
+                    <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">mle_param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_varname_to_mle</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">all_model_components_dict</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span><span class="o">.</span><span class="n">observable</span>
+                <span class="p">]</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">MLEInferenceRes</span><span class="p">(</span><span class="n">inference_data</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  <li><a href="../../../scistanpy.html">scistanpy</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

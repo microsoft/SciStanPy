@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scistanpy.utils &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for scistanpy.utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Utility functions and classes for the SciStanPy package.</span>
+
+<span class="sd">This module provides various utility functions and classes that support</span>
+<span class="sd">the core functionality of SciStanPy, including:</span>
+
+<span class="sd">- Lazy importing mechanisms for performance optimization</span>
+<span class="sd">- Mathematical utility functions for numerical stability</span>
+<span class="sd">- Array chunking utilities for efficient memory management</span>
+<span class="sd">- Context managers for external library integration</span>
+<span class="sd">- Optimized statistical computation functions</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dask.config</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">arviz.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dask</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
+
+
+<div class="viewcode-block" id="lazy_import">
+<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.lazy_import">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lazy_import</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Import a module only when it is first needed.</span>
+
+<span class="sd">    This function implements lazy module importing to improve package import</span>
+<span class="sd">    performance by deferring module loading until actual use.</span>
+
+<span class="sd">    :param name: The fully qualified module name to import</span>
+<span class="sd">    :type name: str</span>
+
+<span class="sd">    :returns: The imported module</span>
+<span class="sd">    :rtype: module</span>
+
+<span class="sd">    :raises ImportError: If the specified module cannot be found</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Module is not loaded until first use</span>
+<span class="sd">        &gt;&gt;&gt; numpy_module = lazy_import(&#39;numpy&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; # Now numpy is actually imported</span>
+<span class="sd">        &gt;&gt;&gt; array = numpy_module.array([1, 2, 3])</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        If the module is already imported, returns the cached version</span>
+<span class="sd">        from sys.modules for efficiency.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Check if the module is already imported</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+    <span class="c1"># If not, import it lazily (modified from here:</span>
+    <span class="c1"># https://docs.python.org/3/library/importlib.html#implementing-lazy-imports)</span>
+    <span class="c1"># Get the spec</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="c1"># If the spec is None, raise an ImportError</span>
+    <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Module &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; not found.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create the module with a lazy loader</span>
+    <span class="n">spec</span><span class="o">.</span><span class="n">loader</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">LazyLoader</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="p">)</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+    <span class="c1"># Store with the alias if provided, otherwise use original name</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">module</span>
+    <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">exec_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">module</span></div>
+
+
+
+<div class="viewcode-block" id="LazyObjectProxy">
+<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.LazyObjectProxy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LazyObjectProxy</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A proxy that delays importing a module and accessing an object until first use.</span>
+
+<span class="sd">    This class provides a lazy loading mechanism for specific objects within</span>
+<span class="sd">    modules, allowing fine-grained control over when imports occur. The proxy</span>
+<span class="sd">    forwards all method calls and attribute access to the actual object once</span>
+<span class="sd">    it&#39;s loaded.</span>
+
+<span class="sd">    :param module_name: The fully qualified name of the module containing the object</span>
+<span class="sd">    :type module_name: str</span>
+<span class="sd">    :param obj_name: The name of the object to import from the module</span>
+<span class="sd">    :type obj_name: str</span>
+
+<span class="sd">    :ivar _module_name: Stored module name for lazy loading</span>
+<span class="sd">    :ivar _obj_name: Stored object name for lazy loading</span>
+<span class="sd">    :ivar _cached_obj: Cached reference to the imported object (None until first use)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Create a proxy for numpy.array</span>
+<span class="sd">        &gt;&gt;&gt; array_proxy = LazyObjectProxy(&#39;numpy&#39;, &#39;array&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; # numpy is not imported yet</span>
+<span class="sd">        &gt;&gt;&gt; my_array = array_proxy([1, 2, 3])  # Now numpy is imported</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">obj_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module_name</span> <span class="o">=</span> <span class="n">module_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_obj_name</span> <span class="o">=</span> <span class="n">obj_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_obj</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Import the module and get the object if not already cached.</span>
+
+<span class="sd">        :returns: The imported object</span>
+<span class="sd">        :raises ImportError: If the module or object cannot be imported</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">module</span> <span class="o">=</span> <span class="n">lazy_import</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module_name</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cached_obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj_name</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;cannot import name &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_obj_name</span><span class="si">}</span><span class="s2">&#39; from &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_module_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_obj</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward calls to the actual object.</span>
+
+<span class="sd">        :param args: Positional arguments to forward</span>
+<span class="sd">        :param kwargs: Keyword arguments to forward</span>
+<span class="sd">        :returns: Result of calling the proxied object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_object</span><span class="p">()(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward attribute access to the actual object.</span>
+
+<span class="sd">        :param name: Name of the attribute to access</span>
+<span class="sd">        :returns: The requested attribute from the proxied object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_object</span><span class="p">(),</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a representation of the proxy.</span>
+
+<span class="sd">        :returns: String representation of the proxy or proxied object</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cached_obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;LazyObjectProxy for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_module_name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_obj_name</span><span class="si">}</span><span class="s2">&gt;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="lazy_import_from">
+<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.lazy_import_from">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lazy_import_from</span><span class="p">(</span><span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">obj_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a lazy import proxy for a specific object from a module.</span>
+
+<span class="sd">    This function provides a convenient way to create lazy import proxies,</span>
+<span class="sd">    equivalent to &#39;from module_name import obj_name&#39; but with deferred loading.</span>
+
+<span class="sd">    :param module_name: The fully qualified module name to import from</span>
+<span class="sd">    :type module_name: str</span>
+<span class="sd">    :param obj_name: The name of the object to import from the module</span>
+<span class="sd">    :type obj_name: str</span>
+
+<span class="sd">    :returns: A proxy that will import and return the object when first accessed</span>
+<span class="sd">    :rtype: LazyObjectProxy</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Equivalent to &#39;from numpy import array&#39; but lazy</span>
+<span class="sd">        &gt;&gt;&gt; array = lazy_import_from(&#39;numpy&#39;, &#39;array&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; my_array = array([1, 2, 3])  # numpy imported here</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">LazyObjectProxy</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">obj_name</span><span class="p">)</span></div>
+
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">choose_module</span><span class="p">(</span><span class="n">dist</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">:</span> <span class="o">...</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">choose_module</span><span class="p">(</span><span class="n">dist</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">:</span> <span class="o">...</span>
+
+
+<div class="viewcode-block" id="choose_module">
+<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.choose_module">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">choose_module</span><span class="p">(</span><span class="n">dist</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Choose the appropriate computational module based on input type.</span>
+
+<span class="sd">    This function provides automatic backend selection between NumPy and</span>
+<span class="sd">    PyTorch based on the type of the input data.</span>
+
+<span class="sd">    :param dist: Input data whose type determines the module choice</span>
+<span class="sd">    :type dist: Union[torch.Tensor, np.ndarray, custom_types.SampleType]</span>
+
+<span class="sd">    :returns: The appropriate module (torch for tensors, numpy for arrays)</span>
+<span class="sd">    :rtype: Union[torch, np]</span>
+
+<span class="sd">    :raises TypeError: If the input type is not supported</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; tensor = torch.tensor([1.0, 2.0])</span>
+<span class="sd">        &gt;&gt;&gt; module = choose_module(tensor)  # Returns torch module</span>
+<span class="sd">        &gt;&gt;&gt; result = module.exp(tensor)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">torch</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported type for determining module: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dist</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">stable_sigmoid</span><span class="p">(</span><span class="n">exponent</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span> <span class="o">...</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">stable_sigmoid</span><span class="p">(</span><span class="n">exponent</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span> <span class="o">...</span>
+
+
+<div class="viewcode-block" id="stable_sigmoid">
+<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.stable_sigmoid">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stable_sigmoid</span><span class="p">(</span><span class="n">exponent</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute sigmoid function in a numerically stable way.</span>
+
+<span class="sd">    This function implements a numerically stable version of the sigmoid</span>
+<span class="sd">    function that avoids overflow issues by using different computational</span>
+<span class="sd">    approaches for positive and negative inputs.</span>
+
+<span class="sd">    :param exponent: Input values for sigmoid computation</span>
+<span class="sd">    :type exponent: Union[torch.Tensor, npt.NDArray[np.floating]]</span>
+
+<span class="sd">    :returns: Sigmoid values with the same type and shape as input</span>
+<span class="sd">    :rtype: Union[torch.Tensor, npt.NDArray[np.floating]]</span>
+
+<span class="sd">    The function uses the identity:</span>
+<span class="sd">    - For x &gt;= 0: sigmoid(x) = 1 / (1 + exp(-x))</span>
+<span class="sd">    - For x &lt; 0: sigmoid(x) = exp(x) / (1 + exp(x))</span>
+
+<span class="sd">    This approach prevents overflow in the exponential function regardless</span>
+<span class="sd">    of the sign and magnitude of the input.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">        &gt;&gt;&gt; x = np.array([-1000, 0, 1000])  # Extreme values</span>
+<span class="sd">        &gt;&gt;&gt; stable_result = stable_sigmoid(x)  # No overflow</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Are we working with torch or numpy?</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">choose_module</span><span class="p">(</span><span class="n">exponent</span><span class="p">)</span>
+
+    <span class="c1"># Empty array to store the results</span>
+    <span class="n">sigma_exponent</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">exponent</span><span class="p">,</span> <span class="n">module</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="c1"># Different approach for positive and negative values</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">exponent</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+
+    <span class="c1"># Calculate the sigmoid function for the positives</span>
+    <span class="n">sigma_exponent</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">module</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">exponent</span><span class="p">[</span><span class="n">mask</span><span class="p">]))</span>
+
+    <span class="c1"># Calculate the sigmoid function for the negatives</span>
+    <span class="n">neg_calc</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exponent</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">])</span>
+    <span class="n">sigma_exponent</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">neg_calc</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">neg_calc</span><span class="p">)</span>
+
+    <span class="c1"># We should have no NaN values in the result</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">module</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">sigma_exponent</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">sigma_exponent</span></div>
+
+
+
+<div class="viewcode-block" id="get_chunk_shape">
+<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.get_chunk_shape">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_chunk_shape</span><span class="p">(</span>
+    <span class="n">array_shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">array_precision</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span> <span class="s2">&quot;half&quot;</span><span class="p">],</span>
+    <span class="n">mib_per_chunk</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">frozen_dims</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate optimal chunk shape for Dask arrays based on memory constraints.</span>
+
+<span class="sd">    This function determines the optimal chunking strategy for large arrays</span>
+<span class="sd">    processed with Dask, balancing memory usage with computational efficiency.</span>
+<span class="sd">    It respects frozen dimensions that should not be chunked.</span>
+
+<span class="sd">    :param array_shape: Shape of the array to be chunked</span>
+<span class="sd">    :type array_shape: tuple[custom_types.Integer, ...]</span>
+<span class="sd">    :param array_precision: Precision of array elements affecting memory usage</span>
+<span class="sd">    :type array_precision: Literal[&quot;double&quot;, &quot;single&quot;, &quot;half&quot;]</span>
+<span class="sd">    :param mib_per_chunk: Target chunk size in MiB. If None, uses Dask default</span>
+<span class="sd">    :type mib_per_chunk: Union[custom_types.Integer, None]</span>
+<span class="sd">    :param frozen_dims: Dimensions that should not be chunked</span>
+<span class="sd">    :type frozen_dims: Collection[custom_types.Integer]</span>
+
+<span class="sd">    :returns: Optimal chunk shape for the array</span>
+<span class="sd">    :rtype: tuple[custom_types.Integer, ...]</span>
+
+<span class="sd">    :raises ValueError: If mib_per_chunk is negative</span>
+<span class="sd">    :raises IndexError: If frozen_dims contains invalid dimension indices</span>
+
+<span class="sd">    The algorithm:</span>
+
+<span class="sd">    1. Calculates memory usage per array element based on precision</span>
+<span class="sd">    2. Sets frozen dimensions to their full size</span>
+<span class="sd">    3. Iteratively determines chunk sizes for remaining dimensions</span>
+<span class="sd">    4. Ensures total chunk memory stays within the specified limit (or as close to</span>
+<span class="sd">       it as possible if frozen dimensions result in a smallest possible size above</span>
+<span class="sd">       the limit)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Chunk a (1000, 2000, 100) array, keeping last dim intact</span>
+<span class="sd">        &gt;&gt;&gt; shape = get_chunk_shape(</span>
+<span class="sd">        ...     (1000, 2000, 100), &quot;double&quot;,</span>
+<span class="sd">        ...     mib_per_chunk=64, frozen_dims=(2,)</span>
+<span class="sd">        ... )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mib_per_chunk</span> <span class="o">=</span> <span class="n">mib_per_chunk</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span>
+        <span class="n">dask</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;array.chunk-size&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">removesuffix</span><span class="p">(</span><span class="s2">&quot;MiB&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">mib_per_chunk</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`mib_per_chunk` must be a positive integer or `None`.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Set up frozen dimensions: Negatives to positive equivalent, the whole thing</span>
+    <span class="c1"># to a set</span>
+    <span class="n">frozen_dims</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">array_shape</span><span class="p">)</span> <span class="o">+</span> <span class="n">dimind</span> <span class="k">if</span> <span class="n">dimind</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">dimind</span> <span class="k">for</span> <span class="n">dimind</span> <span class="ow">in</span> <span class="n">frozen_dims</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">frozen_dims</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="nb">min</span><span class="p">(</span><span class="n">frozen_dims</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">max</span><span class="p">(</span><span class="n">frozen_dims</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">array_shape</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Dimensions out of range for array shape.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Get the number of bytes per entry</span>
+    <span class="n">mib_per_entry</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;double&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+        <span class="s2">&quot;single&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="s2">&quot;half&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">}[</span><span class="n">array_precision</span><span class="p">]</span> <span class="o">/</span> <span class="mi">1024</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="c1"># The base chunk shape is a list of ones, except for the frozen dimensions,</span>
+    <span class="c1"># which are set to the size of the dimension.</span>
+    <span class="n">chunk_shape</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">dimsize</span> <span class="k">if</span> <span class="n">dimind</span> <span class="ow">in</span> <span class="n">frozen_dims</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">dimind</span><span class="p">,</span> <span class="n">dimsize</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">array_shape</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="c1"># We have a base volume that depends on the frozen dimensions. If this volume</span>
+    <span class="c1"># is larger than the MiB limit, we are already done.</span>
+    <span class="n">volume</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">chunk_shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">mib_per_entry</span>
+    <span class="k">if</span> <span class="n">volume</span> <span class="o">&gt;=</span> <span class="n">mib_per_chunk</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">chunk_shape</span><span class="p">)</span>
+
+    <span class="c1"># Otherwise, we loop over the dimensions from last to first and determine the</span>
+    <span class="c1"># chunk size. We start with the last dimension and go backwards until we hit</span>
+    <span class="c1"># the MiB limit.</span>
+    <span class="k">for</span> <span class="n">dimind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">array_shape</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+
+        <span class="c1"># Skip frozen dimensions. We have already accounted for these.</span>
+        <span class="k">if</span> <span class="n">dimind</span> <span class="ow">in</span> <span class="n">frozen_dims</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Record the size of this dimension</span>
+        <span class="n">dimsize</span> <span class="o">=</span> <span class="n">array_shape</span><span class="p">[</span><span class="n">dimind</span><span class="p">]</span>
+
+        <span class="c1"># How many elements on this dimension do we need?</span>
+        <span class="n">num_elements</span> <span class="o">=</span> <span class="n">mib_per_chunk</span> <span class="o">//</span> <span class="n">volume</span>
+        <span class="k">assert</span> <span class="n">num_elements</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Chunk size is too small.&quot;</span>
+
+        <span class="c1"># If the number of elements is larger than the size of the dimension, we</span>
+        <span class="c1"># set the chunk size to the size of the dimension, update the volume, and</span>
+        <span class="c1"># continue.</span>
+        <span class="k">if</span> <span class="n">num_elements</span> <span class="o">&gt;</span> <span class="n">dimsize</span><span class="p">:</span>
+            <span class="n">chunk_shape</span><span class="p">[</span><span class="n">dimind</span><span class="p">]</span> <span class="o">=</span> <span class="n">dimsize</span>
+            <span class="n">volume</span> <span class="o">*=</span> <span class="n">dimsize</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Otherwise, we set the chunk size to the number of elements. We are done.</span>
+        <span class="n">chunk_shape</span><span class="p">[</span><span class="n">dimind</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_elements</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">chunk_shape</span><span class="p">)</span>
+
+    <span class="c1"># Should we reach the end of the loop, we have not exceeded the MiB limit. We</span>
+    <span class="c1"># can set the chunk size to the size of the array.</span>
+    <span class="k">return</span> <span class="n">array_shape</span></div>
+
+
+
+<div class="viewcode-block" id="az_dask">
+<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.az_dask">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">az_dask</span><span class="p">:</span>  <span class="c1"># pylint: disable=invalid-name</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Context manager for enabling Dask integration with ArviZ.</span>
+
+<span class="sd">    This context manager provides a convenient way to enable Dask-based</span>
+<span class="sd">    parallel computation within ArviZ operations, automatically handling</span>
+<span class="sd">    the setup and teardown of Dask configuration.</span>
+
+<span class="sd">    :param dask_type: Type of Dask computation to enable</span>
+<span class="sd">    :type dask_type: str</span>
+<span class="sd">    :param output_dtypes: Expected output data types for Dask operations</span>
+<span class="sd">    :type output_dtypes: Union[list[object], None]</span>
+
+<span class="sd">    :ivar dask_type: Stored Dask computation type</span>
+<span class="sd">    :ivar output_dtypes: Stored output data types configuration</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; with az_dask(&quot;parallelized&quot;, [float]) as dask_ctx:</span>
+<span class="sd">        ...     # ArviZ operations here will use Dask parallelization</span>
+<span class="sd">        ...     result = az.summary(trace_data)</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        The context manager automatically disables Dask when exiting,</span>
+<span class="sd">        ensuring clean state management.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">dask_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;parallelized&quot;</span><span class="p">,</span> <span class="n">output_dtypes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+
+        <span class="c1"># Record the dask type and output dtypes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dask_type</span> <span class="o">=</span> <span class="n">dask_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dtypes</span> <span class="o">=</span> <span class="n">output_dtypes</span> <span class="ow">or</span> <span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Enable Dask with ArviZ.</span>
+
+<span class="sd">        :returns: Self for use in with statement</span>
+<span class="sd">        :rtype: az_dask</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Dask</span><span class="o">.</span><span class="n">enable_dask</span><span class="p">(</span>
+            <span class="n">dask_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dask&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dask_type</span><span class="p">,</span> <span class="s2">&quot;output_dtypes&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dtypes</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Disable Dask when exiting the context.</span>
+
+<span class="sd">        :param exc_type: Exception type if an exception occurred</span>
+<span class="sd">        :param exc_value: Exception value if an exception occurred</span>
+<span class="sd">        :param traceback: Exception traceback if an exception occurred</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Dask</span><span class="o">.</span><span class="n">disable_dask</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="faster_autocorrelation">
+<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.faster_autocorrelation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">faster_autocorrelation</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute Spearman rank correlation matrix with optimized NaN handling.</span>
+
+<span class="sd">    This function provides a faster implementation of Spearman rank correlation</span>
+<span class="sd">    computation for 2D arrays that may contain NaN values. It&#39;s optimized for</span>
+<span class="sd">    cases where missing data patterns vary across samples.</span>
+
+<span class="sd">    :param x: Input array with shape (n, m) where n is samples and m is features</span>
+<span class="sd">    :type x: npt.NDArray[np.floating]</span>
+
+<span class="sd">    :returns: Spearman rank correlation matrix of shape (n, n)</span>
+<span class="sd">    :rtype: npt.NDArray[np.floating]</span>
+
+<span class="sd">    The function:</span>
+<span class="sd">    1. Builds masks for non-NaN values in each row</span>
+<span class="sd">    2. Computes pairwise correlations using only overlapping valid data</span>
+<span class="sd">    3. Uses matrix symmetry to avoid redundant calculations</span>
+<span class="sd">    4. Provides progress tracking for long computations</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">        &gt;&gt;&gt; # Data with some NaN values</span>
+<span class="sd">        &gt;&gt;&gt; data = np.random.randn(100, 50)</span>
+<span class="sd">        &gt;&gt;&gt; data[data &lt; -1] = np.nan  # Introduce some NaNs</span>
+<span class="sd">        &gt;&gt;&gt; corr_matrix = faster_autocorrelation(data)</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        This function assumes the input follows scipy.stats.spearmanr</span>
+<span class="sd">        conventions but with axis=1 behavior and NaN-aware computation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Build a mask for the non-NaN values in each row</span>
+    <span class="n">nonnan_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># Get an output array for the correlations</span>
+    <span class="n">rhos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="c1"># Calculate the rhos</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row_1</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span>
+        <span class="nb">enumerate</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">total</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">smoothing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Calculating rhos&quot;</span>
+    <span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">row_2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+
+            <span class="c1"># If i == j, then we can just set the value to 1</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">j</span><span class="p">:</span>
+                <span class="n">rhos</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># If i &gt; j, then we can pull the value from the other side of the matrix</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">j</span><span class="p">:</span>
+                <span class="n">rhos</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">rhos</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Calculate the correlation for the non-NaN values</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">nonnan_mask</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">nonnan_mask</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">rhos</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">spearmanr</span><span class="p">(</span><span class="n">row_1</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">row_2</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span><span class="o">.</span><span class="n">statistic</span>
+
+    <span class="c1"># There should be no NaNs</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">rhos</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">rhos</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/api/index.html">SciStanPy API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../scistanpy.html">scistanpy</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

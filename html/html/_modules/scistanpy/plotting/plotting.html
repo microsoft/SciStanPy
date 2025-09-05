@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scistanpy.plotting.plotting &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for scistanpy.plotting.plotting</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Core plotting functions for SciStanPy visualization and analysis.</span>
+
+<span class="sd">This module implements the primary plotting functionality for SciStanPy,</span>
+<span class="sd">providing specialized visualization tools for Bayesian analysis, model</span>
+<span class="sd">diagnostics, and statistical relationships.</span>
+
+<span class="sd">The module leverages HoloViews and hvplot for flexible, interactive</span>
+<span class="sd">visualizations that can be easily customized and extended. All plotting</span>
+<span class="sd">functions support both standard NumPy arrays and interactive widgets</span>
+<span class="sd">for dynamic exploration of model results.</span>
+
+<span class="sd">Key Features:</span>
+<span class="sd">    - ECDF and KDE plots for distribution visualization</span>
+<span class="sd">    - Quantile plots with confidence intervals</span>
+<span class="sd">    - Model calibration diagnostics</span>
+<span class="sd">    - Hexagonal binning for large datasets</span>
+<span class="sd">    - Interactive plotting with widget support</span>
+<span class="sd">    - Customizable styling and overlays</span>
+
+<span class="sd">Functions are organized by visualization type and complexity, from simple</span>
+<span class="sd">distribution plots to sophisticated multi-panel diagnostic displays.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># pylint: disable=too-many-lines</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span><span class="p">,</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">overload</span><span class="p">,</span>
+    <span class="n">Literal</span><span class="p">,</span>
+    <span class="n">ParamSpec</span><span class="p">,</span>
+    <span class="n">TYPE_CHECKING</span><span class="p">,</span>
+    <span class="n">TypeVar</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">holoviews</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hvplot.interactive</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hvplot.pandas</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">panel.widgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pnw</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
+
+<span class="c1"># Types</span>
+<span class="n">P</span> <span class="o">=</span> <span class="n">ParamSpec</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">)</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
+<span class="n">HVType</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">hv</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">RGB</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="aggregate_data">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.aggregate_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">aggregate_data</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">independent_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate multi-dimensional data for plotting purposes.</span>
+
+<span class="sd">    This function reshapes multi-dimensional arrays according to specified</span>
+<span class="sd">    aggregation rules, preparing data for visualization functions that</span>
+<span class="sd">    expect specific array structures.</span>
+
+<span class="sd">    :param data: Input data array to aggregate</span>
+<span class="sd">    :type data: npt.NDArray</span>
+<span class="sd">    :param independent_dim: Dimension to preserve during aggregation.</span>
+<span class="sd">                           If None, flattens entire array. (Default: None)</span>
+<span class="sd">    :type independent_dim: Optional[int]</span>
+
+<span class="sd">    :returns: Aggregated data array</span>
+<span class="sd">    :rtype: npt.NDArray</span>
+
+<span class="sd">    Aggregation Rules:</span>
+<span class="sd">        - If independent_dim is None: Returns flattened 1D array</span>
+<span class="sd">        - If independent_dim is specified: Returns 2D array with shape</span>
+<span class="sd">          (-1, n_independent) where -1 represents the product of all</span>
+<span class="sd">          other dimensions</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; data = np.random.randn(10, 5, 3)</span>
+<span class="sd">        &gt;&gt;&gt; # Flatten completely</span>
+<span class="sd">        &gt;&gt;&gt; flat = aggregate_data(data)  # Shape: (150,)</span>
+<span class="sd">        &gt;&gt;&gt; # Preserve last dimension</span>
+<span class="sd">        &gt;&gt;&gt; agg = aggregate_data(data, independent_dim=2)  # Shape: (50, 3)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Flatten the data if the independent dimension is not provided.</span>
+    <span class="k">if</span> <span class="n">independent_dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="c1"># If the independent dimension is provided, first move that dimension to</span>
+    <span class="c1"># the end (reshape is C-major), then reshape the data to flatten all other dimensions</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">independent_dim</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">independent_dim</span><span class="p">])</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="allow_interactive">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.allow_interactive">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">allow_interactive</span><span class="p">(</span><span class="n">plotting_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to enable interactive plotting capabilities.</span>
+
+<span class="sd">    This decorator modifies plotting functions to handle both static</span>
+<span class="sd">    DataFrames and interactive hvplot objects, automatically configuring</span>
+<span class="sd">    the appropriate display options for each case.</span>
+
+<span class="sd">    :param plotting_func: The plotting function to make interactive</span>
+<span class="sd">    :type plotting_func: Callable[P, T]</span>
+
+<span class="sd">    :returns: Enhanced function with interactive capabilities</span>
+<span class="sd">    :rtype: Callable[P, T]</span>
+
+<span class="sd">    The decorator handles:</span>
+<span class="sd">        - Static DataFrames: Returns plot directly</span>
+<span class="sd">        - Interactive objects: Configures framewise options</span>
+<span class="sd">        - Plot lists: Combines multiple plots into column layout</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; @allow_interactive</span>
+<span class="sd">        ... def my_plot(df, param):</span>
+<span class="sd">        ...     return df.hvplot.line(y=param)</span>
+<span class="sd">        &gt;&gt;&gt; # Works with both static and interactive data</span>
+<span class="sd">        &gt;&gt;&gt; plot = my_plot(dataframe, &#39;column_name&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">plotting_func</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interactive_plotting_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="c1"># Run the plotting function</span>
+        <span class="n">plot</span> <span class="o">=</span> <span class="n">plotting_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># If the first argument is a dataframe, then we return the plot</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">plot</span>
+
+        <span class="c1"># If a list, then we combine the plots</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">interactive</span> <span class="o">=</span> <span class="n">plot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plot</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="n">interactive</span> <span class="o">=</span> <span class="n">interactive</span> <span class="o">+</span> <span class="n">p</span>
+            <span class="k">return</span> <span class="n">interactive</span><span class="o">.</span><span class="n">cols</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Otherwise, set the framewise option and return</span>
+        <span class="k">return</span> <span class="n">plot</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="n">framewise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">interactive_plotting_func</span></div>
+
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_ecdf_kde</span><span class="p">(</span><span class="n">plotting_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">HVType</span><span class="p">]:</span> <span class="o">...</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_ecdf_kde</span><span class="p">(</span>
+    <span class="n">plotting_df</span><span class="p">:</span> <span class="n">hvplot</span><span class="o">.</span><span class="n">interactive</span><span class="o">.</span><span class="n">Interactive</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">:</span> <span class="n">pnw</span><span class="o">.</span><span class="n">Select</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hvplot</span><span class="o">.</span><span class="n">interactive</span><span class="o">.</span><span class="n">Interactive</span><span class="p">:</span> <span class="o">...</span>
+
+
+<div class="viewcode-block" id="plot_ecdf_kde">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.plot_ecdf_kde">[docs]</a>
+<span class="nd">@allow_interactive</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_ecdf_kde</span><span class="p">(</span><span class="n">plotting_df</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create empirical CDF and kernel density estimate plots.</span>
+
+<span class="sd">    This function generates complementary ECDF and KDE visualizations</span>
+<span class="sd">    for univariate data, providing both cumulative and density perspectives</span>
+<span class="sd">    on the data distribution.</span>
+
+<span class="sd">    :param plotting_df: DataFrame containing the data to plot</span>
+<span class="sd">    :type plotting_df: Union[pd.DataFrame, hvplot.interactive.Interactive]</span>
+<span class="sd">    :param paramname: Name of the parameter/column to visualize</span>
+<span class="sd">    :type paramname: Union[str, pnw.Select]</span>
+
+<span class="sd">    :returns: List containing KDE and ECDF plots, or interactive plot</span>
+<span class="sd">    :rtype: Union[list[HVType], hvplot.interactive.Interactive]</span>
+
+<span class="sd">    The function creates:</span>
+<span class="sd">        - KDE plot: Smooth density estimate with automatic bandwidth</span>
+<span class="sd">        - ECDF plot: Step function showing cumulative probabilities</span>
+
+<span class="sd">    Both plots are configured with consistent styling and appropriate</span>
+<span class="sd">    axis labels for scientific presentation.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; df = pd.DataFrame({&#39;param&#39;: np.random.normal(0, 1, 1000)})</span>
+<span class="sd">        &gt;&gt;&gt; plots = plot_ecdf_kde(df, &#39;param&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; # plots[0] is KDE, plots[1] is ECDF</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Build the plots, combine, and return</span>
+    <span class="n">ecdf_plot</span> <span class="o">=</span> <span class="n">plotting_df</span><span class="o">.</span><span class="n">hvplot</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">paramname</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Cumulative Probability&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;ECDF&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">400</span>
+    <span class="p">)</span>
+    <span class="n">kde_plot</span> <span class="o">=</span> <span class="n">plotting_df</span><span class="o">.</span><span class="n">hvplot</span><span class="o">.</span><span class="n">kde</span><span class="p">(</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">paramname</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;KDE&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">autorange</span><span class="o">=</span><span class="s2">&quot;y&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">kde_plot</span><span class="p">,</span> <span class="n">ecdf_plot</span><span class="p">]</span></div>
+
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_ecdf_violin</span><span class="p">(</span><span class="n">plotting_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">HVType</span><span class="p">]:</span> <span class="o">...</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_ecdf_violin</span><span class="p">(</span>
+    <span class="n">plotting_df</span><span class="p">:</span> <span class="n">hvplot</span><span class="o">.</span><span class="n">interactive</span><span class="o">.</span><span class="n">Interactive</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">:</span> <span class="n">pnw</span><span class="o">.</span><span class="n">Select</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hvplot</span><span class="o">.</span><span class="n">interactive</span><span class="o">.</span><span class="n">Interactive</span><span class="p">:</span> <span class="o">...</span>
+
+
+<div class="viewcode-block" id="plot_ecdf_violin">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.plot_ecdf_violin">[docs]</a>
+<span class="nd">@allow_interactive</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_ecdf_violin</span><span class="p">(</span><span class="n">plotting_df</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create ECDF and violin plots for multi-group data comparison.</span>
+
+<span class="sd">    This function visualizes distributions across multiple groups or</span>
+<span class="sd">    categories, combining empirical CDFs with violin plots to show</span>
+<span class="sd">    both cumulative and density information simultaneously.</span>
+
+<span class="sd">    :param plotting_df: DataFrame with grouped data including &#39;Independent Label&#39; column</span>
+<span class="sd">    :type plotting_df: Union[pd.DataFrame, hvplot.interactive.Interactive]</span>
+<span class="sd">    :param paramname: Name of the parameter/column to visualize</span>
+<span class="sd">    :type paramname: Union[str, pnw.Select]</span>
+
+<span class="sd">    :returns: Combined ECDF and violin plot overlay</span>
+<span class="sd">    :rtype: Union[list[HVType], hvplot.interactive.Interactive]</span>
+
+<span class="sd">    The visualization includes:</span>
+<span class="sd">        - Multi-line ECDF plot: One curve per group with color coding</span>
+<span class="sd">        - Violin plot: Density distributions by group with colorbar</span>
+
+<span class="sd">    Groups are automatically colored using the Inferno colormap.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # DataFrame with &#39;param&#39; values and &#39;Independent Label&#39; grouping</span>
+<span class="sd">        &gt;&gt;&gt; plots = plot_ecdf_violin(grouped_df, &#39;param&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ecdfplot</span> <span class="o">=</span> <span class="n">plotting_df</span><span class="o">.</span><span class="n">hvplot</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">paramname</span><span class="p">,</span>
+        <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Cumulative Probability&quot;</span><span class="p">,</span>
+        <span class="n">by</span><span class="o">=</span><span class="s2">&quot;Independent Label&quot;</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="n">hv</span><span class="o">.</span><span class="n">Palette</span><span class="p">(</span><span class="s2">&quot;Inferno&quot;</span><span class="p">),</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;ECDF&quot;</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">violinplot</span> <span class="o">=</span> <span class="n">plotting_df</span><span class="o">.</span><span class="n">hvplot</span><span class="o">.</span><span class="n">violin</span><span class="p">(</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">paramname</span><span class="p">,</span>
+        <span class="n">by</span><span class="o">=</span><span class="s2">&quot;Independent Label&quot;</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Violin Plot&quot;</span><span class="p">,</span>
+        <span class="n">c</span><span class="o">=</span><span class="s2">&quot;Independent Label&quot;</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;inferno&quot;</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+        <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">colorbar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">ecdfplot</span> <span class="o">+</span> <span class="n">violinplot</span><span class="p">]</span></div>
+
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_relationship</span><span class="p">(</span>
+    <span class="n">plotting_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">datashade</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HVType</span><span class="p">:</span> <span class="o">...</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_relationship</span><span class="p">(</span>
+    <span class="n">plotting_df</span><span class="p">:</span> <span class="n">hvplot</span><span class="o">.</span><span class="n">interactive</span><span class="o">.</span><span class="n">Interactive</span><span class="p">,</span>
+    <span class="o">/</span><span class="p">,</span>
+    <span class="n">paramname</span><span class="p">:</span> <span class="n">pnw</span><span class="o">.</span><span class="n">Select</span><span class="p">,</span>
+    <span class="n">datashade</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hvplot</span><span class="o">.</span><span class="n">interactive</span><span class="o">.</span><span class="n">Interactive</span><span class="p">:</span> <span class="o">...</span>
+
+
+<div class="viewcode-block" id="plot_relationship">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.plot_relationship">[docs]</a>
+<span class="nd">@allow_interactive</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_relationship</span><span class="p">(</span><span class="n">plotting_df</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">,</span> <span class="n">datashade</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize relationships between parameters and independent variables.</span>
+
+<span class="sd">    This function creates line plots showing how parameters vary with</span>
+<span class="sd">    respect to independent variables, with optional datashading for</span>
+<span class="sd">    large datasets to improve performance and readability.</span>
+
+<span class="sd">    :param plotting_df: DataFrame with &#39;Independent Label&#39; and parameter columns</span>
+<span class="sd">    :type plotting_df: Union[pd.DataFrame, hvplot.interactive.Interactive]</span>
+<span class="sd">    :param paramname: Name of the dependent parameter to plot</span>
+<span class="sd">    :type paramname: Union[str, pnw.Select]</span>
+<span class="sd">    :param datashade: Whether to use datashading for large datasets (Default: True)</span>
+<span class="sd">    :type datashade: bool</span>
+
+<span class="sd">    :returns: Line plot showing parameter relationships</span>
+<span class="sd">    :rtype: Union[HVType, hvplot.interactive.Interactive]</span>
+
+<span class="sd">    Datashading options:</span>
+<span class="sd">        - True: Uses count aggregation with Inferno colormap (large data)</span>
+<span class="sd">        - False: Uses dynamic line plotting with lime color (small data)</span>
+
+<span class="sd">    The function automatically optimizes visualization based on data size</span>
+<span class="sd">    and user preferences for performance versus detail.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Plot parameter evolution over time/conditions</span>
+<span class="sd">        &gt;&gt;&gt; plot = plot_relationship(time_series_df, &#39;param&#39;, datashade=True)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Different kwargs for datashade</span>
+    <span class="k">if</span> <span class="n">datashade</span><span class="p">:</span>
+        <span class="n">extra_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;datashade&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;aggregator&quot;</span><span class="p">:</span> <span class="s2">&quot;count&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;cmap&quot;</span><span class="p">:</span> <span class="s2">&quot;inferno&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">extra_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;datashade&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;line_color&quot;</span><span class="p">:</span> <span class="s2">&quot;lime&quot;</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">plotting_df</span><span class="o">.</span><span class="n">hvplot</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="s2">&quot;Independent Label&quot;</span><span class="p">,</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">paramname</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Relationship&quot;</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">extra_kwargs</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="choose_plotting_function">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.choose_plotting_function">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">choose_plotting_function</span><span class="p">(</span>
+    <span class="n">independent_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">],</span>
+    <span class="n">independent_labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span>
+    <span class="n">datashade</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select appropriate plotting function based on data characteristics.</span>
+
+<span class="sd">    This function implements intelligent plot type selection based on</span>
+<span class="sd">    the structure of the data and available metadata.</span>
+
+<span class="sd">    :param independent_dim: Dimension index for independent variable, if any</span>
+<span class="sd">    :type independent_dim: Optional[custom_types.Integer]</span>
+<span class="sd">    :param independent_labels: Labels for independent variable values</span>
+<span class="sd">    :type independent_labels: Optional[npt.NDArray]</span>
+<span class="sd">    :param datashade: Whether to enable datashading for large datasets (Default: True)</span>
+<span class="sd">    :type datashade: bool</span>
+
+<span class="sd">    :returns: Appropriate plotting function for the data structure</span>
+<span class="sd">    :rtype: Callable</span>
+
+<span class="sd">    Selection Logic:</span>
+<span class="sd">        - No independent_dim: Returns plot_ecdf_kde (univariate analysis)</span>
+<span class="sd">        - Independent_dim but no labels: Returns plot_ecdf_violin (multi-group)</span>
+<span class="sd">        - Both independent_dim and labels: Returns plot_relationship (dependency)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; plotter = choose_plotting_function(None, None)  # ECDF/KDE</span>
+<span class="sd">        &gt;&gt;&gt; plotter = choose_plotting_function(1, time_labels)  # Relationship</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">independent_dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">plot_ecdf_kde</span>
+    <span class="k">elif</span> <span class="n">independent_labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">plot_ecdf_violin</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">plot_relationship</span><span class="p">,</span> <span class="n">datashade</span><span class="o">=</span><span class="n">datashade</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="build_plotting_df">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.build_plotting_df">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_plotting_df</span><span class="p">(</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">paramname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;param&quot;</span><span class="p">,</span>
+    <span class="n">independent_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">independent_labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct DataFrame optimized for plotting functions.</span>
+
+<span class="sd">    This function transforms raw sample arrays into structured DataFrames</span>
+<span class="sd">    with appropriate columns and formatting for visualization functions.</span>
+<span class="sd">    It handles various data structures and automatically generates</span>
+<span class="sd">    necessary metadata for plotting.</span>
+
+<span class="sd">    :param samples: Raw sample data to structure for plotting</span>
+<span class="sd">    :type samples: npt.NDArray</span>
+<span class="sd">    :param paramname: Column name to assign for the parameter values (Default: &quot;param&quot;)</span>
+<span class="sd">    :type paramname: str</span>
+<span class="sd">    :param independent_dim: Dimension representing independent variable (Default: None)</span>
+<span class="sd">    :type independent_dim: Optional[custom_types.Integer]</span>
+<span class="sd">    :param independent_labels: Labels for independent variable values (Default: None)</span>
+<span class="sd">    :type independent_labels: Optional[npt.NDArray]</span>
+
+<span class="sd">    :returns: Structured DataFrame ready for plotting functions</span>
+<span class="sd">    :rtype: pd.DataFrame</span>
+
+<span class="sd">    The function handles:</span>
+<span class="sd">        - Data aggregation according to independent dimension</span>
+<span class="sd">        - Automatic label generation when not provided</span>
+<span class="sd">        - ECDF calculation for cumulative plots</span>
+<span class="sd">        - Trace separation with NaN boundaries for line plots</span>
+<span class="sd">        - Proper sorting for visualization functions</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; samples = np.random.randn(100, 50, 10)  # 100 traces, 50 time points, 10 params</span>
+<span class="sd">        &gt;&gt;&gt; df = build_plotting_df(samples, &#39;measurement&#39;, independent_dim=1)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Aggregate the data</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">aggregate_data</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">independent_dim</span><span class="o">=</span><span class="n">independent_dim</span><span class="p">)</span>
+
+    <span class="c1"># If the independent dimension is provided, one path</span>
+    <span class="k">if</span> <span class="n">independent_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="c1"># The data must be a 2D array</span>
+        <span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span>
+
+        <span class="c1"># Build the independent labels if they are not provided. If they are</span>
+        <span class="c1"># provided, make sure they are the right length.</span>
+        <span class="k">if</span> <span class="n">no_labels</span> <span class="o">:=</span> <span class="n">independent_labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">independent_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">independent_labels</span><span class="p">)</span> <span class="o">==</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Add the data to a dataframe, separating each trace with a row of NaNs</span>
+        <span class="n">sub_dfs</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">data_row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="c1"># Combine arrays and add a row of NaNs</span>
+            <span class="n">combined</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">data_row</span><span class="p">,</span> <span class="n">independent_labels</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">combined</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">combined</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)])</span>
+
+            <span class="c1"># Build the dataframe</span>
+            <span class="n">temp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">paramname</span><span class="p">,</span> <span class="s2">&quot;Independent Label&quot;</span><span class="p">])</span>
+            <span class="n">temp_df</span><span class="p">[</span><span class="s2">&quot;Trace&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="n">sub_dfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_df</span>
+
+        <span class="c1"># Combine all dataframes</span>
+        <span class="n">plotting_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">sub_dfs</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># If no labels were provided, drop the NaN rows and add an ECDF column</span>
+        <span class="k">if</span> <span class="n">no_labels</span><span class="p">:</span>
+
+            <span class="c1"># Drop the NaN rows</span>
+            <span class="n">plotting_df</span> <span class="o">=</span> <span class="n">plotting_df</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+
+            <span class="c1"># Add an ECDF column</span>
+            <span class="n">plotting_df</span><span class="p">[</span><span class="s2">&quot;Cumulative Probability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plotting_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
+                <span class="n">by</span><span class="o">=</span><span class="s2">&quot;Independent Label&quot;</span>
+            <span class="p">)[</span><span class="n">paramname</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">pct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">plotting_df</span> <span class="o">=</span> <span class="n">plotting_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+                <span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Independent Label&quot;</span><span class="p">,</span> <span class="s2">&quot;Cumulative Probability&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">plotting_df</span>
+
+    <span class="c1"># If the independent dimension is not provided, we need to add an ECDF</span>
+    <span class="c1"># column</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Get the dataframe</span>
+        <span class="n">plotting_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">paramname</span><span class="p">:</span> <span class="n">data</span><span class="p">})</span>
+
+        <span class="c1"># Add an ECDF to the dataframe</span>
+        <span class="n">plotting_df</span><span class="p">[</span><span class="s2">&quot;Cumulative Probability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plotting_df</span><span class="p">[</span><span class="n">paramname</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">pct</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">plotting_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;Cumulative Probability&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="plot_distribution">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.plot_distribution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_distribution</span><span class="p">(</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">overlay</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">paramname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;param&quot;</span><span class="p">,</span>
+    <span class="n">independent_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">independent_labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">HVType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">HVType</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create comprehensive distribution plots with optional overlays.</span>
+
+<span class="sd">    This is the main distribution plotting function that automatically</span>
+<span class="sd">    selects appropriate visualization types based on data structure</span>
+<span class="sd">    and provides optional ground truth or reference overlays.</span>
+
+<span class="sd">    :param samples: Sample data from model simulations or posterior draws</span>
+<span class="sd">    :type samples: Union[npt.NDArray, torch.Tensor]</span>
+<span class="sd">    :param overlay: Optional reference data to overlay on the plot (Default: None)</span>
+<span class="sd">    :type overlay: Optional[npt.NDArray]</span>
+<span class="sd">    :param paramname: Name to assign for the parameter being plotted (Default: &quot;param&quot;)</span>
+<span class="sd">    :type paramname: str</span>
+<span class="sd">    :param independent_dim: Dimension index for independent variable (Default: None)</span>
+<span class="sd">    :type independent_dim: Optional[custom_types.Integer]</span>
+<span class="sd">    :param independent_labels: Labels for independent variable values (Default: None)</span>
+<span class="sd">    :type independent_labels: Optional[npt.NDArray]</span>
+
+<span class="sd">    :returns: Plot or list of plots showing data distribution</span>
+<span class="sd">    :rtype: Union[HVType, list[HVType]]</span>
+
+<span class="sd">    :raises ValueError: If overlay dimensions don&#39;t match sample dimensions</span>
+
+<span class="sd">    The function automatically:</span>
+<span class="sd">        - Converts PyTorch tensors to NumPy arrays</span>
+<span class="sd">        - Selects appropriate plot type based on data structure</span>
+<span class="sd">        - Overlays reference data with distinct styling</span>
+<span class="sd">        - Handles both single plots and multi-panel layouts</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Simple distribution plot</span>
+<span class="sd">        &gt;&gt;&gt; plot = plot_distribution(posterior_samples, paramname=&#39;mu&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; # With ground truth overlay</span>
+<span class="sd">        &gt;&gt;&gt; plot = plot_distribution(samples, overlay=true_values, paramname=&#39;sigma&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Samples must be a numpy array</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">samples</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="n">samples</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Build the plotting dataframe for the distribution</span>
+    <span class="n">plotting_df</span> <span class="o">=</span> <span class="n">build_plotting_df</span><span class="p">(</span>
+        <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
+        <span class="n">paramname</span><span class="o">=</span><span class="n">paramname</span><span class="p">,</span>
+        <span class="n">independent_dim</span><span class="o">=</span><span class="n">independent_dim</span><span class="p">,</span>
+        <span class="n">independent_labels</span><span class="o">=</span><span class="n">independent_labels</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Get the plotting function</span>
+    <span class="n">plotting_func</span> <span class="o">=</span> <span class="n">choose_plotting_function</span><span class="p">(</span>
+        <span class="n">independent_dim</span><span class="o">=</span><span class="n">independent_dim</span><span class="p">,</span> <span class="n">independent_labels</span><span class="o">=</span><span class="n">independent_labels</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Get the figure</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plotting_func</span><span class="p">(</span><span class="n">plotting_df</span><span class="p">,</span> <span class="n">paramname</span><span class="o">=</span><span class="n">paramname</span><span class="p">)</span>
+
+    <span class="c1"># If no overlay, just return the plot</span>
+    <span class="k">if</span> <span class="n">overlay</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fig</span>
+
+    <span class="c1"># We are working with a 2D overlay if the independent dimension is provided</span>
+    <span class="n">expected_ndim</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">independent_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">overlay</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">expected_ndim</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">expected_ndim</span><span class="p">:]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;The last </span><span class="si">{</span><span class="n">expected_ndim</span><span class="si">}</span><span class="s2"> dimensions of the overlay must be the same &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;shape as the last </span><span class="si">{</span><span class="n">expected_ndim</span><span class="si">}</span><span class="s2"> dimensions of the samples&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Build the plotting dataframe for the overlay</span>
+    <span class="n">overlay_df</span> <span class="o">=</span> <span class="n">build_plotting_df</span><span class="p">(</span>
+        <span class="n">samples</span><span class="o">=</span><span class="n">overlay</span><span class="p">,</span>
+        <span class="n">paramname</span><span class="o">=</span><span class="n">paramname</span><span class="p">,</span>
+        <span class="n">independent_dim</span><span class="o">=</span><span class="n">independent_dim</span><span class="p">,</span>
+        <span class="n">independent_labels</span><span class="o">=</span><span class="n">independent_labels</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Plot the overlay. No data shading for the overlay.</span>
+    <span class="n">overfig</span> <span class="o">=</span> <span class="n">choose_plotting_function</span><span class="p">(</span>
+        <span class="n">independent_dim</span><span class="o">=</span><span class="n">independent_dim</span><span class="p">,</span>
+        <span class="n">independent_labels</span><span class="o">=</span><span class="n">independent_labels</span><span class="p">,</span>
+        <span class="n">datashade</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)(</span><span class="n">overlay_df</span><span class="p">,</span> <span class="n">paramname</span><span class="o">=</span><span class="n">paramname</span><span class="p">)</span>
+
+    <span class="c1"># If a list, then we combine the plots by index</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">overfig</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">overfig</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fig</span><span class="p">):</span>
+            <span class="n">fig</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span> <span class="o">*</span> <span class="n">overfig</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">fig</span>
+
+    <span class="c1"># If not a list, then we combine the plots as is</span>
+    <span class="k">return</span> <span class="n">fig</span> <span class="o">*</span> <span class="n">overfig</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_relative_quantiles">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.calculate_relative_quantiles">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_relative_quantiles</span><span class="p">(</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">observed</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate quantiles of observed values relative to reference distribution.</span>
+
+<span class="sd">    For each observed value, this function computes the quantile (percentile)</span>
+<span class="sd">    it would occupy within the corresponding reference distribution. This is</span>
+<span class="sd">    essential for calibration analysis and model validation.</span>
+
+<span class="sd">    :param reference: Reference observations with shape (n_samples, feat1, ..., featN).</span>
+<span class="sd">                     First dimension is samples, remaining are feature dimensions.</span>
+<span class="sd">    :type reference: npt.NDArray</span>
+<span class="sd">    :param observed: Observed values with shape (n_obs, feat1, ..., featN).</span>
+<span class="sd">                    Feature dimensions must match reference.</span>
+<span class="sd">    :type observed: npt.NDArray</span>
+
+<span class="sd">    :returns: Quantiles of observed values relative to reference</span>
+<span class="sd">    :rtype: npt.NDArray</span>
+
+<span class="sd">    :raises ValueError: If arrays have incompatible dimensions</span>
+
+<span class="sd">    The calculation determines, for each observed value, what fraction of</span>
+<span class="sd">    reference values in the corresponding position are less than or equal</span>
+<span class="sd">    to the observed value. This produces values between 0 and 1.</span>
+
+<span class="sd">    Mathematical Definition:</span>
+<span class="sd">        For observed value x_ij and reference distribution R_j:</span>
+<span class="sd">        quantile_ij = P(R_j &lt;= x_ij) = (1/n) * sum(R_kj &lt;= x_ij for k=1..n)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; ref = np.random.normal(0, 1, (1000, 10))  # 1000 samples, 10 features</span>
+<span class="sd">        &gt;&gt;&gt; obs = np.random.normal(0.5, 1, (5, 10))   # 5 observations, 10 features</span>
+<span class="sd">        &gt;&gt;&gt; quantiles = calculate_relative_quantiles(ref, obs)</span>
+<span class="sd">        &gt;&gt;&gt; # quantiles.shape == (5, 10), values between 0 and 1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Check shapes</span>
+    <span class="k">if</span> <span class="n">reference</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Reference must be at least 2D.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">observed</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Observed must be at least 2D.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">reference</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">observed</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;The shape of the reference and observed must match except for the &quot;</span>
+            <span class="s2">&quot;first dimension.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Now we calculate the quantiles that the observations fall into relative to</span>
+    <span class="c1"># the reference. The produced array has shape (n_observations, ...)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">reference</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">observed</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_defaults</span><span class="p">(</span>
+    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">default_values</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply default values to kwargs dictionary without overwriting existing keys.</span>
+
+<span class="sd">    This utility function provides a clean way to set default plotting</span>
+<span class="sd">    parameters while respecting user-provided customizations.</span>
+
+<span class="sd">    :param kwargs: User-provided keyword arguments (may be None)</span>
+<span class="sd">    :type kwargs: Union[dict[str, Any], None]</span>
+<span class="sd">    :param default_values: Tuple of (key, value) pairs for defaults</span>
+<span class="sd">    :type default_values: tuple[tuple[str, Any], ...]</span>
+
+<span class="sd">    :returns: Dictionary with defaults applied for missing keys</span>
+<span class="sd">    :rtype: dict[str, Any]</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; defaults = ((&#39;color&#39;, &#39;blue&#39;), (&#39;alpha&#39;, 0.5))</span>
+<span class="sd">        &gt;&gt;&gt; user_kwargs = {&#39;color&#39;: &#39;red&#39;}</span>
+<span class="sd">        &gt;&gt;&gt; final = _set_defaults(user_kwargs, defaults)</span>
+<span class="sd">        &gt;&gt;&gt; # final == {&#39;color&#39;: &#39;red&#39;, &#39;alpha&#39;: 0.5}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Convert none to empty dict if needed</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">default_values</span><span class="p">:</span>
+        <span class="c1"># If the key is not in the kwargs, add it</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="c1"># Update the kwargs with default values</span>
+    <span class="k">return</span> <span class="n">kwargs</span>
+
+
+<div class="viewcode-block" id="plot_calibration">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.plot_calibration">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_calibration</span><span class="p">(</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">observed</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate calibration plots for model validation.</span>
+
+<span class="sd">    This function creates empirical cumulative distribution plots of</span>
+<span class="sd">    relative quantiles to assess model calibration. Well-calibrated</span>
+<span class="sd">    models should produce observed values that are uniformly distributed</span>
+<span class="sd">    across quantiles of the reference distribution.</span>
+
+<span class="sd">    :param reference: Reference observations for calibration assessment</span>
+<span class="sd">    :type reference: npt.NDArray</span>
+<span class="sd">    :param observed: Observed values to assess against reference</span>
+<span class="sd">    :type observed: npt.NDArray</span>
+<span class="sd">    :param kwargs: Additional styling options passed to hvplot.Curve</span>
+
+<span class="sd">    :returns: Tuple of (calibration plot overlay, deviance statistics)</span>
+<span class="sd">    :rtype: tuple[hv.Overlay, npt.NDArray[np.floating]]</span>
+
+<span class="sd">    The calibration plot shows:</span>
+<span class="sd">        - ECDF curves for each observation set</span>
+<span class="sd">        - Ideal calibration line (diagonal from (0,0) to (1,1))</span>
+<span class="sd">        - Deviation areas highlighting calibration errors</span>
+
+<span class="sd">    Deviance Calculation:</span>
+<span class="sd">        For each observation, computes the absolute difference in area</span>
+<span class="sd">        between the observed ECDF and the ideal uniform ECDF using</span>
+<span class="sd">        the trapezoidal rule for numerical integration.</span>
+
+<span class="sd">    Interpretation:</span>
+<span class="sd">        - Points near diagonal: Well-calibrated</span>
+<span class="sd">        - Points above diagonal: Model underconfident OR bad fit</span>
+<span class="sd">        - Points below diagonal: Model overconfident OR bad fit</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; ref_data = posterior_predictive_samples  # Shape: (1000, 100)</span>
+<span class="sd">        &gt;&gt;&gt; obs_data = actual_observations          # Shape: (10, 100)</span>
+<span class="sd">        &gt;&gt;&gt; plot, deviances = plot_calibration(ref_data, obs_data)</span>
+<span class="sd">        &gt;&gt;&gt; print(f&quot;Mean deviance: {deviances.mean():.3f}&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># pylint: disable=line-too-long</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_deviance</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span> <span class="n">y</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates the absolute difference in area between the observed ECDF and the</span>
+<span class="sd">        ideal ECDF. We can calculate this by subtracting the area under the curve</span>
+<span class="sd">        of the ideal ECDF from the area under the curve of the observed ECDF, calculated</span>
+<span class="sd">        using the trapezoidal rule:</span>
+
+<span class="sd">        \begin{align}</span>
+<span class="sd">        AUC_{obs} = \sum_{i=1}^{n} (x_{i+1} - x_{i}) * (y_{i+1} + y_{i}) / 2</span>
+<span class="sd">        AUC_{ideal} = \sum_{i=1}^{n} (x_{i+1} - x_{i}) * (x_{i+1} + x_{i}) / 2</span>
+<span class="sd">        AUC_{diff} = \sum_{i=1}^{n} (x_{i+1} - x_{i}) * abs((y_{i+1} + y_{i}) - (x_{i+1} + x_{i})) / 2</span>
+<span class="sd">        \end{align}</span>
+
+<span class="sd">        where $x$ are the quantiles and $y$ are the cumulative probabilities and we</span>
+<span class="sd">        take the absolute value of the difference between the two AUCs at each step</span>
+<span class="sd">        to get the absolute difference.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the widths of the intervals</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># Get the total heights of the trapezoids over intervals for the observed</span>
+        <span class="c1"># and ideal ECDFs</span>
+        <span class="n">h_obs</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">y</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">h_ideal</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Calculate the absolute difference in areas under the curves</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dx</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h_obs</span> <span class="o">-</span> <span class="n">h_ideal</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+    <span class="c1"># Now we calculate the quantiles that the observations fall into relative to</span>
+    <span class="c1"># the reference. The produced array has shape (n_observations, n_features)</span>
+    <span class="n">quantiles</span> <span class="o">=</span> <span class="n">calculate_relative_quantiles</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span>
+
+    <span class="c1"># Add to plots</span>
+    <span class="n">deviances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">quantiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">plots</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">quantiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">obs_ind</span><span class="p">,</span> <span class="n">obs_quantiles</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">quantiles</span><span class="p">):</span>
+
+        <span class="c1"># Get the ECDF coordinates of the observed quantiles</span>
+        <span class="n">ecdf</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">ecdf</span><span class="p">(</span><span class="n">obs_quantiles</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">ecdf</span><span class="o">.</span><span class="n">cdf</span><span class="o">.</span><span class="n">quantiles</span><span class="p">,</span> <span class="n">ecdf</span><span class="o">.</span><span class="n">cdf</span><span class="o">.</span><span class="n">probabilities</span>
+
+        <span class="c1"># Calculate the absolute deviance</span>
+        <span class="n">deviances</span><span class="p">[</span><span class="n">obs_ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">calculate_deviance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="c1"># Build the plot</span>
+        <span class="n">plots</span><span class="p">[</span><span class="n">obs_ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">hv</span><span class="o">.</span><span class="n">Curve</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">kdims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Quantiles&quot;</span><span class="p">],</span> <span class="n">vdims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Cumulative Probability&quot;</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># One final plot giving the idealized ECDF</span>
+    <span class="n">plots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">hv</span><span class="o">.</span><span class="n">Curve</span><span class="p">(</span>
+        <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">kdims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Quantiles&quot;</span><span class="p">],</span>
+        <span class="n">vdims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Cumulative Probability&quot;</span><span class="p">],</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="n">line_color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">line_dash</span><span class="o">=</span><span class="s2">&quot;dashed&quot;</span><span class="p">,</span> <span class="n">show_legend</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">(</span><span class="n">plots</span><span class="p">),</span> <span class="n">deviances</span></div>
+
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">quantile_plot</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">quantiles</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">observed</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">labels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">include_median</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">overwrite_input</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">return_quantiles</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span>
+    <span class="n">observed_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">,</span> <span class="s2">&quot;scatter&quot;</span><span class="p">],</span>
+    <span class="n">area_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">median_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">observed_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">allow_nan</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">:</span> <span class="o">...</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">quantile_plot</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
+    <span class="n">quantiles</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">observed</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">labels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">include_median</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">overwrite_input</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">return_quantiles</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+    <span class="n">observed_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">,</span> <span class="s2">&quot;scatter&quot;</span><span class="p">],</span>
+    <span class="n">area_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">median_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">observed_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">allow_nan</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]]:</span> <span class="o">...</span>
+
+
+<div class="viewcode-block" id="quantile_plot">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.quantile_plot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">quantile_plot</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">,</span>
+    <span class="n">reference</span><span class="p">,</span>
+    <span class="n">quantiles</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">observed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">include_median</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">overwrite_input</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">return_quantiles</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">observed_type</span><span class="o">=</span><span class="s2">&quot;line&quot;</span><span class="p">,</span>
+    <span class="n">area_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">median_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">observed_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create quantile plots with confidence intervals and optional overlays.</span>
+
+<span class="sd">    This function generates area plots showing quantile ranges of reference</span>
+<span class="sd">    data along with optional median lines and observed data overlays.</span>
+<span class="sd">    It&#39;s particularly useful for visualizing uncertainty bands around</span>
+<span class="sd">    model predictions.</span>
+
+<span class="sd">    :param x: X-axis values (independent variable)</span>
+<span class="sd">    :type x: npt.NDArray</span>
+<span class="sd">    :param reference: Reference data with shape (n_samples, n_points)</span>
+<span class="sd">    :type reference: npt.NDArray</span>
+<span class="sd">    :param quantiles: Quantile values to calculate and plot (0 &lt; q &lt; 1)</span>
+<span class="sd">    :type quantiles: npt.ArrayLike</span>
+<span class="sd">    :param observed: Optional observed data to overlay. Must be 1D or 2D with last</span>
+<span class="sd">        dimension matching that of the reference data (Default: None).</span>
+<span class="sd">    :type observed: Optional[npt.ArrayLike]</span>
+<span class="sd">    :param labels: Optional labels for hover tooltips (Default: None).</span>
+<span class="sd">    :type labels: Optional[dict[str, npt.ArrayLike]]</span>
+<span class="sd">    :param include_median: Whether to include median line (Default: True)</span>
+<span class="sd">    :type include_median: bool</span>
+<span class="sd">    :param overwrite_input: Whether to overwrite reference array during calculations.</span>
+<span class="sd">        This can help save memory by avoiding the creation of intermediate copies.</span>
+<span class="sd">        (Default: False)</span>
+<span class="sd">    :type overwrite_input: bool</span>
+<span class="sd">    :param return_quantiles: Whether to return calculated quantiles along with plot.</span>
+<span class="sd">        (Default: False)</span>
+<span class="sd">    :type return_quantiles: bool</span>
+<span class="sd">    :param observed_type: Type of overlay plot (&#39;line&#39; or &#39;scatter&#39;) (Default: &#39;line&#39;)</span>
+<span class="sd">    :type observed_type: Literal[&quot;line&quot;, &quot;scatter&quot;]</span>
+<span class="sd">    :param area_kwargs: Styling options for quantile areas. See `hv.opts.Area`.</span>
+<span class="sd">    :type area_kwargs: Optional[dict[str, Any]]</span>
+<span class="sd">    :param median_kwargs: Styling options for median line. See `hv.opts.Line`.</span>
+<span class="sd">    :type median_kwargs: Optional[dict[str, Any]]</span>
+<span class="sd">    :param observed_kwargs: Styling options for observed overlay. See `hv.opts.Curve`</span>
+<span class="sd">        or `hv.opts.Scatter` depending on choice of `observed_type`.</span>
+<span class="sd">    :type observed_kwargs: Optional[dict[str, Any]]</span>
+<span class="sd">    :param allow_nan: If True, uses `np.nanquantile` for quantile calculation. Otherwise,</span>
+<span class="sd">        uses `np.quantile` (Default: False).</span>
+<span class="sd">    :type allow_nan: bool</span>
+
+<span class="sd">    :returns: Quantile plot overlay, optionally with calculated quantiles</span>
+<span class="sd">    :rtype: Union[hv.Overlay, tuple[hv.Overlay, npt.NDArray[np.floating]]]</span>
+
+<span class="sd">    :raises ValueError: If quantiles are not between 0 and 1, or if array dimensions</span>
+<span class="sd">        are invalid</span>
+
+<span class="sd">    Features:</span>
+<span class="sd">        - Automatic quantile symmetrization (adds complement quantiles)</span>
+<span class="sd">        - Nested confidence intervals with graduated transparency</span>
+<span class="sd">        - Customizable styling for all plot components</span>
+<span class="sd">        - Optional hover labels for interactive exploration</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; x = np.linspace(0, 10, 100)</span>
+<span class="sd">        &gt;&gt;&gt; ref = np.random.normal(np.sin(x), 0.1, (1000, 100))</span>
+<span class="sd">        &gt;&gt;&gt; obs = np.sin(x) + 0.05 * np.random.randn(100)</span>
+<span class="sd">        &gt;&gt;&gt; plot = quantile_plot(x, ref, [0.025, 0.25], observed=obs)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Set the default kwargs</span>
+    <span class="n">area_kwargs</span> <span class="o">=</span> <span class="n">_set_defaults</span><span class="p">(</span>
+        <span class="n">area_kwargs</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;color&quot;</span><span class="p">,</span> <span class="s2">&quot;black&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;line_width&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;line_color&quot;</span><span class="p">,</span> <span class="s2">&quot;black&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;fill_alpha&quot;</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;show_legend&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">median_kwargs</span> <span class="o">=</span> <span class="n">_set_defaults</span><span class="p">(</span>
+        <span class="n">median_kwargs</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;color&quot;</span><span class="p">,</span> <span class="s2">&quot;black&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;line_width&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;line_color&quot;</span><span class="p">,</span> <span class="s2">&quot;black&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;show_legend&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">observed_kwargs</span> <span class="o">=</span> <span class="n">_set_defaults</span><span class="p">(</span>
+        <span class="n">observed_kwargs</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;color&quot;</span><span class="p">,</span> <span class="s2">&quot;gold&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;line_width&quot;</span><span class="p">,</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">observed_type</span> <span class="o">==</span> <span class="s2">&quot;line&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;show_legend&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">_set_defaults</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="p">())</span>
+
+    <span class="c1"># The plot data must be 2D.</span>
+    <span class="k">if</span> <span class="n">reference</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The plot data must be 2D.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># If provided, the observed must be 1D or 2D and the last dimension must match</span>
+    <span class="c1"># that of the plot data</span>
+    <span class="k">if</span> <span class="n">observed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="c1"># Check the observed shape</span>
+        <span class="k">if</span> <span class="n">observed</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">observed</span> <span class="o">=</span> <span class="n">observed</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">observed</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The observed must be 1D or 2D.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">observed</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">reference</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The last dimension of the observed must match the last &quot;</span>
+                <span class="s2">&quot;dimension of the plot data.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Get the type of observed plot</span>
+        <span class="n">observed_plot</span> <span class="o">=</span> <span class="n">hv</span><span class="o">.</span><span class="n">Scatter</span> <span class="k">if</span> <span class="n">observed_type</span> <span class="o">==</span> <span class="s2">&quot;scatter&quot;</span> <span class="k">else</span> <span class="n">hv</span><span class="o">.</span><span class="n">Curve</span>
+
+    <span class="c1"># Get the quantiles</span>
+    <span class="n">max_digits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">quantiles</span><span class="p">)</span>
+    <span class="n">quantiles</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="nb">set</span><span class="p">(</span><span class="n">quantiles</span><span class="p">)</span> <span class="o">|</span> <span class="p">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">q</span><span class="p">,</span> <span class="n">max_digits</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">quantiles</span><span class="p">}</span> <span class="o">|</span> <span class="p">{</span><span class="mf">0.5</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Check that the quantiles are between 0 and 1</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">q</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">quantiles</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Quantiles must be between 0 and 1. Please provide a valid list of &quot;</span>
+            <span class="s2">&quot;quantiles.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Check that the quantiles are odd in number and include 0.5</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">quantiles</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Quantiles must be odd in number&quot;</span>
+    <span class="n">median_ind</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">quantiles</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="k">assert</span> <span class="n">quantiles</span><span class="p">[</span><span class="n">median_ind</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;Quantiles must include 0.5&quot;</span>
+
+    <span class="c1"># Calculate the quantiles</span>
+    <span class="n">area_bounds</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanquantile</span> <span class="k">if</span> <span class="n">allow_nan</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">)(</span>
+        <span class="n">reference</span><span class="p">,</span> <span class="n">quantiles</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">overwrite_input</span><span class="o">=</span><span class="n">overwrite_input</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Only include hover tools if we have labels</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_hover_tools</span><span class="p">(</span><span class="n">kwargset</span><span class="p">):</span>
+        <span class="n">kwargset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;hover_mode&quot;</span><span class="p">:</span> <span class="n">kwargset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hover_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;vline&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">kwargset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tools&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;hover&quot;</span><span class="p">])),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">labels</span><span class="p">:</span>
+        <span class="n">add_hover_tools</span><span class="p">(</span><span class="n">median_kwargs</span><span class="p">)</span>
+        <span class="n">add_hover_tools</span><span class="p">(</span><span class="n">observed_kwargs</span><span class="p">)</span>
+
+    <span class="c1"># Build the plots</span>
+    <span class="n">plots</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">hv</span><span class="o">.</span><span class="n">Area</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">area_bounds</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">area_bounds</span><span class="p">[</span><span class="o">-</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]),</span>
+            <span class="n">vdims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;lower&quot;</span><span class="p">,</span> <span class="s2">&quot;upper&quot;</span><span class="p">],</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="o">**</span><span class="n">area_kwargs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">quantiles</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">include_median</span><span class="p">:</span>
+        <span class="n">plots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">hv</span><span class="o">.</span><span class="n">Curve</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">area_bounds</span><span class="p">[</span><span class="n">median_ind</span><span class="p">],</span> <span class="o">*</span><span class="n">labels</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+                <span class="n">kdims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span>
+                <span class="n">vdims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">labels</span><span class="o">.</span><span class="n">keys</span><span class="p">()],</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="o">**</span><span class="n">median_kwargs</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">observed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plots</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">observed_plot</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">observed_data</span><span class="p">,</span> <span class="o">*</span><span class="n">labels</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+                <span class="n">kdims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span>
+                <span class="n">vdims</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">labels</span><span class="o">.</span><span class="n">keys</span><span class="p">()],</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="o">**</span><span class="n">observed_kwargs</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">observed_data</span> <span class="ow">in</span> <span class="n">observed</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Return the quantiles if requested</span>
+    <span class="n">plots</span> <span class="o">=</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">(</span><span class="n">plots</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">return_quantiles</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">plots</span><span class="p">,</span> <span class="n">area_bounds</span>
+
+    <span class="k">return</span> <span class="n">plots</span></div>
+
+
+
+<div class="viewcode-block" id="hexgrid_with_mean">
+<a class="viewcode-back" href="../../../docs/api/plotting/plotting.html#scistanpy.plotting.plotting.hexgrid_with_mean">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hexgrid_with_mean</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
+    <span class="n">y</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">mean_windowsize</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">hex_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">mean_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create hexagonal binning plot with rolling mean overlay.</span>
+
+<span class="sd">    This function generates a hexagonal heatmap showing data density</span>
+<span class="sd">    combined with a rolling mean trend line, useful for visualizing</span>
+<span class="sd">    large datasets with underlying trends.</span>
+
+<span class="sd">    :param x: X-axis data values</span>
+<span class="sd">    :type x: npt.NDArray[np.floating]</span>
+<span class="sd">    :param y: Y-axis data values</span>
+<span class="sd">    :type y: npt.NDArray[np.floating]</span>
+<span class="sd">    :param mean_windowsize: Window size for rolling mean calculation.</span>
+<span class="sd">                           Defaults to x.size // 100 if not specified.</span>
+<span class="sd">    :type mean_windowsize: Optional[custom_types.Integer]</span>
+<span class="sd">    :param hex_kwargs: Styling options for hexagonal tiles. See `hv.opts.HexTiles`.</span>
+<span class="sd">    :type hex_kwargs: Optional[dict[str, Any]]</span>
+<span class="sd">    :param mean_kwargs: Styling options for rolling mean line. See `hv.opts.Line`.</span>
+<span class="sd">    :type mean_kwargs: Optional[dict[str, Any]]</span>
+
+<span class="sd">    :returns: Overlay combining hexagonal heatmap and rolling mean</span>
+<span class="sd">    :rtype: hv.Overlay</span>
+
+<span class="sd">    :raises ValueError: If x and y arrays have different shapes or are not 1D</span>
+
+<span class="sd">    The hexagonal binning:</span>
+<span class="sd">        - Aggregates points into hexagonal cells</span>
+<span class="sd">        - Colors cells by point density using viridis colormap</span>
+<span class="sd">        - Includes colorbar for density interpretation</span>
+
+<span class="sd">    The rolling mean:</span>
+<span class="sd">        - Computed over sorted x values to show trend</span>
+<span class="sd">        - Window size automatically scaled to data size</span>
+<span class="sd">        - Styled for clear visibility over density plot</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Large dataset with trend</span>
+<span class="sd">        &gt;&gt;&gt; x = np.random.randn(10000)</span>
+<span class="sd">        &gt;&gt;&gt; y = 2*x + 0.5*np.random.randn(10000)</span>
+<span class="sd">        &gt;&gt;&gt; plot = hexgrid_with_mean(x, y, mean_windowsize=200)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># x and y must be 1D arrays</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;x and y must be 1D arrays.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;x and y must have the same shape.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Set the default kwargs</span>
+    <span class="n">hex_kwargs</span> <span class="o">=</span> <span class="n">_set_defaults</span><span class="p">(</span>
+        <span class="n">hex_kwargs</span><span class="p">,</span>
+        <span class="p">((</span><span class="s2">&quot;cmap&quot;</span><span class="p">,</span> <span class="s2">&quot;viridis&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;colorbar&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
+    <span class="p">)</span>
+    <span class="n">mean_kwargs</span> <span class="o">=</span> <span class="n">_set_defaults</span><span class="p">(</span>
+        <span class="n">mean_kwargs</span><span class="p">,</span>
+        <span class="p">((</span><span class="s2">&quot;color&quot;</span><span class="p">,</span> <span class="s2">&quot;slategray&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;line_width&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+    <span class="p">)</span>
+    <span class="n">windowsize</span> <span class="o">=</span> <span class="n">mean_windowsize</span> <span class="ow">or</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span> <span class="o">//</span> <span class="mi">100</span><span class="p">)</span>
+
+    <span class="c1"># Build the plot</span>
+    <span class="k">return</span> <span class="n">hv</span><span class="o">.</span><span class="n">HexTiles</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="o">**</span><span class="n">hex_kwargs</span><span class="p">)</span> <span class="o">*</span> <span class="n">hv</span><span class="o">.</span><span class="n">Curve</span><span class="p">(</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">y</span><span class="p">})</span>
+        <span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">windowsize</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">dropna</span><span class="p">(),</span>
+        <span class="s2">&quot;x&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;y&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Rolling Mean&quot;</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="o">**</span><span class="n">mean_kwargs</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/api/index.html">SciStanPy API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../../scistanpy.html">scistanpy</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scistanpy.model.components.transformations.transformed_data &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for scistanpy.model.components.transformations.transformed_data</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Transformed data components for Stan model generation.</span>
+
+<span class="sd">This module provides specialized transformation classes for components that</span>
+<span class="sd">belong in Stan&#39;s transformed data block. These transformations represent</span>
+<span class="sd">deterministic computations that can be performed once at the beginning of</span>
+<span class="sd">Stan program execution, before any sampling begins.</span>
+
+<span class="sd">Transformed data components differ from regular transformations in that they:</span>
+<span class="sd">- Execute only once per Stan program run</span>
+<span class="sd">- Cannot depend on parameters (only on data)</span>
+<span class="sd">- Enable computational optimizations through pre-calculation</span>
+<span class="sd">- Reduce per-iteration computational overhead in Stan models</span>
+
+<span class="sd">Key Components:</span>
+<span class="sd">    - **TransformedData**: Abstract base class for transformed data components</span>
+<span class="sd">    - **LogMultinomialCoefficient**: Pre-computed multinomial coefficients for efficiency</span>
+
+<span class="sd">The module integrates with SciStanPy&#39;s transformation system while providing</span>
+<span class="sd">the specialized behavior required for Stan&#39;s transformed data block, enabling</span>
+<span class="sd">significant performance improvements for models with expensive deterministic</span>
+<span class="sd">computations.</span>
+
+<span class="sd">Performance Benefits:</span>
+<span class="sd">    Transformed data components enable performance optimizations by:</span>
+<span class="sd">    - Pre-computing expensive deterministic functions</span>
+<span class="sd">    - Reducing per-iteration computational load</span>
+<span class="sd">    - Leveraging Stan&#39;s program structure for efficiency</span>
+<span class="sd">    - Avoiding redundant calculations during sampling</span>
+
+<span class="sd">These optimizations are particularly valuable for:</span>
+<span class="sd">- Complex likelihood functions with constant terms</span>
+<span class="sd">- Expensive matrix operations on fixed data</span>
+<span class="sd">- Normalization constants for custom distributions</span>
+<span class="sd">- Any deterministic computation independent of parameters</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.transformations</span><span class="w"> </span><span class="kn">import</span> <span class="n">transformed_parameters</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">parameters</span>
+
+
+<div class="viewcode-block" id="TransformedData">
+<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.TransformedData">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransformedData</span><span class="p">(</span><span class="n">transformed_parameters</span><span class="o">.</span><span class="n">Transformation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for Stan transformed data block components.</span>
+
+<span class="sd">    This class provides the foundation for model components that generate</span>
+<span class="sd">    Stan code for the transformed data block. Components in this block</span>
+<span class="sd">    represent deterministic computations that are performed once at the</span>
+<span class="sd">    beginning of Stan execution, before any parameter sampling begins.</span>
+
+<span class="sd">    Transformed data components must satisfy strict requirements:</span>
+<span class="sd">    - Can only depend on data (not parameters)</span>
+<span class="sd">    - Must be deterministic (no random components)</span>
+<span class="sd">    - Execute exactly once per Stan program run</span>
+<span class="sd">    - Cannot be sampled from or optimized</span>
+
+<span class="sd">    The class inherits from Transformation but disables sampling and PyTorch</span>
+<span class="sd">    optimization capabilities since transformed data components represent</span>
+<span class="sd">    fixed computations rather than random variables or learnable parameters.</span>
+
+<span class="sd">    Subclasses must implement:</span>
+<span class="sd">    - model_varname property for Stan variable naming</span>
+<span class="sd">    - write_stan_operation method for generating Stan code</span>
+
+<span class="sd">    The class provides performance benefits by:</span>
+<span class="sd">    - Pre-computing expensive deterministic functions</span>
+<span class="sd">    - Reducing per-iteration computational overhead</span>
+<span class="sd">    - Enabling Stan compiler optimizations</span>
+<span class="sd">    - Avoiding redundant calculations during sampling</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># The transformation is renamed to be more descriptive</span>
+    <span class="n">get_transformed_data_assignment</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">transformed_parameters</span><span class="o">.</span><span class="n">Transformation</span><span class="o">.</span><span class="n">_transformation</span>  <span class="c1"># pylint: disable=protected-access</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for sampling attempts on transformed data.</span>
+
+<span class="sd">        :param args: Unused positional arguments</span>
+<span class="sd">        :param kwargs: Unused keyword arguments</span>
+
+<span class="sd">        :raises NotImplementedError: Always, as transformed data cannot be sampled</span>
+
+<span class="sd">        Transformed data components represent deterministic computations that</span>
+<span class="sd">        are performed once at Stan initialization. They cannot be sampled from</span>
+<span class="sd">        as they are not random variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;TransformedData does not implement _draw.&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">torch_parametrization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for PyTorch parameterization attempts.</span>
+
+<span class="sd">        :raises NotImplementedError: Always, as transformed data has no parameters</span>
+
+<span class="sd">        Transformed data components are not learnable parameters and therefore</span>
+<span class="sd">        cannot have PyTorch parameterizations. They represent fixed computations</span>
+<span class="sd">        based on data rather than optimizable variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;TransformedData does not implement torch_parametrization.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model_varname</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the Stan model variable name for this transformed data component.</span>
+
+<span class="sd">        :returns: Variable name to use in generated Stan code</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        This abstract property must be implemented by all subclasses to provide</span>
+<span class="sd">        appropriate variable names for the transformed data block. The name should</span>
+<span class="sd">        be descriptive and follow Stan naming conventions.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="LogMultinomialCoefficient">
+<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.LogMultinomialCoefficient">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogMultinomialCoefficient</span><span class="p">(</span><span class="n">TransformedData</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre-computed logarithmic multinomial coefficient for performance optimization.</span>
+
+<span class="sd">    This class implements a performance optimization for multinomial distributions</span>
+<span class="sd">    parameterized by log_theta. When the multinomial is used to model observable</span>
+<span class="sd">    data (known counts), the multinomial coefficient can be pre-calculated once</span>
+<span class="sd">    rather than computed at each MCMC iteration.</span>
+
+<span class="sd">    :param counts: Multinomial parameter with log_theta parameterization</span>
+<span class="sd">    :type counts: parameters.MultinomialLogTheta</span>
+<span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
+
+<span class="sd">    :cvar SHAPE_CHECK: Disabled for this component (False)</span>
+
+<span class="sd">    Mathematical Background:</span>
+<span class="sd">        The multinomial probability mass function includes a coefficient term:</span>
+<span class="sd">        C(n; k₁, k₂, ..., kₘ) = n! / (k₁! × k₂! × ... × kₘ!)</span>
+
+<span class="sd">        For fixed observed counts, this coefficient is constant across all</span>
+<span class="sd">        MCMC iterations and can be pre-computed for efficiency.</span>
+
+<span class="sd">    Performance Impact:</span>
+<span class="sd">        - Eliminates factorial computations from each MCMC iteration</span>
+<span class="sd">        - Reduces computational overhead for multinomial likelihoods</span>
+<span class="sd">        - Particularly beneficial for large sample sizes or many categories</span>
+<span class="sd">        - Can provide substantial speedup for multinomial-heavy models</span>
+
+<span class="sd">    Usage Requirements:</span>
+<span class="sd">        - The counts parameter must be observable (represent data)</span>
+<span class="sd">        - Only applicable to MultinomialLogTheta distributions</span>
+<span class="sd">        - Automatically managed by MultinomialLogTheta components</span>
+
+<span class="sd">    The coefficient is automatically included in the transformed data block</span>
+<span class="sd">    when appropriate and removed if the parameter becomes non-observable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SHAPE_CHECK</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">counts</span><span class="p">:</span> <span class="s2">&quot;parameters.MultinomialLogTheta&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the multinomial coefficient with shape adjustment.</span>
+
+<span class="sd">        :param counts: Multinomial parameter to optimize</span>
+<span class="sd">        :type counts: parameters.MultinomialLogTheta</span>
+<span class="sd">        :param kwargs: Additional arguments for parent initialization</span>
+
+<span class="sd">        The initialization creates a coefficient component with shape adjusted</span>
+<span class="sd">        to remove the final dimension (since the coefficient is scalar for</span>
+<span class="sd">        each multinomial trial).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Initialize the parent class</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>  <span class="c1"># The last dimension is reduced to 1</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="LogMultinomialCoefficient.write_stan_operation">
+<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.LogMultinomialCoefficient.write_stan_operation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">counts</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for computing the log multinomial coefficient.</span>
+
+<span class="sd">        :param counts: Stan variable name for the count data</span>
+<span class="sd">        :type counts: str</span>
+
+<span class="sd">        :returns: Stan function call for log multinomial coefficient</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        :raises ValueError: If counts parameter is not observable</span>
+
+<span class="sd">        This method generates the Stan function call to compute the logarithmic</span>
+<span class="sd">        multinomial coefficient. The computation is only valid for observable</span>
+<span class="sd">        (fixed) count data, as the coefficient must be deterministic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># The counts must be an observable</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">observable</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;We can only pre-calculate the multinomial coefficient for constant counts.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log_multinomial_coeff(</span><span class="si">{</span><span class="n">counts</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model_varname</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the model variable name for the multinomial coefficient.</span>
+
+<span class="sd">        :returns: Descriptive variable name based on the counts parameter</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        The variable name follows the pattern:</span>
+<span class="sd">        &quot;{counts_variable_name}.log_multinomial_coefficient&quot;</span>
+
+<span class="sd">        This provides clear identification of the coefficient&#39;s purpose and</span>
+<span class="sd">        its relationship to the associated multinomial parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">.log_multinomial_coefficient&quot;</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../../index.html">Module code</a><ul>
+  <li><a href="../../../../scistanpy.html">scistanpy</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
