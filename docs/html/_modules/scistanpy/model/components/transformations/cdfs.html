@@ -31,7 +31,10 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.model.components.transformations.cdfs</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Cumulative distribution function transformations for SciStanPy parameters.</span>
 
 <span class="sd">This module provides specialized transformation classes for computing cumulative</span>
@@ -86,7 +89,7 @@
 
 
 <div class="viewcode-block" id="CDFLike">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CDFLike</span><span class="p">(</span><span class="n">transformed_parameters</span><span class="o">.</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for cumulative distribution function transformations.</span>
 
@@ -157,7 +160,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CDFLike.check_parameters">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.check_parameters">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.check_parameters">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">check_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargset</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that provided parameters match distribution requirements.</span>
 
@@ -190,7 +193,7 @@
 
 
 <div class="viewcode-block" id="CDFLike.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.run_np_torch_op">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the CDF operation using NumPy or PyTorch backend.</span>
@@ -270,7 +273,7 @@
 
 
 <div class="viewcode-block" id="CDFLike.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for the CDFLike operation.</span>
 
@@ -302,7 +305,7 @@
 
 
 <div class="viewcode-block" id="CDF">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDF">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDF">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CDF</span><span class="p">(</span><span class="n">CDFLike</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard cumulative distribution function transformation.</span>
 
@@ -340,7 +343,7 @@
     <span class="n">TORCH_FUNC</span> <span class="o">=</span> <span class="s2">&quot;cdf&quot;</span>
 
 <div class="viewcode-block" id="CDF.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDF.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDF.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>  <span class="c1"># pylint: disable=useless-parent-delegation</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute CDF computation using appropriate backend.</span>
 
@@ -360,7 +363,7 @@
 
 
 <div class="viewcode-block" id="SurvivalFunction">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.SurvivalFunction">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.SurvivalFunction">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SurvivalFunction</span><span class="p">(</span><span class="n">CDFLike</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Survival function (complementary CDF) transformation.</span>
 
@@ -400,7 +403,7 @@
     <span class="n">TORCH_FUNC</span> <span class="o">=</span> <span class="s2">&quot;cdf&quot;</span>
 
 <div class="viewcode-block" id="SurvivalFunction.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.SurvivalFunction.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.SurvivalFunction.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute survival function computation with backend-specific handling.</span>
 
@@ -437,7 +440,7 @@
 
 
 <div class="viewcode-block" id="LogCDF">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogCDF">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogCDF">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogCDF</span><span class="p">(</span><span class="n">CDFLike</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Logarithmic cumulative distribution function transformation.</span>
 
@@ -481,7 +484,7 @@
     <span class="n">TORCH_FUNC</span> <span class="o">=</span> <span class="s2">&quot;log_cdf&quot;</span>
 
 <div class="viewcode-block" id="LogCDF.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogCDF.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogCDF.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute log CDF computation with appropriate numerical handling.</span>
 
@@ -521,7 +524,7 @@
 
 
 <div class="viewcode-block" id="LogSurvivalFunction">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogSurvivalFunction</span><span class="p">(</span><span class="n">CDFLike</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Logarithmic survival function transformation.</span>
 
@@ -566,7 +569,7 @@
     <span class="n">TORCH_FUNC</span> <span class="o">=</span> <span class="s2">&quot;log_sf&quot;</span>
 
 <div class="viewcode-block" id="LogSurvivalFunction.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute log survival function computation with numerical stability.</span>
 
@@ -631,7 +634,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

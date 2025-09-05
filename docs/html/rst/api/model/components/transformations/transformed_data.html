@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Transformed Data API Reference &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+    <link rel="next" title="Transformed Parameters API Reference" href="transformed_parameters.html" />
+    <link rel="prev" title="CDFs API Reference" href="cdfs.html" />
+   
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="transformed-data-api-reference">
+<h1>Transformed Data API Reference<a class="headerlink" href="#transformed-data-api-reference" title="Link to this heading">¶</a></h1>
+<p>This reference covers the transformed data functionality for efficient data preprocessing in SciStanPy.</p>
+<section id="transformed-data-module">
+<h2>Transformed Data Module<a class="headerlink" href="#transformed-data-module" title="Link to this heading">¶</a></h2>
+<p>Transformed data components for Stan model generation.</p>
+<p>This module provides specialized transformation classes for components that
+belong in Stan’s transformed data block. These transformations represent
+deterministic computations that can be performed once at the beginning of
+Stan program execution, before any sampling begins.</p>
+<p>Transformed data components differ from regular transformations in that they:
+- Execute only once per Stan program run
+- Cannot depend on parameters (only on data)
+- Enable computational optimizations through pre-calculation
+- Reduce per-iteration computational overhead in Stan models</p>
+<dl class="simple">
+<dt>Key Components:</dt><dd><ul class="simple">
+<li><p><strong>TransformedData</strong>: Abstract base class for transformed data components</p></li>
+<li><p><strong>LogMultinomialCoefficient</strong>: Pre-computed multinomial coefficients for efficiency</p></li>
+</ul>
+</dd>
+</dl>
+<p>The module integrates with SciStanPy’s transformation system while providing
+the specialized behavior required for Stan’s transformed data block, enabling
+significant performance improvements for models with expensive deterministic
+computations.</p>
+<dl class="simple">
+<dt>Performance Benefits:</dt><dd><p>Transformed data components enable performance optimizations by:
+- Pre-computing expensive deterministic functions
+- Reducing per-iteration computational load
+- Leveraging Stan’s program structure for efficiency
+- Avoiding redundant calculations during sampling</p>
+</dd>
+</dl>
+<p>These optimizations are particularly valuable for:
+- Complex likelihood functions with constant terms
+- Expensive matrix operations on fixed data
+- Normalization constants for custom distributions
+- Any deterministic computation independent of parameters</p>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_data.</span></span><span class="sig-name descname"><span class="pre">LogMultinomialCoefficient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">parameters.MultinomialLogTheta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/transformations/transformed_data.html#LogMultinomialCoefficient"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedData</span></code></p>
+<p>Pre-computed logarithmic multinomial coefficient for performance optimization.</p>
+<p>This class implements a performance optimization for multinomial distributions
+parameterized by log_theta. When the multinomial is used to model observable
+data (known counts), the multinomial coefficient can be pre-calculated once
+rather than computed at each MCMC iteration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>counts</strong> (<em>parameters.MultinomialLogTheta</em>) – Multinomial parameter with log_theta parameterization</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>SHAPE_CHECK</strong> – Disabled for this component (False)</p>
+</dd>
+</dl>
+<dl>
+<dt>Mathematical Background:</dt><dd><p>The multinomial probability mass function includes a coefficient term:
+C(n; k₁, k₂, …, kₘ) = n! / (k₁! × k₂! × … × kₘ!)</p>
+<p>For fixed observed counts, this coefficient is constant across all
+MCMC iterations and can be pre-computed for efficiency.</p>
+</dd>
+<dt>Performance Impact:</dt><dd><ul class="simple">
+<li><p>Eliminates factorial computations from each MCMC iteration</p></li>
+<li><p>Reduces computational overhead for multinomial likelihoods</p></li>
+<li><p>Particularly beneficial for large sample sizes or many categories</p></li>
+<li><p>Can provide substantial speedup for multinomial-heavy models</p></li>
+</ul>
+</dd>
+<dt>Usage Requirements:</dt><dd><ul class="simple">
+<li><p>The counts parameter must be observable (represent data)</p></li>
+<li><p>Only applicable to MultinomialLogTheta distributions</p></li>
+<li><p>Automatically managed by MultinomialLogTheta components</p></li>
+</ul>
+</dd>
+</dl>
+<p>The coefficient is automatically included in the transformed data block
+when appropriate and removed if the parameter becomes non-observable.</p>
+<p>Initialize the multinomial coefficient with shape adjustment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>counts</strong> (<em>parameters.MultinomialLogTheta</em>) – Multinomial parameter to optimize</p></li>
+<li><p><strong>kwargs</strong> – Additional arguments for parent initialization</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization creates a coefficient component with shape adjusted
+to remove the final dimension (since the coefficient is scalar for
+each multinomial trial).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">SHAPE_CHECK</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_varname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em></dt>
+<dd><p>Get the model variable name for the multinomial coefficient.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Descriptive variable name based on the counts parameter</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<p>The variable name follows the pattern:
+“{counts_variable_name}.log_multinomial_coefficient”</p>
+<p>This provides clear identification of the coefficient’s purpose and
+its relationship to the associated multinomial parameter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">write_stan_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/transformations/transformed_data.html#LogMultinomialCoefficient.write_stan_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Generate Stan code for computing the log multinomial coefficient.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>counts</strong> (<em>str</em>) – Stan variable name for the count data</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stan function call for log multinomial coefficient</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If counts parameter is not observable</p>
+</dd>
+</dl>
+<p>This method generates the Stan function call to compute the logarithmic
+multinomial coefficient. The computation is only valid for observable
+(fixed) count data, as the coefficient must be deterministic.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_data.</span></span><span class="sig-name descname"><span class="pre">TransformedData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/transformations/transformed_data.html#TransformedData"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></p>
+<p>Abstract base class for Stan transformed data block components.</p>
+<p>This class provides the foundation for model components that generate
+Stan code for the transformed data block. Components in this block
+represent deterministic computations that are performed once at the
+beginning of Stan execution, before any parameter sampling begins.</p>
+<p>Transformed data components must satisfy strict requirements:
+- Can only depend on data (not parameters)
+- Must be deterministic (no random components)
+- Execute exactly once per Stan program run
+- Cannot be sampled from or optimized</p>
+<p>The class inherits from Transformation but disables sampling and PyTorch
+optimization capabilities since transformed data components represent
+fixed computations rather than random variables or learnable parameters.</p>
+<p>Subclasses must implement:
+- model_varname property for Stan variable naming
+- write_stan_operation method for generating Stan code</p>
+<p>The class provides performance benefits by:
+- Pre-computing expensive deterministic functions
+- Reducing per-iteration computational overhead
+- Enabling Stan compiler optimizations
+- Avoiding redundant calculations during sampling</p>
+<p>Initialize a model component with specified shape and parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
+<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
+2. Validates parameter constraints and bounds
+3. Converts non-component parameters to constants
+4. Establishes parent-child relationships
+5. Validates and sets component shape through broadcasting</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_transformed_data_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assignment_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_side_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span></dt>
+<dd><p>Generate complete transformation assignment code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index_opts</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em><em>]</em>) – Index variable names for multi-dimensional operations</p></li>
+<li><p><strong>assignment_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Keyword arguments for assignment formatting. Defaults to None.</p></li>
+<li><p><strong>right_side_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Keyword arguments for right-side formatting. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Complete Stan assignment statement</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>This method combines the left-hand side variable name with the right-hand
+side operation to create a complete Stan assignment statement suitable
+for use in transformed parameters or transformed data blocks.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_varname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em></dt>
+<dd><p>Get or generate the SciStanPy variable name for this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Variable name for this component</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<p>If a variable name has been explicitly assigned, returns that name.
+Otherwise, automatically generates a name based on child component
+relationships using dot notation for hierarchical names.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">torch_parametrization</span></span></dt>
+<dd><p>Raise error for PyTorch parameterization attempts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Always, as transformed data has no parameters</p>
+</dd>
+</dl>
+<p>Transformed data components are not learnable parameters and therefore
+cannot have PyTorch parameterizations. They represent fixed computations
+based on data rather than optimizable variables.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="transformeddata-class">
+<h2>TransformedData Class<a class="headerlink" href="#transformeddata-class" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_data.</span></span><span class="sig-name descname"><span class="pre">TransformedData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/transformations/transformed_data.html#TransformedData"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></p>
+<p>Abstract base class for Stan transformed data block components.</p>
+<p>This class provides the foundation for model components that generate
+Stan code for the transformed data block. Components in this block
+represent deterministic computations that are performed once at the
+beginning of Stan execution, before any parameter sampling begins.</p>
+<p>Transformed data components must satisfy strict requirements:
+- Can only depend on data (not parameters)
+- Must be deterministic (no random components)
+- Execute exactly once per Stan program run
+- Cannot be sampled from or optimized</p>
+<p>The class inherits from Transformation but disables sampling and PyTorch
+optimization capabilities since transformed data components represent
+fixed computations rather than random variables or learnable parameters.</p>
+<p>Subclasses must implement:
+- model_varname property for Stan variable naming
+- write_stan_operation method for generating Stan code</p>
+<p>The class provides performance benefits by:
+- Pre-computing expensive deterministic functions
+- Reducing per-iteration computational overhead
+- Enabling Stan compiler optimizations
+- Avoiding redundant calculations during sampling</p>
+<p>Initialize a model component with specified shape and parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
+<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
+2. Validates parameter constraints and bounds
+3. Converts non-component parameters to constants
+4. Establishes parent-child relationships
+5. Validates and sets component shape through broadcasting</p>
+<p><strong>Efficient Data Preprocessing:</strong></p>
+<p>The TransformedData class enables computationally expensive operations to be performed once in Stan’s transformed data block rather than repeatedly during sampling:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Expensive computation that should be done once</span>
+<span class="n">large_matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>
+
+<span class="c1"># This computation will be moved to transformed data block</span>
+<span class="n">matrix_inverse</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">TransformedData</span><span class="p">(</span>
+    <span class="n">operation</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+    <span class="n">operand</span><span class="o">=</span><span class="n">large_matrix</span><span class="p">,</span>
+    <span class="n">stan_operation</span><span class="o">=</span><span class="s2">&quot;inverse(</span><span class="si">{operand}</span><span class="s2">)&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Stan Code Generation:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The transformed data generates:</span>
+<span class="c1"># transformed data {</span>
+<span class="c1">#     matrix[1000, 1000] matrix_inverse = inverse(large_matrix);</span>
+<span class="c1"># }</span>
+<span class="c1">#</span>
+<span class="c1"># Instead of computing the inverse at every MCMC iteration</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_transformed_data_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assignment_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_side_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span></dt>
+<dd><p>Generate complete transformation assignment code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index_opts</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em><em>]</em>) – Index variable names for multi-dimensional operations</p></li>
+<li><p><strong>assignment_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Keyword arguments for assignment formatting. Defaults to None.</p></li>
+<li><p><strong>right_side_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Keyword arguments for right-side formatting. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Complete Stan assignment statement</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>This method combines the left-hand side variable name with the right-hand
+side operation to create a complete Stan assignment statement suitable
+for use in transformed parameters or transformed data blocks.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_varname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em></dt>
+<dd><p>Get or generate the SciStanPy variable name for this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Variable name for this component</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<p>If a variable name has been explicitly assigned, returns that name.
+Otherwise, automatically generates a name based on child component
+relationships using dot notation for hierarchical names.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">torch_parametrization</span></span></dt>
+<dd><p>Raise error for PyTorch parameterization attempts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Always, as transformed data has no parameters</p>
+</dd>
+</dl>
+<p>Transformed data components are not learnable parameters and therefore
+cannot have PyTorch parameterizations. They represent fixed computations
+based on data rather than optimizable variables.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="key-features">
+<h2>Key Features<a class="headerlink" href="#key-features" title="Link to this heading">¶</a></h2>
+<p><strong>One-Time Computation:</strong></p>
+<p>TransformedData components are evaluated once during Stan’s data processing phase, making them ideal for:</p>
+<ul class="simple">
+<li><p>Matrix decompositions and inverses</p></li>
+<li><p>Expensive mathematical constants</p></li>
+<li><p>Data preprocessing and normalization</p></li>
+<li><p>Multinomial coefficient calculations</p></li>
+</ul>
+<p><strong>Example Applications:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Matrix decomposition for efficient sampling</span>
+<span class="n">covariance_matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">empirical_covariance</span><span class="p">)</span>
+<span class="n">cholesky_decomp</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">TransformedData</span><span class="p">(</span>
+    <span class="n">operation</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cov</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">cov</span><span class="p">),</span>
+    <span class="n">operand</span><span class="o">=</span><span class="n">covariance_matrix</span><span class="p">,</span>
+    <span class="n">stan_operation</span><span class="o">=</span><span class="s2">&quot;cholesky_decompose(</span><span class="si">{operand}</span><span class="s2">)&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Multinomial normalization constants</span>
+<span class="n">observed_counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogTheta</span><span class="p">(</span>
+    <span class="n">log_theta</span><span class="o">=</span><span class="n">log_probabilities</span><span class="p">,</span>
+    <span class="n">N</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">observable</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="c1"># Multinomial coefficient automatically computed in transformed data</span>
+</pre></div>
+</div>
+<p><strong>Stan Integration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic transformed data block generation</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">parameters_using_transformed_data</span><span class="p">)</span>
+<span class="n">stan_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_stan</span><span class="p">()</span>
+
+<span class="c1"># Generated Stan includes:</span>
+<span class="c1"># transformed data {</span>
+<span class="c1">#     // Expensive computations here</span>
+<span class="c1">#     matrix[n, n] inv_cov = inverse(cov_matrix);</span>
+<span class="c1">#     real log_multinomial_coeff = lgamma(sum(counts) + 1) - sum(lgamma(counts + 1));</span>
+<span class="c1"># }</span>
+</pre></div>
+</div>
+</section>
+<section id="automatic-usage-in-scistanpy">
+<h2>Automatic Usage in SciStanPy<a class="headerlink" href="#automatic-usage-in-scistanpy" title="Link to this heading">¶</a></h2>
+<p><strong>MultinomialLogTheta Optimization:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># When using MultinomialLogTheta with observable=True:</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogTheta</span><span class="p">(</span>
+    <span class="n">log_theta</span><span class="o">=</span><span class="n">log_probs</span><span class="p">,</span>
+    <span class="n">N</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">observable</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Triggers transformed data optimization</span>
+<span class="p">)</span>
+
+<span class="c1"># SciStanPy automatically:</span>
+<span class="c1"># 1. Computes multinomial coefficient in transformed data</span>
+<span class="c1"># 2. Uses precomputed value in model block</span>
+<span class="c1"># 3. Avoids recomputing expensive lgamma functions</span>
+</pre></div>
+</div>
+<p><strong>Matrix Operations:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Large matrix operations are candidates for transformed data</span>
+<span class="n">design_matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">X_data</span><span class="p">)</span>  <span class="c1"># Large design matrix</span>
+
+<span class="c1"># If used in computationally expensive ways:</span>
+<span class="n">precision_matrix</span> <span class="o">=</span> <span class="n">design_matrix</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">design_matrix</span>
+<span class="c1"># Could be moved to transformed data for efficiency</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-transformed-data">
+<h2>Custom Transformed Data<a class="headerlink" href="#custom-transformed-data" title="Link to this heading">¶</a></h2>
+<p><strong>Creating Custom Transformed Data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CustomTransformedData</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">TransformedData</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Custom transformed data operation.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">my_operation</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="c1"># Expensive computation here</span>
+            <span class="k">return</span> <span class="n">expensive_computation</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">operation</span><span class="o">=</span><span class="n">my_operation</span><span class="p">,</span>
+            <span class="n">operand</span><span class="o">=</span><span class="n">input_data</span><span class="p">,</span>
+            <span class="n">stan_operation</span><span class="o">=</span><span class="s2">&quot;my_stan_function(</span><span class="si">{operand}</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Manual Transformed Data Creation:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># For operations requiring custom Stan code</span>
+<span class="n">complex_preprocessing</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">TransformedData</span><span class="p">(</span>
+    <span class="n">operation</span><span class="o">=</span><span class="k">lambda</span> <span class="n">data</span><span class="p">:</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">data</span><span class="p">),</span>
+    <span class="n">operand</span><span class="o">=</span><span class="n">raw_data</span><span class="p">,</span>
+    <span class="n">stan_operation</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    {</span>
+<span class="s2">        // Custom Stan preprocessing code</span>
+<span class="s2">        vector[N] processed_data;</span>
+<span class="s2">        for (i in 1:N) {</span>
+<span class="s2">            processed_data[i] = custom_transform(raw_data[i]);</span>
+<span class="s2">        }</span>
+<span class="s2">    }</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-benefits">
+<h2>Performance Benefits<a class="headerlink" href="#performance-benefits" title="Link to this heading">¶</a></h2>
+<p><strong>Computational Efficiency:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Without transformed data: computed every MCMC iteration</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">slow_model</span><span class="p">():</span>
+    <span class="n">expensive_result</span> <span class="o">=</span> <span class="n">expensive_computation</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># Computed 4000+ times</span>
+    <span class="k">return</span> <span class="n">likelihood_using</span><span class="p">(</span><span class="n">expensive_result</span><span class="p">)</span>
+
+<span class="c1"># With transformed data: computed once</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fast_model</span><span class="p">():</span>
+    <span class="n">expensive_result</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">TransformedData</span><span class="p">(</span>
+        <span class="n">operation</span><span class="o">=</span><span class="n">expensive_computation</span><span class="p">,</span>
+        <span class="n">operand</span><span class="o">=</span><span class="n">data</span>
+    <span class="p">)</span>  <span class="c1"># Computed once in transformed data block</span>
+    <span class="k">return</span> <span class="n">likelihood_using</span><span class="p">(</span><span class="n">expensive_result</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Memory Efficiency:</strong></p>
+<p>TransformedData operations can also help with memory management by preprocessing data into more efficient formats:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert sparse data to dense format once</span>
+<span class="n">sparse_matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">scipy_sparse_matrix</span><span class="p">)</span>
+<span class="n">dense_matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">TransformedData</span><span class="p">(</span>
+    <span class="n">operation</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">toarray</span><span class="p">(),</span>
+    <span class="n">operand</span><span class="o">=</span><span class="n">sparse_matrix</span><span class="p">,</span>
+    <span class="n">stan_operation</span><span class="o">=</span><span class="s2">&quot;to_matrix(</span><span class="si">{operand}</span><span class="s2">)&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="stan-code-generation-details">
+<h2>Stan Code Generation Details<a class="headerlink" href="#stan-code-generation-details" title="Link to this heading">¶</a></h2>
+<p><strong>Variable Declaration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># TransformedData automatically generates appropriate Stan types</span>
+<span class="n">transformed_component</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">TransformedData</span><span class="p">(</span>
+    <span class="n">operation</span><span class="o">=</span><span class="n">matrix_operation</span><span class="p">,</span>
+    <span class="n">operand</span><span class="o">=</span><span class="n">matrix_input</span>
+<span class="p">)</span>
+
+<span class="c1"># Generates Stan declaration based on operation result:</span>
+<span class="c1"># matrix[rows, cols] transformed_component = operation(matrix_input);</span>
+</pre></div>
+</div>
+<p><strong>Block Organization:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciStanPy organizes transformed data block efficiently:</span>
+<span class="c1"># transformed data {</span>
+<span class="c1">#     // Declarations first</span>
+<span class="c1">#     matrix[n, n] inv_cov;</span>
+<span class="c1">#     real log_coeff;</span>
+<span class="c1">#</span>
+<span class="c1">#     // Computations in dependency order</span>
+<span class="c1">#     inv_cov = inverse(covariance_matrix);</span>
+<span class="c1">#     log_coeff = lgamma(sum(counts) + 1) - sum(lgamma(counts + 1));</span>
+<span class="c1"># }</span>
+</pre></div>
+</div>
+</section>
+<section id="integration-patterns">
+<h2>Integration Patterns<a class="headerlink" href="#integration-patterns" title="Link to this heading">¶</a></h2>
+<p><strong>With Model Components:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Transformed data integrates seamlessly with other components</span>
+<span class="n">preprocessed_data</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">TransformedData</span><span class="p">(</span>
+    <span class="n">operation</span><span class="o">=</span><span class="n">preprocessing_function</span><span class="p">,</span>
+    <span class="n">operand</span><span class="o">=</span><span class="n">raw_data</span>
+<span class="p">)</span>
+
+<span class="c1"># Use in parameter definitions</span>
+<span class="n">regression_mean</span> <span class="o">=</span> <span class="n">design_matrix</span> <span class="o">@</span> <span class="n">coefficients</span> <span class="o">+</span> <span class="n">preprocessed_data</span>
+</pre></div>
+</div>
+<p><strong>With Custom Distributions:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use transformed data with custom distributions requiring expensive setup</span>
+<span class="n">normalization_constant</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">TransformedData</span><span class="p">(</span>
+    <span class="n">operation</span><span class="o">=</span><span class="n">compute_normalization</span><span class="p">,</span>
+    <span class="n">operand</span><span class="o">=</span><span class="n">parameters</span>
+<span class="p">)</span>
+
+<span class="c1"># Custom distribution using precomputed constant</span>
+<span class="n">custom_likelihood</span> <span class="o">=</span> <span class="n">CustomDistribution</span><span class="p">(</span>
+    <span class="n">params</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+    <span class="n">normalization</span><span class="o">=</span><span class="n">normalization_constant</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Identify expensive operations</strong> that don’t depend on parameters</p></li>
+<li><p><strong>Use for preprocessing</strong> that can be done once before sampling</p></li>
+<li><p><strong>Consider matrix operations</strong> as candidates for transformed data</p></li>
+<li><p><strong>Validate Stan code generation</strong> for custom operations</p></li>
+<li><p><strong>Profile models</strong> to identify transformation opportunities</p></li>
+<li><p><strong>Use automatic features</strong> like MultinomialLogTheta optimization</p></li>
+<li><p><strong>Document custom transformed data</strong> operations clearly</p></li>
+</ol>
+<p>The transformed data framework provides essential performance optimization capabilities while maintaining the clean separation between data preprocessing and statistical modeling in SciStanPy.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">SciStanPy API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#top-level-package">Top-Level Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#module-overview">Module Overview</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../../index.html#quick-navigation">Quick Navigation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../../custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html">Model API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../operations.html">Operations API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#usage-notes">Usage Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#missing-something">Missing Something?</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">SciStanPy API Reference</a><ul>
+  <li><a href="../../index.html">Model API Reference</a><ul>
+  <li><a href="../index.html">Model Components API Reference</a><ul>
+  <li><a href="index.html">Transformations API Reference</a><ul>
+      <li>Previous: <a href="cdfs.html" title="previous chapter">CDFs API Reference</a></li>
+      <li>Next: <a href="transformed_parameters.html" title="next chapter">Transformed Parameters API Reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../../../../_sources/rst/api/model/components/transformations/transformed_data.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

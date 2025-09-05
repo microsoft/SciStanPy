@@ -31,7 +31,10 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.model.results.hmc</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Hamiltonian Monte Carlo (HMC) sampling results analysis and diagnostics.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;Hamiltonian Monte Carlo (HMC) sampling results analysis and diagnostics.</span>
 
 <span class="sd">This module provides tools for analyzing and diagnosing HMC sampling results from</span>
 <span class="sd">Stan models. It offers specialized classes and functions for processing</span>
@@ -127,7 +130,7 @@
 
 
 <div class="viewcode-block" id="_symmetrize_quantiles">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc._symmetrize_quantiles">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc._symmetrize_quantiles">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">_symmetrize_quantiles</span><span class="p">(</span>
     <span class="n">quantiles</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Float</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Float</span><span class="p">]:</span>
@@ -176,7 +179,7 @@
 
 
 <div class="viewcode-block" id="VariableAnalyzer">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.VariableAnalyzer">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.VariableAnalyzer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">VariableAnalyzer</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Interactive analysis tool for variables that fail MCMC diagnostic tests.</span>
 
@@ -534,7 +537,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="VariableAnalyzer.display">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.VariableAnalyzer.display">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.VariableAnalyzer.display">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Display the complete interactive analysis interface.</span>
 
@@ -550,7 +553,7 @@
 
 
 <div class="viewcode-block" id="CmdStanMCMCToNetCDFConverter">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CmdStanMCMCToNetCDFConverter</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Efficient converter from CmdStan CSV output to NetCDF format.</span>
 
@@ -669,7 +672,7 @@
         <span class="k">return</span> <span class="n">varname_to_column_order</span>
 
 <div class="viewcode-block" id="CmdStanMCMCToNetCDFConverter.write_netcdf">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter.write_netcdf">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter.write_netcdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_netcdf</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -999,7 +1002,7 @@
 
 
 <div class="viewcode-block" id="cmdstan_csv_to_netcdf">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.cmdstan_csv_to_netcdf">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.cmdstan_csv_to_netcdf">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">cmdstan_csv_to_netcdf</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="n">CmdStanMCMC</span><span class="p">,</span>
     <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;Model&quot;</span><span class="p">,</span>
@@ -1067,7 +1070,7 @@
 
 
 <div class="viewcode-block" id="dask_enabled_summary_stats">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.dask_enabled_summary_stats">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.dask_enabled_summary_stats">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">dask_enabled_summary_stats</span><span class="p">(</span><span class="n">inference_obj</span><span class="p">:</span> <span class="n">az</span><span class="o">.</span><span class="n">InferenceData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute summary statistics using Dask for memory efficiency.</span>
 
@@ -1123,7 +1126,7 @@
 
 
 <div class="viewcode-block" id="dask_enabled_diagnostics">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.dask_enabled_diagnostics">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.dask_enabled_diagnostics">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">dask_enabled_diagnostics</span><span class="p">(</span><span class="n">inference_obj</span><span class="p">:</span> <span class="n">az</span><span class="o">.</span><span class="n">InferenceData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute MCMC diagnostics using Dask for memory efficiency.</span>
 
@@ -1175,7 +1178,7 @@
 
 
 <div class="viewcode-block" id="SampleResults">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SampleResults</span><span class="p">(</span><span class="n">mle</span><span class="o">.</span><span class="n">MLEInferenceRes</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Comprehensive analysis interface for HMC sampling results. This class should</span>
 <span class="sd">    never be instantiated directly. Instead, use the `from_disk` method to load the</span>
@@ -1276,7 +1279,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">inference_obj</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SampleResults.calculate_summaries">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.calculate_summaries">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.calculate_summaries">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_summaries</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">var_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1391,7 +1394,7 @@
 
 
 <div class="viewcode-block" id="SampleResults.calculate_diagnostics">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.calculate_diagnostics">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.calculate_diagnostics">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_diagnostics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute MCMC diagnostics with side effects and reporting.</span>
 
@@ -1409,7 +1412,7 @@
 
 
 <div class="viewcode-block" id="SampleResults.evaluate_sample_stats">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.evaluate_sample_stats">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.evaluate_sample_stats">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_sample_stats</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">max_tree_depth</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1467,7 +1470,7 @@
 
 
 <div class="viewcode-block" id="SampleResults.evaluate_variable_diagnostic_stats">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.evaluate_variable_diagnostic_stats">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.evaluate_variable_diagnostic_stats">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_variable_diagnostic_stats</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">r_hat_thresh</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Float</span> <span class="o">=</span> <span class="n">DEFAULT_RHAT_THRESH</span><span class="p">,</span>
@@ -1547,7 +1550,7 @@
 
 
 <div class="viewcode-block" id="SampleResults.identify_failed_diagnostics">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.identify_failed_diagnostics">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.identify_failed_diagnostics">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">identify_failed_diagnostics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">silent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
         <span class="s2">&quot;custom_types.StrippedTestRes&quot;</span><span class="p">,</span>
         <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;custom_types.StrippedTestRes&quot;</span><span class="p">],</span>
@@ -1707,7 +1710,7 @@
 
 
 <div class="viewcode-block" id="SampleResults.diagnose">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.diagnose">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.diagnose">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">diagnose</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">max_tree_depth</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1783,7 +1786,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="SampleResults.plot_sample_failure_quantile_traces">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.plot_sample_failure_quantile_traces">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.plot_sample_failure_quantile_traces">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">plot_sample_failure_quantile_traces</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">600</span>
     <span class="p">):</span>
@@ -1985,7 +1988,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pn</span><span class="o">.</span><span class="n">pane</span><span class="o">.</span><span class="n">HoloViews</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="SampleResults.plot_variable_failure_quantile_traces">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">plot_variable_failure_quantile_traces</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">display</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2051,7 +2054,7 @@
 
 
 <div class="viewcode-block" id="SampleResults.from_disk">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.from_disk">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.from_disk">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_disk</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -2140,7 +2143,7 @@
 
 
 <div class="viewcode-block" id="fit_from_csv_noload">
-<a class="viewcode-back" href="../../../../docs/api/model/results/hmc.html#scistanpy.model.results.hmc.fit_from_csv_noload">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/hmc.html#scistanpy.model.results.hmc.fit_from_csv_noload">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fit_from_csv_noload</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CmdStanMCMC</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create CmdStanMCMC object from CSV files without loading data into memory.</span>
 <span class="sd">    This function is adapted from `cmdstanpy.from_csv`.</span>
@@ -2330,7 +2333,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

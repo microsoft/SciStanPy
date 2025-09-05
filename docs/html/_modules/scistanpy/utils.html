@@ -31,7 +31,11 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.utils</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Utility functions and classes for the SciStanPy package.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+
+<span class="sd">&quot;&quot;&quot;Utility functions and classes for the SciStanPy package.</span>
 
 <span class="sd">This module provides various utility functions and classes that support</span>
 <span class="sd">the core functionality of SciStanPy, including:</span>
@@ -64,7 +68,7 @@
 
 
 <div class="viewcode-block" id="lazy_import">
-<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.lazy_import">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/utils.html#scistanpy.utils.lazy_import">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">lazy_import</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Import a module only when it is first needed.</span>
 
@@ -114,7 +118,7 @@
 
 
 <div class="viewcode-block" id="LazyObjectProxy">
-<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.LazyObjectProxy">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/utils.html#scistanpy.utils.LazyObjectProxy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LazyObjectProxy</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A proxy that delays importing a module and accessing an object until first use.</span>
 
@@ -190,7 +194,7 @@
 
 
 <div class="viewcode-block" id="lazy_import_from">
-<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.lazy_import_from">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/utils.html#scistanpy.utils.lazy_import_from">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">lazy_import_from</span><span class="p">(</span><span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">obj_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a lazy import proxy for a specific object from a module.</span>
 
@@ -223,7 +227,7 @@
 
 
 <div class="viewcode-block" id="choose_module">
-<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.choose_module">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/utils.html#scistanpy.utils.choose_module">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">choose_module</span><span class="p">(</span><span class="n">dist</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Choose the appropriate computational module based on input type.</span>
 
@@ -262,7 +266,7 @@
 
 
 <div class="viewcode-block" id="stable_sigmoid">
-<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.stable_sigmoid">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/utils.html#scistanpy.utils.stable_sigmoid">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">stable_sigmoid</span><span class="p">(</span><span class="n">exponent</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute sigmoid function in a numerically stable way.</span>
 
@@ -311,7 +315,7 @@
 
 
 <div class="viewcode-block" id="get_chunk_shape">
-<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.get_chunk_shape">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/utils.html#scistanpy.utils.get_chunk_shape">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_chunk_shape</span><span class="p">(</span>
     <span class="n">array_shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
     <span class="n">array_precision</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span> <span class="s2">&quot;half&quot;</span><span class="p">],</span>
@@ -426,7 +430,7 @@
 
 
 <div class="viewcode-block" id="az_dask">
-<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.az_dask">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/utils.html#scistanpy.utils.az_dask">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">az_dask</span><span class="p">:</span>  <span class="c1"># pylint: disable=invalid-name</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Context manager for enabling Dask integration with ArviZ.</span>
 
@@ -483,7 +487,7 @@
 
 
 <div class="viewcode-block" id="faster_autocorrelation">
-<a class="viewcode-back" href="../../docs/api/utils.html#scistanpy.utils.faster_autocorrelation">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/utils.html#scistanpy.utils.faster_autocorrelation">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">faster_autocorrelation</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute Spearman rank correlation matrix with optimized NaN handling.</span>
 
@@ -572,7 +576,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

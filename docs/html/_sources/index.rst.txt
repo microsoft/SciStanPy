@@ -100,7 +100,7 @@ Once installed, you can start modeling! All SciStanPy models are built by inheri
    # Build the model
    model = MyModel(temperatures, reaction_rates)
 
-Compehensive documentation for the SciStanPy API can be found :doc:`here <docs/api/index>`. For starting quickly, however, the most important modules and objects are :doc:`model <docs/api/model/model>`, :doc:`parameters <docs/api/model/components/parameters>`, and :doc:`operations <docs/api/operations>`. Less frequently used, but also important, is the :doc:`constants <docs/api/model/components/constants>` module. Follow the links for detailed API references. In short, however, the :py:class:`~scistanpy.model.model.Model` object forms the backbone of all SciStanPy models, distributions defined in :doc:`parameters <docs/api/model/components/parameters>` define those models' variables, :doc:`operations <docs/api/operations>` define transformations of those variables, and :doc:`constants <docs/api/model/components/constants>` provide fixed values used throughout the model.
+Compehensive documentation for the SciStanPy API can be found :doc:`here <rst/api/index>`. For starting quickly, however, the most important modules and objects are :doc:`model <rst/api/model/model>`, :doc:`parameters <rst/api/model/components/parameters>`, and :doc:`operations <rst/api/operations>`. Less frequently used, but also important, is the :doc:`constants <rst/api/model/components/constants>` module. Follow the links for detailed API references. In short, however, the :py:class:`~scistanpy.model.model.Model` object forms the backbone of all SciStanPy models, distributions defined in :doc:`parameters <rst/api/model/components/parameters>` define those models' variables, :doc:`operations <rst/api/operations>` define transformations of those variables, and :doc:`constants <rst/api/model/components/constants>` provide fixed values used throughout the model.
 
 Once a model is defined, there are multiple ways to use it. First, you may wish to explore the effects of different hyperparameter values. This can be done through an interactive interface as below:
 
@@ -110,7 +110,7 @@ Once a model is defined, there are multiple ways to use it. First, you may wish 
    # explore prior predictive distributions. Just run:
    model.prior_predictive()
 
-Additional information on the dashboard can be found :doc:`here <docs/api/plotting/prior_predictive>`.
+Additional information on the dashboard can be found :doc:`here <rst/api/plotting/prior_predictive>`.
 
 You can also directly draw from the prior distribution with the below:
 
@@ -149,7 +149,7 @@ The :py:class:`~scistanpy.model.results.mle.MLE` object returned by :py:meth:`~s
    # Evaluate model fit with posterior predictive checks
    mle_inference.run_ppc()
 
-Additional methods exposed by the :py:class:`~scistanpy.model.results.mle.MLEInferenceRes` can be found in its :doc:`associated documentation <docs/api/model/results/mle>`. Note that the MLEInferenceRes class also exposes the `inference_obj` instance variable, which is an `arviz.InferenceData <https://python.arviz.org/en/latest/api/generated/arviz.InferenceData.html>_` object containing the samples drawn from the model. This can be used to interface directly with the `ArviZ ecosystem <https://python.arviz.org/en/latest/index.html>_` for analysis of Bayesian models.
+Additional methods exposed by the :py:class:`~scistanpy.model.results.mle.MLEInferenceRes` can be found in its :doc:`associated documentation <rst/api/model/results/mle>`. Note that the MLEInferenceRes class also exposes the `inference_obj` instance variable, which is an `arviz.InferenceData <https://python.arviz.org/en/latest/api/generated/arviz.InferenceData.html>_` object containing the samples drawn from the model. This can be used to interface directly with the `ArviZ ecosystem <https://python.arviz.org/en/latest/index.html>_` for analysis of Bayesian models.
 
 The most notable feature of SciStanPy--and, indeed, the inspiration for its name--is its ability to automatically write and execute `Stan <https://mc-stan.org/>`_ programs. As with SciStanPy's PyTorch's integration, Stan functionality can be accessed at both the model and inference levels. To access an object representing a Stan model, run the following:
 
@@ -206,7 +206,7 @@ All Submodules
 .. toctree::
    :maxdepth: 3
 
-   docs/api/index
+   rst/api/index
 
 Copyright and License
 =====================

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Stan Integration &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="Stan Functions Library Reference" href="stan_functions.html" />
+    <link rel="prev" title="Hamiltonian Monte Carlo Results API Reference" href="../results/hmc.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="stan-integration">
+<h1>Stan Integration<a class="headerlink" href="#stan-integration" title="Link to this heading">¶</a></h1>
+<p>This page documents the <cite>scistanpy.model.stan</cite> package and its
+implementation modules. The package provides small utilities and the
+implementation for translating SciStanPy models into Stan programs,
+assembling Stan includes shipped with the package, and compiling/running
+Stan-based inference. The package’s top-level symbol is
+<cite>STAN_INCLUDE_PATHS</cite>, a list of directories that contain Stan function
+snippets to be included when compiling generated Stan programs.</p>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="stan_functions.html">Stan Functions Library Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stan_model.html">Stan Model API Reference</a></li>
+</ul>
+</div>
+</section>
+<section id="top-level-module">
+<h2>Top-level module<a class="headerlink" href="#top-level-module" title="Link to this heading">¶</a></h2>
+<p>Stan probabilistic programming language integration for SciStanPy.</p>
+<p>This submodule provides comprehensive integration between SciStanPy models and
+the Stan probabilistic programming language, enabling high-performance Bayesian
+inference through Hamiltonian Monte Carlo (HMC).</p>
+<p>The integration handles the complete workflow from SciStanPy model specifications
+to Stan code generation, compilation, and execution. It automatically translates
+Python model definitions into Stan code while preserving the probabilistic structure
+and mathematical relationships.</p>
+<dl>
+<dt>Key Components:</dt><dd><ul class="simple">
+<li><p><strong>Automatic Code Generation</strong>: Converts SciStanPy models to Stan language</p></li>
+<li><p><strong>Compilation Management</strong>: Handles Stan-to-C++ compilation with caching</p></li>
+<li><p><strong>Sampling Interface</strong>: Provides high-level interface to Stan sampling algorithms</p></li>
+<li><p><strong>Custom Functions</strong>: Extends Stan with SciStanPy-specific mathematical functions</p></li>
+<li><p><strong>Diagnostics Integration</strong>: Incorporates Stan’s comprehensive MCMC diagnostics</p></li>
+</ul>
+</dd>
+<dt>Architecture:</dt><dd><p>The submodule follows a layered architecture:</p>
+<ol class="arabic simple">
+<li><p><strong>Model Translation Layer</strong>: Converts Python objects to Stan syntax</p></li>
+<li><p><strong>Code Generation Layer</strong>: Assembles complete Stan programs</p></li>
+<li><p><strong>Compilation Layer</strong>: Manages C++ compilation and executable creation.
+This stage relies heavily on the <cite>CmdStanPy</cite> project.</p></li>
+<li><p><strong>Execution Layer</strong>: Interfaces with Stan sampling algorithms. This stage
+also relies heavily on the <cite>CmdStanPy</cite> project.</p></li>
+<li><p><strong>Results Layer</strong>: Processes and structures Stan output</p></li>
+</ol>
+</dd>
+<dt>Stan Language Features:</dt><dd><ul class="simple">
+<li><p>Support for Stan’s probabilistic modeling constructs</p></li>
+<li><p>Custom function definitions for SciStanPy-specific operations</p></li>
+<li><p>Comprehensive convergence diagnostics and model checking</p></li>
+</ul>
+</dd>
+<dt>Custom Extensions:</dt><dd><p>The submodule includes custom Stan functions that extend the base language
+with SciStanPy-specific mathematical operations. These functions are
+automatically included in generated Stan programs and provide:</p>
+<ul class="simple">
+<li><p>Specialized probability distributions</p></li>
+<li><p>Custom transformation functions</p></li>
+<li><p>Optimized mathematical operations</p></li>
+<li><p>SciStanPy-specific utility functions</p></li>
+</ul>
+</dd>
+<dt>Global Configuration:</dt><dd><dl class="simple">
+<dt>STAN_INCLUDE_PATHS: List of directories containing custom Stan function definitions.</dt><dd><p>These paths are automatically included during Stan compilation
+to provide access to SciStanPy-specific extensions.</p>
+</dd>
+</dl>
+</dd>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Compile SciStanPy model to Stan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stan_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_stan</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Run MCMC sampling</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>See Also:</dt><dd><ul class="simple">
+<li><p>Stan User’s Guide: <a class="reference external" href="https://mc-stan.org/docs/">https://mc-stan.org/docs/</a></p></li>
+<li><p>CmdStanPy Documentation: <a class="reference external" href="https://cmdstanpy.readthedocs.io/">https://cmdstanpy.readthedocs.io/</a></p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">scistanpy.model.results</span></code>: For working with Stan sampling results</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="implementation-notes">
+<h2>Implementation notes<a class="headerlink" href="#implementation-notes" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>STAN_INCLUDE_PATHS: a list of absolute paths (usually including the
+package directory) used by the Stan code assembly step to locate
+bundled Stan function snippets and headers. The symbol is defined in
+<cite>scistanpy.model.stan.__init__</cite> and is intended to be consumed by the
+Stan program builder in <cite>stan_model</cite>.</p></li>
+<li><p><cite>stan_functions</cite>: a small collection of Stan code fragments and
+utilities that are included into generated Stan programs when
+required by model components. These are plain Stan snippets stored
+alongside the Python package.</p></li>
+<li><p><cite>stan_model</cite>: the implementation that assembles a complete Stan
+program from a SciStanPy <cite>Model</cite>, optionally compiles it, and offers
+helpers to run Stan inference using a chosen Stan frontend. The exact
+frontend integration (e.g., CmdStanPy, CmdStan, etc.) is handled in
+the implementation and may evolve; consult the <cite>stan_model</cite> page for
+the current API and runtime requirements.</p></li>
+</ul>
+</section>
+<section id="minimal-usage-examples">
+<h2>Minimal usage examples<a class="headerlink" href="#minimal-usage-examples" title="Link to this heading">¶</a></h2>
+<p>Include bundled Stan snippets when compiling a model (used inside the
+library):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.stan</span><span class="w"> </span><span class="kn">import</span> <span class="n">STAN_INCLUDE_PATHS</span>
+
+<span class="c1"># STAN_INCLUDE_PATHS is passed to the Stan program builder so it can</span>
+<span class="c1"># discover and include local Stan function snippets.</span>
+</pre></div>
+</div>
+<p>Convert a SciStanPy model to a Stan owner object via the library API:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Typical higher-level usage (see stan_model page for details):</span>
+<span class="n">stan_prog</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_stan</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;./stan_cache&#39;</span><span class="p">,</span> <span class="n">force_compile</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">stan_prog</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">observed_y</span><span class="p">},</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="further-reading">
+<h2>Further reading<a class="headerlink" href="#further-reading" title="Link to this heading">¶</a></h2>
+<p>For details on the Stan program snippets included with SciStanPy, see
+<cite>stan_functions</cite>. For the Stan program generation, compilation and the
+inference wrappers consult <cite>stan_model</cite>.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">SciStanPy API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#top-level-package">Top-Level Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#module-overview">Module Overview</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html#quick-navigation">Quick Navigation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">Model API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../operations.html">Operations API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#usage-notes">Usage Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#missing-something">Missing Something?</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">SciStanPy API Reference</a><ul>
+  <li><a href="../index.html">Model API Reference</a><ul>
+      <li>Previous: <a href="../results/hmc.html" title="previous chapter">Hamiltonian Monte Carlo Results API Reference</a></li>
+      <li>Next: <a href="stan_functions.html" title="next chapter">Stan Functions Library Reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../../../_sources/rst/api/model/stan/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

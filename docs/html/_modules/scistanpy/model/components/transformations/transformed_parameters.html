@@ -31,7 +31,10 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.model.components.transformations.transformed_parameters</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Parameter transformation components for SciStanPy models.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;Parameter transformation components for SciStanPy models.</span>
 
 <span class="sd">This module provides a comprehensive library of mathematical transformations that</span>
 <span class="sd">can be applied to model parameters. These transformations enable complex model</span>
@@ -97,7 +100,7 @@
 
 
 <div class="viewcode-block" id="TransformableParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransformableParameter</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin class enabling mathematical operator overloading for parameters.</span>
 
@@ -162,7 +165,7 @@
 
 
 <div class="viewcode-block" id="Transformation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Transformation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Transformation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Transformation</span><span class="p">(</span><span class="n">abstract_model_component</span><span class="o">.</span><span class="n">AbstractModelComponent</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all parameter transformations in SciStanPy.</span>
 
@@ -223,7 +226,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="Transformation.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Transformation.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Transformation.write_stan_operation">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">to_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for the specific transformation operation.</span>
@@ -241,7 +244,7 @@
 
 
 <div class="viewcode-block" id="Transformation.get_right_side">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Transformation.get_right_side">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Transformation.get_right_side">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -314,7 +317,7 @@
 
 
 <div class="viewcode-block" id="TransformedParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransformedParameter</span><span class="p">(</span><span class="n">Transformation</span><span class="p">,</span> <span class="n">TransformableParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for transformed parameters that can be used in parameter blocks.</span>
 
@@ -376,7 +379,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="TransformedParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the mathematical operation using NumPy or PyTorch.</span>
@@ -394,7 +397,7 @@
 
 
 <div class="viewcode-block" id="TransformedParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.write_stan_operation">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">to_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for the transformation operation.</span>
@@ -452,7 +455,7 @@
 
 
 <div class="viewcode-block" id="BinaryTransformedParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BinaryTransformedParameter</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for transformations involving exactly two parameters.</span>
 
@@ -494,7 +497,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="BinaryTransformedParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.run_np_torch_op">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute binary operation on two inputs.</span>
@@ -510,7 +513,7 @@
 
 
 <div class="viewcode-block" id="BinaryTransformedParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dist2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for binary operations using STAN_OPERATOR.</span>
 
@@ -534,7 +537,7 @@
 
 
 <div class="viewcode-block" id="UnaryTransformedParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">UnaryTransformedParameter</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for transformations involving exactly one parameter.</span>
 
@@ -568,7 +571,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="UnaryTransformedParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.run_np_torch_op">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute unary operation on single input.</span>
@@ -583,7 +586,7 @@
 
 
 <div class="viewcode-block" id="UnaryTransformedParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for unary operations using STAN_OPERATOR.</span>
 
@@ -606,7 +609,7 @@
 
 <span class="c1"># Basic arithmetic operations</span>
 <div class="viewcode-block" id="AddParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AddParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AddParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AddParameter</span><span class="p">(</span><span class="n">BinaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Addition transformation for two parameters.</span>
 
@@ -624,7 +627,7 @@
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;+&quot;</span>
 
 <div class="viewcode-block" id="AddParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AddParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AddParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise addition.</span>
 
@@ -639,7 +642,7 @@
 
 
 <div class="viewcode-block" id="SubtractParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SubtractParameter</span><span class="p">(</span><span class="n">BinaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Subtraction transformation for two parameters.</span>
 
@@ -657,7 +660,7 @@
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
 
 <div class="viewcode-block" id="SubtractParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise subtraction.</span>
 
@@ -672,7 +675,7 @@
 
 
 <div class="viewcode-block" id="MultiplyParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultiplyParameter</span><span class="p">(</span><span class="n">BinaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Element-wise multiplication transformation for two parameters.</span>
 
@@ -690,7 +693,7 @@
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.*&quot;</span>
 
 <div class="viewcode-block" id="MultiplyParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise multiplication.</span>
 
@@ -705,7 +708,7 @@
 
 
 <div class="viewcode-block" id="DivideParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.DivideParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.DivideParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DivideParameter</span><span class="p">(</span><span class="n">BinaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Element-wise division transformation for two parameters.</span>
 
@@ -723,7 +726,7 @@
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;./&quot;</span>
 
 <div class="viewcode-block" id="DivideParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.DivideParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.DivideParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise division.</span>
 
@@ -738,7 +741,7 @@
 
 
 <div class="viewcode-block" id="PowerParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.PowerParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.PowerParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PowerParameter</span><span class="p">(</span><span class="n">BinaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Element-wise exponentiation transformation for two parameters.</span>
 
@@ -756,7 +759,7 @@
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.^&quot;</span>
 
 <div class="viewcode-block" id="PowerParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.PowerParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.PowerParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise exponentiation.</span>
 
@@ -771,7 +774,7 @@
 
 
 <div class="viewcode-block" id="NegateParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NegateParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NegateParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NegateParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Unary negation transformation for parameters.</span>
 
@@ -789,7 +792,7 @@
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
 
 <div class="viewcode-block" id="NegateParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NegateParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NegateParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise negation.</span>
 
@@ -803,7 +806,7 @@
 
 
 <div class="viewcode-block" id="AbsParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbsParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Absolute value transformation for parameters.</span>
 
@@ -823,7 +826,7 @@
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
 
 <div class="viewcode-block" id="AbsParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute element-wise absolute value.</span>
 
@@ -835,7 +838,7 @@
 
 
 <div class="viewcode-block" id="AbsParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan absolute value function call.</span>
 
@@ -851,7 +854,7 @@
 
 
 <div class="viewcode-block" id="LogParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Natural logarithm transformation for parameters.</span>
 
@@ -872,7 +875,7 @@
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;dist1&quot;</span><span class="p">}</span>
 
 <div class="viewcode-block" id="LogParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute element-wise natural logarithm.</span>
 
@@ -884,7 +887,7 @@
 
 
 <div class="viewcode-block" id="LogParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan logarithm function call.</span>
 
@@ -900,7 +903,7 @@
 
 
 <div class="viewcode-block" id="ExpParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExpParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExpParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Exponential transformation for parameters.</span>
 
@@ -921,14 +924,14 @@
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
 
 <div class="viewcode-block" id="ExpParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExpParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExpParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 
         <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">choose_module</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ExpParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExpParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExpParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan exponential function call.</span>
 
@@ -944,7 +947,7 @@
 
 
 <div class="viewcode-block" id="NormalizeParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NormalizeParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalization transformation that scales values to sum to 1 in the last dimension</span>
 <span class="sd">    of the input.</span>
@@ -975,7 +978,7 @@
     <span class="n">UPPER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">1.0</span>
 
 <div class="viewcode-block" id="NormalizeParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute normalization by dividing by sum along last dimension.</span>
 
@@ -995,7 +998,7 @@
 
 
 <div class="viewcode-block" id="NormalizeParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan normalization code.</span>
 
@@ -1011,7 +1014,7 @@
 
 
 <div class="viewcode-block" id="NormalizeLogParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NormalizeLogParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-space normalization transformation for log-probability vectors over the</span>
 <span class="sd">    last dimension of the input.</span>
@@ -1042,7 +1045,7 @@
     <span class="n">UPPER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
 
 <div class="viewcode-block" id="NormalizeLogParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log-space normalization using log-sum-exp.</span>
 
@@ -1061,7 +1064,7 @@
 
 
 <div class="viewcode-block" id="NormalizeLogParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan log-space normalization code.</span>
 
@@ -1077,7 +1080,7 @@
 
 
 <div class="viewcode-block" id="Reduction">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Reduction</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for operations that reduce dimensionality.</span>
 
@@ -1147,7 +1150,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dist1</span><span class="o">=</span><span class="n">dist1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Reduction.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">keepdim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute reduction operation with backend-appropriate function.</span>
 
@@ -1180,7 +1183,7 @@
 
 
 <div class="viewcode-block" id="Reduction.get_index_offset">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_index_offset">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_index_offset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_index_offset</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;abstract_model_component.AbstractModelComponent&quot;</span><span class="p">],</span>
@@ -1201,7 +1204,7 @@
 
 
 <div class="viewcode-block" id="Reduction.get_assign_depth">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_assign_depth">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_assign_depth">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_assign_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return assignment depth one level higher than normal.</span>
 
@@ -1217,7 +1220,7 @@
 
 
 <div class="viewcode-block" id="LogSumExpParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSumExpParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSumExpParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogSumExpParameter</span><span class="p">(</span><span class="n">Reduction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-sum-exp reduction transformation.</span>
 
@@ -1252,7 +1255,7 @@
     <span class="n">NP_FUNC</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">logsumexp</span>
 
 <div class="viewcode-block" id="LogSumExpParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSumExpParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSumExpParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan log_sum_exp function call.</span>
 
@@ -1268,7 +1271,7 @@
 
 
 <div class="viewcode-block" id="SumParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SumParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SumParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SumParameter</span><span class="p">(</span><span class="n">Reduction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sum reduction transformation.</span>
 
@@ -1298,7 +1301,7 @@
     <span class="n">NP_FUNC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span>
 
 <div class="viewcode-block" id="SumParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SumParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SumParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan sum function call.</span>
 
@@ -1314,7 +1317,7 @@
 
 
 <div class="viewcode-block" id="Log1pExpParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Log1pExpParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log(1 + exp(x)) transformation with numerical stability.</span>
 
@@ -1337,7 +1340,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="Log1pExpParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log(1 + exp(x)) with numerical stability.</span>
 
@@ -1362,7 +1365,7 @@
 
 
 <div class="viewcode-block" id="Log1pExpParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan log1p_exp function call.</span>
 
@@ -1378,7 +1381,7 @@
 
 
 <div class="viewcode-block" id="SigmoidParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SigmoidParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sigmoid (logistic) transformation for parameters.</span>
 
@@ -1407,7 +1410,7 @@
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
 
 <div class="viewcode-block" id="SigmoidParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute sigmoid function with numerical stability.</span>
 
@@ -1439,7 +1442,7 @@
 
 
 <div class="viewcode-block" id="SigmoidParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan inverse logit function call.</span>
 
@@ -1455,14 +1458,14 @@
 
 
 <div class="viewcode-block" id="LogSigmoidParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogSigmoidParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Defines a parameter that is the log of the sigmoid of another.&quot;&quot;&quot;</span>
 
     <span class="n">UPPER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
 
 <div class="viewcode-block" id="LogSigmoidParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">logsigmoid</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span>  <span class="c1"># pylint: disable=not-callable</span>
@@ -1475,7 +1478,7 @@
 
 
 <div class="viewcode-block" id="LogSigmoidParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log_inv_logit(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 </div>
@@ -1483,7 +1486,7 @@
 
 
 <div class="viewcode-block" id="ExponentialGrowth">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExponentialGrowth</span><span class="p">(</span><span class="n">ExpParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A transformed parameter that models exponential growth. Specifically, parameters</span>
@@ -1526,7 +1529,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="ExponentialGrowth.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute exponential growth: A * exp(r * t).</span>
 
@@ -1542,7 +1545,7 @@
     <span class="c1"># pylint: enable=arguments-differ</span>
 
 <div class="viewcode-block" id="ExponentialGrowth.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1553,7 +1556,7 @@
 
 
 <div class="viewcode-block" id="BinaryExponentialGrowth">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BinaryExponentialGrowth</span><span class="p">(</span><span class="n">ExpParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Binary exponential growth for two time points.</span>
 
@@ -1608,7 +1611,7 @@
         <span class="n">r</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 <div class="viewcode-block" id="BinaryExponentialGrowth.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute binary exponential growth: A * exp(r).</span>
 
@@ -1621,7 +1624,7 @@
 
 
 <div class="viewcode-block" id="BinaryExponentialGrowth.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for binary exponential growth.</span>
 
@@ -1639,7 +1642,7 @@
 
 
 <div class="viewcode-block" id="LogExponentialGrowth">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogExponentialGrowth</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-scale exponential growth model transformation.</span>
 
@@ -1708,7 +1711,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="LogExponentialGrowth.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">log_A</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log-exponential growth: log_A + r * t.</span>
 
@@ -1724,7 +1727,7 @@
     <span class="c1"># pylint: enable=arguments-differ</span>
 
 <div class="viewcode-block" id="LogExponentialGrowth.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">log_A</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1734,7 +1737,7 @@
 
 
 <div class="viewcode-block" id="BinaryLogExponentialGrowth">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BinaryLogExponentialGrowth</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Binary log-exponential growth for two time points.</span>
 
@@ -1789,7 +1792,7 @@
         <span class="n">r</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 <div class="viewcode-block" id="BinaryLogExponentialGrowth.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">log_A</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute binary log-exponential growth: log_A + r.</span>
 
@@ -1802,7 +1805,7 @@
 
 
 <div class="viewcode-block" id="BinaryLogExponentialGrowth.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_A</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for binary log-exponential growth.</span>
 
@@ -1820,7 +1823,7 @@
 
 
 <div class="viewcode-block" id="SigmoidGrowth">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SigmoidGrowth</span><span class="p">(</span><span class="n">SigmoidParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sigmoid growth model transformation.</span>
 
@@ -1898,7 +1901,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="SigmoidGrowth.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute sigmoid growth: A * sigmoid(r * (t - c)).</span>
 
@@ -1915,7 +1918,7 @@
     <span class="c1"># pylint: enable=arguments-differ</span>
 
 <div class="viewcode-block" id="SigmoidGrowth.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1926,7 +1929,7 @@
 
 
 <div class="viewcode-block" id="LogSigmoidGrowth">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogSigmoidGrowth</span><span class="p">(</span><span class="n">LogSigmoidParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-scale sigmoid growth model transformation.</span>
 
@@ -2001,7 +2004,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="LogSigmoidGrowth.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">log_A</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log-sigmoid growth: log_A + log_sigmoid(r * (t - c)).</span>
 
@@ -2018,7 +2021,7 @@
     <span class="c1"># pylint: enable=arguments-differ</span>
 
 <div class="viewcode-block" id="LogSigmoidGrowth.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">log_A</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -2029,7 +2032,7 @@
 
 
 <div class="viewcode-block" id="SigmoidGrowthInitParametrization">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SigmoidGrowthInitParametrization</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sigmoid growth with initial value parameterization.</span>
 
@@ -2103,7 +2106,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="SigmoidGrowthInitParametrization.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute sigmoid growth with initial parameterization using log-add-exp.</span>
 
@@ -2132,7 +2135,7 @@
 
 
 <div class="viewcode-block" id="SigmoidGrowthInitParametrization.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># pylint: disable=invalid-name</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -2145,7 +2148,7 @@
 
 
 <div class="viewcode-block" id="LogSigmoidGrowthInitParametrization">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogSigmoidGrowthInitParametrization</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-scale sigmoid growth with initial value parameterization.</span>
 
@@ -2228,7 +2231,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="LogSigmoidGrowthInitParametrization.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">log_x0</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log-sigmoid growth with initial parameterization.</span>
 
@@ -2253,7 +2256,7 @@
 
 
 <div class="viewcode-block" id="LogSigmoidGrowthInitParametrization.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">log_x0</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># pylint: disable=invalid-name</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -2264,7 +2267,7 @@
 
 
 <div class="viewcode-block" id="ConvolveSequence">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConvolveSequence</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sequence convolution transformation using weight matrices.</span>
 
@@ -2357,7 +2360,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">ordinals</span><span class="o">=</span><span class="n">ordinals</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ConvolveSequence.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">ordinals</span><span class="p">):</span>  <span class="c1"># pylint: disable=arguments-differ</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Performs the convolution&quot;&quot;&quot;</span>
 
@@ -2457,7 +2460,7 @@
 
 
 <div class="viewcode-block" id="ConvolveSequence.get_index_offset">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.get_index_offset">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.get_index_offset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_index_offset</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;abstract_model_component.AbstractModelComponent&quot;</span><span class="p">],</span>
@@ -2486,7 +2489,7 @@
 
 
 <div class="viewcode-block" id="ConvolveSequence.get_right_side">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.get_right_side">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.get_right_side">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -2510,7 +2513,7 @@
 
 
 <div class="viewcode-block" id="ConvolveSequence.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ordinals</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -2529,7 +2532,7 @@
 
 
 <div class="viewcode-block" id="ConvolveSequence.get_supporting_functions">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.get_supporting_functions">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.get_supporting_functions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return required Stan function includes.</span>
 
@@ -2542,7 +2545,7 @@
 
 
 <div class="viewcode-block" id="IndexParameter">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">IndexParameter</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Array indexing transformation with NumPy-compatible semantics.</span>
 
@@ -2619,7 +2622,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="IndexParameter.neg_to_pos">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.neg_to_pos">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.neg_to_pos">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">neg_to_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neg_ind</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert negative indices to positive indices.</span>
 
@@ -2828,7 +2831,7 @@
     <span class="c1"># reflect Stan&#39;s 1-indexing and no negative indices. We use the Python indices</span>
     <span class="c1"># stored earlier as a result. The parents kwargs is included for compatibility</span>
 <div class="viewcode-block" id="IndexParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.run_np_torch_op">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ, unused-argument</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="o">**</span><span class="n">parents</span>
     <span class="p">):</span>
@@ -2854,7 +2857,7 @@
 
 
 <div class="viewcode-block" id="IndexParameter.get_right_side">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.get_right_side">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.get_right_side">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -2874,7 +2877,7 @@
 
 
 <div class="viewcode-block" id="IndexParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dist</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -2945,7 +2948,7 @@
 
 
 <div class="viewcode-block" id="IndexParameter.get_transformation_assignment">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.get_transformation_assignment">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.get_transformation_assignment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_transformation_assignment</span><span class="p">(</span>  <span class="c1"># pylint: disable=unused-argument</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -2966,7 +2969,7 @@
 
     <span class="c1"># The definition depth is always 0 for this transformation</span>
 <div class="viewcode-block" id="IndexParameter.get_assign_depth">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.get_assign_depth">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.get_assign_depth">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_assign_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">:</span>  <span class="c1"># pylint: disable=C0116</span>
         <span class="k">return</span> <span class="mi">0</span></div>
 
@@ -3011,7 +3014,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

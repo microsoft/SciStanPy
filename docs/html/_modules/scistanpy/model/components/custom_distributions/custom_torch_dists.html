@@ -31,7 +31,10 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.model.components.custom_distributions.custom_torch_dists</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Custom PyTorch distribution implementations for SciStanPy models.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;Custom PyTorch distribution implementations for SciStanPy models.</span>
 
 <span class="sd">This module provides specialized PyTorch distribution classes that extend or</span>
 <span class="sd">modify the standard PyTorch distributions to meet specific requirements of</span>
@@ -83,7 +86,7 @@
 
 
 <div class="viewcode-block" id="CustomDistribution">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CustomDistribution</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base marker class for custom SciStanPy distributions.</span>
 
@@ -98,7 +101,7 @@
 
 
 <div class="viewcode-block" id="Multinomial">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Multinomial</span><span class="p">(</span><span class="n">CustomDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extended multinomial distribution supporting inhomogeneous total counts.</span>
 
@@ -197,7 +200,7 @@
         <span class="p">]</span>
 
 <div class="viewcode-block" id="Multinomial.log_prob">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial.log_prob">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log-probabilities for observed multinomial outcomes.</span>
 
@@ -235,7 +238,7 @@
 
 
 <div class="viewcode-block" id="Multinomial.sample">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial.sample">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial.sample">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate samples from the multinomial distribution.</span>
 
@@ -260,7 +263,7 @@
 
 
 <div class="viewcode-block" id="MultinomialProb">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialProb">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialProb">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialProb</span><span class="p">(</span><span class="n">Multinomial</span><span class="p">,</span> <span class="n">CustomDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution parameterized by probabilities.</span>
 
@@ -306,7 +309,7 @@
 
 
 <div class="viewcode-block" id="MultinomialLogit">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogit</span><span class="p">(</span><span class="n">Multinomial</span><span class="p">,</span> <span class="n">CustomDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution parameterized by logits.</span>
 
@@ -355,7 +358,7 @@
 
 
 <div class="viewcode-block" id="MultinomialLogTheta">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogTheta">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogTheta">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogTheta</span><span class="p">(</span><span class="n">MultinomialLogit</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with normalized log-probabilities.</span>
 
@@ -420,7 +423,7 @@
 
 
 <div class="viewcode-block" id="Normal">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Normal</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Enhanced normal distribution with numerically stable log-space functions.</span>
 
@@ -452,7 +455,7 @@
 
     <span class="c1"># pylint: disable=not-callable, abstract-method</span>
 <div class="viewcode-block" id="Normal.log_cdf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal.log_cdf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal.log_cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute logarithm of cumulative distribution function.</span>
 
@@ -470,7 +473,7 @@
 
 
 <div class="viewcode-block" id="Normal.log_sf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal.log_sf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal.log_sf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute logarithm of survival function (1 - CDF).</span>
 
@@ -493,7 +496,7 @@
 
 
 <div class="viewcode-block" id="LogNormal">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogNormal</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Enhanced log-normal distribution with numerically stable log-space functions.</span>
 
@@ -521,7 +524,7 @@
 
     <span class="c1"># pylint: disable=not-callable, abstract-method</span>
 <div class="viewcode-block" id="LogNormal.log_cdf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal.log_cdf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal.log_cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute logarithm of cumulative distribution function.</span>
 
@@ -538,7 +541,7 @@
 
 
 <div class="viewcode-block" id="LogNormal.log_sf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal.log_sf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal.log_sf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute logarithm of survival function.</span>
 
@@ -558,7 +561,7 @@
 
 <span class="c1"># pylint: disable=abstract-method</span>
 <div class="viewcode-block" id="Lomax">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Lomax">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Lomax">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Lomax</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">transformed_distribution</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">,</span> <span class="n">CustomDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Lomax distribution implementation (shifted Pareto distribution).</span>
 
@@ -608,7 +611,7 @@
 
 
 <div class="viewcode-block" id="ExpLomax">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpLomax">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpLomax">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpLomax</span><span class="p">(</span>
     <span class="n">dist</span><span class="o">.</span><span class="n">transformed_distribution</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">,</span> <span class="n">CustomDistribution</span>
 <span class="p">):</span>
@@ -661,7 +664,7 @@
 
 
 <div class="viewcode-block" id="ExpExponential">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpExponential">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpExponential">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpExponential</span><span class="p">(</span>
     <span class="n">dist</span><span class="o">.</span><span class="n">transformed_distribution</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">,</span> <span class="n">CustomDistribution</span>
 <span class="p">):</span>
@@ -707,7 +710,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpDirichlet">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpDirichlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpDirichlet</span><span class="p">(</span>
     <span class="n">dist</span><span class="o">.</span><span class="n">transformed_distribution</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">,</span> <span class="n">CustomDistribution</span>
 <span class="p">):</span>
@@ -786,7 +789,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

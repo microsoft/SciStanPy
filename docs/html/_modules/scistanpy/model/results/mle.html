@@ -31,7 +31,10 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.model.results.mle</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Maximum likelihood estimation results analysis and visualization for SciStanPy</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;Maximum likelihood estimation results analysis and visualization for SciStanPy</span>
 <span class="sd">models.</span>
 
 <span class="sd">This module provides analysis tools for maximum likelihood estimation</span>
@@ -112,7 +115,7 @@
 
 
 <div class="viewcode-block" id="_log10_shift">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle._log10_shift">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle._log10_shift">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">_log10_shift</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply log10 transformation with automatic shifting for non-positive values.</span>
 
@@ -149,7 +152,7 @@
 
 
 <div class="viewcode-block" id="MLEInferenceRes">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MLEInferenceRes</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Analysis interface for maximum likelihood estimation results.</span>
 
@@ -212,7 +215,7 @@
             <span class="p">)</span>
 
 <div class="viewcode-block" id="MLEInferenceRes.save_netcdf">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.save_netcdf">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.save_netcdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Save the ArviZ InferenceData object to NetCDF format.</span>
 
@@ -257,7 +260,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">add_groups</span><span class="p">({</span><span class="n">attrname</span><span class="p">:</span> <span class="n">new_group</span><span class="p">})</span>
 
 <div class="viewcode-block" id="MLEInferenceRes.calculate_summaries">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.calculate_summaries">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.calculate_summaries">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_summaries</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">var_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -422,7 +425,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="MLEInferenceRes.check_calibration">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.check_calibration">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.check_calibration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">check_calibration</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">return_deviance</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">600</span>
     <span class="p">):</span>
@@ -541,7 +544,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="MLEInferenceRes.plot_posterior_predictive_samples">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.plot_posterior_predictive_samples">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.plot_posterior_predictive_samples">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">plot_posterior_predictive_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -676,7 +679,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="MLEInferenceRes.plot_observed_quantiles">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.plot_observed_quantiles">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.plot_observed_quantiles">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">plot_observed_quantiles</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">use_ranks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">windowsize</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
@@ -784,7 +787,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">hv</span><span class="o">.</span><span class="n">Overlay</span><span class="p">]]:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="MLEInferenceRes.run_ppc">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.run_ppc">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.run_ppc">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_ppc</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -917,7 +920,7 @@
 
 
 <div class="viewcode-block" id="MLEInferenceRes.from_disk">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.from_disk">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.from_disk">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_disk</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MLEInferenceRes&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Load MLEInferenceRes object from saved NetCDF file.</span>
@@ -944,7 +947,7 @@
 
 
 <div class="viewcode-block" id="MLEParam">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEParam">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLEParam">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MLEParam</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for maximum likelihood estimate of a single model parameter.</span>
 
@@ -988,7 +991,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span>
 
 <div class="viewcode-block" id="MLEParam.draw">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLEParam.draw">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLEParam.draw">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1045,7 +1048,7 @@
 
 
 <div class="viewcode-block" id="MLE">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLE">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLE">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MLE</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete maximum likelihood estimation results for a SciStanPy model.</span>
 
@@ -1136,7 +1139,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="MLE.plot_loss_curve">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLE.plot_loss_curve">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLE.plot_loss_curve">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">plot_loss_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate interactive plot of the optimization loss trajectory.</span>
 
@@ -1206,7 +1209,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="MLE.draw">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLE.draw">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLE.draw">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">as_xarray</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate samples from all fitted parameter distributions.</span>
 
@@ -1264,7 +1267,7 @@
 
 
 <div class="viewcode-block" id="MLE.get_inference_obj">
-<a class="viewcode-back" href="../../../../docs/api/model/results/mle.html#scistanpy.model.results.mle.MLE.get_inference_obj">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/results/mle.html#scistanpy.model.results.mle.MLE.get_inference_obj">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_inference_obj</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">n</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
@@ -1383,7 +1386,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

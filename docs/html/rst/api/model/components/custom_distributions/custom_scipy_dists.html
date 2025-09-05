@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Custom SciPy Distributions API Reference &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+    <link rel="next" title="Parameters API Reference" href="../parameters.html" />
+    <link rel="prev" title="Custom PyTorch Distributions API Reference" href="custom_torch_dists.html" />
+   
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="custom-scipy-distributions-api-reference">
+<h1>Custom SciPy Distributions API Reference<a class="headerlink" href="#custom-scipy-distributions-api-reference" title="Link to this heading">¶</a></h1>
+<p>This reference covers the custom SciPy-based probability distributions in SciStanPy.</p>
+<section id="custom-scipy-distributions-module">
+<h2>Custom SciPy Distributions Module<a class="headerlink" href="#custom-scipy-distributions-module" title="Link to this heading">¶</a></h2>
+<p>Custom SciPy distribution implementations for SciStanPy models.</p>
+<p>This module provides extended and custom SciPy distribution classes that address
+limitations in the standard SciPy distribution library for probabilistic modeling.
+These implementations enable advanced batch operations, support variable batch
+dimensions, and provide transformed distributions not available in the standard library.</p>
+<dl class="simple">
+<dt>Key Features:</dt><dd><ul class="simple">
+<li><p><strong>Enhanced Batch Support</strong>: Extended multivariate distributions with variable batch dimensions</p></li>
+<li><p><strong>Custom Transformations</strong>: Log-transformed distributions with proper Jacobian corrections</p></li>
+<li><dl class="simple">
+<dt><strong>Alternative Parameterizations</strong>: Logit and log-probability parameterizations for</dt><dd><p>multinomial distributions</p>
+</dd>
+</dl>
+</li>
+<li><p><strong>Numerical Stability</strong>: Improved implementations for edge cases and extreme values</p></li>
+</ul>
+</dd>
+</dl>
+<p>Distribution Categories:</p>
+<dl class="simple">
+<dt><strong>Enhanced Multivariate Distributions</strong>: Extended batch support</dt><dd><ul class="simple">
+<li><p>CustomDirichlet: Dirichlet distribution with variable batch dimensions</p></li>
+<li><p>CustomMultinomial: Multinomial distribution with flexible batch handling</p></li>
+<li><p>MultinomialLogit: Logit-parameterized multinomial distribution</p></li>
+<li><p>MultinomialLogTheta: Log-probability parameterized multinomial distribution</p></li>
+</ul>
+</dd>
+<dt><strong>Transformed Distributions</strong>: Log-transformed variants</dt><dd><ul class="simple">
+<li><p>ExpDirichlet: Log-transformed Dirichlet distribution</p></li>
+<li><p>LogUnivariateScipyTransform: General log-transformation framework</p></li>
+<li><p>TransformedScipyDist: Abstract base for distribution transformations</p></li>
+</ul>
+</dd>
+<dt><strong>Pre-configured Distributions</strong>: Ready-to-use distribution instances</dt><dd><ul class="simple">
+<li><p>dirichlet: CustomDirichlet instance</p></li>
+<li><p>multinomial: CustomMultinomial instance</p></li>
+<li><p>expexponential: Log-transformed exponential distribution</p></li>
+<li><p>explomax: Log-transformed Lomax distribution</p></li>
+<li><p>expdirichlet: ExpDirichlet instance</p></li>
+</ul>
+</dd>
+</dl>
+<p>The distributions in this module are designed to work within SciPy’s distribution
+framework while providing enhanced functionality for advanced probabilistic modeling
+scenarios commonly encountered in SciStanPy applications.</p>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">CustomDirichlet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#CustomDirichlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dirichlet_gen</span></code></p>
+<p>Enhanced Dirichlet distribution supporting variable batch dimensions.</p>
+<p>This class extends SciPy’s standard Dirichlet distribution to support
+arbitrary batch dimensions while maintaining compatibility with the
+SciPy distribution interface. The standard SciPy implementation has
+limitations with batch operations that this class addresses.</p>
+<p>Key Enhancements:
+- Support for arbitrary batch dimensions in alpha parameters
+- Proper broadcasting behavior across batch dimensions
+- Consistent output shapes for all distribution methods
+- Efficient vectorized operations over batch elements</p>
+<p>The implementation uses a decorator pattern to extend existing SciPy
+methods with batch dimension handling while preserving the original
+mathematical properties of the Dirichlet distribution.</p>
+<p>Mathematical Properties:
+- Support: Probability simplex {x : Σxᵢ = 1, xᵢ ≥ 0}
+- Parameters: α = (α₁, α₂, …, αₖ) where αᵢ &gt; 0
+- Mean: E[Xᵢ] = αᵢ / Σⱼ αⱼ
+- Useful for modeling categorical probabilities and compositional data</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Standard usage with batch dimensions</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dirichlet</span> <span class="o">=</span> <span class="n">CustomDirichlet</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">dirichlet</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># output_shape = (100, 3, 3)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_probs</span> <span class="o">=</span> <span class="n">dirichlet</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Covariance matrix of the Dirichlet distribution.</p>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>alpha<span class="classifier">array_like</span></dt><dd><p>The concentration parameters. The number of entries determines the
+dimensionality of the distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>cov<span class="classifier">ndarray</span></dt><dd><p>The covariance matrix of the distribution.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Differential entropy of the Dirichlet distribution.</p>
+<section id="id1">
+<h3>Parameters<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>alpha<span class="classifier">array_like</span></dt><dd><p>The concentration parameters. The number of entries determines the
+dimensionality of the distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id2">
+<h3>Returns<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>h<span class="classifier">scalar</span></dt><dd><p>Entropy of the Dirichlet distribution</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">logpdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Log of the Dirichlet probability density function.</p>
+<section id="id3">
+<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>x<span class="classifier">array_like</span></dt><dd><p>Quantiles, with the last axis of <cite>x</cite> denoting the components.</p>
+</dd>
+<dt>alpha<span class="classifier">array_like</span></dt><dd><p>The concentration parameters. The number of entries determines the
+dimensionality of the distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id4">
+<h3>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>pdf<span class="classifier">ndarray or scalar</span></dt><dd><p>Log of the probability density function evaluated at <cite>x</cite>.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Mean of the Dirichlet distribution.</p>
+<section id="id5">
+<h3>Parameters<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>alpha<span class="classifier">array_like</span></dt><dd><p>The concentration parameters. The number of entries determines the
+dimensionality of the distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id6">
+<h3>Returns<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>mu<span class="classifier">ndarray or scalar</span></dt><dd><p>Mean of the Dirichlet distribution.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>The Dirichlet probability density function.</p>
+<section id="id7">
+<h3>Parameters<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>x<span class="classifier">array_like</span></dt><dd><p>Quantiles, with the last axis of <cite>x</cite> denoting the components.</p>
+</dd>
+<dt>alpha<span class="classifier">array_like</span></dt><dd><p>The concentration parameters. The number of entries determines the
+dimensionality of the distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id8">
+<h3>Returns<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>pdf<span class="classifier">ndarray or scalar</span></dt><dd><p>The probability density function evaluated at <cite>x</cite>.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.floating</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">np.random.Generator</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.floating</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#CustomDirichlet.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Generate random samples from the Dirichlet distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>npt.NDArray</em><em>[</em><em>np.floating</em><em>]</em>) – Concentration parameters with shape (…, k)</p></li>
+<li><p><strong>size</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>, </em><em>None</em><em>]</em>) – Output shape. Defaults to 1.</p></li>
+<li><p><strong>random_state</strong> (<em>Union</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>np.random.Generator</em><em>, </em><em>None</em><em>]</em>) – Random state for reproducible sampling. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Random samples from Dirichlet distribution</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>npt.NDArray[np.floating]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If alpha cannot be broadcast to the specified size</p>
+</dd>
+</dl>
+<p>This method supports arbitrary batch dimensions in the alpha parameter
+and properly broadcasts to the requested output size while maintaining
+the simplex constraint for each sample.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Variance of the Dirichlet distribution.</p>
+<section id="id9">
+<h3>Parameters<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>alpha<span class="classifier">array_like</span></dt><dd><p>The concentration parameters. The number of entries determines the
+dimensionality of the distribution.</p>
+</dd>
+</dl>
+</section>
+<section id="id10">
+<h3>Returns<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>v<span class="classifier">ndarray or scalar</span></dt><dd><p>Variance of the Dirichlet distribution.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">CustomMultinomial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#CustomMultinomial"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">multinomial_gen</span></code></p>
+<p>Enhanced multinomial distribution supporting variable batch dimensions.</p>
+<p>This class extends SciPy’s standard multinomial distribution to support
+arbitrary batch dimensions in both the trial count (n) and probability
+parameters (p), enabling flexible batch operations for discrete multivariate
+modeling scenarios.</p>
+<p>Key Enhancements:
+- Variable batch dimensions for n and p parameters
+- Proper broadcasting behavior between n and p
+- Support for different trial counts across batch elements
+- Consistent output shapes for sampling operations</p>
+<p>Mathematical Properties:
+- Support: {x ∈ ℕ₀ᵏ : Σxᵢ = n}
+- Parameters: n (trial count), p = (p₁, …, pₖ) where Σpᵢ = 1
+- PMF: P(X = x) = n! / (∏xᵢ!) × ∏pᵢˣⁱ
+- Useful for modeling categorical count data</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Batch multinomial with different trial counts</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">20</span><span class="p">],</span> <span class="p">[</span><span class="mi">15</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>
+<span class="gp">... </span>              <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span>
+<span class="gp">... </span>              <span class="p">[</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">multinomial</span> <span class="o">=</span> <span class="n">CustomMultinomial</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">multinomial</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># shape = (100, 3, 3)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.integer</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.floating</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">np.random.Generator</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.integer</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#CustomMultinomial.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Generate random samples from the multinomial distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>Union</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>npt.NDArray</em><em>[</em><em>np.integer</em><em>]</em><em>]</em>) – Number of trials (can be scalar or array)</p></li>
+<li><p><strong>p</strong> (<em>npt.NDArray</em><em>[</em><em>np.floating</em><em>]</em>) – Event probabilities with shape (…, k)</p></li>
+<li><p><strong>size</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>, </em><em>None</em><em>]</em>) – Output shape. Defaults to 1.</p></li>
+<li><p><strong>random_state</strong> (<em>Union</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>np.random.Generator</em><em>, </em><em>None</em><em>]</em>) – Random state for reproducible sampling. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Random samples from multinomial distribution</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>npt.NDArray[np.integer]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If n and p cannot be broadcast to compatible shapes</p>
+</dd>
+</dl>
+<p>This method supports different trial counts for each batch element
+and handles broadcasting between scalar/array n and multi-dimensional p.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">ExpDirichlet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#ExpDirichlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CustomDirichlet</span></code></p>
+<p>Log-transformed Dirichlet distribution (Exponential-Dirichlet).</p>
+<p>This class implements a distribution where the logarithm of a Dirichlet-distributed
+random vector follows this distribution. It’s useful for modeling log-scale
+compositional data and log-probability vectors with proper Jacobian corrections.</p>
+<p>Mathematical Properties:
+- If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α)
+- Support: (-∞, 0]ᵏ (log-simplex)
+- Constraint: Σexp(yᵢ) = 1
+- Natural for log-probability modeling</p>
+<p>The log-transformation requires proper Jacobian correction for probability
+calculations. This distribution is particularly valuable for:
+- Log-space compositional data analysis
+- Bayesian modeling of log-probability vectors
+- Numerical stability in extreme probability regimes
+- Integration with other log-space model components</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-compositional data modeling</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">exp_dirichlet</span> <span class="o">=</span> <span class="n">ExpDirichlet</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_samples</span> <span class="o">=</span> <span class="n">exp_dirichlet</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1000</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Verify constraint: np.exp(log_samples).sum(axis=-1) ≈ 1</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#ExpDirichlet.cov"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Raise error for undefined moments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Covariance is not analytically available</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#ExpDirichlet.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Raise error for undefined entropy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Entropy is not analytically available</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">logpdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#ExpDirichlet.logpdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute log probability density with Jacobian correction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Log-probability values</p></li>
+<li><p><strong>alpha</strong> – Concentration parameters</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Log probability density values</p>
+</dd>
+</dl>
+<p>The implementation includes the proper Jacobian correction for the
+log-transformation, computed analytically for efficiency and numerical stability.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#ExpDirichlet.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Raise error for undefined moments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Mean is not analytically available</p>
+</dd>
+</dl>
+<p>The moments of the log-transformed Dirichlet distribution do not
+have simple closed-form expressions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#ExpDirichlet.pdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute probability density function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Log-probability values</p></li>
+<li><p><strong>alpha</strong> – Concentration parameters</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Probability density values</p>
+</dd>
+</dl>
+<p>Computed as the exponential of the log probability density for
+numerical stability and consistency.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.floating</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">np.random.Generator</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.floating</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#ExpDirichlet.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Generate random samples from the log-transformed Dirichlet distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>npt.NDArray</em><em>[</em><em>np.floating</em><em>]</em>) – Concentration parameters</p></li>
+<li><p><strong>size</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>, </em><em>None</em><em>]</em>) – Output shape. Defaults to 1.</p></li>
+<li><p><strong>random_state</strong> (<em>Union</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>np.random.Generator</em><em>, </em><em>None</em><em>]</em>) – Random state. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Log-probability samples</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>npt.NDArray[np.floating]</p>
+</dd>
+</dl>
+<p>Samples are generated by first sampling from the standard Dirichlet
+distribution and then applying the logarithmic transformation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#ExpDirichlet.var"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Raise error for undefined moments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Variance is not analytically available</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">LogUnivariateScipyTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">rv_continuous</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#LogUnivariateScipyTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedScipyDist</span></code></p>
+<p>Log transformation for univariate SciPy distributions.</p>
+<p>This class implements the natural logarithm transformation for any
+univariate SciPy distribution, creating a log-transformed variant
+with proper Jacobian corrections.</p>
+<p>This transformation is commonly used to:
+- Convert positive-valued distributions to real-valued distributions
+- Enable log-scale modeling of multiplicative processes
+- Improve numerical stability for heavy-tailed distributions
+- Create log-normal variants of arbitrary positive distributions</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create log-transformed exponential distribution</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_exponential</span> <span class="o">=</span> <span class="n">LogUnivariateScipyTransform</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">expon</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># This is equivalent to a Gumbel distribution</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">log_exponential</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize transformed distribution with base distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>base_dist</strong> (<em>stats.rv_continuous</em>) – Base distribution to transform</p>
+</dd>
+</dl>
+<p>Records the base distribution for use in transformation operations.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">inverse_transform</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ufunc</span> <span class="pre">'exp'&gt;</span></em></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">log_jacobian_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#LogUnivariateScipyTransform.log_jacobian_correction"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute log Jacobian correction for logarithmic transformation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>npt.NDArray</em><em>[</em><em>np.floating</em><em>]</em>) – Values in transformed (log) space</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Log Jacobian determinant (equal to x for log transform)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>npt.NDArray[np.floating]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">transform</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ufunc</span> <span class="pre">'log'&gt;</span></em></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">MultinomialLogTheta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#MultinomialLogTheta"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CustomMultinomial</span></code></p>
+<p>Multinomial distribution with normalized log-probability parameterization.</p>
+<p>This class provides a log-probability parameterized interface where the
+input parameters are logarithms of probabilities that must already be
+normalized (i.e., their exponentials sum to 1). This is useful when
+working with log-probability vectors from other computations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>exp_p</strong> – Decorator that transforms log-probabilities to probabilities</p>
+</dd>
+</dl>
+<p>Mathematical Properties:
+- Parameterization: log_p ∈ ℝᵏ with Σexp(log_pᵢ) = 1</p>
+<p>The log-probability parameterization is particularly useful when:
+- Working with log-normalized probability vectors
+- Interfacing with other log-space computations
+- Ensuring consistency with log-space model components</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Normalized log-probabilities</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">logits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_probs</span> <span class="o">=</span> <span class="n">logits</span> <span class="o">-</span> <span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">100</span><span class="p">],</span> <span class="p">[</span><span class="mi">200</span><span class="p">],</span> <span class="p">[</span><span class="mi">150</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">multinomial_log_theta</span> <span class="o">=</span> <span class="n">MultinomialLogTheta</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">multinomial_log_theta</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">log_p</span><span class="o">=</span><span class="n">log_probs</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Covariance matrix of the multinomial distribution.</p>
+<section id="id11">
+<h3>Parameters<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>n<span class="classifier">int</span></dt><dd><p>Number of trials</p>
+</dd>
+<dt>p<span class="classifier">array_like</span></dt><dd><p>Probability of a trial falling into each category; should sum to 1</p>
+</dd>
+</dl>
+</section>
+<section id="id12">
+<h3>Returns<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>cov<span class="classifier">ndarray</span></dt><dd><p>The covariance matrix of the distribution</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Compute the entropy of the multinomial distribution.</p>
+<p>The entropy is computed using this expression:</p>
+<div class="math notranslate nohighlight">
+\[f(x) = - \log n! - n\sum_{i=1}^k p_i \log p_i +
+\sum_{i=1}^k \sum_{x=0}^n \binom n x p_i^x(1-p_i)^{n-x} \log x!\]</div>
+<section id="id13">
+<h3>Parameters<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
+<p>%(_doc_default_callparams)s</p>
+</section>
+<section id="id14">
+<h3>Returns<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>h<span class="classifier">scalar</span></dt><dd><p>Entropy of the Multinomial distribution</p>
+</dd>
+</dl>
+</section>
+<section id="notes">
+<h3>Notes<a class="headerlink" href="#notes" title="Link to this heading">¶</a></h3>
+<p>%(_doc_callparams_note)s</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">exp_p</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#MultinomialLogTheta.exp_p"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Decorator that transforms log-probabilities to probabilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>function</strong> (<em>Callable</em>) – Function to wrap with log-probability transformation</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Wrapped function that accepts log_p instead of probabilities</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If log-probabilities are not properly normalized</p>
+</dd>
+</dl>
+<p>This decorator validates that the exponentials of log-probabilities
+sum to 1 (within tolerance) and applies the exponential transformation
+to convert to valid probabilities.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">logpmf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Log of the Multinomial probability mass function.</p>
+<section id="id15">
+<h3>Parameters<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>x<span class="classifier">array_like</span></dt><dd><p>Quantiles, with the last axis of <cite>x</cite> denoting the components.</p>
+</dd>
+<dt>n<span class="classifier">int</span></dt><dd><p>Number of trials</p>
+</dd>
+<dt>p<span class="classifier">array_like</span></dt><dd><p>Probability of a trial falling into each category; should sum to 1</p>
+</dd>
+</dl>
+</section>
+<section id="id16">
+<h3>Returns<a class="headerlink" href="#id16" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>logpmf<span class="classifier">ndarray or scalar</span></dt><dd><p>Log of the probability mass function evaluated at <cite>x</cite></p>
+</dd>
+</dl>
+</section>
+<section id="id17">
+<h3>Notes<a class="headerlink" href="#id17" title="Link to this heading">¶</a></h3>
+<p><cite>n</cite> should be a nonnegative integer. Each element of <cite>p</cite> should be in the
+interval <span class="math notranslate nohighlight">\([0,1]\)</span> and the elements should sum to 1. If they do not sum to
+1, the last element of the <cite>p</cite> array is not used and is replaced with the
+remaining probability left over from the earlier elements.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">pmf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Multinomial probability mass function.</p>
+<section id="id18">
+<h3>Parameters<a class="headerlink" href="#id18" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>x<span class="classifier">array_like</span></dt><dd><p>Quantiles, with the last axis of <cite>x</cite> denoting the components.</p>
+</dd>
+<dt>n<span class="classifier">int</span></dt><dd><p>Number of trials</p>
+</dd>
+<dt>p<span class="classifier">array_like</span></dt><dd><p>Probability of a trial falling into each category; should sum to 1</p>
+</dd>
+</dl>
+</section>
+<section id="id19">
+<h3>Returns<a class="headerlink" href="#id19" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>pmf<span class="classifier">ndarray or scalar</span></dt><dd><p>Probability density function evaluated at <cite>x</cite></p>
+</dd>
+</dl>
+</section>
+<section id="id20">
+<h3>Notes<a class="headerlink" href="#id20" title="Link to this heading">¶</a></h3>
+<p><cite>n</cite> should be a nonnegative integer. Each element of <cite>p</cite> should be in the
+interval <span class="math notranslate nohighlight">\([0,1]\)</span> and the elements should sum to 1. If they do not sum to
+1, the last element of the <cite>p</cite> array is not used and is replaced with the
+remaining probability left over from the earlier elements.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.integer</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.floating</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">np.random.Generator</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.integer</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Generate random samples from the multinomial distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>Union</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>npt.NDArray</em><em>[</em><em>np.integer</em><em>]</em><em>]</em>) – Number of trials (can be scalar or array)</p></li>
+<li><p><strong>p</strong> (<em>npt.NDArray</em><em>[</em><em>np.floating</em><em>]</em>) – Event probabilities with shape (…, k)</p></li>
+<li><p><strong>size</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>, </em><em>None</em><em>]</em>) – Output shape. Defaults to 1.</p></li>
+<li><p><strong>random_state</strong> (<em>Union</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>np.random.Generator</em><em>, </em><em>None</em><em>]</em>) – Random state for reproducible sampling. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Random samples from multinomial distribution</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>npt.NDArray[np.integer]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If n and p cannot be broadcast to compatible shapes</p>
+</dd>
+</dl>
+<p>This method supports different trial counts for each batch element
+and handles broadcasting between scalar/array n and multi-dimensional p.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">MultinomialLogit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#MultinomialLogit"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CustomMultinomial</span></code></p>
+<p>Multinomial distribution with logit parameterization.</p>
+<p>This class provides a logit-parameterized interface to the multinomial
+distribution, where probabilities are specified as logits (log-odds)
+rather than normalized probabilities. This parameterization is often
+more convenient for modeling and optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>softmax_p</strong> – Decorator that transforms logits to probabilities</p>
+</dd>
+</dl>
+<p>Mathematical Properties:
+- Parameterization: logits ∈ ℝᵏ (unconstrained)
+- Transformation: pᵢ = exp(logitᵢ) / Σⱼ exp(logitⱼ)
+- Natural for neural network outputs and linear models
+- Automatic normalization ensures valid probabilities</p>
+<p>The logit parameterization offers several advantages:
+- No normalization constraints on input parameters
+- Better numerical properties for optimization
+- Natural output space for many machine learning models
+- Automatic softmax transformation to valid probabilities</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Logit parameterization (no normalization needed)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">logits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mi">75</span><span class="p">],</span> <span class="p">[</span><span class="mi">100</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">multinomial_logit</span> <span class="o">=</span> <span class="n">MultinomialLogit</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">multinomial_logit</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Covariance matrix of the multinomial distribution.</p>
+<section id="id21">
+<h3>Parameters<a class="headerlink" href="#id21" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>n<span class="classifier">int</span></dt><dd><p>Number of trials</p>
+</dd>
+<dt>p<span class="classifier">array_like</span></dt><dd><p>Probability of a trial falling into each category; should sum to 1</p>
+</dd>
+</dl>
+</section>
+<section id="id22">
+<h3>Returns<a class="headerlink" href="#id22" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>cov<span class="classifier">ndarray</span></dt><dd><p>The covariance matrix of the distribution</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Compute the entropy of the multinomial distribution.</p>
+<p>The entropy is computed using this expression:</p>
+<div class="math notranslate nohighlight">
+\[f(x) = - \log n! - n\sum_{i=1}^k p_i \log p_i +
+\sum_{i=1}^k \sum_{x=0}^n \binom n x p_i^x(1-p_i)^{n-x} \log x!\]</div>
+<section id="id23">
+<h3>Parameters<a class="headerlink" href="#id23" title="Link to this heading">¶</a></h3>
+<p>%(_doc_default_callparams)s</p>
+</section>
+<section id="id24">
+<h3>Returns<a class="headerlink" href="#id24" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>h<span class="classifier">scalar</span></dt><dd><p>Entropy of the Multinomial distribution</p>
+</dd>
+</dl>
+</section>
+<section id="id25">
+<h3>Notes<a class="headerlink" href="#id25" title="Link to this heading">¶</a></h3>
+<p>%(_doc_callparams_note)s</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">logpmf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Log of the Multinomial probability mass function.</p>
+<section id="id26">
+<h3>Parameters<a class="headerlink" href="#id26" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>x<span class="classifier">array_like</span></dt><dd><p>Quantiles, with the last axis of <cite>x</cite> denoting the components.</p>
+</dd>
+<dt>n<span class="classifier">int</span></dt><dd><p>Number of trials</p>
+</dd>
+<dt>p<span class="classifier">array_like</span></dt><dd><p>Probability of a trial falling into each category; should sum to 1</p>
+</dd>
+</dl>
+</section>
+<section id="id27">
+<h3>Returns<a class="headerlink" href="#id27" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>logpmf<span class="classifier">ndarray or scalar</span></dt><dd><p>Log of the probability mass function evaluated at <cite>x</cite></p>
+</dd>
+</dl>
+</section>
+<section id="id28">
+<h3>Notes<a class="headerlink" href="#id28" title="Link to this heading">¶</a></h3>
+<p><cite>n</cite> should be a nonnegative integer. Each element of <cite>p</cite> should be in the
+interval <span class="math notranslate nohighlight">\([0,1]\)</span> and the elements should sum to 1. If they do not sum to
+1, the last element of the <cite>p</cite> array is not used and is replaced with the
+remaining probability left over from the earlier elements.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">pmf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Multinomial probability mass function.</p>
+<section id="id29">
+<h3>Parameters<a class="headerlink" href="#id29" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>x<span class="classifier">array_like</span></dt><dd><p>Quantiles, with the last axis of <cite>x</cite> denoting the components.</p>
+</dd>
+<dt>n<span class="classifier">int</span></dt><dd><p>Number of trials</p>
+</dd>
+<dt>p<span class="classifier">array_like</span></dt><dd><p>Probability of a trial falling into each category; should sum to 1</p>
+</dd>
+</dl>
+</section>
+<section id="id30">
+<h3>Returns<a class="headerlink" href="#id30" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>pmf<span class="classifier">ndarray or scalar</span></dt><dd><p>Probability density function evaluated at <cite>x</cite></p>
+</dd>
+</dl>
+</section>
+<section id="id31">
+<h3>Notes<a class="headerlink" href="#id31" title="Link to this heading">¶</a></h3>
+<p><cite>n</cite> should be a nonnegative integer. Each element of <cite>p</cite> should be in the
+interval <span class="math notranslate nohighlight">\([0,1]\)</span> and the elements should sum to 1. If they do not sum to
+1, the last element of the <cite>p</cite> array is not used and is replaced with the
+remaining probability left over from the earlier elements.</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.integer</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.floating</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">np.random.Generator</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">npt.NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">np.integer</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Generate random samples from the multinomial distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>Union</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>npt.NDArray</em><em>[</em><em>np.integer</em><em>]</em><em>]</em>) – Number of trials (can be scalar or array)</p></li>
+<li><p><strong>p</strong> (<em>npt.NDArray</em><em>[</em><em>np.floating</em><em>]</em>) – Event probabilities with shape (…, k)</p></li>
+<li><p><strong>size</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>, </em><em>None</em><em>]</em>) – Output shape. Defaults to 1.</p></li>
+<li><p><strong>random_state</strong> (<em>Union</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>np.random.Generator</em><em>, </em><em>None</em><em>]</em>) – Random state for reproducible sampling. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Random samples from multinomial distribution</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>npt.NDArray[np.integer]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If n and p cannot be broadcast to compatible shapes</p>
+</dd>
+</dl>
+<p>This method supports different trial counts for each batch element
+and handles broadcasting between scalar/array n and multi-dimensional p.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">softmax_p</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#MultinomialLogit.softmax_p"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Decorator that transforms logits to probabilities using softmax.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>function</strong> (<em>Callable</em>) – Function to wrap with logit transformation</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Wrapped function that accepts logits instead of probabilities</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+<p>This decorator automatically applies the softmax transformation to
+convert logits to valid probabilities before calling the underlying
+multinomial distribution methods.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">TransformedScipyDist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">rv_continuous</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for transformed SciPy distributions.</p>
+<p>This class provides a framework for creating distributions that are
+transformations of existing SciPy distributions. It handles the
+mathematical details of transformation including Jacobian corrections
+for probability density functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>base_dist</strong> (<em>stats.rv_continuous</em>) – Base SciPy distribution to transform</p>
+</dd>
+</dl>
+<p>Key Features:
+- Automatic Jacobian correction for probability densities
+- Proper transformation of all distribution methods
+- Maintains SciPy distribution interface compatibility
+- Support for arbitrary invertible transformations</p>
+<p>Subclasses must implement:
+- transform: Forward transformation function
+- inverse_transform: Inverse transformation function
+- log_jacobian_correction: Log determinant of Jacobian matrix</p>
+<p>The framework automatically handles:
+- PDF/log-PDF with Jacobian corrections
+- CDF through inverse transformation
+- Quantile functions through forward transformation
+- Random sampling through transformation of base samples</p>
+<p>Initialize transformed distribution with base distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>base_dist</strong> (<em>stats.rv_continuous</em>) – Base distribution to transform</p>
+</dd>
+</dl>
+<p>Records the base distribution for use in transformation operations.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.cdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute cumulative distribution function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Values at which to evaluate CDF</p></li>
+<li><p><strong>args</strong> – Arguments for base distribution</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments for base distribution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cumulative probability values</p>
+</dd>
+</dl>
+<p>Uses inverse transformation to map to base distribution space.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inverse_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.inverse_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">isf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.isf"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute inverse survival function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> – Probability values</p></li>
+<li><p><strong>args</strong> – Arguments for base distribution</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments for base distribution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Inverse survival function values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">log_jacobian_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.log_jacobian_correction"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">logpdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.logpdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute log probability density function with Jacobian correction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Values at which to evaluate log-PDF</p></li>
+<li><p><strong>args</strong> – Arguments for base distribution</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments for base distribution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Log probability density values</p>
+</dd>
+</dl>
+<p>More numerically stable than computing log of PDF directly.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">logsf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.logsf"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute log survival function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Values at which to evaluate log survival function</p></li>
+<li><p><strong>args</strong> – Arguments for base distribution</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments for base distribution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Log survival probability values</p>
+</dd>
+</dl>
+<p>More numerically stable for small survival probabilities.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.pdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute probability density function with Jacobian correction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Values at which to evaluate PDF</p></li>
+<li><p><strong>args</strong> – Arguments for base distribution</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments for base distribution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Probability density values</p>
+</dd>
+</dl>
+<p>Applies the change of variables formula with proper Jacobian correction.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">ppf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.ppf"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute percent point function (inverse CDF).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> – Probability values</p></li>
+<li><p><strong>args</strong> – Arguments for base distribution</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments for base distribution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Quantile values</p>
+</dd>
+</dl>
+<p>Uses forward transformation of base distribution quantiles.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.rvs"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Generate random samples from transformed distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Arguments for base distribution</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments for base distribution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Random samples from transformed distribution</p>
+</dd>
+</dl>
+<p>Generates samples from base distribution and applies transformation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">sf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.sf"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute survival function (1 - CDF).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Values at which to evaluate survival function</p></li>
+<li><p><strong>args</strong> – Arguments for base distribution</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments for base distribution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Survival probability values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/scistanpy/model/components/custom_distributions/custom_scipy_dists.html#TransformedScipyDist.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<section id="expdirichlet-implementation">
+<h3>expdirichlet Implementation<a class="headerlink" href="#expdirichlet-implementation" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">expdirichlet</span></span></dt>
+<dd><p>alias of &lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet object&gt;</p>
+</dd></dl>
+
+</section>
+<section id="explomax-implementation">
+<h3>explomax Implementation<a class="headerlink" href="#explomax-implementation" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">explomax</span></span></dt>
+<dd><p>alias of &lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform object&gt;</p>
+</dd></dl>
+
+</section>
+<section id="multinomial-logit-implementation">
+<h3>multinomial_logit Implementation<a class="headerlink" href="#multinomial-logit-implementation" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">multinomial_logit</span></span></dt>
+<dd><p>alias of &lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit object&gt;</p>
+</dd></dl>
+
+</section>
+<section id="multinomial-log-theta-implementation">
+<h3>multinomial_log_theta Implementation<a class="headerlink" href="#multinomial-log-theta-implementation" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">multinomial_log_theta</span></span></dt>
+<dd><p>alias of &lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta object&gt;</p>
+</dd></dl>
+
+</section>
+</section>
+<section id="backend-comparison-and-integration">
+<h2>Backend Comparison and Integration<a class="headerlink" href="#backend-comparison-and-integration" title="Link to this heading">¶</a></h2>
+<p><strong>SciPy vs PyTorch Implementations:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compare implementations for consistency</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">])</span>
+
+<span class="c1"># SciPy backend</span>
+<span class="n">exp_dir_scipy</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">expdirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">scipy_samples</span> <span class="o">=</span> <span class="n">exp_dir_scipy</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># PyTorch backend</span>
+<span class="n">exp_dir_torch</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">expdirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">alpha</span><span class="p">))</span>
+<span class="n">torch_samples</span> <span class="o">=</span> <span class="n">exp_dir_torch</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="mi">1000</span><span class="p">,))</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+<span class="c1"># Statistical comparison</span>
+<span class="n">scipy_mean</span> <span class="o">=</span> <span class="n">scipy_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">torch_mean</span> <span class="o">=</span> <span class="n">torch_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean difference: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">scipy_mean</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">torch_mean</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>When to Use Each Backend:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciPy backend advantages:</span>
+<span class="c1"># - Mature statistical functions (CDF, SF, PPF)</span>
+<span class="c1"># - Robust numerical implementations</span>
+<span class="c1"># - Extensive statistical analysis tools</span>
+<span class="c1"># - CPU-optimized performance</span>
+
+<span class="c1"># PyTorch backend advantages:</span>
+<span class="c1"># - Automatic differentiation</span>
+<span class="c1"># - GPU acceleration</span>
+<span class="c1"># - Batch processing</span>
+<span class="c1"># - Integration with neural networks</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-characteristics">
+<h2>Performance Characteristics<a class="headerlink" href="#performance-characteristics" title="Link to this heading">¶</a></h2>
+<p><strong>CPU Performance:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciPy optimized for CPU statistical computing</span>
+<span class="n">large_alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">exp_dir</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">expdirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">large_alpha</span><span class="p">)</span>
+
+<span class="c1"># Efficient sampling</span>
+<span class="n">samples</span> <span class="o">=</span> <span class="n">exp_dir</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>  <span class="c1"># Fast CPU sampling</span>
+
+<span class="c1"># Statistical analysis</span>
+<span class="n">percentiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="p">[</span><span class="mi">25</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">75</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Memory Efficiency:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Memory-efficient processing with SciPy</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">batch_evaluate</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate in batches to manage memory.&quot;&quot;&quot;</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">batch_size</span><span class="p">]</span>
+        <span class="n">batch_results</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_results</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Statistical Analysis Integration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Leverage SciPy ecosystem for analysis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+
+<span class="c1"># Distribution fitting</span>
+<span class="n">sample_data</span> <span class="o">=</span> <span class="n">lomax_scipy</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># Goodness of fit tests</span>
+<span class="n">ks_stat</span><span class="p">,</span> <span class="n">p_value</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">kstest</span><span class="p">(</span>
+    <span class="n">sample_data</span><span class="p">,</span>
+    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">lomax_scipy</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Confidence intervals</span>
+<span class="n">alpha_level</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">lower</span> <span class="o">=</span> <span class="n">lomax_scipy</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">alpha_level</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">upper</span> <span class="o">=</span> <span class="n">lomax_scipy</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha_level</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="integration-with-scistanpy-models">
+<h2>Integration with SciStanPy Models<a class="headerlink" href="#integration-with-scistanpy-models" title="Link to this heading">¶</a></h2>
+<p><strong>Automatic Backend Selection:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciStanPy automatically selects appropriate backend</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+
+<span class="c1"># This uses PyTorch backend for model building</span>
+<span class="n">exp_dir_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">expdirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+
+<span class="c1"># But can use SciPy backend for analysis</span>
+<span class="n">samples</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">exp_dir_param</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>  <span class="c1"># Uses SciPy for sampling</span>
+</pre></div>
+</div>
+<p><strong>Custom Distribution Development:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Template for new SciPy distribution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">rv_continuous</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomSciPyDistribution</span><span class="p">(</span><span class="n">rv_continuous</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Template for custom SciPy distribution.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_param</span> <span class="o">=</span> <span class="n">custom_param</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">):</span>
+        <span class="c1"># Implement probability density function</span>
+        <span class="k">return</span> <span class="n">density_function</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">):</span>
+        <span class="c1"># Implement cumulative distribution function</span>
+        <span class="k">return</span> <span class="n">cdf_function</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># Implement random number generation</span>
+        <span class="k">return</span> <span class="n">generate_samples</span><span class="p">(</span><span class="n">custom_param</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Validation and Testing:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Validate custom distributions</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_distribution</span><span class="p">(</span><span class="n">scipy_dist</span><span class="p">,</span> <span class="n">torch_dist</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare SciPy and PyTorch implementations.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Sample comparison</span>
+    <span class="n">scipy_samples</span> <span class="o">=</span> <span class="n">scipy_dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+    <span class="n">torch_samples</span> <span class="o">=</span> <span class="n">torch_dist</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="mi">1000</span><span class="p">,))</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+    <span class="c1"># Statistical moments</span>
+    <span class="n">scipy_mean</span> <span class="o">=</span> <span class="n">scipy_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">torch_mean</span> <span class="o">=</span> <span class="n">torch_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Check consistency</span>
+    <span class="n">mean_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">scipy_mean</span> <span class="o">-</span> <span class="n">torch_mean</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">mean_diff</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Implementations differ: </span><span class="si">{</span><span class="n">mean_diff</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ Implementations are consistent&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="numerical-considerations">
+<h2>Numerical Considerations<a class="headerlink" href="#numerical-considerations" title="Link to this heading">¶</a></h2>
+<p><strong>Precision and Stability:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciPy provides robust numerical implementations</span>
+
+<span class="c1"># Handle extreme parameter values</span>
+<span class="n">extreme_alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">])</span>
+<span class="n">stable_dist</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">expdirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">extreme_alpha</span><span class="p">)</span>
+
+<span class="c1"># Numerical stability in log-space</span>
+<span class="n">very_small_probs</span> <span class="o">=</span> <span class="n">stable_dist</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">extreme_samples</span><span class="p">)</span>
+
+<span class="c1"># Automatic overflow/underflow handling</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">very_small_probs</span><span class="p">))</span>
+</pre></div>
+</div>
+<p><strong>Error Handling:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comprehensive parameter validation</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">invalid_dist</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter validation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Runtime checks</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">invalid_sample</span> <span class="o">=</span> <span class="n">lomax_dist</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample validation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Use SciPy backend</strong> for statistical analysis and exploratory work</p></li>
+<li><p><strong>Leverage PyTorch backend</strong> for gradient-based optimization</p></li>
+<li><p><strong>Validate implementations</strong> when developing custom distributions</p></li>
+<li><p><strong>Handle extreme values</strong> with appropriate numerical techniques</p></li>
+<li><p><strong>Test statistical properties</strong> against known analytical results</p></li>
+<li><p><strong>Use appropriate precision</strong> for your computational requirements</p></li>
+<li><p><strong>Profile performance</strong> for computational bottlenecks</p></li>
+</ol>
+<p>The SciPy custom distributions provide robust, well-tested implementations that integrate seamlessly with the broader scientific Python ecosystem while maintaining full compatibility with SciStanPy’s modeling framework.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">SciStanPy API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#top-level-package">Top-Level Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#module-overview">Module Overview</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../../index.html#quick-navigation">Quick Navigation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../../custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html">Model API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../operations.html">Operations API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#usage-notes">Usage Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#missing-something">Missing Something?</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">SciStanPy API Reference</a><ul>
+  <li><a href="../../index.html">Model API Reference</a><ul>
+  <li><a href="../index.html">Model Components API Reference</a><ul>
+  <li><a href="index.html">Custom Distributions API Reference</a><ul>
+      <li>Previous: <a href="custom_torch_dists.html" title="previous chapter">Custom PyTorch Distributions API Reference</a></li>
+      <li>Next: <a href="../parameters.html" title="next chapter">Parameters API Reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../../../../_sources/rst/api/model/components/custom_distributions/custom_scipy_dists.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

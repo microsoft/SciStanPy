@@ -31,7 +31,10 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.model.components.parameters</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Parameter classes for defining probabilistic model components in SciStanPy.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;Parameter classes for defining probabilistic model components in SciStanPy.</span>
 
 <span class="sd">This module provides the core parameter classes that serve as building blocks for</span>
 <span class="sd">constructing probabilistic models in SciStanPy. These classes represent random</span>
@@ -172,7 +175,7 @@
 
 
 <div class="viewcode-block" id="ParameterMeta">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ParameterMeta">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ParameterMeta">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ParameterMeta</span><span class="p">(</span><span class="n">ABCMeta</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Metaclass for automatic CDF transform class generation.</span>
 
@@ -217,7 +220,7 @@
 
 
 <div class="viewcode-block" id="ClassOrInstanceMethod">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ClassOrInstanceMethod">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ClassOrInstanceMethod">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClassOrInstanceMethod</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Descriptor enabling dual class/instance method behavior.</span>
 
@@ -294,7 +297,7 @@
 
 
 <div class="viewcode-block" id="Parameter">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Parameter</span><span class="p">(</span>
     <span class="n">abstract_model_component</span><span class="o">.</span><span class="n">AbstractModelComponent</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">ParameterMeta</span>
 <span class="p">):</span>
@@ -414,7 +417,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_torch_parametrization</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="Parameter.init_pytorch">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.init_pytorch">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.init_pytorch">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">init_pytorch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">init_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -506,7 +509,7 @@
         <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 <div class="viewcode-block" id="Parameter.as_observable">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.as_observable">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.as_observable">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">as_observable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Parameter&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Mark parameter as observable (representing observed data).</span>
 
@@ -535,7 +538,7 @@
 
 
 <div class="viewcode-block" id="Parameter.get_target_incrementation">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_target_incrementation">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_target_incrementation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_target_incrementation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan target increment statement for log-probability.</span>
 
@@ -561,7 +564,7 @@
 
 
 <div class="viewcode-block" id="Parameter.get_generated_quantities">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_generated_quantities">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_generated_quantities">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_generated_quantities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for posterior predictive sampling.</span>
 
@@ -582,7 +585,7 @@
 
 
 <div class="viewcode-block" id="Parameter.get_torch_logprob">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_torch_logprob">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_torch_logprob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_torch_logprob</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">observed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
@@ -617,7 +620,7 @@
 
 
 <div class="viewcode-block" id="Parameter.get_rng">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_rng">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_rng">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_rng</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">:</span>
@@ -641,7 +644,7 @@
 
 
 <div class="viewcode-block" id="Parameter.write_dist_args">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.write_dist_args">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.write_dist_args">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_dist_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">to_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Format distribution arguments for Stan code generation.</span>
 
@@ -659,7 +662,7 @@
 
 
 <div class="viewcode-block" id="Parameter.get_right_side">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_right_side">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_right_side">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -712,7 +715,7 @@
 
 
 <div class="viewcode-block" id="Parameter.get_transformed_data_declaration">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_transformed_data_declaration">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_transformed_data_declaration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_transformed_data_declaration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan transformed data block declarations.</span>
 
@@ -728,7 +731,7 @@
 
 
 <div class="viewcode-block" id="Parameter.get_generated_quantity_declaration">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_generated_quantity_declaration">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_generated_quantity_declaration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_generated_quantity_declaration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_basetype</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan variable declaration for generated quantities.</span>
 
@@ -752,7 +755,7 @@
 
 
 <div class="viewcode-block" id="Parameter.get_raw_stan_parameter_declaration">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_raw_stan_parameter_declaration">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_raw_stan_parameter_declaration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_raw_stan_parameter_declaration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_basetype</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan parameter declaration for raw (untransformed) variables.</span>
 
@@ -779,7 +782,7 @@
 
     <span class="c1"># pylint: disable=no-self-argument</span>
 <div class="viewcode-block" id="Parameter.cdf">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.cdf">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.cdf">[docs]</a>
     <span class="nd">@ClassOrInstanceMethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;cdfs.CDF&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create cumulative distribution function transform.</span>
@@ -806,7 +809,7 @@
 
 
 <div class="viewcode-block" id="Parameter.ccdf">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.ccdf">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.ccdf">[docs]</a>
     <span class="nd">@ClassOrInstanceMethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">ccdf</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -827,7 +830,7 @@
 
 
 <div class="viewcode-block" id="Parameter.log_cdf">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.log_cdf">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.log_cdf">[docs]</a>
     <span class="nd">@ClassOrInstanceMethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_cdf</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;cdfs.LogCDF&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create logarithmic CDF transform.</span>
@@ -846,7 +849,7 @@
 
 
 <div class="viewcode-block" id="Parameter.log_ccdf">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.log_ccdf">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.log_ccdf">[docs]</a>
     <span class="nd">@ClassOrInstanceMethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_ccdf</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -1020,7 +1023,7 @@
 
 
 <div class="viewcode-block" id="ContinuousDistribution">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ContinuousDistribution">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ContinuousDistribution">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ContinuousDistribution</span><span class="p">(</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">transformed_parameters</span><span class="o">.</span><span class="n">TransformableParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for parameters with continuous sample spaces.</span>
 
@@ -1032,7 +1035,7 @@
 
 
 <div class="viewcode-block" id="DiscreteDistribution">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.DiscreteDistribution">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.DiscreteDistribution">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DiscreteDistribution</span><span class="p">(</span><span class="n">Parameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for parameters with discrete sample spaces.</span>
 
@@ -1049,7 +1052,7 @@
 
 
 <div class="viewcode-block" id="Normal">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Normal">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Normal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Normal</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Normal (Gaussian) distribution parameter.</span>
 
@@ -1108,7 +1111,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_noncentered</span> <span class="o">=</span> <span class="n">noncentered</span>
 
 <div class="viewcode-block" id="Normal.get_transformation_assignment">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Normal.get_transformation_assignment">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Normal.get_transformation_assignment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_transformation_assignment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for parameter transformation.</span>
 
@@ -1143,7 +1146,7 @@
 
 
 <div class="viewcode-block" id="Normal.get_target_incrementation">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Normal.get_target_incrementation">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Normal.get_target_incrementation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_target_incrementation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan target increment with appropriate variable names.</span>
 
@@ -1173,7 +1176,7 @@
 
 
 <div class="viewcode-block" id="Normal.get_right_side">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Normal.get_right_side">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Normal.get_right_side">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -1226,7 +1229,7 @@
 
 
 <div class="viewcode-block" id="HalfNormal">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.HalfNormal">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.HalfNormal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HalfNormal</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Half-normal distribution parameter (normal truncated at zero).</span>
 
@@ -1255,7 +1258,7 @@
     <span class="n">STAN_TO_TORCH_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="s2">&quot;scale&quot;</span><span class="p">}</span>
 
 <div class="viewcode-block" id="HalfNormal.write_dist_args">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.HalfNormal.write_dist_args">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.HalfNormal.write_dist_args">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_dist_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># pylint: disable=arguments-differ</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Format distribution arguments for Stan (location=0, scale=sigma).</span>
 
@@ -1271,7 +1274,7 @@
 
 
 <div class="viewcode-block" id="UnitNormal">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.UnitNormal">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.UnitNormal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">UnitNormal</span><span class="p">(</span><span class="n">Normal</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard normal distribution (mu=0, sigma=1).</span>
 
@@ -1305,7 +1308,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="o">.</span><span class="n">is_togglable</span> <span class="o">=</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="UnitNormal.write_dist_args">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.UnitNormal.write_dist_args">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.UnitNormal.write_dist_args">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_dist_args</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ, unused-argument</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1326,7 +1329,7 @@
 
 
 <div class="viewcode-block" id="LogNormal">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.LogNormal">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.LogNormal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogNormal</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-normal distribution parameter.</span>
 
@@ -1362,7 +1365,7 @@
 
 
 <div class="viewcode-block" id="Beta">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Beta">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Beta">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Beta</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Beta distribution parameter.</span>
 
@@ -1410,7 +1413,7 @@
 
 
 <div class="viewcode-block" id="Gamma">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Gamma">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Gamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Gamma</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Gamma distribution parameter.</span>
 
@@ -1459,7 +1462,7 @@
 
 
 <div class="viewcode-block" id="InverseGamma">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.InverseGamma">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.InverseGamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InverseGamma</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Inverse gamma distribution parameter.</span>
 
@@ -1504,7 +1507,7 @@
 
 
 <div class="viewcode-block" id="Exponential">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Exponential">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Exponential">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Exponential</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Exponential distribution parameter.</span>
 
@@ -1550,7 +1553,7 @@
 
 
 <div class="viewcode-block" id="ExpExponential">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpExponential">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpExponential">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpExponential</span><span class="p">(</span><span class="n">Exponential</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Exp-Exponential distribution (log of exponential random variable).</span>
 
@@ -1592,7 +1595,7 @@
     <span class="p">}</span>  <span class="c1"># Transform beta to match the scipy distribution&#39;s scale parameter</span>
 
 <div class="viewcode-block" id="ExpExponential.get_supporting_functions">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpExponential.get_supporting_functions">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpExponential.get_supporting_functions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of required Stan function includes.</span>
 
@@ -1612,7 +1615,7 @@
 
 
 <div class="viewcode-block" id="Lomax">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Lomax">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Lomax">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Lomax</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Lomax distribution (Pareto Type II with location=0).</span>
 
@@ -1656,7 +1659,7 @@
     <span class="n">STAN_TO_TORCH_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lambda_&quot;</span><span class="p">:</span> <span class="s2">&quot;lambda_&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha&quot;</span><span class="p">}</span>
 
 <div class="viewcode-block" id="Lomax.write_dist_args">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Lomax.write_dist_args">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Lomax.write_dist_args">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_dist_args</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1679,7 +1682,7 @@
 
 
 <div class="viewcode-block" id="ExpLomax">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpLomax">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpLomax">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpLomax</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Exp-Lomax distribution (log of Lomax random variable).</span>
 
@@ -1720,7 +1723,7 @@
     <span class="n">STAN_TO_TORCH_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lambda_&quot;</span><span class="p">:</span> <span class="s2">&quot;lambda_&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha&quot;</span><span class="p">}</span>
 
 <div class="viewcode-block" id="ExpLomax.get_supporting_functions">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpLomax.get_supporting_functions">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpLomax.get_supporting_functions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of required Stan function includes.</span>
 
@@ -1738,7 +1741,7 @@
 
 
 <div class="viewcode-block" id="Dirichlet">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Dirichlet">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Dirichlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Dirichlet</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Dirichlet distribution parameter.</span>
 
@@ -1824,7 +1827,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpDirichlet</span><span class="p">(</span><span class="n">Dirichlet</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Exp-Dirichlet distribution (log of Dirichlet random variable).</span>
 
@@ -1883,7 +1886,7 @@
     <span class="n">STAN_TO_TORCH_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="s2">&quot;concentration&quot;</span><span class="p">}</span>
 
 <div class="viewcode-block" id="ExpDirichlet.get_supporting_functions">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_supporting_functions">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_supporting_functions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of required Stan function includes.</span>
 
@@ -1901,7 +1904,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet.get_transformation_assignment">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_transformation_assignment">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_transformation_assignment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_transformation_assignment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for log-simplex constraint transformation.</span>
 
@@ -1925,7 +1928,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet.get_right_side">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_right_side">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_right_side">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -1958,7 +1961,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet.get_raw_stan_parameter_declaration">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_raw_stan_parameter_declaration">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_raw_stan_parameter_declaration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_raw_stan_parameter_declaration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_basetype</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate declaration for raw parameter with reduced dimensions.</span>
 
@@ -1995,7 +1998,7 @@
 
 
 <div class="viewcode-block" id="Binomial">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Binomial">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Binomial">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Binomial</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Binomial distribution parameter.</span>
 
@@ -2036,7 +2039,7 @@
 
 
 <div class="viewcode-block" id="Poisson">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Poisson">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Poisson">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Poisson</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Poisson distribution parameter.</span>
 
@@ -2118,7 +2121,7 @@
 
 
 <div class="viewcode-block" id="Multinomial">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.Multinomial">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.Multinomial">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Multinomial</span><span class="p">(</span><span class="n">_MultinomialBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard multinomial distribution parameter.</span>
 
@@ -2156,7 +2159,7 @@
 
 
 <div class="viewcode-block" id="MultinomialLogit">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogit">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogit">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogit</span><span class="p">(</span><span class="n">_MultinomialBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with logit parameterization.</span>
 
@@ -2192,7 +2195,7 @@
 
 
 <div class="viewcode-block" id="MultinomialLogTheta">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogTheta</span><span class="p">(</span><span class="n">_MultinomialBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with log-probability parameterization.</span>
 
@@ -2298,7 +2301,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_record_child</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MultinomialLogTheta.get_supporting_functions">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta.get_supporting_functions">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta.get_supporting_functions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of required Stan function includes.</span>
 
@@ -2314,7 +2317,7 @@
 
 
 <div class="viewcode-block" id="MultinomialLogTheta.write_dist_args">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta.write_dist_args">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta.write_dist_args">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_dist_args</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ, arguments-renamed</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">log_theta</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">coeff</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="p">):</span>
@@ -2343,7 +2346,7 @@
 
 
 <div class="viewcode-block" id="MultinomialLogTheta.get_right_side">
-<a class="viewcode-back" href="../../../../docs/api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta.get_right_side">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta.get_right_side">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -2434,7 +2437,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

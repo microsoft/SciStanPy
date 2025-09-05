@@ -31,7 +31,10 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.model.components.custom_distributions.custom_scipy_dists</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Custom SciPy distribution implementations for SciStanPy models.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;Custom SciPy distribution implementations for SciStanPy models.</span>
 
 <span class="sd">This module provides extended and custom SciPy distribution classes that address</span>
 <span class="sd">limitations in the standard SciPy distribution library for probabilistic modeling.</span>
@@ -125,7 +128,7 @@
 
 
 <div class="viewcode-block" id="CustomDirichlet">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CustomDirichlet</span><span class="p">(</span>
     <span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">dirichlet_gen</span>  <span class="c1"># pylint: disable=protected-access</span>
 <span class="p">):</span>
@@ -245,7 +248,7 @@
     <span class="c1"># pylint: enable=protected-access</span>
 
 <div class="viewcode-block" id="CustomDirichlet.rvs">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet.rvs">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
@@ -300,7 +303,7 @@
 
 
 <div class="viewcode-block" id="CustomMultinomial">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CustomMultinomial</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">multinomial_gen</span><span class="p">):</span>  <span class="c1"># pylint: disable=W0212</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Enhanced multinomial distribution supporting variable batch dimensions.</span>
 
@@ -332,7 +335,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="CustomMultinomial.rvs">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial.rvs">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">n</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">|</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">],</span>
@@ -403,7 +406,7 @@
 
 
 <div class="viewcode-block" id="MultinomialLogit">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogit</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with logit parameterization.</span>
 
@@ -435,7 +438,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="MultinomialLogit.softmax_p">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit.softmax_p">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit.softmax_p">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">softmax_p</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator that transforms logits to probabilities using softmax.</span>
@@ -470,7 +473,7 @@
 
 
 <div class="viewcode-block" id="MultinomialLogTheta">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogTheta</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with normalized log-probability parameterization.</span>
 
@@ -499,7 +502,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="MultinomialLogTheta.exp_p">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta.exp_p">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta.exp_p">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">exp_p</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator that transforms log-probabilities to probabilities.</span>
@@ -545,7 +548,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpDirichlet</span><span class="p">(</span><span class="n">CustomDirichlet</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-transformed Dirichlet distribution (Exponential-Dirichlet).</span>
 
@@ -575,7 +578,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ExpDirichlet.logpdf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.logpdf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.logpdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log probability density with Jacobian correction.</span>
 
@@ -597,7 +600,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet.pdf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.pdf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.pdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute probability density function.</span>
 
@@ -613,7 +616,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet.rvs">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.rvs">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
@@ -640,7 +643,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet.mean">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.mean">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined moments.</span>
 
@@ -653,7 +656,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet.var">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.var">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.var">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined moments.</span>
 
@@ -663,7 +666,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet.cov">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.cov">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.cov">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined moments.</span>
 
@@ -673,7 +676,7 @@
 
 
 <div class="viewcode-block" id="ExpDirichlet.entropy">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.entropy">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.entropy">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined entropy.</span>
 
@@ -685,7 +688,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransformedScipyDist</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for transformed SciPy distributions.</span>
 
@@ -726,7 +729,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span> <span class="o">=</span> <span class="n">base_dist</span>
 
 <div class="viewcode-block" id="TransformedScipyDist.transform">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.transform">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.transform">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply forward transformation to input values.</span>
@@ -744,7 +747,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist.inverse_transform">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.inverse_transform">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.inverse_transform">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">inverse_transform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]</span>
@@ -764,7 +767,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist.log_jacobian_correction">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.log_jacobian_correction">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.log_jacobian_correction">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_jacobian_correction</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -785,7 +788,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist.pdf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.pdf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.pdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute probability density function with Jacobian correction.</span>
 
@@ -803,7 +806,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist.logpdf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.logpdf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.logpdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log probability density function with Jacobian correction.</span>
 
@@ -821,7 +824,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist.cdf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.cdf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute cumulative distribution function.</span>
 
@@ -837,7 +840,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist.ppf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.ppf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.ppf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">ppf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute percent point function (inverse CDF).</span>
 
@@ -853,7 +856,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist.sf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.sf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.sf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute survival function (1 - CDF).</span>
 
@@ -867,7 +870,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist.isf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.isf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.isf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">isf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute inverse survival function.</span>
 
@@ -881,7 +884,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist.logsf">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.logsf">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.logsf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">logsf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log survival function.</span>
 
@@ -897,7 +900,7 @@
 
 
 <div class="viewcode-block" id="TransformedScipyDist.rvs">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.rvs">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate random samples from transformed distribution.</span>
 
@@ -914,7 +917,7 @@
 
 
 <div class="viewcode-block" id="LogUnivariateScipyTransform">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogUnivariateScipyTransform</span><span class="p">(</span><span class="n">TransformedScipyDist</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log transformation for univariate SciPy distributions.</span>
 
@@ -939,7 +942,7 @@
     <span class="n">inverse_transform</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span>
 
 <div class="viewcode-block" id="LogUnivariateScipyTransform.log_jacobian_correction">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform.log_jacobian_correction">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform.log_jacobian_correction">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_jacobian_correction</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
@@ -992,7 +995,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

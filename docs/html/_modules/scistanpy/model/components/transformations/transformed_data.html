@@ -31,7 +31,10 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.model.components.transformations.transformed_data</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Transformed data components for Stan model generation.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;Transformed data components for Stan model generation.</span>
 
 <span class="sd">This module provides specialized transformation classes for components that</span>
 <span class="sd">belong in Stan&#39;s transformed data block. These transformations represent</span>
@@ -79,7 +82,7 @@
 
 
 <div class="viewcode-block" id="TransformedData">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.TransformedData">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.TransformedData">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransformedData</span><span class="p">(</span><span class="n">transformed_parameters</span><span class="o">.</span><span class="n">Transformation</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for Stan transformed data block components.</span>
 
@@ -158,7 +161,7 @@
 
 
 <div class="viewcode-block" id="LogMultinomialCoefficient">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.LogMultinomialCoefficient">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.LogMultinomialCoefficient">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogMultinomialCoefficient</span><span class="p">(</span><span class="n">TransformedData</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre-computed logarithmic multinomial coefficient for performance optimization.</span>
 
@@ -216,7 +219,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="LogMultinomialCoefficient.write_stan_operation">
-<a class="viewcode-back" href="../../../../../docs/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.LogMultinomialCoefficient.write_stan_operation">[docs]</a>
+<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.LogMultinomialCoefficient.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">counts</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -286,7 +289,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

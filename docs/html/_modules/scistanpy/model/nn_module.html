@@ -31,7 +31,11 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.model.nn_module</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;PyTorch integration utilities for SciStanPy models.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+
+<span class="sd">&quot;&quot;&quot;PyTorch integration utilities for SciStanPy models.</span>
 
 <span class="sd">This module provides integration between SciStanPy probabilistic models</span>
 <span class="sd">and PyTorch&#39;s automatic differentiation and optimization framework. It enables</span>
@@ -79,7 +83,7 @@
 
 
 <div class="viewcode-block" id="check_observable_data">
-<a class="viewcode-back" href="../../../docs/api/model/nn_module.html#scistanpy.model.nn_module.check_observable_data">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/model/nn_module.html#scistanpy.model.nn_module.check_observable_data">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_observable_data</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="s2">&quot;ssp_model.Model&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate that provided data matches model observable specifications.</span>
 
@@ -137,7 +141,7 @@
 
 
 <div class="viewcode-block" id="PyTorchModel">
-<a class="viewcode-back" href="../../../docs/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PyTorchModel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;PyTorch-trainable version of a SciStanPy Model.</span>
 
@@ -200,7 +204,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">learnable_params</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ParameterList</span><span class="p">(</span><span class="n">learnable_params</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PyTorchModel.forward">
-<a class="viewcode-back" href="../../../docs/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.forward">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log probability of observed data given current parameters.</span>
 
@@ -248,7 +252,7 @@
 
 
 <div class="viewcode-block" id="PyTorchModel.fit">
-<a class="viewcode-back" href="../../../docs/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.fit">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.fit">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -393,7 +397,7 @@
 
 
 <div class="viewcode-block" id="PyTorchModel.export_params">
-<a class="viewcode-back" href="../../../docs/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.export_params">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.export_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">export_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Export optimized parameter values from the fitted model.</span>
 
@@ -425,7 +429,7 @@
 
 
 <div class="viewcode-block" id="PyTorchModel.export_distributions">
-<a class="viewcode-back" href="../../../docs/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.export_distributions">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.export_distributions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">export_distributions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Export fitted probability distributions for all model components.</span>
 
@@ -494,7 +498,7 @@
         <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="PyTorchModel.cuda">
-<a class="viewcode-back" href="../../../docs/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.cuda">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.cuda">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cuda</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move model to CUDA device.</span>
 
@@ -515,7 +519,7 @@
 
 
 <div class="viewcode-block" id="PyTorchModel.cpu">
-<a class="viewcode-back" href="../../../docs/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.cpu">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.cpu">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move model to CPU device.</span>
 
@@ -535,7 +539,7 @@
 
 
 <div class="viewcode-block" id="PyTorchModel.to">
-<a class="viewcode-back" href="../../../docs/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.to">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.to">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move model to specified device or data type.</span>
 
@@ -585,7 +589,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

@@ -31,7 +31,11 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.plotting.prior_predictive</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Prior predictive check functionality for SciStanPy models.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+
+<span class="sd">&quot;&quot;&quot;Prior predictive check functionality for SciStanPy models.</span>
 
 <span class="sd">This module provides interactive widgets and visualizations for conducting</span>
 <span class="sd">prior predictive checks on SciStanPy models. Prior predictive checks allow</span>
@@ -83,7 +87,7 @@
 
 
 <div class="viewcode-block" id="PriorPredictiveCheck">
-<a class="viewcode-back" href="../../../docs/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PriorPredictiveCheck</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Interactive dashboard for conducting prior predictive checks.</span>
 
@@ -466,7 +470,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">update_plot_button</span><span class="o">.</span><span class="n">loading</span> <span class="o">=</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="PriorPredictiveCheck.set_group_dim_options">
-<a class="viewcode-back" href="../../../docs/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_group_dim_options">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_group_dim_options">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_group_dim_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update grouping dimension options based on selected target parameter.</span>
 
@@ -506,7 +510,7 @@
 
 
 <div class="viewcode-block" id="PriorPredictiveCheck.set_independent_var_options">
-<a class="viewcode-back" href="../../../docs/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_independent_var_options">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_independent_var_options">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_independent_var_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update independent variable options based on grouping dimension.</span>
 
@@ -541,7 +545,7 @@
 
 
 <div class="viewcode-block" id="PriorPredictiveCheck.set_plot_type_options">
-<a class="viewcode-back" href="../../../docs/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_plot_type_options">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_plot_type_options">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_plot_type_options</span><span class="p">(</span>  <span class="c1"># pylint: disable=unused-argument</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -587,7 +591,7 @@
 
 
 <div class="viewcode-block" id="PriorPredictiveCheck.display">
-<a class="viewcode-back" href="../../../docs/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.display">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.display">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pn</span><span class="o">.</span><span class="n">Row</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and return the complete interactive dashboard layout.</span>
 
@@ -634,7 +638,7 @@
 
 
 <div class="viewcode-block" id="PriorPredictiveCheck.get_kde_kwargs">
-<a class="viewcode-back" href="../../../docs/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_kde_kwargs">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_kde_kwargs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_kde_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate keyword arguments for kernel density estimate plots.</span>
 
@@ -662,7 +666,7 @@
 
 
 <div class="viewcode-block" id="PriorPredictiveCheck.get_ecdf_kwargs">
-<a class="viewcode-back" href="../../../docs/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_ecdf_kwargs">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_ecdf_kwargs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_ecdf_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate keyword arguments for empirical CDF plots.</span>
 
@@ -692,7 +696,7 @@
 
 
 <div class="viewcode-block" id="PriorPredictiveCheck.get_violin_kwargs">
-<a class="viewcode-back" href="../../../docs/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_violin_kwargs">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_violin_kwargs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_violin_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate arguments for violin plot creation.</span>
 
@@ -752,7 +756,7 @@
 
 
 <div class="viewcode-block" id="PriorPredictiveCheck.get_relationship_kwargs">
-<a class="viewcode-back" href="../../../docs/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_relationship_kwargs">[docs]</a>
+<a class="viewcode-back" href="../../../rst/api/plotting/prior_predictive.html#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_relationship_kwargs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_relationship_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate keyword arguments for relationship plots.</span>
 
@@ -836,7 +840,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

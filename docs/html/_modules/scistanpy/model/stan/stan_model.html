@@ -31,7 +31,11 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.model.stan.stan_model</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Stan probabilistic programming language integration and code generation.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+
+<span class="sd">&quot;&quot;&quot;Stan probabilistic programming language integration and code generation.</span>
 
 <span class="sd">This module provides the core functionality for translating SciStanPy models into</span>
 <span class="sd">Stan probabilistic programming language code and managing the complete Stan</span>
@@ -130,7 +134,7 @@
 
 
 <div class="viewcode-block" id="StanCodeBase">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StanCodeBase</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for Stan code organization and generation.</span>
 
@@ -165,7 +169,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">parent_loop</span> <span class="o">=</span> <span class="n">parent_loop</span>
 
 <div class="viewcode-block" id="StanCodeBase.recurse_for_loops">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.recurse_for_loops">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.recurse_for_loops">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">recurse_for_loops</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="s2">&quot;StanForLoop&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate all for-loops in the program hierarchy.</span>
 
@@ -189,7 +193,7 @@
 
 
 <div class="viewcode-block" id="StanCodeBase.recurse_model_components">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.recurse_model_components">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.recurse_model_components">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">recurse_model_components</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">abstract_model_component</span><span class="o">.</span><span class="n">AbstractModelComponent</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
@@ -216,7 +220,7 @@
 
 
 <div class="viewcode-block" id="StanCodeBase.get_parent_loop">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.get_parent_loop">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.get_parent_loop">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_parent_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;StanCodeBase&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get ancestor loop at specified level in the hierarchy.</span>
@@ -420,7 +424,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="StanCodeBase.get_target_incrementation">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.get_target_incrementation">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.get_target_incrementation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_target_incrementation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">_dummy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -439,7 +443,7 @@
 
 
 <div class="viewcode-block" id="StanCodeBase.get_transformation_assignment">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.get_transformation_assignment">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.get_transformation_assignment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_transformation_assignment</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">declarations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -458,7 +462,7 @@
 
 
 <div class="viewcode-block" id="StanCodeBase.get_generated_quantities">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.get_generated_quantities">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.get_generated_quantities">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_generated_quantities</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">declarations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -477,7 +481,7 @@
 
 
 <div class="viewcode-block" id="StanCodeBase.get_transformed_data_assignment">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.get_transformed_data_assignment">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.get_transformed_data_assignment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_transformed_data_assignment</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">declarations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -496,7 +500,7 @@
 
 
 <div class="viewcode-block" id="StanCodeBase.finalize_line">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.finalize_line">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.finalize_line">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">finalize_line</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">indendation_level</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -532,7 +536,7 @@
 
 
 <div class="viewcode-block" id="StanCodeBase.combine_lines">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.combine_lines">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.combine_lines">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">combine_lines</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">indentation_level</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -641,7 +645,7 @@
 
 
 <div class="viewcode-block" id="StanForLoop">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanForLoop">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanForLoop">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StanForLoop</span><span class="p">(</span><span class="n">StanCodeBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a Stan for-loop construct with optimization capabilities.</span>
 
@@ -702,7 +706,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_loop</span><span class="o">.</span><span class="n">ancestry</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parent_loop</span><span class="p">]</span>
 
 <div class="viewcode-block" id="StanForLoop.get_parent_loop">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanForLoop.get_parent_loop">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanForLoop.get_parent_loop">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_parent_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StanCodeBase</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get ancestor loop at specified level in the hierarchy.</span>
 
@@ -721,7 +725,7 @@
 
 
 <div class="viewcode-block" id="StanForLoop.append">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanForLoop.append">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanForLoop.append">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">component</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
@@ -747,7 +751,7 @@
 
 
 <div class="viewcode-block" id="StanForLoop.copy">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanForLoop.copy">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanForLoop.copy">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record_in_parent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;StanForLoop&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a shallow copy of this loop.</span>
 
@@ -772,7 +776,7 @@
 
 
 <div class="viewcode-block" id="StanForLoop.squash">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanForLoop.squash">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanForLoop.squash">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">squash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove singleton loops by moving contents to parent.</span>
 
@@ -909,7 +913,7 @@
 
 
 <div class="viewcode-block" id="StanProgram">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StanProgram</span><span class="p">(</span><span class="n">StanCodeBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete Stan program generation and management.</span>
 
@@ -975,7 +979,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
 
 <div class="viewcode-block" id="StanProgram.build_node_to_depth">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.build_node_to_depth">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.build_node_to_depth">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_node_to_depth</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">abstract_model_component</span><span class="o">.</span><span class="n">AbstractModelComponent</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
@@ -1019,7 +1023,7 @@
 
 
 <div class="viewcode-block" id="StanProgram.get_varnames">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.get_varnames">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.get_varnames">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_varnames</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract and categorize all variable names from the model.</span>
 
@@ -1064,7 +1068,7 @@
 
 
 <div class="viewcode-block" id="StanProgram.get_parent_loop">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.get_parent_loop">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.get_parent_loop">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_parent_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StanCodeBase</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get parent loop (only self is available for root program).</span>
 
@@ -1082,7 +1086,7 @@
 
 
 <div class="viewcode-block" id="StanProgram.compile">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.compile">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.compile">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Organize model components into proper Stan program structure.</span>
 
@@ -1172,7 +1176,7 @@
 
 
 <div class="viewcode-block" id="StanProgram.recurse_for_loops">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.recurse_for_loops">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.recurse_for_loops">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">recurse_for_loops</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">StanForLoop</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate all for-loops in the program (excluding self).</span>
 
@@ -1187,7 +1191,7 @@
 
 
 <div class="viewcode-block" id="StanProgram.append">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.append">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.append">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">component</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
@@ -1553,7 +1557,7 @@
 
 
 <div class="viewcode-block" id="StanModel">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StanModel</span><span class="p">(</span><span class="n">CmdStanModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Enhanced CmdStanModel with SciStanPy integration.</span>
 
@@ -1668,7 +1672,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">output_dir</span>
 
 <div class="viewcode-block" id="StanModel.write_stan_program">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.write_stan_program">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.write_stan_program">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_program</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write and format the generated Stan program to disk.</span>
 
@@ -1693,7 +1697,7 @@
 
 
 <div class="viewcode-block" id="StanModel.gather_inputs">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.gather_inputs">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.gather_inputs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">gather_inputs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">observables</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">]:</span>
@@ -1754,7 +1758,7 @@
 
 
 <div class="viewcode-block" id="StanModel.code">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.code">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.code">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">code</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the complete Stan program code.</span>
 
@@ -1801,7 +1805,7 @@
         <span class="k">return</span> <span class="p">[{</span><span class="n">name</span><span class="p">:</span> <span class="n">draw</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">draw</span> <span class="ow">in</span> <span class="n">draws</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">chains</span><span class="p">)]</span>
 
 <div class="viewcode-block" id="StanModel.get_varnames_to_dimnames">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.get_varnames_to_dimnames">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.get_varnames_to_dimnames">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_varnames_to_dimnames</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create mapping from variable names to dimension names for ArviZ.</span>
 
@@ -1831,7 +1835,7 @@
 
 
 <div class="viewcode-block" id="StanModel.sample">
-<a class="viewcode-back" href="../../../../docs/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.sample">[docs]</a>
+<a class="viewcode-back" href="../../../../rst/api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.sample">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="n">args</span><span class="p">,</span>
@@ -2005,7 +2009,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">

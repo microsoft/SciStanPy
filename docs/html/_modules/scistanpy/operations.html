@@ -31,7 +31,11 @@
           <div class="body" role="main">
             
   <h1>Source code for scistanpy.operations</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Custom operations for use in SciStanPy Stan models.</span>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+
+<span class="sd">&quot;&quot;&quot;Custom operations for use in SciStanPy Stan models.</span>
 
 <span class="sd">This module provides a framework for adding mathematical operations to the model</span>
 <span class="sd">graph. Operations are built from TransformedParameter classes and can handle both</span>
@@ -43,6 +47,7 @@
 <span class="sd">Operations can work with both raw numerical data and SciStanPy model components.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstract_model_component</span>
@@ -50,7 +55,7 @@
 
 
 <div class="viewcode-block" id="MetaOperation">
-<a class="viewcode-back" href="../../docs/api/operations.html#scistanpy.operations.MetaOperation">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/operations.html#scistanpy.operations.MetaOperation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MetaOperation</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Metaclass for dynamically creating operation classes.</span>
 
@@ -98,7 +103,7 @@
 
 
 <div class="viewcode-block" id="Operation">
-<a class="viewcode-back" href="../../docs/api/operations.html#scistanpy.operations.Operation">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/operations.html#scistanpy.operations.Operation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Operation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for SciStanPy mathematical operations.</span>
 
@@ -165,7 +170,7 @@
 
 
 <div class="viewcode-block" id="build_operation">
-<a class="viewcode-back" href="../../docs/api/operations.html#scistanpy.operations.build_operation">[docs]</a>
+<a class="viewcode-back" href="../../rst/api/operations.html#scistanpy.operations.build_operation">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_operation</span><span class="p">(</span>
     <span class="n">distclass</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">transformed_parameters</span><span class="o">.</span><span class="n">TransformedParameter</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operation</span><span class="p">:</span>
@@ -357,7 +362,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../docs/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rst/api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">
