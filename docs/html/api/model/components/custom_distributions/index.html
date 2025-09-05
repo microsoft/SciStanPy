@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Custom Distributions API Reference &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="Custom PyTorch Distributions API Reference" href="custom_torch_dists.html" />
+    <link rel="prev" title="Constants API Reference" href="../constants.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="custom-distributions-api-reference">
+<h1>Custom Distributions API Reference<a class="headerlink" href="#custom-distributions-api-reference" title="Link to this heading">¶</a></h1>
+<p>This reference covers the custom probability distributions available in SciStanPy for specialized modeling needs.</p>
+<section id="custom-distributions-submodule-overview">
+<h2>Custom Distributions Submodule Overview<a class="headerlink" href="#custom-distributions-submodule-overview" title="Link to this heading">¶</a></h2>
+<p>The custom distributions submodule provides specialized probability distributions that extend the standard library for scientific modeling applications:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="custom_torch_dists.html">Custom PyTorch Distributions API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_scipy_dists.html">Custom SciPy Distributions API Reference</a></li>
+</ul>
+</div>
+</section>
+<section id="module-scistanpy.model.components.custom_distributions">
+<span id="custom-distributions-framework"></span><h2>Custom Distributions Framework<a class="headerlink" href="#module-scistanpy.model.components.custom_distributions" title="Link to this heading">¶</a></h2>
+<p>Custom distribution implementations for SciStanPy models.</p>
+<p>This submodule provides enhanced and custom distribution implementations that
+extend the capabilities of standard PyTorch and SciPy distributions. These
+distributions address specific modeling needs and limitations in the standard
+libraries while maintaining compatibility with SciStanPy’s multi-backend
+architecture.</p>
+<p>The custom distributions are organized into two main categories:</p>
+<dl>
+<dt>PyTorch Extensions (custom_torch_dists):</dt><dd><p>Enhanced PyTorch distributions with additional functionality and numerical
+improvements for probabilistic modeling scenarios.</p>
+<dl class="simple">
+<dt><strong>Multinomial Extensions</strong>:</dt><dd><ul class="simple">
+<li><p>Multinomial: Support for inhomogeneous total counts across batches</p></li>
+<li><p>MultinomialProb: Probability-parameterized multinomial</p></li>
+<li><p>MultinomialLogit: Logit-parameterized multinomial</p></li>
+<li><p>MultinomialLogTheta: Normalized log-probability multinomial</p></li>
+</ul>
+</dd>
+<dt><strong>Numerically Enhanced Distributions</strong>:</dt><dd><ul class="simple">
+<li><p>Normal: Improved log-CDF and log-survival functions</p></li>
+<li><p>LogNormal: Enhanced numerical stability for extreme values</p></li>
+</ul>
+</dd>
+<dt><strong>Custom Distribution Types</strong>:</dt><dd><ul class="simple">
+<li><p>Lomax: Shifted Pareto distribution implementation</p></li>
+<li><p>ExpLomax: Log-transformed Lomax distribution</p></li>
+<li><p>ExpExponential: Log-transformed exponential (Gumbel) distribution</p></li>
+<li><p>ExpDirichlet: Log-transformed Dirichlet distribution</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt>SciPy Extensions (custom_scipy_dists):</dt><dd><p>Extended SciPy distributions with enhanced batch support and custom
+parameterizations for advanced statistical modeling.</p>
+<dl class="simple">
+<dt><strong>Enhanced Multivariate Distributions</strong>:</dt><dd><ul class="simple">
+<li><p>CustomDirichlet: Variable batch dimension support</p></li>
+<li><p>CustomMultinomial: Flexible batch handling for multinomial</p></li>
+<li><p>MultinomialLogit: Logit-parameterized multinomial</p></li>
+<li><p>MultinomialLogTheta: Log-probability parameterized multinomial</p></li>
+</ul>
+</dd>
+<dt><strong>Log-Transformed Distributions</strong>:</dt><dd><ul class="simple">
+<li><p>ExpDirichlet: Log-space Dirichlet with Jacobian corrections</p></li>
+<li><p>TransformedScipyDist: Framework for general transformations</p></li>
+<li><p>LogUnivariateScipyTransform: Log-transformation implementation</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Key Features:</p>
+<dl class="simple">
+<dt><strong>Enhanced Batch Operations</strong>: Support for variable batch dimensions and</dt><dd><p>flexible broadcasting that goes beyond standard library limitations.</p>
+</dd>
+<dt><strong>Alternative Parameterizations</strong>: Multiple parameterization options (logits,</dt><dd><p>log-probabilities, etc.) that are more convenient for different modeling
+scenarios and optimization approaches.</p>
+</dd>
+<dt><strong>Numerical Stability</strong>: Improved implementations that handle extreme values,</dt><dd><p>very small probabilities, and numerical edge cases more robustly than
+standard implementations.</p>
+</dd>
+<dt><strong>Multi-Backend Compatibility</strong>: Consistent interfaces that work across</dt><dd><p>PyTorch, SciPy, and Stan while maintaining backend-specific optimizations.</p>
+</dd>
+<dt><strong>Custom Distribution Types</strong>: Implementations of distributions not available</dt><dd><p>in standard libraries, particularly log-transformed variants useful for
+multiplicative modeling and log-space computations.</p>
+</dd>
+</dl>
+<p>Integration with SciStanPy:</p>
+<p>These custom distributions integrate with SciStanPy’s parameter system
+to provide:
+- Automatic Stan code generation for custom distributions
+- Consistent sampling interfaces across backends
+- Support for transformed parameter relationships
+- Enhanced error checking and validation
+- Optimized computation paths for common modeling patterns</p>
+<p>The distributions maintain the standard PyTorch and SciPy interfaces while
+providing additional functionality needed for advanced probabilistic modeling
+scenarios. They are designed to be drop-in replacements for standard
+distributions in most cases, with enhanced capabilities for specific use cases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</section>
+<section id="distribution-categories">
+<h2>Distribution Categories<a class="headerlink" href="#distribution-categories" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt><strong>Log-Transformed Distributions</strong></dt><dd><p>Distributions defined on the logarithm of standard distributions for improved numerical stability and parameterization flexibility</p>
+</dd>
+<dt><strong>Heavy-Tailed Distributions</strong></dt><dd><p>Distributions with power-law or polynomial tails for robust modeling of extreme events</p>
+</dd>
+<dt><strong>Constrained Distributions</strong></dt><dd><p>Distributions with complex constraint structures like log-simplexes and modified standard distributions</p>
+</dd>
+<dt><strong>Scientific Distributions</strong></dt><dd><p>Domain-specific distributions commonly used in scientific applications</p>
+</dd>
+</dl>
+</section>
+<section id="key-features">
+<h2>Key Features<a class="headerlink" href="#key-features" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt><strong>Multi-Backend Support</strong></dt><dd><p>All custom distributions provide implementations for both PyTorch and SciPy backends, enabling seamless integration across different computational contexts</p>
+</dd>
+<dt><strong>Stan Integration</strong></dt><dd><p>Custom Stan function libraries provide efficient MCMC sampling for all custom distributions</p>
+</dd>
+<dt><strong>Automatic CDF Generation</strong></dt><dd><p>All distributions automatically receive CDF, CCDF, log-CDF, and log-CCDF methods</p>
+</dd>
+<dt><strong>Numerical Stability</strong></dt><dd><p>Implementations emphasize numerical stability through log-space arithmetic and careful handling of extreme values</p>
+</dd>
+</dl>
+</section>
+<section id="available-custom-distributions">
+<h2>Available Custom Distributions<a class="headerlink" href="#available-custom-distributions" title="Link to this heading">¶</a></h2>
+<p><strong>Log-Space Distributions:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Exp-Exponential: If exp(Y) ~ Exponential, then Y ~ ExpExponential</span>
+<span class="n">log_lifetime</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpExponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+
+<span class="c1"># Exp-Dirichlet: Log-simplex distribution</span>
+<span class="n">log_probabilities</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+
+<span class="c1"># Exp-Lomax: Heavy-tailed log-scale distribution</span>
+<span class="n">log_income</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpLomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Heavy-Tailed Distributions:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Lomax distribution for wealth, insurance claims</span>
+<span class="n">claim_sizes</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+
+<span class="c1"># Power-law tails for extreme events</span>
+<span class="n">earthquake_magnitudes</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Multinomial Variants:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Multinomial with logit parameterization</span>
+<span class="n">category_counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogit</span><span class="p">(</span>
+    <span class="n">gamma</span><span class="o">=</span><span class="n">logit_probabilities</span><span class="p">,</span>  <span class="c1"># Unconstrained</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span>
+<span class="p">)</span>
+
+<span class="c1"># Multinomial with log-theta parameterization (optimized)</span>
+<span class="n">optimized_counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogTheta</span><span class="p">(</span>
+    <span class="n">log_theta</span><span class="o">=</span><span class="n">log_probabilities</span><span class="p">,</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span><span class="p">,</span>
+    <span class="n">observable</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Enables coefficient optimization</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="scientific-applications">
+<h2>Scientific Applications<a class="headerlink" href="#scientific-applications" title="Link to this heading">¶</a></h2>
+<p><strong>Survival Analysis:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Log-transformed survival times for numerical stability</span>
+<span class="n">log_survival_time</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpExponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="n">hazard_rate</span><span class="p">)</span>
+
+<span class="c1"># Heavy-tailed survival for heterogeneous populations</span>
+<span class="n">survival_time</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Compositional Data Analysis:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Log-simplex for high-dimensional compositional data</span>
+<span class="n">log_composition</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpDirichlet</span><span class="p">(</span>
+    <span class="n">alpha</span><span class="o">=</span><span class="n">concentration_params</span><span class="p">,</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n_components</span><span class="p">,)</span>
+<span class="p">)</span>
+
+<span class="c1"># Robust to numerical issues with very small proportions</span>
+<span class="n">composition</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_composition</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Extreme Value Modeling:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Heavy-tailed distributions for extreme events</span>
+<span class="n">extreme_events</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Lomax</span><span class="p">(</span>
+    <span class="n">lambda_</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="o">=</span><span class="n">tail_index</span>
+<span class="p">)</span>
+
+<span class="c1"># Log-scale modeling for wide dynamic range</span>
+<span class="n">log_extreme_events</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpLomax</span><span class="p">(</span>
+    <span class="n">lambda_</span><span class="o">=</span><span class="n">log_threshold</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="o">=</span><span class="n">tail_index</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Count Data with Complex Structure:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Multinomial with unconstrained parameterization</span>
+<span class="n">vote_counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogit</span><span class="p">(</span>
+    <span class="n">gamma</span><span class="o">=</span><span class="n">candidate_logits</span><span class="p">,</span>  <span class="c1"># Can be any real values</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">total_voters</span>
+<span class="p">)</span>
+
+<span class="c1"># Efficient for large counts with automatic optimization</span>
+<span class="n">large_counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogTheta</span><span class="p">(</span>
+    <span class="n">log_theta</span><span class="o">=</span><span class="n">log_probabilities</span><span class="p">,</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">large_sample_size</span><span class="p">,</span>
+    <span class="n">observable</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Triggers coefficient precomputation</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="implementation-details">
+<h2>Implementation Details<a class="headerlink" href="#implementation-details" title="Link to this heading">¶</a></h2>
+<p><strong>PyTorch Integration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Custom distributions work with PyTorch autodiff</span>
+<span class="n">log_rates</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Gradients flow through custom distributions</span>
+<span class="n">exp_dist</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpExponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_rates</span><span class="p">))</span>
+<span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">exp_dist</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">observed_data</span><span class="p">)</span>
+<span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>  <span class="c1"># Gradients computed automatically</span>
+</pre></div>
+</div>
+<p><strong>Stan Function Integration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Stan functions automatically included</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">exp_exponential_param</span><span class="p">)</span>
+<span class="n">stan_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_stan</span><span class="p">()</span>
+
+<span class="c1"># Generated Stan includes:</span>
+<span class="c1"># functions {</span>
+<span class="c1">#     #include &lt;expexponential.stanfunctions&gt;</span>
+<span class="c1"># }</span>
+</pre></div>
+</div>
+<p><strong>Numerical Stability:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Log-space arithmetic prevents overflow/underflow</span>
+<span class="n">very_small_alpha</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">1e-10</span><span class="p">)</span>
+<span class="n">stable_dirichlet</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">very_small_alpha</span><span class="p">)</span>
+
+<span class="c1"># Handles extreme parameter values gracefully</span>
+<span class="n">extreme_lambda</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">1e6</span><span class="p">)</span>
+<span class="n">stable_lomax</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpLomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">extreme_lambda</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-considerations">
+<h2>Performance Considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading">¶</a></h2>
+<p><strong>Efficient Parameterizations:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># MultinomialLogTheta with observable=True triggers optimization</span>
+<span class="n">efficient_multinomial</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogTheta</span><span class="p">(</span>
+    <span class="n">log_theta</span><span class="o">=</span><span class="n">log_probs</span><span class="p">,</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">large_n</span><span class="p">,</span>
+    <span class="n">observable</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Multinomial coefficient precomputed</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Memory-Efficient Sampling:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Batch sampling for memory efficiency</span>
+<span class="n">large_samples</span> <span class="o">=</span> <span class="n">exp_dist</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Stan Code Optimization:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Vectorized operations in generated Stan code</span>
+<span class="n">vector_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpExponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="n">rates</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1000</span><span class="p">,))</span>
+<span class="c1"># Generates efficient vectorized Stan sampling</span>
+</pre></div>
+</div>
+</section>
+<section id="integration-patterns">
+<h2>Integration Patterns<a class="headerlink" href="#integration-patterns" title="Link to this heading">¶</a></h2>
+<p><strong>With Standard Distributions:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Combine custom and standard distributions</span>
+<span class="n">location</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">scale</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpExponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Log-scale parameter</span>
+
+<span class="c1"># Use in hierarchical models</span>
+<span class="n">observations</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+    <span class="n">mu</span><span class="o">=</span><span class="n">location</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>In Complex Models:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Multi-level model with custom distributions</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RobustHierarchicalModel</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group_data</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Heavy-tailed group effects</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_effects</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Lomax</span><span class="p">(</span>
+            <span class="n">lambda_</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">group_data</span><span class="p">),)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Log-simplex mixing proportions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mixing_props</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpDirichlet</span><span class="p">(</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Custom Distribution Development:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Framework for creating new custom distributions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.custom_distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">CustomDistribution</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyCustomDistribution</span><span class="p">(</span><span class="n">CustomDistribution</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Template for custom distribution development.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Parameter validation and setup</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">param1</span><span class="o">=</span><span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="o">=</span><span class="n">param2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_torch_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">):</span>
+        <span class="c1"># PyTorch distribution implementation</span>
+        <span class="k">return</span> <span class="n">CustomTorchDistribution</span><span class="p">(</span><span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Stan function includes</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;#include &lt;mycustom.stanfunctions&gt;&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Choose appropriate parameterizations</strong> for your modeling context</p></li>
+<li><p><strong>Use log-space distributions</strong> for improved numerical stability</p></li>
+<li><p><strong>Leverage automatic optimizations</strong> like MultinomialLogTheta</p></li>
+<li><p><strong>Consider heavy-tailed distributions</strong> for robust modeling</p></li>
+<li><p><strong>Test custom distributions</strong> thoroughly before use in models</p></li>
+<li><p><strong>Monitor numerical stability</strong> with extreme parameter values</p></li>
+<li><p><strong>Use vectorized operations</strong> for computational efficiency</p></li>
+<li><p><strong>Document custom distributions</strong> with clear mathematical definitions</p></li>
+</ol>
+<p>The custom distributions framework extends SciStanPy’s modeling capabilities while maintaining consistency with the core parameter system and multi-backend computational support.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">SciStanPy API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#top-level-package">Top-Level Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#module-overview">Module Overview</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../../index.html#quick-navigation">Quick Navigation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../../custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html">Model API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../operations.html">Operations API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#usage-notes">Usage Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#missing-something">Missing Something?</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">SciStanPy API Reference</a><ul>
+  <li><a href="../../index.html">Model API Reference</a><ul>
+  <li><a href="../index.html">Model Components API Reference</a><ul>
+      <li>Previous: <a href="../constants.html" title="previous chapter">Constants API Reference</a></li>
+      <li>Next: <a href="custom_torch_dists.html" title="next chapter">Custom PyTorch Distributions API Reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../../../_sources/api/model/components/custom_distributions/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

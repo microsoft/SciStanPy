@@ -105,7 +105,7 @@
 
 
 <div class="viewcode-block" id="model_comps_to_dict">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.model_comps_to_dict">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.model_comps_to_dict">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">model_comps_to_dict</span><span class="p">(</span>
     <span class="n">model_comps</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">abstract_model_component</span><span class="o">.</span><span class="n">AbstractModelComponent</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">abstract_model_component</span><span class="o">.</span><span class="n">AbstractModelComponent</span><span class="p">]:</span>
@@ -131,7 +131,7 @@
 
 
 <div class="viewcode-block" id="run_delayed_mcmc">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.run_delayed_mcmc">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.run_delayed_mcmc">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_delayed_mcmc</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;hmc_results.SampleResults&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a delayed MCMC run from a pickled configuration file.</span>
 
@@ -172,7 +172,7 @@
 
 
 <div class="viewcode-block" id="Model">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.Model">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.Model">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Model</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Primary interface for Bayesian model construction and analysis in SciStanPy.</span>
 
@@ -411,7 +411,7 @@
         <span class="k">return</span> <span class="n">model_varname_to_object</span>
 
 <div class="viewcode-block" id="Model.get_dimname_map">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.Model.get_dimname_map">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.Model.get_dimname_map">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_dimname_map</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">],</span> <span class="nb">str</span><span class="p">]:</span>
@@ -623,7 +623,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="Model.draw">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.Model.draw">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.Model.draw">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">named_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">as_xarray</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Draw samples from the model&#39;s prior distribution.</span>
 
@@ -676,7 +676,7 @@
 
 
 <div class="viewcode-block" id="Model.to_pytorch">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.Model.to_pytorch">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.Model.to_pytorch">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_pytorch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;nn_module.PyTorchModel&quot;</span><span class="p">:</span>
@@ -703,7 +703,7 @@
 
 
 <div class="viewcode-block" id="Model.to_stan">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.Model.to_stan">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.Model.to_stan">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_stan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;stan_model.StanModel&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compile the model to Stan code for MCMC sampling.</span>
 
@@ -720,7 +720,7 @@
 
 
 <div class="viewcode-block" id="Model.mle">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.Model.mle">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.Model.mle">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mle</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">epochs</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">=</span> <span class="n">DEFAULT_N_EPOCHS</span><span class="p">,</span>
@@ -839,7 +839,7 @@
         <span class="p">}</span>
 
 <div class="viewcode-block" id="Model.simulate_mle">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.Model.simulate_mle">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.Model.simulate_mle">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">simulate_mle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span> <span class="s2">&quot;mle_module.MLE&quot;</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate data from model prior and fit via maximum likelihood.</span>
 
@@ -905,7 +905,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="Model.mcmc">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.Model.mcmc">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.Model.mcmc">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mcmc</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -1031,7 +1031,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">simulate_mcmc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay_run</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
 
 <div class="viewcode-block" id="Model.simulate_mcmc">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.Model.simulate_mcmc">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.Model.simulate_mcmc">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">simulate_mcmc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay_run</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate data from model prior and perform Hamiltonian Monte Carlo sampling.</span>
 
@@ -1073,7 +1073,7 @@
 
 
 <div class="viewcode-block" id="Model.prior_predictive">
-<a class="viewcode-back" href="../../../rst/api/model/model.html#scistanpy.model.model.Model.prior_predictive">[docs]</a>
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.Model.prior_predictive">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">prior_predictive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">copy_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pn</span><span class="o">.</span><span class="n">Row</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create interactive prior predictive check visualization.</span>
 
@@ -1515,7 +1515,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../rst/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">
@@ -1523,8 +1523,6 @@
 <ul>
   <li><a href="../../../index.html">Documentation overview</a><ul>
   <li><a href="../../index.html">Module code</a><ul>
-  <li><a href="../../scistanpy.html">scistanpy</a><ul>
-  </ul></li>
   </ul></li>
   </ul></li>
 </ul>

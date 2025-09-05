@@ -82,7 +82,7 @@
 
 
 <div class="viewcode-block" id="TransformedData">
-<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.TransformedData">[docs]</a>
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.TransformedData">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransformedData</span><span class="p">(</span><span class="n">transformed_parameters</span><span class="o">.</span><span class="n">Transformation</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for Stan transformed data block components.</span>
 
@@ -160,8 +160,6 @@
 
 
 
-<div class="viewcode-block" id="LogMultinomialCoefficient">
-<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.LogMultinomialCoefficient">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogMultinomialCoefficient</span><span class="p">(</span><span class="n">TransformedData</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre-computed logarithmic multinomial coefficient for performance optimization.</span>
 
@@ -218,8 +216,6 @@
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="LogMultinomialCoefficient.write_stan_operation">
-<a class="viewcode-back" href="../../../../../rst/api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.LogMultinomialCoefficient.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">counts</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -243,8 +239,7 @@
                 <span class="s2">&quot;We can only pre-calculate the multinomial coefficient for constant counts.&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log_multinomial_coeff(</span><span class="si">{</span><span class="n">counts</span><span class="si">}</span><span class="s2">)&quot;</span></div>
-
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log_multinomial_coeff(</span><span class="si">{</span><span class="n">counts</span><span class="si">}</span><span class="s2">)&quot;</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">model_varname</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -259,8 +254,7 @@
 <span class="sd">        This provides clear identification of the coefficient&#39;s purpose and</span>
 <span class="sd">        its relationship to the associated multinomial parameter.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">.log_multinomial_coefficient&quot;</span></div>
-
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">.log_multinomial_coefficient&quot;</span>
 </pre></div>
 
           </div>
@@ -289,7 +283,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../rst/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">
@@ -297,8 +291,6 @@
 <ul>
   <li><a href="../../../../../index.html">Documentation overview</a><ul>
   <li><a href="../../../../index.html">Module code</a><ul>
-  <li><a href="../../../../scistanpy.html">scistanpy</a><ul>
-  </ul></li>
   </ul></li>
   </ul></li>
 </ul>

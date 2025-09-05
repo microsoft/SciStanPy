@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Transformations API Reference &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="CDFs API Reference" href="cdfs.html" />
+    <link rel="prev" title="Parameters API Reference" href="../parameters.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="transformations-api-reference">
+<h1>Transformations API Reference<a class="headerlink" href="#transformations-api-reference" title="Link to this heading">¶</a></h1>
+<p>This reference covers the mathematical transformations and operator overloading framework in SciStanPy.</p>
+<p>The transformations submodule provides the foundation for mathematical operations on model components, enabling complex model construction through operator overloading and automatic dependency tracking.</p>
+<section id="transformations-submodule-overview">
+<h2>Transformations Submodule Overview<a class="headerlink" href="#transformations-submodule-overview" title="Link to this heading">¶</a></h2>
+<p>The transformations submodule consists of several key components:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cdfs.html">CDFs API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transformed_data.html">Transformed Data API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transformed_parameters.html">Transformed Parameters API Reference</a></li>
+</ul>
+</div>
+</section>
+<section id="mathematical-transformations">
+<h2>Mathematical Transformations<a class="headerlink" href="#mathematical-transformations" title="Link to this heading">¶</a></h2>
+<p>The transformations system allows you to create complex mathematical relationships:</p>
+<p><strong>Example Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Basic parameter</span>
+<span class="n">log_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Transform to ensure positive values</span>
+<span class="n">rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_rate</span><span class="p">)</span>
+
+<span class="c1"># Use in further calculations</span>
+<span class="n">concentration</span> <span class="o">=</span> <span class="n">initial_conc</span> <span class="o">*</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">rate</span> <span class="o">*</span> <span class="n">time</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="transformation-types">
+<h2>Transformation Types<a class="headerlink" href="#transformation-types" title="Link to this heading">¶</a></h2>
+<p>SciStanPy provides several types of transformations:</p>
+<ul class="simple">
+<li><p><strong>Unary transformations</strong>: Operations on single parameters (exp, log, abs, etc.)</p></li>
+<li><p><strong>Binary transformations</strong>: Operations between parameters (+, -, *, /, etc.)</p></li>
+<li><p><strong>Specialized transformations</strong>: Domain-specific mathematical functions</p></li>
+</ul>
+<p>All transformations:</p>
+<ul class="simple">
+<li><p><strong>Preserve gradients</strong>: Support automatic differentiation</p></li>
+<li><p><strong>Generate Stan code</strong>: Automatically convert to Stan syntax</p></li>
+<li><p><strong>Handle broadcasting</strong>: Work with arrays and scalars consistently</p></li>
+<li><p><strong>Validate inputs</strong>: Check mathematical constraints</p></li>
+</ul>
+</section>
+<section id="stan-code-generation">
+<h2>Stan Code Generation<a class="headerlink" href="#stan-code-generation" title="Link to this heading">¶</a></h2>
+<p>Transformations automatically generate appropriate Stan code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Python expression</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_param</span><span class="p">)</span> <span class="o">+</span> <span class="n">constant_value</span>
+
+<span class="c1"># Automatically generates Stan code like:</span>
+<span class="c1"># result = exp(log_param) + constant_value;</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">SciStanPy API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#top-level-package">Top-Level Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#module-overview">Module Overview</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../../index.html#quick-navigation">Quick Navigation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../../custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html">Model API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../operations.html">Operations API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#usage-notes">Usage Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#missing-something">Missing Something?</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">SciStanPy API Reference</a><ul>
+  <li><a href="../../index.html">Model API Reference</a><ul>
+  <li><a href="../index.html">Model Components API Reference</a><ul>
+      <li>Previous: <a href="../parameters.html" title="previous chapter">Parameters API Reference</a></li>
+      <li>Next: <a href="cdfs.html" title="next chapter">CDFs API Reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../../../_sources/api/model/components/transformations/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Neural Network Module API Reference &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Model Results API Reference" href="results/index.html" />
+    <link rel="prev" title="Model API Reference" href="model.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="neural-network-module-api-reference">
+<h1>Neural Network Module API Reference<a class="headerlink" href="#neural-network-module-api-reference" title="Link to this heading">¶</a></h1>
+<p>This reference covers the PyTorch neural network integration for SciStanPy models.</p>
+<section id="module-scistanpy.model.nn_module">
+<span id="neural-network-module"></span><h2>Neural Network Module<a class="headerlink" href="#module-scistanpy.model.nn_module" title="Link to this heading">¶</a></h2>
+<p>PyTorch integration utilities for SciStanPy models.</p>
+<p>This module provides integration between SciStanPy probabilistic models
+and PyTorch’s automatic differentiation and optimization framework. It enables
+maximum likelihood estimation, variational inference, and other gradient-based
+learning procedures on SciStanPy models.</p>
+<p>The module’s core functionality centers around converting SciStanPy models into
+PyTorch nn.Module instances that preserve the probabilistic structure while
+enabling efficient gradient computation and optimization. This allows users to
+leverage PyTorch’s ecosystem of optimizers, learning rate schedulers, and other
+training utilities.</p>
+<dl class="simple">
+<dt>Key Features:</dt><dd><ul class="simple">
+<li><p>Automatic conversion of SciStanPy models to PyTorch modules</p></li>
+<li><p>Gradient-based parameter optimization with various optimizers</p></li>
+<li><p>Mixed precision training support for improved performance</p></li>
+<li><p>Early stopping and convergence monitoring</p></li>
+<li><p>GPU acceleration and device management</p></li>
+</ul>
+</dd>
+</dl>
+<p>The module handles the complex details of parameter initialization, gradient
+computation, and device management, providing a simple interface for fitting
+Bayesian models using modern deep learning techniques.</p>
+<dl class="simple">
+<dt>Performance Considerations:</dt><dd><ul class="simple">
+<li><p>GPU acceleration significantly improves training speed for large models</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</section>
+<section id="core-pytorch-integration">
+<h2>Core PyTorch Integration<a class="headerlink" href="#core-pytorch-integration" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.nn_module.PyTorchModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.nn_module.</span></span><span class="sig-name descname"><span class="pre">PyTorchModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/scistanpy/model/nn_module.html#PyTorchModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.nn_module.PyTorchModel" title="Link to this definition">¶</a></dt>
+<dd><p>PyTorch-trainable version of a SciStanPy Model.</p>
+<p>This class converts SciStanPy probabilistic models into PyTorch nn.Module
+instances that can be optimized using standard PyTorch training procedures.
+It preserves the probabilistic structure while enabling gradient-based
+parameter estimation and other machine learning techniques.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>ssp_model.Model</em>) – SciStanPy model to convert to PyTorch</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Random seed for reproducible parameter initialization. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>model</strong> – Reference to the original SciStanPy model</p></li>
+<li><p><strong>learnable_params</strong> – PyTorch ParameterList containing optimizable parameters</p></li>
+</ul>
+</dd>
+</dl>
+<p>The conversion process:
+- Initializes all model parameters for PyTorch optimization
+- Sets up proper gradient computation graphs
+- Configures device placement and memory management
+- Preserves probabilistic model structure and relationships</p>
+<p>The resulting PyTorch model can be:
+- Optimized using any PyTorch optimizer
+- Moved between devices (CPU/GPU)
+- Integrated with PyTorch training pipelines
+- Used for both maximum likelihood and variational inference</p>
+<dl>
+<dt>Note:</dt><dd><p>This class should not be instantiated directly. Instead, use the
+<cite>to_pytorch()</cite> method on a SciStanPy Model instance.</p>
+</dd>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_pytorch</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">pytorch_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">pytorch_model</span><span class="p">(</span><span class="o">**</span><span class="n">observed_data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+<dt>Args:</dt><dd><p>model: The <cite>scistanpy.model.Model</cite> instance to convert to PyTorch.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Creating PyTorch Models:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="c1"># Define SciStanPy model</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyModel</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">observable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Convert to PyTorch</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">MyModel</span><span class="p">()</span>
+<span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_pytorch</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Training with PyTorch Optimizers:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Manual optimization loop</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">pytorch_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    <span class="n">log_prob</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">observed_data</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">log_prob</span>  <span class="c1"># Negative log-likelihood</span>
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Automated Training:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use built-in training method</span>
+<span class="n">loss_history</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">observed_data</span><span class="p">},</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">early_stop</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">mixed_precision</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>GPU Acceleration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Move model to GPU</span>
+<span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+<span class="c1"># Or specify device explicitly</span>
+<span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda:1&#39;</span><span class="p">)</span>
+
+<span class="c1"># GPU-accelerated training</span>
+<span class="n">loss_history</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">observed_data</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()},</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+    <span class="n">mixed_precision</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="validation-functions">
+<h2>Validation Functions<a class="headerlink" href="#validation-functions" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.nn_module.</span></span><span class="sig-name descname"><span class="pre">check_observable_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ssp_model.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/scistanpy/model/nn_module.html#check_observable_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Validate that provided data matches model observable specifications.</p>
+<p>This function performs comprehensive validation to ensure that the observed
+data dictionary contains exactly the expected observables with correct
+shapes and types. It prevents common errors during model fitting by
+catching data mismatches early.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>ssp_model.Model</em>) – SciStanPy model containing observable specifications</p></li>
+<li><p><strong>data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>torch.Tensor</em><em>]</em>) – Dictionary mapping observable names to their tensor data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If observable names don’t match expected set</p></li>
+<li><p><strong>ValueError</strong> – If data shapes don’t match observable shapes</p></li>
+</ul>
+</dd>
+</dl>
+<p>The validation checks:
+- Perfect correspondence between provided and expected observable names
+- Exact shape matching between data tensors and observable specifications
+- Proper tensor formatting for PyTorch computation</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">check_observable_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>  <span class="c1"># Validates or raises error</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><strong>Data Validation Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Prepare data dictionary</span>
+<span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
+    <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1"># Validate against model expectations</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">check_observable_data</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Data validation passed&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data validation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="training-and-optimization">
+<h2>Training and Optimization<a class="headerlink" href="#training-and-optimization" title="Link to this heading">¶</a></h2>
+<p><strong>Advanced Training Options:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Training with custom settings</span>
+<span class="n">loss_trajectory</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="mi">20000</span><span class="p">,</span>           <span class="c1"># Maximum epochs</span>
+    <span class="n">early_stop</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>         <span class="c1"># Stop if no improvement for 100 epochs</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span>              <span class="c1"># Learning rate</span>
+    <span class="n">mixed_precision</span><span class="o">=</span><span class="kc">True</span>    <span class="c1"># Use automatic mixed precision</span>
+<span class="p">)</span>
+
+<span class="c1"># Check convergence</span>
+<span class="n">final_loss</span> <span class="o">=</span> <span class="n">loss_trajectory</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final loss: </span><span class="si">{</span><span class="n">final_loss</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Custom Optimization Strategies:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Advanced optimizer configuration</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span>
+    <span class="n">pytorch_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">weight_decay</span><span class="o">=</span><span class="mf">1e-4</span>
+<span class="p">)</span>
+
+<span class="c1"># Learning rate scheduling</span>
+<span class="n">scheduler</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">ReduceLROnPlateau</span><span class="p">(</span>
+    <span class="n">optimizer</span><span class="p">,</span> <span class="n">patience</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mf">0.5</span>
+<span class="p">)</span>
+
+<span class="c1"># Custom training loop with scheduling</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_epochs</span><span class="p">):</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">pytorch_model</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+    <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="parameter-and-distribution-export">
+<h2>Parameter and Distribution Export<a class="headerlink" href="#parameter-and-distribution-export" title="Link to this heading">¶</a></h2>
+<p><strong>Extracting Fitted Parameters:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get optimized parameter values</span>
+<span class="n">fitted_params</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">export_params</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">fitted_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Accessing Fitted Distributions:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get fitted probability distributions</span>
+<span class="n">distributions</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">export_distributions</span><span class="p">()</span>
+
+<span class="c1"># Use for posterior predictive sampling</span>
+<span class="n">fitted_normal</span> <span class="o">=</span> <span class="n">distributions</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
+<span class="n">posterior_samples</span> <span class="o">=</span> <span class="n">fitted_normal</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="mi">1000</span><span class="p">,))</span>
+</pre></div>
+</div>
+</section>
+<section id="device-management">
+<h2>Device Management<a class="headerlink" href="#device-management" title="Link to this heading">¶</a></h2>
+<p><strong>Multi-GPU Training:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check GPU availability</span>
+<span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;cuda:</span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">current_device</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+<span class="c1"># Data parallel training for large models</span>
+<span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">DataParallel</span><span class="p">(</span><span class="n">pytorch_model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Memory-Efficient Training:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Mixed precision for memory efficiency</span>
+<span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>  <span class="c1"># Use FP16</span>
+
+<span class="c1"># Gradient accumulation for large effective batch sizes</span>
+<span class="n">accumulation_steps</span> <span class="o">=</span> <span class="mi">4</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data_loader</span><span class="p">):</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">pytorch_model</span><span class="p">(</span><span class="o">**</span><span class="n">batch</span><span class="p">)</span> <span class="o">/</span> <span class="n">accumulation_steps</span>
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">accumulation_steps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="integration-patterns">
+<h2>Integration Patterns<a class="headerlink" href="#integration-patterns" title="Link to this heading">¶</a></h2>
+<p><strong>SciStanPy to PyTorch Workflow:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Complete workflow example</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytorch_fitting_workflow</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">observed_data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete PyTorch fitting workflow.&quot;&quot;&quot;</span>
+
+    <span class="c1"># 1. Convert to PyTorch</span>
+    <span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_pytorch</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+
+    <span class="c1"># 2. Move to GPU if available</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cuda&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span>
+    <span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># 3. Prepare data</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">observed_data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="c1"># 4. Fit model</span>
+    <span class="n">loss_history</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+        <span class="n">epochs</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+        <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">early_stop</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">mixed_precision</span><span class="o">=</span><span class="p">(</span><span class="n">device</span> <span class="o">==</span> <span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 5. Extract results</span>
+    <span class="n">fitted_params</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">export_params</span><span class="p">()</span>
+    <span class="n">fitted_distributions</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">export_distributions</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;loss_history&#39;</span><span class="p">:</span> <span class="n">loss_history</span><span class="p">,</span>
+        <span class="s1">&#39;parameters&#39;</span><span class="p">:</span> <span class="n">fitted_params</span><span class="p">,</span>
+        <span class="s1">&#39;distributions&#39;</span><span class="p">:</span> <span class="n">fitted_distributions</span><span class="p">,</span>
+        <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">pytorch_model</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Variational Inference:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use PyTorch model for variational inference</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">VariationalModel</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">original_model</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">original_model</span><span class="o">.</span><span class="n">to_pytorch</span><span class="p">()</span>
+
+        <span class="c1"># Variational parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_mu</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_log_sigma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="c1"># Sample from variational distribution</span>
+        <span class="n">epsilon</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_mu</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_mu</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_log_sigma</span><span class="p">)</span> <span class="o">*</span> <span class="n">epsilon</span>
+
+        <span class="c1"># Compute ELBO</span>
+        <span class="n">log_likelihood</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">kl_divergence</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">kl_divergence</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_mu</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_log_sigma</span><span class="p">)),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">log_likelihood</span> <span class="o">-</span> <span class="n">kl_divergence</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-considerations">
+<h2>Performance Considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading">¶</a></h2>
+<p><strong>Optimization Tips:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Use mixed precision</strong> on GPUs to reduce memory usage and increase speed</p></li>
+<li><p><strong>Enable early stopping</strong> to prevent overfitting and save computation</p></li>
+<li><p><strong>Choose appropriate learning rates</strong> - start with 0.001 and adjust based on convergence</p></li>
+<li><p><strong>Monitor gradient norms</strong> to detect vanishing/exploding gradients</p></li>
+<li><p><strong>Use GPU acceleration</strong> for models with many parameters or large datasets</p></li>
+</ol>
+<p><strong>Memory Management:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Monitor memory usage</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_memory_usage</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">memory_allocated</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1024</span><span class="o">**</span><span class="mi">2</span>  <span class="c1"># MB</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Memory before training: </span><span class="si">{</span><span class="n">get_memory_usage</span><span class="p">()</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> MB&quot;</span><span class="p">)</span>
+
+<span class="c1"># Clear cache if needed</span>
+<span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">empty_cache</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="error-handling-and-debugging">
+<h2>Error Handling and Debugging<a class="headerlink" href="#error-handling-and-debugging" title="Link to this heading">¶</a></h2>
+<p><strong>Common Issues and Solutions:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Handle common training issues</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">loss_history</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">&quot;out of memory&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;GPU out of memory - try reducing batch size or using CPU&quot;</span><span class="p">)</span>
+        <span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span>
+</pre></div>
+</div>
+<p><strong>Gradient Debugging:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check for gradient issues</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_gradients</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">total_norm</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">param_norm</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">total_norm</span> <span class="o">+=</span> <span class="n">param_norm</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">total_norm</span> <span class="o">=</span> <span class="n">total_norm</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">total_norm</span>
+
+<span class="c1"># Monitor during training</span>
+<span class="n">grad_norm</span> <span class="o">=</span> <span class="n">check_gradients</span><span class="p">(</span><span class="n">pytorch_model</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">grad_norm</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: Large gradients detected&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Validate data format</strong> before training to catch shape mismatches early</p></li>
+<li><p><strong>Use reproducible seeds</strong> for debugging and development</p></li>
+<li><p><strong>Monitor loss trajectories</strong> to assess convergence quality</p></li>
+<li><p><strong>Leverage GPU acceleration</strong> for computational efficiency</p></li>
+<li><p><strong>Export fitted parameters</strong> for further analysis and model comparison</p></li>
+<li><p><strong>Use early stopping</strong> to prevent overfitting and reduce computation time</p></li>
+<li><p><strong>Enable mixed precision</strong> on modern GPUs for memory and speed benefits</p></li>
+</ol>
+<p>The PyTorch integration enables efficient gradient-based optimization while preserving the probabilistic structure of SciStanPy models.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">SciStanPy API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#top-level-package">Top-Level Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#module-overview">Module Overview</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#quick-navigation">Quick Navigation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Model API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../operations.html">Operations API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#usage-notes">Usage Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#missing-something">Missing Something?</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">SciStanPy API Reference</a><ul>
+  <li><a href="index.html">Model API Reference</a><ul>
+      <li>Previous: <a href="model.html" title="previous chapter">Model API Reference</a></li>
+      <li>Next: <a href="results/index.html" title="next chapter">Model Results API Reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../_sources/api/model/nn_module.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

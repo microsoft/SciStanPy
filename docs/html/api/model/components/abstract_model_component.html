@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Abstract Model Component API Reference &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Constants API Reference" href="constants.html" />
+    <link rel="prev" title="Model Components API Reference" href="index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="abstract-model-component-api-reference">
+<h1>Abstract Model Component API Reference<a class="headerlink" href="#abstract-model-component-api-reference" title="Link to this heading">¶</a></h1>
+<p>This reference covers the abstract base classes that form the foundation of SciStanPy’s model component architecture.</p>
+<section id="module-scistanpy.model.components.abstract_model_component">
+<span id="abstract-model-component-module"></span><h2>Abstract Model Component Module<a class="headerlink" href="#module-scistanpy.model.components.abstract_model_component" title="Link to this heading">¶</a></h2>
+<p>Abstract base classes for SciStanPy model components.</p>
+<p>This module defines the foundational abstract class that forms the core
+architecture of SciStanPy model components, including parameters, constants, and
+transformations.</p>
+<p>The module establishes the common functionality that all model components must
+implement.</p>
+<dl class="simple">
+<dt>Core Abstractions:</dt><dd><ul class="simple">
+<li><p><strong>Component Hierarchy</strong>: Parent-child relationships between model elements</p></li>
+<li><p><strong>Stan Code Generation</strong>: Automatic translation to Stan programming language</p></li>
+<li><p><strong>Shape Broadcasting</strong>: Automatic handling of multi-dimensional parameters</p></li>
+<li><p><strong>Dependency Management</strong>: Tracking and validation of component relationships</p></li>
+</ul>
+</dd>
+<dt>Key Responsibilities:</dt><dd><ul class="simple">
+<li><p>Define abstract interfaces for model component behavior</p></li>
+<li><p>Implement common functionality for shape handling and validation</p></li>
+<li><p>Provide Stan code generation template</p></li>
+<li><p>Manage component relationships and dependency graphs</p></li>
+<li><p>Handle parameter bounds and constraints</p></li>
+<li><p>Support sampling and drawing from component distributions</p></li>
+</ul>
+</dd>
+<dt>Stan Integration:</dt><dd><p>The abstract base provides core Stan code generation capabilities including:
+- Variable declarations with appropriate types and constraints
+- Index management for multi-dimensional arrays
+- Target increment and transformation assignment generation
+- Support function inclusion for custom distributions</p>
+</dd>
+<dt>Component Relationships:</dt><dd><p>The hierarchy system enables complex model construction through:
+- Parent-child linkage for dependency tracking
+- Parameter name resolution and validation
+- Automatic shape broadcasting across related components
+- Tree traversal for model analysis and code generation</p>
+</dd>
+</dl>
+<p>This foundational layer enables the construction of sophisticated probabilistic
+models while maintaining type safety and automatic Stan code generation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</section>
+<section id="core-abstract-classes">
+<h2>Core Abstract Classes<a class="headerlink" href="#core-abstract-classes" title="Link to this heading">¶</a></h2>
+<section id="abstractmodelcomponent">
+<h3>AbstractModelComponent<a class="headerlink" href="#abstractmodelcomponent" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.abstract_model_component.</span></span><span class="sig-name descname"><span class="pre">AbstractModelComponent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract base class for all SciStanPy model components.</p>
+<p>This class defines the fundamental interface and common functionality for
+all elements in a SciStanPy probabilistic model. It provides the foundation
+for parameters, constants, transformations, and other model components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component array. Defaults to scalar ().</p></li>
+<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters that this component depends on</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>POSITIVE_PARAMS</strong> – Set of parameter names that must be positive</p></li>
+<li><p><strong>NEGATIVE_PARAMS</strong> – Set of parameter names that must be negative</p></li>
+<li><p><strong>SIMPLEX_PARAMS</strong> – Set of parameter names that must be simplexes</p></li>
+<li><p><strong>LOG_SIMPLEX_PARAMS</strong> – Set of parameter names that must be log-simplexes</p></li>
+<li><p><strong>BASE_STAN_DTYPE</strong> – Base Stan data type for this component</p></li>
+<li><p><strong>LOWER_BOUND</strong> – Lower bound constraint for component values</p></li>
+<li><p><strong>UPPER_BOUND</strong> – Upper bound constraint for component values</p></li>
+<li><p><strong>IS_SIMPLEX</strong> – Whether this component represents a simplex</p></li>
+<li><p><strong>IS_LOG_SIMPLEX</strong> – Whether this component represents a log-simplex</p></li>
+<li><p><strong>FORCE_PARENT_NAME</strong> – Whether to force naming of parent variables in Stan code</p></li>
+<li><p><strong>FORCE_LOOP_RESET</strong> – Whether to force loop reset in Stan code</p></li>
+<li><p><strong>_model_varname</strong> – SciStanPy variable name for this component</p></li>
+<li><p><strong>_parents</strong> – Dictionary mapping parameter names to parent components</p></li>
+<li><p><strong>_component_to_paramname</strong> – Reverse mapping from components to parameter names</p></li>
+<li><p><strong>_shape</strong> – Shape tuple for this component</p></li>
+<li><p><strong>_children</strong> – List of child components that depend on this one</p></li>
+</ul>
+</dd>
+</dl>
+<p>The class provides core functionality for:
+- Component relationship management (parents and children)
+- Shape validation and broadcasting
+- Stan code generation for variable declarations and operations
+- Sampling and drawing from component distributions
+- Tree traversal for model analysis</p>
+<p>All model components must implement the abstract methods for drawing samples
+and generating Stan code appropriate to their type.</p>
+<p>Initialize a model component with specified shape and parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
+<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
+2. Validates parameter constraints and bounds
+3. Converts non-component parameters to constants
+4. Establishes parent-child relationships
+5. Validates and sets component shape through broadcasting</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Foundation of All Model Components:</strong></p>
+<p>The AbstractModelComponent class provides the essential infrastructure for all SciStanPy model components:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># All model components inherit from AbstractModelComponent</span>
+<span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">observable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Access component relationships</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Y has parents: </span><span class="si">{</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">model_varname</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">y</span><span class="o">.</span><span class="n">parents</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mu has children: </span><span class="si">{</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">model_varname</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">mu</span><span class="o">.</span><span class="n">children</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Key Architectural Features:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Shape inference and broadcasting</span>
+<span class="n">multi_dim_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+    <span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>  <span class="c1"># Shape automatically inferred</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span>             <span class="c1"># Automatically broadcasted</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter shape: </span><span class="si">{</span><span class="n">multi_dim_param</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># (3, 4)</span>
+
+<span class="c1"># Dependency tree traversal</span>
+<span class="k">for</span> <span class="n">depth</span><span class="p">,</span> <span class="n">current</span><span class="p">,</span> <span class="n">relative</span> <span class="ow">in</span> <span class="n">y</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">walk_down</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Depth </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">current</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">relative</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Stan Code Generation Framework:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic Stan variable declarations</span>
+<span class="n">stan_dtype</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">()</span>  <span class="c1"># &quot;real&quot; for scalar normal</span>
+<span class="n">declaration</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">get_stan_parameter_declaration</span><span class="p">()</span>
+
+<span class="c1"># Multi-dimensional declarations</span>
+<span class="n">matrix_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">matrix_decl</span> <span class="o">=</span> <span class="n">matrix_param</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">()</span>  <span class="c1"># &quot;array[5] vector[3]&quot;</span>
+</pre></div>
+</div>
+<p><strong>Sampling and Drawing Interface:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Hierarchical sampling</span>
+<span class="n">samples</span><span class="p">,</span> <span class="n">all_draws</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># Access all component draws</span>
+<span class="k">for</span> <span class="n">component</span><span class="p">,</span> <span class="n">draws</span> <span class="ow">in</span> <span class="n">all_draws</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">component</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">: shape </span><span class="si">{</span><span class="n">draws</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+<section id="component-relationships">
+<h2>Component Relationships<a class="headerlink" href="#component-relationships" title="Link to this heading">¶</a></h2>
+<p><strong>Parent-Child Architecture:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Building hierarchical relationships</span>
+<span class="n">global_mean</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">group_means</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+    <span class="n">mu</span><span class="o">=</span><span class="n">global_mean</span><span class="p">,</span>          <span class="c1"># Parent relationship</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,)</span>              <span class="c1"># 10 groups</span>
+<span class="p">)</span>
+<span class="n">observations</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+    <span class="n">mu</span><span class="o">=</span><span class="n">group_means</span><span class="p">,</span>          <span class="c1"># Another parent relationship</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">observable</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># Explore relationships</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Global mean children: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">global_mean</span><span class="o">.</span><span class="n">children</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Group means parents: </span><span class="si">{</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">model_varname</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">group_means</span><span class="o">.</span><span class="n">parents</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Dependency Graph Navigation:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Walk up the dependency tree</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">show_dependencies</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">indent</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span> <span class="o">*</span> <span class="n">level</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">indent</span><span class="si">}{</span><span class="n">component</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">component</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">component</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
+        <span class="n">show_dependencies</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">show_dependencies</span><span class="p">(</span><span class="n">observations</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="shape-and-broadcasting-system">
+<h2>Shape and Broadcasting System<a class="headerlink" href="#shape-and-broadcasting-system" title="Link to this heading">¶</a></h2>
+<p><strong>Automatic Shape Inference:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Broadcasting follows NumPy rules</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,))</span>
+
+<span class="c1"># Combination automatically broadcasts to (5, 3)</span>
+<span class="n">combined</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Broadcasted shape: </span><span class="si">{</span><span class="n">combined</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Shape Validation:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Incompatible shapes raise clear errors</span>
+    <span class="n">incompatible</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+        <span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
+        <span class="n">sigma</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">)),</span>  <span class="c1"># Incompatible shape</span>
+    <span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Shape error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Multi-dimensional Indexing:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Advanced indexing support</span>
+<span class="n">matrix_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="c1"># Index into subcomponents</span>
+<span class="n">row_slice</span> <span class="o">=</span> <span class="n">matrix_param</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span>    <span class="c1"># Third row</span>
+<span class="n">column_slice</span> <span class="o">=</span> <span class="n">matrix_param</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="c1"># Second column</span>
+<span class="n">element</span> <span class="o">=</span> <span class="n">matrix_param</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>      <span class="c1"># Single element</span>
+</pre></div>
+</div>
+</section>
+<section id="stan-integration-framework">
+<h2>Stan Integration Framework<a class="headerlink" href="#stan-integration-framework" title="Link to this heading">¶</a></h2>
+<p><strong>Variable Declaration System:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic Stan type inference</span>
+<span class="n">real_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">int_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Poisson</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">simplex_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">real_param</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">())</span>     <span class="c1"># &quot;real&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">int_param</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">())</span>      <span class="c1"># &quot;int&lt;lower=0&gt;&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">simplex_param</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">())</span>  <span class="c1"># &quot;simplex[3]&quot;</span>
+</pre></div>
+</div>
+<p><strong>Bound Constraint Handling:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic bound detection</span>
+<span class="n">positive_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">bounded_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">positive_param</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">())</span>  <span class="c1"># &quot;real&lt;lower=0.0&gt;&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">bounded_param</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">())</span>   <span class="c1"># &quot;real&lt;lower=0.0, upper=1.0&gt;&quot;</span>
+</pre></div>
+</div>
+<p><strong>Index Management for Multi-dimensional Arrays:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic indexing for Stan loops</span>
+<span class="n">param_3d</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="c1"># Get indexed variable name for Stan code</span>
+<span class="n">index_opts</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">)</span>
+<span class="n">indexed_name</span> <span class="o">=</span> <span class="n">param_3d</span><span class="o">.</span><span class="n">get_indexed_varname</span><span class="p">(</span><span class="n">index_opts</span><span class="p">)</span>
+<span class="c1"># Result: &quot;param_3d[i,j]&quot; (last dimension vectorized)</span>
+</pre></div>
+</div>
+</section>
+<section id="error-handling-and-validation">
+<h2>Error Handling and Validation<a class="headerlink" href="#error-handling-and-validation" title="Link to this heading">¶</a></h2>
+<p><strong>Comprehensive Parameter Validation:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Parameter constraint validation</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">invalid_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span>
+        <span class="n">alpha</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># Must be positive</span>
+        <span class="n">beta</span><span class="o">=</span><span class="mi">2</span>
+    <span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter validation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Shape Compatibility Checking:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Shape compatibility validation</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">incompatible</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+        <span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
+        <span class="n">sigma</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span>  <span class="c1"># Incompatible</span>
+        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>            <span class="c1"># Also incompatible</span>
+    <span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Shape compatibility: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Bound Violation Detection:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Runtime bound checking during sampling</span>
+<span class="n">param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># This would violate Beta bounds during internal validation</span>
+    <span class="n">samples</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="c1"># Automatic validation ensures samples ∈ (0, 1)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bound violation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="tree-traversal-and-analysis">
+<h2>Tree Traversal and Analysis<a class="headerlink" href="#tree-traversal-and-analysis" title="Link to this heading">¶</a></h2>
+<p><strong>Model Structure Analysis:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">analyze_model_structure</span><span class="p">(</span><span class="n">component</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze the structure of a model component tree.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Find all components in the tree</span>
+    <span class="n">components</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">component</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">current</span><span class="p">,</span> <span class="n">relative</span> <span class="ow">in</span> <span class="n">component</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">walk_down</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">components</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+        <span class="n">components</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">relative</span><span class="p">)</span>
+
+    <span class="c1"># Categorize components</span>
+    <span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">components</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">)]</span>
+    <span class="n">constants</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">components</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">)]</span>
+    <span class="n">transforms</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">components</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s1">&#39;_transformation&#39;</span><span class="p">)]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model structure analysis:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Total components: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">components</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Parameters: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Constants: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">constants</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Transformations: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">transforms</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;components&#39;</span><span class="p">:</span> <span class="n">components</span><span class="p">,</span>
+        <span class="s1">&#39;parameters&#39;</span><span class="p">:</span> <span class="n">parameters</span><span class="p">,</span>
+        <span class="s1">&#39;constants&#39;</span><span class="p">:</span> <span class="n">constants</span><span class="p">,</span>
+        <span class="s1">&#39;transformations&#39;</span><span class="p">:</span> <span class="n">transforms</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Dependency Validation:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">validate_dependencies</span><span class="p">(</span><span class="n">component</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate that component dependencies form a valid DAG.&quot;&quot;&quot;</span>
+
+    <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">rec_stack</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_cycle</span><span class="p">(</span><span class="n">comp</span><span class="p">):</span>
+        <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
+        <span class="n">rec_stack</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">comp</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">has_cycle</span><span class="p">(</span><span class="n">parent</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">rec_stack</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="n">rec_stack</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="ow">not</span> <span class="n">has_cycle</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="advanced-usage-patterns">
+<h2>Advanced Usage Patterns<a class="headerlink" href="#advanced-usage-patterns" title="Link to this heading">¶</a></h2>
+<p><strong>Custom Component Development:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CustomTransformation</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">AbstractModelComponent</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Example custom component implementation.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_param</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_param</span><span class="o">=</span><span class="n">input_param</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level_draws</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+        <span class="c1"># Custom sampling logic</span>
+        <span class="n">input_value</span> <span class="o">=</span> <span class="n">level_draws</span><span class="p">[</span><span class="s1">&#39;input_param&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">custom_function</span><span class="p">(</span><span class="n">input_value</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Custom Stan code generation</span>
+        <span class="n">formattables</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_right_side</span><span class="p">(</span><span class="n">index_opts</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;custom_function(</span><span class="si">{</span><span class="n">formattables</span><span class="p">[</span><span class="s1">&#39;input_param&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2"> = custom_function(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">input_param</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">)&quot;</span>
+</pre></div>
+</div>
+<p><strong>Interactive Model Exploration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">interactive_model_explorer</span><span class="p">(</span><span class="n">component</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an interactive model exploration interface.&quot;&quot;&quot;</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">panel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pn</span>
+
+    <span class="c1"># Get all constants for sliders</span>
+    <span class="n">all_constants</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">current</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">component</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">walk_down</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">all_constants</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="c1"># Create sliders for togglable constants</span>
+    <span class="n">sliders</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">const</span> <span class="ow">in</span> <span class="n">all_constants</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">const</span><span class="o">.</span><span class="n">is_togglable</span><span class="p">:</span>
+            <span class="n">sliders</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">model_varname</span><span class="p">]</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">FloatSlider</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">model_varname</span><span class="p">,</span>
+                <span class="n">start</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">slider_start</span><span class="p">,</span>
+                <span class="n">end</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">slider_end</span><span class="p">,</span>
+                <span class="n">step</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">slider_step_size</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="n">const</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">const</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sliders</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-considerations">
+<h2>Performance Considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading">¶</a></h2>
+<p><strong>Efficient Sampling:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Batch sampling for efficiency</span>
+<span class="n">large_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">50</span><span class="p">))</span>
+
+<span class="c1"># Single large draw vs multiple small draws</span>
+<span class="c1"># Efficient: Single large draw</span>
+<span class="n">samples</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">large_param</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># Less efficient: Multiple small draws in loop</span>
+<span class="c1"># for i in range(1000):</span>
+<span class="c1">#     sample, _ = large_param.draw(n=1)</span>
+</pre></div>
+</div>
+<p><strong>Memory Management:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Be mindful of component relationships for memory</span>
+<span class="c1"># Shared parents are stored once</span>
+<span class="n">shared_parent</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">children</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">child</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+        <span class="n">mu</span><span class="o">=</span><span class="n">shared_parent</span><span class="p">,</span>  <span class="c1"># Shared reference, not copied</span>
+        <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span>
+    <span class="p">)</span>
+    <span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Understand the component hierarchy</strong> before building complex models</p></li>
+<li><p><strong>Use shape broadcasting</strong> to avoid manual shape specification</p></li>
+<li><p><strong>Validate model structure</strong> with tree traversal methods</p></li>
+<li><p><strong>Leverage automatic Stan code generation</strong> rather than writing custom Stan</p></li>
+<li><p><strong>Use descriptive variable names</strong> for better model interpretability</p></li>
+<li><p><strong>Check component relationships</strong> to ensure model correctness</p></li>
+<li><p><strong>Monitor memory usage</strong> in models with many shared components</p></li>
+</ol>
+<p>The AbstractModelComponent foundation enables sophisticated probabilistic modeling while maintaining mathematical rigor and computational efficiency across multiple backends.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">SciStanPy API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#top-level-package">Top-Level Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#module-overview">Module Overview</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html#quick-navigation">Quick Navigation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">Model API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../operations.html">Operations API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#usage-notes">Usage Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#missing-something">Missing Something?</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">SciStanPy API Reference</a><ul>
+  <li><a href="../index.html">Model API Reference</a><ul>
+  <li><a href="index.html">Model Components API Reference</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Model Components API Reference</a></li>
+      <li>Next: <a href="constants.html" title="next chapter">Constants API Reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../../_sources/api/model/components/abstract_model_component.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

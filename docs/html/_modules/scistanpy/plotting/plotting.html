@@ -96,7 +96,7 @@
 
 
 <div class="viewcode-block" id="aggregate_data">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.aggregate_data">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.aggregate_data">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">aggregate_data</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">independent_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span>
@@ -142,7 +142,7 @@
 
 
 <div class="viewcode-block" id="allow_interactive">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.allow_interactive">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.allow_interactive">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">allow_interactive</span><span class="p">(</span><span class="n">plotting_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to enable interactive plotting capabilities.</span>
 
@@ -204,7 +204,7 @@
 
 
 <div class="viewcode-block" id="plot_ecdf_kde">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.plot_ecdf_kde">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.plot_ecdf_kde">[docs]</a>
 <span class="nd">@allow_interactive</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_ecdf_kde</span><span class="p">(</span><span class="n">plotting_df</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create empirical CDF and kernel density estimate plots.</span>
@@ -256,7 +256,7 @@
 
 
 <div class="viewcode-block" id="plot_ecdf_violin">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.plot_ecdf_violin">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.plot_ecdf_violin">[docs]</a>
 <span class="nd">@allow_interactive</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_ecdf_violin</span><span class="p">(</span><span class="n">plotting_df</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create ECDF and violin plots for multi-group data comparison.</span>
@@ -325,7 +325,7 @@
 
 
 <div class="viewcode-block" id="plot_relationship">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.plot_relationship">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.plot_relationship">[docs]</a>
 <span class="nd">@allow_interactive</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_relationship</span><span class="p">(</span><span class="n">plotting_df</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">paramname</span><span class="p">,</span> <span class="n">datashade</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize relationships between parameters and independent variables.</span>
@@ -378,7 +378,7 @@
 
 
 <div class="viewcode-block" id="choose_plotting_function">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.choose_plotting_function">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.choose_plotting_function">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">choose_plotting_function</span><span class="p">(</span>
     <span class="n">independent_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">],</span>
     <span class="n">independent_labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span>
@@ -418,7 +418,7 @@
 
 
 <div class="viewcode-block" id="build_plotting_df">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.build_plotting_df">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.build_plotting_df">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_plotting_df</span><span class="p">(</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
     <span class="n">paramname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;param&quot;</span><span class="p">,</span>
@@ -518,7 +518,7 @@
 
 
 <div class="viewcode-block" id="plot_distribution">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.plot_distribution">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.plot_distribution">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_distribution</span><span class="p">(</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
     <span class="n">overlay</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -623,7 +623,7 @@
 
 
 <div class="viewcode-block" id="calculate_relative_quantiles">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.calculate_relative_quantiles">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.calculate_relative_quantiles">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">calculate_relative_quantiles</span><span class="p">(</span>
     <span class="n">reference</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">observed</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span>
@@ -710,7 +710,7 @@
 
 
 <div class="viewcode-block" id="plot_calibration">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.plot_calibration">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.plot_calibration">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_calibration</span><span class="p">(</span>
     <span class="n">reference</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
     <span class="n">observed</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
@@ -856,7 +856,7 @@
 
 
 <div class="viewcode-block" id="quantile_plot">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.quantile_plot">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.quantile_plot">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">quantile_plot</span><span class="p">(</span>
     <span class="n">x</span><span class="p">,</span>
     <span class="n">reference</span><span class="p">,</span>
@@ -1057,7 +1057,7 @@
 
 
 <div class="viewcode-block" id="hexgrid_with_mean">
-<a class="viewcode-back" href="../../../rst/api/plotting/plotting.html#scistanpy.plotting.plotting.hexgrid_with_mean">[docs]</a>
+<a class="viewcode-back" href="../../../api/plotting/plotting.html#scistanpy.plotting.plotting.hexgrid_with_mean">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">hexgrid_with_mean</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
     <span class="n">y</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
@@ -1162,7 +1162,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../rst/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">
@@ -1170,8 +1170,6 @@
 <ul>
   <li><a href="../../../index.html">Documentation overview</a><ul>
   <li><a href="../../index.html">Module code</a><ul>
-  <li><a href="../../scistanpy.html">scistanpy</a><ul>
-  </ul></li>
   </ul></li>
   </ul></li>
 </ul>

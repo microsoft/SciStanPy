@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Parameters API Reference &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Transformations API Reference" href="transformations/index.html" />
+    <link rel="prev" title="Custom SciPy Distributions API Reference" href="custom_distributions/custom_scipy_dists.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="parameters-api-reference">
+<h1>Parameters API Reference<a class="headerlink" href="#parameters-api-reference" title="Link to this heading">¶</a></h1>
+<p>This reference covers the parameter components and probability distributions available in SciStanPy.</p>
+<section id="module-scistanpy.model.components.parameters">
+<span id="parameters-module"></span><h2>Parameters Module<a class="headerlink" href="#module-scistanpy.model.components.parameters" title="Link to this heading">¶</a></h2>
+<p>Parameter classes for defining probabilistic model components in SciStanPy.</p>
+<p>This module provides the core parameter classes that serve as building blocks for
+constructing probabilistic models in SciStanPy. These classes represent random
+variables with specific probability distributions and handle the complex task of
+translating between Python model specifications, PyTorch modules, and Stan probabilistic
+programming language code.</p>
+<dl>
+<dt>Parameter Type Hierarchy:</dt><dd><ul class="simple">
+<li><p><strong>Parameter</strong>: Base class for all probabilistic model components</p></li>
+<li><p><strong>ContinuousDistribution</strong>: Parameters with continuous sample spaces</p></li>
+<li><p><strong>DiscreteDistribution</strong>: Parameters with discrete sample spaces</p></li>
+</ul>
+</dd>
+<dt>Key Features:</dt><dd><ul class="simple">
+<li><p><strong>Multi-Backend Support</strong>: Integration with SciPy, PyTorch, and Stan</p></li>
+<li><p><strong>Automatic Parameterization</strong>: Intelligent handling of parameter bounds and constraints</p></li>
+<li><p><strong>Non-Centered Parameterization</strong>: Automatic reparameterization for improved sampling</p></li>
+<li><p><strong>Custom Distributions</strong>: Extended distribution library beyond standard offerings</p></li>
+<li><p><strong>Type Safety</strong>: Comprehensive type checking and validation</p></li>
+</ul>
+</dd>
+<dt>Stan Code Generation:</dt><dd><p>Each parameter class automatically generates appropriate Stan code including:
+- Variable declarations with proper constraints
+- Target increment statements for log-probability
+- Generated quantities for posterior predictive sampling
+- Support for custom Stan functions when needed</p>
+</dd>
+<dt>Distribution Support:</dt><dd><p><strong>Continuous Distributions:</strong>
+- Normal, HalfNormal, UnitNormal, LogNormal
+- Beta, Gamma, InverseGamma, Exponential
+- Dirichlet, ExpDirichlet (log-simplex)
+- Custom: ExpExponential, Lomax, ExpLomax</p>
+<p><strong>Discrete Distributions:</strong>
+- Binomial, Poisson
+- Multinomial variants: standard, logit, log-theta parameterizations</p>
+</dd>
+<dt>Advanced Features:</dt><dd><ul class="simple">
+<li><p><strong>Automatic Reparameterization</strong>: Non-centered parameterization for hierarchical models</p></li>
+<li><p><strong>Constraint Handling</strong>: Automatic bound enforcement and transformations</p></li>
+<li><p><strong>Observable Support</strong>: Automatic identification of observed data model components</p></li>
+<li><p><strong>PyTorch Integration</strong>: Native support for gradient-based optimization</p></li>
+<li><p><strong>Custom Function Integration</strong>: Automatic inclusion of required Stan functions</p></li>
+</ul>
+</dd>
+</dl>
+<p>The parameter classes are designed to be composable, allowing complex hierarchical
+models to be built through simple parameter relationships while maintaining
+mathematical rigor and computational efficiency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</section>
+<section id="core-parameter-infrastructure">
+<h2>Core Parameter Infrastructure<a class="headerlink" href="#core-parameter-infrastructure" title="Link to this heading">¶</a></h2>
+<section id="parametermeta">
+<h3>ParameterMeta<a class="headerlink" href="#parametermeta" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ParameterMeta">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">ParameterMeta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bases</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">namespace</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ParameterMeta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ParameterMeta" title="Link to this definition">¶</a></dt>
+<dd><p>Metaclass for automatic CDF transform class generation.</p>
+<p>This metaclass automatically creates cumulative distribution function (CDF)
+and related transform classes for each Parameter subclass, enabling automatic
+generation of probabilistic transforms and survival functions.</p>
+<p>The metaclass creates four transform classes for each parameter:</p>
+<ul class="simple">
+<li><p>CDF: Cumulative distribution function</p></li>
+<li><p>SF: Survival function (complementary CDF)</p></li>
+<li><p>LOG_CDF: Logarithmic CDF</p></li>
+<li><p>LOG_SF: Logarithmic survival function</p></li>
+</ul>
+<p>Create CDF transform classes for the Parameter subclass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the class being created</p></li>
+<li><p><strong>bases</strong> (<em>tuple</em>) – Base classes for the new class</p></li>
+<li><p><strong>attrs</strong> (<em>dict</em>) – Class attributes dictionary</p></li>
+</ul>
+</dd>
+</dl>
+<p>This method automatically generates transform classes by creating
+new class types that inherit from the appropriate CDF base classes
+and reference the current parameter class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Automatic CDF Generation:</strong></p>
+<p>The ParameterMeta metaclass automatically creates CDF-related transform classes for each parameter:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># CDF transforms are automatically available</span>
+<span class="n">normal_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Access CDF transforms</span>
+<span class="n">cdf_transform</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">data_points</span><span class="p">)</span>
+<span class="n">survival_transform</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">ccdf</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">data_points</span><span class="p">)</span>
+<span class="n">log_cdf_transform</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">log_cdf</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">data_points</span><span class="p">)</span>
+<span class="n">log_survival_transform</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">log_ccdf</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">data_points</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="classorinstancemethod">
+<h3>ClassOrInstanceMethod<a class="headerlink" href="#classorinstancemethod" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ClassOrInstanceMethod">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">ClassOrInstanceMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ClassOrInstanceMethod"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ClassOrInstanceMethod" title="Link to this definition">¶</a></dt>
+<dd><p>Descriptor enabling dual class/instance method behavior.</p>
+<p>This descriptor allows methods to behave differently when called as class
+methods versus instance methods, enabling flexible parameter handling for
+CDF-like functions that can use either explicit parameters or instance
+parameter values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>func</strong> (<em>Callable</em>) – Function to wrap with dual behavior</p>
+</dd>
+</dl>
+<p>When called as an instance method, the descriptor automatically uses the
+instance’s parameter values. When called as a class method, it requires
+explicit parameter specification.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Flexible CDF Access:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># As instance method (uses parameter&#39;s values)</span>
+<span class="n">normal_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">cdf</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))</span>
+
+<span class="c1"># As class method (explicit parameters)</span>
+<span class="n">cdf</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+<section id="base-parameter-classes">
+<h2>Base Parameter Classes<a class="headerlink" href="#base-parameter-classes" title="Link to this heading">¶</a></h2>
+<section id="parameter">
+<h3>Parameter<a class="headerlink" href="#parameter" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Parameter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Parameter" title="Link to this definition">¶</a></dt>
+<dd><p>Base class for all probabilistic parameters in SciStanPy models.</p>
+<p>This class provides the foundational infrastructure for representing random
+variables with specific probability distributions. It handles the complex
+mapping between Python model specifications and Stan code generation while
+providing integration with SciPy and PyTorch ecosystems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>STAN_DIST</strong> – Stan distribution name for code generation</p></li>
+<li><p><strong>HAS_RAW_VARNAME</strong> – Whether parameter uses a raw/transformed parameterization</p></li>
+<li><p><strong>SCIPY_DIST</strong> – Corresponding SciPy distribution class</p></li>
+<li><p><strong>TORCH_DIST</strong> – Corresponding PyTorch distribution class</p></li>
+<li><p><strong>STAN_TO_SCIPY_NAMES</strong> – Parameter name mapping for SciPy interface</p></li>
+<li><p><strong>STAN_TO_TORCH_NAMES</strong> – Parameter name mapping for PyTorch interface</p></li>
+<li><p><strong>STAN_TO_SCIPY_TRANSFORMS</strong> – Parameter transformation functions converting between
+Stan and SciPy parametrizations</p></li>
+<li><p><strong>CDF</strong> – Automatically generated CDF transform class</p></li>
+<li><p><strong>SF</strong> – Automatically generated SF transform class</p></li>
+<li><p><strong>LOG_CDF</strong> – Automatically generated log CDF transform class</p></li>
+<li><p><strong>LOG_SF</strong> – Automatically generated log SF transform class</p></li>
+</ul>
+</dd>
+</dl>
+<p>The class automatically handles:</p>
+<ul class="simple">
+<li><p>Parameter validation and type checking</p></li>
+<li><p>Stan code generation for all model blocks</p></li>
+<li><p>PyTorch parameter initialization and management</p></li>
+<li><p>Observable/latent parameter distinction</p></li>
+<li><p>Bound enforcement and constraint handling</p></li>
+</ul>
+<p>Key Capabilities:</p>
+<ul class="simple">
+<li><p><strong>Multi-Backend Integration</strong>: Works with SciPy, PyTorch, and Stan</p></li>
+<li><p><strong>Automatic Code Generation</strong>: Generates appropriate Stan syntax</p></li>
+<li><p><strong>Type Safety</strong>: Validates parameter types and constraints</p></li>
+<li><p><strong>Flexible Parameterization</strong>: Supports both raw and transformed parameters</p></li>
+<li><p><strong>Observable Support</strong>: Can represent both latent variables and observed data</p></li>
+</ul>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Core Parameter Functionality:</strong></p>
+<p>The Parameter class provides the foundation for all probabilistic components:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Basic parameter creation</span>
+<span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Multi-dimensional parameters</span>
+<span class="n">group_effects</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+    <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,)</span>  <span class="c1"># 10 group effects</span>
+<span class="p">)</span>
+
+<span class="c1"># Observable parameters</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">as_observable</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>PyTorch Integration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize for PyTorch optimization</span>
+<span class="n">param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">param</span><span class="o">.</span><span class="n">init_pytorch</span><span class="p">(</span><span class="n">init_val</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Access PyTorch tensor with constraints</span>
+<span class="n">tensor</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">torch_parametrization</span>
+
+<span class="c1"># Compute log probabilities for gradient descent</span>
+<span class="n">log_prob</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get_torch_logprob</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="continuousdistribution">
+<h3>ContinuousDistribution<a class="headerlink" href="#continuousdistribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ContinuousDistribution">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">ContinuousDistribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ContinuousDistribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ContinuousDistribution" title="Link to this definition">¶</a></dt>
+<dd><p>Base class for parameters with continuous sample spaces.</p>
+<p>This class extends Parameter to provide functionality specific to continuous
+probability distributions. It inherits transformation capabilities that
+enable complex hierarchical model construction.</p>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Mathematical Transformation Support:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Continuous parameters support transformations</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Mathematical operations create transformations</span>
+<span class="n">sum_param</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+<span class="n">product_param</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">log_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="discretedistribution">
+<h3>DiscreteDistribution<a class="headerlink" href="#discretedistribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.DiscreteDistribution">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">DiscreteDistribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#DiscreteDistribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.DiscreteDistribution" title="Link to this definition">¶</a></dt>
+<dd><p>Base class for parameters with discrete sample spaces.</p>
+<p>This class extends Parameter for discrete probability distributions,
+handling the specific requirements of integer-valued random variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>BASE_STAN_DTYPE</strong> – Stan data type for discrete variables (“int”)</p></li>
+<li><p><strong>LOWER_BOUND</strong> – Default lower bound for discrete values (0)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Integer-Valued Distributions:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Discrete parameters for count data</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Poisson</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">successes</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Binomial</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+<section id="continuous-distributions">
+<h2>Continuous Distributions<a class="headerlink" href="#continuous-distributions" title="Link to this heading">¶</a></h2>
+<section id="normal-distribution">
+<h3>Normal Distribution<a class="headerlink" href="#normal-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Normal">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Normal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.ContinuousParameterType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.ContinuousParameterType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noncentered</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Normal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Normal" title="Link to this definition">¶</a></dt>
+<dd><p>Normal (Gaussian) distribution parameter.</p>
+<p>Implements the normal distribution with location (mu) and scale (sigma)
+parameters. Supports automatic non-centered parameterization for improved
+sampling in hierarchical models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<em>custom_types.ContinuousParameterType</em>) – Location parameter (mean)</p></li>
+<li><p><strong>sigma</strong> (<em>custom_types.ContinuousParameterType</em>) – Scale parameter (standard deviation)</p></li>
+<li><p><strong>noncentered</strong> (<em>bool</em>) – Whether to use non-centered parameterization. Defaults to True.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ Normal(μ, σ) where f(x) = (1/(σ√(2π))) * exp(-½((x-μ)/σ)²)</p>
+</dd>
+<dt>Non-Centered Parameterization:</dt><dd><p>When enabled for hierarchical models:
+- Raw variable: z ~ Normal(0, 1)
+- Transformed: x = μ + σ * z
+- Can improve MCMC sampling efficiency</p>
+</dd>
+</dl>
+<p>The non-centered parameterization is automatically applied when:
+- noncentered=True (default)
+- Parameter is not a hyperparameter
+- Parameter is not observable</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Standard normal parameter</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mu</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Hierarchical parameter with automatic non-centering</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Standard and Non-Centered Parameterization:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Standard normal parameter</span>
+<span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Hierarchical with automatic non-centering</span>
+<span class="n">sigma_global</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">group_effects</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+    <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="n">sigma_global</span><span class="p">,</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,),</span>
+    <span class="n">noncentered</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Default for hierarchical parameters</span>
+<span class="p">)</span>
+
+<span class="c1"># Force centered parameterization</span>
+<span class="n">centered_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+    <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">noncentered</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Non-Centered Benefits:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Non-centered parameterization improves MCMC efficiency</span>
+<span class="c1"># Stan code: z_raw ~ std_normal(); z = mu + sigma * z_raw;</span>
+
+<span class="c1"># Automatic detection of when to use non-centering:</span>
+<span class="c1"># - Not a hyperparameter (has parameter parents)</span>
+<span class="c1"># - Not observable</span>
+<span class="c1"># - noncentered=True (default)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="halfnormal-distribution">
+<h3>HalfNormal Distribution<a class="headerlink" href="#halfnormal-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.HalfNormal">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">HalfNormal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#HalfNormal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.HalfNormal" title="Link to this definition">¶</a></dt>
+<dd><p>Half-normal distribution parameter (normal truncated at zero).</p>
+<p>Implements the half-normal distribution, which is a normal distribution
+truncated to positive values. Commonly used for scale parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sigma</strong> (<em>custom_types.ContinuousParameterType</em>) – Scale parameter</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl>
+<dt>Mathematical Definition:</dt><dd><p>X ~ HalfNormal(σ) where f(x) = (2/(σ√(2π))) * exp(-x²/(2σ²)) for x ≥ 0</p>
+</dd>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Scale parameter for hierarchical model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tau</span> <span class="o">=</span> <span class="n">HalfNormal</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Individual-level scale</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sigma_i</span> <span class="o">=</span> <span class="n">HalfNormal</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">tau</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Positive-Constrained Normal:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Scale parameters with half-normal priors</span>
+<span class="n">tau</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="c1"># Hierarchical scale modeling</span>
+<span class="n">global_scale</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="n">local_scales</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">global_scale</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="unitnormal-distribution">
+<h3>UnitNormal Distribution<a class="headerlink" href="#unitnormal-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.UnitNormal">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">UnitNormal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#UnitNormal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.UnitNormal" title="Link to this definition">¶</a></dt>
+<dd><p>Standard normal distribution (mu=0, sigma=1).</p>
+<p>Implements the standard normal distribution with fixed parameters.
+This is a convenience class for the commonly used N(0,1) distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ N(0, 1) where f(x) = (1/√(2π)) * exp(-x²/2)</p>
+</dd>
+</dl>
+<p>The standard normal distribution:
+- Has fixed parameters that cannot be toggled
+- Uses the “std_normal” distribution in Stan
+- Is commonly used for prior specifications
+- Serves as the basis for non-centered parameterizations</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Standard normal prior</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">z</span> <span class="o">=</span> <span class="n">UnitNormal</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Used in non-centered parameterization</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">z</span>  <span class="c1"># Conceptually</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Standard Normal Convenience:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fixed N(0,1) distribution</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">UnitNormal</span><span class="p">()</span>
+
+<span class="c1"># Useful for non-centered parameterizations</span>
+<span class="n">z_raw</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">UnitNormal</span><span class="p">()</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">z_raw</span>  <span class="c1"># Conceptual transformation</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="lognormal-distribution">
+<h3>LogNormal Distribution<a class="headerlink" href="#lognormal-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.LogNormal">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">LogNormal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#LogNormal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.LogNormal" title="Link to this definition">¶</a></dt>
+<dd><p>Log-normal distribution parameter.</p>
+<p>Implements the log-normal distribution where log(X) follows a normal
+distribution. Commonly used for modeling positive quantities with
+multiplicative effects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<em>custom_types.ContinuousParameterType</em>) – Location parameter for underlying normal</p></li>
+<li><p><strong>sigma</strong> (<em>custom_types.ContinuousParameterType</em>) – Scale parameter for underlying normal</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl>
+<dt>Mathematical Definition:</dt><dd><p>If Y ~ Normal(μ, σ), then X = exp(Y) ~ LogNormal(μ, σ)
+f(x) = (1/(xσ√(2π))) * exp(-½((ln(x)-μ)/σ)²) for x &gt; 0</p>
+</dd>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Scale parameter with log-normal prior</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sigma</span> <span class="o">=</span> <span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Positive-Valued with Log-Normal Structure:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Scale parameters</span>
+<span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Multiplicative effects</span>
+<span class="n">growth_factor</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.1</span><span class="p">),</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="beta-distribution">
+<h3>Beta Distribution<a class="headerlink" href="#beta-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Beta">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Beta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Beta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Beta" title="Link to this definition">¶</a></dt>
+<dd><p>Beta distribution parameter.</p>
+<p>Implements the beta distribution with shape parameters alpha and beta.
+The distribution has support on (0, 1) and is commonly used for modeling
+probabilities and proportions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>custom_types.ContinuousParameterType</em>) – First shape parameter (concentration)</p></li>
+<li><p><strong>beta</strong> (<em>custom_types.ContinuousParameterType</em>) – Second shape parameter (concentration)</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ Beta(α, β) where f(x) = (Γ(α+β)/(Γ(α)Γ(β))) * x^(α-1) * (1-x)^(β-1)</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: (0, 1)
+- Mean: α/(α+β)
+- Mode: (α-1)/(α+β-2) for α,β &gt; 1
+- Variance: αβ/((α+β)²(α+β+1))</p>
+<p>Common Applications:
+- Prior distributions for probabilities
+- Modeling proportions and percentages
+- Bayesian A/B testing
+- Mixture model component weights</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Uniform prior on probability</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Beta</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Weakly informative prior favoring smaller probabilities</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p_rare</span> <span class="o">=</span> <span class="n">Beta</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Probability and Proportion Modeling:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Uniform prior on [0,1]</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Informative prior favoring small probabilities</span>
+<span class="n">p_rare</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>  <span class="c1"># Mean = 0.1</span>
+
+<span class="c1"># Informative prior around 0.7</span>
+<span class="n">p_informed</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="gamma-distribution">
+<h3>Gamma Distribution<a class="headerlink" href="#gamma-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Gamma">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Gamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Gamma" title="Link to this definition">¶</a></dt>
+<dd><p>Gamma distribution parameter.</p>
+<p>Implements the gamma distribution with shape (alpha) and rate (beta)
+parameters. Commonly used for modeling positive continuous quantities
+with specific shape characteristics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>custom_types.ContinuousParameterType</em>) – Shape parameter</p></li>
+<li><p><strong>beta</strong> (<em>custom_types.ContinuousParameterType</em>) – Rate parameter</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ Gamma(α, β) where f(x) = (β^α/Γ(α)) * x^(α-1) * exp(-βx)</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: (0, ∞)
+- Mean: α/β
+- Mode: (α-1)/β for α &gt; 1
+- Variance: α/β²</p>
+<p>Note on Parameterization:
+- Stan uses shape-rate parameterization: Gamma(α, β)
+- SciPy uses shape-scale parameterization: Gamma(α, 1/β)
+- Automatic transformation handles this difference</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Precision parameter (inverse variance)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tau</span> <span class="o">=</span> <span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Positive continuous variable</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">waiting_time</span> <span class="o">=</span> <span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">shape_param</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">rate_param</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Shape-Rate Parameterization:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Precision parameter (inverse variance)</span>
+<span class="n">tau</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Rate parameterization</span>
+
+<span class="c1"># Positive continuous variables</span>
+<span class="n">waiting_time</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">rate</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="inversegamma-distribution">
+<h3>InverseGamma Distribution<a class="headerlink" href="#inversegamma-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.InverseGamma">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">InverseGamma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#InverseGamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.InverseGamma" title="Link to this definition">¶</a></dt>
+<dd><p>Inverse gamma distribution parameter.</p>
+<p>Implements the inverse gamma distribution, commonly used as a conjugate
+prior for variance parameters in Bayesian analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>custom_types.ContinuousParameterType</em>) – Shape parameter</p></li>
+<li><p><strong>beta</strong> (<em>custom_types.ContinuousParameterType</em>) – Scale parameter</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ InverseGamma(α, β) where f(x) = (β^α/Γ(α)) * x^(-α-1) * exp(-β/x)</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: (0, ∞)
+- Mean: β/(α-1) for α &gt; 1
+- Mode: β/(α+1)
+- Variance: β²/((α-1)²(α-2)) for α &gt; 2</p>
+<p>Common Applications:
+- Conjugate prior for normal variance
+- Hierarchical modeling of scale parameters
+- Bayesian regression variance modeling</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Prior for variance parameter</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sigma_sq</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Hierarchical variance</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tau_sq</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">a_tau</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">b_tau</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Conjugate Prior for Variance:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Variance parameter</span>
+<span class="n">sigma_squared</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">InverseGamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Hierarchical variance modeling</span>
+<span class="n">tau_squared</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">InverseGamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">a_prior</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">b_prior</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="exponential-distribution">
+<h3>Exponential Distribution<a class="headerlink" href="#exponential-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Exponential">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Exponential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Exponential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Exponential" title="Link to this definition">¶</a></dt>
+<dd><p>Exponential distribution parameter.</p>
+<p>Implements the exponential distribution with rate parameter beta.
+Commonly used for modeling waiting times and survival analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beta</strong> (<em>custom_types.ContinuousParameterType</em>) – Rate parameter</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ Exponential(β) where f(x) = β * exp(-βx) for x ≥ 0</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: [0, ∞)
+- Mean: 1/β
+- Mode: 0
+- Variance: 1/β²</p>
+<p>Note on Parameterization:
+- Stan uses rate parameterization: Exponential(β)
+- SciPy uses scale parameterization: Exponential(1/β)
+- Automatic transformation handles this difference</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Waiting time parameter</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wait_time</span> <span class="o">=</span> <span class="n">Exponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Scale parameter with exponential prior</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tau</span> <span class="o">=</span> <span class="n">Exponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="n">rate_prior</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Waiting Times and Survival:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Waiting time with rate parameterization</span>
+<span class="n">wait_time</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Exponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+
+<span class="c1"># Survival analysis</span>
+<span class="n">event_time</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Exponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="n">hazard_rate</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="custom-continuous-distributions">
+<h3>Custom Continuous Distributions<a class="headerlink" href="#custom-continuous-distributions" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpExponential">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">ExpExponential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpExponential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpExponential" title="Link to this definition">¶</a></dt>
+<dd><p>Exp-Exponential distribution (log of exponential random variable).</p>
+<p>Implements the distribution of Y where exp(Y) ~ Exponential(β).
+This is equivalent to Y = log(X) where X ~ Exponential(β).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beta</strong> (<em>custom_types.ContinuousParameterType</em>) – Rate parameter for the underlying exponential</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>If X ~ Exponential(β), then Y = log(X) ~ ExpExponential(β)
+f(y) = β * exp(y - β*exp(y)) for y ∈ (-∞, ∞)</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: (-∞, ∞)
+- Related to Gumbel distribution family
+- Useful for log-scale modeling of exponential processes</p>
+<p>This distribution requires custom Stan functions for implementation (see
+<cite>expexponential.stanfunctions</cite> in the <cite>stan</cite> submodule) which are automatically
+included in any Stan program defined using this distribution.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-scale waiting time</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_wait</span> <span class="o">=</span> <span class="n">ExpExponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-transformed scale parameter</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_scale</span> <span class="o">=</span> <span class="n">ExpExponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="n">prior_rate</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Lomax">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Lomax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Lomax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Lomax" title="Link to this definition">¶</a></dt>
+<dd><p>Lomax distribution (Pareto Type II with location=0).</p>
+<p>Implements the Lomax distribution, which is a special case of the
+Pareto Type II distribution with location parameter set to 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lambda</strong> (<em>custom_types.ContinuousParameterType</em>) – Scale parameter</p></li>
+<li><p><strong>alpha</strong> (<em>custom_types.ContinuousParameterType</em>) – Shape parameter</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ Lomax(λ, α) where f(x) = (α/λ) * (1 + x/λ)^(-α-1) for x ≥ 0</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: [0, ∞)
+- Mean: λ/(α-1) for α &gt; 1
+- Mode: 0
+- Heavy-tailed distribution</p>
+<p>Common Applications:
+- Modeling income distributions
+- Network analysis (degree distributions)
+- Reliability engineering
+- Extreme value modeling</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Heavy-tailed positive variable</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">wealth</span> <span class="o">=</span> <span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">scale_param</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">shape_param</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Robust scale parameter</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sigma</span> <span class="o">=</span> <span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpLomax">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">ExpLomax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpLomax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpLomax" title="Link to this definition">¶</a></dt>
+<dd><p>Exp-Lomax distribution (log of Lomax random variable).</p>
+<p>Implements the distribution of Y where exp(Y) ~ Lomax(λ, α).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lambda</strong> (<em>custom_types.ContinuousParameterType</em>) – Scale parameter for underlying Lomax</p></li>
+<li><p><strong>alpha</strong> (<em>custom_types.ContinuousParameterType</em>) – Shape parameter for underlying Lomax</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>If X ~ Lomax(λ, α), then Y = log(X) ~ ExpLomax(λ, α)
+f(y) = (α/λ) * exp(y) * (1 + exp(y)/λ)^(-α-1) for y ∈ (-∞, ∞)</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: (-∞, ∞)
+- Log-scale version of heavy-tailed Lomax
+- Useful for modeling log-transformed heavy-tailed data</p>
+<p>This distribution requires custom Stan functions for implementation (see
+<cite>explomax.stanfunctions</cite> in the <cite>stan</cite> submodule) which are automatically
+included in any Stan program defined using this distribution.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-scale heavy-tailed variable</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_income</span> <span class="o">=</span> <span class="n">ExpLomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Robust log-scale parameter</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_sigma</span> <span class="o">=</span> <span class="n">ExpLomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Heavy-Tailed and Log-Transformed Distributions:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Heavy-tailed distributions for robust modeling</span>
+<span class="n">wealth</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="c1"># Log-scale heavy-tailed</span>
+<span class="n">log_income</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpLomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="c1"># Log-exponential (Gumbel-type)</span>
+<span class="n">log_waiting_time</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpExponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+<section id="simplex-distributions">
+<h2>Simplex Distributions<a class="headerlink" href="#simplex-distributions" title="Link to this heading">¶</a></h2>
+<section id="dirichlet-distribution">
+<h3>Dirichlet Distribution<a class="headerlink" href="#dirichlet-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Dirichlet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Buffer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Dirichlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet" title="Link to this definition">¶</a></dt>
+<dd><p>Dirichlet distribution parameter.</p>
+<p>Implements the Dirichlet distribution for modeling probability simplexes.
+The distribution generates vectors that sum to 1, making it ideal for
+modeling categorical probabilities and mixture weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>Union</em><em>[</em><a class="reference internal" href="abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><em>AbstractModelComponent</em></a><em>, </em><em>npt.ArrayLike</em><em>]</em>) – Concentration parameters (can be scalar or array-like). If scalar,
+will be converted to the appropriate shape given by the <cite>shape</cite> kwarg.</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments including ‘shape’ if alpha is scalar</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ Dirichlet(α) where f(x) = (Γ(Σαᵢ)/Πᵢ Γ(αᵢ)) * Πᵢ xᵢ^(αᵢ-1)</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: K-dimensional simplex (Σxᵢ = 1, xᵢ &gt; 0)
+- Mean: E[Xᵢ] = αᵢ/Σαⱼ
+- Mode: (αᵢ-1)/(Σαⱼ-K) for all αᵢ &gt; 1</p>
+<p>Parameter Handling:
+- If alpha is scalar, ‘shape’ must be provided to create uniform concentration
+- If alpha is array-like, it defines the concentration for each component</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Uniform Dirichlet (symmetric)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Non-uniform concentrations</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Hierarchical concentration</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha_prior</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize Dirichlet distribution with concentration parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>Union</em><em>[</em><a class="reference internal" href="abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><em>AbstractModelComponent</em></a><em>, </em><em>npt.ArrayLike</em><em>]</em>) – Concentration parameters for each component</p></li>
+<li><p><strong>kwargs</strong> – Additional arguments including ‘shape’ if alpha is scalar</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If alpha is scalar but ‘shape’ is not provided</p>
+</dd>
+</dl>
+<p>The initialization handles both scalar and vector specifications of
+concentration parameters, automatically creating uniform arrays when
+a scalar value is provided with an explicit shape.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Probability Simplex Modeling:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Symmetric Dirichlet (uniform on simplex)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,))</span>
+
+<span class="c1"># Non-uniform concentrations</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]))</span>
+
+<span class="c1"># Hierarchical concentration</span>
+<span class="n">alpha_vec</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,))</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha_vec</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="expdirichlet-distribution">
+<h3>ExpDirichlet Distribution<a class="headerlink" href="#expdirichlet-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">ExpDirichlet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Buffer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><span class="pre">_SupportsArray</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">_NestedSequence</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">complex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpDirichlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet" title="Link to this definition">¶</a></dt>
+<dd><p>Exp-Dirichlet distribution (log of Dirichlet random variable).</p>
+<p>Implements the distribution of Y where exp(Y) ~ Dirichlet(α).
+This provides a log-simplex parameterization that can be more numerically
+stable for extreme concentration parameters and extremely high-dimensional
+simplexes, like those encountered when modeling deep mutational scanning data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>Union</em><em>[</em><a class="reference internal" href="abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><em>AbstractModelComponent</em></a><em>, </em><em>npt.ArrayLike</em><em>]</em>) – Concentration parameters for underlying Dirichlet</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments including ‘shape’ if alpha is scalar</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α)
+where Σexp(Yᵢ) = 1 (log-simplex constraint)</p>
+</dd>
+</dl>
+<p>Properties:</p>
+<ul class="simple">
+<li><p>Support: Log-simplex {y : Σexp(yᵢ) = 1}</p></li>
+<li><p>Raw parameterization uses K-1 dimensions with constraint transformation</p></li>
+<li><p>More numerically stable for extreme concentrations</p></li>
+</ul>
+<p>Stan Implementation:</p>
+<ul class="simple">
+<li><p>Uses custom constraint functions for log-simplex transformation</p></li>
+<li><p>Raw parameter has K-1 dimensions (reduced for constraint)</p></li>
+<li><p>Special thanks to Sean Pinkney for assistance with deriving the log probability
+density function; thanks also to Bob Carpenter and others for developing the
+log-simplex constraint used in SciStanPy. See
+<cite>here &lt;https://discourse.mc-stan.org/t/log-simplex-constraints/39782&gt;_</cite> for
+derivations and
+<a class="reference external" href="https://github.com/bob-carpenter/transforms/tree/main/simplex_transforms/stan/transforms">here</a>
+for transforms.</p></li>
+</ul>
+<p>This distribution requires custom Stan functions for implementation (see
+<cite>expdirichlet.stanfunctions</cite> in the <cite>stan</cite> submodule) which are automatically
+included in any Stan program defined using this distribution.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-simplex probabilities</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_p</span> <span class="o">=</span> <span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha_vec</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Numerically stable log-probabilities</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log_weights</span> <span class="o">=</span> <span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,))</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize Dirichlet distribution with concentration parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>Union</em><em>[</em><a class="reference internal" href="abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><em>AbstractModelComponent</em></a><em>, </em><em>npt.ArrayLike</em><em>]</em>) – Concentration parameters for each component</p></li>
+<li><p><strong>kwargs</strong> – Additional arguments including ‘shape’ if alpha is scalar</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If alpha is scalar but ‘shape’ is not provided</p>
+</dd>
+</dl>
+<p>The initialization handles both scalar and vector specifications of
+concentration parameters, automatically creating uniform arrays when
+a scalar value is provided with an explicit shape.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Log-Simplex for Numerical Stability:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Log-probability vectors for high-dimensional problems</span>
+<span class="n">log_p</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1000</span><span class="p">,))</span>
+
+<span class="c1"># More stable for extreme concentrations</span>
+<span class="n">log_weights</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha_vec</span><span class="p">)</span>
+
+<span class="c1"># Constraint: exp(log_p).sum() == 1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+<section id="discrete-distributions">
+<h2>Discrete Distributions<a class="headerlink" href="#discrete-distributions" title="Link to this heading">¶</a></h2>
+<section id="binomial-distribution">
+<h3>Binomial Distribution<a class="headerlink" href="#binomial-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Binomial">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Binomial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Binomial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Binomial" title="Link to this definition">¶</a></dt>
+<dd><p>Binomial distribution parameter.</p>
+<p>Implements the binomial distribution for modeling the number of successes
+in a fixed number of independent Bernoulli trials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>N</strong> (<em>custom_types.DiscreteParameterType</em>) – Number of trials</p></li>
+<li><p><strong>theta</strong> (<em>custom_types.ContinuousParameterType</em>) – Success probability</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ Binomial(N, θ) where P(X = k) = C(N,k) * θᵏ * (1-θ)^(N-k)</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: {0, 1, 2, …, N}
+- Mean: N * θ
+- Variance: N * θ * (1-θ)
+- Mode: floor((N+1) * θ)</p>
+<p>Common Applications:
+- Number of successes in fixed trials
+- Proportion data with known denominators</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Number of successes in 10 trials</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">successes</span> <span class="o">=</span> <span class="n">Binomial</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">success_prob</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Success Counts in Fixed Trials:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Number of successes in N trials</span>
+<span class="n">successes</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Binomial</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">success_rate</span><span class="p">)</span>
+
+<span class="c1"># Proportion data</span>
+<span class="n">observed_successes</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Binomial</span><span class="p">(</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">trial_counts</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">success_probability</span>
+<span class="p">)</span><span class="o">.</span><span class="n">as_observable</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="poisson-distribution">
+<h3>Poisson Distribution<a class="headerlink" href="#poisson-distribution" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Poisson">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Poisson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Poisson"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Poisson" title="Link to this definition">¶</a></dt>
+<dd><p>Poisson distribution parameter.</p>
+<p>Implements the Poisson distribution for modeling count data with
+a single rate parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lambda</strong> (<em>custom_types.ContinuousParameterType</em>) – Rate parameter (mean number of events)</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ Poisson(λ) where P(X = k) = (λᵏ * exp(-λ)) / k!</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: {0, 1, 2, 3, …}
+- Mean: λ
+- Variance: λ
+- Mode: floor(λ)</p>
+<p>Common Applications:
+- Event counting (arrivals, defects, etc.)
+- Modeling rare events
+- Count regression
+- Queueing theory</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Number of events per time period</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">Poisson</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">event_rate</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Observed count data</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y_counts</span> <span class="o">=</span> <span class="n">Poisson</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">fitted_rate</span><span class="p">)</span><span class="o">.</span><span class="n">as_observable</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Count Data Modeling:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Event counts</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Poisson</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">event_rate</span><span class="p">)</span>
+
+<span class="c1"># Observed count data</span>
+<span class="n">observed_counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Poisson</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">fitted_rate</span><span class="p">)</span><span class="o">.</span><span class="n">as_observable</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+<section id="multinomial-distributions">
+<h2>Multinomial Distributions<a class="headerlink" href="#multinomial-distributions" title="Link to this heading">¶</a></h2>
+<section id="standard-multinomial">
+<h3>Standard Multinomial<a class="headerlink" href="#standard-multinomial" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Multinomial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Multinomial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial" title="Link to this definition">¶</a></dt>
+<dd><p>Standard multinomial distribution parameter.</p>
+<p>Implements the multinomial distribution with probability vector theta
+and number of trials N. Models the number of observations in each
+category for a fixed number of trials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta</strong> (<em>custom_types.ContinuousParameterType</em>) – Probability vector (must sum to 1)</p></li>
+<li><p><strong>N</strong> (<em>custom_types.DiscreteParameterType</em>) – Number of trials</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>X ~ Multinomial(N, θ) where P(X = x) = (N! / Πᵢ xᵢ!) * Πᵢ θᵢ^xᵢ</p>
+</dd>
+</dl>
+<p>Properties:
+- Support: {x : Σxᵢ = N, xᵢ ≥ 0}
+- Mean: E[Xᵢ] = N * θᵢ
+- Variance: Var[Xᵢ] = N * θᵢ * (1 - θᵢ)
+- Covariance: Cov[Xᵢ, Xⱼ] = -N * θᵢ * θⱼ</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Categorical data with known totals</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">Multinomial</span><span class="p">(</span><span class="n">theta</span><span class="o">=</span><span class="n">category_probs</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Categorical Count Data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Category counts with probability vector</span>
+<span class="n">category_counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Multinomial</span><span class="p">(</span>
+    <span class="n">theta</span><span class="o">=</span><span class="n">category_probs</span><span class="p">,</span>  <span class="c1"># Must sum to 1</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="multinomiallogit">
+<h3>MultinomialLogit<a class="headerlink" href="#multinomiallogit" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogit">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">MultinomialLogit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#MultinomialLogit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit" title="Link to this definition">¶</a></dt>
+<dd><p>Multinomial distribution with logit parameterization.</p>
+<p>Implements the multinomial distribution parameterized by logits (gamma)
+rather than probabilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gamma</strong> (<em>custom_types.ContinuousParameterType</em>) – Logit vector (unconstrained real values)</p></li>
+<li><p><strong>N</strong> (<em>custom_types.DiscreteParameterType</em>) – Number of trials</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>θᵢ = exp(γᵢ) / Σⱼ exp(γⱼ) (softmax transformation)
+X ~ Multinomial(N, θ)</p>
+</dd>
+</dl>
+<p>Properties:
+- Unconstrained parameterization (γ ∈ ℝᴷ)
+- Natural for logistic regression extensions
+- Automatic softmax transformation applied</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Logit-parameterized multinomial</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">MultinomialLogit</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="n">logit_probs</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize parameter with distribution-specific arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
+if subclass was incorrectly defined)</p></li>
+<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization process:
+1. Validates all required class attributes are defined
+2. Checks that all required distribution parameters are provided
+3. Initializes parent AbstractModelComponent
+4. Sets up observability tracking and PyTorch parameter placeholders</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Logit-Parameterized Multinomial:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Unconstrained parameterization</span>
+<span class="n">logits</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,))</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogit</span><span class="p">(</span>
+    <span class="n">gamma</span><span class="o">=</span><span class="n">logits</span><span class="p">,</span>  <span class="c1"># Unconstrained</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="multinomiallogtheta">
+<h3>MultinomialLogTheta<a class="headerlink" href="#multinomiallogtheta" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">MultinomialLogTheta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.ContinuousParameterType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.DiscreteParameterType</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#MultinomialLogTheta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta" title="Link to this definition">¶</a></dt>
+<dd><p>Multinomial distribution with log-probability parameterization.</p>
+<p>Implements the multinomial distribution in terms of the log of the theta
+parameter. This parameterization is useful for models that naturally
+work with log-probabilities. It can use the ExpDirichlet distribution as a
+prior to enforce the log-simplex constraint and keep computations completely
+in the log-probability space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_theta</strong> (<em>custom_types.ContinuousParameterType</em>) – Log probability vector (log-simplex constraint)</p></li>
+<li><p><strong>N</strong> (<em>custom_types.DiscreteParameterType</em>) – Number of trials</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Mathematical Definition:</dt><dd><p>θᵢ = exp(log_θᵢ) (with normalization: Σⱼ exp(log_θⱼ) = 1)
+X ~ Multinomial(N, θ)</p>
+</dd>
+</dl>
+<p>Properties:</p>
+<ul class="simple">
+<li><p>Log-simplex parameterization</p></li>
+<li><p>Numerically stable for small probabilities</p></li>
+<li><p>Optional multinomial coefficient pre-computation</p></li>
+</ul>
+<p>Special Features:</p>
+<ul class="simple">
+<li><p>Automatic multinomial coefficient calculation when used as observable. This
+results in improved computational efficiency by eliminating redundant calculations.</p></li>
+<li><p>Coefficient removed when parameter has other children</p></li>
+</ul>
+<p>This distribution requires custom Stan functions for implementation (see
+<cite>multinomial.stanfunctions</cite> in the <cite>stan</cite> submodule) which are automatically
+included in any Stan program defined using this distribution.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-probability parameterized multinomial</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">MultinomialLogTheta</span><span class="p">(</span><span class="n">log_theta</span><span class="o">=</span><span class="n">log_probs</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Initialize MultinomialLogTheta with automatic coefficient handling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_theta</strong> (<em>custom_types.ContinuousParameterType</em>) – Log probability parameter</p></li>
+<li><p><strong>N</strong> (<em>custom_types.DiscreteParameterType</em>) – Number of trials parameter</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
+</ul>
+</dd>
+</dl>
+<p>The initialization automatically creates a multinomial coefficient
+component that is removed if the parameter gains children (indicating
+it’s not an observable).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<p><strong>Log-Probability Parameterized with Optimization:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Log-simplex parameterization</span>
+<span class="n">log_probs</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogTheta</span><span class="p">(</span>
+    <span class="n">log_theta</span><span class="o">=</span><span class="n">log_probs</span><span class="p">,</span>  <span class="c1"># Log-simplex constraint</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span>
+<span class="p">)</span>
+
+<span class="c1"># Automatic coefficient optimization for observables</span>
+<span class="n">observed_counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogTheta</span><span class="p">(</span>
+    <span class="n">log_theta</span><span class="o">=</span><span class="n">log_probs</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">100</span>
+<span class="p">)</span><span class="o">.</span><span class="n">as_observable</span><span class="p">()</span>
+<span class="c1"># Multinomial coefficient pre-computed for efficiency</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+<section id="advanced-parameter-features">
+<h2>Advanced Parameter Features<a class="headerlink" href="#advanced-parameter-features" title="Link to this heading">¶</a></h2>
+<p><strong>Non-Centered Parameterization:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic non-centering for hierarchical models</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">hierarchical_model</span><span class="p">():</span>
+    <span class="c1"># Global parameters</span>
+    <span class="n">mu_global</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">sigma_global</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Group-level parameters (automatically non-centered)</span>
+    <span class="n">group_effects</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+        <span class="n">mu</span><span class="o">=</span><span class="n">mu_global</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="o">=</span><span class="n">sigma_global</span><span class="p">,</span>
+        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,)</span>  <span class="c1"># Automatically uses non-centered parameterization</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">group_effects</span>
+</pre></div>
+</div>
+<p><strong>Observable Parameter Management:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic observable detection</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_model_with_observables</span><span class="p">():</span>
+    <span class="c1"># Parameters</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c1"># Observable (no children = automatically observable)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span>
+
+    <span class="c1"># Explicitly mark as observable</span>
+    <span class="n">y_explicit</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span><span class="o">.</span><span class="n">as_observable</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">y_explicit</span>
+</pre></div>
+</div>
+<p><strong>CDF and Probability Functions:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comprehensive probability function access</span>
+<span class="n">normal_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">data_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+<span class="c1"># CDF functions</span>
+<span class="n">cdf_vals</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">data_points</span><span class="p">)</span>
+<span class="n">survival_vals</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">ccdf</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">data_points</span><span class="p">)</span>
+
+<span class="c1"># Log-space for numerical stability</span>
+<span class="n">log_cdf_vals</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">log_cdf</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">data_points</span><span class="p">)</span>
+<span class="n">log_survival_vals</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">log_ccdf</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">data_points</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Multi-Backend Integration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciPy backend for CPU sampling</span>
+<span class="n">samples</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># PyTorch backend for GPU optimization</span>
+<span class="n">normal_param</span><span class="o">.</span><span class="n">init_pytorch</span><span class="p">()</span>
+<span class="n">torch_tensor</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">torch_parametrization</span>
+<span class="n">log_prob</span> <span class="o">=</span> <span class="n">normal_param</span><span class="o">.</span><span class="n">get_torch_logprob</span><span class="p">()</span>
+
+<span class="c1"># Stan backend for MCMC</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">normal_param</span><span class="p">)</span>
+<span class="n">stan_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="parameter-constraints-and-bounds">
+<h2>Parameter Constraints and Bounds<a class="headerlink" href="#parameter-constraints-and-bounds" title="Link to this heading">¶</a></h2>
+<p><strong>Automatic Constraint Handling:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Positive parameters</span>
+<span class="n">positive_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># &gt; 0</span>
+
+<span class="c1"># Bounded parameters</span>
+<span class="n">bounded_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>   <span class="c1"># ∈ (0, 1)</span>
+
+<span class="c1"># Simplex parameters</span>
+<span class="n">simplex_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>  <span class="c1"># Sums to 1</span>
+
+<span class="c1"># Custom bounds via constants</span>
+<span class="n">custom_bounded</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+    <span class="n">mu</span><span class="o">=</span><span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">lower_bound</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper_bound</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Stan Code Generation with Constraints:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic Stan constraint generation</span>
+<span class="n">param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">stan_type</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">()</span>  <span class="c1"># &quot;real&lt;lower=0.0&gt;&quot;</span>
+
+<span class="c1"># Multi-dimensional with constraints</span>
+<span class="n">param_vector</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,))</span>
+<span class="n">stan_type</span> <span class="o">=</span> <span class="n">param_vector</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">()</span>  <span class="c1"># &quot;vector&lt;lower=0.0&gt;[5]&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="model-building-patterns">
+<h2>Model Building Patterns<a class="headerlink" href="#model-building-patterns" title="Link to this heading">¶</a></h2>
+<p><strong>Hierarchical Model Construction:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">build_hierarchical_model</span><span class="p">(</span><span class="n">group_sizes</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a hierarchical model with automatic parameterization.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Population-level parameters</span>
+    <span class="n">mu_pop</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">sigma_pop</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Group-level parameters (automatic non-centering)</span>
+    <span class="n">mu_groups</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+        <span class="n">mu</span><span class="o">=</span><span class="n">mu_pop</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="o">=</span><span class="n">sigma_pop</span><span class="p">,</span>
+        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">group_sizes</span><span class="p">),)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Individual-level parameters</span>
+    <span class="n">sigma_indiv</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c1"># Observations</span>
+    <span class="n">observations</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">size</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">group_sizes</span><span class="p">):</span>
+        <span class="n">obs</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+            <span class="n">mu</span><span class="o">=</span><span class="n">mu_groups</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">sigma</span><span class="o">=</span><span class="n">sigma_indiv</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">size</span><span class="p">,)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">as_observable</span><span class="p">()</span>
+        <span class="n">observations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;population&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">mu_pop</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="n">sigma_pop</span><span class="p">},</span>
+        <span class="s1">&#39;groups&#39;</span><span class="p">:</span> <span class="n">mu_groups</span><span class="p">,</span>
+        <span class="s1">&#39;individual_sigma&#39;</span><span class="p">:</span> <span class="n">sigma_indiv</span><span class="p">,</span>
+        <span class="s1">&#39;observations&#39;</span><span class="p">:</span> <span class="n">observations</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Mixture Model Construction:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">build_mixture_model</span><span class="p">(</span><span class="n">n_components</span><span class="p">,</span> <span class="n">n_obs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a finite mixture model.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Mixture weights</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n_components</span><span class="p">,))</span>
+
+    <span class="c1"># Component parameters</span>
+    <span class="n">component_means</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+        <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n_components</span><span class="p">,)</span>
+    <span class="p">)</span>
+    <span class="n">component_sds</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span>
+        <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n_components</span><span class="p">,)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Mixture assignments (latent)</span>
+    <span class="n">assignments</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">MultinomialLogit</span><span class="p">(</span>
+        <span class="n">gamma</span><span class="o">=</span><span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">weights</span><span class="p">),</span>  <span class="c1"># Convert weights to logits</span>
+        <span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Observations (mixture likelihood would need custom implementation)</span>
+    <span class="c1"># This is a conceptual example</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;weights&#39;</span><span class="p">:</span> <span class="n">weights</span><span class="p">,</span>
+        <span class="s1">&#39;means&#39;</span><span class="p">:</span> <span class="n">component_means</span><span class="p">,</span>
+        <span class="s1">&#39;sds&#39;</span><span class="p">:</span> <span class="n">component_sds</span><span class="p">,</span>
+        <span class="s1">&#39;assignments&#39;</span><span class="p">:</span> <span class="n">assignments</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-optimization-tips">
+<h2>Performance Optimization Tips<a class="headerlink" href="#performance-optimization-tips" title="Link to this heading">¶</a></h2>
+<p><strong>Efficient Parameter Specification:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Efficient: Single multi-dimensional parameter</span>
+<span class="n">efficient</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,))</span>
+
+<span class="c1"># Less efficient: Many individual parameters</span>
+<span class="c1"># inefficient = [ssp.parameters.Normal(mu=0, sigma=1) for _ in range(100)]</span>
+</pre></div>
+</div>
+<p><strong>Memory-Conscious Model Building:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Share parent parameters when possible</span>
+<span class="n">shared_sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">observations</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">obs</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+        <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">sigma</span><span class="o">=</span><span class="n">shared_sigma</span><span class="p">,</span>  <span class="c1"># Shared, not duplicated</span>
+        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,)</span>
+    <span class="p">)</span>
+    <span class="n">observations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Stan Code Optimization:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciStanPy automatically optimizes Stan code:</span>
+<span class="c1"># - Non-centered parameterization for hierarchical models</span>
+<span class="c1"># - Vectorized operations where possible</span>
+<span class="c1"># - Efficient constraint handling</span>
+<span class="c1"># - Optimal loop structure for multi-dimensional parameters</span>
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Use appropriate parameterizations</strong> for your modeling context</p></li>
+<li><p><strong>Leverage automatic non-centering</strong> for hierarchical models</p></li>
+<li><p><strong>Choose efficient distributions</strong> for your data type (continuous vs discrete)</p></li>
+<li><p><strong>Use shape parameters</strong> instead of creating many individual parameters</p></li>
+<li><p><strong>Mark observables explicitly</strong> when the automatic detection isn’t sufficient</p></li>
+<li><p><strong>Validate parameter bounds</strong> match your domain knowledge</p></li>
+<li><p><strong>Use CDF functions</strong> for truncated distributions and model validation</p></li>
+</ol>
+<p>The parameter system provides a comprehensive foundation for probabilistic modeling while maintaining mathematical rigor and computational efficiency across multiple backends.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">SciStanPy API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#top-level-package">Top-Level Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#module-overview">Module Overview</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html#quick-navigation">Quick Navigation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">Model API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../operations.html">Operations API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#usage-notes">Usage Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#missing-something">Missing Something?</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">SciStanPy API Reference</a><ul>
+  <li><a href="../index.html">Model API Reference</a><ul>
+  <li><a href="index.html">Model Components API Reference</a><ul>
+      <li>Previous: <a href="custom_distributions/custom_scipy_dists.html" title="previous chapter">Custom SciPy Distributions API Reference</a></li>
+      <li>Next: <a href="transformations/index.html" title="next chapter">Transformations API Reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../../_sources/api/model/components/parameters.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

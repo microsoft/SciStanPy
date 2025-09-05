@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Custom SciPy Distributions API Reference &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="Parameters API Reference" href="../parameters.html" />
+    <link rel="prev" title="Custom PyTorch Distributions API Reference" href="custom_torch_dists.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="custom-scipy-distributions-api-reference">
+<h1>Custom SciPy Distributions API Reference<a class="headerlink" href="#custom-scipy-distributions-api-reference" title="Link to this heading">¶</a></h1>
+<p>This reference covers the custom SciPy-based probability distributions in SciStanPy.</p>
+<section id="module-scistanpy.model.components.custom_distributions.custom_scipy_dists">
+<span id="custom-scipy-distributions-module"></span><h2>Custom SciPy Distributions Module<a class="headerlink" href="#module-scistanpy.model.components.custom_distributions.custom_scipy_dists" title="Link to this heading">¶</a></h2>
+<p>Custom SciPy distribution implementations for SciStanPy models.</p>
+<p>This module provides extended and custom SciPy distribution classes that address
+limitations in the standard SciPy distribution library for probabilistic modeling.
+These implementations enable advanced batch operations, support variable batch
+dimensions, and provide transformed distributions not available in the standard library.</p>
+<dl class="simple">
+<dt>Key Features:</dt><dd><ul class="simple">
+<li><p><strong>Enhanced Batch Support</strong>: Extended multivariate distributions with variable batch dimensions</p></li>
+<li><p><strong>Custom Transformations</strong>: Log-transformed distributions with proper Jacobian corrections</p></li>
+<li><dl class="simple">
+<dt><strong>Alternative Parameterizations</strong>: Logit and log-probability parameterizations for</dt><dd><p>multinomial distributions</p>
+</dd>
+</dl>
+</li>
+<li><p><strong>Numerical Stability</strong>: Improved implementations for edge cases and extreme values</p></li>
+</ul>
+</dd>
+</dl>
+<p>Distribution Categories:</p>
+<dl class="simple">
+<dt><strong>Enhanced Multivariate Distributions</strong>: Extended batch support</dt><dd><ul class="simple">
+<li><p>CustomDirichlet: Dirichlet distribution with variable batch dimensions</p></li>
+<li><p>CustomMultinomial: Multinomial distribution with flexible batch handling</p></li>
+<li><p>MultinomialLogit: Logit-parameterized multinomial distribution</p></li>
+<li><p>MultinomialLogTheta: Log-probability parameterized multinomial distribution</p></li>
+</ul>
+</dd>
+<dt><strong>Transformed Distributions</strong>: Log-transformed variants</dt><dd><ul class="simple">
+<li><p>ExpDirichlet: Log-transformed Dirichlet distribution</p></li>
+<li><p>LogUnivariateScipyTransform: General log-transformation framework</p></li>
+<li><p>TransformedScipyDist: Abstract base for distribution transformations</p></li>
+</ul>
+</dd>
+<dt><strong>Pre-configured Distributions</strong>: Ready-to-use distribution instances</dt><dd><ul class="simple">
+<li><p>dirichlet: CustomDirichlet instance</p></li>
+<li><p>multinomial: CustomMultinomial instance</p></li>
+<li><p>expexponential: Log-transformed exponential distribution</p></li>
+<li><p>explomax: Log-transformed Lomax distribution</p></li>
+<li><p>expdirichlet: ExpDirichlet instance</p></li>
+</ul>
+</dd>
+</dl>
+<p>The distributions in this module are designed to work within SciPy’s distribution
+framework while providing enhanced functionality for advanced probabilistic modeling
+scenarios commonly encountered in SciStanPy applications.</p>
+<dl class="field-list simple">
+<dt class="field-odd">members<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+<dt class="field-even">undoc-members<span class="colon">:</span></dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<section id="expdirichlet-implementation">
+<h3>expdirichlet Implementation<a class="headerlink" href="#expdirichlet-implementation" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_scipy_dists.expdirichlet">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">expdirichlet</span></span><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.expdirichlet" title="Link to this definition">¶</a></dt>
+<dd><p>alias of &lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet object&gt;</p>
+</dd></dl>
+
+</section>
+<section id="explomax-implementation">
+<h3>explomax Implementation<a class="headerlink" href="#explomax-implementation" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_scipy_dists.explomax">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">explomax</span></span><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.explomax" title="Link to this definition">¶</a></dt>
+<dd><p>alias of &lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform object&gt;</p>
+</dd></dl>
+
+</section>
+<section id="multinomial-logit-implementation">
+<h3>multinomial_logit Implementation<a class="headerlink" href="#multinomial-logit-implementation" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial_logit">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">multinomial_logit</span></span><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial_logit" title="Link to this definition">¶</a></dt>
+<dd><p>alias of &lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit object&gt;</p>
+</dd></dl>
+
+</section>
+<section id="multinomial-log-theta-implementation">
+<h3>multinomial_log_theta Implementation<a class="headerlink" href="#multinomial-log-theta-implementation" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial_log_theta">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_scipy_dists.</span></span><span class="sig-name descname"><span class="pre">multinomial_log_theta</span></span><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial_log_theta" title="Link to this definition">¶</a></dt>
+<dd><p>alias of &lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta object&gt;</p>
+</dd></dl>
+
+</section>
+</section>
+<section id="backend-comparison-and-integration">
+<h2>Backend Comparison and Integration<a class="headerlink" href="#backend-comparison-and-integration" title="Link to this heading">¶</a></h2>
+<p><strong>SciPy vs PyTorch Implementations:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compare implementations for consistency</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">])</span>
+
+<span class="c1"># SciPy backend</span>
+<span class="n">exp_dir_scipy</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">expdirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">scipy_samples</span> <span class="o">=</span> <span class="n">exp_dir_scipy</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># PyTorch backend</span>
+<span class="n">exp_dir_torch</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">expdirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">alpha</span><span class="p">))</span>
+<span class="n">torch_samples</span> <span class="o">=</span> <span class="n">exp_dir_torch</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="mi">1000</span><span class="p">,))</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+<span class="c1"># Statistical comparison</span>
+<span class="n">scipy_mean</span> <span class="o">=</span> <span class="n">scipy_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">torch_mean</span> <span class="o">=</span> <span class="n">torch_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean difference: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">scipy_mean</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">torch_mean</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>When to Use Each Backend:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciPy backend advantages:</span>
+<span class="c1"># - Mature statistical functions (CDF, SF, PPF)</span>
+<span class="c1"># - Robust numerical implementations</span>
+<span class="c1"># - Extensive statistical analysis tools</span>
+<span class="c1"># - CPU-optimized performance</span>
+
+<span class="c1"># PyTorch backend advantages:</span>
+<span class="c1"># - Automatic differentiation</span>
+<span class="c1"># - GPU acceleration</span>
+<span class="c1"># - Batch processing</span>
+<span class="c1"># - Integration with neural networks</span>
+</pre></div>
+</div>
+</section>
+<section id="performance-characteristics">
+<h2>Performance Characteristics<a class="headerlink" href="#performance-characteristics" title="Link to this heading">¶</a></h2>
+<p><strong>CPU Performance:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciPy optimized for CPU statistical computing</span>
+<span class="n">large_alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">exp_dir</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">expdirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">large_alpha</span><span class="p">)</span>
+
+<span class="c1"># Efficient sampling</span>
+<span class="n">samples</span> <span class="o">=</span> <span class="n">exp_dir</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>  <span class="c1"># Fast CPU sampling</span>
+
+<span class="c1"># Statistical analysis</span>
+<span class="n">percentiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="p">[</span><span class="mi">25</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">75</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Memory Efficiency:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Memory-efficient processing with SciPy</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">batch_evaluate</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate in batches to manage memory.&quot;&quot;&quot;</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">batch_size</span><span class="p">]</span>
+        <span class="n">batch_results</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_results</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Statistical Analysis Integration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Leverage SciPy ecosystem for analysis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+
+<span class="c1"># Distribution fitting</span>
+<span class="n">sample_data</span> <span class="o">=</span> <span class="n">lomax_scipy</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># Goodness of fit tests</span>
+<span class="n">ks_stat</span><span class="p">,</span> <span class="n">p_value</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">kstest</span><span class="p">(</span>
+    <span class="n">sample_data</span><span class="p">,</span>
+    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">lomax_scipy</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Confidence intervals</span>
+<span class="n">alpha_level</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">lower</span> <span class="o">=</span> <span class="n">lomax_scipy</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">alpha_level</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">upper</span> <span class="o">=</span> <span class="n">lomax_scipy</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha_level</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="integration-with-scistanpy-models">
+<h2>Integration with SciStanPy Models<a class="headerlink" href="#integration-with-scistanpy-models" title="Link to this heading">¶</a></h2>
+<p><strong>Automatic Backend Selection:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciStanPy automatically selects appropriate backend</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+
+<span class="c1"># This uses PyTorch backend for model building</span>
+<span class="n">exp_dir_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">expdirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+
+<span class="c1"># But can use SciPy backend for analysis</span>
+<span class="n">samples</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">exp_dir_param</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>  <span class="c1"># Uses SciPy for sampling</span>
+</pre></div>
+</div>
+<p><strong>Custom Distribution Development:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Template for new SciPy distribution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">rv_continuous</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomSciPyDistribution</span><span class="p">(</span><span class="n">rv_continuous</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Template for custom SciPy distribution.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_param</span> <span class="o">=</span> <span class="n">custom_param</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">):</span>
+        <span class="c1"># Implement probability density function</span>
+        <span class="k">return</span> <span class="n">density_function</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">):</span>
+        <span class="c1"># Implement cumulative distribution function</span>
+        <span class="k">return</span> <span class="n">cdf_function</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">custom_param</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># Implement random number generation</span>
+        <span class="k">return</span> <span class="n">generate_samples</span><span class="p">(</span><span class="n">custom_param</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Validation and Testing:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Validate custom distributions</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_distribution</span><span class="p">(</span><span class="n">scipy_dist</span><span class="p">,</span> <span class="n">torch_dist</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare SciPy and PyTorch implementations.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Sample comparison</span>
+    <span class="n">scipy_samples</span> <span class="o">=</span> <span class="n">scipy_dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+    <span class="n">torch_samples</span> <span class="o">=</span> <span class="n">torch_dist</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="mi">1000</span><span class="p">,))</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+    <span class="c1"># Statistical moments</span>
+    <span class="n">scipy_mean</span> <span class="o">=</span> <span class="n">scipy_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">torch_mean</span> <span class="o">=</span> <span class="n">torch_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Check consistency</span>
+    <span class="n">mean_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">scipy_mean</span> <span class="o">-</span> <span class="n">torch_mean</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">mean_diff</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Implementations differ: </span><span class="si">{</span><span class="n">mean_diff</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✓ Implementations are consistent&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="numerical-considerations">
+<h2>Numerical Considerations<a class="headerlink" href="#numerical-considerations" title="Link to this heading">¶</a></h2>
+<p><strong>Precision and Stability:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># SciPy provides robust numerical implementations</span>
+
+<span class="c1"># Handle extreme parameter values</span>
+<span class="n">extreme_alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1e-6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">])</span>
+<span class="n">stable_dist</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">expdirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">extreme_alpha</span><span class="p">)</span>
+
+<span class="c1"># Numerical stability in log-space</span>
+<span class="n">very_small_probs</span> <span class="o">=</span> <span class="n">stable_dist</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">extreme_samples</span><span class="p">)</span>
+
+<span class="c1"># Automatic overflow/underflow handling</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">very_small_probs</span><span class="p">))</span>
+</pre></div>
+</div>
+<p><strong>Error Handling:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comprehensive parameter validation</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">invalid_dist</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter validation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Runtime checks</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">invalid_sample</span> <span class="o">=</span> <span class="n">lomax_dist</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample validation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Use SciPy backend</strong> for statistical analysis and exploratory work</p></li>
+<li><p><strong>Leverage PyTorch backend</strong> for gradient-based optimization</p></li>
+<li><p><strong>Validate implementations</strong> when developing custom distributions</p></li>
+<li><p><strong>Handle extreme values</strong> with appropriate numerical techniques</p></li>
+<li><p><strong>Test statistical properties</strong> against known analytical results</p></li>
+<li><p><strong>Use appropriate precision</strong> for your computational requirements</p></li>
+<li><p><strong>Profile performance</strong> for computational bottlenecks</p></li>
+</ol>
+<p>The SciPy custom distributions provide robust, well-tested implementations that integrate seamlessly with the broader scientific Python ecosystem while maintaining full compatibility with SciStanPy’s modeling framework.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">SciStanPy API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#top-level-package">Top-Level Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#module-overview">Module Overview</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../../index.html#quick-navigation">Quick Navigation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../../custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html">Model API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../operations.html">Operations API Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#usage-notes">Usage Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#stability">Stability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#missing-something">Missing Something?</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">SciStanPy API Reference</a><ul>
+  <li><a href="../../index.html">Model API Reference</a><ul>
+  <li><a href="../index.html">Model Components API Reference</a><ul>
+  <li><a href="index.html">Custom Distributions API Reference</a><ul>
+      <li>Previous: <a href="custom_torch_dists.html" title="previous chapter">Custom PyTorch Distributions API Reference</a></li>
+      <li>Next: <a href="../parameters.html" title="next chapter">Parameters API Reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../../../_sources/api/model/components/custom_distributions/custom_scipy_dists.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

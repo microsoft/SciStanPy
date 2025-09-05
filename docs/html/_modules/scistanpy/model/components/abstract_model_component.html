@@ -104,7 +104,7 @@
 
 
 <div class="viewcode-block" id="AbstractModelComponent">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent">[docs]</a>
+<a class="viewcode-back" href="../../../../api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbstractModelComponent</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all SciStanPy model components.</span>
 
@@ -374,8 +374,6 @@
         <span class="c1"># Set the shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span> <span class="o">=</span> <span class="n">broadcasted_shape</span>
 
-<div class="viewcode-block" id="AbstractModelComponent.get_child_paramnames">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_child_paramnames">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_child_paramnames</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="s2">&quot;AbstractModelComponent&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get parameter names that this component defines in its children.</span>
 
@@ -410,11 +408,8 @@
             <span class="c1"># Record the name</span>
             <span class="n">child_paramnames</span><span class="p">[</span><span class="n">child</span><span class="p">]</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="n">child_paramnames</span></div>
+        <span class="k">return</span> <span class="n">child_paramnames</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.get_indexed_varname">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_indexed_varname">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_indexed_varname</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -483,8 +478,7 @@
         <span class="c1"># Build the indexed variable name</span>
         <span class="n">indexed_varname</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span>
 
-        <span class="k">return</span> <span class="n">indexed_varname</span></div>
-
+        <span class="k">return</span> <span class="n">indexed_varname</span>
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_draw</span><span class="p">(</span>
@@ -507,8 +501,6 @@
 <span class="sd">        distribution or deterministic function.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="AbstractModelComponent.draw">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.draw">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">n</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span>
@@ -603,11 +595,8 @@
                 <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">_drawn</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
                 <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">_drawn</span><span class="p">[</span><span class="n">param</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">draws</span><span class="p">,</span> <span class="n">_drawn</span></div>
+        <span class="k">return</span> <span class="n">draws</span><span class="p">,</span> <span class="n">_drawn</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.walk_tree">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.walk_tree">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">walk_tree</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">walk_down</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">_recursion_depth</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;AbstractModelComponent&quot;</span><span class="p">,</span> <span class="s2">&quot;AbstractModelComponent&quot;</span><span class="p">]]:</span>
@@ -652,11 +641,8 @@
                 <span class="p">)</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">to_return</span></div>
+        <span class="k">return</span> <span class="n">to_return</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.get_shared_leading">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_shared_leading">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_shared_leading</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;AbstractModelComponent&quot;</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">:</span>
@@ -698,11 +684,8 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">break</span>
 
-        <span class="k">return</span> <span class="n">compat_level</span></div>
+        <span class="k">return</span> <span class="n">compat_level</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.get_supporting_functions">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_supporting_functions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get Stan function definitions required by this component.</span>
 
@@ -719,11 +702,8 @@
 <span class="sd">        - Include statements for external function libraries</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># The default is no supporting functions</span>
-        <span class="k">return</span> <span class="p">[]</span></div>
+        <span class="k">return</span> <span class="p">[]</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.get_transformation_assignment">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_transformation_assignment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_transformation_assignment</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>  <span class="c1"># pylint: disable=unused-argument</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -743,11 +723,8 @@
 <span class="sd">        parameterizations) should override this method to provide appropriate</span>
 <span class="sd">        Stan transformation code.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.get_target_incrementation">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_target_incrementation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_target_incrementation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>  <span class="c1"># pylint: disable=unused-argument</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -766,11 +743,8 @@
 <span class="sd">        Probabilistic components should override this method to provide</span>
 <span class="sd">        appropriate target increment statements for their distributions.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.get_index_offset">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_index_offset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_index_offset</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;AbstractModelComponent&quot;</span><span class="p">],</span> <span class="n">offset_adjustment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -801,11 +775,8 @@
             <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parents</span><span class="p">[</span><span class="n">query</span><span class="p">]</span>
 
         <span class="c1"># Calculate offset</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">query</span><span class="o">.</span><span class="n">ndim</span> <span class="o">+</span> <span class="n">offset_adjustment</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">query</span><span class="o">.</span><span class="n">ndim</span> <span class="o">+</span> <span class="n">offset_adjustment</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.get_right_side">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_right_side">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -894,11 +865,8 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown model component type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">param</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">model_components</span></div>
+        <span class="k">return</span> <span class="n">model_components</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.declare_stan_variable">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.declare_stan_variable">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">declare_stan_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">varname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">force_basetype</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan variable declaration with appropriate type.</span>
 
@@ -914,11 +882,8 @@
 <span class="sd">        the variable name to create a complete variable declaration suitable</span>
 <span class="sd">        for use in Stan data, parameters, or other blocks.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">(</span><span class="n">force_basetype</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">varname</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">(</span><span class="n">force_basetype</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">varname</span><span class="si">}</span><span class="s2">&quot;</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.get_assign_depth">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_assign_depth">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_assign_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the assignment depth for Stan loop structure.</span>
 
@@ -948,11 +913,8 @@
             <span class="n">level</span> <span class="o">-=</span> <span class="mi">1</span>
 
         <span class="c1"># Clip at zero</span>
-        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.get_stan_dtype">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_stan_dtype">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_stan_dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_basetype</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan data type declaration for this component.</span>
 
@@ -1002,11 +964,8 @@
         <span class="k">if</span> <span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;array[</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">string_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
 
-        <span class="k">return</span> <span class="n">dtype</span></div>
+        <span class="k">return</span> <span class="n">dtype</span>
 
-
-<div class="viewcode-block" id="AbstractModelComponent.get_stan_parameter_declaration">
-<a class="viewcode-back" href="../../../../rst/api/model/components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_stan_parameter_declaration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_stan_parameter_declaration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_basetype</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan parameter declaration for this component.</span>
 
@@ -1021,8 +980,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">declare_stan_variable</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">stan_model_varname</span><span class="p">,</span> <span class="n">force_basetype</span><span class="o">=</span><span class="n">force_basetype</span>
-        <span class="p">)</span></div>
-
+        <span class="p">)</span>
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1353,7 +1311,7 @@
 </search>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../rst/api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">SciStanPy API Reference</a></li>
 </ul>
 
 <div class="relations">
@@ -1361,8 +1319,6 @@
 <ul>
   <li><a href="../../../../index.html">Documentation overview</a><ul>
   <li><a href="../../../index.html">Module code</a><ul>
-  <li><a href="../../../scistanpy.html">scistanpy</a><ul>
-  </ul></li>
   </ul></li>
   </ul></li>
 </ul>
