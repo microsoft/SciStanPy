@@ -1,39 +1,10 @@
 SciStanPy API Reference
 =======================
 
-This section provides the low-level, import-level documentation for SciStanPy.
-It complements the user and advanced guides by exposing public classes, functions,
-and modules intended for direct programmatic use.
-
-Scope
------
-Only implemented, importable objects are listed. Experimental or planned interfaces
-are intentionally omitted.
-
-Top-Level Package
------------------
-
-The root package exposes core entry points:
-
-.. automodule:: scistanpy
-   :undoc-members:
-   :show-inheritance:
-
-Module Overview
----------------
-
-- scistanpy.utils: General utilities (lazy import, numerical stability, chunking, Dask context, correlation helper)
-- scistanpy.defaults: Centralized default configuration values
-- scistanpy.model: Model class and Stan code generation pipeline
-- scistanpy.model.components: Model component building blocks
-- scistanpy.model.results: Result and diagnostic classes (MLEInferenceRes, SampleResults)
-- scistanpy.model.stan: Stan integration, program generation helpers (indirect via model.to_stan())
-
-Quick Navigation
-----------------
+At the root level, SciStanPy exposes the :py:mod:`scistanpy.operations`, :py:mod:`scistanpy.utils`, :py:mod:`scistanpy.model.components.parameters`, and :py:mod:`scistanpy.model.results` modules, as well as the :py:class:`scistanpy.model.model.Model` and :py:class:`scistanpy.model.components.constants.Constant` classes. These components will be sufficient for most users of SciStanPy; however, links to relevant documentation for the entire public API is provided below for reference:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
 
    custom_types
    defaults
@@ -43,16 +14,8 @@ Quick Navigation
    operations
    utils
 
-Usage Notes
------------
-1. Prefer high-level methods (Model.draw, Model.mle, Model.mcmc, Model.prior_predictive) before diving into internal Stan code generation utilities.
-2. Utilities in scistanpy.utils are backend-agnostic; choose_module helps dispatch between NumPy and PyTorch.
-3. Defaults in scistanpy.defaults can be imported and overridden in application code where appropriate.
+There are also a few objects defined at the root level itself. These include the following:
 
-Stability
----------
-Public objects documented here follow semantic versioning. Internal helpers (prefixed with underscores or not listed) may change without notice.
+.. autofunction:: scistanpy.manual_seed
 
-Missing Something?
-------------------
-If an object you expect to see is absent, verify it exists in the codebase and is publicly importable, then open a documentation issue or pull request.
+.. autodata:: scistanpy.RNG

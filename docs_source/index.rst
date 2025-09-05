@@ -201,7 +201,7 @@ The below table links to the documentaiton for the most commonly used components
 All Submodules
 --------------
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    api/index
 
