@@ -120,7 +120,7 @@ def _exp_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]: ...
 def _exp_transform(x: "custom_types.Float") -> "custom_types.Float": ...
 
 
-def _exp_transform(x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
+def _exp_transform(x):
     """Apply element-wise exponential transformation.
 
     Simple exponential transformation function for parameter transformations.

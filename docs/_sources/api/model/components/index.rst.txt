@@ -24,8 +24,6 @@ Component Architecture
 ----------------------
 
 .. automodule:: scistanpy.model.components
-
-   :members:
    :undoc-members:
    :show-inheritance:
 

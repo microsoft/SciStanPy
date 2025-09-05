@@ -72,21 +72,14 @@ computations.</p>
 - Expensive matrix operations on fixed data
 - Normalization constants for custom distributions
 - Any deterministic computation independent of parameters</p>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </section>
 <section id="transformeddata-class">
 <h2>TransformedData Class<a class="headerlink" href="#transformeddata-class" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_data.TransformedData">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_data.</span></span><span class="sig-name descname"><span class="pre">TransformedData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_data.html#TransformedData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_data.TransformedData" title="Link to this definition">¶</a></dt>
-<dd><p>Abstract base class for Stan transformed data block components.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></p>
+<p>Abstract base class for Stan transformed data block components.</p>
 <p>This class provides the foundation for model components that generate
 Stan code for the transformed data block. Components in this block
 represent deterministic computations that are performed once at the
@@ -122,14 +115,6 @@ fixed computations rather than random variables or learnable parameters.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Efficient Data Preprocessing:</strong></p>
 <p>The TransformedData class enables computationally expensive operations to be performed once in Stan’s transformed data block rather than repeatedly during sampling:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
@@ -155,6 +140,61 @@ fixed computations rather than random variables or learnable parameters.</p>
 <span class="c1"># Instead of computing the inverse at every MCMC iteration</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_data.TransformedData.get_transformed_data_assignment">
+<span class="sig-name descname"><span class="pre">get_transformed_data_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assignment_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_side_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_data.TransformedData.get_transformed_data_assignment" title="Link to this definition">¶</a></dt>
+<dd><p>Generate complete transformation assignment code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index_opts</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em><em>]</em>) – Index variable names for multi-dimensional operations</p></li>
+<li><p><strong>assignment_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Keyword arguments for assignment formatting. Defaults to None.</p></li>
+<li><p><strong>right_side_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Keyword arguments for right-side formatting. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Complete Stan assignment statement</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>This method combines the left-hand side variable name with the right-hand
+side operation to create a complete Stan assignment statement suitable
+for use in transformed parameters or transformed data blocks.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_data.TransformedData.model_varname">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_varname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_data.TransformedData.model_varname" title="Link to this definition">¶</a></dt>
+<dd><p>Get or generate the SciStanPy variable name for this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Variable name for this component</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<p>If a variable name has been explicitly assigned, returns that name.
+Otherwise, automatically generates a name based on child component
+relationships using dot notation for hierarchical names.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_data.TransformedData.torch_parametrization">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">torch_parametrization</span></span><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_data.TransformedData.torch_parametrization" title="Link to this definition">¶</a></dt>
+<dd><p>Raise error for PyTorch parameterization attempts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>NotImplementedError</strong> – Always, as transformed data has no parameters</p>
+</dd>
+</dl>
+<p>Transformed data components are not learnable parameters and therefore
+cannot have PyTorch parameterizations. They represent fixed computations
+based on data rather than optimizable variables.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>

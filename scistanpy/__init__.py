@@ -101,11 +101,10 @@ manual_seed()  # Set the seed for the global random number generator
 
 # Import objects that should be easily accessible from the package level
 # pylint: disable=wrong-import-position
-from scistanpy import utils
-
-# Lazy imports for performance and to avoid circular imports
+from scistanpy import operations, utils
 from scistanpy.model.components.constants import Constant
 from scistanpy.model.model import Model
 
+# Lazy imports for performance and to avoid circular imports
 parameters = utils.lazy_import("scistanpy.model.components.parameters")
 results = utils.lazy_import("scistanpy.model.results")

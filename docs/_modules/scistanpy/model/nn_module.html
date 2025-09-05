@@ -203,6 +203,8 @@
         <span class="c1"># Record learnable parameters such that they can be recognized by PyTorch</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">learnable_params</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ParameterList</span><span class="p">(</span><span class="n">learnable_params</span><span class="p">)</span>
 
+<div class="viewcode-block" id="PyTorchModel.forward">
+<a class="viewcode-back" href="../../../api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log probability of observed data given current parameters.</span>
 
@@ -246,8 +248,11 @@
             <span class="c1"># Add to the total log probability</span>
             <span class="n">log_prob</span> <span class="o">+=</span> <span class="n">temp_log_prob</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
-        <span class="k">return</span> <span class="n">log_prob</span>
+        <span class="k">return</span> <span class="n">log_prob</span></div>
 
+
+<div class="viewcode-block" id="PyTorchModel.fit">
+<a class="viewcode-back" href="../../../api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.fit">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -388,8 +393,11 @@
             <span class="n">loss_trajectory</span><span class="p">[</span><span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
         <span class="c1"># Trim off the None values of the loss trajectory and convert to a tensor</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">loss_trajectory</span><span class="p">[:</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">loss_trajectory</span><span class="p">[:</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="PyTorchModel.export_params">
+<a class="viewcode-back" href="../../../api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.export_params">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">export_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Export optimized parameter values from the fitted model.</span>
 
@@ -417,8 +425,11 @@
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">name</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">torch_parametrization</span>
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">}</span>
+        <span class="p">}</span></div>
 
+
+<div class="viewcode-block" id="PyTorchModel.export_distributions">
+<a class="viewcode-back" href="../../../api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.export_distributions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">export_distributions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Export fitted probability distributions for all model components.</span>
 
@@ -451,7 +462,8 @@
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_dict</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">observable_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">)</span>
-        <span class="p">}</span>
+        <span class="p">}</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_move_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">funcname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Internal method for device placement operations.</span>
@@ -485,6 +497,8 @@
 
         <span class="k">return</span> <span class="bp">self</span>
 
+<div class="viewcode-block" id="PyTorchModel.cuda">
+<a class="viewcode-back" href="../../../api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.cuda">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cuda</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move model to CUDA device.</span>
 
@@ -501,8 +515,11 @@
 <span class="sd">            &gt;&gt;&gt; pytorch_model = pytorch_model.cuda()  # Move to default GPU</span>
 <span class="sd">            &gt;&gt;&gt; pytorch_model = pytorch_model.cuda(1)  # Move to GPU 1</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_move_model</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_move_model</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="PyTorchModel.cpu">
+<a class="viewcode-back" href="../../../api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.cpu">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move model to CPU device.</span>
 
@@ -518,8 +535,11 @@
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; pytorch_model = pytorch_model.cpu()  # Move to CPU</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_move_model</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_move_model</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="PyTorchModel.to">
+<a class="viewcode-back" href="../../../api/model/nn_module.html#scistanpy.model.nn_module.PyTorchModel.to">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move model to specified device or data type.</span>
 
@@ -539,6 +559,7 @@
 <span class="sd">            &gt;&gt;&gt; pytorch_model = pytorch_model.to(&#39;cpu&#39;, dtype=torch.float32)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_move_model</span><span class="p">(</span><span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</div>
 
 </pre></div>
 

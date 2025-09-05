@@ -7,8 +7,6 @@ Transformed Parameters Module
 -----------------------------
 
 .. automodule:: scistanpy.model.components.transformations.transformed_parameters
-
-   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -19,7 +17,6 @@ Abstract Base Class
 ~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.TransformedParameter
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -47,7 +44,6 @@ BinaryTransformedParameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -67,7 +63,6 @@ UnaryTransformedParameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -88,25 +83,21 @@ Basic Arithmetic
 ~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.AddParameter
-
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.SubtractParameter
-
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter
-
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.DivideParameter
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -128,19 +119,16 @@ Power and Unary Operations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.PowerParameter
-
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.NegateParameter
-
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.AbsParameter
-
    :members:
    :undoc-members:
    :show-inheritance:

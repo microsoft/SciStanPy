@@ -7,8 +7,6 @@ Operations Module
 -----------------
 
 .. automodule:: scistanpy.operations
-
-   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -20,13 +18,11 @@ The operations module provides a framework for creating mathematical operations 
 **Core Classes:**
 
 .. autoclass:: scistanpy.operations.MetaOperation
-
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.operations.Operation
-
    :members:
    :undoc-members:
    :show-inheritance:

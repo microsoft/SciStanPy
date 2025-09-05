@@ -7,8 +7,6 @@ HMC Results Module
 ------------------
 
 .. automodule:: scistanpy.model.results.hmc
-
-   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -19,7 +17,6 @@ Sample Results Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.results.hmc.SampleResults
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -48,7 +45,6 @@ Variable Failure Analyzer
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.results.hmc.VariableAnalyzer
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -77,7 +73,6 @@ CSV to NetCDF Conversion
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter
-
    :members:
    :undoc-members:
    :show-inheritance:

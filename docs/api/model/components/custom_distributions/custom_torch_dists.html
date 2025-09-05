@@ -78,14 +78,6 @@ PyTorch distribution library.</p>
 <p>The distributions in this module are designed to work within PyTorch’s
 distribution framework while providing the specific functionality required
 for probabilistic modeling in SciStanPy.</p>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </section>
 <section id="distribution-architecture">
 <h2>Distribution Architecture<a class="headerlink" href="#distribution-architecture" title="Link to this heading">¶</a></h2>
@@ -94,20 +86,13 @@ for probabilistic modeling in SciStanPy.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_torch_dists.</span></span><span class="sig-name descname"><span class="pre">CustomDistribution</span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/custom_distributions/custom_torch_dists.html#CustomDistribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution" title="Link to this definition">¶</a></dt>
-<dd><p>Base marker class for custom SciStanPy distributions.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base marker class for custom SciStanPy distributions.</p>
 <p>This class serves as a marker interface for custom distribution implementations
 in SciStanPy. It doesn’t provide any functionality but is useful for type
 hinting and identifying custom distributions in the codebase.</p>
 <p>All custom distribution classes should inherit from this class to maintain
 consistency and enable type checking.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Foundation for Custom Distributions:</strong></p>
 <p>The CustomDistribution class provides the PyTorch backend for all custom probability distributions:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
@@ -137,7 +122,8 @@ consistency and enable type checking.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_torch_dists.ExpExponential">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_torch_dists.</span></span><span class="sig-name descname"><span class="pre">ExpExponential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/custom_distributions/custom_torch_dists.html#ExpExponential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpExponential" title="Link to this definition">¶</a></dt>
-<dd><p>Exponential-Exponential distribution implementation.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedDistribution</span></code>, <a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution" title="scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution"><code class="xref py py-class docutils literal notranslate"><span class="pre">CustomDistribution</span></code></a></p>
+<p>Exponential-Exponential distribution implementation.</p>
 <p>This distribution is created by taking the logarithm of an exponentially
 distributed random variable. It’s also known as the Gumbel distribution
 and is useful for extreme value modeling.</p>
@@ -177,12 +163,6 @@ and is useful for extreme value modeling.</p>
 <li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
 </ul>
 </dd>
-<dt class="field-even">Members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
 </dl>
 <p><strong>Log-Exponential Distribution:</strong></p>
 <p>If X ~ Exponential(β), then Y = log(X) ~ ExpExponential(β):</p>
@@ -216,7 +196,8 @@ and is useful for extreme value modeling.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_torch_dists.ExpDirichlet">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_torch_dists.</span></span><span class="sig-name descname"><span class="pre">ExpDirichlet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/custom_distributions/custom_torch_dists.html#ExpDirichlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpDirichlet" title="Link to this definition">¶</a></dt>
-<dd><p>Exponential-Dirichlet distribution implementation.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedDistribution</span></code>, <a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution" title="scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution"><code class="xref py py-class docutils literal notranslate"><span class="pre">CustomDistribution</span></code></a></p>
+<p>Exponential-Dirichlet distribution implementation.</p>
 <p>This distribution is created by taking the element-wise logarithm of a
 Dirichlet-distributed random vector. It’s useful for modeling log-scale
 compositional data and log-probability vectors.</p>
@@ -260,12 +241,6 @@ the exponential transformation.</p>
 <li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
 </ul>
 </dd>
-<dt class="field-even">Members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
 </dl>
 <p><strong>Log-Simplex Distribution:</strong></p>
 <p>If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α):</p>
@@ -299,7 +274,8 @@ the exponential transformation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_torch_dists.ExpLomax">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_torch_dists.</span></span><span class="sig-name descname"><span class="pre">ExpLomax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/custom_distributions/custom_torch_dists.html#ExpLomax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpLomax" title="Link to this definition">¶</a></dt>
-<dd><p>Exponential-Lomax distribution implementation.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedDistribution</span></code>, <a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution" title="scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution"><code class="xref py py-class docutils literal notranslate"><span class="pre">CustomDistribution</span></code></a></p>
+<p>Exponential-Lomax distribution implementation.</p>
 <p>This distribution is created by taking the logarithm of a Lomax-distributed
 random variable. It’s useful for modeling log-scale phenomena that exhibit
 heavy-tailed behavior.</p>
@@ -344,12 +320,6 @@ distribution with the convenience of log-scale modeling.</p>
 <li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
 </ul>
 </dd>
-<dt class="field-even">Members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
 </dl>
 <p><strong>Log-Heavy-Tailed Distribution:</strong></p>
 <p>If X ~ Lomax(λ, α), then Y = log(X) ~ ExpLomax(λ, α):</p>
@@ -386,7 +356,8 @@ distribution with the convenience of log-scale modeling.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_torch_dists.Lomax">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_torch_dists.</span></span><span class="sig-name descname"><span class="pre">Lomax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/custom_distributions/custom_torch_dists.html#Lomax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.Lomax" title="Link to this definition">¶</a></dt>
-<dd><p>Lomax distribution implementation (shifted Pareto distribution).</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedDistribution</span></code>, <a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution" title="scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution"><code class="xref py py-class docutils literal notranslate"><span class="pre">CustomDistribution</span></code></a></p>
+<p>Lomax distribution implementation (shifted Pareto distribution).</p>
 <p>The Lomax distribution is a shifted version of the Pareto distribution,
 also known as the Pareto Type II distribution. It’s implemented as a
 transformed Pareto distribution with an affine transformation.</p>
@@ -430,12 +401,6 @@ framework with a Pareto base distribution and an affine transformation.</p>
 <li><p><strong>kwargs</strong> – Additional base distribution keyword arguments</p></li>
 </ul>
 </dd>
-<dt class="field-even">Members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
 </dl>
 <p><strong>Power-Law Tail Distribution:</strong></p>
 <p>The Lomax distribution (Pareto Type II) has polynomial tails:</p>
@@ -488,7 +453,8 @@ framework with a Pareto base distribution and an affine transformation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_torch_dists.</span></span><span class="sig-name descname"><span class="pre">MultinomialLogit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">total_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/custom_distributions/custom_torch_dists.html#MultinomialLogit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit" title="Link to this definition">¶</a></dt>
-<dd><p>Multinomial distribution parameterized by logits.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Multinomial</span></code>, <a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution" title="scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution"><code class="xref py py-class docutils literal notranslate"><span class="pre">CustomDistribution</span></code></a></p>
+<p>Multinomial distribution parameterized by logits.</p>
 <p>This class provides a specialized interface for multinomial distributions
 where the parameters are specified as logits (log-odds) rather than
 probabilities. This parameterization is often more convenient for
@@ -525,12 +491,6 @@ modeling and optimization.</p>
 <li><p><strong>validate_args</strong> – Validation flag</p></li>
 </ul>
 </dd>
-<dt class="field-even">Members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
 </dl>
 <p><strong>Unconstrained Multinomial Parameterization:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Unconstrained parameterization for optimization</span>
@@ -575,7 +535,8 @@ modeling and optimization.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogTheta">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.custom_distributions.custom_torch_dists.</span></span><span class="sig-name descname"><span class="pre">MultinomialLogTheta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">total_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_probs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/custom_distributions/custom_torch_dists.html#MultinomialLogTheta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogTheta" title="Link to this definition">¶</a></dt>
-<dd><p>Multinomial distribution with normalized log-probabilities.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit" title="scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultinomialLogit</span></code></a></p>
+<p>Multinomial distribution with normalized log-probabilities.</p>
 <p>This class extends MultinomialLogit with the additional constraint that
 the input log-probabilities must already be normalized (i.e., their
 exponentials sum to 1). This is useful when working with log-probability
@@ -622,14 +583,6 @@ invalid probability distributions.</p>
 </dd>
 </dl>
 <p>Validates that log_probs are properly normalized before initialization.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Log-Probability Parameterized with Optimization:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Log-simplex parameterization</span>
 <span class="n">log_probabilities</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">]))</span>

@@ -47,14 +47,6 @@ the core functionality of SciStanPy, including:</p>
 <li><p>Context managers for external library integration</p></li>
 <li><p>Optimized statistical computation functions</p></li>
 </ul>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </section>
 <section id="lazy-import-system">
 <h2>Lazy Import System<a class="headerlink" href="#lazy-import-system" title="Link to this heading">¶</a></h2>
@@ -96,7 +88,8 @@ from sys.modules for efficiency.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.utils.LazyObjectProxy">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">LazyObjectProxy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/utils.html#LazyObjectProxy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.LazyObjectProxy" title="Link to this definition">¶</a></dt>
-<dd><p>A proxy that delays importing a module and accessing an object until first use.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A proxy that delays importing a module and accessing an object until first use.</p>
 <p>This class provides a lazy loading mechanism for specific objects within
 modules, allowing fine-grained control over when imports occur. The proxy
 forwards all method calls and attribute access to the actual object once
@@ -124,14 +117,6 @@ it’s loaded.</p>
 </pre></div>
 </div>
 </dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
 </dl>
 </dd></dl>
 
@@ -334,7 +319,8 @@ the limit)</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.utils.az_dask">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">az_dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dask_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'parallelized'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dtypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/utils.html#az_dask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.az_dask" title="Link to this definition">¶</a></dt>
-<dd><p>Context manager for enabling Dask integration with ArviZ.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Context manager for enabling Dask integration with ArviZ.</p>
 <p>This context manager provides a convenient way to enable Dask-based
 parallel computation within ArviZ operations, automatically handling
 the setup and teardown of Dask configuration.</p>
@@ -362,14 +348,6 @@ the setup and teardown of Dask configuration.</p>
 <dt>Note:</dt><dd><p>The context manager automatically disables Dask when exiting,
 ensuring clean state management.</p>
 </dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
 </dl>
 </dd></dl>
 

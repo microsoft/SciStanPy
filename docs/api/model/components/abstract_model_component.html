@@ -76,14 +76,6 @@ implement.</p>
 </dl>
 <p>This foundational layer enables the construction of sophisticated probabilistic
 models while maintaining type safety and automatic Stan code generation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </section>
 <section id="core-abstract-classes">
 <h2>Core Abstract Classes<a class="headerlink" href="#core-abstract-classes" title="Link to this heading">¶</a></h2>
@@ -92,7 +84,8 @@ models while maintaining type safety and automatic Stan code generation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.abstract_model_component.</span></span><span class="sig-name descname"><span class="pre">AbstractModelComponent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="Link to this definition">¶</a></dt>
-<dd><p>Abstract base class for all SciStanPy model components.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for all SciStanPy model components.</p>
 <p>This class defines the fundamental interface and common functionality for
 all elements in a SciStanPy probabilistic model. It provides the foundation
 for parameters, constants, transformations, and other model components.</p>
@@ -147,14 +140,6 @@ and generating Stan code appropriate to their type.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Foundation of All Model Components:</strong></p>
 <p>The AbstractModelComponent class provides the essential infrastructure for all SciStanPy model components:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
@@ -202,6 +187,626 @@ and generating Stan code appropriate to their type.</p>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">component</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">: shape </span><span class="si">{</span><span class="n">draws</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.BASE_STAN_DTYPE">
+<span class="sig-name descname"><span class="pre">BASE_STAN_DTYPE</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'real'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'int'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'simplex'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'real'</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.BASE_STAN_DTYPE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.FORCE_LOOP_RESET">
+<span class="sig-name descname"><span class="pre">FORCE_LOOP_RESET</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.FORCE_LOOP_RESET" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.FORCE_PARENT_NAME">
+<span class="sig-name descname"><span class="pre">FORCE_PARENT_NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.FORCE_PARENT_NAME" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.IS_LOG_SIMPLEX">
+<span class="sig-name descname"><span class="pre">IS_LOG_SIMPLEX</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.IS_LOG_SIMPLEX" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.IS_SIMPLEX">
+<span class="sig-name descname"><span class="pre">IS_SIMPLEX</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.IS_SIMPLEX" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.LOG_SIMPLEX_PARAMS">
+<span class="sig-name descname"><span class="pre">LOG_SIMPLEX_PARAMS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.LOG_SIMPLEX_PARAMS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.LOWER_BOUND">
+<span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Float'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.LOWER_BOUND" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.NEGATIVE_PARAMS">
+<span class="sig-name descname"><span class="pre">NEGATIVE_PARAMS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.NEGATIVE_PARAMS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.POSITIVE_PARAMS">
+<span class="sig-name descname"><span class="pre">POSITIVE_PARAMS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.POSITIVE_PARAMS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.SIMPLEX_PARAMS">
+<span class="sig-name descname"><span class="pre">SIMPLEX_PARAMS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.SIMPLEX_PARAMS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.UPPER_BOUND">
+<span class="sig-name descname"><span class="pre">UPPER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Float'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.UPPER_BOUND" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.assign_depth">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">assign_depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.assign_depth" title="Link to this definition">¶</a></dt>
+<dd><p>Get the assignment depth for Stan loop nesting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Loop nesting level for this component</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>custom_types.Integer</p>
+</dd>
+</dl>
+<p>This property provides convenient access to the assignment depth
+calculation, which determines how deeply nested this component
+should be in Stan’s loop structure.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.children">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">children</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.children" title="Link to this definition">¶</a></dt>
+<dd><p>Get all child components that depend on this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Copy of the children list</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent">AbstractModelComponent</a>]</p>
+</dd>
+</dl>
+<p>Returns a copy to prevent external modification of the internal
+children list while allowing iteration and inspection.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.constants">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">constants</span></span><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.constants" title="Link to this definition">¶</a></dt>
+<dd><p>Get all constant-valued parent components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary mapping parameter names to constant components</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, <a class="reference internal" href="constants.html#scistanpy.model.components.constants.Constant" title="scistanpy.model.components.constants.Constant">Constant</a>]</p>
+</dd>
+</dl>
+<p>This property filters parent components to return only those that
+are Constant instances, useful for identifying fixed values in
+the model hierarchy.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.declare_stan_variable">
+<span class="sig-name descname"><span class="pre">declare_stan_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">varname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_basetype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.declare_stan_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.declare_stan_variable" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan variable declaration with appropriate type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>varname</strong> (<em>str</em>) – Variable name to declare</p></li>
+<li><p><strong>force_basetype</strong> (<em>bool</em>) – Whether to force array[…] basetype format. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Complete Stan variable declaration</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>This method combines the Stan data type (from get_stan_dtype) with
+the variable name to create a complete variable declaration suitable
+for use in Stan data, parameters, or other blocks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">_drawn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'AbstractModelComponent'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">npt.NDArray</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">npt.NDArray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'AbstractModelComponent'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">npt.NDArray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.draw" title="Link to this definition">¶</a></dt>
+<dd><p>Recursively draw samples from this component and its dependency tree.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>custom_types.Integer</em>) – Number of samples to draw</p></li>
+<li><p><strong>_drawn</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><em>AbstractModelComponent</em></a><em>, </em><em>npt.NDArray</em><em>]</em><em>]</em>) – Cache of previously drawn samples. Auto-created if None. Defaults to None.
+Internal use only. Used to cache draws throughout recursion.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Random seed for reproducible sampling. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of (samples_from_this_component, all_drawn_samples)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[npt.NDArray, dict[<a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent">AbstractModelComponent</a>, npt.NDArray]]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="../../exceptions.html#scistanpy.exceptions.NumpySampleError" title="scistanpy.exceptions.NumpySampleError"><strong>NumpySampleError</strong></a> – If sampling fails due to parameter issues</p></li>
+<li><p><strong>AssertionError</strong> – If drawn values violate component bounds or constraints</p></li>
+</ul>
+</dd>
+</dl>
+<p>This method implements the complete sampling workflow:
+1. Recursively draws from parent components if not already drawn
+2. Collects parent samples for the current level
+3. Draws n samples from this component using parent values
+4. Validates drawn samples against bounds and constraints
+5. Returns samples and updates the global draw cache</p>
+<p>The method enforces constraint validation including:
+- Lower and upper bound checking
+- Simplex sum-to-one validation
+- Parameter type constraint validation</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.force_name">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">force_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.force_name" title="Link to this definition">¶</a></dt>
+<dd><p>Check whether this component should be explicitly named in Stan code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if any child forces parent naming</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+<p>This property returns True if any child component has FORCE_PARENT_NAME
+set to True, indicating that this component should be given an explicit
+variable name in the generated Stan code rather than being inlined.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_assign_depth">
+<span class="sig-name descname"><span class="pre">get_assign_depth</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_assign_depth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_assign_depth" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the assignment depth for Stan loop structure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Loop nesting level for this component’s assignment</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+<p>This method determines the appropriate loop nesting level for
+defining this component in Stan code. The depth is calculated as:
+- Number of dimensions minus one (last dimension is vectorized)
+- Minus trailing singleton dimensions (except the last)
+- Clipped to a minimum of zero</p>
+<p>Assignment depth affects:
+- Loop structure in generated Stan code
+- Index variable management
+- Vectorization opportunities</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_child_paramnames">
+<span class="sig-name descname"><span class="pre">get_child_paramnames</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_child_paramnames"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_child_paramnames" title="Link to this definition">¶</a></dt>
+<dd><p>Get parameter names that this component defines in its children.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping from child components to parameter names they use for this component</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[<a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent">AbstractModelComponent</a>, str]</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AssertionError</strong> – If a child references this component with multiple parameter names</p>
+</dd>
+</dl>
+<p>This method analyzes the dependency graph to determine how child
+components reference this component. Each child should reference
+this component through exactly one parameter name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_index_offset">
+<span class="sig-name descname"><span class="pre">get_index_offset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_adjustment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_index_offset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_index_offset" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate index offset for multi-dimensional variable access.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><em>AbstractModelComponent</em></a><em>]</em>) – Component or parameter name to calculate offset for</p></li>
+<li><p><strong>offset_adjustment</strong> (<em>int</em>) – Additional offset to apply. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of leading indices to skip</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>KeyError</strong> – If query string doesn’t match any parent parameter</p>
+</dd>
+</dl>
+<p>This method calculates the appropriate index offset when accessing
+parent components that have different numbers of dimensions. The
+offset accounts for implicit singleton dimensions that are added
+during broadcasting operations.</p>
+<p>Index offsets are essential for:
+- Proper multi-dimensional array indexing in Stan code
+- Handling broadcasting between components of different shapes
+- Maintaining correct dimension alignment in generated code</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_indexed_varname">
+<span class="sig-name descname"><span class="pre">get_indexed_varname</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_name_override</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_indexed_varname"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_indexed_varname" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan variable name with appropriate indexing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index_opts</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em><em>]</em>) – Index variable names to choose from.</p></li>
+<li><p><strong>offset</strong> (<em>custom_types.Integer</em>) – Number of leading indices to skip. Defaults to 0.</p></li>
+<li><p><strong>start_dim</strong> (<em>custom_types.Integer</em>) – First dimension to include in indexing. Defaults to 0.</p></li>
+<li><p><strong>end_dim</strong> (<em>Optional</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Last dimension to include in indexing. Defaults to -1.</p></li>
+<li><p><strong>_name_override</strong> (<em>str</em>) – Override for base variable name. Defaults to “”.
+Internal use only.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stan variable name with proper indexing</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>This method generates proper Stan variable names for multi-dimensional
+components, handling:
+- Singleton dimension skipping
+- Index offset management for broadcasting
+- Dimension range selection
+- Automatic vectorization of the last dimension</p>
+<p>The offset parameter accounts for implicit singleton dimensions added
+during broadcasting between parent and child components.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_right_side">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_right_side</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_adjustment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_right_side"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_right_side" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan code for the right-hand side of statements.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index_opts</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em><em>]</em>) – Index variable names for multi-dimensional access</p></li>
+<li><p><strong>start_dims</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>custom_types.Integer</em><em>]</em><em>]</em>) – First indexable dimension for each parent parameter.
+Defaults to None.</p></li>
+<li><p><strong>end_dims</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>custom_types.Integer</em><em>]</em><em>]</em>) – Last indexable dimension for each parent parameter. Defaults
+to None.</p></li>
+<li><p><strong>offset_adjustment</strong> (<em>int</em>) – Index offset adjustment. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary mapping parameter names to Stan code strings</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, str]</p>
+</dd>
+</dl>
+<p>This abstract method must be implemented by all model components
+to generate appropriate Stan code for probability statements, transformations,
+and assignments. The method processes parent components and returns
+properly formatted Stan expressions.</p>
+<p>The base implementation in this abstract class provides common
+functionality for:
+- Processing parent component relationships
+- Handling index offsets and dimension slicing
+- Determining when to use variable names vs. inline expressions
+- Managing transformed parameter code generation</p>
+<p>Subclasses extend this foundation to generate component-specific
+Stan code patterns.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_shared_leading">
+<span class="sig-name descname"><span class="pre">get_shared_leading</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">custom_types.Integer</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_shared_leading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_shared_leading" title="Link to this definition">¶</a></dt>
+<dd><p>Determine the number of compatible leading dimensions with another component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><em>AbstractModelComponent</em></a>) – Component to compare shapes with</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of shared leading dimensions</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>custom_types.Integer</p>
+</dd>
+</dl>
+<p>This method analyzes shape compatibility between components by counting
+the number of leading dimensions that are compatible according to
+broadcasting rules. Dimensions are compatible if they are equal or
+if at least one of them is 1 (singleton).</p>
+<p>Shape compatibility is important for:
+- Determining indexing strategies
+- Validating broadcasting operations
+- Optimizing Stan code generation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_stan_dtype">
+<span class="sig-name descname"><span class="pre">get_stan_dtype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_basetype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_stan_dtype"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_stan_dtype" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan data type declaration for this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>force_basetype</strong> (<em>bool</em>) – Whether to force array[…] format instead of vectors.
+Defaults to False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stan data type string with bounds</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>AssertionError</strong> – If unknown data type is encountered</p>
+</dd>
+</dl>
+<p>This method generates appropriate Stan data type declarations based on:
+- Base data type (real, int, simplex)
+- Component dimensionality
+- Bound constraints
+- Whether vector/array format is preferred</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_stan_parameter_declaration">
+<span class="sig-name descname"><span class="pre">get_stan_parameter_declaration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_basetype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_stan_parameter_declaration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_stan_parameter_declaration" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan parameter declaration for this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>force_basetype</strong> (<em>bool</em>) – Whether to force array[…] format. Defaults to False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Complete Stan parameter declaration</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>This convenience method generates a parameter declaration using the
+component’s Stan model variable name and appropriate data type.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_supporting_functions">
+<span class="sig-name descname"><span class="pre">get_supporting_functions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_supporting_functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_supporting_functions" title="Link to this definition">¶</a></dt>
+<dd><p>Get Stan function definitions required by this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of Stan function definition strings</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
+</dd>
+</dl>
+<p>This method returns Stan function definitions or include statements
+that must be added to the Stan program to support this component.
+The default implementation returns an empty list.</p>
+<p>Custom components may override this method to include:
+- Custom distribution definitions
+- Helper function implementations
+- Include statements for external function libraries</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_target_incrementation">
+<span class="sig-name descname"><span class="pre">get_target_incrementation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_target_incrementation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_target_incrementation" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan code for log-probability target increments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>index_opts</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – Index variable names for multi-dimensional access</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stan code for target increment (empty by default)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>This method generates Stan code for the model block, where
+log-probability contributions are added to the target density.
+The default implementation returns an empty string.</p>
+<p>Probabilistic components should override this method to provide
+appropriate target increment statements for their distributions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_transformation_assignment">
+<span class="sig-name descname"><span class="pre">get_transformation_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_transformation_assignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_transformation_assignment" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan code for parameter transformation assignments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>index_opts</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – Index variable names for multi-dimensional access</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stan code for transformation assignment (empty by default)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>This method generates Stan code for the transformed parameters block,
+where deterministic transformations of parameters are computed.
+The default implementation returns an empty string.</p>
+<p>Components that require parameter transformations (such as non-centered
+parameterizations) should override this method to provide appropriate
+Stan transformation code.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.is_named">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_named</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.is_named" title="Link to this definition">¶</a></dt>
+<dd><p>Check whether this component has an assigned variable name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if component has been assigned a model variable name</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.model_varname">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_varname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.model_varname" title="Link to this definition">¶</a></dt>
+<dd><p>Get or generate the SciStanPy variable name for this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Variable name for this component</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<p>If a variable name has been explicitly assigned, returns that name.
+Otherwise, automatically generates a name based on child component
+relationships using dot notation for hierarchical names.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.ndim">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ndim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.ndim" title="Link to this definition">¶</a></dt>
+<dd><p>Get the number of dimensions of this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of dimensions</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>custom_types.Integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.observable">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">observable</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.observable" title="Link to this definition">¶</a></dt>
+<dd><p>Check whether this component represents observed data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>False by default (most components are not observable)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+<p>Observable components represent known data values rather than
+parameters to be inferred. The default implementation returns
+False; subclasses may override for specific behavior.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.parents">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parents</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.parents" title="Link to this definition">¶</a></dt>
+<dd><p>Get all parent components that this component depends on.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of parent components</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent">AbstractModelComponent</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.shape">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.shape" title="Link to this definition">¶</a></dt>
+<dd><p>Get the shape of this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Shape tuple for this component</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[int, …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.stan_bounds">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">stan_bounds</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.stan_bounds" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan bounds specification string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Stan bounds specification (empty if no bounds)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<p>This property formats lower and upper bounds into Stan’s constraint
+syntax. Returns an empty string if no bounds are specified.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.stan_model_varname">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">stan_model_varname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.stan_model_varname" title="Link to this definition">¶</a></dt>
+<dd><p>Get the Stan-compatible variable name for this component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Stan variable name with dots replaced by double underscores</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<p>Converts the SciStanPy variable name to Stan-compatible format by
+replacing dots with double underscores.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.torch_parametrization">
+<em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">torch_parametrization</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.torch_parametrization" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.walk_tree">
+<span class="sig-name descname"><span class="pre">walk_tree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">walk_down</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_recursion_depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'AbstractModelComponent'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'AbstractModelComponent'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.walk_tree"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.walk_tree" title="Link to this definition">¶</a></dt>
+<dd><p>Traverse the model component dependency tree.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>walk_down</strong> (<em>bool</em>) – Whether to walk toward children (True) or parents (False).
+Defaults to True.</p></li>
+<li><p><strong>_recursion_depth</strong> (<em>custom_types.Integer</em>) – Current recursion depth (internal parameter).
+Defaults to 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of (depth, current_component, relative_component) tuples</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[int, <a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent">AbstractModelComponent</a>, <a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent">AbstractModelComponent</a>]]</p>
+</dd>
+</dl>
+<p>This method enables systematic traversal of the model dependency graph
+in either direction. Each tuple contains:
+- Recursion depth relative to the starting component
+- The current component in the traversal
+- The relative component (child if walking down, parent if walking up)</p>
+<p>Tree traversal is useful for:
+- Model structure analysis and visualization
+- Dependency validation and cycle detection
+- Code generation ordering
+- Model component discovery</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>

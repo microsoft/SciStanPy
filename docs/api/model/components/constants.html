@@ -46,21 +46,14 @@ components that don’t change during inference.</p>
 <p>The Constant class integrates with SciStanPy’s model component hierarchy while
 providing specialized functionality for fixed-value components. It is particularly
 important for interactive model manipulation during prior predictive checks.</p>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </section>
 <section id="constant-class">
 <h2>Constant Class<a class="headerlink" href="#constant-class" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.constants.</span></span><span class="sig-name descname"><span class="pre">Constant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Float'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">npt.NDArray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">np.integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">np.floating</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Float'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'custom_types.Float'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">togglable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_uniformity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/constants.html#Constant"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.constants.Constant" title="Link to this definition">¶</a></dt>
-<dd><p>Represents a constant value component in SciStanPy models.</p>
+<dd><p>Bases: <a class="reference internal" href="abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractModelComponent</span></code></a></p>
+<p>Represents a constant value component in SciStanPy models.</p>
 <p>This class wraps fixed numerical values to integrate them into the SciStanPy
 model component hierarchy. Constants provide the foundation for model
 construction by supplying fixed hyperparameters, unmodeled data, and other
@@ -124,14 +117,6 @@ Defaults to False.</p></li>
 3. Validates bounds if specified
 4. Sets up PyTorch tensor representations
 5. Configures interactive properties</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Key Features:</strong></p>
 <p>The Constant class provides essential functionality for representing fixed values in SciStanPy models:</p>
 <ul class="simple">
@@ -172,6 +157,114 @@ Defaults to False.</p></li>
 <span class="p">)</span>
 </pre></div>
 </div>
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant.enforce_uniformity">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">enforce_uniformity</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#scistanpy.model.components.constants.Constant.enforce_uniformity" title="Link to this definition">¶</a></dt>
+<dd><p>Check if uniformity enforcement is enabled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if uniformity is enforced</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If uniformity is enforced but value is not uniform</p>
+</dd>
+</dl>
+<p>When enabled, this property ensures that all elements of array-valued
+constants have the same value, which is useful for symmetric priors
+and other modeling contexts requiring uniform parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant.get_right_side">
+<span class="sig-name descname"><span class="pre">get_right_side</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_adjustment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/constants.html#Constant.get_right_side"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.constants.Constant.get_right_side" title="Link to this definition">¶</a></dt>
+<dd><p>Return Stan code for right-hand side (empty for constants).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index_opts</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em><em>]</em>) – Indexing options (unused for constants)</p></li>
+<li><p><strong>start_dims</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>custom_types.Integer</em><em>]</em><em>]</em>) – Starting dimensions (unused for constants)</p></li>
+<li><p><strong>end_dims</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>custom_types.Integer</em><em>]</em><em>]</em>) – Ending dimensions (unused for constants)</p></li>
+<li><p><strong>offset_adjustment</strong> (<em>int</em>) – Index offset (unused for constants)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Empty string (constants don’t have right-hand side expressions)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>Constants don’t participate in Stan probability statements as they
+represent fixed data values, so this method returns an empty string.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant.slider_end">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">slider_end</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><a class="headerlink" href="#scistanpy.model.components.constants.Constant.slider_end" title="Link to this definition">¶</a></dt>
+<dd><p>Get ending value for interactive sliders.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Appropriate ending value for sliders</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>custom_types.Float</p>
+</dd>
+</dl>
+<p>Returns the upper bound if specified, otherwise calculates a reasonable
+upper limit based on the value’s order of magnitude.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant.slider_start">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">slider_start</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><a class="headerlink" href="#scistanpy.model.components.constants.Constant.slider_start" title="Link to this definition">¶</a></dt>
+<dd><p>Get starting value for interactive sliders.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Appropriate starting value for sliders</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>custom_types.Float</p>
+</dd>
+</dl>
+<p>Returns the lower bound if specified, otherwise calculates a reasonable
+lower limit based on the value’s order of magnitude.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant.slider_step_size">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">slider_step_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><a class="headerlink" href="#scistanpy.model.components.constants.Constant.slider_step_size" title="Link to this definition">¶</a></dt>
+<dd><p>Get step size for interactive sliders.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Appropriate step size for sliders</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>custom_types.Float</p>
+</dd>
+</dl>
+<p>Calculates a step size that provides approximately 100 steps between
+the slider start and end values, enabling fine-grained control.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant.torch_parametrization">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">torch_parametrization</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#scistanpy.model.components.constants.Constant.torch_parametrization" title="Link to this definition">¶</a></dt>
+<dd><p>Get PyTorch tensor representation of the constant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>PyTorch tensor containing the constant value</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+<p>Provides a tensor representation for PyTorch-based computations,
+enabling integration with gradient-based operations.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>

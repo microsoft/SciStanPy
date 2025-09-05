@@ -7,8 +7,6 @@ Parameters Module
 -----------------
 
 .. automodule:: scistanpy.model.components.parameters
-
-   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -19,7 +17,6 @@ ParameterMeta
 ~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.ParameterMeta
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -43,7 +40,6 @@ ClassOrInstanceMethod
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.ClassOrInstanceMethod
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -66,7 +62,6 @@ Parameter
 ~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Parameter
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -106,7 +101,6 @@ ContinuousDistribution
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.ContinuousDistribution
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -128,7 +122,6 @@ DiscreteDistribution
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.DiscreteDistribution
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -148,7 +141,6 @@ Normal Distribution
 ~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Normal
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -190,7 +182,6 @@ HalfNormal Distribution
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.HalfNormal
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -210,7 +201,6 @@ UnitNormal Distribution
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.UnitNormal
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -230,7 +220,6 @@ LogNormal Distribution
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.LogNormal
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -249,7 +238,6 @@ Beta Distribution
 ~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Beta
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -271,7 +259,6 @@ Gamma Distribution
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Gamma
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -290,7 +277,6 @@ InverseGamma Distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.InverseGamma
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -309,7 +295,6 @@ Exponential Distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Exponential
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -328,19 +313,16 @@ Custom Continuous Distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.ExpExponential
-
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.parameters.Lomax
-
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.parameters.ExpLomax
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -365,7 +347,6 @@ Dirichlet Distribution
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Dirichlet
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -388,7 +369,6 @@ ExpDirichlet Distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.ExpDirichlet
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -412,7 +392,6 @@ Binomial Distribution
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Binomial
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -433,7 +412,6 @@ Poisson Distribution
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Poisson
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -455,7 +433,6 @@ Standard Multinomial
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.Multinomial
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -474,7 +451,6 @@ MultinomialLogit
 ~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.MultinomialLogit
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -494,7 +470,6 @@ MultinomialLogTheta
 ~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.parameters.MultinomialLogTheta
-
    :members:
    :undoc-members:
    :show-inheritance:

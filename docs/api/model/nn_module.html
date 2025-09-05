@@ -67,21 +67,14 @@ Bayesian models using modern deep learning techniques.</p>
 </ul>
 </dd>
 </dl>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </section>
 <section id="core-pytorch-integration">
 <h2>Core PyTorch Integration<a class="headerlink" href="#core-pytorch-integration" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.nn_module.PyTorchModel">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.nn_module.</span></span><span class="sig-name descname"><span class="pre">PyTorchModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/scistanpy/model/nn_module.html#PyTorchModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.nn_module.PyTorchModel" title="Link to this definition">¶</a></dt>
-<dd><p>PyTorch-trainable version of a SciStanPy Model.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>PyTorch-trainable version of a SciStanPy Model.</p>
 <p>This class converts SciStanPy probabilistic models into PyTorch nn.Module
 instances that can be optimized using standard PyTorch training procedures.
 It preserves the probabilistic structure while enabling gradient-based
@@ -124,14 +117,6 @@ parameter estimation and other machine learning techniques.</p>
 </dd>
 <dt>Args:</dt><dd><p>model: The <cite>scistanpy.model.Model</cite> instance to convert to PyTorch.</p>
 </dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
 </dl>
 <p><strong>Creating PyTorch Models:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
@@ -188,6 +173,255 @@ parameter estimation and other machine learning techniques.</p>
 <span class="p">)</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.nn_module.PyTorchModel.cpu">
+<span class="sig-name descname"><span class="pre">cpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/scistanpy/model/nn_module.html#PyTorchModel.cpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.nn_module.PyTorchModel.cpu" title="Link to this definition">¶</a></dt>
+<dd><p>Move model to CPU device.</p>
+<p>This method transfers the entire model (including SciStanPy constants)
+back to CPU memory, useful for inference or when GPU memory is limited.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Arguments passed to torch.nn.Module.cpu()</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments passed to torch.nn.Module.cpu()</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Self reference for method chaining</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#scistanpy.model.nn_module.PyTorchModel" title="scistanpy.model.nn_module.PyTorchModel">PyTorchModel</a></p>
+</dd>
+</dl>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>  <span class="c1"># Move to CPU</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.nn_module.PyTorchModel.cuda">
+<span class="sig-name descname"><span class="pre">cuda</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/scistanpy/model/nn_module.html#PyTorchModel.cuda"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.nn_module.PyTorchModel.cuda" title="Link to this definition">¶</a></dt>
+<dd><p>Move model to CUDA device.</p>
+<p>This method transfers the entire model (including SciStanPy constants)
+to a CUDA-enabled GPU device for accelerated computation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Arguments passed to torch.nn.Module.cuda()</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments passed to torch.nn.Module.cuda()</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Self reference for method chaining</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#scistanpy.model.nn_module.PyTorchModel" title="scistanpy.model.nn_module.PyTorchModel">PyTorchModel</a></p>
+</dd>
+</dl>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>  <span class="c1"># Move to default GPU</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">cuda</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Move to GPU 1</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.nn_module.PyTorchModel.export_distributions">
+<span class="sig-name descname"><span class="pre">export_distributions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.distributions.Distribution</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/scistanpy/model/nn_module.html#PyTorchModel.export_distributions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.nn_module.PyTorchModel.export_distributions" title="Link to this definition">¶</a></dt>
+<dd><p>Export fitted probability distributions for all model components.</p>
+<p>This method returns the complete set of probability distributions
+from the fitted model, including both parameter distributions (priors)
+and observable distributions (likelihoods) with their current
+parameter values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary mapping component names to their distribution objects</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, torch.distributions.Distribution]</p>
+</dd>
+</dl>
+<p>The exported distributions include:
+- Parameter distributions with updated hyperparameter values
+- Observable distributions with fitted parameter values
+- All distributions in their PyTorch format for further computation</p>
+<p>This is useful for:
+- Posterior predictive sampling
+- Model diagnostics and validation
+- Uncertainty quantification
+- Distribution comparison and analysis</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">distributions</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">export_distributions</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fitted_normal</span> <span class="o">=</span> <span class="n">distributions</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>  <span class="c1"># torch.distributions.Normal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">fitted_normal</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="mi">1000</span><span class="p">,))</span>  <span class="c1"># Sample from fit distribution</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.nn_module.PyTorchModel.export_params">
+<span class="sig-name descname"><span class="pre">export_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/scistanpy/model/nn_module.html#PyTorchModel.export_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.nn_module.PyTorchModel.export_params" title="Link to this definition">¶</a></dt>
+<dd><p>Export optimized parameter values from the fitted model.</p>
+<p>This method extracts the current parameter values after optimization,
+providing access to the maximum likelihood estimates or other fitted
+parameter values. It excludes observable parameters (which represent
+data) and focuses on the learnable model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary mapping parameter names to their current tensor values</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, torch.Tensor]</p>
+</dd>
+</dl>
+<p>Excluded from export:
+- Observable parameters (representing data, not learnable parameters)
+- Unnamed parameters
+- Intermediate computational results from transformations</p>
+<p>This is typically used after model fitting to extract the estimated
+parameter values for further analysis or model comparison.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fitted_params</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">export_params</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mu_estimate</span> <span class="o">=</span> <span class="n">fitted_params</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sigma_estimate</span> <span class="o">=</span> <span class="n">fitted_params</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.nn_module.PyTorchModel.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_stop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarType_co</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mixed_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../../_modules/scistanpy/model/nn_module.html#PyTorchModel.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.nn_module.PyTorchModel.fit" title="Link to this definition">¶</a></dt>
+<dd><p>Optimize model parameters using gradient-based maximum likelihood estimation.</p>
+<p>This method performs complete model training using the Adam optimizer
+with configurable early stopping, learning rate, and mixed precision
+support. It automatically handles device placement, gradient computation,
+and convergence monitoring.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epochs</strong> (<em>custom_types.Integer</em>) – Maximum number of training epochs. Defaults to 100000.</p></li>
+<li><p><strong>early_stop</strong> (<em>custom_types.Integer</em>) – Epochs without improvement before stopping. Defaults to 10.</p></li>
+<li><p><strong>lr</strong> (<em>custom_types.Float</em>) – Learning rate for Adam optimizer. Defaults to 0.001.</p></li>
+<li><p><strong>data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>torch.Tensor</em><em>, </em><em>npt.NDArray</em><em>, </em><em>custom_types.Float</em><em>,
+</em><em>custom_types.Integer</em><em>]</em><em>]</em>) – Observed data for model observables</p></li>
+<li><p><strong>mixed_precision</strong> (<em>bool</em>) – Whether to use automatic mixed precision. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor containing loss trajectory throughout training</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>UserWarning</strong> – If early stopping is not triggered within epoch limit</p>
+</dd>
+</dl>
+<p>Training Features:
+- Adam optimization with configurable learning rate
+- Early stopping based on loss plateau detection
+- Mixed precision training for memory efficiency and speed
+- Progress monitoring with real-time loss display
+- Automatic device placement and tensor conversion
+- Convergence tracking</p>
+<p>The training loop:
+1. Converts input data to appropriate tensor format
+2. Validates data compatibility with model observables
+3. Iteratively optimizes parameters using gradient descent
+4. Monitors convergence and applies early stopping
+5. Returns complete loss trajectory for analysis</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">loss_history</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">observed_data</span><span class="p">},</span>
+<span class="gp">... </span>    <span class="n">epochs</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">early_stop</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">mixed_precision</span><span class="o">=</span><span class="kc">True</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">final_loss</span> <span class="o">=</span> <span class="n">loss_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.nn_module.PyTorchModel.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../../_modules/scistanpy/model/nn_module.html#PyTorchModel.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.nn_module.PyTorchModel.forward" title="Link to this definition">¶</a></dt>
+<dd><p>Compute log probability of observed data given current parameters.</p>
+<p>This method calculates the total log probability (log-likelihood) of
+the observed data under the current model parameters. It forms the
+core objective function for maximum likelihood estimation and other
+gradient-based inference procedures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>torch.Tensor</em><em>]</em>) – Observed data tensors keyed by observable parameter names</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total log probability of the observed data</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+<p>The computation includes:
+- Log probabilities of all observable parameters given data
+- Log probabilities of all latent parameters given their priors
+- Proper handling of different distribution types and shapes
+- Gradient computation for backpropagation</p>
+<dl>
+<dt>Note:</dt><dd><p>This returns log probability, <em>not</em> log loss (negative log probability).
+For optimization, negate the result to get the loss function.</p>
+</dd>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">log_prob</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">observed_y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">observed_x</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">log_prob</span>  <span class="c1"># Negative for minimization</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.nn_module.PyTorchModel.to">
+<span class="sig-name descname"><span class="pre">to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/scistanpy/model/nn_module.html#PyTorchModel.to"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.nn_module.PyTorchModel.to" title="Link to this definition">¶</a></dt>
+<dd><p>Move model to specified device or data type.</p>
+<p>This method provides flexible device and dtype conversion for the
+entire model, including both PyTorch parameters and SciStanPy
+constant tensors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Arguments passed to torch.nn.Module.to()</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments passed to torch.nn.Module.to()</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Self reference for method chaining</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#scistanpy.model.nn_module.PyTorchModel" title="scistanpy.model.nn_module.PyTorchModel">PyTorchModel</a></p>
+</dd>
+</dl>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda:0&#39;</span><span class="p">)</span>  <span class="c1"># Move to specific GPU</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>  <span class="c1"># Change precision</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>

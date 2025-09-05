@@ -7,8 +7,6 @@ Constants Module
 ----------------
 
 .. automodule:: scistanpy.model.components.constants
-
-   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -16,7 +14,6 @@ Constant Class
 --------------
 
 .. autoclass:: scistanpy.model.components.constants.Constant
-
    :members:
    :undoc-members:
    :show-inheritance:

@@ -7,8 +7,6 @@ Utils Module
 ------------
 
 .. automodule:: scistanpy.utils
-
-   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -21,7 +19,6 @@ Deferred importing to improve startup performance.
    :noindex:
 
 .. autoclass:: scistanpy.utils.LazyObjectProxy
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -99,7 +96,6 @@ Dask Integration
 Enable / disable ArviZ Dask execution.
 
 .. autoclass:: scistanpy.utils.az_dask
-
    :members:
    :undoc-members:
    :show-inheritance:

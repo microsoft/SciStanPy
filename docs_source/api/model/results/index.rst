@@ -20,8 +20,6 @@ Results Module
 --------------
 
 .. automodule:: scistanpy.model.results
-
-   :members:
    :undoc-members:
    :show-inheritance:
 

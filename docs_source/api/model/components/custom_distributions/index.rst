@@ -18,8 +18,6 @@ Custom Distributions Framework
 ------------------------------
 
 .. automodule:: scistanpy.model.components.custom_distributions
-
-   :members:
    :undoc-members:
    :show-inheritance:
 

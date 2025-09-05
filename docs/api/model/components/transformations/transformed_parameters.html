@@ -80,14 +80,6 @@ automatic differentiation capabilities and Stan code generation.</p>
 <p>Note that these will not typically be instantiated directly. Instead, use Python’s
 inbuilt operators between other model components or else use SciStanPy’s <cite>operations</cite>
 submodule.</p>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </section>
 <section id="core-transformation-classes">
 <h2>Core Transformation Classes<a class="headerlink" href="#core-transformation-classes" title="Link to this heading">¶</a></h2>
@@ -96,7 +88,8 @@ submodule.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_parameters.</span></span><span class="sig-name descname"><span class="pre">TransformedParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#TransformedParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="Link to this definition">¶</a></dt>
-<dd><p>Base class for transformed parameters that can be used in parameter blocks.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformableParameter</span></code></p>
+<p>Base class for transformed parameters that can be used in parameter blocks.</p>
 <p>This class provides the foundation for parameters that result from mathematical
 operations on other parameters. It handles both the computational aspects
 (sampling, PyTorch operations) and code generation aspects (Stan assignments).</p>
@@ -136,14 +129,6 @@ but can be used directly for custom operations.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Unified Transformation Interface:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># All transformations are TransformedParameters</span>
 <span class="n">transformation</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
@@ -158,6 +143,96 @@ but can be used directly for custom operations.</p>
 <span class="n">is_named</span> <span class="o">=</span> <span class="n">transformation</span><span class="o">.</span><span class="n">is_named</span>
 </pre></div>
 </div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.STAN_OPERATOR">
+<span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.get_transformation_assignment">
+<span class="sig-name descname"><span class="pre">get_transformation_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assignment_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_side_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.get_transformation_assignment" title="Link to this definition">¶</a></dt>
+<dd><p>Generate complete transformation assignment code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index_opts</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em><em>]</em>) – Index variable names for multi-dimensional operations</p></li>
+<li><p><strong>assignment_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Keyword arguments for assignment formatting. Defaults to None.</p></li>
+<li><p><strong>right_side_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Keyword arguments for right-side formatting. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Complete Stan assignment statement</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>This method combines the left-hand side variable name with the right-hand
+side operation to create a complete Stan assignment statement suitable
+for use in transformed parameters or transformed data blocks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#TransformedParameter.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.SampleType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarType_co</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Execute the mathematical operation using NumPy or PyTorch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>draws</strong> (<em>Union</em><em>[</em><em>torch.Tensor</em><em>, </em><em>custom_types.SampleType</em><em>]</em>) – Input values for the operation</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result of the mathematical operation</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[torch.Tensor, npt.NDArray]</p>
+</dd>
+</dl>
+<p>This abstract method defines the core computational logic for the
+transformation. It must handle both NumPy and PyTorch inputs
+appropriately to maintain backend compatibility.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.torch_parametrization">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">torch_parametrization</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.torch_parametrization" title="Link to this definition">¶</a></dt>
+<dd><p>Get PyTorch representation with transformations applied.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>PyTorch tensor with operation applied to parent tensors</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+<p>This property applies the transformation operation to the PyTorch
+parameterizations of all parent parameters, maintaining gradient
+flow for optimization.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.write_stan_operation">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write_stan_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">to_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#TransformedParameter.write_stan_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.write_stan_operation" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan code for the transformation operation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>to_format</strong> (<em>str</em>) – Formatted parameter strings</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stan code for the operation</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – If STAN_OPERATOR is not defined for simple operations</p>
+</dd>
+</dl>
+<p>This method must be implemented to provide appropriate Stan code
+for the mathematical operation represented by this transformation.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -169,7 +244,8 @@ but can be used directly for custom operations.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_parameters.</span></span><span class="sig-name descname"><span class="pre">BinaryTransformedParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#BinaryTransformedParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter" title="Link to this definition">¶</a></dt>
-<dd><p>Base class for transformations involving exactly two parameters.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a></p>
+<p>Base class for transformations involving exactly two parameters.</p>
 <p>This class provides a specialized interface for binary mathematical operations
 such as addition, subtraction, multiplication, and division. It enforces the
 two-parameter constraint and provides appropriate method signatures.</p>
@@ -202,14 +278,6 @@ and can optionally override write_stan_operation for custom Stan formatting.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Two-Operand Transformations:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Binary operations automatically handle broadcasting</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,))</span>
@@ -219,6 +287,49 @@ and can optionally override write_stan_operation for custom Stan formatting.</p>
 <span class="n">combined</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.run_np_torch_op">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#BinaryTransformedParameter.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.run_np_torch_op" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.SampleType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.SampleType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarType_co</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Execute binary operation on two inputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist1</strong> – First operand</p></li>
+<li><p><strong>dist2</strong> – Second operand</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result of binary operation</p>
+</dd>
+</dl>
+<p>This method implements the core binary mathematical operation
+for both NumPy and PyTorch backends.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.write_stan_operation">
+<span class="sig-name descname"><span class="pre">write_stan_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#BinaryTransformedParameter.write_stan_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.write_stan_operation" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan code for binary operations using STAN_OPERATOR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist1</strong> (<em>str</em>) – Formatted string for first parameter</p></li>
+<li><p><strong>dist2</strong> (<em>str</em>) – Formatted string for second parameter</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stan code with infix operator</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>Generates Stan code in the format “dist1 OPERATOR dist2” for
+standard binary operations.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -227,7 +338,8 @@ and can optionally override write_stan_operation for custom Stan formatting.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_parameters.</span></span><span class="sig-name descname"><span class="pre">UnaryTransformedParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#UnaryTransformedParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter" title="Link to this definition">¶</a></dt>
-<dd><p>Base class for transformations involving exactly one parameter.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a></p>
+<p>Base class for transformations involving exactly one parameter.</p>
 <p>This class provides a specialized interface for unary mathematical operations
 such as negation, absolute value, logarithms, and exponentials. It enforces
 the single-parameter constraint and provides appropriate method signatures.</p>
@@ -258,14 +370,6 @@ and can optionally override write_stan_operation for custom Stan formatting.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Single-Operand Transformations:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Unary operations preserve shape</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
@@ -273,6 +377,43 @@ and can optionally override write_stan_operation for custom Stan formatting.</p>
 <span class="n">abs_x</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>        <span class="c1"># Shape remains (3, 4)</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.run_np_torch_op">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#UnaryTransformedParameter.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.run_np_torch_op" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.SampleType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarType_co</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Execute unary operation on single input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dist1</strong> – Input operand</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Result of unary operation</p>
+</dd>
+</dl>
+<p>This method implements the core unary mathematical operation
+for both NumPy and PyTorch backends.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.write_stan_operation">
+<span class="sig-name descname"><span class="pre">write_stan_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#UnaryTransformedParameter.write_stan_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.write_stan_operation" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan code for unary operations using STAN_OPERATOR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dist1</strong> (<em>str</em>) – Formatted string for the parameter</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stan code with prefix operator</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>Generates Stan code in the format “OPERATOR dist1” for
+standard unary operations.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -284,7 +425,8 @@ and can optionally override write_stan_operation for custom Stan formatting.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.AddParameter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_parameters.</span></span><span class="sig-name descname"><span class="pre">AddParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#AddParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.AddParameter" title="Link to this definition">¶</a></dt>
-<dd><p>Addition transformation for two parameters.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryTransformedParameter</span></code></a></p>
+<p>Addition transformation for two parameters.</p>
 <p>Implements element-wise addition of two parameters: result = dist1 + dist2</p>
 <p>Mathematical Properties:
 - Commutative: a + b = b + a
@@ -307,20 +449,35 @@ used for combining effects, offsets, and linear combinations of parameters.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.AddParameter.STAN_OPERATOR">
+<span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'+'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.AddParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.AddParameter.run_np_torch_op">
+<span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#AddParameter.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.AddParameter.run_np_torch_op" title="Link to this definition">¶</a></dt>
+<dd><p>Perform element-wise addition.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist1</strong> – First addend</p></li>
+<li><p><strong>dist2</strong> – Second addend</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sum of the two inputs</p>
+</dd>
 </dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.SubtractParameter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_parameters.</span></span><span class="sig-name descname"><span class="pre">SubtractParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#SubtractParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter" title="Link to this definition">¶</a></dt>
-<dd><p>Subtraction transformation for two parameters.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryTransformedParameter</span></code></a></p>
+<p>Subtraction transformation for two parameters.</p>
 <p>Implements element-wise subtraction of two parameters: result = dist1 - dist2</p>
 <p>Mathematical Properties:
 - Non-commutative: a - b ≠ b - a (generally)
@@ -343,20 +500,35 @@ and relative measures between parameters.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.STAN_OPERATOR">
+<span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'-'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.run_np_torch_op">
+<span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#SubtractParameter.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.run_np_torch_op" title="Link to this definition">¶</a></dt>
+<dd><p>Perform element-wise subtraction.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist1</strong> – Minuend</p></li>
+<li><p><strong>dist2</strong> – Subtrahend</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Difference of the two inputs</p>
+</dd>
 </dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_parameters.</span></span><span class="sig-name descname"><span class="pre">MultiplyParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#MultiplyParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter" title="Link to this definition">¶</a></dt>
-<dd><p>Element-wise multiplication transformation for two parameters.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryTransformedParameter</span></code></a></p>
+<p>Element-wise multiplication transformation for two parameters.</p>
 <p>Implements element-wise multiplication of two parameters: result = dist1 * dist2</p>
 <p>Mathematical Properties:
 - Commutative: a * b = b * a
@@ -379,20 +551,35 @@ product relationships between parameters.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.STAN_OPERATOR">
+<span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.*'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.run_np_torch_op">
+<span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#MultiplyParameter.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.run_np_torch_op" title="Link to this definition">¶</a></dt>
+<dd><p>Perform element-wise multiplication.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist1</strong> – First factor</p></li>
+<li><p><strong>dist2</strong> – Second factor</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Product of the two inputs</p>
+</dd>
 </dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.DivideParameter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_parameters.</span></span><span class="sig-name descname"><span class="pre">DivideParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#DivideParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.DivideParameter" title="Link to this definition">¶</a></dt>
-<dd><p>Element-wise division transformation for two parameters.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryTransformedParameter</span></code></a></p>
+<p>Element-wise division transformation for two parameters.</p>
 <p>Implements element-wise division of two parameters: result = dist1 / dist2</p>
 <p>Mathematical Properties:
 - Non-commutative: a / b ≠ b / a (generally)
@@ -415,14 +602,6 @@ and relative measures. Care must be taken to avoid division by zero.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Arithmetic Operation Examples:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Basic arithmetic</span>
 <span class="n">a</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -434,6 +613,28 @@ and relative measures. Care must be taken to avoid division by zero.</p>
 <span class="n">division</span> <span class="o">=</span> <span class="n">a</span> <span class="o">/</span> <span class="n">b</span>          <span class="c1"># DivideParameter</span>
 </pre></div>
 </div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.DivideParameter.STAN_OPERATOR">
+<span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'./'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.DivideParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.DivideParameter.run_np_torch_op">
+<span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#DivideParameter.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.DivideParameter.run_np_torch_op" title="Link to this definition">¶</a></dt>
+<dd><p>Perform element-wise division.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist1</strong> – Dividend</p></li>
+<li><p><strong>dist2</strong> – Divisor</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Quotient of the two inputs</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -442,7 +643,8 @@ and relative measures. Care must be taken to avoid division by zero.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.PowerParameter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_parameters.</span></span><span class="sig-name descname"><span class="pre">PowerParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#PowerParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.PowerParameter" title="Link to this definition">¶</a></dt>
-<dd><p>Element-wise exponentiation transformation for two parameters.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryTransformedParameter</span></code></a></p>
+<p>Element-wise exponentiation transformation for two parameters.</p>
 <p>Implements element-wise exponentiation: result = dist1 ^ dist2</p>
 <p>Mathematical Properties:
 - Non-commutative: a^b ≠ b^a (generally)
@@ -465,20 +667,35 @@ and exponential scaling effects.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.PowerParameter.STAN_OPERATOR">
+<span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.^'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.PowerParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.PowerParameter.run_np_torch_op">
+<span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#PowerParameter.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.PowerParameter.run_np_torch_op" title="Link to this definition">¶</a></dt>
+<dd><p>Perform element-wise exponentiation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist1</strong> – Base</p></li>
+<li><p><strong>dist2</strong> – Exponent</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dist1 raised to the power of dist2</p>
+</dd>
 </dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.NegateParameter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_parameters.</span></span><span class="sig-name descname"><span class="pre">NegateParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#NegateParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.NegateParameter" title="Link to this definition">¶</a></dt>
-<dd><p>Unary negation transformation for parameters.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnaryTransformedParameter</span></code></a></p>
+<p>Unary negation transformation for parameters.</p>
 <p>Implements element-wise negation of a parameter: result = -dist1</p>
 <p>Mathematical Properties:
 - Involutory: -(-a) = a
@@ -501,20 +718,32 @@ and creating opposite relationships.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.NegateParameter.STAN_OPERATOR">
+<span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'-'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.NegateParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.NegateParameter.run_np_torch_op">
+<span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#NegateParameter.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.NegateParameter.run_np_torch_op" title="Link to this definition">¶</a></dt>
+<dd><p>Perform element-wise negation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dist1</strong> – Input parameter</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Negated input</p>
+</dd>
 </dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.AbsParameter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.transformations.transformed_parameters.</span></span><span class="sig-name descname"><span class="pre">AbsParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#AbsParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.AbsParameter" title="Link to this definition">¶</a></dt>
-<dd><p>Absolute value transformation for parameters.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnaryTransformedParameter</span></code></a></p>
+<p>Absolute value transformation for parameters.</p>
 <p>Implements element-wise absolute value: result = |dist1|</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
@@ -542,14 +771,6 @@ for magnitudes, distances, and ensuring positive parameters.</p>
 3. Converts non-component parameters to constants
 4. Establishes parent-child relationships
 5. Validates and sets component shape through broadcasting</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Advanced Arithmetic Examples:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Power operations</span>
 <span class="n">squared</span> <span class="o">=</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span>                     <span class="c1"># PowerParameter</span>
@@ -560,6 +781,42 @@ for magnitudes, distances, and ensuring positive parameters.</p>
 <span class="n">absolute</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>     <span class="c1"># AbsParameter</span>
 </pre></div>
 </div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.AbsParameter.LOWER_BOUND">
+<span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.LOWER_BOUND" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.AbsParameter.run_np_torch_op">
+<span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#AbsParameter.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.run_np_torch_op" title="Link to this definition">¶</a></dt>
+<dd><p>Compute element-wise absolute value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dist1</strong> – Input parameter</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Absolute value of input</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.AbsParameter.write_stan_operation">
+<span class="sig-name descname"><span class="pre">write_stan_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#AbsParameter.write_stan_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.write_stan_operation" title="Link to this definition">¶</a></dt>
+<dd><p>Generate Stan absolute value function call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dist1</strong> (<em>str</em>) – Formatted parameter string</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stan abs() function call</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>

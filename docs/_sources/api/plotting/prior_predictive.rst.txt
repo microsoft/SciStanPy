@@ -5,8 +5,6 @@ This page documents the interactive prior-predictive visualization helper
 implemented in `scistanpy.plotting.prior_predictive`.
 
 .. automodule:: scistanpy.plotting.prior_predictive
-
-   :members:
    :undoc-members:
    :show-inheritance:
 

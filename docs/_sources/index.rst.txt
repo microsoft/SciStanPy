@@ -31,9 +31,11 @@ Key Concepts
 **Parameters vs Observations**: In SciStanPy, parameters represent unknown quantities you want to learn about ("infer"), while observations are your measured data.
 
 **Distributions**: These encode your knowledge and uncertainty. Use them to express:
+
 - Prior knowledge about parameters
 - Expected relationships between variables
 - Measurement uncertainty and noise
+
 In SciStanPy, parameters and observations are defined using distributions.
 
 **Model Building**: Parameters can depend on one another and/or be transformed using standard mathematical operations. Combine and transform parameters to build a SciStanPy model.
@@ -68,7 +70,9 @@ or build a SciStanPy-specific environment using conda, mamba, or micromamba with
    conda env create -f conda.yml
    conda activate scistanpy
 
-Once installed, you can start modeling! All SciStanPy models are built by inheriting from a base class that handles the underlying complexities of modeling--if you work with PyTorch, this will feel quite familiar.
+Compehensive documentation for the SciStanPy API can be found :doc:`here <api/index>`. For starting quickly, however, the most important modules and objects are :doc:`model <api/model/model>`, :doc:`parameters <api/model/components/parameters>`, and :doc:`operations <api/operations>`. Less frequently used, but also important, is the :doc:`constants <api/model/components/constants>` module. Follow the links for detailed API references.
+
+The :py:class:`~scistanpy.model.model.Model` object forms the backbone of all SciStanPy models, distributions defined in :doc:`parameters <api/model/components/parameters>` define those models' variables, :doc:`operations <api/operations>` define transformations of those variables, and :doc:`constants <api/model/components/constants>` provide fixed values used throughout the model. If you work with PyTorch, defining models in SciStanPy will feel quite familiar:
 
 .. code-block:: python
 
@@ -88,8 +92,8 @@ Once installed, you can start modeling! All SciStanPy models are built by inheri
          super().__init__(default_data = {"reaction_rates": reaction_rates})
 
          # Define priors
-         self.baseline_rate = ssp.parameters.LogNormal(mu=0, sigma=1)  # Rates are always positive
-         self.temperature_effect = ssp.parameters.Normal(mu=0, sigma=0.5)  # Effect of temperature
+         self.baseline_rate = ssp.parameters.LogNormal(mu=0.0, sigma=1.0)  # Rates are always positive
+         self.temperature_effect = ssp.parameters.Normal(mu=0.0, sigma=0.5)  # Effect of temperature
 
          # Model the relationship (Arrhenius-like behavior with noise)
          self.reaction_rates = ssp.parameters.Normal(
@@ -99,8 +103,6 @@ Once installed, you can start modeling! All SciStanPy models are built by inheri
 
    # Build the model
    model = MyModel(temperatures, reaction_rates)
-
-Compehensive documentation for the SciStanPy API can be found :doc:`here <api/index>`. For starting quickly, however, the most important modules and objects are :doc:`model <api/model/model>`, :doc:`parameters <api/model/components/parameters>`, and :doc:`operations <api/operations>`. Less frequently used, but also important, is the :doc:`constants <api/model/components/constants>` module. Follow the links for detailed API references. In short, however, the :py:class:`~scistanpy.model.model.Model` object forms the backbone of all SciStanPy models, distributions defined in :doc:`parameters <api/model/components/parameters>` define those models' variables, :doc:`operations <api/operations>` define transformations of those variables, and :doc:`constants <api/model/components/constants>` provide fixed values used throughout the model.
 
 Once a model is defined, there are multiple ways to use it. First, you may wish to explore the effects of different hyperparameter values. This can be done through an interactive interface as below:
 
@@ -128,7 +130,7 @@ SciStanPy models are also fully compatible with PyTorch, and can be compiled to 
    # Convert to PyTorch module
    torch_model = model.to_pytorch()
 
-The returned PyTorch Module will have a forward method defined that takes observed data as input (using keyword arguments named according to the observables defined in the SciStanPy model -- "reaction_rates" in the example above case) and returns the log-likelihood of the data given the model. Parameter values for the returned model will initially be random, but can be optimized using standard PyTorch techniques. Compiling to a PyTorch module like this also allows SciStanPy models to be dropped in to other frameworks that rely on or extend PyTorch.
+The returned PyTorch Module will have a forward method defined that takes observed data as input (using keyword arguments named according to the observables defined in the SciStanPy model -- ``reaction_rates`` in the example above) and returns the log-likelihood of the data given the model. Parameter values for the returned model will initially be random, but can be optimized using standard PyTorch techniques. Compiling to a PyTorch module like this also allows SciStanPy models to be dropped into other frameworks that rely on or extend PyTorch.
 
 As a convenience method, SciStanPy models can be converted to PyTorch Modules and optimized in a single step using the :py:meth:`~scistanpy.model.model.Model.mle` method:
 
@@ -137,9 +139,9 @@ As a convenience method, SciStanPy models can be converted to PyTorch Modules an
    # Perform maximum likelihood estimation (MLE) using PyTorch backend
    mle_result = model.mle(device='cuda')
 
-Note that if default data was provided during model initialization, then no data needs to be provided to this method call--the registered defaults will be used automatically. Also note that, because this is a PyTorch-based method, GPU accelerattion can be used, which is a particularly useful feature for larger models.
+Note that if default data was provided during model initialization (as above), then no data need be provided to this method call--the registered defaults will be used automatically. Also note that, because this is a PyTorch-based method, GPU accelerattion can be used, which is a particularly useful feature for larger models.
 
-The :py:class:`~scistanpy.model.results.mle.MLE` object returned by :py:meth:`~scistanpy.model.model.Model.mle` method contains the optimized parameter values (accessible as instance variables or via the `model_to_varname` dictionary) and utility methods for evaluating the fit. Extensive details can be found in the :py:class:`MLE documentation <scistanpy.model.results.mle.MLE>`, but one to highlight is :py:meth:`scistanpy.model.results.mle.MLE.get_inference_obj`, which bootstraps samples from the optimized model, providing a cheap (relative to full MCMC sampling) alternative for uncertainty quantification. It can also be particularly helpful during the early stages of model development for assessing model validity before committing to MCMC sampling, especially for large models. Indeed, evaluating model fit with the returned :py:class:`~scistanpy.model.results.mle.MLEInferenceRes` instance is as straightforward as below:
+The :py:class:`~scistanpy.model.results.mle.MLE` object returned by the :py:meth:`~scistanpy.model.model.Model.mle` method contains the optimized parameter values (accessible as instance variables or via the ``model_to_varname`` dictionary) and utility methods for evaluating the fit. Extensive details can be found in the :py:class:`MLE documentation <scistanpy.model.results.mle.MLE>`, but one to highlight is the :py:meth:`~scistanpy.model.results.mle.MLE.get_inference_obj` method, which bootstraps samples from the optimized model, providing a cheap (relative to full MCMC sampling) alternative for uncertainty quantification. It can also be particularly helpful during the early stages of model development for assessing model validity before committing to MCMC sampling, especially for large models. Indeed, evaluating model fit with the returned :py:class:`~scistanpy.model.results.mle.MLEInferenceRes` instance is as straightforward as below:
 
 .. code-block:: python
 
@@ -149,9 +151,9 @@ The :py:class:`~scistanpy.model.results.mle.MLE` object returned by :py:meth:`~s
    # Evaluate model fit with posterior predictive checks
    mle_inference.run_ppc()
 
-Additional methods exposed by the :py:class:`~scistanpy.model.results.mle.MLEInferenceRes` can be found in its :doc:`associated documentation <api/model/results/mle>`. Note that the MLEInferenceRes class also exposes the `inference_obj` instance variable, which is an `arviz.InferenceData <https://python.arviz.org/en/latest/api/generated/arviz.InferenceData.html>_` object containing the samples drawn from the model. This can be used to interface directly with the `ArviZ ecosystem <https://python.arviz.org/en/latest/index.html>_` for analysis of Bayesian models.
+Additional methods exposed by the :py:class:`~scistanpy.model.results.mle.MLEInferenceRes` class can be found in its :doc:`associated documentation <api/model/results/mle>`. Note that the :py:class:`~scistanpy.model.results.mle.MLEInferenceRes` class also exposes the ``inference_obj`` instance variable, which is an `arviz\.InferenceData <https://python.arviz.org/en/latest/api/generated/arviz.InferenceData.html>`_ object containing the samples drawn from the model. This can be used to interface directly with the `ArviZ ecosystem <https://python.arviz.org/en/latest/index.html>`_ for analysis of Bayesian models.
 
-The most notable feature of SciStanPy--and, indeed, the inspiration for its name--is its ability to automatically write and execute `Stan <https://mc-stan.org/>`_ programs. As with SciStanPy's PyTorch's integration, Stan functionality can be accessed at both the model and inference levels. To access an object representing a Stan model, run the following:
+The most notable feature of SciStanPy--and, indeed, the inspiration for its name--is its ability to automatically write and execute `Stan <https://mc-stan.org/>`_ programs. As with SciStanPy's PyTorch integration, Stan functionality can be accessed at both the two levels of granularity. At the lower level, to access an object representing a Stan model, run the following:
 
 .. code-block:: python
 
@@ -167,25 +169,20 @@ To write, compile, and sample from a SciStanPy model directly, run the below:
    # Run Hamiltonian Monte Carlo sampling
    mcmc_result = model.mcmc()
 
-As with the PyTorch model, if the "default_data" argument was provided to the parent class on initialization, that data will be used for sampling. Otherwise, it should be provided as the "data" kwarg to `model.mcmc()`.
+As with the PyTorch model, if the ``default_data`` argument was provided to the parent class on initialization, that data will be used for sampling. Otherwise, it should be provided as the ``data`` kwarg to :py:meth:`~scistanpy.model.model.Model.mcmc`.
 
-The :py:class:`~scistanpy.model.results.hmc.SampleResults` instance that is returned by the :py:meth:`~scistanpy.model.model.Model.mcmc` method contains the samples drawn during sampling. The `SampleResults` class is an extension of the :py:class:`~scistanpy.model.results.mle.MLEInferenceRes` class introduced above. It shares the same methods and properties, plus some others. Most notable among the additional methods are :py:meth:`~scistanpy.model.results.hmc.SampleResults.diagnose`, which runs diagnostic checks on MCMC samples (see `Stan's documentation <https://mc-stan.org/learn-stan/diagnostics-warnings.html>`_ for a review of the different diagnostics), :py:meth:`~scistanpy.model.results.hmc.SampleResults.plot_sample_failure_quantile_traces`, which provides an interactive dashboard for visualizing *samples* that failed diagnostic  checks, and :py:meth:`~scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces`, which provides an interactive dashboard for visualizing *variables* (i.e., parameters) that failed diagnostic checks.
+The :py:class:`~scistanpy.model.results.hmc.SampleResults` instance that is returned by the :py:meth:`~scistanpy.model.model.Model.mcmc` method contains the samples drawn during sampling. The :py:class:`~scistanpy.model.results.hmc.SampleResults` class is an extension of the :py:class:`~scistanpy.model.results.mle.MLEInferenceRes` class introduced above. It shares the same methods and properties, plus some others. Most notable among the additional methods are :py:meth:`~scistanpy.model.results.hmc.SampleResults.diagnose`, which runs diagnostic checks on MCMC samples (see `Stan's documentation <https://mc-stan.org/learn-stan/diagnostics-warnings.html>`_ for a review of the different diagnostics), :py:meth:`~scistanpy.model.results.hmc.SampleResults.plot_sample_failure_quantile_traces`, which provides an interactive dashboard for visualizing *samples* that failed diagnostic checks, and :py:meth:`~scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces`, which provides an interactive dashboard for visualizing *variables* (i.e., parameters) that failed diagnostic checks.
 
 Additional examples demonstrating usage of the above features can be found in the :doc:`examples/index` section of the documentation.
-
-Indices and Tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
 API Documentation
 =================
 
 Essential Components
 --------------------
-.. list-table:: Essential Components of SciStanPy
+The below table links to the documentaiton for the most commonly used components of the SciStanPy API:
+
+.. list-table::
    :widths: 25 75
    :header-rows: 1
 
@@ -227,3 +224,9 @@ Trademarks
 ============
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow `Microsoft’s Trademark & Brand Guidelines <https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks>`_. Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship. Any use of third-party trademarks or logos are subject to those third-party’s policies.
 
+Indices and Tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

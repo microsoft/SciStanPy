@@ -7,8 +7,6 @@ Model Module
 ------------
 
 .. automodule:: scistanpy.model.model
-
-   :members:
    :undoc-members:
    :show-inheritance:
 

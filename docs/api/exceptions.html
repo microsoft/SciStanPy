@@ -46,14 +46,6 @@ for unified exception handling when needed.</p>
 <p>The exception hierarchy follows Python best practices by providing both
 general and specific exception types for different error conditions that
 may arise during model construction, fitting, and analysis.</p>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </section>
 <section id="exception-hierarchy">
 <h2>Exception Hierarchy<a class="headerlink" href="#exception-hierarchy" title="Link to this heading">¶</a></h2>
@@ -63,7 +55,8 @@ may arise during model construction, fitting, and analysis.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.exceptions.SciStanPyError">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.exceptions.</span></span><span class="sig-name descname"><span class="pre">SciStanPyError</span></span><a class="reference internal" href="../_modules/scistanpy/exceptions.html#SciStanPyError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.exceptions.SciStanPyError" title="Link to this definition">¶</a></dt>
-<dd><p>Base class for all exceptions in the SciStanPy package.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Base class for all exceptions in the SciStanPy package.</p>
 <p>This exception serves as the root of the SciStanPy exception hierarchy,
 allowing users to catch all package-specific exceptions with a single
 except clause. All other SciStanPy exceptions should inherit from this
@@ -82,14 +75,6 @@ base class.</p>
 </pre></div>
 </div>
 </dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
 </dl>
 <p><strong>Usage as Base Exception:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
@@ -113,7 +98,8 @@ base class.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.exceptions.NumpySampleError">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.exceptions.</span></span><span class="sig-name descname"><span class="pre">NumpySampleError</span></span><a class="reference internal" href="../_modules/scistanpy/exceptions.html#NumpySampleError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.exceptions.NumpySampleError" title="Link to this definition">¶</a></dt>
-<dd><p>Raised when a NumPy sample is not valid for the intended operation.</p>
+<dd><p>Bases: <a class="reference internal" href="#scistanpy.exceptions.SciStanPyError" title="scistanpy.exceptions.SciStanPyError"><code class="xref py py-class docutils literal notranslate"><span class="pre">SciStanPyError</span></code></a></p>
+<p>Raised when a NumPy sample is not valid for the intended operation.</p>
 <p>This exception is raised when sample data provided as NumPy arrays
 fails validation checks, such as having incorrect dimensions, invalid
 values, or incompatible data types for the requested operation.</p>
@@ -121,12 +107,6 @@ values, or incompatible data types for the requested operation.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>message</strong> (<em>str</em>) – Error message describing why the sample is invalid</p>
 </dd>
-<dt class="field-even">Members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
 </dl>
 <p><strong>Common Use Cases:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>

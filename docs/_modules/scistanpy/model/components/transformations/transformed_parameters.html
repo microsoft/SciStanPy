@@ -366,6 +366,8 @@
     <span class="nd">@overload</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
+<div class="viewcode-block" id="TransformedParameter.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the mathematical operation using NumPy or PyTorch.</span>
@@ -379,8 +381,11 @@
 <span class="sd">        This abstract method defines the core computational logic for the</span>
 <span class="sd">        transformation. It must handle both NumPy and PyTorch inputs</span>
 <span class="sd">        appropriately to maintain backend compatibility.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
 
+
+<div class="viewcode-block" id="TransformedParameter.write_stan_operation">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.write_stan_operation">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">to_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for the transformation operation.</span>
@@ -400,7 +405,8 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">STAN_OPERATOR</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;The STAN_OPERATOR must be defined.&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Enable calling transformed parameters as functions.</span>
@@ -478,6 +484,8 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">,</span> <span class="n">dist2</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
+<div class="viewcode-block" id="BinaryTransformedParameter.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.run_np_torch_op">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute binary operation on two inputs.</span>
@@ -489,8 +497,11 @@
 
 <span class="sd">        This method implements the core binary mathematical operation</span>
 <span class="sd">        for both NumPy and PyTorch backends.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
 
+
+<div class="viewcode-block" id="BinaryTransformedParameter.write_stan_operation">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dist2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for binary operations using STAN_OPERATOR.</span>
 
@@ -507,6 +518,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write_stan_operation</span><span class="p">()</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">STAN_OPERATOR</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">dist2</span><span class="si">}</span><span class="s2">&quot;</span></div>
+</div>
 
 
     <span class="c1"># pylint: enable=arguments-differ</span>
@@ -546,6 +558,8 @@
     <span class="nd">@overload</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
+<div class="viewcode-block" id="UnaryTransformedParameter.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.run_np_torch_op">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute unary operation on single input.</span>
@@ -556,8 +570,11 @@
 
 <span class="sd">        This method implements the core unary mathematical operation</span>
 <span class="sd">        for both NumPy and PyTorch backends.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
 
+
+<div class="viewcode-block" id="UnaryTransformedParameter.write_stan_operation">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for unary operations using STAN_OPERATOR.</span>
 
@@ -572,6 +589,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write_stan_operation</span><span class="p">()</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">STAN_OPERATOR</span><span class="si">}{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">&quot;</span></div>
+</div>
 
 
     <span class="c1"># pylint: enable=arguments-differ</span>
@@ -596,6 +614,8 @@
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;+&quot;</span>
 
+<div class="viewcode-block" id="AddParameter.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AddParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise addition.</span>
 
@@ -605,6 +625,7 @@
 <span class="sd">        :returns: Sum of the two inputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">dist1</span> <span class="o">+</span> <span class="n">dist2</span></div>
+</div>
 
 
 
@@ -626,6 +647,8 @@
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
 
+<div class="viewcode-block" id="SubtractParameter.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise subtraction.</span>
 
@@ -635,6 +658,7 @@
 <span class="sd">        :returns: Difference of the two inputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">dist1</span> <span class="o">-</span> <span class="n">dist2</span></div>
+</div>
 
 
 
@@ -656,6 +680,8 @@
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.*&quot;</span>
 
+<div class="viewcode-block" id="MultiplyParameter.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise multiplication.</span>
 
@@ -665,6 +691,7 @@
 <span class="sd">        :returns: Product of the two inputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">dist1</span> <span class="o">*</span> <span class="n">dist2</span></div>
+</div>
 
 
 
@@ -686,6 +713,8 @@
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;./&quot;</span>
 
+<div class="viewcode-block" id="DivideParameter.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.DivideParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise division.</span>
 
@@ -695,6 +724,7 @@
 <span class="sd">        :returns: Quotient of the two inputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">dist1</span> <span class="o">/</span> <span class="n">dist2</span></div>
+</div>
 
 
 
@@ -716,6 +746,8 @@
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.^&quot;</span>
 
+<div class="viewcode-block" id="PowerParameter.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.PowerParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise exponentiation.</span>
 
@@ -725,6 +757,7 @@
 <span class="sd">        :returns: dist1 raised to the power of dist2</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">dist1</span><span class="o">**</span><span class="n">dist2</span></div>
+</div>
 
 
 
@@ -746,6 +779,8 @@
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
 
+<div class="viewcode-block" id="NegateParameter.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NegateParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise negation.</span>
 
@@ -754,6 +789,7 @@
 <span class="sd">        :returns: Negated input</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="o">-</span><span class="n">dist1</span></div>
+</div>
 
 
 
@@ -777,6 +813,8 @@
 
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
 
+<div class="viewcode-block" id="AbsParameter.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute element-wise absolute value.</span>
 
@@ -784,8 +822,11 @@
 
 <span class="sd">        :returns: Absolute value of input</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">choose_module</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">choose_module</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="AbsParameter.write_stan_operation">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan absolute value function call.</span>
 
@@ -796,6 +837,7 @@
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;abs(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</div>
 
 
 

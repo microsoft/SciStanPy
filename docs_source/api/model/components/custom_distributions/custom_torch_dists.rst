@@ -7,8 +7,6 @@ Custom Torch Distributions Module
 ---------------------------------
 
 .. automodule:: scistanpy.model.components.custom_distributions.custom_torch_dists
-
-   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -19,7 +17,6 @@ Base Classes
 ~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -52,7 +49,6 @@ ExpExponential Distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.ExpExponential
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -88,7 +84,6 @@ ExpDirichlet Distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.ExpDirichlet
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -124,7 +119,6 @@ ExpLomax Distribution
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.ExpLomax
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -163,7 +157,6 @@ Lomax Distribution
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.Lomax
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -220,7 +213,6 @@ MultinomialLogit Distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -268,7 +260,6 @@ MultinomialLogTheta Distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogTheta
-
    :members:
    :undoc-members:
    :show-inheritance:

@@ -22,7 +22,6 @@ Top-level module
 ----------------
 
 .. automodule:: scistanpy.model.stan
-
    :members:
    :undoc-members:
    :show-inheritance:

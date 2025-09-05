@@ -7,8 +7,6 @@ Custom SciPy Distributions Module
 ---------------------------------
 
 .. automodule:: scistanpy.model.components.custom_distributions.custom_scipy_dists
-
-   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -16,7 +14,6 @@ expdirichlet Implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.expdirichlet
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -48,7 +45,6 @@ explomax Implementation
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.explomax
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -88,7 +84,6 @@ multinomial_logit Implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial_logit
-
    :members:
    :undoc-members:
    :show-inheritance:
@@ -116,7 +111,6 @@ multinomial_log_theta Implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial_log_theta
-
    :members:
    :undoc-members:
    :show-inheritance:

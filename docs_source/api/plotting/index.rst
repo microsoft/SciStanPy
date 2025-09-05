@@ -41,8 +41,6 @@ Module reference
 ----------------
 
 .. automodule:: scistanpy.plotting
-
-   :members:
    :undoc-members:
    :show-inheritance:
 

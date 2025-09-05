@@ -79,14 +79,6 @@ memory efficiency and computational performance for complex models.</p>
 </ul>
 </dd>
 </dl>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </section>
 <section id="core-hmc-analysis-classes">
 <h2>Core HMC Analysis Classes<a class="headerlink" href="#core-hmc-analysis-classes" title="Link to this heading">¶</a></h2>
@@ -95,7 +87,8 @@ memory efficiency and computational performance for complex models.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.results.hmc.SampleResults">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.hmc.</span></span><span class="sig-name descname"><span class="pre">SampleResults</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Model'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">os.PathLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">CmdStanMCMC</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">npt.NDArray</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'double'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'single'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'half'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'single'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inference_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">az.InferenceData</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mib_per_chunk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_dask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#SampleResults"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.SampleResults" title="Link to this definition">¶</a></dt>
-<dd><p>Comprehensive analysis interface for HMC sampling results. This class should
+<dd><p>Bases: <a class="reference internal" href="mle.html#scistanpy.model.results.mle.MLEInferenceRes" title="scistanpy.model.results.mle.MLEInferenceRes"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLEInferenceRes</span></code></a></p>
+<p>Comprehensive analysis interface for HMC sampling results. This class should
 never be instantiated directly. Instead, use the <cite>from_disk</cite> method to load the
 appropriate results object from disk.</p>
 <p>This class extends MLEInferenceRes to provide specialized functionality
@@ -137,14 +130,6 @@ and efficient data management for large MCMC datasets.</p>
 and supports both in-memory and out-of-core computation depending on
 dataset size and available memory.</p>
 <p>Base class just initializes the ArviZ object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Comprehensive MCMC Diagnostics:</strong></p>
 <p>The SampleResults class provides complete diagnostic capabilities for HMC sampling:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
@@ -162,6 +147,394 @@ dataset size and available memory.</p>
 <span class="n">calibration_analysis</span> <span class="o">=</span> <span class="n">mcmc_results</span><span class="o">.</span><span class="n">check_calibration</span><span class="p">()</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.SampleResults.calculate_diagnostics">
+<span class="sig-name descname"><span class="pre">calculate_diagnostics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#SampleResults.calculate_diagnostics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.SampleResults.calculate_diagnostics" title="Link to this definition">¶</a></dt>
+<dd><p>Compute MCMC diagnostics with side effects and reporting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dataset containing diagnostic metrics</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>xr.Dataset</p>
+</dd>
+</dl>
+<p>This convenience method computes only diagnostic metrics by calling
+calculate_summaries with kind=”diagnostics”. It preserves all side
+effects including updating the InferenceData object groups.</p>
+<p>The method is designed as a simple interface for users who only need
+diagnostic information without summary statistics.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.SampleResults.calculate_summaries">
+<span class="sig-name descname"><span class="pre">calculate_summaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'like'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'regex'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'all'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'stats'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'diagnostics'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">circ_var_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat_focus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat_funcs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">callable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extend</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdi_prob</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.94</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skipna</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostic_varnames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">('mcse_mean',</span> <span class="pre">'mcse_sd',</span> <span class="pre">'ess_bulk',</span> <span class="pre">'ess_tail',</span> <span class="pre">'r_hat')</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">xr.Dataset</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#SampleResults.calculate_summaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.SampleResults.calculate_summaries" title="Link to this definition">¶</a></dt>
+<dd><p>Compute comprehensive summary statistics and diagnostics for MCMC results.</p>
+<p>This method extends the parent class functionality to provide HMC-specific
+diagnostic capabilities, including automatic separation of statistics and
+diagnostics into appropriate InferenceData groups. See <cite>az.summary</cite> for
+more detail on arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>var_names</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Variable names to include. Defaults to None (all variables).</p></li>
+<li><p><strong>filter_vars</strong> (<em>Optional</em><em>[</em><em>Literal</em><em>[</em><em>None</em><em>, </em><em>&quot;like&quot;</em><em>, </em><em>&quot;regex&quot;</em><em>]</em><em>]</em>) – Variable filtering method. Defaults to None.</p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>&quot;all&quot;</em><em>, </em><em>&quot;stats&quot;</em><em>, </em><em>&quot;diagnostics&quot;</em><em>]</em>) – Type of computations to perform. Defaults to “all”.</p></li>
+<li><p><strong>round_to</strong> (<em>custom_types.Integer</em>) – Decimal places for rounding. Defaults to 2.</p></li>
+<li><p><strong>circ_var_names</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Names of circular variables. Defaults to None.</p></li>
+<li><p><strong>stat_focus</strong> (<em>str</em>) – Primary statistic for focus. Defaults to “mean”.</p></li>
+<li><p><strong>stat_funcs</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>callable</em><em>]</em><em>, </em><em>callable</em><em>]</em><em>]</em>) – Custom statistic functions. Defaults to None.</p></li>
+<li><p><strong>extend</strong> (<em>bool</em>) – Whether to include extended statistics. Defaults to True.
+Only meaningful if <cite>stat_funcs</cite> is not <cite>None</cite>.</p></li>
+<li><p><strong>hdi_prob</strong> (<em>custom_types.Float</em>) – Probability for highest density interval. Defaults to 0.94.</p></li>
+<li><p><strong>skipna</strong> (<em>bool</em>) – Whether to skip NaN values. Defaults to False.</p></li>
+<li><p><strong>diagnostic_varnames</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Names of diagnostic metrics. Defaults to (“mcse_mean”,
+“mcse_sd”, “ess_bulk”, “ess_tail”, “r_hat”).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Combined dataset with all computed metrics</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+<p>Enhanced Features:
+- Automatic Dask acceleration for large datasets
+- Separation of statistics and diagnostics into appropriate groups
+- Memory-efficient computation strategies</p>
+<p>The method automatically updates the InferenceData object with new groups:
+- variable_summary_stats: Basic summary statistics
+- variable_diagnostic_stats: MCMC diagnostic metrics</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.SampleResults.diagnose">
+<span class="sig-name descname"><span class="pre">diagnose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_tree_depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ebfmi_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_hat_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ess_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.StrippedTestRes'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.StrippedTestRes'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#SampleResults.diagnose"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.SampleResults.diagnose" title="Link to this definition">¶</a></dt>
+<dd><p>Execute complete MCMC diagnostic pipeline with comprehensive reporting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_tree_depth</strong> (<em>Optional</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Maximum tree depth threshold. Uses model default if None.
+Defaults to None.</p></li>
+<li><p><strong>ebfmi_thresh</strong> (<em>custom_types.Float</em>) – E-BFMI threshold for energy diagnostics. Defaults to 0.2.</p></li>
+<li><p><strong>r_hat_thresh</strong> (<em>custom_types.Float</em>) – R-hat threshold for convergence assessment. Defaults to 1.01.</p></li>
+<li><p><strong>ess_thresh</strong> (<em>custom_types.Float</em>) – ESS threshold per chain. Defaults to 100.</p></li>
+<li><p><strong>silent</strong> (<em>bool</em>) – Whether to suppress diagnostic output. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of (sample_failures, variable_failures) as returned by
+identify_failed_diagnostics</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[custom_types.StrippedTestRes, dict[str, custom_types.StrippedTestRes]]</p>
+</dd>
+</dl>
+<p>This method provides a complete, one-stop diagnostic analysis by executing
+the full diagnostic pipeline in the correct order:</p>
+<p>Pipeline Steps:
+1. <strong>calculate_diagnostics</strong>: Compute all diagnostic metrics
+2. <strong>evaluate_sample_stats</strong>: Assess sample-level diagnostic failures
+3. <strong>evaluate_variable_diagnostic_stats</strong>: Assess variable-level failures
+4. <strong>identify_failed_diagnostics</strong>: Summarize and report all failures</p>
+<p>The method provides comprehensive assessment of MCMC sampling quality,
+identifying both immediate issues (divergences, energy problems) and
+convergence concerns (R-hat, effective sample size).</p>
+<p>All intermediate results are stored in the InferenceData object for
+later access and further analysis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.SampleResults.evaluate_sample_stats">
+<span class="sig-name descname"><span class="pre">evaluate_sample_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_tree_depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ebfmi_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">xr.Dataset</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#SampleResults.evaluate_sample_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.SampleResults.evaluate_sample_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate sample-level diagnostic statistics for MCMC quality assessment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_tree_depth</strong> (<em>Optional</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Maximum tree depth threshold. Uses model default if None.
+Defaults to None.</p></li>
+<li><p><strong>ebfmi_thresh</strong> (<em>custom_types.Float</em>) – E-BFMI threshold for energy diagnostics. Defaults to 0.2.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with boolean arrays indicating test failures</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+<p>This method evaluates sample-level diagnostic statistics to identify
+problematic samples in the MCMC chains. Tests are considered failures
+when samples exhibit the following characteristics:</p>
+<p>Failure Conditions:
+- <strong>Tree Depth</strong>: Sample reached maximum tree depth (saturation)
+- <strong>E-BFMI</strong>: Energy-based fraction of missing information below threshold
+- <strong>Divergence</strong>: Sample diverged during Hamiltonian dynamics</p>
+<p>The resulting boolean arrays have True values indicating failed samples
+and False values indicating successful samples. This information is
+stored in the ‘sample_diagnostic_tests’ group of the InferenceData object.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sample_tests</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">evaluate_sample_stats</span><span class="p">(</span><span class="n">ebfmi_thresh</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n_diverged</span> <span class="o">=</span> <span class="n">sample_tests</span><span class="o">.</span><span class="n">diverged</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of divergent samples: </span><span class="si">{</span><span class="n">n_diverged</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.SampleResults.evaluate_variable_diagnostic_stats">
+<span class="sig-name descname"><span class="pre">evaluate_variable_diagnostic_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_hat_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ess_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">xr.Dataset</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#SampleResults.evaluate_variable_diagnostic_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.SampleResults.evaluate_variable_diagnostic_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate variable-level diagnostic statistics for convergence assessment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r_hat_thresh</strong> (<em>custom_types.Float</em>) – R-hat threshold for convergence. Defaults to 1.01.</p></li>
+<li><p><strong>ess_thresh</strong> (<em>custom_types.Integer</em>) – ESS threshold per chain. Defaults to 100.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with boolean arrays indicating variable-level test failures</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If variable_diagnostic_stats group doesn’t exist</p></li>
+<li><p><strong>ValueError</strong> – If required metrics are missing</p></li>
+</ul>
+</dd>
+</dl>
+<p>This method evaluates variable-level diagnostic statistics to identify
+parameters that exhibit poor sampling behavior. Tests are considered
+failures when variables meet the following criteria:</p>
+<p>Failure Conditions:
+- <strong>R-hat</strong>: Split R-hat statistic &gt;= threshold (poor convergence)
+- <strong>ESS Bulk</strong>: Bulk effective sample size / n_chains &lt;= threshold per chain
+- <strong>ESS Tail</strong>: Tail effective sample size / n_chains &lt;= threshold per chain</p>
+<p>Results are stored in the ‘variable_diagnostic_tests’ group with boolean
+arrays indicating which variables failed which tests.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">var_tests</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">evaluate_variable_diagnostic_stats</span><span class="p">(</span><span class="n">r_hat_thresh</span><span class="o">=</span><span class="mf">1.02</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">failed_convergence</span> <span class="o">=</span> <span class="n">var_tests</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;r_hat&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Variables with poor convergence: </span><span class="si">{</span><span class="n">failed_convergence</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.SampleResults.from_disk">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_disk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csv_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_dask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults" title="scistanpy.model.results.hmc.SampleResults"><span class="pre">SampleResults</span></a></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#SampleResults.from_disk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.SampleResults.from_disk" title="Link to this definition">¶</a></dt>
+<dd><p>Load SampleResults from saved NetCDF file with optional CSV metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to NetCDF file containing inference data</p></li>
+<li><p><strong>csv_files</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Paths to original CSV files or pattern. Defaults to None (auto-detect).</p></li>
+<li><p><strong>skip_fit</strong> (<em>bool</em>) – Whether to skip loading CSV metadata. Defaults to False.</p></li>
+<li><p><strong>use_dask</strong> (<em>bool</em>) – Whether to enable Dask for computation. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Loaded SampleResults object ready for analysis</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults" title="scistanpy.model.results.hmc.SampleResults">SampleResults</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>FileNotFoundError</strong> – If the specified NetCDF file doesn’t exist</p>
+</dd>
+</dl>
+<p>This class method enables loading of previously saved MCMC results from
+NetCDF format, with optional access to original CSV metadata for complete
+functionality.</p>
+<p>Loading Modes:
+- <strong>Full loading</strong>: NetCDF + CSV metadata (complete functionality)
+- <strong>NetCDF only</strong>: Fast loading without CSV metadata (limited functionality)
+- <strong>Auto-detection</strong>: Automatically finds CSV files based on NetCDF path</p>
+<p>The method supports flexible CSV file specification:
+- Explicit list of CSV file paths
+- Glob pattern for automatic discovery
+- Auto-detection based on NetCDF filename conventions</p>
+<p>When use_dask=True, the loaded data supports out-of-core computation
+for memory-efficient analysis of large datasets.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Load with auto-detected CSV files</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">SampleResults</span><span class="o">.</span><span class="n">from_disk</span><span class="p">(</span><span class="s1">&#39;model_results.nc&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Load with explicit CSV files</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">SampleResults</span><span class="o">.</span><span class="n">from_disk</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="s1">&#39;results.nc&#39;</span><span class="p">,</span> <span class="n">csv_files</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;chain_1.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;chain_2.csv&#39;</span><span class="p">]</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Fast loading without CSV metadata</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">SampleResults</span><span class="o">.</span><span class="n">from_disk</span><span class="p">(</span><span class="s1">&#39;results.nc&#39;</span><span class="p">,</span> <span class="n">skip_fit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.SampleResults.identify_failed_diagnostics">
+<span class="sig-name descname"><span class="pre">identify_failed_diagnostics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'custom_types.StrippedTestRes'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.StrippedTestRes'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#SampleResults.identify_failed_diagnostics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.SampleResults.identify_failed_diagnostics" title="Link to this definition">¶</a></dt>
+<dd><p>Identify and report diagnostic test failures with comprehensive summary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>silent</strong> (<em>bool</em>) – Whether to suppress printed output. Defaults to False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of (sample_failures, variable_failures) dictionaries</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[custom_types.StrippedTestRes, dict[str, custom_types.StrippedTestRes]]</p>
+</dd>
+</dl>
+<p>This method analyzes the results of diagnostic tests and provides both
+programmatic access to failure information and human-readable summaries.
+It requires that diagnostic evaluation methods have been run previously.</p>
+<p>Return Structure:
+- <strong>sample_failures</strong>: Dictionary mapping test names to arrays of failed sample indices
+- <strong>variable_failures</strong>: Dictionary mapping metric names to dictionaries of failed variables</p>
+<p>The method processes test results to extract:
+- Indices of samples that failed each diagnostic test
+- Names of variables that failed each diagnostic metric
+- Summary statistics showing failure rates and percentages</p>
+<p>When not silent, provides detailed reporting including:
+- Failure counts and percentages for each test type
+- Variable-specific failure information organized by metric
+- Clear categorization of sample vs. variable-level issues</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sample_fails</span><span class="p">,</span> <span class="n">var_fails</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">identify_failed_diagnostics</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Check divergence issues</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">diverged_samples</span> <span class="o">=</span> <span class="n">sample_fails</span><span class="p">[</span><span class="s1">&#39;diverged&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Check convergence issues</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">poor_rhat_vars</span> <span class="o">=</span> <span class="n">var_fails</span><span class="p">[</span><span class="s1">&#39;r_hat&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.SampleResults.plot_sample_failure_quantile_traces">
+<span class="sig-name descname"><span class="pre">plot_sample_failure_quantile_traces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">True</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">HoloMap</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#SampleResults.plot_sample_failure_quantile_traces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.SampleResults.plot_sample_failure_quantile_traces" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">plot_sample_failure_quantile_traces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">False</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Overlay</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Visualize quantile traces for samples that failed diagnostic tests.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>display</strong> (<em>bool</em>) – Whether to return formatted layout for display. Defaults to True.</p></li>
+<li><p><strong>width</strong> (<em>custom_types.Integer</em>) – Width of plots in pixels. Defaults to 600.</p></li>
+<li><p><strong>height</strong> (<em>custom_types.Integer</em>) – Height of plots in pixels. Defaults to 600.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Quantile trace plots in requested format</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[hv.HoloMap, dict[str, hv.Overlay]]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no samples failed diagnostic tests</p>
+</dd>
+</dl>
+<p>This method creates specialized trace plots showing how samples that
+failed diagnostic tests compare to those that passed. The visualization
+helps identify systematic patterns in sampling failures.</p>
+<p>Plot Structure:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>X-axis</strong>: Cumulative fraction of parameters (0 to 1, sorted by typical quantile</dt><dd><p>of failed samples)</p>
+</dd>
+</dl>
+</li>
+<li><p><strong>Y-axis</strong>: Quantiles of failed samples relative to passing samples</p></li>
+<li><p><strong>Individual traces</strong>: Semi-transparent lines for each failed sample</p></li>
+<li><p><strong>Typical trace</strong>: Bold line showing median behavior across failures</p></li>
+<li><p><strong>Reference line</strong>: Diagonal indicating perfect calibration</p></li>
+</ul>
+<p>The plots reveal:</p>
+<ul class="simple">
+<li><p>Whether failures are systematic across parameters</p></li>
+<li><p>Patterns in how failed samples deviate from typical behavior</p></li>
+<li><p>The severity and consistency of sampling problems</p></li>
+</ul>
+<p>Parameters are sorted by their typical failed quantiles to highlight
+systematic patterns, with x-axis labels hidden since absolute parameter
+identity is less important than relative patterns.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Display interactive traces</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span><span class="o">.</span><span class="n">plot_sample_failure_quantile_traces</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Access individual diagnostic plots</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traces</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_sample_failure_quantile_traces</span><span class="p">(</span><span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">diverged_plot</span> <span class="o">=</span> <span class="n">traces</span><span class="p">[</span><span class="s1">&#39;diverged&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces">
+<span class="sig-name descname"><span class="pre">plot_variable_failure_quantile_traces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">True</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#scistanpy.model.results.hmc.VariableAnalyzer" title="scistanpy.model.results.hmc.VariableAnalyzer"><span class="pre">VariableAnalyzer</span></a></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#SampleResults.plot_variable_failure_quantile_traces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">plot_variable_failure_quantile_traces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">False</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">HoloViews</span></span></span></dt>
+<dd><p>Create interactive analyzer for variables that failed diagnostic tests.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>display</strong> (<em>bool</em>) – Whether to return display-ready analyzer. Defaults to True.</p></li>
+<li><p><strong>width</strong> (<em>custom_types.Integer</em>) – Width of plots in pixels. Defaults to 800.</p></li>
+<li><p><strong>height</strong> (<em>custom_types.Integer</em>) – Height of plots in pixels. Defaults to 400.</p></li>
+<li><p><strong>plot_quantiles</strong> (<em>bool</em>) – Whether to plot quantiles vs raw values. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Interactive analyzer or Panel layout</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[<a class="reference internal" href="#scistanpy.model.results.hmc.VariableAnalyzer" title="scistanpy.model.results.hmc.VariableAnalyzer">VariableAnalyzer</a>, pn.pane.HoloViews]</p>
+</dd>
+</dl>
+<p>This method creates an interactive analysis tool for examining individual
+variables that failed diagnostic tests. The analyzer provides widgets for
+selecting specific variables, diagnostic metrics, and array indices.</p>
+<p>Interactive Features:
+- <strong>Variable Selection</strong>: Choose from variables that failed any test
+- <strong>Metric Selection</strong>: Focus on specific diagnostic failures
+- <strong>Index Selection</strong>: Examine individual array elements for multi-dimensional parameters</p>
+<p>The resulting trace plots show:
+- Sample trajectories across MCMC chains with distinct colors
+- Quantile analysis relative to parameters that passed tests
+- Hover information with detailed sample metadata
+- Chain-specific behavior identification</p>
+<p>This tool is particularly valuable for:
+- Understanding the nature of convergence problems
+- Identifying problematic parameter regions
+- Diagnosing systematic vs. sporadic sampling issues
+- Planning model reparameterization strategies</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Interactive analysis in notebook</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">analyzer</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_variable_failure_quantile_traces</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">analyzer</span>  <span class="c1"># Display widget interface</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Programmatic access to analyzer</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">analyzer_obj</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_variable_failure_quantile_traces</span><span class="p">(</span><span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Access underlying data and interface components</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -170,7 +543,8 @@ dataset size and available memory.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.results.hmc.VariableAnalyzer">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.hmc.</span></span><span class="sig-name descname"><span class="pre">VariableAnalyzer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults" title="scistanpy.model.results.hmc.SampleResults"><span class="pre">SampleResults</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">800</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">400</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#VariableAnalyzer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.VariableAnalyzer" title="Link to this definition">¶</a></dt>
-<dd><p>Interactive analysis tool for variables that fail MCMC diagnostic tests.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Interactive analysis tool for variables that fail MCMC diagnostic tests.</p>
 <p>This class provides an interactive interface for analyzing individual variables
 that have failed diagnostic tests during MCMC sampling. It creates a dashboard
 with widgets for selecting variables, metrics, and specific array indices,
@@ -216,14 +590,6 @@ samples, helping identify the nature of sampling problems.</p>
 plot_variable_failure_quantile_traces method of SampleResults instead.</p>
 </dd>
 </dl>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>Interactive Diagnostic Analysis:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create interactive analyzer for failed variables</span>
 <span class="n">analyzer</span> <span class="o">=</span> <span class="n">mcmc_results</span><span class="o">.</span><span class="n">plot_variable_failure_quantile_traces</span><span class="p">(</span>
@@ -239,6 +605,22 @@ plot_variable_failure_quantile_traces method of SampleResults instead.</p>
 <span class="c1"># - Real-time trace plot updates</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.VariableAnalyzer.display">
+<span class="sig-name descname"><span class="pre">display</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#VariableAnalyzer.display"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.VariableAnalyzer.display" title="Link to this definition">¶</a></dt>
+<dd><p>Display the complete interactive analysis interface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Panel layout containing all widgets and plots</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pn.Layout</p>
+</dd>
+</dl>
+<p>This method returns the complete interactive interface for display
+in Jupyter notebooks or Panel applications.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -250,7 +632,8 @@ plot_variable_failure_quantile_traces method of SampleResults instead.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.hmc.</span></span><span class="sig-name descname"><span class="pre">CmdStanMCMCToNetCDFConverter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CmdStanMCMC</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">os.PathLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><span class="pre">Model</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#CmdStanMCMCToNetCDFConverter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter" title="Link to this definition">¶</a></dt>
-<dd><p>Efficient converter from CmdStan CSV output to NetCDF format.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Efficient converter from CmdStan CSV output to NetCDF format.</p>
 <p>This class handles the conversion of CmdStan CSV output files to NetCDF
 format, providing efficient storage and access for large MCMC datasets.
 It properly organizes data into appropriate groups and handles dimension
@@ -284,14 +667,6 @@ should not be instantiated directly in most use cases.</p>
 <p>Initialization involves collecting information about the different variables
 in the fit object. This includes the names of the variables, their shapes,
 and their types. This information is used to create the HDF5 file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 <p><strong>High-Performance Data Conversion:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Direct conversion from CSV to NetCDF</span>
 <span class="n">netcdf_path</span> <span class="o">=</span> <span class="n">cmdstan_csv_to_netcdf</span><span class="p">(</span>
@@ -305,6 +680,36 @@ and their types. This information is used to create the HDF5 file.</p>
 <span class="n">results</span> <span class="o">=</span> <span class="n">SampleResults</span><span class="o">.</span><span class="n">from_disk</span><span class="p">(</span><span class="n">netcdf_path</span><span class="p">,</span> <span class="n">use_dask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter.write_netcdf">
+<span class="sig-name descname"><span class="pre">write_netcdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'double'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'single'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'half'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'single'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mib_per_chunk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#CmdStanMCMCToNetCDFConverter.write_netcdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter.write_netcdf" title="Link to this definition">¶</a></dt>
+<dd><p>Write the converted data to NetCDF format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Output filename. Auto-generated if None. Defaults to None.</p></li>
+<li><p><strong>precision</strong> (<em>Literal</em><em>[</em><em>&quot;double&quot;</em><em>, </em><em>&quot;single&quot;</em><em>, </em><em>&quot;half&quot;</em><em>]</em>) – Numerical precision for arrays. Defaults to “single”.</p></li>
+<li><p><strong>mib_per_chunk</strong> (<em>Optional</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Memory limit per chunk in MiB. Defaults to None, meaning
+use Dask default.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the created NetCDF file</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>This method orchestrates the complete conversion process:
+1. Creates NetCDF file with appropriate structure
+2. Sets up dimensions based on model and data characteristics
+3. Creates variables with optimal chunking strategies
+4. Populates data from CSV files with progress tracking</p>
+<p>The resulting NetCDF file contains properly organized groups for
+posterior samples, posterior predictive samples, sample statistics,
+and observed data.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">

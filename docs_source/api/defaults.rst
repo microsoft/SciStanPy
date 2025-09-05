@@ -7,8 +7,6 @@ Defaults Module
 ---------------
 
 .. automodule:: scistanpy.defaults
-
-   :members:
    :undoc-members:
    :show-inheritance:
 

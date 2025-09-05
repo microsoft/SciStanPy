@@ -46,14 +46,6 @@ graphs.</p>
 <p>The module uses a metaclass pattern to dynamically create operation classes that
 maintain proper documentation inheritance and provide flexible parameter handling.
 Operations can work with both raw numerical data and SciStanPy model components.</p>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </section>
 <section id="operation-framework">
 <h2>Operation Framework<a class="headerlink" href="#operation-framework" title="Link to this heading">¶</a></h2>
@@ -62,7 +54,8 @@ Operations can work with both raw numerical data and SciStanPy model components.
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.operations.MetaOperation">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">MetaOperation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bases</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/operations.html#MetaOperation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.operations.MetaOperation" title="Link to this definition">¶</a></dt>
-<dd><p>Metaclass for dynamically creating operation classes.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+<p>Metaclass for dynamically creating operation classes.</p>
 <p>This metaclass is responsible for creating operation classes from
 TransformedParameter classes. It validates that the provided distclass
 is appropriate and automatically inherits documentation from the
@@ -86,20 +79,13 @@ underlying transformation class.</p>
 - Ensures DISTCLASS attribute exists
 - Validates DISTCLASS inheritance from TransformedParameter
 - Inherits documentation from the DISTCLASS to the __call__ method</p>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.operations.Operation">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">Operation</span></span><a class="reference internal" href="../_modules/scistanpy/operations.html#Operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.operations.Operation" title="Link to this definition">¶</a></dt>
-<dd><p>Base class for SciStanPy mathematical operations.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for SciStanPy mathematical operations.</p>
 <p>This class provides the foundation for all mathematical operations that can
 be used in SciStanPy models. Operations can handle both immediate computation
 on numerical data and deferred computation when used with model components.</p>
@@ -117,14 +103,11 @@ SciStanPy model components or raw numerical data and handle each
 case appropriately.</p>
 </dd>
 </dl>
-<dl class="field-list simple">
-<dt class="field-odd">Members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">Undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">Show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.operations.Operation.DISTCLASS">
+<span class="sig-name descname"><span class="pre">DISTCLASS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><span class="pre">TransformedParameter</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.operations.Operation.DISTCLASS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <p><strong>Operation Builder:</strong></p>

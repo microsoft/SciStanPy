@@ -7,8 +7,6 @@ Transformed Data Module
 -----------------------
 
 .. automodule:: scistanpy.model.components.transformations.transformed_data
-
-   :members:
    :undoc-members:
    :show-inheritance:
 
@@ -16,7 +14,6 @@ TransformedData Class
 ---------------------
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_data.TransformedData
-
    :members:
    :undoc-members:
    :show-inheritance:

@@ -4,8 +4,6 @@ CDFs API Reference
 This page documents the CDF-style transformation classes implemented in `scistanpy.model.components.transformations.cdfs`.
 
 .. automodule:: scistanpy.model.components.transformations.cdfs
-
-   :members:
    :undoc-members:
    :show-inheritance:
 
