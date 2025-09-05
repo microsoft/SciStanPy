@@ -35,182 +35,75 @@
             
   <section id="scistanpy-api-reference">
 <h1>SciStanPy API Reference<a class="headerlink" href="#scistanpy-api-reference" title="Link to this heading">¶</a></h1>
-<p>This section provides the low-level, import-level documentation for SciStanPy.
-It complements the user and advanced guides by exposing public classes, functions,
-and modules intended for direct programmatic use.</p>
-<section id="scope">
-<h2>Scope<a class="headerlink" href="#scope" title="Link to this heading">¶</a></h2>
-<p>Only implemented, importable objects are listed. Experimental or planned interfaces
-are intentionally omitted.</p>
-</section>
-<section id="top-level-package">
-<h2>Top-Level Package<a class="headerlink" href="#top-level-package" title="Link to this heading">¶</a></h2>
-<p>The root package exposes core entry points:</p>
-<p id="module-scistanpy">SciStanPy: Probabilistic modeling for scientific applications with Stan and PyTorch.</p>
-<p>SciStanPy is a Python package for building and evaluating Bayesian models,
-particularly suited for analyzing deep mutational scanning data and other
-scientific applications. The package combines the probabilistic modeling
-capabilities of Stan with the flexibility of PyTorch for neural network
-components.</p>
-<dl>
-<dt>Key Features:</dt><dd><ul class="simple">
-<li><p>Integration between Stan and PyTorch</p></li>
-<li><p>Inbuilt model evaluation tools</p></li>
-<li><p>Inbuilt prior selection/evaluation</p></li>
-<li><p>Type-safe model construction with comprehensive type checking</p></li>
-<li><p>Flexible parameter and distribution definitions</p></li>
-<li><p>Built-in support for common scientific modeling patterns</p></li>
+<p>At the root level, SciStanPy exposes the <a class="reference internal" href="operations.html#module-scistanpy.operations" title="scistanpy.operations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scistanpy.operations</span></code></a>, <a class="reference internal" href="utils.html#module-scistanpy.utils" title="scistanpy.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scistanpy.utils</span></code></a>, <a class="reference internal" href="model/components/parameters.html#module-scistanpy.model.components.parameters" title="scistanpy.model.components.parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scistanpy.model.components.parameters</span></code></a>, and <a class="reference internal" href="model/results/index.html#module-scistanpy.model.results" title="scistanpy.model.results"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scistanpy.model.results</span></code></a> modules, as well as the <a class="reference internal" href="model/model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">scistanpy.model.model.Model</span></code></a> and <a class="reference internal" href="model/components/constants.html#scistanpy.model.components.constants.Constant" title="scistanpy.model.components.constants.Constant"><code class="xref py py-class docutils literal notranslate"><span class="pre">scistanpy.model.components.constants.Constant</span></code></a> classes. These components will be sufficient for most users of SciStanPy; however, links to relevant documentation for the entire public API is provided below for reference:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model/index.html">Model API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operations.html">Operations API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils API Reference</a></li>
 </ul>
+</div>
+<p>There are also a few objects defined at the root level itself. These include the following:</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="scistanpy.manual_seed">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.</span></span><span class="sig-name descname"><span class="pre">manual_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy.html#manual_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.manual_seed" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the seed for global random number generators.</p>
+<p>This function sets the seed for both NumPy and PyTorch random number
+generators to ensure reproducible results across the entire SciStanPy
+workflow. It updates the global RNG variable and synchronizes PyTorch’s
+random state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>seed</strong> (<em>Union</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>None</em><em>]</em>) – Seed value for random number generation. If None, uses
+system entropy to generate a random seed.</p>
 </dd>
-<dt>Global Variables:</dt><dd><p>RNG: Global random number generator for reproducible computations
-__version__: Package version string</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – If seed is not an integer type when provided</p>
 </dd>
+</dl>
+<dl>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Set global seed for reproducibility</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Set seed for reproducible results</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ssp</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a simple model</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Now all random operations will be reproducible</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">random_data</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">RNG</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>Note:</dt><dd><p>This function modifies global state and should typically be called
+once at the beginning of a script or analysis for reproducibility. Note
+also that it sets the PyTorch global random seed by calling <cite>torch.manual_seed</cite>,
+which means that any random processes in PyTorch will also become deterministic.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.RNG">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.</span></span><span class="sig-name descname"><span class="pre">RNG</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Generator</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7DD56D8A1C40</span></em><a class="headerlink" href="#scistanpy.RNG" title="Link to this definition">¶</a></dt>
+<dd><p>Global random number generator for SciStanPy.</p>
+<p>This generator is used throughout the package to ensure reproducible
+random number generation. It can be seeded using the manual_seed()
+function to ensure consistent results across runs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.random.Generator</p>
+</dd>
+</dl>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Use the global RNG</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">random_values</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">RNG</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd>
 </dl>
-</section>
-<section id="module-overview">
-<h2>Module Overview<a class="headerlink" href="#module-overview" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>scistanpy.utils: General utilities (lazy import, numerical stability, chunking, Dask context, correlation helper)</p></li>
-<li><p>scistanpy.defaults: Centralized default configuration values</p></li>
-<li><p>scistanpy.model: Model class and Stan code generation pipeline</p></li>
-<li><p>scistanpy.model.components: Model component building blocks</p></li>
-<li><p>scistanpy.model.results: Result and diagnostic classes (MLEInferenceRes, SampleResults)</p></li>
-<li><p>scistanpy.model.stan: Stan integration, program generation helpers (indirect via model.to_stan())</p></li>
-</ul>
-</section>
-<section id="quick-navigation">
-<h2>Quick Navigation<a class="headerlink" href="#quick-navigation" title="Link to this heading">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="custom_types.html">Custom Types API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="custom_types.html#module-scistanpy.custom_types">Custom Types Module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="custom_types.html#scalar-types">Scalar Types</a></li>
-<li class="toctree-l3"><a class="reference internal" href="custom_types.html#parameter-types">Parameter Types</a></li>
-<li class="toctree-l3"><a class="reference internal" href="custom_types.html#distribution-types">Distribution Types</a></li>
-<li class="toctree-l3"><a class="reference internal" href="custom_types.html#diagnostic-types">Diagnostic Types</a></li>
-<li class="toctree-l3"><a class="reference internal" href="custom_types.html#utility-types">Utility Types</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="custom_types.html#usage-examples">Usage Examples</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="defaults.html">Defaults API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="defaults.html#module-scistanpy.defaults">Defaults Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="defaults.html#default-configuration-values">Default Configuration Values</a></li>
-<li class="toctree-l2"><a class="reference internal" href="defaults.html#common-default-values">Common Default Values</a></li>
-<li class="toctree-l2"><a class="reference internal" href="defaults.html#customizing-defaults">Customizing Defaults</a></li>
-<li class="toctree-l2"><a class="reference internal" href="defaults.html#integration-with-components">Integration with Components</a></li>
-<li class="toctree-l2"><a class="reference internal" href="defaults.html#configuration-management">Configuration Management</a></li>
-<li class="toctree-l2"><a class="reference internal" href="defaults.html#environment-variables">Environment Variables</a></li>
-<li class="toctree-l2"><a class="reference internal" href="defaults.html#see-also">See Also</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="exceptions.html#module-scistanpy.exceptions">Exceptions Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="exceptions.html#exception-hierarchy">Exception Hierarchy</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="exceptions.html#base-exception">Base Exception</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="exceptions.html#specific-exception-types">Specific Exception Types</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="exceptions.html#sample-validation-errors">Sample Validation Errors</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="exceptions.html#error-handling-best-practices">Error Handling Best Practices</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="model/index.html">Model API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="model/index.html#model-submodule-overview">Model Submodule Overview</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="model/components/index.html">Model Components API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model/model.html">Model API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model/nn_module.html">Neural Network Module API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model/results/index.html">Model Results API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model/stan/index.html">Stan Integration</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="model/index.html#core-module-and-class">Core Module and Class</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model/index.html#how-models-are-constructed">How Models are Constructed</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model/index.html#key-behaviors-and-api-surface">Key Behaviors and API Surface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model/index.html#notes-on-backends">Notes on Backends</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model/index.html#documentation-pages">Documentation Pages</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model/index.html#guidance">Guidance</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="plotting/index.html">Plotting API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="plotting/index.html#plotting-submodule-overview">Plotting Submodule Overview</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="plotting/plotting.html">Plotting API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plotting/prior_predictive.html">Prior Predictive</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="plotting/index.html#public-api">Public API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plotting/index.html#module-scistanpy.plotting">Module reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plotting/index.html#minimal-usage-examples">Minimal usage examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plotting/index.html#notes-and-guidance">Notes and guidance</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plotting/index.html#see-also">See also</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="operations.html">Operations API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="operations.html#module-scistanpy.operations">Operations Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="operations.html#operation-framework">Operation Framework</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="operations.html#scistanpy.operations.MetaOperation"><code class="docutils literal notranslate"><span class="pre">MetaOperation</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="operations.html#scistanpy.operations.Operation"><code class="docutils literal notranslate"><span class="pre">Operation</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="operations.html#available-operations">Available Operations</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="operations.html#mathematical-functions">Mathematical Functions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="operations.html#statistical-operations">Statistical Operations</a></li>
-<li class="toctree-l3"><a class="reference internal" href="operations.html#growth-model-operations">Growth Model Operations</a></li>
-<li class="toctree-l3"><a class="reference internal" href="operations.html#specialized-operations">Specialized Operations</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="operations.html#operation-usage-patterns">Operation Usage Patterns</a></li>
-<li class="toctree-l2"><a class="reference internal" href="operations.html#creating-custom-operations">Creating Custom Operations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="operations.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utils API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#module-scistanpy.utils">Utils Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#lazy-import-system">Lazy Import System</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="utils.html#scistanpy.utils.LazyObjectProxy"><code class="docutils literal notranslate"><span class="pre">LazyObjectProxy</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#backend-selection">Backend Selection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#numerical-stability">Numerical Stability</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#array-chunking">Array Chunking</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#dask-integration">Dask Integration</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="utils.html#scistanpy.utils.az_dask"><code class="docutils literal notranslate"><span class="pre">az_dask</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#statistical-computing">Statistical Computing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#available-utilities-summary">Available Utilities Summary</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
-<section id="usage-notes">
-<h2>Usage Notes<a class="headerlink" href="#usage-notes" title="Link to this heading">¶</a></h2>
-<ol class="arabic simple">
-<li><p>Prefer high-level methods (Model.draw, Model.mle, Model.mcmc, Model.prior_predictive) before diving into internal Stan code generation utilities.</p></li>
-<li><p>Utilities in scistanpy.utils are backend-agnostic; choose_module helps dispatch between NumPy and PyTorch.</p></li>
-<li><p>Defaults in scistanpy.defaults can be imported and overridden in application code where appropriate.</p></li>
-</ol>
-</section>
-<section id="stability">
-<h2>Stability<a class="headerlink" href="#stability" title="Link to this heading">¶</a></h2>
-<p>Public objects documented here follow semantic versioning. Internal helpers (prefixed with underscores or not listed) may change without notice.</p>
-</section>
-<section id="missing-something">
-<h2>Missing Something?<a class="headerlink" href="#missing-something" title="Link to this heading">¶</a></h2>
-<p>If an object you expect to see is absent, verify it exists in the codebase and is publicly importable, then open a documentation issue or pull request.</p>
-</section>
+</dd></dl>
+
 </section>
 
 
@@ -241,22 +134,15 @@ __version__: Package version string</p>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">SciStanPy API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#scope">Scope</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#top-level-package">Top-Level Package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-overview">Module Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#quick-navigation">Quick Navigation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="custom_types.html">Custom Types API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="defaults.html">Defaults API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="exceptions.html">Exceptions API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model/index.html">Model API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plotting/index.html">Plotting API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="operations.html">Operations API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="utils.html">Utils API Reference</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#usage-notes">Usage Notes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#stability">Stability</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#missing-something">Missing Something?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model/index.html">Model API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="operations.html">Operations API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utils API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scistanpy.manual_seed"><code class="docutils literal notranslate"><span class="pre">manual_seed()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scistanpy.RNG"><code class="docutils literal notranslate"><span class="pre">RNG</span></code></a></li>
 </ul>
 </li>
 </ul>

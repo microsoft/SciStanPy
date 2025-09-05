@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scistanpy &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for scistanpy</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">SciStanPy: Probabilistic modeling for scientific applications with Stan and PyTorch.</span>
+
+<span class="sd">SciStanPy is a Python package for building and evaluating Bayesian models,</span>
+<span class="sd">particularly suited for analyzing deep mutational scanning data and other</span>
+<span class="sd">scientific applications. The package combines the probabilistic modeling</span>
+<span class="sd">capabilities of Stan with the flexibility of PyTorch for neural network</span>
+<span class="sd">components.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typeguard</span><span class="w"> </span><span class="kn">import</span> <span class="n">install_import_hook</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="c1"># Define the version</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.0.7&quot;</span>
+
+<span class="c1"># Set up type checking</span>
+<span class="n">install_import_hook</span><span class="p">(</span><span class="s2">&quot;scistanpy&quot;</span><span class="p">)</span>
+
+<span class="c1"># Define the global random number generator</span>
+<span class="n">RNG</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span>
+<span class="sd">&quot;&quot;&quot;Global random number generator for SciStanPy.</span>
+
+<span class="sd">This generator is used throughout the package to ensure reproducible</span>
+<span class="sd">random number generation. It can be seeded using the manual_seed()</span>
+<span class="sd">function to ensure consistent results across runs.</span>
+
+<span class="sd">:type: np.random.Generator</span>
+
+<span class="sd">Example:</span>
+<span class="sd">    &gt;&gt;&gt; import scistanpy as ssp</span>
+<span class="sd">    &gt;&gt;&gt; # Use the global RNG</span>
+<span class="sd">    &gt;&gt;&gt; random_values = ssp.RNG.normal(0, 1, size=10)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Get custom types if TYPE_CHECKING is True</span>
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
+
+
+<div class="viewcode-block" id="manual_seed">
+<a class="viewcode-back" href="../api/index.html#scistanpy.manual_seed">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sets the seed for global random number generators.</span>
+
+<span class="sd">    This function sets the seed for both NumPy and PyTorch random number</span>
+<span class="sd">    generators to ensure reproducible results across the entire SciStanPy</span>
+<span class="sd">    workflow. It updates the global RNG variable and synchronizes PyTorch&#39;s</span>
+<span class="sd">    random state.</span>
+
+<span class="sd">    :param seed: Seed value for random number generation. If None, uses</span>
+<span class="sd">                system entropy to generate a random seed.</span>
+<span class="sd">    :type seed: Union[custom_types.Integer, None]</span>
+
+<span class="sd">    :raises TypeError: If seed is not an integer type when provided</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; import scistanpy as ssp</span>
+<span class="sd">        &gt;&gt;&gt; # Set seed for reproducible results</span>
+<span class="sd">        &gt;&gt;&gt; ssp.manual_seed(42)</span>
+<span class="sd">        &gt;&gt;&gt; # Now all random operations will be reproducible</span>
+<span class="sd">        &gt;&gt;&gt; random_data = ssp.RNG.normal(0, 1, size=100)</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        This function modifies global state and should typically be called</span>
+<span class="sd">        once at the beginning of a script or analysis for reproducibility. Note</span>
+<span class="sd">        also that it sets the PyTorch global random seed by calling `torch.manual_seed`,</span>
+<span class="sd">        which means that any random processes in PyTorch will also become deterministic.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">RNG</span>  <span class="c1"># pylint: disable=global-statement</span>
+    <span class="n">RNG</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span></div>
+
+
+
+<span class="n">manual_seed</span><span class="p">()</span>  <span class="c1"># Set the seed for the global random number generator</span>
+
+<span class="c1"># Import objects that should be easily accessible from the package level</span>
+<span class="c1"># pylint: disable=wrong-import-position</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">operations</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constant</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+
+<span class="c1"># Lazy imports for performance and to avoid circular imports</span>
+<span class="n">parameters</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;scistanpy.model.components.parameters&quot;</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;scistanpy.model.results&quot;</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">SciStanPy API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Bruce Wittmann.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -8,8 +8,12 @@ This module provides type aliases and unions for various components used through
 the SciStanPy package, including parameter types, distribution types, and utility
 types for type checking and documentation purposes.
 
-All imports are conditional on TYPE_CHECKING to avoid circular imports while
+All imports are conditional on ``TYPE_CHECKING`` to avoid circular imports while
 maintaining proper type hints for development and documentation tools.
+
+.. note::
+    SciStanPy enforces strict type checking for all callables using the `typeguard
+    <https://github.com/agronholm/typeguard>`_ package.
 """
 
 from typing import TYPE_CHECKING, Union
@@ -123,7 +127,7 @@ Used for storing test results with associated metadata.
 StrippedTestRes = dict[str, tuple["npt.NDArray", ...]]
 """Type alias for stripped diagnostic test results.
 
-Simplified version of test results containing only the essential array data.
+Simplified version of :class:`ProcessedTestRes` containing only the essential array data.
 
 :type: dict[str, tuple[npt.NDArray, ...]]
 """

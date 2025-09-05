@@ -33,27 +33,21 @@
 
           <div class="body" role="main">
             
-  <section id="custom-types-api-reference">
-<h1>Custom Types API Reference<a class="headerlink" href="#custom-types-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference covers the type definitions and type aliases used throughout SciStanPy.</p>
-<section id="module-scistanpy.custom_types">
-<span id="custom-types-module"></span><h2>Custom Types Module<a class="headerlink" href="#module-scistanpy.custom_types" title="Link to this heading">¶</a></h2>
+  <section id="module-scistanpy.custom_types">
+<span id="custom-types-api-reference"></span><h1>Custom Types API Reference<a class="headerlink" href="#module-scistanpy.custom_types" title="Link to this heading">¶</a></h1>
 <p>Custom type definitions for SciStanPy models.</p>
 <p>This module provides type aliases and unions for various components used throughout
 the SciStanPy package, including parameter types, distribution types, and utility
 types for type checking and documentation purposes.</p>
-<p>All imports are conditional on TYPE_CHECKING to avoid circular imports while
+<p>All imports are conditional on <code class="docutils literal notranslate"><span class="pre">TYPE_CHECKING</span></code> to avoid circular imports while
 maintaining proper type hints for development and documentation tools.</p>
-<dl class="field-list simple">
-<dt class="field-odd">members<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-<dt class="field-even">undoc-members<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
-<dt class="field-odd">show-inheritance<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>SciStanPy enforces strict type checking for all callables using the <a class="reference external" href="https://github.com/agronholm/typeguard">typeguard</a> package.</p>
+</div>
 <section id="scalar-types">
-<h3>Scalar Types<a class="headerlink" href="#scalar-types" title="Link to this heading">¶</a></h3>
+<h2>Scalar Types<a class="headerlink" href="#scalar-types" title="Link to this heading">¶</a></h2>
+<p>These types combine both NumPy and PyTorch scalar types for convenience.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="scistanpy.custom_types.Integer">
 <span class="sig-prename descclassname"><span class="pre">scistanpy.custom_types.</span></span><span class="sig-name descname"><span class="pre">Integer</span></span><a class="headerlink" href="#scistanpy.custom_types.Integer" title="Link to this definition">¶</a></dt>
@@ -64,8 +58,7 @@ maintaining proper type hints for development and documentation tools.</p>
 <dd class="field-odd"><p>Union[int, np.integer]</p>
 </dd>
 </dl>
-<p>Type alias for integer values, accepting both Python int and NumPy integer types.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">np.integer</span></code></p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">np.integer</span></code></p>
 </dd></dl>
 
 <dl class="py data">
@@ -78,13 +71,13 @@ alias of <code class="xref py py-class docutils literal notranslate"><span class
 <dd class="field-odd"><p>Union[float, np.floating]</p>
 </dd>
 </dl>
-<p>Type alias for floating-point values, accepting both Python float and NumPy floating types.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">np.floating</span></code></p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">np.floating</span></code></p>
 </dd></dl>
 
 </section>
 <section id="parameter-types">
-<h3>Parameter Types<a class="headerlink" href="#parameter-types" title="Link to this heading">¶</a></h3>
+<h2>Parameter Types<a class="headerlink" href="#parameter-types" title="Link to this heading">¶</a></h2>
+<p>These types represent different groupings of objects that can be used within SciStanPy models.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="scistanpy.custom_types.SampleType">
 <span class="sig-prename descclassname"><span class="pre">scistanpy.custom_types.</span></span><span class="sig-name descname"><span class="pre">SampleType</span></span><a class="headerlink" href="#scistanpy.custom_types.SampleType" title="Link to this definition">¶</a></dt>
@@ -96,8 +89,7 @@ including scalars and arrays.</p>
 <dd class="field-odd"><p>Union[int, float, npt.NDArray]</p>
 </dd>
 </dl>
-<p>Type alias for values that can be sampled from distributions.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray</span></code></p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray</span></code></p>
 </dd></dl>
 
 <dl class="py data">
@@ -110,8 +102,7 @@ typically used to define hyperparameters.</p>
 <dd class="field-odd"><p>Union[<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter">transformed_parameters.TransformedParameter</a>, <a class="reference internal" href="model/components/constants.html#scistanpy.model.components.constants.Constant" title="scistanpy.model.components.constants.Constant">constants.Constant</a>]</p>
 </dd>
 </dl>
-<p>Base parameter types including transformed parameters and constants.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">transformed_parameters.TransformedParameter</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">constants.Constant</span></code></p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">transformed_parameters.TransformedParameter</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">constants.Constant</span></code></p>
 </dd></dl>
 
 <dl class="py data">
@@ -125,8 +116,7 @@ base parameters, continuous distributions, and numeric values.</p>
 <dd class="field-odd"><p>Union[BaseParameterType, <a class="reference internal" href="model/components/parameters.html#scistanpy.model.components.parameters.ContinuousDistribution" title="scistanpy.model.components.parameters.ContinuousDistribution">parameters.ContinuousDistribution</a>, float, npt.NDArray[np.floating]]</p>
 </dd>
 </dl>
-<p>Type alias for continuous-valued parameters.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">transformed_parameters.TransformedParameter</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">constants.Constant</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">parameters.ContinuousDistribution</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray[np.floating]</span></code></p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">transformed_parameters.TransformedParameter</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">constants.Constant</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">parameters.ContinuousDistribution</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray[np.floating]</span></code></p>
 </dd></dl>
 
 <dl class="py data">
@@ -140,8 +130,7 @@ base parameters, discrete distributions, and integer values.</p>
 <dd class="field-odd"><p>Union[BaseParameterType, <a class="reference internal" href="model/components/parameters.html#scistanpy.model.components.parameters.DiscreteDistribution" title="scistanpy.model.components.parameters.DiscreteDistribution">parameters.DiscreteDistribution</a>, int, npt.NDArray[np.integer]]</p>
 </dd>
 </dl>
-<p>Type alias for discrete-valued parameters.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">transformed_parameters.TransformedParameter</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">constants.Constant</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">parameters.DiscreteDistribution</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray[np.integer]</span></code></p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">transformed_parameters.TransformedParameter</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">constants.Constant</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">parameters.DiscreteDistribution</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray[np.integer]</span></code></p>
 </dd></dl>
 
 <dl class="py data">
@@ -155,13 +144,12 @@ and model construction, covering both continuous and discrete parameters.</p>
 <dd class="field-odd"><p>Union[ContinuousParameterType, DiscreteParameterType]</p>
 </dd>
 </dl>
-<p>Type alias for parameters that can be combined in operations.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">transformed_parameters.TransformedParameter</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">constants.Constant</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">parameters.ContinuousDistribution</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray[np.floating]</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">parameters.DiscreteDistribution</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray[np.integer]</span></code></p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">transformed_parameters.TransformedParameter</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">constants.Constant</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">parameters.ContinuousDistribution</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray[np.floating]</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">parameters.DiscreteDistribution</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray[np.integer]</span></code></p>
 </dd></dl>
 
 </section>
 <section id="distribution-types">
-<h3>Distribution Types<a class="headerlink" href="#distribution-types" title="Link to this heading">¶</a></h3>
+<h2>Distribution Types<a class="headerlink" href="#distribution-types" title="Link to this heading">¶</a></h2>
 <dl class="py data">
 <dt class="sig sig-object py" id="scistanpy.custom_types.SciStanPyDistribution">
 <span class="sig-prename descclassname"><span class="pre">scistanpy.custom_types.</span></span><span class="sig-name descname"><span class="pre">SciStanPyDistribution</span></span><a class="headerlink" href="#scistanpy.custom_types.SciStanPyDistribution" title="Link to this definition">¶</a></dt>
@@ -173,13 +161,12 @@ implementations.</p>
 <dd class="field-odd"><p>Union[dist.Distribution, <a class="reference internal" href="model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution" title="scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution">custom_torch_dists.CustomDistribution</a>]</p>
 </dd>
 </dl>
-<p>Type alias for PyTorch-compatible distributions used in SciStanPy.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">dist.Distribution</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">custom_torch_dists.CustomDistribution</span></code></p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">dist.Distribution</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">custom_torch_dists.CustomDistribution</span></code></p>
 </dd></dl>
 
 </section>
 <section id="diagnostic-types">
-<h3>Diagnostic Types<a class="headerlink" href="#diagnostic-types" title="Link to this heading">¶</a></h3>
+<h2>Diagnostic Types<a class="headerlink" href="#diagnostic-types" title="Link to this heading">¶</a></h2>
 <dl class="py data">
 <dt class="sig sig-object py" id="scistanpy.custom_types.ProcessedTestRes">
 <span class="sig-prename descclassname"><span class="pre">scistanpy.custom_types.</span></span><span class="sig-name descname"><span class="pre">ProcessedTestRes</span></span><a class="headerlink" href="#scistanpy.custom_types.ProcessedTestRes" title="Link to this definition">¶</a></dt>
@@ -190,27 +177,25 @@ alias of <code class="xref py py-class docutils literal notranslate"><span class
 <dd class="field-odd"><p>dict[str, tuple[tuple[npt.NDArray, …], int]]</p>
 </dd>
 </dl>
-<p>Type alias for processed diagnostic test results.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[npt.NDArray, …], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[npt.NDArray, …], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="scistanpy.custom_types.StrippedTestRes">
 <span class="sig-prename descclassname"><span class="pre">scistanpy.custom_types.</span></span><span class="sig-name descname"><span class="pre">StrippedTestRes</span></span><a class="headerlink" href="#scistanpy.custom_types.StrippedTestRes" title="Link to this definition">¶</a></dt>
 <dd><p>Type alias for stripped diagnostic test results.</p>
-<p>Simplified version of test results containing only the essential array data.</p>
+<p>Simplified version of <a class="reference internal" href="#scistanpy.custom_types.ProcessedTestRes" title="scistanpy.custom_types.ProcessedTestRes"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProcessedTestRes</span></code></a> containing only the essential array data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict[str, tuple[npt.NDArray, …]]</p>
 </dd>
 </dl>
-<p>Type alias for simplified diagnostic test results.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[npt.NDArray, …]]</p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[npt.NDArray, …]]</p>
 </dd></dl>
 
 </section>
 <section id="utility-types">
-<h3>Utility Types<a class="headerlink" href="#utility-types" title="Link to this heading">¶</a></h3>
+<h2>Utility Types<a class="headerlink" href="#utility-types" title="Link to this heading">¶</a></h2>
 <dl class="py data">
 <dt class="sig sig-object py" id="scistanpy.custom_types.IndexType">
 <span class="sig-prename descclassname"><span class="pre">scistanpy.custom_types.</span></span><span class="sig-name descname"><span class="pre">IndexType</span></span><a class="headerlink" href="#scistanpy.custom_types.IndexType" title="Link to this definition">¶</a></dt>
@@ -222,14 +207,11 @@ including integer arrays, slices, single integers, ellipsis, and None.</p>
 <dd class="field-odd"><p>Union[npt.NDArray[np.integer], slice, int, Ellipsis, None]</p>
 </dd>
 </dl>
-<p>Type alias for array indexing operations.
-alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray[np.integer]</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">slice</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | … | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">npt.NDArray[np.integer]</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">slice</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code> | … | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd></dl>
 
-</section>
-</section>
 <section id="usage-examples">
-<h2>Usage Examples<a class="headerlink" href="#usage-examples" title="Link to this heading">¶</a></h2>
+<h3>Usage Examples<a class="headerlink" href="#usage-examples" title="Link to this heading">¶</a></h3>
 <p><strong>Type Checking in Functions:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.custom_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContinuousParameterType</span>
 
@@ -239,25 +221,7 @@ alias of <code class="xref py py-class docutils literal notranslate"><span class
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>Working with Distribution Types:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.custom_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SciStanPyDistribution</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">sample_from_distribution</span><span class="p">(</span><span class="n">dist</span><span class="p">:</span> <span class="n">SciStanPyDistribution</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample from any SciStanPy-compatible distribution.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">dist</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="n">n</span><span class="p">,))</span>
-</pre></div>
-</div>
-<p><strong>Parameter Combinations:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.custom_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">CombinableParameterType</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">combine_parameters</span><span class="p">(</span>
-    <span class="n">param1</span><span class="p">:</span> <span class="n">CombinableParameterType</span><span class="p">,</span>
-    <span class="n">param2</span><span class="p">:</span> <span class="n">CombinableParameterType</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CombinableParameterType</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine two parameters mathematically.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">param1</span> <span class="o">+</span> <span class="n">param2</span>
-</pre></div>
-</div>
+</section>
 </section>
 </section>
 
@@ -289,22 +253,15 @@ alias of <code class="xref py py-class docutils literal notranslate"><span class
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">SciStanPy API Reference</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="index.html#scope">Scope</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#top-level-package">Top-Level Package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#module-overview">Module Overview</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="index.html#quick-navigation">Quick Navigation</a><ul class="current">
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Custom Types API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="defaults.html">Defaults API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="exceptions.html">Exceptions API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model/index.html">Model API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plotting/index.html">Plotting API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="operations.html">Operations API Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="utils.html">Utils API Reference</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#usage-notes">Usage Notes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#stability">Stability</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#missing-something">Missing Something?</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Custom Types API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model/index.html">Model API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="operations.html">Operations API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utils API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#scistanpy.manual_seed"><code class="docutils literal notranslate"><span class="pre">manual_seed()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#scistanpy.RNG"><code class="docutils literal notranslate"><span class="pre">RNG</span></code></a></li>
 </ul>
 </li>
 </ul>

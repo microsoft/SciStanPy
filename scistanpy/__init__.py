@@ -9,25 +9,6 @@ particularly suited for analyzing deep mutational scanning data and other
 scientific applications. The package combines the probabilistic modeling
 capabilities of Stan with the flexibility of PyTorch for neural network
 components.
-
-Key Features:
-    - Integration between Stan and PyTorch
-    - Inbuilt model evaluation tools
-    - Inbuilt prior selection/evaluation
-    - Type-safe model construction with comprehensive type checking
-    - Flexible parameter and distribution definitions
-    - Built-in support for common scientific modeling patterns
-
-Global Variables:
-    RNG: Global random number generator for reproducible computations
-    __version__: Package version string
-
-Example:
-    >>> import scistanpy as ssp
-    >>> # Set global seed for reproducibility
-    >>> ssp.manual_seed(42)
-    >>> # Create a simple model
-    >>> model = ssp.Model()
 """
 
 from typing import Optional, TYPE_CHECKING
@@ -65,7 +46,7 @@ if TYPE_CHECKING:
 
 
 def manual_seed(seed: Optional["custom_types.Integer"] = None):
-    """Set the seed for global random number generators.
+    """Sets the seed for global random number generators.
 
     This function sets the seed for both NumPy and PyTorch random number
     generators to ensure reproducible results across the entire SciStanPy
