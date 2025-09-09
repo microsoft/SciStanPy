@@ -33,161 +33,192 @@
 
           <div class="body" role="main">
             
-  <section id="defaults-api-reference">
-<h1>Defaults API Reference<a class="headerlink" href="#defaults-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference covers the default configuration values and settings used throughout SciStanPy.</p>
-<section id="module-scistanpy.defaults">
-<span id="defaults-module"></span><h2>Defaults Module<a class="headerlink" href="#module-scistanpy.defaults" title="Link to this heading">¶</a></h2>
+  <section id="module-scistanpy.defaults">
+<span id="defaults-api-reference"></span><h1>Defaults API Reference<a class="headerlink" href="#module-scistanpy.defaults" title="Link to this heading">¶</a></h1>
 <p>Default configuration values for SciStanPy package components.</p>
 <p>This module centralizes default values used across various components of the
 SciStanPy package, including fitting parameters, naming conventions, and
-Stan model configuration options. These defaults can be overridden by users
-as needed for specific use cases.</p>
-<p>The module is organized into logical groups covering:
-- Model fitting and optimization defaults
-- Variable and dimension naming conventions
-- Stan model compilation and execution settings
-- Diagnostic thresholds for model validation</p>
-</section>
-<section id="default-configuration-values">
-<h2>Default Configuration Values<a class="headerlink" href="#default-configuration-values" title="Link to this heading">¶</a></h2>
-<p>The defaults module provides centralized configuration for SciStanPy behavior. This module should contain default values for various aspects of the framework:</p>
-<p><strong>Expected Default Categories:</strong></p>
+Stan model configuration options, among others.</p>
+<p>The module is organized into logical groups covering:</p>
 <ul class="simple">
-<li><p><strong>Sampling Parameters</strong>: Default values for MCMC sampling</p></li>
-<li><p><strong>Optimization Settings</strong>: Default values for variational inference and MLE</p></li>
-<li><p><strong>Numerical Tolerances</strong>: Default precision and convergence criteria</p></li>
-<li><p><strong>Backend Settings</strong>: Default computational backend preferences</p></li>
-<li><p><strong>Validation Options</strong>: Default validation and error checking behavior</p></li>
+<li><p>Model fitting and optimization defaults</p></li>
+<li><p>Variable and dimension naming conventions</p></li>
+<li><p>Stan model compilation and execution settings</p></li>
+<li><p>Diagnostic thresholds for model validation</p></li>
 </ul>
-<p><strong>Example Usage Pattern:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<p>Default values cannot be programmatically altered. This documentation serves as a
+reference for users and developers to understand the standard configuration used
+by SciStanPy.</p>
+<p>Default values can be grouped into several categories based on their use within the SciStanPy package. Below is an overview of the default values provided by the module.</p>
+<section id="maximum-likelihood-estimation-defaults">
+<h2>Maximum Likelihood Estimation Defaults<a class="headerlink" href="#maximum-likelihood-estimation-defaults" title="Link to this heading">¶</a></h2>
+<p>Default values used in methods that rely on maximum likelihood estimation for fitting models.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_N_EPOCHS">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_N_EPOCHS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100000</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_N_EPOCHS" title="Link to this definition">¶</a></dt>
+<dd><p>Default number of training epochs for model fitting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
 
-<span class="c1"># Access default values (exact attributes depend on defaults.py content)</span>
-<span class="c1"># These are example attribute names that might exist:</span>
-<span class="c1"># default_samples = ssp.defaults.DEFAULT_N_SAMPLES</span>
-<span class="c1"># default_chains = ssp.defaults.DEFAULT_N_CHAINS</span>
-<span class="c1"># default_backend = ssp.defaults.DEFAULT_BACKEND</span>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_EARLY_STOP">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_EARLY_STOP</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_EARLY_STOP" title="Link to this definition">¶</a></dt>
+<dd><p>Default number of epochs to wait before early stopping.</p>
+<p>Controls how many epochs without improvement to wait before terminating
+training early to prevent overfitting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
 
-<span class="c1"># Use in model configuration</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">likelihood</span><span class="p">)</span>
-<span class="c1"># results = model.sample(</span>
-<span class="c1">#     n_samples=default_samples,</span>
-<span class="c1">#     n_chains=default_chains</span>
-<span class="c1"># )</span>
-</pre></div>
-</div>
-</section>
-<section id="common-default-values">
-<h2>Common Default Values<a class="headerlink" href="#common-default-values" title="Link to this heading">¶</a></h2>
-<p>Based on typical Bayesian modeling practices, the defaults module likely includes:</p>
-<p><strong>Sampling Defaults:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Expected default values (to be confirmed with actual defaults.py):</span>
-<span class="c1"># DEFAULT_N_SAMPLES = 1000        # Number of posterior samples</span>
-<span class="c1"># DEFAULT_N_CHAINS = 4            # Number of MCMC chains</span>
-<span class="c1"># DEFAULT_N_WARMUP = 1000         # Warmup samples per chain</span>
-<span class="c1"># DEFAULT_THIN = 1                # Thinning factor</span>
-<span class="c1"># DEFAULT_ADAPT_DELTA = 0.8       # HMC adaptation parameter</span>
-</pre></div>
-</div>
-<p><strong>Backend Defaults:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Expected backend configuration:</span>
-<span class="c1"># DEFAULT_BACKEND = &#39;stan&#39;        # Primary computational backend</span>
-<span class="c1"># DEFAULT_DEVICE = &#39;cpu&#39;          # Default compute device</span>
-<span class="c1"># DEFAULT_COMPILE_MODEL = True    # Whether to compile models</span>
-</pre></div>
-</div>
-<p><strong>Numerical Defaults:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Expected numerical tolerances:</span>
-<span class="c1"># DEFAULT_RTOL = 1e-6            # Relative tolerance</span>
-<span class="c1"># DEFAULT_ATOL = 1e-8            # Absolute tolerance</span>
-<span class="c1"># DEFAULT_MAX_ITER = 10000       # Maximum iterations</span>
-</pre></div>
-</div>
-<p><strong>Validation Defaults:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Expected validation settings:</span>
-<span class="c1"># DEFAULT_VALIDATE_SHAPES = True  # Shape validation</span>
-<span class="c1"># DEFAULT_VALIDATE_PRIORS = True  # Prior validation</span>
-<span class="c1"># DEFAULT_CHECK_FINITE = True     # Finite value checking</span>
-</pre></div>
-</div>
-</section>
-<section id="customizing-defaults">
-<h2>Customizing Defaults<a class="headerlink" href="#customizing-defaults" title="Link to this heading">¶</a></h2>
-<p><strong>Modifying Defaults:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Modify defaults for your session (example pattern)</span>
-<span class="c1"># ssp.defaults.DEFAULT_N_SAMPLES = 2000</span>
-<span class="c1"># ssp.defaults.DEFAULT_BACKEND = &#39;pytorch&#39;</span>
-</pre></div>
-</div>
-<p><strong>Configuration Context:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use context managers for temporary changes (if implemented)</span>
-<span class="c1"># with ssp.defaults.temporary_config(n_samples=5000, backend=&#39;pytorch&#39;):</span>
-<span class="c1">#     results = model.sample()  # Uses temporary settings</span>
-<span class="c1"># # Reverts to original defaults after context</span>
-</pre></div>
-</div>
-</section>
-<section id="integration-with-components">
-<h2>Integration with Components<a class="headerlink" href="#integration-with-components" title="Link to this heading">¶</a></h2>
-<p><strong>Automatic Default Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Components automatically use default values when not specified</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">likelihood</span><span class="p">)</span>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_LR">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_LR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.001</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_LR" title="Link to this definition">¶</a></dt>
+<dd><p>Default learning rate for optimization algorithms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
 
-<span class="c1"># This would use default sampling parameters:</span>
-<span class="c1"># results = model.sample()  # Uses DEFAULT_N_SAMPLES, DEFAULT_N_CHAINS, etc.</span>
+</section>
+<section id="stan-variable-naming-defaults">
+<h2>Stan Variable Naming Defaults<a class="headerlink" href="#stan-variable-naming-defaults" title="Link to this heading">¶</a></h2>
+<p>Default values for index variable names in autogenerated Stan code.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_INDEX_ORDER">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_INDEX_ORDER</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('i',</span> <span class="pre">'j',</span> <span class="pre">'k',</span> <span class="pre">'l',</span> <span class="pre">'m',</span> <span class="pre">'n',</span> <span class="pre">'o',</span> <span class="pre">'p',</span> <span class="pre">'q',</span> <span class="pre">'r',</span> <span class="pre">'s',</span> <span class="pre">'t')</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_INDEX_ORDER" title="Link to this definition">¶</a></dt>
+<dd><p>Default ordering for index variable names in mathematical expressions.</p>
+<p>Provides a consistent sequence of variable names for indexing operations,
+following mathematical conventions starting with ‘i’, ‘j’, ‘k’, etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[str, …]</p>
+</dd>
+</dl>
+</dd></dl>
 
-<span class="c1"># Explicit parameters override defaults:</span>
-<span class="c1"># results = model.sample(n_samples=2000)  # Overrides DEFAULT_N_SAMPLES</span>
-</pre></div>
-</div>
-<p><strong>Backend Selection:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Default backend selection logic (example)</span>
-<span class="c1"># model.set_backend()  # Uses DEFAULT_BACKEND</span>
-<span class="c1"># model.set_backend(&#39;pytorch&#39;)  # Explicit override</span>
-</pre></div>
-</div>
 </section>
-<section id="configuration-management">
-<h2>Configuration Management<a class="headerlink" href="#configuration-management" title="Link to this heading">¶</a></h2>
-<p><strong>Loading Configuration:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># If configuration files are supported:</span>
-<span class="c1"># config = ssp.defaults.load_config(&#39;my_config.yaml&#39;)</span>
-<span class="c1"># ssp.defaults.update_defaults(config)</span>
-</pre></div>
-</div>
-<p><strong>Saving Configuration:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Save current defaults to file:</span>
-<span class="c1"># ssp.defaults.save_config(&#39;current_config.yaml&#39;)</span>
-</pre></div>
-</div>
+<section id="xarray-dimension-naming-defaults">
+<h2>XArray Dimension Naming Defaults<a class="headerlink" href="#xarray-dimension-naming-defaults" title="Link to this heading">¶</a></h2>
+<p>Default dimension names used when converting SciStanPy objects to XArray data structures.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_DIM_NAMES">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_DIM_NAMES</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('a',</span> <span class="pre">'b',</span> <span class="pre">'c',</span> <span class="pre">'d',</span> <span class="pre">'e',</span> <span class="pre">'f',</span> <span class="pre">'g',</span> <span class="pre">'h',</span> <span class="pre">'i',</span> <span class="pre">'j',</span> <span class="pre">'k',</span> <span class="pre">'l',</span> <span class="pre">'m',</span> <span class="pre">'o',</span> <span class="pre">'p',</span> <span class="pre">'q',</span> <span class="pre">'r',</span> <span class="pre">'s',</span> <span class="pre">'t',</span> <span class="pre">'u',</span> <span class="pre">'v',</span> <span class="pre">'w',</span> <span class="pre">'x',</span> <span class="pre">'y',</span> <span class="pre">'z')</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_DIM_NAMES" title="Link to this definition">¶</a></dt>
+<dd><p>Default names for data dimensions, excluding ‘n’.</p>
+<p>Generates dimension names from lowercase ASCII letters, excluding ‘n’ which
+is typically reserved for sample size notation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[str, …]</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
-<section id="environment-variables">
-<h2>Environment Variables<a class="headerlink" href="#environment-variables" title="Link to this heading">¶</a></h2>
-<p><strong>Environment-Based Configuration:</strong></p>
-<p>The defaults module may support configuration via environment variables:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example environment variable usage:</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">SCISTANPY_DEFAULT_BACKEND</span><span class="o">=</span>pytorch
-<span class="nb">export</span><span class="w"> </span><span class="nv">SCISTANPY_DEFAULT_N_SAMPLES</span><span class="o">=</span><span class="m">2000</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">SCISTANPY_DEVICE</span><span class="o">=</span>cuda
-</pre></div>
-</div>
-<p><strong>Priority Order:</strong></p>
-<p>Configuration precedence (typical pattern):</p>
-<ol class="arabic simple">
-<li><p>Explicit function arguments (highest priority)</p></li>
-<li><p>Runtime configuration changes</p></li>
-<li><p>Environment variables</p></li>
-<li><p>Configuration files</p></li>
-<li><p>Built-in defaults (lowest priority)</p></li>
-</ol>
+<section id="stan-compilation-defaults">
+<h2>Stan Compilation Defaults<a class="headerlink" href="#stan-compilation-defaults" title="Link to this heading">¶</a></h2>
+<p>Default values related to the compilation of Stan models.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_FORCE_COMPILE">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_FORCE_COMPILE</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_FORCE_COMPILE" title="Link to this definition">¶</a></dt>
+<dd><p>Default setting for forcing Stan model recompilation.</p>
+<p>When False, uses cached compiled models when available. When True,
+forces recompilation even if a cached version exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_CPP_OPTIONS">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_CPP_OPTIONS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'STAN_THREADS':</span> <span class="pre">True}</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_CPP_OPTIONS" title="Link to this definition">¶</a></dt>
+<dd><p>Default C++ compilation options for Stan models.</p>
+<p>Enables threading support in compiled Stan models for improved
+performance on multi-core systems.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, bool]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_USER_HEADER">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_USER_HEADER</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_USER_HEADER" title="Link to this definition">¶</a></dt>
+<dd><p>Default user header content for Stan models.</p>
+<p>Custom C++ code that can be included in Stan model compilation.
+None indicates no custom header by default.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_MODEL_NAME">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_MODEL_NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'model'</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_MODEL_NAME" title="Link to this definition">¶</a></dt>
+<dd><p>Default name for generated Stan models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
-<section id="see-also">
-<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="exceptions.html"><span class="doc">Exceptions API Reference</span></a> - Error handling for invalid configuration</p></li>
-<li><p><a class="reference internal" href="utils.html"><span class="doc">Utils API Reference</span></a> - Utility functions that may use defaults</p></li>
-</ul>
+<section id="diagnostic-threshold-defaults">
+<h2>Diagnostic Threshold Defaults<a class="headerlink" href="#diagnostic-threshold-defaults" title="Link to this heading">¶</a></h2>
+<p>Default thresholds used for model diagnostics.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_EBFMI_THRESH">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_EBFMI_THRESH</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.2</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_EBFMI_THRESH" title="Link to this definition">¶</a></dt>
+<dd><p>Default threshold for Energy Bayesian Fraction of Missing Information (E-BFMI).</p>
+<p>Values below this threshold may indicate inefficient sampling and
+potential bias in MCMC results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_ESS_THRESH">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_ESS_THRESH</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_ESS_THRESH" title="Link to this definition">¶</a></dt>
+<dd><p>Default threshold for Effective Sample Size (ESS) per chain.</p>
+<p>Minimum effective sample size considered adequate for reliable
+posterior inference from each MCMC chain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.defaults.DEFAULT_RHAT_THRESH">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.defaults.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_RHAT_THRESH</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.01</span></em><a class="headerlink" href="#scistanpy.defaults.DEFAULT_RHAT_THRESH" title="Link to this definition">¶</a></dt>
+<dd><p>Default threshold for R-hat convergence diagnostic.</p>
+<p>Values above this threshold indicate potential convergence issues
+in MCMC sampling across chains.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
