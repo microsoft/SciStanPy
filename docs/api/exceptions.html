@@ -33,11 +33,8 @@
 
           <div class="body" role="main">
             
-  <section id="exceptions-api-reference">
-<h1>Exceptions API Reference<a class="headerlink" href="#exceptions-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference covers the custom exception classes used throughout SciStanPy for error handling.</p>
-<section id="module-scistanpy.exceptions">
-<span id="exceptions-module"></span><h2>Exceptions Module<a class="headerlink" href="#module-scistanpy.exceptions" title="Link to this heading">¶</a></h2>
+  <section id="module-scistanpy.exceptions">
+<span id="exceptions-api-reference"></span><h1>Exceptions API Reference<a class="headerlink" href="#module-scistanpy.exceptions" title="Link to this heading">¶</a></h1>
 <p>Custom exception classes for the SciStanPy package.</p>
 <p>This module defines a hierarchy of custom exceptions used throughout the
 SciStanPy package to provide clear error reporting and exception handling.
@@ -46,12 +43,8 @@ for unified exception handling when needed.</p>
 <p>The exception hierarchy follows Python best practices by providing both
 general and specific exception types for different error conditions that
 may arise during model construction, fitting, and analysis.</p>
-</section>
-<section id="exception-hierarchy">
-<h2>Exception Hierarchy<a class="headerlink" href="#exception-hierarchy" title="Link to this heading">¶</a></h2>
-<p>SciStanPy defines a hierarchy of custom exception classes to provide clear error reporting:</p>
 <section id="base-exception">
-<h3>Base Exception<a class="headerlink" href="#base-exception" title="Link to this heading">¶</a></h3>
+<h2>Base Exception<a class="headerlink" href="#base-exception" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.exceptions.SciStanPyError">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.exceptions.</span></span><span class="sig-name descname"><span class="pre">SciStanPyError</span></span><a class="reference internal" href="../_modules/scistanpy/exceptions.html#SciStanPyError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.exceptions.SciStanPyError" title="Link to this definition">¶</a></dt>
@@ -76,25 +69,11 @@ base class.</p>
 </div>
 </dd>
 </dl>
-<p><strong>Usage as Base Exception:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="c1"># Any SciStanPy operation</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">likelihood</span><span class="p">)</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
-<span class="k">except</span> <span class="n">ssp</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">SciStanPyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SciStanPy error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
 </dd></dl>
 
 </section>
-</section>
 <section id="specific-exception-types">
 <h2>Specific Exception Types<a class="headerlink" href="#specific-exception-types" title="Link to this heading">¶</a></h2>
-<section id="sample-validation-errors">
-<h3>Sample Validation Errors<a class="headerlink" href="#sample-validation-errors" title="Link to this heading">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.exceptions.NumpySampleError">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.exceptions.</span></span><span class="sig-name descname"><span class="pre">NumpySampleError</span></span><a class="reference internal" href="../_modules/scistanpy/exceptions.html#NumpySampleError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.exceptions.NumpySampleError" title="Link to this definition">¶</a></dt>
@@ -108,48 +87,8 @@ values, or incompatible data types for the requested operation.</p>
 <dd class="field-odd"><p><strong>message</strong> (<em>str</em>) – Error message describing why the sample is invalid</p>
 </dd>
 </dl>
-<p><strong>Common Use Cases:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="c1"># Operations with invalid NumPy sample data</span>
-    <span class="n">invalid_sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
-    <span class="c1"># Some operation that validates the sample</span>
-<span class="k">except</span> <span class="n">ssp</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">NumpySampleError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid sample data: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
 </dd></dl>
 
-</section>
-</section>
-<section id="error-handling-best-practices">
-<h2>Error Handling Best Practices<a class="headerlink" href="#error-handling-best-practices" title="Link to this heading">¶</a></h2>
-<p><strong>Catching Specific Exceptions:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="c1"># SciStanPy operations</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">likelihood</span><span class="p">)</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
-<span class="k">except</span> <span class="n">ssp</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">NumpySampleError</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Check your sample data for invalid values&quot;</span><span class="p">)</span>
-<span class="k">except</span> <span class="n">ssp</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">SciStanPyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;General SciStanPy error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Exception Hierarchy Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Catch all SciStanPy exceptions</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="c1"># Model operations</span>
-    <span class="k">pass</span>
-<span class="k">except</span> <span class="n">ssp</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">SciStanPyError</span><span class="p">:</span>
-    <span class="c1"># Handle any SciStanPy-related error</span>
-    <span class="k">pass</span>
-<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-    <span class="c1"># Handle other exceptions</span>
-    <span class="k">pass</span>
-</pre></div>
-</div>
 </section>
 </section>
 
