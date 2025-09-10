@@ -915,13 +915,7 @@ use Dask default.</p></li>
 <h3>Utility Functions<a class="headerlink" href="#utility-functions" title="Link to this heading">¶</a></h3>
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.hmc.</span></span><span class="sig-name descname"><span class="pre">fit_from_csv_noload</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">PathLike</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CmdStanMCMC</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#fit_from_csv_noload"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.hmc.</span></span><span class="sig-name descname"><span class="pre">fit_from_csv_noload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">PathLike</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CmdStanMCMC</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#fit_from_csv_noload"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Create CmdStanMCMC object from CSV files without loading data into memory.
 This function is adapted from <cite>cmdstanpy.from_csv</cite>.</p>
 <dl class="field-list simple">
@@ -1057,13 +1051,7 @@ computed simultaneously to maximize efficiency.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.hmc.</span></span><span class="sig-name descname"><span class="pre">_symmetrize_quantiles</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Float</span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#_symmetrize_quantiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.hmc.</span></span><span class="sig-name descname"><span class="pre">_symmetrize_quantiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/hmc.html#_symmetrize_quantiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Symmetrize and validate quantile sequences for plotting.</p>
 <p>This utility function takes a sequence of quantiles and creates a symmetric
 set by adding complementary quantiles and ensuring the median is included.
@@ -1504,7 +1492,7 @@ It also validates that all quantiles are properly bounded.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &#169;2025, Bruce Wittmann.
+      &#169;2025, Microsoft Corporation.
       
       |
       Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>

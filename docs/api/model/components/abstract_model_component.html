@@ -302,14 +302,7 @@ the model hierarchy.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.declare_stan_variable">
-<span class="sig-name descname"><span class="pre">declare_stan_variable</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">varname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">force_basetype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.declare_stan_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.declare_stan_variable" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">declare_stan_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">varname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_basetype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.declare_stan_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.declare_stan_variable" title="Link to this definition">¶</a></dt>
 <dd><p>Generate Stan variable declaration with appropriate type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -564,13 +557,7 @@ Stan code patterns.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_shared_leading">
-<span class="sig-name descname"><span class="pre">get_shared_leading</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">custom_types.Integer</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_shared_leading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_shared_leading" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_shared_leading</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">custom_types.Integer</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_shared_leading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_shared_leading" title="Link to this definition">¶</a></dt>
 <dd><p>Determine the number of compatible leading dimensions with another component.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -621,13 +608,7 @@ Defaults to False.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_stan_parameter_declaration">
-<span class="sig-name descname"><span class="pre">get_stan_parameter_declaration</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">force_basetype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_stan_parameter_declaration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_stan_parameter_declaration" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_stan_parameter_declaration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_basetype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_stan_parameter_declaration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_stan_parameter_declaration" title="Link to this definition">¶</a></dt>
 <dd><p>Generate Stan parameter declaration for this component.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -667,13 +648,7 @@ The default implementation returns an empty list.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_target_incrementation">
-<span class="sig-name descname"><span class="pre">get_target_incrementation</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_target_incrementation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_target_incrementation" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_target_incrementation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_target_incrementation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_target_incrementation" title="Link to this definition">¶</a></dt>
 <dd><p>Generate Stan code for log-probability target increments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -695,13 +670,7 @@ appropriate target increment statements for their distributions.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_transformation_assignment">
-<span class="sig-name descname"><span class="pre">get_transformation_assignment</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_transformation_assignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_transformation_assignment" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_transformation_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/abstract_model_component.html#AbstractModelComponent.get_transformation_assignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_transformation_assignment" title="Link to this definition">¶</a></dt>
 <dd><p>Generate Stan code for parameter transformation assignments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1247,7 +1216,7 @@ in either direction. Each tuple contains:
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &#169;2025, Bruce Wittmann.
+      &#169;2025, Microsoft Corporation.
       
       |
       Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>

@@ -208,13 +208,7 @@ Defaults to None.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanCodeBase.get_generated_quantities">
-<span class="sig-name descname"><span class="pre">get_generated_quantities</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">declarations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase.get_generated_quantities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_generated_quantities" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_generated_quantities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">declarations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase.get_generated_quantities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_generated_quantities" title="Link to this definition">¶</a></dt>
 <dd><p>Generate Stan code for generated quantities block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -238,13 +232,7 @@ sampling and derived quantity computation.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanCodeBase.get_target_incrementation">
-<span class="sig-name descname"><span class="pre">get_target_incrementation</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">_dummy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase.get_target_incrementation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_target_incrementation" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_target_incrementation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_dummy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase.get_target_incrementation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_target_incrementation" title="Link to this definition">¶</a></dt>
 <dd><p>Generate Stan code for model block <cite>target</cite> variable incrementation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -263,13 +251,7 @@ increment statements for parameters and observables.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanCodeBase.get_transformation_assignment">
-<span class="sig-name descname"><span class="pre">get_transformation_assignment</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">declarations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase.get_transformation_assignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_transformation_assignment" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_transformation_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">declarations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase.get_transformation_assignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_transformation_assignment" title="Link to this definition">¶</a></dt>
 <dd><p>Generate Stan code for transformed parameters block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -288,13 +270,7 @@ transformations.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanCodeBase.get_transformed_data_assignment">
-<span class="sig-name descname"><span class="pre">get_transformed_data_assignment</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">declarations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase.get_transformed_data_assignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_transformed_data_assignment" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_transformed_data_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">declarations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase.get_transformed_data_assignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_transformed_data_assignment" title="Link to this definition">¶</a></dt>
 <dd><p>Generate Stan code for transformed data block.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -502,13 +478,7 @@ added to maintain proper Stan code structure.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanForLoop.copy">
-<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">record_in_parent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop" title="scistanpy.model.stan.stan_model.StanForLoop"><span class="pre">StanForLoop</span></a></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanForLoop.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanForLoop.copy" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record_in_parent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop" title="scistanpy.model.stan.stan_model.StanForLoop"><span class="pre">StanForLoop</span></a></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanForLoop.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanForLoop.copy" title="Link to this definition">¶</a></dt>
 <dd><p>Create a shallow copy of this loop.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1827,7 +1797,7 @@ of SciStanPy for debugging or optimization purposes.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &#169;2025, Bruce Wittmann.
+      &#169;2025, Microsoft Corporation.
       
       |
       Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>

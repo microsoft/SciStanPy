@@ -157,13 +157,7 @@ equivalent to <code class="docutils literal notranslate"><span class="pre">from<
 <p>Many SciStanPy operations can be performed using either NumPy or PyTorch as the underlying numerical backend. The utility function below automates the selection of the appropriate backend based on the input data type.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="scistanpy.utils.choose_module">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">choose_module</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.SampleType'</span></span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ModuleType</span></span></span><a class="reference internal" href="../_modules/scistanpy/utils.html#choose_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.choose_module" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">choose_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.SampleType'</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ModuleType</span></span></span><a class="reference internal" href="../_modules/scistanpy/utils.html#choose_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.choose_module" title="Link to this definition">¶</a></dt>
 <dd><p>Choose the appropriate computational module based on input type.</p>
 <p>This function provides automatic backend selection between NumPy and
 PyTorch based on the type of the input data.</p>
@@ -296,14 +290,7 @@ the limit)</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.utils.az_dask">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">az_dask</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">dask_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'parallelized'</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">output_dtypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/utils.html#az_dask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.az_dask" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">az_dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dask_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'parallelized'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dtypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/utils.html#az_dask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.az_dask" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Context manager for enabling Dask integration with ArviZ.</p>
 <p>This context manager provides a convenient way to enable Dask-based
@@ -403,7 +390,7 @@ ensuring clean state management.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &#169;2025, Bruce Wittmann.
+      &#169;2025, Microsoft Corporation.
       
       |
       Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>

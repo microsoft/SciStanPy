@@ -1,20 +1,12 @@
 # Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-
+# Basic information about the project.
 project = "SciStanPy"
-copyright = "2025, Bruce Wittmann"
+copyright = "%Y, Microsoft Corporation"
 author = "Bruce Wittmann"
 release = "Alpha"
 
-# -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
-
+# Extensions
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -23,19 +15,16 @@ extensions = [
     "sphinx.ext.githubpages",  # Support GitHub pages
 ]
 
-autosummary_generate = True
-autoclass_content = "both"  # include class and __init__ docstrings
-autodoc_mock_imports = ["torch"]
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
+autoclass_content = "both"  # Include both class docstring and __init__
+autodoc_mock_imports = ["torch"]  # Mock torch
 
-templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+templates_path = ["_templates"]  # Path to templates
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]  # Patterns to ignore
 
-
-# -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
-
+# HTML output settings
 html_theme = "alabaster"
 html_static_path = ["_static"]
 
 # Set the maximum line length for function signatures in the documentation
-maximum_signature_line_length = 80
+maximum_signature_line_length = 100
