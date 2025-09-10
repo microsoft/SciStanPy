@@ -1,11 +1,6 @@
 Operations API Reference
 ========================
 
-This reference covers the mathematical operations and transformations available in SciStanPy.
-
-Operations Module
------------------
-
 .. automodule:: scistanpy.operations
    :undoc-members:
    :show-inheritance:
@@ -13,7 +8,7 @@ Operations Module
 Operation Framework
 -------------------
 
-The operations module provides a framework for creating mathematical operations that work with both SciStanPy model components and raw numerical data.
+The operations module provides a framework for creating mathematical operations from :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter` classes that work with both SciStanPy model components and raw numerical data (NumPy arrays/PyTorch tensors).
 
 **Core Classes:**
 
@@ -26,217 +21,28 @@ The operations module provides a framework for creating mathematical operations 
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members: __call__
 
 **Operation Builder:**
 
+The :py:func:`~scistanpy.operations.build_operation` function allows users to create custom operations easily by wrapping a :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter` subclass. This is the main interface for creating new operations from custom :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter` classes and is what is used under the hood to create all built-in operations.
+
 .. autofunction:: scistanpy.operations.build_operation
-   :noindex:
-
-Available Operations
---------------------
-
-Mathematical Functions
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autodata:: scistanpy.operations.abs_
-   :annotation:
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # With model components
-      param = ssp.parameters.Normal(mu=0, sigma=1)
-      abs_param = ssp.operations.abs_(param)
-
-      # With numerical data
-      result = ssp.operations.abs_([-1, -2, 3])  # Returns [1, 2, 3]
-
-.. autodata:: scistanpy.operations.exp
-   :annotation:
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # Exponential transformation
-      log_rate = ssp.parameters.Normal(mu=0, sigma=1)
-      rate = ssp.operations.exp(log_rate)  # Ensures positive values
-
-.. autodata:: scistanpy.operations.log
-   :annotation:
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # Natural logarithm
-      positive_param = ssp.parameters.LogNormal(mu=0, sigma=1)
-      log_param = ssp.operations.log(positive_param)
-
-.. autodata:: scistanpy.operations.log1p_exp
-   :annotation:
-
-   Numerically stable computation of log(1 + exp(x)).
-
-.. autodata:: scistanpy.operations.sigmoid
-   :annotation:
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # Convert logits to probabilities
-      logits = ssp.parameters.Normal(mu=0, sigma=1)
-      probabilities = ssp.operations.sigmoid(logits)
-
-.. autodata:: scistanpy.operations.log_sigmoid
-   :annotation:
-
-   Numerically stable computation of log(sigmoid(x)).
-
-Statistical Operations
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autodata:: scistanpy.operations.normalize
-   :annotation:
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # Normalize to unit sum (over last dimension)
-      weights = ssp.parameters.LogNormal(mu=0, sigma=1, shape=(3,))
-      probabilities = ssp.operations.normalize(weights)
-
-.. autodata:: scistanpy.operations.normalize_log
-   :annotation:
-
-   Log-space normalization ensuring log-sum-exp equals 0.
-
-.. autodata:: scistanpy.operations.sum_
-   :annotation:
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # Sum over last dimension
-      values = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))
-      total = ssp.operations.sum_(values)
-
-.. autodata:: scistanpy.operations.logsumexp
-   :annotation:
-
-   Numerically stable computation of log(sum(exp(x))).
-
-Growth Model Operations
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autodata:: scistanpy.operations.exponential_growth
-   :annotation:
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # Model exponential population growth
-      time_points = np.array([0, 1, 2, 3, 4])
-      initial_pop = ssp.parameters.LogNormal(mu=np.log(100), sigma=0.1)
-      growth_rate = ssp.parameters.Normal(mu=0.1, sigma=0.05)
-
-      population = ssp.operations.exponential_growth(
-          t=time_points, A=initial_pop, r=growth_rate
-      )
-
-.. autodata:: scistanpy.operations.log_exponential_growth
-   :annotation:
-
-   Log-space version of exponential growth modeling.
-
-.. autodata:: scistanpy.operations.binary_exponential_growth
-   :annotation:
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # Two-timepoint exponential growth
-      initial_size = ssp.parameters.LogNormal(mu=np.log(50), sigma=0.2)
-      growth_rate = ssp.parameters.Normal(mu=0.2, sigma=0.1)
-
-      final_size = ssp.operations.binary_exponential_growth(
-          A=initial_size, r=growth_rate
-      )
-
-.. autodata:: scistanpy.operations.binary_log_exponential_growth
-   :annotation:
-
-   Log-space version of binary exponential growth.
-
-.. autodata:: scistanpy.operations.sigmoid_growth
-   :annotation:
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # Logistic growth with carrying capacity
-      time_points = np.array([0, 5, 10, 15, 20])
-      carrying_capacity = ssp.parameters.LogNormal(mu=np.log(1000), sigma=0.1)
-      growth_rate = ssp.parameters.Normal(mu=0.3, sigma=0.1)
-      inflection_time = ssp.parameters.Normal(mu=10, sigma=2)
-
-      population = ssp.operations.sigmoid_growth(
-          t=time_points, A=carrying_capacity, r=growth_rate, c=inflection_time
-      )
-
-.. autodata:: scistanpy.operations.log_sigmoid_growth
-   :annotation:
-
-   Log-space version of sigmoid growth modeling.
-
-.. autodata:: scistanpy.operations.sigmoid_growth_init_param
-   :annotation:
-
-   Alternative sigmoid growth parameterization using initial population.
-
-.. autodata:: scistanpy.operations.log_sigmoid_growth_init_param
-   :annotation:
-
-   Log-space version of initial-population-parameterized sigmoid growth.
-
-Specialized Operations
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autodata:: scistanpy.operations.convolve_sequence
-   :annotation:
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # Sequence convolution for pattern matching
-      sequence = np.array([0, 1, 2, 1, 0])  # Encoded sequence
-      weights = ssp.parameters.Normal(mu=0, sigma=1, shape=(3, 3))
-
-      convolved = ssp.operations.convolve_sequence(
-          weights=weights, ordinals=sequence
-      )
 
 Operation Usage Patterns
 ------------------------
+Operations can be used in two main contexts: with SciStanPy model components (:py:class:`~scistanpy.model.components.parameters.Parameter`, :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter`, and :py:class:`~scistanpy.model.components.constants.Constant`) and with raw numerical data (NumPy arrays or PyTorch tensors). The operations automatically dispatch to the appropriate behavior based on the input type.
 
 **With Model Components:**
 
 .. code-block:: python
 
    # Operations with parameters create transformed parameters
-   base_param = ssp.parameters.Normal(mu=0, sigma=1)
+   base_param = ssp.parameters.Normal(mu=0.0, sigma=1.0)
    transformed = ssp.operations.exp(base_param)
 
    # Use in model definitions
-   likelihood = ssp.parameters.Normal(mu=transformed, sigma=0.1)
+   observed = ssp.parameters.Normal(mu=transformed, sigma=0.1)
 
 **With Numerical Data:**
 
@@ -260,43 +66,70 @@ Operation Usage Patterns
    param_result = my_function(ssp.parameters.Normal(mu=0, sigma=1))
    data_result = my_function(np.array([1, 2, 3]))
 
-Creating Custom Operations
---------------------------
+Available Operations
+--------------------
+The following operations are available in the SciStanPy operations module. Each operation is documented with its usage patterns and examples.
 
-**Using build_operation:**
+If there's a specific mathematical operation that you need which is not listed here (and, given that this is an evolving library, there are certainly many missing), please consider (A) raising an issue on the SciStanPy GitHub repository requesting its addition, or (B) creating a custom operation using the :py:func:`~scistanpy.operations.build_operation` function. If you take the latter approach, also consider contributing your custom operation back to the SciStanPy project for inclusion in future releases!
 
-.. code-block:: python
+Mathematical Functions
+~~~~~~~~~~~~~~~~~~~~~~
+Below are the basic mathematical operations provided by SciStanPy.
 
-   from scistanpy.operations import build_operation
-   from scistanpy.model.components.transformations.transformed_parameters import UnaryTransformedParameter
+.. autodata:: scistanpy.operations.abs_
 
-   class MyTransformation(UnaryTransformedParameter):
-       """Custom mathematical transformation."""
+.. autodata:: scistanpy.operations.exp
 
-       def run_np_torch_op(self, x):
-           # Implementation for numerical data
-           return x**2 + 1
+.. autodata:: scistanpy.operations.log
 
-       def write_stan_operation(self, x: str) -> str:
-           # Stan code generation
-           return f"square({x}) + 1"
+.. autodata:: scistanpy.operations.log1p_exp
 
-   # Create operation
-   my_operation = build_operation(MyTransformation)
+.. autodata:: scistanpy.operations.sigmoid
 
-   # Use the operation
-   param = ssp.parameters.Normal(mu=0, sigma=1)
-   transformed = my_operation(param)
+.. autodata:: scistanpy.operations.log_sigmoid
 
-Best Practices
---------------
+Normalization Operations
+~~~~~~~~~~~~~~~~~~~~~~~~
+Normalization operations that can be used to build constrained transformed parameters from unconstrained parameters. Take care with these when sampling! It is easy to create non-identifiable models if the normalization is not used correctly.
 
-1. **Use descriptive variable names** when chaining operations
-2. **Prefer log-space operations** for numerical stability when dealing with extreme values
-3. **Validate inputs** when creating custom operations
-4. **Document custom operations** with clear mathematical descriptions
-5. **Test operations** with both model components and numerical data
-6. **Use growth model operations** for temporal modeling applications
-7. **Combine operations naturally** to build complex mathematical expressions
+.. note::
 
-The operations framework provides the foundation for building sophisticated mathematical models while maintaining computational efficiency across different backends.
+   The normalization operations always operate over the last dimension of the input parameter when applied to SciStanPy parameters.
+
+.. autodata:: scistanpy.operations.normalize
+
+.. autodata:: scistanpy.operations.normalize_log
+
+Reduction Operations
+~~~~~~~~~~~~~~~~~~~~
+Reduction operations allow for aggregating values across dimensions of parameters or data. As with the normalization operations, these always operate over the last dimension of the input parameter when applied to SciStanPy parameters.
+
+.. autodata:: scistanpy.operations.sum_
+
+.. autodata:: scistanpy.operations.logsumexp
+
+Growth Model Operations
+~~~~~~~~~~~~~~~~~~~~~~~
+Growth model operations provide a set of mathematical transformations for modeling population growth and similar temporal dynamics. These operations can be used to define growth models in a probabilistic framework (e.g., for deep mutational scanning).
+
+.. autodata:: scistanpy.operations.exponential_growth
+
+.. autodata:: scistanpy.operations.binary_exponential_growth
+
+.. autodata:: scistanpy.operations.log_exponential_growth
+
+.. autodata:: scistanpy.operations.binary_log_exponential_growth
+
+.. autodata:: scistanpy.operations.sigmoid_growth
+
+.. autodata:: scistanpy.operations.log_sigmoid_growth
+
+.. autodata:: scistanpy.operations.sigmoid_growth_init_param
+
+.. autodata:: scistanpy.operations.log_sigmoid_growth_init_param
+
+Specialized Operations
+~~~~~~~~~~~~~~~~~~~~~~
+Specialized operations provide additional mathematical transformations that are useful in specific modeling contexts. There is plenty of room for expansion in this category, and users are encouraged to contribute new operations as needed.
+
+.. autodata:: scistanpy.operations.convolve_sequence

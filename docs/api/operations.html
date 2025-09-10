@@ -33,23 +33,19 @@
 
           <div class="body" role="main">
             
-  <section id="operations-api-reference">
-<h1>Operations API Reference<a class="headerlink" href="#operations-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference covers the mathematical operations and transformations available in SciStanPy.</p>
-<section id="module-scistanpy.operations">
-<span id="operations-module"></span><h2>Operations Module<a class="headerlink" href="#module-scistanpy.operations" title="Link to this heading">¶</a></h2>
+  <section id="module-scistanpy.operations">
+<span id="operations-api-reference"></span><h1>Operations API Reference<a class="headerlink" href="#module-scistanpy.operations" title="Link to this heading">¶</a></h1>
 <p>Custom operations for use in SciStanPy Stan models.</p>
 <p>This module provides a framework for adding mathematical operations to the model
-graph. Operations are built from TransformedParameter classes and can handle both
-immediate computation on NumPy/PyTorch data and deferred computation within model
-graphs.</p>
-<p>The module uses a metaclass pattern to dynamically create operation classes that
-maintain proper documentation inheritance and provide flexible parameter handling.
-Operations can work with both raw numerical data and SciStanPy model components.</p>
-</section>
+graph. Operations are built from
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
+classes and can handle both immediate computation on NumPy/PyTorch data and deferred
+computation within model graphs. This module should be the access point to all operations
+available in SciStanPy–users should not need to directly interact with the underlying
+transformation classes.</p>
 <section id="operation-framework">
 <h2>Operation Framework<a class="headerlink" href="#operation-framework" title="Link to this heading">¶</a></h2>
-<p>The operations module provides a framework for creating mathematical operations that work with both SciStanPy model components and raw numerical data.</p>
+<p>The operations module provides a framework for creating mathematical operations from <a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a> classes that work with both SciStanPy model components and raw numerical data (NumPy arrays/PyTorch tensors).</p>
 <p><strong>Core Classes:</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.operations.MetaOperation">
@@ -57,9 +53,10 @@ Operations can work with both raw numerical data and SciStanPy model components.
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
 <p>Metaclass for dynamically creating operation classes.</p>
 <p>This metaclass is responsible for creating operation classes from
-TransformedParameter classes. It validates that the provided distclass
-is appropriate and automatically inherits documentation from the
-underlying transformation class.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
+classes. It validates that a <code class="docutils literal notranslate"><span class="pre">DISTCLASS</span></code> attribute is provided and appropriate,
+then automatically inherits documentation from the underlying transformation
+class. In general, users will not need to interact with this metaclass directly.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -70,15 +67,19 @@ underlying transformation class.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>ValueError</strong> – If DISTCLASS is not provided in class attributes</p></li>
-<li><p><strong>TypeError</strong> – If DISTCLASS is not a subclass of TransformedParameter</p></li>
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">DISTCLASS</span></code> is not provided in class attributes</p></li>
+<li><p><strong>TypeError</strong> – If <code class="docutils literal notranslate"><span class="pre">DISTCLASS</span></code> is not a subclass of
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a></p></li>
 </ul>
 </dd>
 </dl>
-<p>The metaclass performs the following validations and setup:
-- Ensures DISTCLASS attribute exists
-- Validates DISTCLASS inheritance from TransformedParameter
-- Inherits documentation from the DISTCLASS to the __call__ method</p>
+<p>The metaclass performs the following validations and setup:</p>
+<ul class="simple">
+<li><p>Ensures <code class="docutils literal notranslate"><span class="pre">DISTCLASS</span></code> attribute exists</p></li>
+<li><p>Validates <code class="docutils literal notranslate"><span class="pre">DISTCLASS</span></code> inheritance from
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a></p></li>
+<li><p>Inherits documentation from the <code class="docutils literal notranslate"><span class="pre">DISTCLASS</span></code> to the <code class="docutils literal notranslate"><span class="pre">__call__</span></code> method</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py class">
@@ -90,41 +91,92 @@ underlying transformation class.</p>
 be used in SciStanPy models. Operations can handle both immediate computation
 on numerical data and deferred computation when used with model components.</p>
 <p>The class should never be instantiated directly. Instead, use the
-<cite>build_operation</cite> function to create specific operation instances from
-TransformedParameter classes.</p>
+<a class="reference internal" href="#scistanpy.operations.build_operation" title="scistanpy.operations.build_operation"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_operation()</span></code></a> function to create specific
+operation instances from
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
+classes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>DISTCLASS</strong> – The TransformedParameter class this operation wraps</p>
+<dd class="field-odd"><p><strong>DISTCLASS</strong> – The
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
+class this operation wraps.</p>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Note:</dt><dd><p>Operations automatically detect whether they are being called with
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Operations automatically detect whether they are being called with
 SciStanPy model components or raw numerical data and handle each
 case appropriately.</p>
-</dd>
-</dl>
+</div>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.operations.Operation.DISTCLASS">
 <span class="sig-name descname"><span class="pre">DISTCLASS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><span class="pre">TransformedParameter</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.operations.Operation.DISTCLASS" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.operations.Operation.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/operations.html#Operation.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.operations.Operation.__call__" title="Link to this definition">¶</a></dt>
+<dd><p>Apply the operation to the provided inputs.</p>
+<p>This method provides intelligent dispatching based on the input types.
+When called with SciStanPy model components, it returns a new
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
+instance for deferred computation. When called with raw numerical data
+(numpy), it performs immediate computation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>tuple</em>) – Positional arguments for the operation. Can be model components
+or numerical data.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – Keyword arguments for the operation. Can contain model components
+or numerical data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Either a
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
+instance (for deferred computation) or the immediate result of the
+operation on numerical data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter">transformed_parameters.TransformedParameter</a>, Any]</p>
+</dd>
+</dl>
+<p>The method behavior depends on input types:</p>
+<ul class="simple">
+<li><p>If any argument is a SciStanPy model component: Returns a
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
+instance for later evaluation</p></li>
+<li><p>If all arguments are numerical data: Performs immediate computation using
+the underlying
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op"><code class="xref py py-meth docutils literal notranslate"><span class="pre">TransformedParameter.run_np_torch_op()</span></code></a>
+method to compute and return the result directly.</p></li>
+</ul>
+</dd></dl>
+
 </dd></dl>
 
 <p><strong>Operation Builder:</strong></p>
+<p>The <a class="reference internal" href="#scistanpy.operations.build_operation" title="scistanpy.operations.build_operation"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_operation()</span></code></a> function allows users to create custom operations easily by wrapping a <a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a> subclass. This is the main interface for creating new operations from custom <a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a> classes and is what is used under the hood to create all built-in operations.</p>
 <dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">build_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distclass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><span class="pre">TransformedParameter</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#scistanpy.operations.Operation" title="scistanpy.operations.Operation"><span class="pre">Operation</span></a></span></span><a class="reference internal" href="../_modules/scistanpy/operations.html#build_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dt class="sig sig-object py" id="scistanpy.operations.build_operation">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">build_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distclass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><span class="pre">TransformedParameter</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#scistanpy.operations.Operation" title="scistanpy.operations.Operation"><span class="pre">Operation</span></a></span></span><a class="reference internal" href="../_modules/scistanpy/operations.html#build_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.operations.build_operation" title="Link to this definition">¶</a></dt>
 <dd><p>Build an operation instance from a TransformedParameter class.</p>
-<p>This function creates a new operation class using the MetaOperation metaclass
-and returns an instance of that class. The resulting operation inherits
-documentation and behavior from the provided TransformedParameter class.</p>
+<p>This function creates a new operation class using the
+<a class="reference internal" href="#scistanpy.operations.MetaOperation" title="scistanpy.operations.MetaOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetaOperation</span></code></a> metaclass in combination with
+the <a class="reference internal" href="#scistanpy.operations.Operation" title="scistanpy.operations.Operation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Operation</span></code></a> base class, then returns an
+instance of that class. The resulting operation inherits documentation and
+behavior from the provided
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
+class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>distclass</strong> (<em>type</em><em>[</em><a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><em>transformed_parameters.TransformedParameter</em></a><em>]</em>) – The TransformedParameter class to build the operation from.
-Must be a subclass of TransformedParameter.</p>
+<dd class="field-odd"><p><strong>distclass</strong> (<em>type</em><em>[</em><a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><em>transformed_parameters.TransformedParameter</em></a><em>]</em>) – The <a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
+class to build the operation from.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A new operation instance that wraps the provided TransformedParameter</p>
+<dd class="field-even"><p>A new operation instance that wraps the provided
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
+class.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#scistanpy.operations.Operation" title="scistanpy.operations.Operation">Operation</a></p>
@@ -136,273 +188,42 @@ Must be a subclass of TransformedParameter.</p>
 </ul>
 </dd>
 </dl>
-<dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a custom operation from a TransformedParameter</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">my_operation</span> <span class="o">=</span> <span class="n">build_operation</span><span class="p">(</span><span class="n">MyTransformedParameter</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">my_operation</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd>
-</dl>
-</dd></dl>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_operation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.transformations.transformed_parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnaryTransformedParameter</span>
 
-</section>
-<section id="available-operations">
-<h2>Available Operations<a class="headerlink" href="#available-operations" title="Link to this heading">¶</a></h2>
-<section id="mathematical-functions">
-<h3>Mathematical Functions<a class="headerlink" href="#mathematical-functions" title="Link to this heading">¶</a></h3>
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.abs_">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">abs_</span></span><a class="headerlink" href="#scistanpy.operations.abs_" title="Link to this definition">¶</a></dt>
-<dd><p>Absolute value operation.</p>
-<p>Computes the absolute value of the input parameter or numerical data.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># With model components</span>
-<span class="n">param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">abs_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">abs_</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyTransformation</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
+    <span class="c1"># Custom mathematical transformation.</span>
 
-<span class="c1"># With numerical data</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">abs_</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>  <span class="c1"># Returns [1, 2, 3]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="c1"># Implementation for numerical data</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="c1"># Stan code generation</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;square(</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">) + 1&quot;</span>
+
+<span class="c1"># Create operation</span>
+<span class="n">my_operation</span> <span class="o">=</span> <span class="n">build_operation</span><span class="p">(</span><span class="n">MyTransformation</span><span class="p">)</span>
+
+<span class="c1"># Use the operation</span>
+<span class="n">param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">transformed</span> <span class="o">=</span> <span class="n">my_operation</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
 
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.exp">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">exp</span></span><a class="headerlink" href="#scistanpy.operations.exp" title="Link to this definition">¶</a></dt>
-<dd><p>Exponential operation.</p>
-<p>Computes the exponential (e^x) of the input parameter or numerical data.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Exponential transformation</span>
-<span class="n">log_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_rate</span><span class="p">)</span>  <span class="c1"># Ensures positive values</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.log">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log</span></span><a class="headerlink" href="#scistanpy.operations.log" title="Link to this definition">¶</a></dt>
-<dd><p>Natural logarithm operation.</p>
-<p>Computes the natural logarithm of the input parameter or numerical data.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Natural logarithm</span>
-<span class="n">positive_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">log_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">positive_param</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.log1p_exp">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log1p_exp</span></span><a class="headerlink" href="#scistanpy.operations.log1p_exp" title="Link to this definition">¶</a></dt>
-<dd><p>Log(1 + exp(x)) operation.</p>
-<p>Computes log(1 + exp(x)) in a numerically stable way.</p>
-<p>Numerically stable computation of log(1 + exp(x)).</p>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.sigmoid">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sigmoid</span></span><a class="headerlink" href="#scistanpy.operations.sigmoid" title="Link to this definition">¶</a></dt>
-<dd><p>Sigmoid operation.</p>
-<p>Computes the sigmoid function (1 / (1 + exp(-x))) of the input.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert logits to probabilities</span>
-<span class="n">logits</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">probabilities</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.log_sigmoid">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log_sigmoid</span></span><a class="headerlink" href="#scistanpy.operations.log_sigmoid" title="Link to this definition">¶</a></dt>
-<dd><p>Log-sigmoid operation.</p>
-<p>Computes the logarithm of the sigmoid function in a numerically stable way.</p>
-<p>Numerically stable computation of log(sigmoid(x)).</p>
-</dd></dl>
-
-</section>
-<section id="statistical-operations">
-<h3>Statistical Operations<a class="headerlink" href="#statistical-operations" title="Link to this heading">¶</a></h3>
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.normalize">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><a class="headerlink" href="#scistanpy.operations.normalize" title="Link to this definition">¶</a></dt>
-<dd><p>Normalization operation.</p>
-<p>Normalizes input data to unit sum or other normalization schemes. Note that when
-applied to SciStanPy parameters, this operation is always performed over the last
-dimension.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Normalize to unit sum (over last dimension)</span>
-<span class="n">weights</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,))</span>
-<span class="n">probabilities</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.normalize_log">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">normalize_log</span></span><a class="headerlink" href="#scistanpy.operations.normalize_log" title="Link to this definition">¶</a></dt>
-<dd><p>Log-space normalization operation.</p>
-<p>Performs normalization such that the log-sum of exponentials of terms is equal to
-0 (and, consequently, such that the the sum of exponentials is equal to 1).</p>
-<p>Log-space normalization ensuring log-sum-exp equals 0.</p>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.sum_">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sum_</span></span><a class="headerlink" href="#scistanpy.operations.sum_" title="Link to this definition">¶</a></dt>
-<dd><p>Summation operation.</p>
-<p>Computes the sum of input parameters or numerical data. Note that for SciStanPy
-operations, the sum is always performed over the last dimensions.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sum over last dimension</span>
-<span class="n">values</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,))</span>
-<span class="n">total</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">sum_</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.logsumexp">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">logsumexp</span></span><a class="headerlink" href="#scistanpy.operations.logsumexp" title="Link to this definition">¶</a></dt>
-<dd><p>Log-sum-exp operation.</p>
-<p>Computes log(sum(exp(x))) in a numerically stable way.</p>
-<p>Numerically stable computation of log(sum(exp(x))).</p>
-</dd></dl>
-
-</section>
-<section id="growth-model-operations">
-<h3>Growth Model Operations<a class="headerlink" href="#growth-model-operations" title="Link to this heading">¶</a></h3>
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.exponential_growth">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">exponential_growth</span></span><a class="headerlink" href="#scistanpy.operations.exponential_growth" title="Link to this definition">¶</a></dt>
-<dd><p>Exponential growth operation.</p>
-<p>Models exponential growth patterns in time series data.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Model exponential population growth</span>
-<span class="n">time_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
-<span class="n">initial_pop</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-<span class="n">growth_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
-
-<span class="n">population</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exponential_growth</span><span class="p">(</span>
-    <span class="n">t</span><span class="o">=</span><span class="n">time_points</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">initial_pop</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">growth_rate</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.log_exponential_growth">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log_exponential_growth</span></span><a class="headerlink" href="#scistanpy.operations.log_exponential_growth" title="Link to this definition">¶</a></dt>
-<dd><p>Log-exponential growth operation.</p>
-<p>Identical to <cite>exponential_growth</cite>, only models the log of the population size.</p>
-<p>Log-space version of exponential growth modeling.</p>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.binary_exponential_growth">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">binary_exponential_growth</span></span><a class="headerlink" href="#scistanpy.operations.binary_exponential_growth" title="Link to this definition">¶</a></dt>
-<dd><p>Binary exponential growth operation.</p>
-<p>Models exponential growth over two timepoints, taking in the population size at
-the starting time (assumed to be at t = 0) and outputting the population size at
-the ending time (assumed to be at = 1).</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Two-timepoint exponential growth</span>
-<span class="n">initial_size</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-<span class="n">growth_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-
-<span class="n">final_size</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">binary_exponential_growth</span><span class="p">(</span>
-    <span class="n">A</span><span class="o">=</span><span class="n">initial_size</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">growth_rate</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.binary_log_exponential_growth">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">binary_log_exponential_growth</span></span><a class="headerlink" href="#scistanpy.operations.binary_log_exponential_growth" title="Link to this definition">¶</a></dt>
-<dd><p>Binary log-exponential growth operation.</p>
-<p>Identical to <cite>binary_exponential_growth</cite>, only models the log of the population
-size.</p>
-<p>Log-space version of binary exponential growth.</p>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.sigmoid_growth">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sigmoid_growth</span></span><a class="headerlink" href="#scistanpy.operations.sigmoid_growth" title="Link to this definition">¶</a></dt>
-<dd><p>Sigmoid growth operation.</p>
-<p>Models sigmoid growth patterns in time series data.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Logistic growth with carrying capacity</span>
-<span class="n">time_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">])</span>
-<span class="n">carrying_capacity</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-<span class="n">growth_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-<span class="n">inflection_time</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-
-<span class="n">population</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">sigmoid_growth</span><span class="p">(</span>
-    <span class="n">t</span><span class="o">=</span><span class="n">time_points</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">carrying_capacity</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">growth_rate</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">inflection_time</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.log_sigmoid_growth">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log_sigmoid_growth</span></span><a class="headerlink" href="#scistanpy.operations.log_sigmoid_growth" title="Link to this definition">¶</a></dt>
-<dd><p>Log-sigmoid growth operation.</p>
-<p>Models the logarithm of population size growing according to log-sigmoid growth
-patterns in time series data.</p>
-<p>Log-space version of sigmoid growth modeling.</p>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.sigmoid_growth_init_param">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sigmoid_growth_init_param</span></span><a class="headerlink" href="#scistanpy.operations.sigmoid_growth_init_param" title="Link to this definition">¶</a></dt>
-<dd><p>An alternate parametrization of <cite>sigmoid_growth</cite>.</p>
-<p>Parametrizes a model of sigmoid growth using initial population abundance.</p>
-<p>Alternative sigmoid growth parameterization using initial population.</p>
-</dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.log_sigmoid_growth_init_param">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log_sigmoid_growth_init_param</span></span><a class="headerlink" href="#scistanpy.operations.log_sigmoid_growth_init_param" title="Link to this definition">¶</a></dt>
-<dd><p>An alternative parametrization of <cite>log_sigmoid_growth</cite>.</p>
-<p>Parametrizes a model of log sigmoid growth using initial population abundance.</p>
-<p>Log-space version of initial-population-parameterized sigmoid growth.</p>
-</dd></dl>
-
-</section>
-<section id="specialized-operations">
-<h3>Specialized Operations<a class="headerlink" href="#specialized-operations" title="Link to this heading">¶</a></h3>
-<dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.operations.convolve_sequence">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">convolve_sequence</span></span><a class="headerlink" href="#scistanpy.operations.convolve_sequence" title="Link to this definition">¶</a></dt>
-<dd><p>Sequence convolution operation.</p>
-<p>Performs convolution operations on sequence data.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sequence convolution for pattern matching</span>
-<span class="n">sequence</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>  <span class="c1"># Encoded sequence</span>
-<span class="n">weights</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-
-<span class="n">convolved</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">convolve_sequence</span><span class="p">(</span>
-    <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">ordinals</span><span class="o">=</span><span class="n">sequence</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-</section>
 </section>
 <section id="operation-usage-patterns">
 <h2>Operation Usage Patterns<a class="headerlink" href="#operation-usage-patterns" title="Link to this heading">¶</a></h2>
+<p>Operations can be used in two main contexts: with SciStanPy model components (<a class="reference internal" href="model/components/parameters.html#scistanpy.model.components.parameters.Parameter" title="scistanpy.model.components.parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>, <a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>, and <a class="reference internal" href="model/components/constants.html#scistanpy.model.components.constants.Constant" title="scistanpy.model.components.constants.Constant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Constant</span></code></a>) and with raw numerical data (NumPy arrays or PyTorch tensors). The operations automatically dispatch to the appropriate behavior based on the input type.</p>
 <p><strong>With Model Components:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Operations with parameters create transformed parameters</span>
-<span class="n">base_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">base_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 <span class="n">transformed</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">base_param</span><span class="p">)</span>
 
 <span class="c1"># Use in model definitions</span>
-<span class="n">likelihood</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">transformed</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">observed</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">transformed</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>With Numerical Data:</strong></p>
@@ -424,44 +245,305 @@ patterns in time series data.</p>
 </pre></div>
 </div>
 </section>
-<section id="creating-custom-operations">
-<h2>Creating Custom Operations<a class="headerlink" href="#creating-custom-operations" title="Link to this heading">¶</a></h2>
-<p><strong>Using build_operation:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_operation</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.transformations.transformed_parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnaryTransformedParameter</span>
+<section id="available-operations">
+<h2>Available Operations<a class="headerlink" href="#available-operations" title="Link to this heading">¶</a></h2>
+<p>The following operations are available in the SciStanPy operations module. Each operation is documented with its usage patterns and examples.</p>
+<p>If there’s a specific mathematical operation that you need which is not listed here (and, given that this is an evolving library, there are certainly many missing), please consider (A) raising an issue on the SciStanPy GitHub repository requesting its addition, or (B) creating a custom operation using the <a class="reference internal" href="#scistanpy.operations.build_operation" title="scistanpy.operations.build_operation"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_operation()</span></code></a> function. If you take the latter approach, also consider contributing your custom operation back to the SciStanPy project for inclusion in future releases!</p>
+<section id="mathematical-functions">
+<h3>Mathematical Functions<a class="headerlink" href="#mathematical-functions" title="Link to this heading">¶</a></h3>
+<p>Below are the basic mathematical operations provided by SciStanPy.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.abs_">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">abs_</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.absparameter</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.abs_" title="Link to this definition">¶</a></dt>
+<dd><p>Absolute value operation.</p>
+<p>Computes the absolute value of the input parameter or numerical data. See also,
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter" title="scistanpy.model.components.transformations.transformed_parameters.AbsParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbsParameter</span></code></a>.</p>
+<blockquote>
+<div><p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># With model components</span>
+<span class="n">param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">abs_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">abs_</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">MyTransformation</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Custom mathematical transformation.&quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="c1"># Implementation for numerical data</span>
-        <span class="k">return</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="c1"># Stan code generation</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;square(</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">) + 1&quot;</span>
-
-<span class="c1"># Create operation</span>
-<span class="n">my_operation</span> <span class="o">=</span> <span class="n">build_operation</span><span class="p">(</span><span class="n">MyTransformation</span><span class="p">)</span>
-
-<span class="c1"># Use the operation</span>
-<span class="n">param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">transformed</span> <span class="o">=</span> <span class="n">my_operation</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+<span class="c1"># With numerical data</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">abs_</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">])</span>  <span class="c1"># Returns [1.0, 2.0, 3.0]</span>
 </pre></div>
 </div>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.exp">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">exp</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.expparameter</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.exp" title="Link to this definition">¶</a></dt>
+<dd><p>Exponential operation.</p>
+<p>Computes the exponential (e^x) of the input parameter or numerical data. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ExpParameter</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Exponential transformation</span>
+<span class="n">log_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_rate</span><span class="p">)</span>  <span class="c1"># Ensures positive values</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.log">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.logparameter</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.log" title="Link to this definition">¶</a></dt>
+<dd><p>Natural logarithm operation.</p>
+<p>Computes the natural logarithm of the input parameter or numerical data. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">LogParameter</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Natural logarithm</span>
+<span class="n">positive_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">log_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">positive_param</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.log1p_exp">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log1p_exp</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.log1pexpparameter</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.log1p_exp" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">log(1</span> <span class="pre">+</span> <span class="pre">exp(x))</span></code> operation.</p>
+<p>Computes <code class="docutils literal notranslate"><span class="pre">log(1</span> <span class="pre">+</span> <span class="pre">exp(x))</span></code> in a numerically stable way. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Log1pExpParameter</span></code>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.sigmoid">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sigmoid</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.sigmoidparameter</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.sigmoid" title="Link to this definition">¶</a></dt>
+<dd><p>Sigmoid operation.</p>
+<p>Computes the sigmoid function (1 / (1 + exp(-x))) of the input. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SigmoidParameter</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert logits to probabilities</span>
+<span class="n">logits</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">probabilities</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.log_sigmoid">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log_sigmoid</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.logsigmoidparameter</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.log_sigmoid" title="Link to this definition">¶</a></dt>
+<dd><p>Log-sigmoid operation.</p>
+<p>Computes the logarithm of the sigmoid function in a numerically stable way. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">LogSigmoidParameter</span></code>.</p>
+</dd></dl>
+
 </section>
-<section id="best-practices">
-<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
-<ol class="arabic simple">
-<li><p><strong>Use descriptive variable names</strong> when chaining operations</p></li>
-<li><p><strong>Prefer log-space operations</strong> for numerical stability when dealing with extreme values</p></li>
-<li><p><strong>Validate inputs</strong> when creating custom operations</p></li>
-<li><p><strong>Document custom operations</strong> with clear mathematical descriptions</p></li>
-<li><p><strong>Test operations</strong> with both model components and numerical data</p></li>
-<li><p><strong>Use growth model operations</strong> for temporal modeling applications</p></li>
-<li><p><strong>Combine operations naturally</strong> to build complex mathematical expressions</p></li>
-</ol>
-<p>The operations framework provides the foundation for building sophisticated mathematical models while maintaining computational efficiency across different backends.</p>
+<section id="normalization-operations">
+<h3>Normalization Operations<a class="headerlink" href="#normalization-operations" title="Link to this heading">¶</a></h3>
+<p>Normalization operations that can be used to build constrained transformed parameters from unconstrained parameters. Take care with these when sampling! It is easy to create non-identifiable models if the normalization is not used correctly.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The normalization operations always operate over the last dimension of the input parameter when applied to SciStanPy parameters.</p>
+</div>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.normalize">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.normalizeparameter</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.normalize" title="Link to this definition">¶</a></dt>
+<dd><p>Normalization operation.</p>
+<p>Normalizes input data to unit sum. Note that when applied to SciStanPy parameters,
+this operation is always performed over the last dimension. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizeParameter</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Normalize to unit sum (over last dimension)</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
+<span class="n">probabilities</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="c1"># Each row sums to 1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.normalize_log">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">normalize_log</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.normalizelogparameter</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.normalize_log" title="Link to this definition">¶</a></dt>
+<dd><p>Log-space normalization operation.</p>
+<p>This function ensures that the sum of exponentials is equal to 1 over the last dimension
+of the input. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizeLogParameter</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Normalize to unit sum (over last dimension)</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
+<span class="n">probabilities</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+    <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+<span class="p">)</span> <span class="c1"># Each row sums to 1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="reduction-operations">
+<h3>Reduction Operations<a class="headerlink" href="#reduction-operations" title="Link to this heading">¶</a></h3>
+<p>Reduction operations allow for aggregating values across dimensions of parameters or data. As with the normalization operations, these always operate over the last dimension of the input parameter when applied to SciStanPy parameters.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.sum_">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sum_</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.sumparameter</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.sum_" title="Link to this definition">¶</a></dt>
+<dd><p>Summation operation.</p>
+<p>Computes the sum over an input parameter dimension or over numerical data. Note
+that for SciStanPy operations, the sum is always performed over the last dimension.
+See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SumParameter</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sum over last dimension</span>
+<span class="n">values</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">total</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">sum_</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="c1"># Shape = (5,)</span>
+
+<span class="c1"># Sum but keep dimensions</span>
+<span class="n">total_keepdims</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">sum_</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># Shape = (5, 1)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.logsumexp">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">logsumexp</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.logsumexpparameter</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.logsumexp" title="Link to this definition">¶</a></dt>
+<dd><p>Log-sum-exp operation.</p>
+<p>Note that for SciStanPy operations, the sum is always performed over the last
+dimension.</p>
+<p>Computes log(sum(exp(x))) in a numerically stable way. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">LogSumExpParameter</span></code>.</p>
+</dd></dl>
+
+</section>
+<section id="growth-model-operations">
+<h3>Growth Model Operations<a class="headerlink" href="#growth-model-operations" title="Link to this heading">¶</a></h3>
+<p>Growth model operations provide a set of mathematical transformations for modeling population growth and similar temporal dynamics. These operations can be used to define growth models in a probabilistic framework (e.g., for deep mutational scanning).</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.exponential_growth">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">exponential_growth</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.exponentialgrowth</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.exponential_growth" title="Link to this definition">¶</a></dt>
+<dd><p>Exponential growth operation.</p>
+<p>Models exponential growth patterns in time series data. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialGrowth</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Model exponential population growth</span>
+<span class="n">time_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+<span class="n">initial_pop</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">growth_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+
+<span class="n">population</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exponential_growth</span><span class="p">(</span>
+    <span class="n">t</span><span class="o">=</span><span class="n">time_points</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">initial_pop</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">growth_rate</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.binary_exponential_growth">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">binary_exponential_growth</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.binaryexponentialgrowth</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.binary_exponential_growth" title="Link to this definition">¶</a></dt>
+<dd><p>Binary exponential growth operation.</p>
+<p>Models exponential growth over two timepoints, taking in the population size at
+the starting time (assumed to be at t = 0) and outputting the population size at
+the ending time (assumed to be at t = 1). See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryExponentialGrowth</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Two-timepoint exponential growth</span>
+<span class="n">initial_size</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">growth_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+
+<span class="n">final_size</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">binary_exponential_growth</span><span class="p">(</span>
+    <span class="n">A</span><span class="o">=</span><span class="n">initial_size</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">growth_rate</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.log_exponential_growth">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log_exponential_growth</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.logexponentialgrowth</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.log_exponential_growth" title="Link to this definition">¶</a></dt>
+<dd><p>Log-exponential growth operation.</p>
+<p>Identical to <cite>~scistanpy.operations.exponential_growth</cite>, only models the <em>log</em> of
+the population size. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">LogExponentialGrowth</span></code>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.binary_log_exponential_growth">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">binary_log_exponential_growth</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.binarylogexponentialgrowth</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.binary_log_exponential_growth" title="Link to this definition">¶</a></dt>
+<dd><p>Binary log-exponential growth operation.</p>
+<p>Identical to <a class="reference internal" href="#scistanpy.operations.binary_exponential_growth" title="scistanpy.operations.binary_exponential_growth"><code class="xref py py-func docutils literal notranslate"><span class="pre">binary_exponential_growth()</span></code></a>, only models
+the <em>log</em> of the population size. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryLogExponentialGrowth</span></code>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.sigmoid_growth">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sigmoid_growth</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.sigmoidgrowth</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.sigmoid_growth" title="Link to this definition">¶</a></dt>
+<dd><p>Sigmoid growth operation.</p>
+<p>Models sigmoid growth patterns in time series data. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SigmoidGrowth</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Logistic growth with carrying capacity</span>
+<span class="n">time_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">])</span>
+<span class="n">carrying_capacity</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">growth_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">inflection_time</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="n">population</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">sigmoid_growth</span><span class="p">(</span>
+    <span class="n">t</span><span class="o">=</span><span class="n">time_points</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">carrying_capacity</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">growth_rate</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">inflection_time</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.log_sigmoid_growth">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log_sigmoid_growth</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.logsigmoidgrowth</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.log_sigmoid_growth" title="Link to this definition">¶</a></dt>
+<dd><p>Log-sigmoid growth operation.</p>
+<p>Identical to <a class="reference internal" href="#scistanpy.operations.log_sigmoid_growth" title="scistanpy.operations.log_sigmoid_growth"><code class="xref py py-func docutils literal notranslate"><span class="pre">log_sigmoid_growth()</span></code></a>, only models the
+<em>log</em> of the population size. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">LogSigmoidGrowth</span></code>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.sigmoid_growth_init_param">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sigmoid_growth_init_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.sigmoidgrowthinitparametrization</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.sigmoid_growth_init_param" title="Link to this definition">¶</a></dt>
+<dd><p>An alternate parametrization of <a class="reference internal" href="#scistanpy.operations.sigmoid_growth" title="scistanpy.operations.sigmoid_growth"><code class="xref py py-func docutils literal notranslate"><span class="pre">sigmoid_growth()</span></code></a>
+parametrized using initial population abundance rather than carrying capacity. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SigmoidGrowthInitParametrization</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Alternative sigmoid parametrization using initial population</span>
+<span class="n">time_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
+<span class="n">carrying_capacity</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">growth_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">init_pop</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+<span class="n">population</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">sigmoid_growth_init_param</span><span class="p">(</span>
+    <span class="n">t</span><span class="o">=</span><span class="n">time_points</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">carrying_capacity</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">growth_rate</span><span class="p">,</span> <span class="n">A0</span><span class="o">=</span><span class="n">init_pop</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.log_sigmoid_growth_init_param">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log_sigmoid_growth_init_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.logsigmoidgrowthinitparametrization</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.log_sigmoid_growth_init_param" title="Link to this definition">¶</a></dt>
+<dd><p>An alternative parametrization of <a class="reference internal" href="#scistanpy.operations.log_sigmoid_growth" title="scistanpy.operations.log_sigmoid_growth"><code class="xref py py-func docutils literal notranslate"><span class="pre">log_sigmoid_growth()</span></code></a>
+parametrized using initial population abundance rather than carrying capacity. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">LogSigmoidGrowthInitParametrization</span></code>.</p>
+</dd></dl>
+
+</section>
+<section id="specialized-operations">
+<h3>Specialized Operations<a class="headerlink" href="#specialized-operations" title="Link to this heading">¶</a></h3>
+<p>Specialized operations provide additional mathematical transformations that are useful in specific modeling contexts. There is plenty of room for expansion in this category, and users are encouraged to contribute new operations as needed.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="scistanpy.operations.convolve_sequence">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">convolve_sequence</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.operations.convolvesequence</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.operations.convolve_sequence" title="Link to this definition">¶</a></dt>
+<dd><p>Sequence convolution operation.</p>
+<p>Performs convolution operations on sequence data. See also,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ConvolveSequence</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sequence convolution for pattern matching</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">motif_length</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>  <span class="c1"># 4 nucleotides</span>
+<span class="n">dna_sequence</span> <span class="o">=</span> <span class="n">Constant</span><span class="p">(</span><span class="n">encoded_dna</span><span class="p">)</span>  <span class="c1"># 0,1,2,3 for A,C,G,T</span>
+
+<span class="c1"># Perform convolution of the sequence with the weights</span>
+<span class="n">convolved</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">convolve_sequence</span><span class="p">(</span>
+    <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">ordinals</span><span class="o">=</span><span class="n">dna_sequence</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
 </section>
 </section>
 
