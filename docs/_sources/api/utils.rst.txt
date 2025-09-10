@@ -1,12 +1,5 @@
 Utils API Reference
 ===================
-.. toctree::
-
-   lazy-import-system
-   backend-selection
-   numerical-stability
-   dask-integration
-
 .. automodule:: scistanpy.utils
    :undoc-members:
    :show-inheritance:

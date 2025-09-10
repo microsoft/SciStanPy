@@ -76,17 +76,17 @@ Mathematical Functions
 ~~~~~~~~~~~~~~~~~~~~~~
 Below are the basic mathematical operations provided by SciStanPy.
 
-.. autodata:: scistanpy.operations.abs_
+.. autofunction:: scistanpy.operations.abs_
 
-.. autodata:: scistanpy.operations.exp
+.. autofunction:: scistanpy.operations.exp
 
-.. autodata:: scistanpy.operations.log
+.. autofunction:: scistanpy.operations.log
 
-.. autodata:: scistanpy.operations.log1p_exp
+.. autofunction:: scistanpy.operations.log1p_exp
 
-.. autodata:: scistanpy.operations.sigmoid
+.. autofunction:: scistanpy.operations.sigmoid
 
-.. autodata:: scistanpy.operations.log_sigmoid
+.. autofunction:: scistanpy.operations.log_sigmoid
 
 Normalization Operations
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,40 +96,40 @@ Normalization operations that can be used to build constrained transformed param
 
    The normalization operations always operate over the last dimension of the input parameter when applied to SciStanPy parameters.
 
-.. autodata:: scistanpy.operations.normalize
+.. autofunction:: scistanpy.operations.normalize
 
-.. autodata:: scistanpy.operations.normalize_log
+.. autofunction:: scistanpy.operations.normalize_log
 
 Reduction Operations
 ~~~~~~~~~~~~~~~~~~~~
 Reduction operations allow for aggregating values across dimensions of parameters or data. As with the normalization operations, these always operate over the last dimension of the input parameter when applied to SciStanPy parameters.
 
-.. autodata:: scistanpy.operations.sum_
+.. autofunction:: scistanpy.operations.sum_
 
-.. autodata:: scistanpy.operations.logsumexp
+.. autofunction:: scistanpy.operations.logsumexp
 
 Growth Model Operations
 ~~~~~~~~~~~~~~~~~~~~~~~
 Growth model operations provide a set of mathematical transformations for modeling population growth and similar temporal dynamics. These operations can be used to define growth models in a probabilistic framework (e.g., for deep mutational scanning).
 
-.. autodata:: scistanpy.operations.exponential_growth
+.. autofunction:: scistanpy.operations.exponential_growth
 
-.. autodata:: scistanpy.operations.binary_exponential_growth
+.. autofunction:: scistanpy.operations.binary_exponential_growth
 
-.. autodata:: scistanpy.operations.log_exponential_growth
+.. autofunction:: scistanpy.operations.log_exponential_growth
 
-.. autodata:: scistanpy.operations.binary_log_exponential_growth
+.. autofunction:: scistanpy.operations.binary_log_exponential_growth
 
-.. autodata:: scistanpy.operations.sigmoid_growth
+.. autofunction:: scistanpy.operations.sigmoid_growth
 
-.. autodata:: scistanpy.operations.log_sigmoid_growth
+.. autofunction:: scistanpy.operations.log_sigmoid_growth
 
-.. autodata:: scistanpy.operations.sigmoid_growth_init_param
+.. autofunction:: scistanpy.operations.sigmoid_growth_init_param
 
-.. autodata:: scistanpy.operations.log_sigmoid_growth_init_param
+.. autofunction:: scistanpy.operations.log_sigmoid_growth_init_param
 
 Specialized Operations
 ~~~~~~~~~~~~~~~~~~~~~~
 Specialized operations provide additional mathematical transformations that are useful in specific modeling contexts. There is plenty of room for expansion in this category, and users are encouraged to contribute new operations as needed.
 
-.. autodata:: scistanpy.operations.convolve_sequence
+.. autofunction:: scistanpy.operations.convolve_sequence
