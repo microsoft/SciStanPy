@@ -12,3 +12,7 @@ Core Model Class
    :members:
    :undoc-members:
    :show-inheritance:
+
+Utility Methods
+---------------
+.. autofunction:: run_delayed_mcmc

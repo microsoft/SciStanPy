@@ -10,7 +10,7 @@ maximum likelihood estimation, variational inference, and other gradient-based
 learning procedures on SciStanPy models.
 
 The module's core functionality centers around converting SciStanPy models into
-PyTorch nn.Module instances that preserve the probabilistic structure while
+PyTorch ``nn.Module`` instances that preserve the probabilistic structure while
 enabling efficient gradient computation and optimization. This allows users to
 leverage PyTorch's ecosystem of optimizers, learning rate schedulers, and other
 training utilities.
@@ -21,13 +21,6 @@ Key Features:
     - Mixed precision training support for improved performance
     - Early stopping and convergence monitoring
     - GPU acceleration and device management
-
-The module handles the complex details of parameter initialization, gradient
-computation, and device management, providing a simple interface for fitting
-Bayesian models using modern deep learning techniques.
-
-Performance Considerations:
-    - GPU acceleration significantly improves training speed for large models
 """
 
 import warnings
@@ -121,20 +114,13 @@ class PyTorchModel(nn.Module):
     :ivar learnable_params: PyTorch ParameterList containing optimizable parameters
 
     The conversion process:
+
     - Initializes all model parameters for PyTorch optimization
     - Sets up proper gradient computation graphs
     - Configures device placement and memory management
     - Preserves probabilistic model structure and relationships
 
-    The resulting PyTorch model can be:
-    - Optimized using any PyTorch optimizer
-    - Moved between devices (CPU/GPU)
-    - Integrated with PyTorch training pipelines
-    - Used for both maximum likelihood and variational inference
-
-    Note:
-        This class should not be instantiated directly. Instead, use the
-        `to_pytorch()` method on a SciStanPy Model instance.
+    The resulting PyTorch model can be treated like any other nn.Module.
 
     Example:
         >>> pytorch_model = model.to_pytorch(seed=42)
@@ -142,15 +128,16 @@ class PyTorchModel(nn.Module):
         >>> loss = -pytorch_model(**observed_data)
         >>> loss.backward()
         >>> optimizer.step()
+
+    .. note::
+        This class should not be instantiated directly. Instead, use the
+        `to_pytorch()` method on a SciStanPy Model instance.
     """
 
     def __init__(
         self, model: "ssp_model.Model", seed: Optional["custom_types.Integer"] = None
     ):
-        """
-        Args:
-            model: The `scistanpy.model.Model` instance to convert to PyTorch.
-        """
+        """Initialize the PyTorch model from a SciStanPy model."""
         super().__init__()
 
         # Record the model
@@ -179,13 +166,7 @@ class PyTorchModel(nn.Module):
         :returns: Total log probability of the observed data
         :rtype: torch.Tensor
 
-        The computation includes:
-        - Log probabilities of all observable parameters given data
-        - Log probabilities of all latent parameters given their priors
-        - Proper handling of different distribution types and shapes
-        - Gradient computation for backpropagation
-
-        Note:
+        .. important::
             This returns log probability, *not* log loss (negative log probability).
             For optimization, negate the result to get the loss function.
 
@@ -248,15 +229,8 @@ class PyTorchModel(nn.Module):
 
         :raises UserWarning: If early stopping is not triggered within epoch limit
 
-        Training Features:
-        - Adam optimization with configurable learning rate
-        - Early stopping based on loss plateau detection
-        - Mixed precision training for memory efficiency and speed
-        - Progress monitoring with real-time loss display
-        - Automatic device placement and tensor conversion
-        - Convergence tracking
-
         The training loop:
+
         1. Converts input data to appropriate tensor format
         2. Validates data compatibility with model observables
         3. Iteratively optimizes parameters using gradient descent
@@ -364,6 +338,7 @@ class PyTorchModel(nn.Module):
         :rtype: dict[str, torch.Tensor]
 
         Excluded from export:
+
         - Observable parameters (representing data, not learnable parameters)
         - Unnamed parameters
         - Intermediate computational results from transformations
@@ -393,11 +368,13 @@ class PyTorchModel(nn.Module):
         :rtype: dict[str, torch.distributions.Distribution]
 
         The exported distributions include:
+
         - Parameter distributions with updated hyperparameter values
         - Observable distributions with fitted parameter values
         - All distributions in their PyTorch format for further computation
 
         This is useful for:
+
         - Posterior predictive sampling
         - Model diagnostics and validation
         - Uncertainty quantification
@@ -469,7 +446,7 @@ class PyTorchModel(nn.Module):
         """Move model to CPU device.
 
         This method transfers the entire model (including SciStanPy constants)
-        back to CPU memory, useful for inference or when GPU memory is limited.
+        to CPU memory, which is useful for inference or when GPU memory is limited.
 
         :param args: Arguments passed to torch.nn.Module.cpu()
         :param kwargs: Keyword arguments passed to torch.nn.Module.cpu()

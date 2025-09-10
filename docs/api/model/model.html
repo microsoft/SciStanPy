@@ -14,7 +14,7 @@
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Neural Network Module API Reference" href="nn_module.html" />
+    <link rel="next" title="Core PyTorch Integration" href="nn_module.html" />
     <link rel="prev" title="Transformed Parameters API Reference" href="components/transformations/transformed_parameters.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -848,6 +848,41 @@ or other mathematical transformations.</p>
 </dd></dl>
 
 </section>
+<section id="utility-methods">
+<h2>Utility Methods<a class="headerlink" href="#utility-methods" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="scistanpy.model.model.run_delayed_mcmc">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.model.</span></span><span class="sig-name descname"><span class="pre">run_delayed_mcmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">hmc_results.SampleResults</span></span></span><a class="reference internal" href="../../_modules/scistanpy/model/model.html#run_delayed_mcmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.model.run_delayed_mcmc" title="Link to this definition">¶</a></dt>
+<dd><p>Execute a delayed MCMC run from a pickled configuration file.</p>
+<p>This function loads and executes MCMC sampling that was previously
+configured with <cite>Model.mcmc(delay_run=True)</cite>. It’s useful for
+running computationally intensive sampling jobs in batch systems
+or separate processes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – Path to the pickled MCMC configuration file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MCMC sampling results with posterior draws and diagnostics</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>hmc_results.SampleResults</p>
+</dd>
+</dl>
+<p>The function automatically enables console output to provide progress
+feedback during the potentially long-running sampling process.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># First, create delayed run</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">delay_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Later, execute the run</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">run_delayed_mcmc</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">stan_executable_path</span><span class="si">}</span><span class="s2">-delay.pkl&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 </section>
 
 
@@ -896,7 +931,7 @@ or other mathematical transformations.</p>
   <li><a href="../index.html">SciStanPy API Reference</a><ul>
   <li><a href="index.html">Model API Reference</a><ul>
       <li>Previous: <a href="components/transformations/transformed_parameters.html" title="previous chapter">Transformed Parameters API Reference</a></li>
-      <li>Next: <a href="nn_module.html" title="next chapter">Neural Network Module API Reference</a></li>
+      <li>Next: <a href="nn_module.html" title="next chapter">Core PyTorch Integration</a></li>
   </ul></li>
   </ul></li>
   </ul></li>

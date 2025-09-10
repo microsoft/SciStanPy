@@ -43,7 +43,7 @@
 <span class="sd">learning procedures on SciStanPy models.</span>
 
 <span class="sd">The module&#39;s core functionality centers around converting SciStanPy models into</span>
-<span class="sd">PyTorch nn.Module instances that preserve the probabilistic structure while</span>
+<span class="sd">PyTorch ``nn.Module`` instances that preserve the probabilistic structure while</span>
 <span class="sd">enabling efficient gradient computation and optimization. This allows users to</span>
 <span class="sd">leverage PyTorch&#39;s ecosystem of optimizers, learning rate schedulers, and other</span>
 <span class="sd">training utilities.</span>
@@ -54,13 +54,6 @@
 <span class="sd">    - Mixed precision training support for improved performance</span>
 <span class="sd">    - Early stopping and convergence monitoring</span>
 <span class="sd">    - GPU acceleration and device management</span>
-
-<span class="sd">The module handles the complex details of parameter initialization, gradient</span>
-<span class="sd">computation, and device management, providing a simple interface for fitting</span>
-<span class="sd">Bayesian models using modern deep learning techniques.</span>
-
-<span class="sd">Performance Considerations:</span>
-<span class="sd">    - GPU acceleration significantly improves training speed for large models</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
@@ -82,8 +75,6 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">model</span> <span class="k">as</span> <span class="n">ssp_model</span>
 
 
-<div class="viewcode-block" id="check_observable_data">
-<a class="viewcode-back" href="../../../api/model/nn_module.html#scistanpy.model.nn_module.check_observable_data">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_observable_data</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="s2">&quot;ssp_model.Model&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate that provided data matches model observable specifications.</span>
 
@@ -136,8 +127,7 @@
                 <span class="sa">f</span><span class="s2">&quot;The shape of the provided data for observable </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> does not match &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;the expected shape. Expected: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, provided: &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span></div>
-
+            <span class="p">)</span>
 
 
 <div class="viewcode-block" id="PyTorchModel">
@@ -159,20 +149,13 @@
 <span class="sd">    :ivar learnable_params: PyTorch ParameterList containing optimizable parameters</span>
 
 <span class="sd">    The conversion process:</span>
+
 <span class="sd">    - Initializes all model parameters for PyTorch optimization</span>
 <span class="sd">    - Sets up proper gradient computation graphs</span>
 <span class="sd">    - Configures device placement and memory management</span>
 <span class="sd">    - Preserves probabilistic model structure and relationships</span>
 
-<span class="sd">    The resulting PyTorch model can be:</span>
-<span class="sd">    - Optimized using any PyTorch optimizer</span>
-<span class="sd">    - Moved between devices (CPU/GPU)</span>
-<span class="sd">    - Integrated with PyTorch training pipelines</span>
-<span class="sd">    - Used for both maximum likelihood and variational inference</span>
-
-<span class="sd">    Note:</span>
-<span class="sd">        This class should not be instantiated directly. Instead, use the</span>
-<span class="sd">        `to_pytorch()` method on a SciStanPy Model instance.</span>
+<span class="sd">    The resulting PyTorch model can be treated like any other nn.Module.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; pytorch_model = model.to_pytorch(seed=42)</span>
@@ -180,15 +163,16 @@
 <span class="sd">        &gt;&gt;&gt; loss = -pytorch_model(**observed_data)</span>
 <span class="sd">        &gt;&gt;&gt; loss.backward()</span>
 <span class="sd">        &gt;&gt;&gt; optimizer.step()</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        This class should not be instantiated directly. Instead, use the</span>
+<span class="sd">        `to_pytorch()` method on a SciStanPy Model instance.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;ssp_model.Model&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            model: The `scistanpy.model.Model` instance to convert to PyTorch.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the PyTorch model from a SciStanPy model.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
         <span class="c1"># Record the model</span>
@@ -219,13 +203,7 @@
 <span class="sd">        :returns: Total log probability of the observed data</span>
 <span class="sd">        :rtype: torch.Tensor</span>
 
-<span class="sd">        The computation includes:</span>
-<span class="sd">        - Log probabilities of all observable parameters given data</span>
-<span class="sd">        - Log probabilities of all latent parameters given their priors</span>
-<span class="sd">        - Proper handling of different distribution types and shapes</span>
-<span class="sd">        - Gradient computation for backpropagation</span>
-
-<span class="sd">        Note:</span>
+<span class="sd">        .. important::</span>
 <span class="sd">            This returns log probability, *not* log loss (negative log probability).</span>
 <span class="sd">            For optimization, negate the result to get the loss function.</span>
 
@@ -291,15 +269,8 @@
 
 <span class="sd">        :raises UserWarning: If early stopping is not triggered within epoch limit</span>
 
-<span class="sd">        Training Features:</span>
-<span class="sd">        - Adam optimization with configurable learning rate</span>
-<span class="sd">        - Early stopping based on loss plateau detection</span>
-<span class="sd">        - Mixed precision training for memory efficiency and speed</span>
-<span class="sd">        - Progress monitoring with real-time loss display</span>
-<span class="sd">        - Automatic device placement and tensor conversion</span>
-<span class="sd">        - Convergence tracking</span>
-
 <span class="sd">        The training loop:</span>
+
 <span class="sd">        1. Converts input data to appropriate tensor format</span>
 <span class="sd">        2. Validates data compatibility with model observables</span>
 <span class="sd">        3. Iteratively optimizes parameters using gradient descent</span>
@@ -410,6 +381,7 @@
 <span class="sd">        :rtype: dict[str, torch.Tensor]</span>
 
 <span class="sd">        Excluded from export:</span>
+
 <span class="sd">        - Observable parameters (representing data, not learnable parameters)</span>
 <span class="sd">        - Unnamed parameters</span>
 <span class="sd">        - Intermediate computational results from transformations</span>
@@ -442,11 +414,13 @@
 <span class="sd">        :rtype: dict[str, torch.distributions.Distribution]</span>
 
 <span class="sd">        The exported distributions include:</span>
+
 <span class="sd">        - Parameter distributions with updated hyperparameter values</span>
 <span class="sd">        - Observable distributions with fitted parameter values</span>
 <span class="sd">        - All distributions in their PyTorch format for further computation</span>
 
 <span class="sd">        This is useful for:</span>
+
 <span class="sd">        - Posterior predictive sampling</span>
 <span class="sd">        - Model diagnostics and validation</span>
 <span class="sd">        - Uncertainty quantification</span>
@@ -524,7 +498,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move model to CPU device.</span>
 
 <span class="sd">        This method transfers the entire model (including SciStanPy constants)</span>
-<span class="sd">        back to CPU memory, useful for inference or when GPU memory is limited.</span>
+<span class="sd">        to CPU memory, which is useful for inference or when GPU memory is limited.</span>
 
 <span class="sd">        :param args: Arguments passed to torch.nn.Module.cpu()</span>
 <span class="sd">        :param kwargs: Keyword arguments passed to torch.nn.Module.cpu()</span>

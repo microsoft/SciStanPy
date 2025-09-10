@@ -380,7 +380,7 @@ normalize_log = build_operation(transformed_parameters.NormalizeLogParameter)
 """
 
 sigmoid = build_operation(transformed_parameters.SigmoidParameter)
-"""Sigmoid operation.
+r"""Sigmoid operation.
 
 Computes the sigmoid function :math:`(1 + \exp(-x))^{-1}` of the input. See also,
 :py:class:`~scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter`.
