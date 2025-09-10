@@ -217,7 +217,7 @@ def stable_sigmoid(exponent: torch.Tensor) -> torch.Tensor: ...
 
 
 def stable_sigmoid(exponent):
-    """Compute sigmoid function in a numerically stable way.
+    r"""Compute sigmoid function in a numerically stable way.
 
     This function implements a numerically stable version of the sigmoid
     function that avoids overflow issues by using different computational
@@ -231,9 +231,14 @@ def stable_sigmoid(exponent):
 
     The function uses the identity:
 
-    - For x >= 0: sigmoid(x) = 1 / (1 + exp(-x))
-    - For x < 0: sigmoid(x) = exp(x) / (1 + exp(x))
-    """
+    .. math::
+
+        \sigma(x) =
+        \begin{cases}
+            \frac{1}{1 + e^{-x}} & \text{if } x \geq 0 \\
+            \frac{e^{x}}{1 + e^{x}} & \text{if } x < 0
+        \end{cases}
+        """
     # Are we working with torch or numpy?
     module = choose_module(exponent)
 

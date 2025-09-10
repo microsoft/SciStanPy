@@ -298,9 +298,9 @@ Computes the natural logarithm of the input parameter or numerical data. See als
 """
 
 log1p_exp = build_operation(transformed_parameters.Log1pExpParameter)
-"""``log(1 + exp(x))`` operation.
+r""":math:`\log(1 + \exp(x))` operation.
 
-Computes ``log(1 + exp(x))`` in a numerically stable way. See also,
+Computes :math:`\log(1 + \exp(x))` in a numerically stable way. See also,
 :py:class:`~scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter`.
 """
 
@@ -382,7 +382,7 @@ normalize_log = build_operation(transformed_parameters.NormalizeLogParameter)
 sigmoid = build_operation(transformed_parameters.SigmoidParameter)
 """Sigmoid operation.
 
-Computes the sigmoid function (1 / (1 + exp(-x))) of the input. See also,
+Computes the sigmoid function :math:`(1 + \exp(-x))^{-1}` of the input. See also,
 :py:class:`~scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter`.
 
 **Usage:**
