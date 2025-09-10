@@ -2,28 +2,27 @@
 # Licensed under the MIT license.
 
 
-"""Prior predictive check functionality for SciStanPy models.
+"""Interactive prior predictive check functionality for SciStanPy models.
 
 This module provides interactive widgets and visualizations for conducting
 prior predictive checks on SciStanPy models. Prior predictive checks allow
 users to examine the behavior of their models before fitting to data by
 sampling from prior distributions and visualizing the resulting predictions.
 
-The module centers around the PriorPredictiveCheck class, which creates
-an interactive dashboard with sliders for model hyperparameters and
-dropdown menus for selecting visualization options. This enables rapid
+The module centers around the :py:class:`~scistanpy.plotting.prior_predictive.PriorPredictiveCheck`
+class, which creates an interactive dashboard with sliders for model hyperparameters
+and dropdown menus for selecting visualization options. This enables rapid
 exploration of how different prior specifications affect model behavior.
-
-Key Features:
-    - Interactive hyperparameter adjustment with sliders
-    - Multiple visualization types (ECDF, KDE, violin, relationship plots)
-    - Automatic widget configuration based on model structure
-    - Real-time plot updates with efficient data processing
-    - Support for multi-dimensional parameter exploration
 
 The interface automatically adapts to the structure of the provided model,
 exposing only relevant parameters and visualization options based on the
 data dimensions and available coordinates.
+
+.. note::
+    Instances of the :py:class:`~scistanpy.plotting.prior_predictive.PriorPredictiveCheck`
+    class will not typically be accessed directly by users. Instead, they are accessed
+    via the :py:meth:`Model.prior_predictive() <~scistanpy.model.Model.prior_predictive>`
+    method.
 """
 
 from __future__ import annotations
@@ -80,14 +79,6 @@ class PriorPredictiveCheck:
     :ivar update_plot_button: Button to update plot without redrawing data
     :ivar fig: HoloViews pane containing the current plot
 
-    The dashboard provides real-time updates as users adjust parameters.
-
-    Example:
-        >>> # Add parameters and observables to model
-        >>> model = ssp.ModelSubclass(*args, **kwargs)
-        >>> # Display dashboard in notebook or web application
-        >>> check = PriorPredictiveCheck(model, copy_model=True)
-        >>> dashboard = check.display()
     """
 
     def __init__(self, model: "ssp_model.Model", copy_model: bool = False):
@@ -517,6 +508,7 @@ class PriorPredictiveCheck:
         :type event: Event
 
         Plot Type Logic:
+
         - ECDF and KDE: Always available for any parameter
         - Violin: Available when grouping dimension is selected
         - Relationship: Available when both grouping and independent variable are selected
@@ -557,15 +549,13 @@ class PriorPredictiveCheck:
         :rtype: pn.Row
 
         The layout consists of:
+
         - Left panel: Model hyperparameter sliders and viewing options
         - Right panel: Interactive plot display that updates based on selections
 
-        All widgets are organized into logical groups with appropriate headers
-        for intuitive navigation and use.
-
         Example:
             >>> check = PriorPredictiveCheck(model)
-            >>> dashboard = check.display()
+            >>> dashboard = check.display() # For Jupyter notebook
             >>> dashboard.servable()  # For web deployment
         """
         # Organize widgets and plot
@@ -601,11 +591,12 @@ class PriorPredictiveCheck:
         :rtype: dict
 
         The returned dictionary includes:
-        - kind: Set to 'kde' for kernel density estimation
-        - x: `None` for KDE plots.
-        - y: Target parameter name for the y-axis
-        - by: Independent label for grouping (if applicable)
-        - datashade: Disabled (False) for KDE plots to maintain clarity
+
+        - 'kind': Set to 'kde' for kernel density estimation
+        - 'x': `None` for KDE plots.
+        - 'y': Target parameter name for the y-axis
+        - 'by': Independent label for grouping (if applicable)
+        - 'datashade': Disabled (False) for KDE plots to maintain clarity
         """
         return {
             "kind": "kde",
@@ -626,12 +617,13 @@ class PriorPredictiveCheck:
         :rtype: dict
 
         The returned dictionary includes:
-        - kind: Set to 'line' for step-like ECDF appearance
-        - x: Target parameter values
-        - y: 'Cumulative Probability' (computed during data processing)
-        - by: Independent label for grouping multiple ECDFs
-        - datashade: Disabled (False) for ECDF plots to maintain clarity
-        - hover: Set to 'hline' for horizontal hover lines
+
+        - 'kind': Set to 'line' for step-like ECDF appearance
+        - 'x': Target parameter values
+        - 'y': 'Cumulative Probability' (computed during data processing)
+        - 'by': Independent label for grouping multiple ECDFs
+        - 'datashade': Disabled (False) for ECDF plots to maintain clarity
+        - 'hover': Set to 'hline' for horizontal hover lines
         """
         return {
             "kind": "line",
@@ -653,14 +645,16 @@ class PriorPredictiveCheck:
         :rtype: dict
 
         The method handles multiple grouping scenarios:
+
         - Single grouping by dimension index
         - Grouping by both dimension and independent variable
         - Automatic determination of primary vs. secondary grouping
 
         The returned dictionary includes:
-        - args: Tuple of (groups..., values) for HoloViews Violin constructor
-        - kdims: List of key dimension names
-        - vdims: Value dimension name (target parameter)
+
+        - 'args': Tuple of (groups..., values) for HoloViews Violin constructor
+        - 'kdims': List of key dimension names
+        - 'vdims': Value dimension name (target parameter)
         """
         # This is only an option if we have a grouping dimension
         group_indices = self._processed_data[self.group_dim_dropdown.value].to_numpy()

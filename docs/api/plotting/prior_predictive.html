@@ -33,96 +33,258 @@
 
           <div class="body" role="main">
             
-  <section id="prior-predictive">
-<h1>Prior Predictive<a class="headerlink" href="#prior-predictive" title="Link to this heading">¶</a></h1>
-<p>This page documents the interactive prior-predictive visualization helper
-implemented in <cite>scistanpy.plotting.prior_predictive</cite>.</p>
-<p id="module-scistanpy.plotting.prior_predictive">Prior predictive check functionality for SciStanPy models.</p>
+  <section id="module-scistanpy.plotting.prior_predictive">
+<span id="prior-predictive"></span><h1>Prior Predictive<a class="headerlink" href="#module-scistanpy.plotting.prior_predictive" title="Link to this heading">¶</a></h1>
+<p>Interactive prior predictive check functionality for SciStanPy models.</p>
 <p>This module provides interactive widgets and visualizations for conducting
 prior predictive checks on SciStanPy models. Prior predictive checks allow
 users to examine the behavior of their models before fitting to data by
 sampling from prior distributions and visualizing the resulting predictions.</p>
-<p>The module centers around the PriorPredictiveCheck class, which creates
-an interactive dashboard with sliders for model hyperparameters and
-dropdown menus for selecting visualization options. This enables rapid
+<p>The module centers around the <a class="reference internal" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck" title="scistanpy.plotting.prior_predictive.PriorPredictiveCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">PriorPredictiveCheck</span></code></a>
+class, which creates an interactive dashboard with sliders for model hyperparameters
+and dropdown menus for selecting visualization options. This enables rapid
 exploration of how different prior specifications affect model behavior.</p>
-<dl class="simple">
-<dt>Key Features:</dt><dd><ul class="simple">
-<li><p>Interactive hyperparameter adjustment with sliders</p></li>
-<li><p>Multiple visualization types (ECDF, KDE, violin, relationship plots)</p></li>
-<li><p>Automatic widget configuration based on model structure</p></li>
-<li><p>Real-time plot updates with efficient data processing</p></li>
-<li><p>Support for multi-dimensional parameter exploration</p></li>
-</ul>
-</dd>
-</dl>
 <p>The interface automatically adapts to the structure of the provided model,
 exposing only relevant parameters and visualization options based on the
 data dimensions and available coordinates.</p>
-<section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
-<p>The module implements an interactive dashboard for conducting prior
-predictive checks on SciStanPy models. The primary public class is
-<cite>PriorPredictiveCheck</cite> which creates a Panel/HoloViews-based interface
-that lets users draw from the model priors, inspect simulated outputs,
-and interactively adjust toggleable model constants.</p>
-<p>Key features (implemented)
-- An interactive dashboard with widgets generated from model hyperparameters (toggleable constants are exposed as sliders).
-- Multiple plot modes supported: ECDF, KDE, Violin, and Relationship plots.
-- Reactive controls to select target variables, grouping dimensions, and independent variables for visualization.
-- Methods to run the full pipeline (update model, draw samples, process data, and update the plot) as well as to update only the plot.
-- Output is an interactive Panel layout suitable for Jupyter or Panel apps.</p>
-</section>
-<section id="primary-class-and-methods">
-<h2>Primary class and methods<a class="headerlink" href="#primary-class-and-methods" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>PriorPredictiveCheck(model, copy_model: bool = False)
-- Constructs the dashboard for the provided SciStanPy model.</p></li>
-<li><p>display() -&gt; panel.Row
-- Assemble and return the Panel layout for display.</p></li>
-<li><p>_init_float_sliders()
-- Create sliders for toggleable constants found in the model.</p></li>
-<li><p>_update_model()
-- Apply slider values back to the model constants.</p></li>
-<li><p>_draw_data()
-- Draw prior predictive samples from the model and store them as an xarray.Dataset.</p></li>
-<li><p>_process_data()
-- Convert the drawn xarray data into a pandas DataFrame adapted to the currently selected plot type and grouping choices.</p></li>
-<li><p>_update_plot(event=None)
-- Re-render the current plot using hvplot/HoloViews based on processed data.</p></li>
-<li><p>_full_pipeline(event=None)
-- Run the full flow: update model constants, draw new data, and refresh plot.</p></li>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Instances of the <a class="reference internal" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck" title="scistanpy.plotting.prior_predictive.PriorPredictiveCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">PriorPredictiveCheck</span></code></a>
+class will not typically be accessed directly by users. Instead, they are accessed
+via the <code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.prior_predictive()</span></code>
+method.</p>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.plotting.prior_predictive.PriorPredictiveCheck">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.plotting.prior_predictive.</span></span><span class="sig-name descname"><span class="pre">PriorPredictiveCheck</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ssp_model.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/scistanpy/plotting/prior_predictive.html#PriorPredictiveCheck"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Interactive dashboard for conducting prior predictive checks.</p>
+<p>This class creates a comprehensive interface for exploring model behavior
+through prior predictive sampling. It automatically generates appropriate
+widgets based on the model structure and provides multiple visualization
+modes for examining parameter distributions and relationships.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>ssp_model.Model</em>) – SciStanPy model to analyze</p></li>
+<li><p><strong>copy_model</strong> (<em>bool</em>) – Whether to create a copy of the model to avoid modifying the original.
+Defaults to False, meaning updates to model parameters in the
+interactive plot will be reflected in the original model object.</p></li>
 </ul>
-</section>
-<section id="dependencies-and-notes">
-<h2>Dependencies and notes<a class="headerlink" href="#dependencies-and-notes" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>The dashboard uses Panel and HoloViews (hvplot) for widgets and plots.
-Installing these packages is required for the interactive dashboard to work.</p></li>
-<li><p>The implementation expects the provided SciStanPy model to expose
-component metadata (e.g., <cite>named_model_components_dict</cite>, <cite>observables</cite>) and
-to support the <cite>draw</cite> method for prior sampling.</p></li>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>model</strong> – The model being analyzed (copy or reference)</p></li>
+<li><p><strong>float_sliders</strong> – Dictionary of parameter adjustment sliders</p></li>
+<li><p><strong>target_dropdown</strong> – Widget for selecting which parameter to visualize</p></li>
+<li><p><strong>group_dim_dropdown</strong> – Widget for selecting grouping dimension</p></li>
+<li><p><strong>independent_var_dropdown</strong> – Widget for selecting independent variable</p></li>
+<li><p><strong>plot_type_dropdown</strong> – Widget for selecting visualization type</p></li>
+<li><p><strong>draw_seed_entry</strong> – Widget for setting random seed</p></li>
+<li><p><strong>draw_entry</strong> – Widget for setting number of experiments</p></li>
+<li><p><strong>update_model_button</strong> – Button to update model and redraw data</p></li>
+<li><p><strong>update_plot_button</strong> – Button to update plot without redrawing data</p></li>
+<li><p><strong>fig</strong> – HoloViews pane containing the current plot</p></li>
 </ul>
-</section>
-<section id="minimal-usage-example">
-<h2>Minimal usage example<a class="headerlink" href="#minimal-usage-example" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.plotting.prior_predictive</span><span class="w"> </span><span class="kn">import</span> <span class="n">PriorPredictiveCheck</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">MySciStanPyModel</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># your model subclass</span>
-<span class="n">check</span> <span class="o">=</span> <span class="n">PriorPredictiveCheck</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">copy_model</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">dashboard</span> <span class="o">=</span> <span class="n">check</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
-<span class="c1"># In a Jupyter notebook the dashboard can be displayed inline:</span>
-<span class="n">dashboard</span>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.plotting.prior_predictive.PriorPredictiveCheck.display">
+<span class="sig-name descname"><span class="pre">display</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Row</span></span></span><a class="reference internal" href="../../_modules/scistanpy/plotting/prior_predictive.html#PriorPredictiveCheck.display"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.display" title="Link to this definition">¶</a></dt>
+<dd><p>Create and return the complete interactive dashboard layout.</p>
+<p>This method assembles all widgets and the plot display into a
+comprehensive dashboard layout suitable for display in Jupyter
+notebooks, Panel applications, or web interfaces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Panel layout containing all interface elements</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pn.Row</p>
+</dd>
+</dl>
+<p>The layout consists of:</p>
+<ul class="simple">
+<li><p>Left panel: Model hyperparameter sliders and viewing options</p></li>
+<li><p>Right panel: Interactive plot display that updates based on selections</p></li>
+</ul>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">check</span> <span class="o">=</span> <span class="n">PriorPredictiveCheck</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dashboard</span> <span class="o">=</span> <span class="n">check</span><span class="o">.</span><span class="n">display</span><span class="p">()</span> <span class="c1"># For Jupyter notebook</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dashboard</span><span class="o">.</span><span class="n">servable</span><span class="p">()</span>  <span class="c1"># For web deployment</span>
 </pre></div>
 </div>
-</section>
-<section id="see-also">
-<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_ecdf_kwargs">
+<span class="sig-name descname"><span class="pre">get_ecdf_kwargs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/scistanpy/plotting/prior_predictive.html#PriorPredictiveCheck.get_ecdf_kwargs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_ecdf_kwargs" title="Link to this definition">¶</a></dt>
+<dd><p>Generate keyword arguments for empirical CDF plots.</p>
+<p>This method constructs the parameter dictionary needed for creating
+ECDF visualizations using hvplot, including cumulative probability
+calculations and appropriate hover interactions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary of hvplot parameters for ECDF plotting</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+<p>The returned dictionary includes:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="index.html"><span class="doc">Plotting Subpackage API Reference</span></a> for the plotting package overview</p></li>
+<li><p>‘kind’: Set to ‘line’ for step-like ECDF appearance</p></li>
+<li><p>‘x’: Target parameter values</p></li>
+<li><p>‘y’: ‘Cumulative Probability’ (computed during data processing)</p></li>
+<li><p>‘by’: Independent label for grouping multiple ECDFs</p></li>
+<li><p>‘datashade’: Disabled (False) for ECDF plots to maintain clarity</p></li>
+<li><p>‘hover’: Set to ‘hline’ for horizontal hover lines</p></li>
 </ul>
-</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_kde_kwargs">
+<span class="sig-name descname"><span class="pre">get_kde_kwargs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/scistanpy/plotting/prior_predictive.html#PriorPredictiveCheck.get_kde_kwargs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_kde_kwargs" title="Link to this definition">¶</a></dt>
+<dd><p>Generate keyword arguments for kernel density estimate plots.</p>
+<p>This method constructs the parameter dictionary needed for creating
+KDE visualizations using hvplot, including appropriate grouping
+and styling options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary of hvplot parameters for KDE plotting</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+<p>The returned dictionary includes:</p>
+<ul class="simple">
+<li><p>‘kind’: Set to ‘kde’ for kernel density estimation</p></li>
+<li><p>‘x’: <cite>None</cite> for KDE plots.</p></li>
+<li><p>‘y’: Target parameter name for the y-axis</p></li>
+<li><p>‘by’: Independent label for grouping (if applicable)</p></li>
+<li><p>‘datashade’: Disabled (False) for KDE plots to maintain clarity</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_relationship_kwargs">
+<span class="sig-name descname"><span class="pre">get_relationship_kwargs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/scistanpy/plotting/prior_predictive.html#PriorPredictiveCheck.get_relationship_kwargs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_relationship_kwargs" title="Link to this definition">¶</a></dt>
+<dd><p>Generate keyword arguments for relationship plots.</p>
+<p>This method constructs the parameter dictionary for creating
+relationship visualizations that show how parameters vary with
+respect to independent variables, using datashading for performance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary of hvplot parameters for relationship plotting</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+<p>The returned dictionary includes:
+- kind: Set to ‘line’ for continuous relationships
+- x: Independent variable name
+- y: Target parameter name
+- datashade: Enabled (True) for performance with large datasets
+- dynamic: Disabled (False), resulting in all data being embedded in output
+- aggregator: Set to ‘count’ for density-based coloring
+- cmap: ‘inferno’ colormap</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_violin_kwargs">
+<span class="sig-name descname"><span class="pre">get_violin_kwargs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/scistanpy/plotting/prior_predictive.html#PriorPredictiveCheck.get_violin_kwargs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.get_violin_kwargs" title="Link to this definition">¶</a></dt>
+<dd><p>Generate arguments for violin plot creation.</p>
+<p>This method constructs the arguments needed for creating violin plots
+using HoloViews, handling complex grouping scenarios and determining
+appropriate categorization based on data structure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing plot arguments and dimensions</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+<p>The method handles multiple grouping scenarios:</p>
+<ul class="simple">
+<li><p>Single grouping by dimension index</p></li>
+<li><p>Grouping by both dimension and independent variable</p></li>
+<li><p>Automatic determination of primary vs. secondary grouping</p></li>
+</ul>
+<p>The returned dictionary includes:</p>
+<ul class="simple">
+<li><p>‘args’: Tuple of (groups…, values) for HoloViews Violin constructor</p></li>
+<li><p>‘kdims’: List of key dimension names</p></li>
+<li><p>‘vdims’: Value dimension name (target parameter)</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_group_dim_options">
+<span class="sig-name descname"><span class="pre">set_group_dim_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/scistanpy/plotting/prior_predictive.html#PriorPredictiveCheck.set_group_dim_options"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_group_dim_options" title="Link to this definition">¶</a></dt>
+<dd><p>Update grouping dimension options based on selected target parameter.</p>
+<p>This method configures the group dimension dropdown with appropriate
+options based on the dimensionality of the currently selected target
+parameter. It ensures that grouping options are only available for
+multi-dimensional parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – Panel event containing the new target parameter selection</p>
+</dd>
+</dl>
+<p>The method updates both the dropdown options and the descriptive text
+showing dimension sizes to help users understand the data structure.
+If the previously selected grouping dimension is no longer valid,
+it automatically resets to a sensible default.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_independent_var_options">
+<span class="sig-name descname"><span class="pre">set_independent_var_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/scistanpy/plotting/prior_predictive.html#PriorPredictiveCheck.set_independent_var_options"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_independent_var_options" title="Link to this definition">¶</a></dt>
+<dd><p>Update independent variable options based on grouping dimension.</p>
+<p>This method configures the independent variable dropdown with coordinates
+and data variables that are compatible with the selected grouping
+dimension. Only variables that vary along the grouping dimension are
+included as options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – Panel event containing the new grouping dimension selection</p>
+</dd>
+</dl>
+<p>The method scans both coordinates and data variables in the xarray
+Dataset to find suitable independent variables, ensuring compatibility
+with the selected visualization approach.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_plot_type_options">
+<span class="sig-name descname"><span class="pre">set_plot_type_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/scistanpy/plotting/prior_predictive.html#PriorPredictiveCheck.set_plot_type_options"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.plotting.prior_predictive.PriorPredictiveCheck.set_plot_type_options" title="Link to this definition">¶</a></dt>
+<dd><p>Update available plot types based on current dimension selections.</p>
+<p>This method determines which visualization types are appropriate
+given the current selections for target parameter, grouping dimension,
+and independent variable. It enables more sophisticated plot types
+as more structure is specified.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – Panel event (used for callback compatibility is not used)</p>
+</dd>
+</dl>
+<p>Plot Type Logic:</p>
+<ul class="simple">
+<li><p>ECDF and KDE: Always available for any parameter</p></li>
+<li><p>Violin: Available when grouping dimension is selected</p></li>
+<li><p>Relationship: Available when both grouping and independent variable are selected</p></li>
+</ul>
+<p>The method automatically selects the most sophisticated available plot
+type as the default when options change.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
 
