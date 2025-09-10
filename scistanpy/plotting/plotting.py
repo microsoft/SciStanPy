@@ -6,7 +6,9 @@
 
 This module implements the primary plotting functionality for SciStanPy,
 providing specialized visualization tools for Bayesian analysis, model
-diagnostics, and statistical relationships.
+diagnostics, and statistical relationships. As with all submodules in the plotting
+subpackage, the functions here are intended for internal use to support higher-level
+plotting operations and are not typically called directly by end users.
 
 The module leverages HoloViews and hvplot for flexible, interactive
 visualizations that can be easily customized and extended. All plotting
@@ -14,6 +16,7 @@ functions support both standard NumPy arrays and interactive widgets
 for dynamic exploration of model results.
 
 Key Features:
+
     - ECDF and KDE plots for distribution visualization
     - Quantile plots with confidence intervals
     - Model calibration diagnostics
@@ -73,18 +76,18 @@ def aggregate_data(
 
     :param data: Input data array to aggregate
     :type data: npt.NDArray
-    :param independent_dim: Dimension to preserve during aggregation.
-                           If None, flattens entire array. (Default: None)
+    :param independent_dim: Dimension to preserve during aggregation. If None, flattens
+        entire array. (Default: None)
     :type independent_dim: Optional[int]
 
     :returns: Aggregated data array
     :rtype: npt.NDArray
 
     Aggregation Rules:
+
         - If independent_dim is None: Returns flattened 1D array
         - If independent_dim is specified: Returns 2D array with shape
-          (-1, n_independent) where -1 represents the product of all
-          other dimensions
+          (-1, n_independent) where -1 represents the product of all other dimensions
 
     Example:
         >>> data = np.random.randn(10, 5, 3)
@@ -106,7 +109,8 @@ def aggregate_data(
 
 
 def allow_interactive(plotting_func: Callable[P, T]) -> Callable[P, T]:
-    """Decorator to enable interactive plotting capabilities.
+    """Decorator to enable both static and interactive plotting capabilities with
+    plotting functions.
 
     This decorator modifies plotting functions to handle both static
     DataFrames and interactive hvplot objects, automatically configuring
@@ -181,11 +185,9 @@ def plot_ecdf_kde(plotting_df, /, paramname):
     :rtype: Union[list[HVType], hvplot.interactive.Interactive]
 
     The function creates:
+
         - KDE plot: Smooth density estimate with automatic bandwidth
         - ECDF plot: Step function showing cumulative probabilities
-
-    Both plots are configured with consistent styling and appropriate
-    axis labels for scientific presentation.
 
     Example:
         >>> df = pd.DataFrame({'param': np.random.normal(0, 1, 1000)})
@@ -218,10 +220,10 @@ def plot_ecdf_violin(plotting_df, /, paramname):
     """Create ECDF and violin plots for multi-group data comparison.
 
     This function visualizes distributions across multiple groups or
-    categories, combining empirical CDFs with violin plots to show
-    both cumulative and density information simultaneously.
+    categories, combining empirical CDFs with violin plots.
 
-    :param plotting_df: DataFrame with grouped data including 'Independent Label' column
+    :param plotting_df: DataFrame with grouped data including 'Independent Label'
+        and 'Cumulative Probability' columns.
     :type plotting_df: Union[pd.DataFrame, hvplot.interactive.Interactive]
     :param paramname: Name of the parameter/column to visualize
     :type paramname: Union[str, pnw.Select]
@@ -230,6 +232,7 @@ def plot_ecdf_violin(plotting_df, /, paramname):
     :rtype: Union[list[HVType], hvplot.interactive.Interactive]
 
     The visualization includes:
+
         - Multi-line ECDF plot: One curve per group with color coding
         - Violin plot: Density distributions by group with colorbar
 
@@ -287,7 +290,8 @@ def plot_relationship(plotting_df, /, paramname, datashade=True):
     respect to independent variables, with optional datashading for
     large datasets to improve performance and readability.
 
-    :param plotting_df: DataFrame with 'Independent Label' and parameter columns
+    :param plotting_df: DataFrame with 'Independent Label' and parameter columns.
+        Different groups are separated by NaN rows.
     :type plotting_df: Union[pd.DataFrame, hvplot.interactive.Interactive]
     :param paramname: Name of the dependent parameter to plot
     :type paramname: Union[str, pnw.Select]
@@ -298,11 +302,9 @@ def plot_relationship(plotting_df, /, paramname, datashade=True):
     :rtype: Union[HVType, hvplot.interactive.Interactive]
 
     Datashading options:
+
         - True: Uses count aggregation with Inferno colormap (large data)
         - False: Uses dynamic line plotting with lime color (small data)
-
-    The function automatically optimizes visualization based on data size
-    and user preferences for performance versus detail.
 
     Example:
         >>> # Plot parameter evolution over time/conditions
@@ -334,10 +336,11 @@ def choose_plotting_function(
     independent_labels: Optional[npt.NDArray],
     datashade: bool = True,
 ) -> Callable:
-    """Select appropriate plotting function based on data characteristics.
-
-    This function implements intelligent plot type selection based on
-    the structure of the data and available metadata.
+    """A utility function that selects an appropriate plotting function
+    (:py:func:`~scistanpy.plotting.plotting.plot_ecdf_kde`,
+    :py:func:`~scistanpy.plotting.plotting.plot_ecdf_violin`, or
+    :py:func:`~scistanpy.plotting.plotting.plot_relationship`) based on
+    data characteristics.
 
     :param independent_dim: Dimension index for independent variable, if any
     :type independent_dim: Optional[custom_types.Integer]
@@ -350,12 +353,14 @@ def choose_plotting_function(
     :rtype: Callable
 
     Selection Logic:
-        - No independent_dim: Returns plot_ecdf_kde (univariate analysis)
-        - Independent_dim but no labels: Returns plot_ecdf_violin (multi-group)
-        - Both independent_dim and labels: Returns plot_relationship (dependency)
+
+        - No independent_dim: Returns ``plot_ecdf_kde`` (univariate analysis)
+        - Independent_dim but no labels: Returns ``plot_ecdf_violin`` (multi-group)
+        - Both independent_dim and labels: Returns ``plot_relationship`` (dependency)
 
     Example:
         >>> plotter = choose_plotting_function(None, None)  # ECDF/KDE
+        >>> plotter = choose_plotting_function(1, None)     # ECDF/Violin
         >>> plotter = choose_plotting_function(1, time_labels)  # Relationship
     """
     if independent_dim is None:
@@ -374,10 +379,9 @@ def build_plotting_df(
 ) -> pd.DataFrame:
     """Construct DataFrame optimized for plotting functions.
 
-    This function transforms raw sample arrays into structured DataFrames
-    with appropriate columns and formatting for visualization functions.
-    It handles various data structures and automatically generates
-    necessary metadata for plotting.
+    This function transforms raw sample arrays into structured DataFrames with appropriate
+    columns and formatting for visualization functions. It handles various data
+    structures and automatically generates necessary metadata for plotting.
 
     :param samples: Raw sample data to structure for plotting
     :type samples: npt.NDArray
@@ -392,6 +396,7 @@ def build_plotting_df(
     :rtype: pd.DataFrame
 
     The function handles:
+
         - Data aggregation according to independent dimension
         - Automatic label generation when not provided
         - ECDF calculation for cumulative plots
@@ -399,8 +404,17 @@ def build_plotting_df(
         - Proper sorting for visualization functions
 
     Example:
-        >>> samples = np.random.randn(100, 50, 10)  # 100 traces, 50 time points, 10 params
-        >>> df = build_plotting_df(samples, 'measurement', independent_dim=1)
+        .. code-block:: python
+
+            # Samples from a model with 100 traces, 50 time points, and 10 parameters
+            samples = np.random.randn(100, 50, 10)  # 100 traces, 50 time points, 10 params
+
+            # Build DataFrame for plotting parameter 'measurement' with time as
+            # independent variable
+            df = build_plotting_df(samples, 'measurement', independent_dim=1)
+
+            # df now contains columns for 'measurement' and 'Independent Label'
+            # separated by rows of NaN for trace boundaries, ready for plotting.
     """
     # Aggregate the data
     data = aggregate_data(data=samples, independent_dim=independent_dim)
@@ -470,11 +484,10 @@ def plot_distribution(
     independent_dim: Optional["custom_types.Integer"] = None,
     independent_labels: Optional[npt.NDArray] = None,
 ) -> Union[HVType, list[HVType]]:
-    """Create comprehensive distribution plots with optional overlays.
+    """The main entrypoint for creating distribution plots.
 
-    This is the main distribution plotting function that automatically
-    selects appropriate visualization types based on data structure
-    and provides optional ground truth or reference overlays.
+    This function automatically selects appropriate visualization types based on
+    data structure and allows for optional ground truth or reference overlays.
 
     :param samples: Sample data from model simulations or posterior draws
     :type samples: Union[npt.NDArray, torch.Tensor]
@@ -492,17 +505,18 @@ def plot_distribution(
 
     :raises ValueError: If overlay dimensions don't match sample dimensions
 
-    The function automatically:
-        - Converts PyTorch tensors to NumPy arrays
-        - Selects appropriate plot type based on data structure
-        - Overlays reference data with distinct styling
-        - Handles both single plots and multi-panel layouts
-
     Example:
         >>> # Simple distribution plot
         >>> plot = plot_distribution(posterior_samples, paramname='mu')
         >>> # With ground truth overlay
         >>> plot = plot_distribution(samples, overlay=true_values, paramname='sigma')
+        >>> # Distribution plot with independent variable (e.g., time series)
+        >>> plot = plot_distribution(
+        >>>     samples,
+        >>>     paramname='beta',
+        >>>     independent_dim=1,
+        >>>     independent_labels=time_points
+        >>> )
     """
     # Samples must be a numpy array
     samples = (
@@ -568,20 +582,22 @@ def plot_distribution(
 def calculate_relative_quantiles(
     reference: npt.NDArray, observed: npt.NDArray
 ) -> npt.NDArray:
-    """Calculate quantiles of observed values relative to reference distribution.
+    r"""Calculate quantiles of observed values relative to reference distribution.
 
-    For each observed value, this function computes the quantile (percentile)
-    it would occupy within the corresponding reference distribution. This is
-    essential for calibration analysis and model validation.
+    For each observed value, this function computes the quantile it would occupy
+    within the corresponding reference distribution. This is essential for calibration
+    analysis and model validation.
 
     :param reference: Reference observations with shape (n_samples, feat1, ..., featN).
-                     First dimension is samples, remaining are feature dimensions.
+        First dimension is samples, remaining are feature dimensions.
     :type reference: npt.NDArray
     :param observed: Observed values with shape (n_obs, feat1, ..., featN).
                     Feature dimensions must match reference.
     :type observed: npt.NDArray
 
-    :returns: Quantiles of observed values relative to reference
+    :returns: Quantiles of observed values relative to reference. Has the same
+        shape as ``observed``, with values between 0 and 1 indicating quantile positions
+        of each observed value within the reference distribution.
     :rtype: npt.NDArray
 
     :raises ValueError: If arrays have incompatible dimensions
@@ -590,9 +606,16 @@ def calculate_relative_quantiles(
     reference values in the corresponding position are less than or equal
     to the observed value. This produces values between 0 and 1.
 
-    Mathematical Definition:
-        For observed value x_ij and reference distribution R_j:
-        quantile_ij = P(R_j <= x_ij) = (1/n) * sum(R_kj <= x_ij for k=1..n)
+    **Mathematical Definition:**
+    For a single observed value :math:`x` and reference distribution
+    :math:`R \in \mathbb{R}^N`,:
+
+    .. math::
+        \textrm{quantile} = P(R_i <= x) = \frac{1}{N} \sum^N_{i=1}
+        \begin{cases}
+            1 & \text{if } R_i \leq x \\
+            0 & \text{if } R_i \gt x \\
+        \end{cases}
 
     Example:
         >>> ref = np.random.normal(0, 1, (1000, 10))  # 1000 samples, 10 features
@@ -654,36 +677,49 @@ def plot_calibration(
     observed: npt.NDArray,
     **kwargs,
 ) -> tuple[hv.Overlay, npt.NDArray[np.floating]]:
-    """Generate calibration plots for model validation.
+    r"""Generate calibration plots for model validation.
 
     This function creates empirical cumulative distribution plots of
     relative quantiles to assess model calibration. Well-calibrated
     models should produce observed values that are uniformly distributed
-    across quantiles of the reference distribution.
+    across quantiles of the reference distribution. See
+    :py:func:`~scistanpy.plotting.plotting.calculate_relative_quantiles` for quantile
+    calculation details.
 
     :param reference: Reference observations for calibration assessment
     :type reference: npt.NDArray
     :param observed: Observed values to assess against reference
     :type observed: npt.NDArray
-    :param kwargs: Additional styling options passed to hvplot.Curve
+    :param kwargs: Additional styling options passed to `hvplot.Curve`
 
     :returns: Tuple of (calibration plot overlay, deviance statistics)
     :rtype: tuple[hv.Overlay, npt.NDArray[np.floating]]
 
     The calibration plot shows:
-        - ECDF curves for each observation set
-        - Ideal calibration line (diagonal from (0,0) to (1,1))
-        - Deviation areas highlighting calibration errors
 
-    Deviance Calculation:
-        For each observation, computes the absolute difference in area
-        between the observed ECDF and the ideal uniform ECDF using
-        the trapezoidal rule for numerical integration.
+        - ECDF curves for each observation. Note that the curve represents observations
+            for the full set of parameters, not individual parameters.
+        - Ideal calibration line (diagonal from (0,0) to (1,1))
+        - Area of the deviation from ideal, which is the absolute difference in
+          area between the observed ECDF and the ideal uniform ECDF using the trapezoidal
+          rule for numerical integration. The lower the deviance, the better the
+          calibration.
 
     Interpretation:
         - Points near diagonal: Well-calibrated
-        - Points above diagonal: Model underconfident OR bad fit
-        - Points below diagonal: Model overconfident OR bad fit
+        - Narrow (overrepresentation of mid quartiles) but symmetric ECDF curve:
+          Underdispersed model (model is too confident).
+        - Wide (overrepresentation of extreme quartiles) but symmetric ECDF curve:
+          Overdispersed model (model is not confident enough).
+        - Asymmetric ECDF curve: Systematic bias in model predictions.
+
+    .. note::
+        If you have highly constrained variables, this plot may be misleading at
+        the extremes. For example, if a variable is constrained to be :math:`\ge0`
+        and the reference distribution has all values at zero, then any observed
+        value will be in the 100th percentile, even if that observation is also
+        zero. This will present as a strong overrepresentation of extreme quantiles,
+        but is in fact a perfectly calibrated outcome.
 
     Example:
         >>> ref_data = posterior_predictive_samples  # Shape: (1000, 100)
@@ -855,6 +891,7 @@ def quantile_plot(
         are invalid
 
     Features:
+
         - Automatic quantile symmetrization (adds complement quantiles)
         - Nested confidence intervals with graduated transparency
         - Customizable styling for all plot components
@@ -1022,11 +1059,13 @@ def hexgrid_with_mean(
     :raises ValueError: If x and y arrays have different shapes or are not 1D
 
     The hexagonal binning:
+
         - Aggregates points into hexagonal cells
         - Colors cells by point density using viridis colormap
         - Includes colorbar for density interpretation
 
     The rolling mean:
+
         - Computed over sorted x values to show trend
         - Window size automatically scaled to data size
         - Styled for clear visibility over density plot

@@ -12,6 +12,7 @@
     <script src="../_static/documentation_options.js?v=6b921976"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Utils API Reference" href="utils.html" />
@@ -159,7 +160,13 @@ method to compute and return the result directly.</p></li>
 <p>The <a class="reference internal" href="#scistanpy.operations.build_operation" title="scistanpy.operations.build_operation"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_operation()</span></code></a> function allows users to create custom operations easily by wrapping a <a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a> subclass. This is the main interface for creating new operations from custom <a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a> classes and is what is used under the hood to create all built-in operations.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="scistanpy.operations.build_operation">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">build_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distclass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><span class="pre">TransformedParameter</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#scistanpy.operations.Operation" title="scistanpy.operations.Operation"><span class="pre">Operation</span></a></span></span><a class="reference internal" href="../_modules/scistanpy/operations.html#build_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.operations.build_operation" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">build_operation</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="n"><span class="pre">distclass</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><span class="pre">TransformedParameter</span></a><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#scistanpy.operations.Operation" title="scistanpy.operations.Operation"><span class="pre">Operation</span></a></span></span><a class="reference internal" href="../_modules/scistanpy/operations.html#build_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.operations.build_operation" title="Link to this definition">¶</a></dt>
 <dd><p>Build an operation instance from a TransformedParameter class.</p>
 <p>This function creates a new operation class using the
 <a class="reference internal" href="#scistanpy.operations.MetaOperation" title="scistanpy.operations.MetaOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetaOperation</span></code></a> metaclass in combination with
@@ -302,8 +309,8 @@ class.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="scistanpy.operations.log1p_exp">
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log1p_exp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.log1p_exp" title="Link to this definition">¶</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">log(1</span> <span class="pre">+</span> <span class="pre">exp(x))</span></code> operation.</p>
-<p>Computes <code class="docutils literal notranslate"><span class="pre">log(1</span> <span class="pre">+</span> <span class="pre">exp(x))</span></code> in a numerically stable way. See also,
+<dd><p><span class="math notranslate nohighlight">\(\log(1 + \exp(x))\)</span> operation.</p>
+<p>Computes <span class="math notranslate nohighlight">\(\log(1 + \exp(x))\)</span> in a numerically stable way. See also,
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Log1pExpParameter</span></code>.</p>
 </dd></dl>
 
@@ -311,7 +318,7 @@ class.</p>
 <dt class="sig sig-object py" id="scistanpy.operations.sigmoid">
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sigmoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.sigmoid" title="Link to this definition">¶</a></dt>
 <dd><p>Sigmoid operation.</p>
-<p>Computes the sigmoid function (1 / (1 + exp(-x))) of the input. See also,
+<p>Computes the sigmoid function <span class="math notranslate nohighlight">\((1 + \exp(-x))^{-1}\)</span> of the input. See also,
 <code class="xref py py-class docutils literal notranslate"><span class="pre">SigmoidParameter</span></code>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert logits to probabilities</span>
@@ -579,7 +586,7 @@ parametrized using initial population abundance rather than carrying capacity. S
 <li class="toctree-l2"><a class="reference internal" href="defaults.html">Defaults API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model/index.html">Model API Reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plotting/index.html">Plotting API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting/index.html">Plotting Subpackage API Reference</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Operations API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils API Reference</a></li>
 </ul>

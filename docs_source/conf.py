@@ -36,3 +36,6 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "alabaster"
 html_static_path = ["_static"]
+
+# Set the maximum line length for function signatures in the documentation
+maximum_signature_line_length = 80

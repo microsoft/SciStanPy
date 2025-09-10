@@ -222,6 +222,8 @@
 
 
 
+<div class="viewcode-block" id="choose_module">
+<a class="viewcode-back" href="../../api/utils.html#scistanpy.utils.choose_module">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">choose_module</span><span class="p">(</span><span class="n">dist</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ModuleType</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Choose the appropriate computational module based on input type.</span>
 
@@ -247,7 +249,8 @@
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">np</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported type for determining module: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dist</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported type for determining module: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dist</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+
 
 
 <span class="nd">@overload</span>
@@ -261,7 +264,7 @@
 <div class="viewcode-block" id="stable_sigmoid">
 <a class="viewcode-back" href="../../api/utils.html#scistanpy.utils.stable_sigmoid">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">stable_sigmoid</span><span class="p">(</span><span class="n">exponent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute sigmoid function in a numerically stable way.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute sigmoid function in a numerically stable way.</span>
 
 <span class="sd">    This function implements a numerically stable version of the sigmoid</span>
 <span class="sd">    function that avoids overflow issues by using different computational</span>
@@ -275,9 +278,14 @@
 
 <span class="sd">    The function uses the identity:</span>
 
-<span class="sd">    - For x &gt;= 0: sigmoid(x) = 1 / (1 + exp(-x))</span>
-<span class="sd">    - For x &lt; 0: sigmoid(x) = exp(x) / (1 + exp(x))</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \sigma(x) =</span>
+<span class="sd">        \begin{cases}</span>
+<span class="sd">            \frac{1}{1 + e^{-x}} &amp; \text{if } x \geq 0 \\</span>
+<span class="sd">            \frac{e^{x}}{1 + e^{x}} &amp; \text{if } x &lt; 0</span>
+<span class="sd">        \end{cases}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
     <span class="c1"># Are we working with torch or numpy?</span>
     <span class="n">module</span> <span class="o">=</span> <span class="n">choose_module</span><span class="p">(</span><span class="n">exponent</span><span class="p">)</span>
 
