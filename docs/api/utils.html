@@ -34,10 +34,9 @@
             
   <section id="utils-api-reference">
 <h1>Utils API Reference<a class="headerlink" href="#utils-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference documents the currently implemented utility functions and helper components in SciStanPy.</p>
-<section id="module-scistanpy.utils">
-<span id="utils-module"></span><h2>Utils Module<a class="headerlink" href="#module-scistanpy.utils" title="Link to this heading">¶</a></h2>
-<p>Utility functions and classes for the SciStanPy package.</p>
+<div class="toctree-wrapper compound">
+</div>
+<p id="module-scistanpy.utils">Utility functions and classes for the SciStanPy package.</p>
 <p>This module provides various utility functions and classes that support
 the core functionality of SciStanPy, including:</p>
 <ul class="simple">
@@ -47,13 +46,14 @@ the core functionality of SciStanPy, including:</p>
 <li><p>Context managers for external library integration</p></li>
 <li><p>Optimized statistical computation functions</p></li>
 </ul>
-</section>
+<p>Users will not typically need to interact with this module directly–it is designed
+to be used internally by SciStanPy.</p>
 <section id="lazy-import-system">
 <h2>Lazy Import System<a class="headerlink" href="#lazy-import-system" title="Link to this heading">¶</a></h2>
-<p>Deferred importing to improve startup performance.</p>
+<p>To speed up initial import times, SciStanPy provides a lazy import system that defers loading of optional dependencies until they are actually needed.</p>
 <dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">lazy_import</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/utils.html#lazy_import"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dt class="sig sig-object py" id="scistanpy.utils.lazy_import">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">lazy_import</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/utils.html#lazy_import"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.lazy_import" title="Link to this definition">¶</a></dt>
 <dd><p>Import a module only when it is first needed.</p>
 <p>This function implements lazy module importing to improve package import
 performance by deferring module loading until actual use.</p>
@@ -79,10 +79,12 @@ performance by deferring module loading until actual use.</p>
 </pre></div>
 </div>
 </dd>
-<dt>Note:</dt><dd><p>If the module is already imported, returns the cached version
-from sys.modules for efficiency.</p>
-</dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the module is already imported, returns the cached version
+from sys.modules for efficiency.</p>
+</div>
 </dd></dl>
 
 <dl class="py class">
@@ -121,11 +123,11 @@ it’s loaded.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">lazy_import_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/utils.html#lazy_import_from"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dt class="sig sig-object py" id="scistanpy.utils.lazy_import_from">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">lazy_import_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/utils.html#lazy_import_from"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.lazy_import_from" title="Link to this definition">¶</a></dt>
 <dd><p>Create a lazy import proxy for a specific object from a module.</p>
 <p>This function provides a convenient way to create lazy import proxies,
-equivalent to ‘from module_name import obj_name’ but with deferred loading.</p>
+equivalent to <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">module_name</span> <span class="pre">import</span> <span class="pre">obj_name</span></code> but with deferred loading.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -150,25 +152,13 @@ equivalent to ‘from module_name import obj_name’ but with deferred loading.<
 </dl>
 </dd></dl>
 
-<p>Example Usage:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Lazy import of a module</span>
-<span class="n">np_mod</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;numpy&quot;</span><span class="p">)</span>
-<span class="n">arr</span> <span class="o">=</span> <span class="n">np_mod</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-
-<span class="c1"># Lazy import of an object</span>
-<span class="n">array</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">lazy_import_from</span><span class="p">(</span><span class="s2">&quot;numpy&quot;</span><span class="p">,</span> <span class="s2">&quot;array&quot;</span><span class="p">)</span>
-<span class="n">arr2</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>
-</pre></div>
-</div>
 </section>
 <section id="backend-selection">
 <h2>Backend Selection<a class="headerlink" href="#backend-selection" title="Link to this heading">¶</a></h2>
-<p>Automatic dispatch between NumPy and PyTorch.</p>
+<p>Many SciStanPy operations can be performed using either NumPy or PyTorch as the underlying numerical backend. The utility function below automates the selection of the appropriate backend based on the input data type.</p>
 <dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">choose_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch</span></span></span><a class="reference internal" href="../_modules/scistanpy/utils.html#choose_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">choose_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.SampleType</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;module</span> <span class="pre">'numpy'</span> <span class="pre">from</span> <span class="pre">'/home/bwittmann/micromamba/envs/scistanpy/lib/python3.12/site-packages/numpy/__init__.py'&gt;</span></span></span></dt>
+<dt class="sig sig-object py" id="scistanpy.utils.choose_module">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">choose_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.SampleType'</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ModuleType</span></span></span><a class="reference internal" href="../_modules/scistanpy/utils.html#choose_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.choose_module" title="Link to this definition">¶</a></dt>
 <dd><p>Choose the appropriate computational module based on input type.</p>
 <p>This function provides automatic backend selection between NumPy and
 PyTorch based on the type of the input data.</p>
@@ -197,20 +187,13 @@ PyTorch based on the type of the input data.</p>
 </dl>
 </dd></dl>
 
-<p>Example Usage:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
-<span class="n">mod</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">choose_module</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>   <span class="c1"># torch</span>
-<span class="n">out</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-</pre></div>
-</div>
 </section>
 <section id="numerical-stability">
 <h2>Numerical Stability<a class="headerlink" href="#numerical-stability" title="Link to this heading">¶</a></h2>
-<p>Stable sigmoid avoiding overflow.</p>
+<p>With probabilistic computations, numerical stability is often a concern. The following utility function provides a numerically stable implementation of the sigmoid function.</p>
 <dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">stable_sigmoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exponent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/scistanpy/utils.html#stable_sigmoid"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dt class="sig sig-object py" id="scistanpy.utils.stable_sigmoid">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">stable_sigmoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exponent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/scistanpy/utils.html#stable_sigmoid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.stable_sigmoid" title="Link to this definition">¶</a></dt>
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">stable_sigmoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exponent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span></dt>
 <dd><p>Compute sigmoid function in a numerically stable way.</p>
@@ -228,31 +211,17 @@ approaches for positive and negative inputs.</p>
 <dd class="field-odd"><p>Union[torch.Tensor, npt.NDArray[np.floating]]</p>
 </dd>
 </dl>
-<p>The function uses the identity:
-- For x &gt;= 0: sigmoid(x) = 1 / (1 + exp(-x))
-- For x &lt; 0: sigmoid(x) = exp(x) / (1 + exp(x))</p>
-<p>This approach prevents overflow in the exponential function regardless
-of the sign and magnitude of the input.</p>
-<dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">])</span>  <span class="c1"># Extreme values</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">stable_result</span> <span class="o">=</span> <span class="n">stable_sigmoid</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># No overflow</span>
-</pre></div>
-</div>
-</dd>
-</dl>
+<p>The function uses the identity:</p>
+<ul class="simple">
+<li><p>For x &gt;= 0: sigmoid(x) = 1 / (1 + exp(-x))</p></li>
+<li><p>For x &lt; 0: sigmoid(x) = exp(x) / (1 + exp(x))</p></li>
+</ul>
 </dd></dl>
 
-<p>Example Usage:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">])</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">stable_sigmoid</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</pre></div>
-</div>
 </section>
-<section id="array-chunking">
-<h2>Array Chunking<a class="headerlink" href="#array-chunking" title="Link to this heading">¶</a></h2>
-<p>Memory-aware Dask-friendly chunk shape calculation.</p>
+<section id="dask-integration">
+<h2>Dask Integration<a class="headerlink" href="#dask-integration" title="Link to this heading">¶</a></h2>
+<p>For particularly large models, sampling via Stan can yield more data than cat fit in memory. To handle such cases, SciStanPy integrates Dask to enable out-of-core computation and parallel processing, particularly with the <a class="reference internal" href="model/results/hmc.html#scistanpy.model.results.hmc.SampleResults" title="scistanpy.model.results.hmc.SampleResults"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleResults</span></code></a> class. The following utility functions assist with Dask integration.</p>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">get_chunk_shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array_precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'double'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'single'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'half'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mib_per_chunk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.Integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frozen_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Collection</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/scistanpy/utils.html#get_chunk_shape"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
@@ -264,7 +233,7 @@ It respects frozen dimensions that should not be chunked.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>array_shape</strong> (<em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em>) – Shape of the array to be chunked</p></li>
-<li><p><strong>array_precision</strong> (<em>Literal</em><em>[</em><em>&quot;double&quot;</em><em>, </em><em>&quot;single&quot;</em><em>, </em><em>&quot;half&quot;</em><em>]</em>) – Precision of array elements affecting memory usage</p></li>
+<li><p><strong>array_precision</strong> (<em>Literal</em><em>[</em><em>&quot;double&quot;</em><em>, </em><em>&quot;single&quot;</em><em>, </em><em>&quot;half&quot;</em><em>]</em>) – Numerical precision assumed in calculating memory usage.</p></li>
 <li><p><strong>mib_per_chunk</strong> (<em>Union</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>None</em><em>]</em>) – Target chunk size in MiB. If None, uses Dask default</p></li>
 <li><p><strong>frozen_dims</strong> (<em>Collection</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Dimensions that should not be chunked</p></li>
 </ul>
@@ -303,19 +272,6 @@ the limit)</p></li>
 </dl>
 </dd></dl>
 
-<p>Example Usage:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">shape</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_chunk_shape</span><span class="p">(</span>
-    <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
-    <span class="s2">&quot;double&quot;</span><span class="p">,</span>
-    <span class="n">mib_per_chunk</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
-    <span class="n">frozen_dims</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,)</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="dask-integration">
-<h2>Dask Integration<a class="headerlink" href="#dask-integration" title="Link to this heading">¶</a></h2>
-<p>Enable / disable ArviZ Dask execution.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.utils.az_dask">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">az_dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dask_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'parallelized'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dtypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/utils.html#az_dask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.utils.az_dask" title="Link to this definition">¶</a></dt>
@@ -339,84 +295,20 @@ the setup and teardown of Dask configuration.</p>
 </dd>
 </dl>
 <dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">az_dask</span><span class="p">(</span><span class="s2">&quot;parallelized&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="k">as</span> <span class="n">dask_ctx</span><span class="p">:</span>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">az_dask</span><span class="p">()</span> <span class="k">as</span> <span class="n">dask_ctx</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="c1"># ArviZ operations here will use Dask parallelization</span>
 <span class="gp">... </span>    <span class="n">result</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">trace_data</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd>
-<dt>Note:</dt><dd><p>The context manager automatically disables Dask when exiting,
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The context manager automatically disables Dask when exiting,
 ensuring clean state management.</p>
-</dd>
-</dl>
+</div>
 </dd></dl>
 
-<p>Example Usage:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">ssp</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">az_dask</span><span class="p">(</span><span class="s2">&quot;parallelized&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
-    <span class="c1"># ArviZ functions now use Dask (where supported)</span>
-    <span class="k">pass</span>
-</pre></div>
-</div>
-</section>
-<section id="statistical-computing">
-<h2>Statistical Computing<a class="headerlink" href="#statistical-computing" title="Link to this heading">¶</a></h2>
-<p>Pairwise Spearman rank correlation (row vs row) with NaN-aware optimization.</p>
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.utils.</span></span><span class="sig-name descname"><span class="pre">faster_autocorrelation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy/utils.html#faster_autocorrelation"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Compute Spearman rank correlation matrix with optimized NaN handling.</p>
-<p>This function provides a faster implementation of Spearman rank correlation
-computation for 2D arrays that may contain NaN values. It’s optimized for
-cases where missing data patterns vary across samples.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>npt.NDArray</em><em>[</em><em>np.floating</em><em>]</em>) – Input array with shape (n, m) where n is samples and m is features</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Spearman rank correlation matrix of shape (n, n)</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>npt.NDArray[np.floating]</p>
-</dd>
-</dl>
-<p>The function:
-1. Builds masks for non-NaN values in each row
-2. Computes pairwise correlations using only overlapping valid data
-3. Uses matrix symmetry to avoid redundant calculations
-4. Provides progress tracking for long computations</p>
-<dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Data with some NaN values</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="p">[</span><span class="n">data</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>  <span class="c1"># Introduce some NaNs</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">corr_matrix</span> <span class="o">=</span> <span class="n">faster_autocorrelation</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd>
-<dt>Note:</dt><dd><p>This function assumes the input follows scipy.stats.spearmanr
-conventions but with axis=1 behavior and NaN-aware computation.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<p>Example Usage:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
-<span class="n">x</span><span class="p">[</span><span class="n">x</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-<span class="n">rhos</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">faster_autocorrelation</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># shape (100, 100)</span>
-</pre></div>
-</div>
-</section>
-<section id="available-utilities-summary">
-<h2>Available Utilities Summary<a class="headerlink" href="#available-utilities-summary" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>lazy_import / lazy_import_from / LazyObjectProxy: deferred imports</p></li>
-<li><p>choose_module: backend selection (NumPy vs PyTorch)</p></li>
-<li><p>stable_sigmoid: numerically stable logistic function</p></li>
-<li><p>get_chunk_shape: memory-constrained Dask chunk shape helper</p></li>
-<li><p>az_dask: context-managed ArviZ+Dask integration</p></li>
-<li><p>faster_autocorrelation: pairwise Spearman correlation matrix with NaN handling</p></li>
-</ul>
 </section>
 </section>
 
@@ -455,8 +347,6 @@ conventions but with axis=1 behavior and NaN-aware computation.</p>
 <li class="toctree-l2"><a class="reference internal" href="plotting/index.html">Plotting API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="operations.html">Operations API Reference</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Utils API Reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#scistanpy.manual_seed"><code class="docutils literal notranslate"><span class="pre">manual_seed()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#scistanpy.RNG"><code class="docutils literal notranslate"><span class="pre">RNG</span></code></a></li>
 </ul>
 </li>
 </ul>

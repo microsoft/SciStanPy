@@ -45,6 +45,9 @@
 <span class="sd">- Array chunking utilities for efficient memory management</span>
 <span class="sd">- Context managers for external library integration</span>
 <span class="sd">- Optimized statistical computation functions</span>
+
+<span class="sd">Users will not typically need to interact with this module directly--it is designed</span>
+<span class="sd">to be used internally by SciStanPy.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -52,7 +55,8 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">dask.config</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -89,7 +93,7 @@
 <span class="sd">        &gt;&gt;&gt; # Now numpy is actually imported</span>
 <span class="sd">        &gt;&gt;&gt; array = numpy_module.array([1, 2, 3])</span>
 
-<span class="sd">    Note:</span>
+<span class="sd">    .. note::</span>
 <span class="sd">        If the module is already imported, returns the cached version</span>
 <span class="sd">        from sys.modules for efficiency.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -199,7 +203,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a lazy import proxy for a specific object from a module.</span>
 
 <span class="sd">    This function provides a convenient way to create lazy import proxies,</span>
-<span class="sd">    equivalent to &#39;from module_name import obj_name&#39; but with deferred loading.</span>
+<span class="sd">    equivalent to ``from module_name import obj_name`` but with deferred loading.</span>
 
 <span class="sd">    :param module_name: The fully qualified module name to import from</span>
 <span class="sd">    :type module_name: str</span>
@@ -218,17 +222,7 @@
 
 
 
-<span class="nd">@overload</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">choose_module</span><span class="p">(</span><span class="n">dist</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">:</span> <span class="o">...</span>
-
-
-<span class="nd">@overload</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">choose_module</span><span class="p">(</span><span class="n">dist</span><span class="p">:</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">:</span> <span class="o">...</span>
-
-
-<div class="viewcode-block" id="choose_module">
-<a class="viewcode-back" href="../../api/utils.html#scistanpy.utils.choose_module">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">choose_module</span><span class="p">(</span><span class="n">dist</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">choose_module</span><span class="p">(</span><span class="n">dist</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="s2">&quot;custom_types.SampleType&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ModuleType</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Choose the appropriate computational module based on input type.</span>
 
 <span class="sd">    This function provides automatic backend selection between NumPy and</span>
@@ -253,8 +247,7 @@
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">np</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported type for determining module: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dist</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
-
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported type for determining module: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dist</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
 
 <span class="nd">@overload</span>
@@ -281,16 +274,9 @@
 <span class="sd">    :rtype: Union[torch.Tensor, npt.NDArray[np.floating]]</span>
 
 <span class="sd">    The function uses the identity:</span>
+
 <span class="sd">    - For x &gt;= 0: sigmoid(x) = 1 / (1 + exp(-x))</span>
 <span class="sd">    - For x &lt; 0: sigmoid(x) = exp(x) / (1 + exp(x))</span>
-
-<span class="sd">    This approach prevents overflow in the exponential function regardless</span>
-<span class="sd">    of the sign and magnitude of the input.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; import numpy as np</span>
-<span class="sd">        &gt;&gt;&gt; x = np.array([-1000, 0, 1000])  # Extreme values</span>
-<span class="sd">        &gt;&gt;&gt; stable_result = stable_sigmoid(x)  # No overflow</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Are we working with torch or numpy?</span>
     <span class="n">module</span> <span class="o">=</span> <span class="n">choose_module</span><span class="p">(</span><span class="n">exponent</span><span class="p">)</span>
@@ -330,7 +316,7 @@
 
 <span class="sd">    :param array_shape: Shape of the array to be chunked</span>
 <span class="sd">    :type array_shape: tuple[custom_types.Integer, ...]</span>
-<span class="sd">    :param array_precision: Precision of array elements affecting memory usage</span>
+<span class="sd">    :param array_precision: Numerical precision assumed in calculating memory usage.</span>
 <span class="sd">    :type array_precision: Literal[&quot;double&quot;, &quot;single&quot;, &quot;half&quot;]</span>
 <span class="sd">    :param mib_per_chunk: Target chunk size in MiB. If None, uses Dask default</span>
 <span class="sd">    :type mib_per_chunk: Union[custom_types.Integer, None]</span>
@@ -447,11 +433,11 @@
 <span class="sd">    :ivar output_dtypes: Stored output data types configuration</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; with az_dask(&quot;parallelized&quot;, [float]) as dask_ctx:</span>
+<span class="sd">        &gt;&gt;&gt; with az_dask() as dask_ctx:</span>
 <span class="sd">        ...     # ArviZ operations here will use Dask parallelization</span>
 <span class="sd">        ...     result = az.summary(trace_data)</span>
 
-<span class="sd">    Note:</span>
+<span class="sd">    .. note::</span>
 <span class="sd">        The context manager automatically disables Dask when exiting,</span>
 <span class="sd">        ensuring clean state management.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -486,8 +472,6 @@
 
 
 
-<div class="viewcode-block" id="faster_autocorrelation">
-<a class="viewcode-back" href="../../api/utils.html#scistanpy.utils.faster_autocorrelation">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">faster_autocorrelation</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute Spearman rank correlation matrix with optimized NaN handling.</span>
 
@@ -546,8 +530,7 @@
 
     <span class="c1"># There should be no NaNs</span>
     <span class="k">assert</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">rhos</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">rhos</span></div>
-
+    <span class="k">return</span> <span class="n">rhos</span>
 </pre></div>
 
           </div>

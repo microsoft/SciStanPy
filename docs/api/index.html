@@ -49,8 +49,8 @@
 </div>
 <p>There are also a few objects defined at the root level itself. These include the following:</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="scistanpy.manual_seed">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.</span></span><span class="sig-name descname"><span class="pre">manual_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy.html#manual_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.manual_seed" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.</span></span><span class="sig-name descname"><span class="pre">manual_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scistanpy.html#manual_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Sets the seed for global random number generators.</p>
 <p>This function sets the seed for both NumPy and PyTorch random number
 generators to ensure reproducible results across the entire SciStanPy
@@ -83,8 +83,8 @@ which means that any random processes in PyTorch will also become deterministic.
 </dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="scistanpy.RNG">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.</span></span><span class="sig-name descname"><span class="pre">RNG</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Generator</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x751C9DEB1C40</span></em><a class="headerlink" href="#scistanpy.RNG" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.</span></span><span class="sig-name descname"><span class="pre">RNG</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Generator</span></em></dt>
 <dd><p>Global random number generator for SciStanPy.</p>
 <p>This generator is used throughout the package to ensure reproducible
 random number generation. It can be seeded using the manual_seed()
@@ -141,8 +141,6 @@ function to ensure consistent results across runs.</p>
 <li class="toctree-l2"><a class="reference internal" href="plotting/index.html">Plotting API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="operations.html">Operations API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils API Reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#scistanpy.manual_seed"><code class="docutils literal notranslate"><span class="pre">manual_seed()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#scistanpy.RNG"><code class="docutils literal notranslate"><span class="pre">RNG</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -17,5 +17,8 @@ At the root level, SciStanPy exposes the :py:mod:`~scistanpy.operations`, :py:mo
 There are also a few objects defined at the root level itself. These include the following:
 
 .. autofunction:: scistanpy.manual_seed
+   :noindex:
 
 .. autodata:: scistanpy.RNG
+   :noindex:
+   :no-value:

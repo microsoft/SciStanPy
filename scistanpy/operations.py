@@ -18,6 +18,8 @@ from __future__ import annotations
 from scistanpy.model.components import abstract_model_component
 from scistanpy.model.components.transformations import transformed_parameters
 
+# pylint: disable=line-too-long
+
 
 class MetaOperation(type):
     """Metaclass for dynamically creating operation classes.

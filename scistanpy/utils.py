@@ -12,6 +12,9 @@ the core functionality of SciStanPy, including:
 - Array chunking utilities for efficient memory management
 - Context managers for external library integration
 - Optimized statistical computation functions
+
+Users will not typically need to interact with this module directly--it is designed
+to be used internally by SciStanPy.
 """
 
 from __future__ import annotations
@@ -19,7 +22,8 @@ from __future__ import annotations
 import importlib.util
 import sys
 
-from typing import Collection, Literal, overload, TYPE_CHECKING
+from types import ModuleType
+from typing import Collection, Literal, overload, TYPE_CHECKING, Union
 
 import dask.config
 import numpy as np
@@ -54,7 +58,7 @@ def lazy_import(name: str):
         >>> # Now numpy is actually imported
         >>> array = numpy_module.array([1, 2, 3])
 
-    Note:
+    .. note::
         If the module is already imported, returns the cached version
         from sys.modules for efficiency.
     """
@@ -158,7 +162,7 @@ def lazy_import_from(module_name: str, obj_name: str):
     """Create a lazy import proxy for a specific object from a module.
 
     This function provides a convenient way to create lazy import proxies,
-    equivalent to 'from module_name import obj_name' but with deferred loading.
+    equivalent to ``from module_name import obj_name`` but with deferred loading.
 
     :param module_name: The fully qualified module name to import from
     :type module_name: str
@@ -176,15 +180,7 @@ def lazy_import_from(module_name: str, obj_name: str):
     return LazyObjectProxy(module_name, obj_name)
 
 
-@overload
-def choose_module(dist: torch.Tensor) -> torch: ...
-
-
-@overload
-def choose_module(dist: "custom_types.SampleType") -> np: ...
-
-
-def choose_module(dist):
+def choose_module(dist: Union[torch.Tensor, "custom_types.SampleType"]) -> ModuleType:
     """Choose the appropriate computational module based on input type.
 
     This function provides automatic backend selection between NumPy and
@@ -234,16 +230,9 @@ def stable_sigmoid(exponent):
     :rtype: Union[torch.Tensor, npt.NDArray[np.floating]]
 
     The function uses the identity:
+
     - For x >= 0: sigmoid(x) = 1 / (1 + exp(-x))
     - For x < 0: sigmoid(x) = exp(x) / (1 + exp(x))
-
-    This approach prevents overflow in the exponential function regardless
-    of the sign and magnitude of the input.
-
-    Example:
-        >>> import numpy as np
-        >>> x = np.array([-1000, 0, 1000])  # Extreme values
-        >>> stable_result = stable_sigmoid(x)  # No overflow
     """
     # Are we working with torch or numpy?
     module = choose_module(exponent)
@@ -280,7 +269,7 @@ def get_chunk_shape(
 
     :param array_shape: Shape of the array to be chunked
     :type array_shape: tuple[custom_types.Integer, ...]
-    :param array_precision: Precision of array elements affecting memory usage
+    :param array_precision: Numerical precision assumed in calculating memory usage.
     :type array_precision: Literal["double", "single", "half"]
     :param mib_per_chunk: Target chunk size in MiB. If None, uses Dask default
     :type mib_per_chunk: Union[custom_types.Integer, None]
@@ -394,11 +383,11 @@ class az_dask:  # pylint: disable=invalid-name
     :ivar output_dtypes: Stored output data types configuration
 
     Example:
-        >>> with az_dask("parallelized", [float]) as dask_ctx:
+        >>> with az_dask() as dask_ctx:
         ...     # ArviZ operations here will use Dask parallelization
         ...     result = az.summary(trace_data)
 
-    Note:
+    .. note::
         The context manager automatically disables Dask when exiting,
         ensuring clean state management.
     """
