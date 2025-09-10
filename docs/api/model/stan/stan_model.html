@@ -108,7 +108,6 @@ syntax for different program blocks (model, transformed parameters, etc.).</p>
 - Component filtering and organization based on block requirements
 - Proper indentation and formatting management
 - Loop optimization and combination capabilities</p>
-<p>Initializes the Stan code base.</p>
 <p><strong>Code Structure Management:</strong></p>
 <p>The StanCodeBase class provides the foundation for organizing Stan code into hierarchical structures:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example of code organization hierarchy</span>
@@ -408,13 +407,6 @@ compatible loops, and proper nesting within the code hierarchy.</p>
 <p>The class automatically determines loop ranges by analyzing the dimensions
 of nested model components and provides optimization features like loop
 combination to generate efficient Stan code.</p>
-<p>Initialize the for-loop.</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>index: The index variable for the loop
-start: The starting value of the loop
-end: The ending value of the loop</p>
-</dd>
-</dl>
 <p><strong>Loop Optimization Features:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic loop range calculation</span>
 <span class="c1"># SciStanPy analyzes component dimensions to determine loop bounds</span>
@@ -683,7 +675,6 @@ gathered from the SciStanPy model.</p></li>
 - Intelligent loop organization and optimization
 - Complete Stan program block generation
 - Variable name conflict resolution</p>
-<p>Initializes and compiles the Stan program.</p>
 <p><strong>Complete Program Assembly:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate complete Stan program</span>
 <span class="n">program</span> <span class="o">=</span> <span class="n">StanProgram</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
@@ -1084,23 +1075,6 @@ sampling interfaces, and comprehensive result processing.</p>
 <p>The class handles the complete workflow from SciStanPy model to Stan
 execution, providing an interface that abstracts away the complexities of Stan
 code generation and compilation management.</p>
-<p>Initialize object given constructor args.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model_name</strong> – Deprecated. Model name, used for output file names.</p></li>
-<li><p><strong>stan_file</strong> – Path to Stan program file.</p></li>
-<li><p><strong>exe_file</strong> – Path to compiled executable file.</p></li>
-<li><p><strong>force_compile</strong> – Whether or not to force recompilation if
-executable file already exists.</p></li>
-<li><p><strong>stanc_options</strong> – Options for stanc compiler.</p></li>
-<li><p><strong>cpp_options</strong> – Options for C++ compiler.</p></li>
-<li><p><strong>user_header</strong> – A path to a header file to include during C++
-compilation.</p></li>
-<li><p><strong>compile</strong> – Deprecated. Whether or not to compile the model.</p></li>
-</ul>
-</dd>
-</dl>
 <p><strong>Key Features:</strong></p>
 <ul class="simple">
 <li><p><strong>Automatic Code Generation</strong>: Translates SciStanPy models to Stan</p></li>

@@ -108,21 +108,6 @@ fixed computations rather than random variables or learnable parameters.</p>
 - Reducing per-iteration computational overhead
 - Enabling Stan compiler optimizations
 - Avoiding redundant calculations during sampling</p>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <p><strong>Efficient Data Preprocessing:</strong></p>
 <p>The TransformedData class enables computationally expensive operations to be performed once in Stan’s transformed data block rather than repeatedly during sampling:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>

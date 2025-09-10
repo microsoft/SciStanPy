@@ -106,19 +106,6 @@ generation of probabilistic transforms and survival functions.</p>
 <li><p>LOG_CDF: Logarithmic CDF</p></li>
 <li><p>LOG_SF: Logarithmic survival function</p></li>
 </ul>
-<p>Create CDF transform classes for the Parameter subclass.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>) – Name of the class being created</p></li>
-<li><p><strong>bases</strong> (<em>tuple</em>) – Base classes for the new class</p></li>
-<li><p><strong>attrs</strong> (<em>dict</em>) – Class attributes dictionary</p></li>
-</ul>
-</dd>
-</dl>
-<p>This method automatically generates transform classes by creating
-new class types that inherit from the appropriate CDF base classes
-and reference the current parameter class.</p>
 <p><strong>Automatic CDF Generation:</strong></p>
 <p>The ParameterMeta metaclass automatically creates CDF-related transform classes for each parameter:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># CDF transforms are automatically available</span>
@@ -213,24 +200,6 @@ Stan and SciPy parametrizations</p></li>
 <li><p><strong>Flexible Parameterization</strong>: Supports both raw and transformed parameters</p></li>
 <li><p><strong>Observable Support</strong>: Can represent both latent variables and observed data</p></li>
 </ul>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Core Parameter Functionality:</strong></p>
 <p>The Parameter class provides the foundation for all probabilistic components:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Basic parameter creation</span>
@@ -806,24 +775,6 @@ conventions and handling parameter name mappings.</p>
 <p>This class extends Parameter to provide functionality specific to continuous
 probability distributions. It inherits transformation capabilities that
 enable complex hierarchical model construction.</p>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Mathematical Transformation Support:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Continuous parameters support transformations</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -879,24 +830,6 @@ handling the specific requirements of integer-valued random variables.</p>
 </ul>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Integer-Valued Distributions:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Discrete parameters for count data</span>
 <span class="n">counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Poisson</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
@@ -995,24 +928,6 @@ sampling in hierarchical models.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Standard and Non-Centered Parameterization:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Standard normal parameter</span>
 <span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -1223,24 +1138,6 @@ truncated to positive values. Commonly used for scale parameters.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Positive-Constrained Normal:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Scale parameters with half-normal priors</span>
 <span class="n">tau</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
@@ -1351,24 +1248,6 @@ This is a convenience class for the commonly used N(0,1) distribution.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Standard Normal Convenience:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fixed N(0,1) distribution</span>
 <span class="n">z</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">UnitNormal</span><span class="p">()</span>
@@ -1459,24 +1338,6 @@ f(x) = (1/(xσ√(2π))) * exp(-½((ln(x)-μ)/σ)²) for x &gt; 0</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Positive-Valued with Log-Normal Structure:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Scale parameters</span>
 <span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -1595,24 +1456,6 @@ probabilities and proportions.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Probability and Proportion Modeling:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Uniform prior on [0,1]</span>
 <span class="n">p</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Beta</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -1727,24 +1570,6 @@ with specific shape characteristics.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Shape-Rate Parameterization:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Precision parameter (inverse variance)</span>
 <span class="n">tau</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Rate parameterization</span>
@@ -1855,24 +1680,6 @@ prior for variance parameters in Bayesian analysis.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Conjugate Prior for Variance:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Variance parameter</span>
 <span class="n">sigma_squared</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">InverseGamma</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -1977,24 +1784,6 @@ Commonly used for modeling waiting times and survival analysis.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Waiting Times and Survival:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Waiting time with rate parameterization</span>
 <span class="n">wait_time</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Exponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
@@ -2103,24 +1892,6 @@ included in any Stan program defined using this distribution.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpExponential.CDF">
 <span class="sig-name descname"><span class="pre">CDF</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.ExpExponential.CDF" title="Link to this definition">¶</a></dt>
@@ -2238,24 +2009,6 @@ Pareto Type II distribution with location parameter set to 0.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Lomax.CDF">
 <span class="sig-name descname"><span class="pre">CDF</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.Lomax.CDF" title="Link to this definition">¶</a></dt>
@@ -2376,24 +2129,6 @@ included in any Stan program defined using this distribution.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Heavy-Tailed and Log-Transformed Distributions:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Heavy-tailed distributions for robust modeling</span>
 <span class="n">wealth</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
@@ -2536,21 +2271,6 @@ will be converted to the appropriate shape given by the <cite>shape</cite> kwarg
 </div>
 </dd>
 </dl>
-<p>Initialize Dirichlet distribution with concentration parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>alpha</strong> (<em>Union</em><em>[</em><a class="reference internal" href="abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><em>AbstractModelComponent</em></a><em>, </em><em>npt.ArrayLike</em><em>]</em>) – Concentration parameters for each component</p></li>
-<li><p><strong>kwargs</strong> – Additional arguments including ‘shape’ if alpha is scalar</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If alpha is scalar but ‘shape’ is not provided</p>
-</dd>
-</dl>
-<p>The initialization handles both scalar and vector specifications of
-concentration parameters, automatically creating uniform arrays when
-a scalar value is provided with an explicit shape.</p>
 <p><strong>Probability Simplex Modeling:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Symmetric Dirichlet (uniform on simplex)</span>
 <span class="n">p</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,))</span>
@@ -2687,21 +2407,6 @@ included in any Stan program defined using this distribution.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize Dirichlet distribution with concentration parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>alpha</strong> (<em>Union</em><em>[</em><a class="reference internal" href="abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><em>AbstractModelComponent</em></a><em>, </em><em>npt.ArrayLike</em><em>]</em>) – Concentration parameters for each component</p></li>
-<li><p><strong>kwargs</strong> – Additional arguments including ‘shape’ if alpha is scalar</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If alpha is scalar but ‘shape’ is not provided</p>
-</dd>
-</dl>
-<p>The initialization handles both scalar and vector specifications of
-concentration parameters, automatically creating uniform arrays when
-a scalar value is provided with an explicit shape.</p>
 <p><strong>Log-Simplex for Numerical Stability:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Log-probability vectors for high-dimensional problems</span>
 <span class="n">log_p</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1000</span><span class="p">,))</span>
@@ -2911,24 +2616,6 @@ in a fixed number of independent Bernoulli trials.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Success Counts in Fixed Trials:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Number of successes in N trials</span>
 <span class="n">successes</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Binomial</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">success_rate</span><span class="p">)</span>
@@ -3031,24 +2718,6 @@ a single rate parameter.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Count Data Modeling:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Event counts</span>
 <span class="n">counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Poisson</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">event_rate</span><span class="p">)</span>
@@ -3147,24 +2816,6 @@ category for a fixed number of trials.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Categorical Count Data:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Category counts with probability vector</span>
 <span class="n">category_counts</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Multinomial</span><span class="p">(</span>
@@ -3265,24 +2916,6 @@ X ~ Multinomial(N, θ)</p>
 </div>
 </dd>
 </dl>
-<p>Initialize parameter with distribution-specific arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> – Distribution parameters (mu, sigma, etc. depending on subclass)</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If required class attributes are missing (i.e.,
-if subclass was incorrectly defined)</p></li>
-<li><p><strong>TypeError</strong> – If required distribution parameters are missing</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Validates all required class attributes are defined
-2. Checks that all required distribution parameters are provided
-3. Initializes parent AbstractModelComponent
-4. Sets up observability tracking and PyTorch parameter placeholders</p>
 <p><strong>Logit-Parameterized Multinomial:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Unconstrained parameterization</span>
 <span class="n">logits</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,))</span>
@@ -3402,19 +3035,6 @@ included in any Stan program defined using this distribution.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize MultinomialLogTheta with automatic coefficient handling.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>log_theta</strong> (<em>custom_types.ContinuousParameterType</em>) – Log probability parameter</p></li>
-<li><p><strong>N</strong> (<em>custom_types.DiscreteParameterType</em>) – Number of trials parameter</p></li>
-<li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization automatically creates a multinomial coefficient
-component that is removed if the parameter gains children (indicating
-it’s not an observable).</p>
 <p><strong>Log-Probability Parameterized with Optimization:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Log-simplex parameterization</span>
 <span class="n">log_probs</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>

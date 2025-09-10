@@ -16,7 +16,6 @@ extensions = [
 ]
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
-autoclass_content = "both"  # Include both class docstring and __init__
 autodoc_mock_imports = ["torch"]  # Mock torch
 
 templates_path = ["_templates"]  # Path to templates

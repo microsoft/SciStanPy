@@ -33,33 +33,21 @@
 
           <div class="body" role="main">
             
-  <section id="model-api-reference">
-<h1>Model API Reference<a class="headerlink" href="#model-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference covers the core Model class for building and executing Bayesian models in SciStanPy.</p>
-<section id="module-scistanpy.model.model">
-<span id="model-module"></span><h2>Model Module<a class="headerlink" href="#module-scistanpy.model.model" title="Link to this heading">¶</a></h2>
+  <section id="module-scistanpy.model.model">
+<span id="model-api-reference"></span><h1>Model API Reference<a class="headerlink" href="#module-scistanpy.model.model" title="Link to this heading">¶</a></h1>
 <p>Core Model class for SciStanPy Bayesian modeling framework.</p>
-<p>This module contains the fundamental Model class that serves as the primary
-interface for building, compiling, and executing Bayesian models in SciStanPy.
-The Model class orchestrates the composition of model components (parameters,
-constants, transformations) and provides methods for sampling, compilation,
-and analysis.</p>
-<p>The Model class uses a metaclass pattern to automatically register model
-components defined as instance attributes, enabling intuitive model construction
-through simple attribute assignment. It supports multiple backends including
-Stan for MCMC sampling and PyTorch for maximum likelihood estimation.</p>
-<dl class="simple">
-<dt>Key Features:</dt><dd><ul class="simple">
-<li><p>Automatic component registration and validation</p></li>
-<li><p>Multiple sampling backends (Stan MCMC, PyTorch MLE)</p></li>
-<li><p>Prior and posterior predictive checking</p></li>
-<li><p>Efficient compilation with caching</p></li>
-<li><p>Comprehensive model introspection and diagnostics</p></li>
-<li><p>xarray integration for structured data handling</p></li>
-</ul>
-</dd>
-</dl>
-</section>
+<p>This module contains the fundamental <a class="reference internal" href="#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> class
+that serves as the primary interface for building, compiling, and executing Bayesian
+models in SciStanPy. The <a class="reference internal" href="#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> class orchestrates
+the composition of model components (<a class="reference internal" href="components/parameters.html#module-scistanpy.model.components.parameters" title="scistanpy.model.components.parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameters</span></code></a>,
+<a class="reference internal" href="components/constants.html#scistanpy.model.components.constants.Constant" title="scistanpy.model.components.constants.Constant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Constants</span></code></a>, and
+<a class="reference internal" href="components/transformations/transformed_parameters.html#module-scistanpy.model.components.transformations.transformed_parameters" title="scistanpy.model.components.transformations.transformed_parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Transformed</span> <span class="pre">Parameters</span></code></a>)
+that define the probabilistic structure of the model.</p>
+<p>The <a class="reference internal" href="#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> class uses a metaclass pattern to automatically
+register model components defined as instance attributes, enabling intuitive model
+construction through simple attribute assignment. It supports multiple backends
+including Stan for Hamiltonai Monte Carlo sampling and PyTorch for maximum likelihood
+estimation.</p>
 <section id="core-model-class">
 <h2>Core Model Class<a class="headerlink" href="#core-model-class" title="Link to this heading">¶</a></h2>
 <dl class="py class">
@@ -76,92 +64,73 @@ Stan for MCMC sampling and PyTorch for maximum likelihood estimation.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Primary interface for Bayesian model construction and analysis in SciStanPy.</p>
 <p>The Model class provides a declarative interface for building Bayesian models
-by composing parameters, constants, and transformations. It automatically
-handles component registration, validation, and provides methods for sampling,
-compilation, and analysis across multiple backends.</p>
+by composing <a class="reference internal" href="components/parameters.html#module-scistanpy.model.components.parameters" title="scistanpy.model.components.parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameters</span></code></a>,
+<a class="reference internal" href="components/constants.html#scistanpy.model.components.constants.Constant" title="scistanpy.model.components.constants.Constant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Constants</span></code></a>, and
+<a class="reference internal" href="components/transformations/transformed_parameters.html#module-scistanpy.model.components.transformations.transformed_parameters" title="scistanpy.model.components.transformations.transformed_parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Transformed</span> <span class="pre">Parameters</span></code></a>.
+It automatically handles component registration and validation, and provides
+methods for sampling, compilation, and analysis across multiple backends.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>args</strong> – Positional arguments (unused, for subclass compatibility)</p></li>
-<li><p><strong>default_data</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>npt.NDArray</em><em>]</em><em>]</em>) – Default observed data for model observables. When provided,
+<dd class="field-odd"><p><strong>default_data</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>npt.NDArray</em><em>]</em><em>]</em>) – Default observed data for model observables. When provided,
 any instance method requiring data will use these if not otherwise provided.
-Defaults to None.</p></li>
-<li><p><strong>kwargs</strong> – Additional keyword arguments (unused, for subclass compatibility)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Variables<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>_default_data</strong> – Stored default data for observables</p></li>
-<li><p><strong>_named_model_components</strong> – Tuple of components that have explicit names</p></li>
-<li><p><strong>_model_varname_to_object</strong> – Mapping from variable names to components</p></li>
-<li><p><strong>_init_complete</strong> – Flag indicating initialization completion</p></li>
-</ul>
+Defaults to None.</p>
 </dd>
 </dl>
 <p>The class uses a metaclass pattern that automatically registers model
 components defined as instance attributes. Components are validated
 for naming conventions and automatically assigned model variable names.</p>
-<dl>
-<dt>Model Construction:</dt><dd><p>Models are built by subclassing Model and defining components as
+<p>Models are built by subclassing Model and defining components as
 instance attributes in the __init__ method. The metaclass automatically
 discovers and registers these components.</p>
-</dd>
-<dt>Supported Operations:</dt><dd><ul class="simple">
-<li><p>Prior and posterior sampling</p></li>
-<li><p>Maximum likelihood estimation using PyTorch</p></li>
-<li><p>MCMC sampling using Stan</p></li>
-<li><p>Model compilation and caching</p></li>
-<li><p>Prior predictive checking with interactive visualization</p></li>
-<li><p>Model simulation and validation</p></li>
-</ul>
-</dd>
+<dl>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">MyModel</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="gp">... </span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
 <span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">observable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">MyModel</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">prior_samples</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">prior_predictive</span><span class="p">()</span>  <span class="c1"># Interactive dashboard for prior exploration</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">()</span> <span class="c1"># Maximum likelihood estimation</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">()</span> <span class="c1"># Hamiltonian Monte Carlo sampling in Stan</span>
 </pre></div>
 </div>
 </dd>
 </dl>
-<p>This should be overridden by the subclass.</p>
-<p><strong>Model Construction Pattern:</strong></p>
-<p>The Model class uses a metaclass pattern for automatic component registration:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="k">class</span><span class="w"> </span><span class="nc">MyModel</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
-        <span class="c1"># Components are automatically registered</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">observable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="c1"># Create and use the model</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">MyModel</span><span class="p">()</span>
-<span class="n">prior_samples</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All <a class="reference internal" href="components/parameters.html#module-scistanpy.model.components.parameters" title="scistanpy.model.components.parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Parameters</span></code></a> have a
+<code class="docutils literal notranslate"><span class="pre">shape</span></code> attribute that defines their dimensionality. For example, I can
+define a 2D array of parameters like this:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 </pre></div>
 </div>
-<p><strong>Multiple Backend Support:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># PyTorch backend for MLE</span>
-<span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
-
-<span class="c1"># Stan backend for MCMC</span>
-<span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
+<p>This will create 12 independent Normal parameters arranged in a 3x4 array.
+All SciStanPy parameters and operations support broadcasting using the same
+rules as NumPy, so you can easily define complex hierarchical models with
+minimal code. For example, I can define a child parameter that depends on
+<code class="docutils literal notranslate"><span class="pre">beta</span></code> like this:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 </pre></div>
 </div>
-<p><strong>Interactive Prior Exploration:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create interactive dashboard</span>
-<span class="n">dashboard</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">prior_predictive</span><span class="p">()</span>
-<span class="c1"># Display in Jupyter notebook or serve as web app</span>
-</pre></div>
+<p>This will create a 10x3x4 array of Normal parameters where each slice along
+the first dimension represents a set of parameters drawn from a Normal distribution
+whose mean is given by a single element of <code class="docutils literal notranslate"><span class="pre">beta</span></code>.</p>
+</div>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>Follow these best practices when building models:</p>
+<ol class="arabic simple">
+<li><p>Use descriptive component names that reflect their scientific meaning</p></li>
+<li><p>Set <code class="docutils literal notranslate"><span class="pre">default_data</span></code> for models with fixed datasets to streamline workflows</p></li>
+<li><p>Start with prior predictive checks before fitting to real data</p></li>
+<li><p>Use simulation methods to validate model implementation</p></li>
+<li><p>Choose appropriate backends for different tasks (PyTorch for MLE, Stan for MCMC)</p></li>
+<li><p>Validate models incrementally by building from simple to complex</p></li>
+</ol>
 </div>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.model.Model.all_model_components">
@@ -297,13 +266,13 @@ when no explicit data is provided, streamlining common workflows.</p>
 
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span></dt>
 <dd><p>Draw samples from the model’s prior distribution.</p>
-<p>This method generates samples from all observable parameters in the
+<p>This method generates samples from all elements of the
 model by traversing the dependency graph and sampling from each
-component’s distribution in topological order.</p>
+component.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<em>custom_types.Integer</em>) – Number of samples to draw from each observable</p></li>
+<li><p><strong>n</strong> (<em>custom_types.Integer</em>) – Number of samples to draw from each component.</p></li>
 <li><p><strong>named_only</strong> (<em>bool</em>) – Whether to return only named components. Defaults to True.</p></li>
 <li><p><strong>as_xarray</strong> (<em>bool</em>) – Whether to return results as xarray Dataset. Defaults to False.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Random seed for reproducible sampling. Defaults to None.</p></li>
@@ -316,11 +285,6 @@ component’s distribution in topological order.</p>
 <dd class="field-odd"><p>Union[dict[str, npt.NDArray], dict[<a class="reference internal" href="components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent">AbstractModelComponent</a>, npt.NDArray], xr.Dataset]</p>
 </dd>
 </dl>
-<p>The method automatically handles:
-- Dependency resolution between model components
-- Consistent random number generation with optional seeding
-- Efficient sampling by reusing intermediate results
-- Format conversion based on return type preferences</p>
 <dl>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Draw 1000 samples as dictionary</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
@@ -480,10 +444,12 @@ the <cite>cmdstanpy.CmdStanModel.sample</cite> for options.</p></li>
 <dd class="field-even"><p><strong>ValueError</strong> – If delay_run is True but output_dir is None</p>
 </dd>
 </dl>
-<p>Delayed Execution:
-When delay_run=True, the method saves sampling configuration to a
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When delay_run=True, the method saves sampling configuration to a
 pickle file instead of executing immediately. This enables batch
 processing and distributed computing workflows.</p>
+</div>
 <dl>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Immediate MCMC sampling</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
@@ -553,6 +519,14 @@ for <cite>early_stop</cite> number epochs.</p></li>
 </div>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">mle</span></code> method is much cheaper to run than <code class="docutils literal notranslate"><span class="pre">mcmc</span></code> and can be a
+useful first step for model validation and debugging. Also note that,
+via the <a class="reference internal" href="results/mle.html#scistanpy.model.results.mle.MLE" title="scistanpy.model.results.mle.MLE"><code class="xref py py-class docutils literal notranslate"><span class="pre">scistanpy.model.results.mle.MLE</span></code></a> object returned,
+you can bootstrap observed data to obtain uncertainty estimates about
+the observed data.</p>
+</div>
 </dd></dl>
 
 <dl class="py property">
@@ -674,15 +648,19 @@ slider values and clicking “update model”.</p>
 <dd class="field-odd"><p>pn.Row</p>
 </dd>
 </dl>
-<p>The dashboard includes:
-- Sliders for all adjustable model hyperparameters
-- Multiple visualization modes (ECDF, KDE, violin, relationship plots)
-- Real-time updates as parameters are modified
-- Options for different grouping and display configurations</p>
-<p>This is useful for:
-- Prior specification and calibration
-- Understanding model behavior before data fitting
-- Identifying unrealistic prior assumptions</p>
+<p>The dashboard includes:</p>
+<ul class="simple">
+<li><p>Sliders for all adjustable model hyperparameters</p></li>
+<li><p>Multiple visualization modes (ECDF, KDE, violin, relationship plots)</p></li>
+<li><p>Real-time updates as parameters are modified</p></li>
+<li><p>Options for different grouping and display configurations</p></li>
+</ul>
+<p>This is useful for:</p>
+<ul class="simple">
+<li><p>Prior specification and calibration</p></li>
+<li><p>Understanding model behavior before data fitting</p></li>
+<li><p>Identifying unrealistic prior assumptions</p></li>
+</ul>
 <dl>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create interactive dashboard</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dashboard</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">prior_predictive</span><span class="p">()</span>
@@ -715,7 +693,8 @@ It’s extremely helpful for model validation and posterior recovery testing.</p
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>delay_run</strong> (<em>bool</em>) – Whether to delay MCMC execution. Defaults to False.</p></li>
-<li><p><strong>kwargs</strong> – Additional keyword arguments passed to mcmc() method</p></li>
+<li><p><strong>kwargs</strong> – Additional keyword arguments passed to
+<a class="reference internal" href="#scistanpy.model.model.Model.mcmc" title="scistanpy.model.model.Model.mcmc"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mcmc()</span></code></a> method.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -729,11 +708,13 @@ None if delay_run=True</p>
 <p>The method automatically updates the model name to indicate
 simulation when using the default name, helping distinguish
 simulated from real data analyses.</p>
-<p>This is crucial for:
-- Validating MCMC implementation correctness
-- Testing posterior recovery in known-truth scenarios
-- Assessing sampler efficiency and convergence
-- Debugging model specification issues</p>
+<p>This is crucial for:</p>
+<ul class="simple">
+<li><p>Validating MCMC implementation correctness</p></li>
+<li><p>Testing posterior recovery in known-truth scenarios</p></li>
+<li><p>Assessing sampler efficiency and convergence</p></li>
+<li><p>Debugging model specification issues</p></li>
+</ul>
 <dl>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Simulate and sample with immediate execution</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sim_data</span><span class="p">,</span> <span class="n">mcmc_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate_mcmc</span><span class="p">(</span><span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
@@ -767,10 +748,12 @@ the model to this simulated data using maximum likelihood estimation.</p>
 <dd class="field-odd"><p>tuple[dict[str, npt.NDArray], mle_module.MLE]</p>
 </dd>
 </dl>
-<p>This is particularly useful for:
-- Model validation and debugging
-- Assessing parameter identifiability (e.g. by running multiple simulations)
-- Verifying implementation correctness</p>
+<p>This is particularly useful for:</p>
+<ul class="simple">
+<li><p>Model validation and debugging</p></li>
+<li><p>Assessing parameter identifiability (e.g. by running multiple simulations)</p></li>
+<li><p>Verifying implementation correctness</p></li>
+</ul>
 <p>The simulated data is automatically passed to the MLE fitting
 procedure, overriding any data specification in kwargs.</p>
 <dl>
@@ -789,8 +772,9 @@ procedure, overriding any data specification in kwargs.</p>
 <p>This method converts the SciStanPy model into a PyTorch module that
 can be optimized using standard PyTorch training procedures for
 maximum likelihood estimation or variational inference. The inputs to this
-module (i.e., the inputs to its <cite>forward</cite> method) are all observed data;
-the output is the likelihood of that data given the current model parameters.</p>
+module (i.e., keyword arguments to its <code class="docutils literal notranslate"><span class="pre">forward</span></code> method) are all observed
+data; the output is the likelihood of that data given the current model
+parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Random seed for reproducible compilation. Defaults to None.</p>
@@ -863,238 +847,6 @@ or other mathematical transformations.</p>
 
 </dd></dl>
 
-</section>
-<section id="model-utilities">
-<h2>Model Utilities<a class="headerlink" href="#model-utilities" title="Link to this heading">¶</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.model.model.</span></span><span class="sig-name descname"><span class="pre">model_comps_to_dict</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">model_comps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a><span class="p"><span class="pre">]</span></span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><span class="pre">AbstractModelComponent</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/scistanpy/model/model.html#model_comps_to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Convert an iterable of model components to a dictionary keyed by variable names.</p>
-<p>This utility function creates a dictionary mapping from model variable names
-to their corresponding component objects, facilitating easy lookup and
-access to model components by name.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>model_comps</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent"><em>abstract_model_component.AbstractModelComponent</em></a><em>]</em>) – Iterable of model components to convert</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Dictionary mapping variable names to components</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict[str, <a class="reference internal" href="components/abstract_model_component.html#scistanpy.model.components.abstract_model_component.AbstractModelComponent" title="scistanpy.model.components.abstract_model_component.AbstractModelComponent">abstract_model_component.AbstractModelComponent</a>]</p>
-</dd>
-</dl>
-<dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">components</span> <span class="o">=</span> <span class="p">[</span><span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">,</span> <span class="n">observable1</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">comp_dict</span> <span class="o">=</span> <span class="n">model_comps_to_dict</span><span class="p">(</span><span class="n">components</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Access by name: comp_dict[&#39;param1&#39;]</span>
-</pre></div>
-</div>
-</dd>
-</dl>
-<p><strong>Example Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert model components to dictionary</span>
-<span class="n">components</span> <span class="o">=</span> <span class="p">[</span><span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">,</span> <span class="n">observable1</span><span class="p">]</span>
-<span class="n">comp_dict</span> <span class="o">=</span> <span class="n">model_comps_to_dict</span><span class="p">(</span><span class="n">components</span><span class="p">)</span>
-<span class="c1"># Access by name: comp_dict[&#39;param1&#39;]</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">scistanpy.model.model.</span></span><span class="sig-name descname"><span class="pre">run_delayed_mcmc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">hmc_results.SampleResults</span></span></span><a class="reference internal" href="../../_modules/scistanpy/model/model.html#run_delayed_mcmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Execute a delayed MCMC run from a pickled configuration file.</p>
-<p>This function loads and executes MCMC sampling that was previously
-configured with <cite>Model.mcmc(delay_run=True)</cite>. It’s useful for
-running computationally intensive sampling jobs in batch systems
-or separate processes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – Path to the pickled MCMC configuration file</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>MCMC sampling results with posterior draws and diagnostics</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>hmc_results.SampleResults</p>
-</dd>
-</dl>
-<p>The function automatically enables console output to provide progress
-feedback during the potentially long-running sampling process.</p>
-<dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># First, create delayed run</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">delay_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Later, execute the run</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">run_delayed_mcmc</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">stan_executable_path</span><span class="si">}</span><span class="s2">-delay.pkl&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd>
-</dl>
-<p><strong>Delayed Execution Workflow:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># First, create delayed run configuration</span>
-<span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./mcmc_output&quot;</span><span class="p">,</span>
-    <span class="n">delay_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-    <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">2000</span>
-<span class="p">)</span>
-
-<span class="c1"># Later, execute the run (possibly on different machine/process)</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">run_delayed_mcmc</span><span class="p">(</span><span class="s2">&quot;./mcmc_output/model-delay.pkl&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-</section>
-<section id="model-properties-and-methods">
-<h2>Model Properties and Methods<a class="headerlink" href="#model-properties-and-methods" title="Link to this heading">¶</a></h2>
-<p><strong>Component Access Properties:</strong></p>
-<p>The Model class provides several properties for accessing different types of components:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Access different component types</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameters: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Observables: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">observable_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Constants: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">constant_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hyperparameters: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">hyperparameter_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Sampling and Inference Methods:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Prior sampling</span>
-<span class="n">prior_samples</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="c1"># Maximum likelihood estimation</span>
-<span class="n">mle_fit</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">,</span>
-    <span class="n">epochs</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
-    <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
-    <span class="n">device</span><span class="o">=</span><span class="s1">&#39;cuda&#39;</span>
-<span class="p">)</span>
-
-<span class="c1"># MCMC sampling</span>
-<span class="n">posterior_samples</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">,</span>
-    <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-    <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
-    <span class="n">iter_warmup</span><span class="o">=</span><span class="mi">1000</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Simulation Methods:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate data and fit with MLE</span>
-<span class="n">sim_data</span><span class="p">,</span> <span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate_mle</span><span class="p">(</span><span class="n">epochs</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
-
-<span class="c1"># Simulate data and fit with MCMC</span>
-<span class="n">sim_data</span><span class="p">,</span> <span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate_mcmc</span><span class="p">(</span><span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="model-introspection">
-<h2>Model Introspection<a class="headerlink" href="#model-introspection" title="Link to this heading">¶</a></h2>
-<p><strong>Component Inspection:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check if parameter exists</span>
-<span class="k">if</span> <span class="s1">&#39;mu&#39;</span> <span class="ow">in</span> <span class="n">model</span><span class="p">:</span>
-    <span class="n">mu_param</span> <span class="o">=</span> <span class="n">model</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">mu_param</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="c1"># Get all component names</span>
-<span class="n">all_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">all_model_components_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-<span class="n">named_only</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">named_model_components_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-</pre></div>
-</div>
-<p><strong>Model Structure:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Print comprehensive model summary</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-
-<span class="c1"># Access specific component types</span>
-<span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">observable</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">observables</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Observable: </span><span class="si">{</span><span class="n">observable</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Default Data Management:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Set default data for convenience</span>
-<span class="n">model</span><span class="o">.</span><span class="n">default_data</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">observed_values</span><span class="p">,</span>
-    <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">predictor_values</span>
-<span class="p">}</span>
-
-<span class="c1"># Now methods can use default data automatically</span>
-<span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">()</span>  <span class="c1"># Uses default_data</span>
-<span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">()</span>  <span class="c1"># Uses default_data</span>
-</pre></div>
-</div>
-</section>
-<section id="advanced-features">
-<h2>Advanced Features<a class="headerlink" href="#advanced-features" title="Link to this heading">¶</a></h2>
-<p><strong>Custom Model Classes:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">HierarchicalModel</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">group_data</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
-        <span class="c1"># Global parameters</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">global_mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">global_sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-        <span class="c1"># Group-specific parameters</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">group_mus</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">global_mu</span><span class="p">,</span>
-            <span class="n">sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">global_sigma</span><span class="p">,</span>
-            <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="p">),)</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Observations</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">observations</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">group_mus</span><span class="p">[</span><span class="n">groups</span><span class="p">],</span>
-            <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-            <span class="n">observable</span><span class="o">=</span><span class="kc">True</span>
-        <span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Model Compilation and Caching:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compile to PyTorch for optimization</span>
-<span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_pytorch</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
-
-<span class="c1"># Compile to Stan for MCMC (with caching)</span>
-<span class="n">stan_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_stan</span><span class="p">(</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;./compiled_models&#39;</span><span class="p">,</span>
-    <span class="n">force_compile</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Use cached version if available</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Mixed Backend Workflows:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use VI for initialization, then MCMC for final inference</span>
-<span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
-
-<span class="c1"># Use MLE results to initialize MCMC</span>
-<span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-    <span class="n">inits</span><span class="o">=</span><span class="n">mle_result</span><span class="o">.</span><span class="n">to_stan_inits</span><span class="p">(),</span>
-    <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-    <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">2000</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="best-practices">
-<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
-<ol class="arabic simple">
-<li><p><strong>Use descriptive component names</strong> that reflect their scientific meaning</p></li>
-<li><p><strong>Set default data</strong> for models with fixed datasets to streamline workflows</p></li>
-<li><p><strong>Start with prior predictive checks</strong> before fitting to real data</p></li>
-<li><p><strong>Use simulation methods</strong> to validate model implementation</p></li>
-<li><p><strong>Leverage caching</strong> for expensive Stan compilation with consistent output directories</p></li>
-<li><p><strong>Choose appropriate backends</strong> for different tasks (PyTorch for MLE, Stan for MCMC)</p></li>
-<li><p><strong>Validate models incrementally</strong> by building from simple to complex</p></li>
-</ol>
-<p>The Model class provides the foundation for all Bayesian modeling workflows in SciStanPy, enabling seamless integration between model specification and computational backends.</p>
 </section>
 </section>
 

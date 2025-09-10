@@ -5,23 +5,12 @@
 """Model construction and management for SciStanPy.
 
 This module provides the core infrastructure for building, compiling, and
-executing Bayesian models using the Stan probabilistic programming language.
-It serves as the primary interface between user-defined model specifications
-and the underlying Stan compilation and sampling machinery.
+executing Bayesian models. It serves as the primary interface between user-defined
+model specifications and the underlying Stan and PyTorch compilation, as well as
+the sampling and optimization machinery.
 
-The module is organized into several key submodules:
-
-Components Submodule (:mod:`scistanpy.model.components`):
-    Contains the building blocks for model construction, including:
-
-    - **Constants**: Fixed values and hyperparameters
-    - **Parameters**: Random variables and distributions
-    - **Transformations**: Mathematical operations on parameters
-    - **Custom Distributions**: Extended `torch` distribution library
-    - **Abstract Base Classes**: Base class for all model components.
-
-Model Core (:mod:`scistanpy.model.model`):
-    Provides the main Model class that orchestrates:
+The primary interface is the :py:class:`~scistanpy.model.model.Model` class,
+which orchestrates model definition, compilation, and execution. Key features include:
 
     - Model component registration and validation
     - Stan code generation from Python specifications
@@ -29,33 +18,39 @@ Model Core (:mod:`scistanpy.model.model`):
     - Prior and posterior sampling interfaces
     - Integration with external fitting libraries (i.e., PyTorch)
 
-Results Submodule (:mod:`scistanpy.model.results`):
-    Handles post-processing and analysis of model outputs:
+Instances of the :py:class:`~scistanpy.model.model.Model` class expose a number
+of methods useful for Bayesian inference, including methods to facilitate:
 
     - MCMC diagnostics and convergence assessment
     - Posterior summary statistics
     - Visualization integration
     - Export utilities for downstream analysis
 
-Key Features:
-    - **Declarative Model Specification**: Build models using Python syntax
-      that automatically translates to Stan code
-    - **Type Safety**: Comprehensive type checking ensures model correctness
-    - **Lazy Compilation**: Models are compiled only when needed, with
-      intelligent caching to avoid redundant compilation
-    - **Extensible Architecture**: Easy addition of new distributions,
-      transformations, and model components
+Models are constructed from building blocks called components, which fall under
+three main categories:
 
-The module design emphasizes both ease of use for common modeling tasks
-and extensibility for advanced applications. Models are constructed by
-composing reusable components, promoting code reuse and maintainability.
+    - :py:class:`Constants <scistanpy.model.components.constants.Constant>`,
+      which represent fixed values and hyperparameters in a SciStanPy model.
+    - :py:class:`Parameters <scistanpy.model.components.parameters.Parameter>`,
+      which represent random variables. These are either inferred (i.e., latent
+      parameters) or directly modeled (i.e., observed variables).
+    - :py:class:`Transformed Parameters <scistanpy.model.components.transformations.transformed_parameters.TransformedParameter>`,
+      which, as the name suggests, are the result of deterministic transformations
+      of Parameters. These result from the :py:mod:`scistanpy.operations` module.
 
-Workflow Overview:
-    1. **Model Definition**: Instantiate Model class and add components
-    2. **Component Registration**: Add parameters, constants, and observables
-    3. **Compilation**: Automatic Stan code generation and compilation
-    4. **Sampling**: Execute prior predictive checks or posterior inference
-    5. **Analysis**: Process results using built-in diagnostic tools
+A typical workflow using the :py:class:`~scistanpy.model.model.Model` class looks
+like this:
+
+    1. **Model Definition**: Instantiate Model class and add components. On initialization,
+       the model will automatically register its components.
+    2. **Prior Predictive Checks**: Use the
+       :py:meth:`Model.prior_predictive() <scistanpy.model.model.Model.prior_predictive>`
+       method to evaluate and set values for model hyperparameters.
+    3. **Compilation**: Compilation to either Stan code or a PyTorch ``nn.Module``.
+    4. **Sampling**: Fit a model using either Hamiltonian Monte Carlo (HMC) via Stan
+       or Maximum Likelihood Estimation (MLE) via PyTorch. Draw samples from the
+       resulting likelihood/posterior.
+    5. **Analysis**: Process results using built-in diagnostic tools.
 
 Example:
     >>> import scistanpy as ssp
@@ -63,25 +58,15 @@ Example:
     >>> class Regressor(ssp.Model):
     >>>     def __init__(self):
     >>>         super().__init__()
-    >>>         self.mu = ssp.parameters.Normal(0, 1)
-    >>>         self.sigma = ssp.parameters.HalfNormal(1)
+    >>>         self.mu = ssp.parameters.Normal(0.0, 1.0)
+    >>>         self.sigma = ssp.parameters.HalfNormal(1.0)
     >>>         self.y = ssp.parameters.Normal(self.mu, self.sigma)
     >>> # Create a model instance
     >>> model = Regressor()
-    >>> # Sample from prior
-    >>> prior_samples = model.draw(n=1000)
+    >>> # Prior predictive checks in Jupyter
+    >>> model.prior_predictive()
     >>> # Run mcmc using Stan
     >>> res = model.mcmc(data = {"y": data})
     >>> # Run maximum likelihood estimation with PyTorch
     >>> mle = model.mle(data = {"y": data})
-
-
-Performance Considerations:
-    - Model compilation can be time-intensive; use caching for repeated runs
-    - Large models benefit from Stan's threading capabilities (enabled by default)
-    - Memory usage scales with model complexity and sample size
-
-See Also:
-    - :mod:`scistanpy.operations`: Mathematical operations for model building
-    - :mod:`scistanpy.plotting`: Visualization tools for model diagnostics
 """

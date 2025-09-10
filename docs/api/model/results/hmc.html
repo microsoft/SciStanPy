@@ -141,7 +141,6 @@ and efficient data management for large MCMC datasets.</p>
 <p>The class automatically handles NetCDF conversion for efficient storage
 and supports both in-memory and out-of-core computation depending on
 dataset size and available memory.</p>
-<p>Base class just initializes the ArviZ object.</p>
 <p><strong>Comprehensive MCMC Diagnostics:</strong></p>
 <p>The SampleResults class provides complete diagnostic capabilities for HMC sampling:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
@@ -784,9 +783,6 @@ naming and chunking strategies.</p>
 - Data type optimization based on precision requirements</p>
 <p>This class is used internally by the cmdstan_csv_to_netcdf function and
 should not be instantiated directly in most use cases.</p>
-<p>Initialization involves collecting information about the different variables
-in the fit object. This includes the names of the variables, their shapes,
-and their types. This information is used to create the HDF5 file.</p>
 <p><strong>High-Performance Data Conversion:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Direct conversion from CSV to NetCDF</span>
 <span class="n">netcdf_path</span> <span class="o">=</span> <span class="n">cmdstan_csv_to_netcdf</span><span class="p">(</span>

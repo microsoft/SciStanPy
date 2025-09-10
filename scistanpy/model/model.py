@@ -4,24 +4,19 @@
 
 """Core Model class for SciStanPy Bayesian modeling framework.
 
-This module contains the fundamental Model class that serves as the primary
-interface for building, compiling, and executing Bayesian models in SciStanPy.
-The Model class orchestrates the composition of model components (parameters,
-constants, transformations) and provides methods for sampling, compilation,
-and analysis.
+This module contains the fundamental :py:class:`~scistanpy.model.model.Model` class
+that serves as the primary interface for building, compiling, and executing Bayesian
+models in SciStanPy. The :py:class:`~scistanpy.model.model.Model` class orchestrates
+the composition of model components (:py:mod:`Parameters <scistanpy.model.components.parameters>`,
+:py:class:`Constants <scistanpy.model.components.constants.Constant>`, and
+:py:mod:`Transformed Parameters <scistanpy.model.components.transformations.transformed_parameters>`)
+that define the probabilistic structure of the model.
 
-The Model class uses a metaclass pattern to automatically register model
-components defined as instance attributes, enabling intuitive model construction
-through simple attribute assignment. It supports multiple backends including
-Stan for MCMC sampling and PyTorch for maximum likelihood estimation.
-
-Key Features:
-    - Automatic component registration and validation
-    - Multiple sampling backends (Stan MCMC, PyTorch MLE)
-    - Prior and posterior predictive checking
-    - Efficient compilation with caching
-    - Comprehensive model introspection and diagnostics
-    - xarray integration for structured data handling
+The :py:class:`~scistanpy.model.model.Model` class uses a metaclass pattern to automatically
+register model components defined as instance attributes, enabling intuitive model
+construction through simple attribute assignment. It supports multiple backends
+including Stan for Hamiltonai Monte Carlo sampling and PyTorch for maximum likelihood
+estimation.
 """
 
 # pylint: disable=too-many-lines
@@ -136,50 +131,69 @@ class Model:
     """Primary interface for Bayesian model construction and analysis in SciStanPy.
 
     The Model class provides a declarative interface for building Bayesian models
-    by composing parameters, constants, and transformations. It automatically
-    handles component registration, validation, and provides methods for sampling,
-    compilation, and analysis across multiple backends.
+    by composing :py:mod:`Parameters <scistanpy.model.components.parameters>`,
+    :py:class:`Constants <scistanpy.model.components.constants.Constant>`, and
+    :py:mod:`Transformed Parameters <scistanpy.model.components.transformations.transformed_parameters>`.
+    It automatically handles component registration and validation, and provides
+    methods for sampling, compilation, and analysis across multiple backends.
 
-    :param args: Positional arguments (unused, for subclass compatibility)
     :param default_data: Default observed data for model observables. When provided,
         any instance method requiring data will use these if not otherwise provided.
         Defaults to None.
     :type default_data: Optional[dict[str, npt.NDArray]]
-    :param kwargs: Additional keyword arguments (unused, for subclass compatibility)
-
-    :ivar _default_data: Stored default data for observables
-    :ivar _named_model_components: Tuple of components that have explicit names
-    :ivar _model_varname_to_object: Mapping from variable names to components
-    :ivar _init_complete: Flag indicating initialization completion
 
     The class uses a metaclass pattern that automatically registers model
     components defined as instance attributes. Components are validated
     for naming conventions and automatically assigned model variable names.
 
-    Model Construction:
-        Models are built by subclassing Model and defining components as
-        instance attributes in the __init__ method. The metaclass automatically
-        discovers and registers these components.
-
-    Supported Operations:
-        - Prior and posterior sampling
-        - Maximum likelihood estimation using PyTorch
-        - MCMC sampling using Stan
-        - Model compilation and caching
-        - Prior predictive checking with interactive visualization
-        - Model simulation and validation
+    Models are built by subclassing Model and defining components as
+    instance attributes in the __init__ method. The metaclass automatically
+    discovers and registers these components.
 
     Example:
         >>> class MyModel(Model):
         ...     def __init__(self):
         ...         super().__init__()
-        ...         self.mu = ssp.parameters.Normal(0, 1)
-        ...         self.sigma = ssp.parameters.HalfNormal(1)
+        ...         self.mu = ssp.parameters.Normal(0.0, 1.0)
+        ...         self.sigma = ssp.parameters.HalfNormal(1.0)
         ...         self.y = ssp.parameters.Normal(self.mu, self.sigma, observable=True)
         >>>
         >>> model = MyModel()
         >>> prior_samples = model.draw(n=1000)
-        >>> mle_result = model.mle()
+        >>> model.prior_predictive()  # Interactive dashboard for prior exploration
+        >>> mle_result = model.mle() # Maximum likelihood estimation
+        >>> mcmc_result = model.mcmc() # Hamiltonian Monte Carlo sampling in Stan
+
+    .. note::
+        All :py:mod:`Parameters <scistanpy.model.components.parameters>` have a
+        ``shape`` attribute that defines their dimensionality. For example, I can
+        define a 2D array of parameters like this:
+
+            >>> import scistanpy as ssp
+            >>> self.beta = ssp.parameters.Normal(mu = 0.0, sigma = 1.0, shape=(3, 4))
+
+        This will create 12 independent Normal parameters arranged in a 3x4 array.
+        All SciStanPy parameters and operations support broadcasting using the same
+        rules as NumPy, so you can easily define complex hierarchical models with
+        minimal code. For example, I can define a child parameter that depends on
+        ``beta`` like this:
+
+            >>> self.alpha = ssp.parameters.Normal(mu = self.beta, sigma = 1.0, shape = (10, 3, 4))
+
+        This will create a 10x3x4 array of Normal parameters where each slice along
+        the first dimension represents a set of parameters drawn from a Normal distribution
+        whose mean is given by a single element of ``beta``.
+
+    .. hint::
+        Follow these best practices when building models:
+
+        1. Use descriptive component names that reflect their scientific meaning
+        2. Set ``default_data`` for models with fixed datasets to streamline workflows
+        3. Start with prior predictive checks before fitting to real data
+        4. Use simulation methods to validate model implementation
+        5. Choose appropriate backends for different tasks (PyTorch for MLE, Stan for MCMC)
+        6. Validate models incrementally by building from simple to complex
+
     """
 
     def __init__(
@@ -581,11 +595,11 @@ class Model:
     def draw(self, n, *, named_only=True, as_xarray=False, seed=None):
         """Draw samples from the model's prior distribution.
 
-        This method generates samples from all observable parameters in the
+        This method generates samples from all elements of the
         model by traversing the dependency graph and sampling from each
-        component's distribution in topological order.
+        component.
 
-        :param n: Number of samples to draw from each observable
+        :param n: Number of samples to draw from each component.
         :type n: custom_types.Integer
         :param named_only: Whether to return only named components. Defaults to True.
         :type named_only: bool
@@ -596,12 +610,6 @@ class Model:
 
         :returns: Sampled values in requested format
         :rtype: Union[dict[str, npt.NDArray], dict[AbstractModelComponent, npt.NDArray], xr.Dataset]
-
-        The method automatically handles:
-        - Dependency resolution between model components
-        - Consistent random number generation with optional seeding
-        - Efficient sampling by reusing intermediate results
-        - Format conversion based on return type preferences
 
         Example:
             >>> # Draw 1000 samples as dictionary
@@ -636,8 +644,9 @@ class Model:
         This method converts the SciStanPy model into a PyTorch module that
         can be optimized using standard PyTorch training procedures for
         maximum likelihood estimation or variational inference. The inputs to this
-        module (i.e., the inputs to its `forward` method) are all observed data;
-        the output is the likelihood of that data given the current model parameters.
+        module (i.e., keyword arguments to its ``forward`` method) are all observed
+        data; the output is the likelihood of that data given the current model
+        parameters.
 
         :param seed: Random seed for reproducible compilation. Defaults to None.
         :type seed: Optional[custom_types.Integer]
@@ -716,6 +725,14 @@ class Model:
             >>> mle_result = model.mle(data=observed_data)
             >>> # GPU-accelerated with custom settings
             >>> mle_result = model.mle(data=obs, device='cuda', epochs=50000, lr=0.01)
+
+
+        .. note::
+            The ``mle`` method is much cheaper to run than ``mcmc`` and can be a
+            useful first step for model validation and debugging. Also note that,
+            via the :py:class:`scistanpy.model.results.mle.MLE` object returned,
+            you can bootstrap observed data to obtain uncertainty estimates about
+            the observed data.
         """
         # Set the default value for observed data
         data = self.default_data if data is None else data
@@ -795,6 +812,7 @@ class Model:
         :rtype: tuple[dict[str, npt.NDArray], mle_module.MLE]
 
         This is particularly useful for:
+
         - Model validation and debugging
         - Assessing parameter identifiability (e.g. by running multiple simulations)
         - Verifying implementation correctness
@@ -902,10 +920,10 @@ class Model:
 
         :raises ValueError: If delay_run is True but output_dir is None
 
-        Delayed Execution:
-        When delay_run=True, the method saves sampling configuration to a
-        pickle file instead of executing immediately. This enables batch
-        processing and distributed computing workflows.
+        .. note::
+            When delay_run=True, the method saves sampling configuration to a
+            pickle file instead of executing immediately. This enables batch
+            processing and distributed computing workflows.
 
         Example:
             >>> # Immediate MCMC sampling
@@ -977,7 +995,8 @@ class Model:
 
         :param delay_run: Whether to delay MCMC execution. Defaults to False.
         :type delay_run: bool
-        :param kwargs: Additional keyword arguments passed to mcmc() method
+        :param kwargs: Additional keyword arguments passed to
+            :py:meth:`~scistanpy.model.model.Model.mcmc` method.
 
         :returns: Tuple of (simulated_data, mcmc_results) if delay_run=False,
                  None if delay_run=True
@@ -988,6 +1007,7 @@ class Model:
         simulated from real data analyses.
 
         This is crucial for:
+
         - Validating MCMC implementation correctness
         - Testing posterior recovery in known-truth scenarios
         - Assessing sampler efficiency and convergence
@@ -1024,12 +1044,14 @@ class Model:
         :rtype: pn.Row
 
         The dashboard includes:
+
         - Sliders for all adjustable model hyperparameters
         - Multiple visualization modes (ECDF, KDE, violin, relationship plots)
         - Real-time updates as parameters are modified
         - Options for different grouping and display configurations
 
         This is useful for:
+
         - Prior specification and calibration
         - Understanding model behavior before data fitting
         - Identifying unrealistic prior assumptions

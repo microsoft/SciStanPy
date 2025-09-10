@@ -33,309 +33,97 @@
 
           <div class="body" role="main">
             
-  <section id="model-api-reference">
-<h1>Model API Reference<a class="headerlink" href="#model-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference covers the Model implementation found in <cite>scistanpy.model.model</cite> and the model-related submodules used to build and run probabilistic models in SciStanPy.</p>
-<p>The model submodule provides the primary interface for constructing models from composable components (parameters, constants, and transformations) and for running inference using the supported backends.</p>
-<section id="model-submodule-overview">
-<h2>Model Submodule Overview<a class="headerlink" href="#model-submodule-overview" title="Link to this heading">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="components/index.html">Model Components API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#model-components-submodule-overview">Model Components Submodule Overview</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="components/abstract_model_component.html">Abstract Model Component API Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="components/abstract_model_component.html#module-scistanpy.model.components.abstract_model_component">Abstract Model Component Module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/abstract_model_component.html#core-abstract-classes">Core Abstract Classes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/abstract_model_component.html#component-relationships">Component Relationships</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/abstract_model_component.html#shape-and-broadcasting-system">Shape and Broadcasting System</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/abstract_model_component.html#stan-integration-framework">Stan Integration Framework</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/abstract_model_component.html#error-handling-and-validation">Error Handling and Validation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/abstract_model_component.html#tree-traversal-and-analysis">Tree Traversal and Analysis</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/abstract_model_component.html#advanced-usage-patterns">Advanced Usage Patterns</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/abstract_model_component.html#performance-considerations">Performance Considerations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/abstract_model_component.html#best-practices">Best Practices</a></li>
+  <section id="module-scistanpy.model">
+<span id="model-api-reference"></span><h1>Model API Reference<a class="headerlink" href="#module-scistanpy.model" title="Link to this heading">¶</a></h1>
+<p>Model construction and management for SciStanPy.</p>
+<p>This module provides the core infrastructure for building, compiling, and
+executing Bayesian models. It serves as the primary interface between user-defined
+model specifications and the underlying Stan and PyTorch compilation, as well as
+the sampling and optimization machinery.</p>
+<p>The primary interface is the <a class="reference internal" href="model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> class,
+which orchestrates model definition, compilation, and execution. Key features include:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Model component registration and validation</p></li>
+<li><p>Stan code generation from Python specifications</p></li>
+<li><p>Compilation management with caching</p></li>
+<li><p>Prior and posterior sampling interfaces</p></li>
+<li><p>Integration with external fitting libraries (i.e., PyTorch)</p></li>
 </ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="components/constants.html">Constants API Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="components/constants.html#module-scistanpy.model.components.constants">Constants Module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/constants.html#constant-class">Constant Class</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/constants.html#constant-properties-and-methods">Constant Properties and Methods</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/constants.html#usage-patterns">Usage Patterns</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/constants.html#validation-and-error-handling">Validation and Error Handling</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/constants.html#best-practices">Best Practices</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/constants.html#memory-and-performance-considerations">Memory and Performance Considerations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/constants.html#error-handling-and-validation">Error Handling and Validation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/constants.html#interactive-model-building">Interactive Model Building</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/constants.html#id1">Best Practices</a></li>
+</div></blockquote>
+<p>Instances of the <a class="reference internal" href="model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> class expose a number
+of methods useful for Bayesian inference, including methods to facilitate:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>MCMC diagnostics and convergence assessment</p></li>
+<li><p>Posterior summary statistics</p></li>
+<li><p>Visualization integration</p></li>
+<li><p>Export utilities for downstream analysis</p></li>
 </ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="components/custom_distributions/index.html">Custom Distributions API Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="components/custom_distributions/index.html#custom-distributions-submodule-overview">Custom Distributions Submodule Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/custom_distributions/index.html#module-scistanpy.model.components.custom_distributions">Custom Distributions Framework</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/custom_distributions/index.html#distribution-categories">Distribution Categories</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/custom_distributions/index.html#key-features">Key Features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/custom_distributions/index.html#available-custom-distributions">Available Custom Distributions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/custom_distributions/index.html#scientific-applications">Scientific Applications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/custom_distributions/index.html#implementation-details">Implementation Details</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/custom_distributions/index.html#performance-considerations">Performance Considerations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/custom_distributions/index.html#integration-patterns">Integration Patterns</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/custom_distributions/index.html#best-practices">Best Practices</a></li>
+</div></blockquote>
+<p>Models are constructed from building blocks called components, which fall under
+three main categories:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="components/constants.html#scistanpy.model.components.constants.Constant" title="scistanpy.model.components.constants.Constant"><code class="xref py py-class docutils literal notranslate"><span class="pre">Constants</span></code></a>,
+which represent fixed values and hyperparameters in a SciStanPy model.</p></li>
+<li><p><a class="reference internal" href="components/parameters.html#scistanpy.model.components.parameters.Parameter" title="scistanpy.model.components.parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameters</span></code></a>,
+which represent random variables. These are either inferred (i.e., latent
+parameters) or directly modeled (i.e., observed variables).</p></li>
+<li><p><a class="reference internal" href="components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformed</span> <span class="pre">Parameters</span></code></a>,
+which, as the name suggests, are the result of deterministic transformations
+of Parameters. These result from the <a class="reference internal" href="../operations.html#module-scistanpy.operations" title="scistanpy.operations"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scistanpy.operations</span></code></a> module.</p></li>
 </ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="components/parameters.html">Parameters API Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#module-scistanpy.model.components.parameters">Parameters Module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#core-parameter-infrastructure">Core Parameter Infrastructure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#base-parameter-classes">Base Parameter Classes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#continuous-distributions">Continuous Distributions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#simplex-distributions">Simplex Distributions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#discrete-distributions">Discrete Distributions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#multinomial-distributions">Multinomial Distributions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#advanced-parameter-features">Advanced Parameter Features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#parameter-constraints-and-bounds">Parameter Constraints and Bounds</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#model-building-patterns">Model Building Patterns</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#performance-optimization-tips">Performance Optimization Tips</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/parameters.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="components/transformations/index.html">Transformations API Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="components/transformations/index.html#transformations-submodule-overview">Transformations Submodule Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/transformations/index.html#mathematical-transformations">Mathematical Transformations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/transformations/index.html#transformation-types">Transformation Types</a></li>
-<li class="toctree-l4"><a class="reference internal" href="components/transformations/index.html#stan-code-generation">Stan Code Generation</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#module-scistanpy.model.components">Component Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#component-hierarchy">Component Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#key-design-principles">Key Design Principles</a></li>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#component-types">Component Types</a></li>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#component-relationships">Component Relationships</a></li>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#stan-code-generation">Stan Code Generation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#advanced-component-features">Advanced Component Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#component-validation">Component Validation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#performance-considerations">Performance Considerations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="components/index.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="model.html">Model API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="model.html#module-scistanpy.model.model">Model Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#core-model-class">Core Model Class</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="model.html#scistanpy.model.model.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.all_model_components"><code class="docutils literal notranslate"><span class="pre">Model.all_model_components</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.all_model_components_dict"><code class="docutils literal notranslate"><span class="pre">Model.all_model_components_dict</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.constant_dict"><code class="docutils literal notranslate"><span class="pre">Model.constant_dict</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.constants"><code class="docutils literal notranslate"><span class="pre">Model.constants</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.default_data"><code class="docutils literal notranslate"><span class="pre">Model.default_data</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.draw"><code class="docutils literal notranslate"><span class="pre">Model.draw()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.get_dimname_map"><code class="docutils literal notranslate"><span class="pre">Model.get_dimname_map()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.has_default_data"><code class="docutils literal notranslate"><span class="pre">Model.has_default_data</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.hyperparameter_dict"><code class="docutils literal notranslate"><span class="pre">Model.hyperparameter_dict</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.hyperparameters"><code class="docutils literal notranslate"><span class="pre">Model.hyperparameters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.mcmc"><code class="docutils literal notranslate"><span class="pre">Model.mcmc()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.mle"><code class="docutils literal notranslate"><span class="pre">Model.mle()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.named_model_components"><code class="docutils literal notranslate"><span class="pre">Model.named_model_components</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.named_model_components_dict"><code class="docutils literal notranslate"><span class="pre">Model.named_model_components_dict</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.observable_dict"><code class="docutils literal notranslate"><span class="pre">Model.observable_dict</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.observables"><code class="docutils literal notranslate"><span class="pre">Model.observables</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.parameter_dict"><code class="docutils literal notranslate"><span class="pre">Model.parameter_dict</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.parameters"><code class="docutils literal notranslate"><span class="pre">Model.parameters</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.prior_predictive"><code class="docutils literal notranslate"><span class="pre">Model.prior_predictive()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.simulate_mcmc"><code class="docutils literal notranslate"><span class="pre">Model.simulate_mcmc()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.simulate_mle"><code class="docutils literal notranslate"><span class="pre">Model.simulate_mle()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.to_pytorch"><code class="docutils literal notranslate"><span class="pre">Model.to_pytorch()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.to_stan"><code class="docutils literal notranslate"><span class="pre">Model.to_stan()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.transformed_parameter_dict"><code class="docutils literal notranslate"><span class="pre">Model.transformed_parameter_dict</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="model.html#scistanpy.model.model.Model.transformed_parameters"><code class="docutils literal notranslate"><span class="pre">Model.transformed_parameters</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#model-utilities">Model Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#model-properties-and-methods">Model Properties and Methods</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#model-introspection">Model Introspection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#advanced-features">Advanced Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="nn_module.html">Neural Network Module API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="nn_module.html#module-scistanpy.model.nn_module">Neural Network Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nn_module.html#core-pytorch-integration">Core PyTorch Integration</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="nn_module.html#scistanpy.model.nn_module.PyTorchModel"><code class="docutils literal notranslate"><span class="pre">PyTorchModel</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="nn_module.html#scistanpy.model.nn_module.PyTorchModel.cpu"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.cpu()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="nn_module.html#scistanpy.model.nn_module.PyTorchModel.cuda"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.cuda()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="nn_module.html#scistanpy.model.nn_module.PyTorchModel.export_distributions"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.export_distributions()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="nn_module.html#scistanpy.model.nn_module.PyTorchModel.export_params"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.export_params()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="nn_module.html#scistanpy.model.nn_module.PyTorchModel.fit"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.fit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="nn_module.html#scistanpy.model.nn_module.PyTorchModel.forward"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.forward()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="nn_module.html#scistanpy.model.nn_module.PyTorchModel.to"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.to()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="nn_module.html#validation-functions">Validation Functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nn_module.html#training-and-optimization">Training and Optimization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nn_module.html#parameter-and-distribution-export">Parameter and Distribution Export</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nn_module.html#device-management">Device Management</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nn_module.html#integration-patterns">Integration Patterns</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nn_module.html#performance-considerations">Performance Considerations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nn_module.html#error-handling-and-debugging">Error Handling and Debugging</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nn_module.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="results/index.html">Model Results API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="results/index.html#results-submodule-overview">Results Submodule Overview</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="results/mle.html">Maximum Likelihood Estimation Results API Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="results/mle.html#module-scistanpy.model.results.mle">MLE Results Module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/mle.html#core-mle-analysis-classes">Core MLE Analysis Classes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/mle.html#diagnostic-capabilities">Diagnostic Capabilities</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/mle.html#utility-functions">Utility Functions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/mle.html#advanced-analysis-workflows">Advanced Analysis Workflows</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/mle.html#integration-with-arviz-ecosystem">Integration with ArviZ Ecosystem</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/mle.html#interactive-dashboard-features">Interactive Dashboard Features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/mle.html#memory-management">Memory Management</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/mle.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="results/hmc.html">Hamiltonian Monte Carlo Results API Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="results/hmc.html#module-scistanpy.model.results.hmc">HMC Results Module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/hmc.html#core-hmc-analysis-classes">Core HMC Analysis Classes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/hmc.html#efficient-data-processing">Efficient Data Processing</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/hmc.html#comprehensive-diagnostic-framework">Comprehensive Diagnostic Framework</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/hmc.html#advanced-visualization-tools">Advanced Visualization Tools</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/hmc.html#memory-efficient-processing">Memory-Efficient Processing</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/hmc.html#scientific-workflow-integration">Scientific Workflow Integration</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/hmc.html#performance-optimization">Performance Optimization</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/hmc.html#integration-with-external-tools">Integration with External Tools</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results/hmc.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="results/index.html#module-scistanpy.model.results">Results Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="results/index.html#core-analysis-frameworks">Core Analysis Frameworks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="results/index.html#unified-analysis-interface">Unified Analysis Interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="results/index.html#key-features">Key Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="results/index.html#analysis-workflow-patterns">Analysis Workflow Patterns</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="results/index.html#standard-mle-analysis-pipeline">Standard MLE Analysis Pipeline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="results/index.html#standard-mcmc-analysis-pipeline">Standard MCMC Analysis Pipeline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="results/index.html#comparative-analysis">Comparative Analysis</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="results/index.html#data-management-and-persistence">Data Management and Persistence</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="results/index.html#efficient-storage-solutions">Efficient Storage Solutions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="results/index.html#cross-platform-compatibility">Cross-Platform Compatibility</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="results/index.html#advanced-analysis-patterns">Advanced Analysis Patterns</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="results/index.html#model-selection-and-comparison">Model Selection and Comparison</a></li>
-<li class="toctree-l3"><a class="reference internal" href="results/index.html#uncertainty-quantification-studies">Uncertainty Quantification Studies</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="results/index.html#integration-with-scientific-workflows">Integration with Scientific Workflows</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="results/index.html#automated-reporting">Automated Reporting</a></li>
-<li class="toctree-l3"><a class="reference internal" href="results/index.html#batch-processing">Batch Processing</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="results/index.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="stan/index.html">Stan Integration</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="stan/index.html#submodules">Submodules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="stan/stan_functions.html">Stan Functions Library Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#stan-functions-overview">Stan Functions Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#function-library-organization">Function Library Organization</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#multinomial-function-library">Multinomial Function Library</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#exp-exponential-distribution">Exp-Exponential Distribution</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#exp-dirichlet-distribution">Exp-Dirichlet Distribution</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#exp-lomax-distribution">Exp-Lomax Distribution</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#sequence-convolution-functions">Sequence Convolution Functions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#function-integration-process">Function Integration Process</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#numerical-stability-features">Numerical Stability Features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#custom-function-development">Custom Function Development</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_functions.html#performance-considerations">Performance Considerations</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="stan/stan_model.html">Stan Model API Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_model.html#module-scistanpy.model.stan.stan_model">Stan Model Module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_model.html#stan-code-organization-classes">Stan Code Organization Classes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_model.html#enhanced-stan-model-class">Enhanced Stan Model Class</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_model.html#automatic-data-gathering">Automatic Data Gathering</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_model.html#stan-code-generation-process">Stan Code Generation Process</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_model.html#stan-function-libraries">Stan Function Libraries</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_model.html#performance-optimizations">Performance Optimizations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_model.html#integration-with-cmdstanpy">Integration with CmdStanPy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_model.html#error-handling-and-debugging">Error Handling and Debugging</a></li>
-<li class="toctree-l4"><a class="reference internal" href="stan/stan_model.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="stan/index.html#module-scistanpy.model.stan">Top-level module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="stan/index.html#implementation-notes">Implementation notes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="stan/index.html#minimal-usage-examples">Minimal usage examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="stan/index.html#further-reading">Further reading</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
-<section id="core-module-and-class">
-<h2>Core Module and Class<a class="headerlink" href="#core-module-and-class" title="Link to this heading">¶</a></h2>
-<p>The implementation of the Model class lives in the module
-<cite>scistanpy.model.model</cite>.</p>
-</section>
-<section id="how-models-are-constructed">
-<h2>How Models are Constructed<a class="headerlink" href="#how-models-are-constructed" title="Link to this heading">¶</a></h2>
-<p>The Model class is designed to be subclassed. Model components (for example parameters and constants) are declared as instance attributes in __init__ and are discovered and registered automatically by the class machinery. This makes model definitions concise and declarative.</p>
-<p>Example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
-
-<span class="k">class</span><span class="w"> </span><span class="nc">SimpleModel</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="c1"># register a prior parameter and an observable</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">observable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">SimpleModel</span><span class="p">(</span><span class="n">x_data</span><span class="p">)</span>
+</div></blockquote>
+<p>A typical workflow using the <a class="reference internal" href="model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> class looks
+like this:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p><strong>Model Definition</strong>: Instantiate Model class and add components. On initialization,
+the model will automatically register its components.</p></li>
+<li><p><strong>Prior Predictive Checks</strong>: Use the
+<a class="reference internal" href="model.html#scistanpy.model.model.Model.prior_predictive" title="scistanpy.model.model.Model.prior_predictive"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.prior_predictive()</span></code></a>
+method to evaluate and set values for model hyperparameters.</p></li>
+<li><p><strong>Compilation</strong>: Compilation to either Stan code or a PyTorch <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code>.</p></li>
+<li><p><strong>Sampling</strong>: Fit a model using either Hamiltonian Monte Carlo (HMC) via Stan
+or Maximum Likelihood Estimation (MLE) via PyTorch. Draw samples from the
+resulting likelihood/posterior.</p></li>
+<li><p><strong>Analysis</strong>: Process results using built-in diagnostic tools.</p></li>
+</ol>
+</div></blockquote>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a simple regression model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">Regressor</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">HalfNormal</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a model instance</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">Regressor</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Prior predictive checks in Jupyter</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">prior_predictive</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Run mcmc using Stan</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">data</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Run maximum likelihood estimation with PyTorch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mle</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">data</span><span class="p">})</span>
 </pre></div>
 </div>
-</section>
-<section id="key-behaviors-and-api-surface">
-<h2>Key Behaviors and API Surface<a class="headerlink" href="#key-behaviors-and-api-surface" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>Automatic component registration: attributes that are <cite>AbstractModelComponent</cite> instances are assigned model variable names and collected during initialization.</p></li>
-<li><p>Introspection properties: the Model exposes typed properties such as <cite>parameters</cite>, <cite>parameter_dict</cite>, <cite>transformed_parameters</cite>, <cite>observables</cite>, <cite>constant_dict</cite>, and helpers like <cite>named_model_components_dict</cite> for programmatic inspection.</p></li>
-<li><p>Default data: models may carry <cite>default_data</cite> which is used by inference methods when explicit data is not provided.</p></li>
-<li><p>Core methods:
-- draw(n, …): sample from priors for model components and return samples (supports returning xarray when requested).
-- to_pytorch(seed=None): convert the model to a PyTorch-backed <cite>nn_module.PyTorchModel</cite> for optimization or variational methods.
-- to_stan(…): compile or produce a <cite>stan_model.StanModel</cite> representation of the SciStanPy model.
-- mle(…): run maximum-likelihood (or optimization) using the PyTorch backend; returns an <cite>mle_module.MLE</cite> result object.
-- mcmc(…): generate Stan code, compile (with caching) and run MCMC sampling via the Stan backend; accepts options for compilation and sampling and returns a Stan-backed results object.</p></li>
+</dd>
+</dl>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+<p>Core elements of the SciStanPy modeling API include:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="components/index.html">Model Components API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Model API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn_module.html">Neural Network Module API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results/index.html">Model Results API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stan/index.html">Stan Integration</a></li>
 </ul>
-</section>
-<section id="notes-on-backends">
-<h2>Notes on Backends<a class="headerlink" href="#notes-on-backends" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>PyTorch is used for optimization / MLE and for converting models to a differentiable form via <cite>to_pytorch</cite>.</p></li>
-<li><p>Stan is used for MCMC sampling; the <cite>mcmc</cite> method produces Stan code from the model, compiles it (with configurable options), and runs sampling.</p></li>
-</ul>
-</section>
-<section id="documentation-pages">
-<h2>Documentation Pages<a class="headerlink" href="#documentation-pages" title="Link to this heading">¶</a></h2>
-<p>See the subpages linked in the toctree for detailed information about model components, the PyTorch interface (<cite>nn_module</cite>), and Stan integration (the <cite>stan</cite> submodule).</p>
-</section>
-<section id="guidance">
-<h2>Guidance<a class="headerlink" href="#guidance" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p>Build models incrementally and validate with prior draws before running expensive samplers.</p></li>
-<li><p>Use <cite>mle</cite> to obtain point estimates that can be used as sensible initializations for Stan in <cite>mcmc</cite> (for example by transforming MLE results into Stan inits when appropriate).</p></li>
-<li><p>Prefer explicit <cite>data</cite> arguments to <cite>mle</cite> / <cite>mcmc</cite> for reproducibility; <cite>default_data</cite> is a convenience but may hide sources of variation.</p></li>
-</ul>
-<p>This page intentionally limits claims to behaviors implemented in the <cite>scistanpy.model.model</cite> implementation and refers readers to the component and backend pages for the complete API details.</p>
+</div>
 </section>
 </section>
 

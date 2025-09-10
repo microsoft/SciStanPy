@@ -122,21 +122,6 @@ overloading or the <cite>operations</cite> submodule rather than direct instanti
 but can be used directly for custom operations.</p>
 </dd>
 </dl>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <p><strong>Unified Transformation Interface:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># All transformations are TransformedParameters</span>
 <span class="n">transformation</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
@@ -293,21 +278,6 @@ the building blocks for more complex mathematical relationships between
 parameters.</p>
 <p>Subclasses must implement run_np_torch_op with the (dist1, dist2) signature
 and can optionally override write_stan_operation for custom Stan formatting.</p>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <p><strong>Two-Operand Transformations:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Binary operations automatically handle broadcasting</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,))</span>
@@ -392,21 +362,6 @@ the single-parameter constraint and provides appropriate method signatures.</p>
 common functions needed in statistical modeling and parameter reparameterization.</p>
 <p>Subclasses must implement run_np_torch_op with the single-parameter signature
 and can optionally override write_stan_operation for custom Stan formatting.</p>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <p><strong>Single-Operand Transformations:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Unary operations preserve shape</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
@@ -485,21 +440,6 @@ standard unary operations.</p>
 - Identity element: 0</p>
 <p>This transformation preserves the shape through broadcasting and is commonly
 used for combining effects, offsets, and linear combinations of parameters.</p>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.AddParameter.STAN_OPERATOR">
 <span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'+'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.AddParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
@@ -544,21 +484,6 @@ used for combining effects, offsets, and linear combinations of parameters.</p>
 - Identity element: 0 (for right operand)</p>
 <p>This transformation is commonly used for computing differences, residuals,
 and relative measures between parameters.</p>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.STAN_OPERATOR">
 <span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'-'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
@@ -603,21 +528,6 @@ and relative measures between parameters.</p>
 - Identity element: 1</p>
 <p>This transformation is fundamental for scaling, interaction effects, and
 product relationships between parameters.</p>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.STAN_OPERATOR">
 <span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.*'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
@@ -662,21 +572,6 @@ product relationships between parameters.</p>
 - Identity element: 1 (for right operand)</p>
 <p>This transformation is used for ratios, rates, normalized quantities,
 and relative measures. Care must be taken to avoid division by zero.</p>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <p><strong>Arithmetic Operation Examples:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Basic arithmetic</span>
 <span class="n">a</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -735,21 +630,6 @@ and relative measures. Care must be taken to avoid division by zero.</p>
 - Identity element: 1 (for exponent), any base^1 = base</p>
 <p>This transformation is used for power relationships, polynomial terms,
 and exponential scaling effects.</p>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.PowerParameter.STAN_OPERATOR">
 <span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.^'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.PowerParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
@@ -786,21 +666,6 @@ and exponential scaling effects.</p>
 - Anti-distributive over multiplication: -(a * b) = (-a) * b = a * (-b)</p>
 <p>This transformation is used for sign changes, directional effects,
 and creating opposite relationships.</p>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.NegateParameter.STAN_OPERATOR">
 <span class="sig-name descname"><span class="pre">STAN_OPERATOR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'-'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.NegateParameter.STAN_OPERATOR" title="Link to this definition">¶</a></dt>
@@ -839,21 +704,6 @@ and creating opposite relationships.</p>
 - Triangle inequality: |a + b| ≤ |a| + |b|</p>
 <p>This transformation ensures non-negative values and is commonly used
 for magnitudes, distances, and ensuring positive parameters.</p>
-<p>Initialize a model component with specified shape and parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>tuple</em><em>[</em><em>custom_types.Integer</em><em>, </em><em>...</em><em>]</em><em>, </em><em>custom_types.Integer</em><em>]</em>) – Shape of the component.</p></li>
-<li><p><strong>model_params</strong> (<em>custom_types.CombinableParameterType</em>) – Named parameters this component depends on</p></li>
-</ul>
-</dd>
-</dl>
-<p>The initialization process:
-1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-2. Validates parameter constraints and bounds
-3. Converts non-component parameters to constants
-4. Establishes parent-child relationships
-5. Validates and sets component shape through broadcasting</p>
 <p><strong>Advanced Arithmetic Examples:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Power operations</span>
 <span class="n">squared</span> <span class="o">=</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span>                     <span class="c1"># PowerParameter</span>

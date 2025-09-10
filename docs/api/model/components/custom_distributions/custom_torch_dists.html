@@ -154,16 +154,6 @@ and is useful for extreme value modeling.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize Exponential-Exponential distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>rate</strong> – Rate parameter for base exponential distribution</p></li>
-<li><p><strong>args</strong> – Additional arguments</p></li>
-<li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
-</ul>
-</dd>
-</dl>
 <p><strong>Log-Exponential Distribution:</strong></p>
 <p>If X ~ Exponential(β), then Y = log(X) ~ ExpExponential(β):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Standard exponential vs log-exponential</span>
@@ -230,16 +220,6 @@ the exponential transformation.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Verify simplex constraint: exp(log_probs).sum(dim=-1) ≈ 1</span>
 </pre></div>
 </div>
-</dd>
-</dl>
-<p>Initialize Exponential-Dirichlet distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>concentration</strong> – Concentration parameter vector</p></li>
-<li><p><strong>args</strong> – Additional arguments</p></li>
-<li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
-</ul>
 </dd>
 </dl>
 <p><strong>Log-Simplex Distribution:</strong></p>
@@ -310,17 +290,6 @@ distribution with the convenience of log-scale modeling.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize Exponential-Lomax distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lambda</strong> – Scale parameter</p></li>
-<li><p><strong>alpha</strong> – Shape parameter</p></li>
-<li><p><strong>args</strong> – Additional arguments</p></li>
-<li><p><strong>kwargs</strong> – Additional keyword arguments</p></li>
-</ul>
-</dd>
-</dl>
 <p><strong>Log-Heavy-Tailed Distribution:</strong></p>
 <p>If X ~ Lomax(λ, α), then Y = log(X) ~ ExpLomax(λ, α):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Heavy-tailed phenomena on log scale</span>
@@ -389,17 +358,6 @@ framework with a Pareto base distribution and an affine transformation.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">lomax</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="mi">1000</span><span class="p">,))</span>
 </pre></div>
 </div>
-</dd>
-</dl>
-<p>Initialize Lomax distribution as transformed Pareto.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lambda</strong> – Scale parameter</p></li>
-<li><p><strong>alpha</strong> – Shape parameter</p></li>
-<li><p><strong>args</strong> – Additional base distribution arguments</p></li>
-<li><p><strong>kwargs</strong> – Additional base distribution keyword arguments</p></li>
-</ul>
 </dd>
 </dl>
 <p><strong>Power-Law Tail Distribution:</strong></p>
@@ -490,16 +448,6 @@ modeling and optimization.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize logit-parameterized multinomial distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>total_count</strong> – Total trials per batch element</p></li>
-<li><p><strong>logits</strong> – Logit parameters (must be provided)</p></li>
-<li><p><strong>validate_args</strong> – Validation flag</p></li>
-</ul>
-</dd>
-</dl>
 <p><strong>Unconstrained Multinomial Parameterization:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Unconstrained parameterization for optimization</span>
 <span class="n">n_categories</span> <span class="o">=</span> <span class="mi">5</span>
@@ -588,17 +536,6 @@ invalid probability distributions.</p>
 </div>
 </dd>
 </dl>
-<p>Initialize normalized log-probability multinomial distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>total_count</strong> – Total trials per batch element</p></li>
-<li><p><strong>log_probs</strong> – Normalized log-probability parameters</p></li>
-<li><p><strong>validate_args</strong> – Validation flag</p></li>
-</ul>
-</dd>
-</dl>
-<p>Validates that log_probs are properly normalized before initialization.</p>
 <p><strong>Log-Probability Parameterized with Optimization:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Log-simplex parameterization</span>
 <span class="n">log_probabilities</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">]))</span>
