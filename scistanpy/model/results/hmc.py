@@ -8,12 +8,14 @@ Stan models. It offers specialized classes and functions for processing
 MCMC output, conducting diagnostic tests, and creating interactive visualizations
 for model validation and troubleshooting.
 
-The module centers around the SampleResults class, which extends MLEInferenceRes
-to provide HMC-specific functionality including convergence diagnostics, sample
-quality assessment, and specialized visualization tools for identifying problematic
-parameters and sampling behavior.
+The module centers around the :py:class:`~scistanpy.model.results.hmc.SampleResults`
+class, which extends :py:class:`~scistanpy.model.results.MLEInferenceRes` to provide
+HMC-specific functionality including convergence diagnostics, sample quality assessment,
+and specialized visualization tools for identifying problematic parameters and sampling
+behavior.
 
 Key Features:
+
     - MCMC diagnostic test suites
     - Interactive visualization tools for failed diagnostics
     - Efficient CSV to NetCDF conversion for large datasets
@@ -22,6 +24,7 @@ Key Features:
     - Automated detection and reporting of sampling issues
 
 Diagnostic Capabilities:
+
     - R-hat convergence assessment
     - Effective sample size (ESS) evaluation
     - Energy fraction of missing information (E-BFMI) analysis
@@ -32,12 +35,6 @@ Diagnostic Capabilities:
 The module is designed to handle both small-scale interactive analysis and
 large-scale batch processing of MCMC results, with particular attention to
 memory efficiency and computational performance for complex models.
-
-Performance Considerations:
-    - NetCDF storage format for efficient large dataset handling
-    - Dask integration for out-of-core computation
-    - Chunked processing strategies for memory management
-    - Optimized data structures for diagnostic computation
 """
 
 from __future__ import annotations
@@ -178,15 +175,17 @@ class VariableAnalyzer:
     samples, helping identify the nature of sampling problems.
 
     Key Features:
+
     - Automatic identification of failed variables and metrics
     - Interactive widget-based navigation
     - Trace plots with chain-specific coloring
     - Quantile-based analysis for identifying sampling bias
     - Real-time plot updates based on widget selections
 
-    Note:
+    .. note::
         This class should not be instantiated directly. Use the
-        plot_variable_failure_quantile_traces method of SampleResults instead.
+        :py:meth:`~scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces`
+        method of :py:class:`~scistanpy.model.results.hmc.SampleResults` instead.
     """
 
     # pylint: disable=attribute-defined-outside-init
@@ -511,7 +510,9 @@ class VariableAnalyzer:
 
 
 class CmdStanMCMCToNetCDFConverter:
-    """Efficient converter from CmdStan CSV output to NetCDF format.
+    """Object responsible for converting CmdStan CSV output to NetCDF format. This
+    class is used internally by the :py:func:`~scistanpy.model.results.hmc.cmdstan_csv_to_netcdf`
+    function and should not be instantiated directly in most use cases.
 
     This class handles the conversion of CmdStan CSV output files to NetCDF
     format, providing efficient storage and access for large MCMC datasets.
@@ -533,13 +534,11 @@ class CmdStanMCMCToNetCDFConverter:
     :ivar varname_to_column_order: Mapping from variables to csv column indices
 
     The converter handles:
+
     - Automatic detection of variable types and dimensions
     - Proper NetCDF group organization
     - Chunking strategies for large datasets
     - Data type optimization based on precision requirements
-
-    This class is used internally by the cmdstan_csv_to_netcdf function and
-    should not be instantiated directly in most use cases.
     """
 
     def __init__(
@@ -961,7 +960,7 @@ def cmdstan_csv_to_netcdf(
     precision: Literal["double", "single", "half"] = "single",
     mib_per_chunk: custom_types.Integer | None = None,
 ) -> str:
-    """Convert CmdStan CSV output to efficient NetCDF format.
+    """Convert CmdStan CSV output to NetCDF format.
 
     This function provides a high-level interface for converting CmdStan
     sampling results from CSV format to NetCDF, enabling efficient storage
@@ -985,12 +984,14 @@ def cmdstan_csv_to_netcdf(
     :rtype: str
 
     The conversion process:
+
     1. Analyzes model structure to determine optimal storage layout
     2. Creates NetCDF file with appropriate groups and dimensions
     3. Converts CSV data with proper chunking for memory efficiency
     4. Organizes results into ArviZ-compatible structure
 
     Benefits of NetCDF format:
+
     - Significantly faster loading compared to CSV
     - Memory-efficient access with chunking support
     - Metadata preservation and self-describing format
@@ -1019,7 +1020,10 @@ def cmdstan_csv_to_netcdf(
 
 
 def dask_enabled_summary_stats(inference_obj: az.InferenceData) -> xr.Dataset:
-    """Compute summary statistics using Dask for memory efficiency.
+    """Compute summary statistics using Dask for memory efficiency. This is used
+    inside the :py:meth:`SampleResults.calculate_summaries()
+    <scistanpy.model.results.hmc.SampleResults.calculate_summaries>` method when
+    Dask is enabled.
 
     :param inference_obj: ArviZ InferenceData object containing posterior samples
     :type inference_obj: az.InferenceData
@@ -1032,11 +1036,13 @@ def dask_enabled_summary_stats(inference_obj: az.InferenceData) -> xr.Dataset:
     on large datasets that might not fit in memory.
 
     The function leverages Dask's lazy evaluation to:
+
     - Queue multiple computations for efficient execution
     - Minimize memory usage through chunked processing
     - Provide progress tracking for long-running computations
 
     Computed Statistics:
+
     - Mean across chains and draws
     - Standard deviation across chains and draws
     - 94% highest density intervals
@@ -1072,7 +1078,10 @@ def dask_enabled_summary_stats(inference_obj: az.InferenceData) -> xr.Dataset:
 
 
 def dask_enabled_diagnostics(inference_obj: az.InferenceData) -> xr.Dataset:
-    """Compute MCMC diagnostics using Dask for memory efficiency.
+    """Compute MCMC diagnostics using Dask for memory efficiency. This is used
+    inside the :py:meth:`SampleResults.calculate_summaries()
+    <scistanpy.model.results.hmc.SampleResults.calculate_summaries>` method when
+    Dask is enabled.
 
     :param inference_obj: ArviZ InferenceData object containing posterior samples
     :type inference_obj: az.InferenceData
@@ -1085,11 +1094,13 @@ def dask_enabled_diagnostics(inference_obj: az.InferenceData) -> xr.Dataset:
     computed simultaneously to maximize efficiency.
 
     Computed Diagnostics:
+
     - Monte Carlo standard errors (mean and sd methods)
     - Effective sample sizes (bulk and tail)
     - R-hat convergence diagnostic
 
     The Dask implementation enables:
+
     - Parallel computation across available cores
     - Memory-efficient processing of large datasets
     - Automatic load balancing and optimization
@@ -1149,6 +1160,7 @@ class SampleResults(mle.MLEInferenceRes):
     :ivar use_dask: Flag controlling Dask usage for computation
 
     The class provides comprehensive functionality for:
+
     - MCMC convergence diagnostics and reporting
     - Sample quality assessment and visualization
     - Interactive analysis of problematic variables
@@ -1156,6 +1168,7 @@ class SampleResults(mle.MLEInferenceRes):
     - Automated detection and reporting of sampling issues
 
     Key Diagnostic Features:
+
     - R-hat convergence assessment
     - Effective sample size evaluation
     - Energy-based diagnostics (E-BFMI)
@@ -1165,6 +1178,26 @@ class SampleResults(mle.MLEInferenceRes):
     The class automatically handles NetCDF conversion for efficient storage
     and supports both in-memory and out-of-core computation depending on
     dataset size and available memory.
+
+    Example:
+        .. code-block:: python
+
+            import scistanpy as ssp
+
+            # Get MCMC results
+            mcmc_results = model.mcmc(data=observed_data, chains=4, iter_sampling=2000)
+
+            # Run full diagnostics
+            diagnostics = mcmc_results.diagnose()
+
+            # Posterior predictive check (interactive in notebook)
+            mcmc_results.run_ppc()
+
+            # Evaluate problematic samples (interactive in notebook)
+            mcmc_results.plot_sample_failure_quantile_traces()
+
+            # Evaluate problematic variables (interactive in notebook)
+            mcmc_results.plot_variable_failure_quantile_traces()
     """
 
     def __init__(
@@ -1243,7 +1276,7 @@ class SampleResults(mle.MLEInferenceRes):
 
         This method extends the parent class functionality to provide HMC-specific
         diagnostic capabilities, including automatic separation of statistics and
-        diagnostics into appropriate InferenceData groups. See `az.summary` for
+        diagnostics into appropriate InferenceData groups. See ``az.summary`` for
         more detail on arguments.
 
         :param var_names: Variable names to include. Defaults to None (all variables).
@@ -1275,11 +1308,13 @@ class SampleResults(mle.MLEInferenceRes):
         :rtype: xr.Dataset
 
         Enhanced Features:
+
         - Automatic Dask acceleration for large datasets
         - Separation of statistics and diagnostics into appropriate groups
         - Memory-efficient computation strategies
 
         The method automatically updates the InferenceData object with new groups:
+
         - variable_summary_stats: Basic summary statistics
         - variable_diagnostic_stats: MCMC diagnostic metrics
         """
@@ -1332,14 +1367,11 @@ class SampleResults(mle.MLEInferenceRes):
         return summaries
 
     def calculate_diagnostics(self) -> xr.Dataset:
-        """Compute MCMC diagnostics with side effects and reporting.
+        """Shortcut to running :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.calculate_summaries`
+        with ``kind="diagnostics"`` and no other arguments.
 
         :returns: Dataset containing diagnostic metrics
         :rtype: xr.Dataset
-
-        This convenience method computes only diagnostic metrics by calling
-        calculate_summaries with kind="diagnostics". It preserves all side
-        effects including updating the InferenceData object groups.
 
         The method is designed as a simple interface for users who only need
         diagnostic information without summary statistics.
@@ -1366,13 +1398,12 @@ class SampleResults(mle.MLEInferenceRes):
         problematic samples in the MCMC chains. Tests are considered failures
         when samples exhibit the following characteristics:
 
-        Failure Conditions:
         - **Tree Depth**: Sample reached maximum tree depth (saturation)
         - **E-BFMI**: Energy-based fraction of missing information below threshold
         - **Divergence**: Sample diverged during Hamiltonian dynamics
 
-        The resulting boolean arrays have True values indicating failed samples
-        and False values indicating successful samples. This information is
+        The resulting boolean arrays have ``True`` values indicating failed samples
+        and ``False`` values indicating successful samples. This information is
         stored in the 'sample_diagnostic_tests' group of the InferenceData object.
 
         Example:
@@ -1410,7 +1441,7 @@ class SampleResults(mle.MLEInferenceRes):
 
         :param r_hat_thresh: R-hat threshold for convergence. Defaults to 1.01.
         :type r_hat_thresh: custom_types.Float
-        :param ess_thresh: ESS threshold per chain. Defaults to 100.
+        :param ess_thresh: ESS threshold *per chain*. Defaults to 100.
         :type ess_thresh: custom_types.Integer
 
         :returns: Dataset with boolean arrays indicating variable-level test failures
@@ -1424,6 +1455,7 @@ class SampleResults(mle.MLEInferenceRes):
         failures when variables meet the following criteria:
 
         Failure Conditions:
+
         - **R-hat**: Split R-hat statistic >= threshold (poor convergence)
         - **ESS Bulk**: Bulk effective sample size / n_chains <= threshold per chain
         - **ESS Tail**: Tail effective sample size / n_chains <= threshold per chain
@@ -1495,25 +1527,23 @@ class SampleResults(mle.MLEInferenceRes):
         It requires that diagnostic evaluation methods have been run previously.
 
         Return Structure:
-        - **sample_failures**: Dictionary mapping test names to arrays of failed sample indices
-        - **variable_failures**: Dictionary mapping metric names to dictionaries of failed variables
+
+        - **sample_failures**: Dictionary mapping test names to arrays of failed
+          sample indices
+        - **variable_failures**: Dictionary mapping metric names to dictionaries
+          of failed variables
 
         The method processes test results to extract:
+
         - Indices of samples that failed each diagnostic test
         - Names of variables that failed each diagnostic metric
         - Summary statistics showing failure rates and percentages
 
         When not silent, provides detailed reporting including:
+
         - Failure counts and percentages for each test type
         - Variable-specific failure information organized by metric
         - Clear categorization of sample vs. variable-level issues
-
-        Example:
-            >>> sample_fails, var_fails = results.identify_failed_diagnostics()
-            >>> # Check divergence issues
-            >>> diverged_samples = sample_fails['diverged']
-            >>> # Check convergence issues
-            >>> poor_rhat_vars = var_fails['r_hat']
         """
 
         def process_test_results(
@@ -1645,7 +1675,15 @@ class SampleResults(mle.MLEInferenceRes):
     ) -> tuple[
         "custom_types.StrippedTestRes", dict[str, "custom_types.StrippedTestRes"]
     ]:
-        """Execute complete MCMC diagnostic pipeline with comprehensive reporting.
+        """Runs the complete MCMC diagnostic pipeline. This involves running, in order:
+
+        1. :py:meth:`~scistanpy.model.results.hmc.SampleResults.calculate_diagnostics`
+        2. :py:meth:`~scistanpy.model.results.hmc.SampleResults.evaluate_sample_stats`
+        3. :py:meth:`~scistanpy.model.results.hmc.SampleResults.evaluate_variable_diagnostic_stats`
+        4. :py:meth:`~scistanpy.model.results.hmc.SampleResults.identify_failed_diagnostics`
+
+        Typically, users will want to use this method rather than calling the individual
+        methods themselves.
 
         :param max_tree_depth: Maximum tree depth threshold. Uses model default if None.
             Defaults to None.
@@ -1663,23 +1701,13 @@ class SampleResults(mle.MLEInferenceRes):
             identify_failed_diagnostics
         :rtype: tuple[custom_types.StrippedTestRes, dict[str, custom_types.StrippedTestRes]]
 
-        This method provides a complete, one-stop diagnostic analysis by executing
-        the full diagnostic pipeline in the correct order:
-
-        Pipeline Steps:
-        1. **calculate_diagnostics**: Compute all diagnostic metrics
-        2. **evaluate_sample_stats**: Assess sample-level diagnostic failures
-        3. **evaluate_variable_diagnostic_stats**: Assess variable-level failures
-        4. **identify_failed_diagnostics**: Summarize and report all failures
-
         The method provides comprehensive assessment of MCMC sampling quality,
-        identifying both immediate issues (divergences, energy problems) and
-        convergence concerns (R-hat, effective sample size).
+        identifying both immediate issues (e.g., divergences, energy problems) and
+        convergence concerns (e.g., R-hat, effective sample size).
 
-        All intermediate results are stored in the InferenceData object for
-        later access and further analysis.
+        All intermediate results are stored in the ``inference_obj`` attribute
+        for later access and further analysis.
         """
-
         # Run the diagnostics
         self.calculate_diagnostics()
         self.evaluate_sample_stats(
@@ -1731,8 +1759,8 @@ class SampleResults(mle.MLEInferenceRes):
 
         Plot Structure:
 
-        - **X-axis**: Cumulative fraction of parameters (0 to 1, sorted by typical quantile
-            of failed samples)
+        - **X-axis**: Cumulative fraction of parameters (0 to 1, sorted by typical
+          quantile of failed samples)
         - **Y-axis**: Quantiles of failed samples relative to passing samples
         - **Individual traces**: Semi-transparent lines for each failed sample
         - **Typical trace**: Bold line showing median behavior across failures
@@ -1744,17 +1772,9 @@ class SampleResults(mle.MLEInferenceRes):
         - Patterns in how failed samples deviate from typical behavior
         - The severity and consistency of sampling problems
 
-        Parameters are sorted by their typical failed quantiles to highlight
-        systematic patterns, with x-axis labels hidden since absolute parameter
-        identity is less important than relative patterns.
-
         Example:
             >>> # Display interactive traces
             >>> results.plot_sample_failure_quantile_traces()
-            >>>
-            >>> # Access individual diagnostic plots
-            >>> traces = results.plot_sample_failure_quantile_traces(display=False)
-            >>> diverged_plot = traces['diverged']
         """
 
         # x-axis labels are meaningless, so we will use a hook to hide them
@@ -1933,17 +1953,20 @@ class SampleResults(mle.MLEInferenceRes):
         selecting specific variables, diagnostic metrics, and array indices.
 
         Interactive Features:
+
         - **Variable Selection**: Choose from variables that failed any test
         - **Metric Selection**: Focus on specific diagnostic failures
         - **Index Selection**: Examine individual array elements for multi-dimensional parameters
 
         The resulting trace plots show:
+
         - Sample trajectories across MCMC chains with distinct colors
         - Quantile analysis relative to parameters that passed tests
         - Hover information with detailed sample metadata
         - Chain-specific behavior identification
 
         This tool is particularly valuable for:
+
         - Understanding the nature of convergence problems
         - Identifying problematic parameter regions
         - Diagnosing systematic vs. sporadic sampling issues
@@ -1953,10 +1976,6 @@ class SampleResults(mle.MLEInferenceRes):
             >>> # Interactive analysis in notebook
             >>> analyzer = results.plot_variable_failure_quantile_traces()
             >>> analyzer  # Display widget interface
-            >>>
-            >>> # Programmatic access to analyzer
-            >>> analyzer_obj = results.plot_variable_failure_quantile_traces(display=False)
-            >>> # Access underlying data and interface components
         """
         # Build the analyzer object
         analyzer = VariableAnalyzer(
@@ -1982,7 +2001,9 @@ class SampleResults(mle.MLEInferenceRes):
 
         :param path: Path to NetCDF file containing inference data
         :type path: str
-        :param csv_files: Paths to original CSV files or pattern. Defaults to None (auto-detect).
+        :param csv_files: Paths to CSV files output by Stan. Can also be a glob
+            pattern in place of a list. Defaults to None (auto-detect based on
+            ``path`` value).
         :type csv_files: Optional[Union[list[str], str]]
         :param skip_fit: Whether to skip loading CSV metadata. Defaults to False.
         :type skip_fit: bool
@@ -1999,20 +2020,18 @@ class SampleResults(mle.MLEInferenceRes):
         functionality.
 
         Loading Modes:
+
         - **Full loading**: NetCDF + CSV metadata (complete functionality)
         - **NetCDF only**: Fast loading without CSV metadata (limited functionality)
         - **Auto-detection**: Automatically finds CSV files based on NetCDF path
 
-        The method supports flexible CSV file specification:
-        - Explicit list of CSV file paths
-        - Glob pattern for automatic discovery
-        - Auto-detection based on NetCDF filename conventions
-
         When use_dask=True, the loaded data supports out-of-core computation
-        for memory-efficient analysis of large datasets.
+        for memory-efficient analysis of large datasets. Management of Dask happens
+        internally, so users do not need to be familiar with Dask to take advantage
+        of it.
 
         Example:
-            >>> # Load with auto-detected CSV files
+            >>> # Load with auto-detected CSV files (csvs must have same basename)
             >>> results = SampleResults.from_disk('model_results.nc')
             >>>
             >>> # Load with explicit CSV files
@@ -2057,7 +2076,7 @@ class SampleResults(mle.MLEInferenceRes):
 
 def fit_from_csv_noload(path: str | list[str] | os.PathLike) -> CmdStanMCMC:
     """Create CmdStanMCMC object from CSV files without loading data into memory.
-    This function is adapted from `cmdstanpy.from_csv`.
+    This function is adapted from ``cmdstanpy.from_csv``.
 
     :param path: Path specification for CSV files (single file, list, or glob pattern)
     :type path: Union[str, list[str], os.PathLike]
@@ -2074,12 +2093,14 @@ def fit_from_csv_noload(path: str | list[str] | os.PathLike) -> CmdStanMCMC:
     usage is a concern.
 
     Path Specifications:
+
     - **Single file**: Direct path to one CSV file
     - **File list**: List of paths to multiple CSV files
     - **Glob pattern**: Wildcard pattern for automatic file discovery
     - **Directory**: Directory containing CSV files (loads all .csv files)
 
     The function performs validation to ensure:
+
     - All specified files exist and are readable
     - Files contain valid Stan CSV output
     - Sampling method is compatible (only 'sample' method supported)
