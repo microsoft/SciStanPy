@@ -47,30 +47,11 @@
 <span class="sd">into proper Stan program structure, including automatic handling of dependency</span>
 <span class="sd">relationships, loop optimization, and efficient Stan code patterns.</span>
 
-<span class="sd">Key Components:</span>
-<span class="sd">    - **StanCodeBase**: Abstract base for Stan code organization</span>
-<span class="sd">    - **StanForLoop**: Represents Stan for-loop constructs with optimization</span>
-<span class="sd">    - **StanProgram**: Complete Stan program generation and management</span>
-<span class="sd">    - **StanModel**: Enhanced CmdStanModel with SciStanPy integration</span>
-
-<span class="sd">Code Generation Features:</span>
-<span class="sd">    - Automatic dependency resolution and topological ordering</span>
-<span class="sd">    - Intelligent for-loop generation and combination</span>
-<span class="sd">    - Proper Stan block organization (data, parameters, model, etc.)</span>
-
-<span class="sd">Stan Integration:</span>
-<span class="sd">    - CmdStanPy integration with enhanced functionality</span>
-<span class="sd">    - Automatic data gathering and validation</span>
-<span class="sd">    - Prior-based initialization for MCMC sampling</span>
-<span class="sd">    - Comprehensive results processing and structuring</span>
-
-<span class="sd">Performance Optimizations:</span>
-<span class="sd">    - Loop combining and singleton elimination</span>
-<span class="sd">    - Parallel chain execution support</span>
-
-<span class="sd">The module maintains strict separation between SciStanPy&#39;s Python-based model</span>
-<span class="sd">specification and Stan&#39;s domain-specific language while providing integration between</span>
-<span class="sd">the two environments.</span>
+<span class="sd">Users will not normally interact with this module directly. Instead, they will either</span>
+<span class="sd">(1) use the :py:meth:`Model.to_stan() &lt;scistanpy.model.model.Model.to_stan&gt;` method</span>
+<span class="sd">to convert a SciStanPy model to a :py:class:`~scistanpy.model.stan.stan_model.StanModel`</span>
+<span class="sd">instance or (2) use this module implicitly when fitting a SciStanPy model via the</span>
+<span class="sd">:py:meth:`Model.mcmc() &lt;scistanpy.model.model.Model.mcmc&gt;` method.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -153,6 +134,7 @@
 <span class="sd">    syntax for different program blocks (model, transformed parameters, etc.).</span>
 
 <span class="sd">    Key Features:</span>
+
 <span class="sd">    - Hierarchical organization of code blocks and loops</span>
 <span class="sd">    - Automatic Stan syntax generation for different program sections</span>
 <span class="sd">    - Component filtering and organization based on block requirements</span>
@@ -265,6 +247,7 @@
 <span class="sd">        :rtype: str</span>
 
 <span class="sd">        The method handles:</span>
+
 <span class="sd">        - Component filtering based on block requirements</span>
 <span class="sd">        - For-loop combination and optimization</span>
 <span class="sd">        - Proper Stan syntax generation and formatting</span>
@@ -516,6 +499,7 @@
 <span class="sd">        :rtype: str</span>
 
 <span class="sd">        This method handles:</span>
+
 <span class="sd">        - Consistent indentation based on scope depth</span>
 <span class="sd">        - Automatic semicolon insertion for statements</span>
 <span class="sd">        - Proper formatting for control structures and comments</span>
@@ -661,6 +645,7 @@
 <span class="sd">    :ivar parent_loop: Reference to parent code block</span>
 
 <span class="sd">    Key Features:</span>
+
 <span class="sd">    - Automatic loop range calculation based on component dimensions</span>
 <span class="sd">    - Loop combination optimization for compatible adjacent loops</span>
 <span class="sd">    - Singleton loop detection and elimination</span>
@@ -934,17 +919,20 @@
 <span class="sd">        (i.e., the names of observable parameters).</span>
 
 <span class="sd">    The class performs comprehensive analysis of the SciStanPy model to:</span>
+
 <span class="sd">    - Build dependency graphs and determine component ordering</span>
 <span class="sd">    - Generate appropriate variable names avoiding conflicts</span>
 <span class="sd">    - Organize components into proper Stan program structure</span>
 <span class="sd">    - Create optimized loop constructs for multi-dimensional components</span>
 <span class="sd">    - Generate all required Stan program blocks with proper syntax</span>
 
-<span class="sd">    Key Features:</span>
-<span class="sd">    - Automatic dependency resolution and topological ordering</span>
-<span class="sd">    - Intelligent loop organization and optimization</span>
-<span class="sd">    - Complete Stan program block generation</span>
-<span class="sd">    - Variable name conflict resolution</span>
+<span class="sd">    The code is generated following the below procedure:</span>
+
+<span class="sd">    1. Dependency Analysis: Build component dependency graph</span>
+<span class="sd">    2. Depth Assignment: Determine nesting levels for components</span>
+<span class="sd">    3. Loop Organization: Create optimized for-loop structures</span>
+<span class="sd">    4. Block Generation: Generate all Stan program blocks</span>
+<span class="sd">    5. Code Formatting: Apply Stan canonical formatting</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;scistanpy.Model&quot;</span><span class="p">):</span>

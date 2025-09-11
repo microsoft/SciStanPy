@@ -33,11 +33,8 @@
 
           <div class="body" role="main">
             
-  <section id="stan-model-api-reference">
-<h1>Stan Model API Reference<a class="headerlink" href="#stan-model-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference covers the Stan probabilistic programming language integration and code generation functionality in SciStanPy.</p>
-<section id="module-scistanpy.model.stan.stan_model">
-<span id="stan-model-module"></span><h2>Stan Model Module<a class="headerlink" href="#module-scistanpy.model.stan.stan_model" title="Link to this heading">¶</a></h2>
+  <section id="module-scistanpy.model.stan.stan_model">
+<span id="stan-model-api-reference"></span><h1>Stan Model API Reference<a class="headerlink" href="#module-scistanpy.model.stan.stan_model" title="Link to this heading">¶</a></h1>
 <p>Stan probabilistic programming language integration and code generation.</p>
 <p>This module provides the core functionality for translating SciStanPy models into
 Stan probabilistic programming language code and managing the complete Stan
@@ -47,41 +44,20 @@ algorithms.</p>
 <p>The module implements a code generation system that organizes SciStanPy model components
 into proper Stan program structure, including automatic handling of dependency
 relationships, loop optimization, and efficient Stan code patterns.</p>
-<dl class="simple">
-<dt>Key Components:</dt><dd><ul class="simple">
-<li><p><strong>StanCodeBase</strong>: Abstract base for Stan code organization</p></li>
-<li><p><strong>StanForLoop</strong>: Represents Stan for-loop constructs with optimization</p></li>
-<li><p><strong>StanProgram</strong>: Complete Stan program generation and management</p></li>
-<li><p><strong>StanModel</strong>: Enhanced CmdStanModel with SciStanPy integration</p></li>
+<p>Users will not normally interact with this module directly. Instead, they will either
+(1) use the <a class="reference internal" href="../model.html#scistanpy.model.model.Model.to_stan" title="scistanpy.model.model.Model.to_stan"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.to_stan()</span></code></a> method
+to convert a SciStanPy model to a <a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel" title="scistanpy.model.stan.stan_model.StanModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">StanModel</span></code></a>
+instance or (2) use this module implicitly when fitting a SciStanPy model via the
+<a class="reference internal" href="../model.html#scistanpy.model.model.Model.mcmc" title="scistanpy.model.model.Model.mcmc"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.mcmc()</span></code></a> method.</p>
+<p>Stan code generation is supported by four main classes, each described below. Users
+of SciStanPy will primarily interact with the <a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel" title="scistanpy.model.stan.stan_model.StanModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">StanModel</span></code></a> class–the others classes are used internally to generate the Stan code.</p>
+<p>Quickly navigate to a section:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase" title="scistanpy.model.stan.stan_model.StanCodeBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">StanCodeBase</span></code></a></p></li>
+<li><p><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop" title="scistanpy.model.stan.stan_model.StanForLoop"><code class="xref py py-class docutils literal notranslate"><span class="pre">StanForLoop</span></code></a></p></li>
+<li><p><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram" title="scistanpy.model.stan.stan_model.StanProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">StanProgram</span></code></a></p></li>
+<li><p><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel" title="scistanpy.model.stan.stan_model.StanModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">StanModel</span></code></a></p></li>
 </ul>
-</dd>
-<dt>Code Generation Features:</dt><dd><ul class="simple">
-<li><p>Automatic dependency resolution and topological ordering</p></li>
-<li><p>Intelligent for-loop generation and combination</p></li>
-<li><p>Proper Stan block organization (data, parameters, model, etc.)</p></li>
-</ul>
-</dd>
-<dt>Stan Integration:</dt><dd><ul class="simple">
-<li><p>CmdStanPy integration with enhanced functionality</p></li>
-<li><p>Automatic data gathering and validation</p></li>
-<li><p>Prior-based initialization for MCMC sampling</p></li>
-<li><p>Comprehensive results processing and structuring</p></li>
-</ul>
-</dd>
-<dt>Performance Optimizations:</dt><dd><ul class="simple">
-<li><p>Loop combining and singleton elimination</p></li>
-<li><p>Parallel chain execution support</p></li>
-</ul>
-</dd>
-</dl>
-<p>The module maintains strict separation between SciStanPy’s Python-based model
-specification and Stan’s domain-specific language while providing integration between
-the two environments.</p>
-</section>
-<section id="stan-code-organization-classes">
-<h2>Stan Code Organization Classes<a class="headerlink" href="#stan-code-organization-classes" title="Link to this heading">¶</a></h2>
-<section id="abstract-base-class">
-<h3>Abstract Base Class<a class="headerlink" href="#abstract-base-class" title="Link to this heading">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanCodeBase">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.stan.stan_model.</span></span><span class="sig-name descname"><span class="pre">StanCodeBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_loop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase" title="scistanpy.model.stan.stan_model.StanCodeBase"><span class="pre">StanCodeBase</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase" title="Link to this definition">¶</a></dt>
@@ -102,24 +78,14 @@ required by Stan programs.</p>
 <p>The class serves as both a container for model components and for-loop
 constructs, and as a code generator that can produce appropriate Stan
 syntax for different program blocks (model, transformed parameters, etc.).</p>
-<p>Key Features:
-- Hierarchical organization of code blocks and loops
-- Automatic Stan syntax generation for different program sections
-- Component filtering and organization based on block requirements
-- Proper indentation and formatting management
-- Loop optimization and combination capabilities</p>
-<p><strong>Code Structure Management:</strong></p>
-<p>The StanCodeBase class provides the foundation for organizing Stan code into hierarchical structures:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example of code organization hierarchy</span>
-<span class="n">program</span> <span class="o">=</span> <span class="n">StanProgram</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-
-<span class="c1"># Access nested structure</span>
-<span class="k">for</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">program</span><span class="o">.</span><span class="n">recurse_for_loops</span><span class="p">():</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loop depth: </span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">depth</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">loop</span><span class="o">.</span><span class="n">model_components</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Component: </span><span class="si">{</span><span class="n">component</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
+<p>Key Features:</p>
+<ul class="simple">
+<li><p>Hierarchical organization of code blocks and loops</p></li>
+<li><p>Automatic Stan syntax generation for different program sections</p></li>
+<li><p>Component filtering and organization based on block requirements</p></li>
+<li><p>Proper indentation and formatting management</p></li>
+<li><p>Loop optimization and combination capabilities</p></li>
+</ul>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanCodeBase.allowed_index_names">
 <em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">allowed_index_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.allowed_index_names" title="Link to this definition">¶</a></dt>
@@ -194,10 +160,12 @@ Defaults to None.</p></li>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
-<p>This method handles:
-- Consistent indentation based on scope depth
-- Automatic semicolon insertion for statements
-- Proper formatting for control structures and comments</p>
+<p>This method handles:</p>
+<ul class="simple">
+<li><p>Consistent indentation based on scope depth</p></li>
+<li><p>Automatic semicolon insertion for statements</p></li>
+<li><p>Proper formatting for control structures and comments</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py property">
@@ -369,9 +337,6 @@ validation, and code generation across all program blocks.</p>
 
 </dd></dl>
 
-</section>
-<section id="for-loop-management">
-<h3>For-Loop Management<a class="headerlink" href="#for-loop-management" title="Link to this heading">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanForLoop">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.stan.stan_model.</span></span><span class="sig-name descname"><span class="pre">StanForLoop</span></span><span class="sig-paren">(</span>
@@ -398,26 +363,17 @@ compatible loops, and proper nesting within the code hierarchy.</p>
 <dd class="field-even"><p><strong>parent_loop</strong> – Reference to parent code block</p>
 </dd>
 </dl>
-<p>Key Features:
-- Automatic loop range calculation based on component dimensions
-- Loop combination optimization for compatible adjacent loops
-- Singleton loop detection and elimination
-- Proper index variable management and scope resolution
-- Hierarchical ancestry tracking for scope navigation</p>
+<p>Key Features:</p>
+<ul class="simple">
+<li><p>Automatic loop range calculation based on component dimensions</p></li>
+<li><p>Loop combination optimization for compatible adjacent loops</p></li>
+<li><p>Singleton loop detection and elimination</p></li>
+<li><p>Proper index variable management and scope resolution</p></li>
+<li><p>Hierarchical ancestry tracking for scope navigation</p></li>
+</ul>
 <p>The class automatically determines loop ranges by analyzing the dimensions
 of nested model components and provides optimization features like loop
 combination to generate efficient Stan code.</p>
-<p><strong>Loop Optimization Features:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic loop range calculation</span>
-<span class="c1"># SciStanPy analyzes component dimensions to determine loop bounds</span>
-
-<span class="c1"># Loop combination optimization</span>
-<span class="c1"># Compatible adjacent loops are automatically combined for efficiency</span>
-
-<span class="c1"># Singleton elimination</span>
-<span class="c1"># Loops with only one iteration are removed for cleaner code</span>
-</pre></div>
-</div>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanForLoop.allowed_index_names">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">allowed_index_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanForLoop.allowed_index_names" title="Link to this definition">¶</a></dt>
@@ -636,9 +592,6 @@ its contents directly to the parent scope.</p>
 
 </dd></dl>
 
-</section>
-<section id="stan-program-generation">
-<h3>Stan Program Generation<a class="headerlink" href="#stan-program-generation" title="Link to this heading">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanProgram">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.stan.stan_model.</span></span><span class="sig-name descname"><span class="pre">StanProgram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><span class="pre">Model</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanProgram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanProgram" title="Link to this definition">¶</a></dt>
@@ -664,38 +617,22 @@ gathered from the SciStanPy model.</p></li>
 </ul>
 </dd>
 </dl>
-<p>The class performs comprehensive analysis of the SciStanPy model to:
-- Build dependency graphs and determine component ordering
-- Generate appropriate variable names avoiding conflicts
-- Organize components into proper Stan program structure
-- Create optimized loop constructs for multi-dimensional components
-- Generate all required Stan program blocks with proper syntax</p>
-<p>Key Features:
-- Automatic dependency resolution and topological ordering
-- Intelligent loop organization and optimization
-- Complete Stan program block generation
-- Variable name conflict resolution</p>
-<p><strong>Complete Program Assembly:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate complete Stan program</span>
-<span class="n">program</span> <span class="o">=</span> <span class="n">StanProgram</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-
-<span class="c1"># Access generated code blocks</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Functions block:&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">program</span><span class="o">.</span><span class="n">functions_block</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Data block:&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">program</span><span class="o">.</span><span class="n">data_block</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Parameters block:&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">program</span><span class="o">.</span><span class="n">parameters_block</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model block:&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">program</span><span class="o">.</span><span class="n">model_block</span><span class="p">)</span>
-
-<span class="c1"># Get complete program</span>
-<span class="n">complete_code</span> <span class="o">=</span> <span class="n">program</span><span class="o">.</span><span class="n">code</span>
-</pre></div>
-</div>
+<p>The class performs comprehensive analysis of the SciStanPy model to:</p>
+<ul class="simple">
+<li><p>Build dependency graphs and determine component ordering</p></li>
+<li><p>Generate appropriate variable names avoiding conflicts</p></li>
+<li><p>Organize components into proper Stan program structure</p></li>
+<li><p>Create optimized loop constructs for multi-dimensional components</p></li>
+<li><p>Generate all required Stan program blocks with proper syntax</p></li>
+</ul>
+<p>The code is generated following the below procedure:</p>
+<ol class="arabic simple">
+<li><p>Dependency Analysis: Build component dependency graph</p></li>
+<li><p>Depth Assignment: Determine nesting levels for components</p></li>
+<li><p>Loop Organization: Create optimized for-loop structures</p></li>
+<li><p>Block Generation: Generate all Stan program blocks</p></li>
+<li><p>Code Formatting: Apply Stan canonical formatting</p></li>
+</ol>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanProgram.allowed_index_names">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">allowed_index_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanProgram.allowed_index_names" title="Link to this definition">¶</a></dt>
@@ -1021,10 +958,6 @@ transformations and derived quantities.</p>
 
 </dd></dl>
 
-</section>
-</section>
-<section id="enhanced-stan-model-class">
-<h2>Enhanced Stan Model Class<a class="headerlink" href="#enhanced-stan-model-class" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanModel">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.stan.stan_model.</span></span><span class="sig-name descname"><span class="pre">StanModel</span></span><span class="sig-paren">(</span>
@@ -1075,59 +1008,6 @@ sampling interfaces, and comprehensive result processing.</p>
 <p>The class handles the complete workflow from SciStanPy model to Stan
 execution, providing an interface that abstracts away the complexities of Stan
 code generation and compilation management.</p>
-<p><strong>Key Features:</strong></p>
-<ul class="simple">
-<li><p><strong>Automatic Code Generation</strong>: Translates SciStanPy models to Stan</p></li>
-<li><p><strong>Enhanced Sampling</strong>: Prior initialization and result processing</p></li>
-<li><p><strong>Data Management</strong>: Automatic gathering of constants and validation</p></li>
-<li><p><strong>Result Integration</strong>: Comprehensive post-processing and analysis</p></li>
-</ul>
-<p><strong>Basic Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
-
-<span class="c1"># Define SciStanPy model</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">MyModel</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">observable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="c1"># Compile to Stan</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">MyModel</span><span class="p">()</span>
-<span class="n">stan_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_stan</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;./stan_models&#39;</span><span class="p">)</span>
-
-<span class="c1"># Sample using enhanced interface</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">observed_data</span><span class="p">},</span>
-    <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-    <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
-    <span class="n">inits</span><span class="o">=</span><span class="s1">&#39;prior&#39;</span>  <span class="c1"># Use prior-based initialization</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Advanced Configuration:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Custom compilation options</span>
-<span class="n">stan_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_stan</span><span class="p">(</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;./compiled_models&#39;</span><span class="p">,</span>
-    <span class="n">force_compile</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">stanc_options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;O1&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>  <span class="c1"># Optimization level 1</span>
-    <span class="n">cpp_options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;STAN_THREADS&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>  <span class="c1"># Enable threading</span>
-    <span class="n">user_header</span><span class="o">=</span><span class="s1">&#39;#include &lt;custom_functions.hpp&gt;&#39;</span><span class="p">,</span>
-    <span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;my_custom_model&#39;</span>
-<span class="p">)</span>
-
-<span class="c1"># Enhanced sampling with memory management</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">large_dataset</span><span class="p">},</span>
-    <span class="n">chains</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-    <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
-    <span class="n">precision</span><span class="o">=</span><span class="s1">&#39;single&#39;</span><span class="p">,</span>  <span class="c1"># Memory optimization</span>
-    <span class="n">mib_per_chunk</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>   <span class="c1"># Chunk size for large arrays</span>
-    <span class="n">use_dask</span><span class="o">=</span><span class="kc">True</span>       <span class="c1"># Distributed processing</span>
-<span class="p">)</span>
-</pre></div>
-</div>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanModel.all_varnames">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">all_varnames</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanModel.all_varnames" title="Link to this definition">¶</a></dt>
@@ -1500,209 +1380,6 @@ of SciStanPy for debugging or optimization purposes.</p>
 </dd></dl>
 
 </section>
-<section id="automatic-data-gathering">
-<h2>Automatic Data Gathering<a class="headerlink" href="#automatic-data-gathering" title="Link to this heading">¶</a></h2>
-<p><strong>Data Management Features:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic data gathering from model</span>
-<span class="n">gathered_data</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">gather_inputs</span><span class="p">(</span>
-    <span class="n">y</span><span class="o">=</span><span class="n">observed_values</span><span class="p">,</span>  <span class="c1"># User provides observables</span>
-    <span class="c1"># Constants automatically gathered from model</span>
-    <span class="c1"># Hyperparameters automatically extracted</span>
-<span class="p">)</span>
-
-<span class="c1"># Access auto-gathered data</span>
-<span class="n">constants</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">autogathered_data</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Auto-gathered: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Data Validation:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Shape validation</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">wrong_shape_data</span><span class="p">})</span>
-<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Shape validation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="c1"># Missing observable detection</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{})</span>  <span class="c1"># Missing required observables</span>
-<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing observables: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="stan-code-generation-process">
-<h2>Stan Code Generation Process<a class="headerlink" href="#stan-code-generation-process" title="Link to this heading">¶</a></h2>
-<p><strong>Code Generation Pipeline:</strong></p>
-<ol class="arabic simple">
-<li><p><strong>Dependency Analysis</strong>: Build component dependency graph</p></li>
-<li><p><strong>Depth Assignment</strong>: Determine nesting levels for components</p></li>
-<li><p><strong>Loop Organization</strong>: Create optimized for-loop structures</p></li>
-<li><p><strong>Block Generation</strong>: Generate all Stan program blocks</p></li>
-<li><p><strong>Code Formatting</strong>: Apply Stan canonical formatting</p></li>
-</ol>
-<p><strong>Generated Stan Blocks:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Access individual Stan blocks</span>
-<span class="n">program</span> <span class="o">=</span> <span class="n">StanProgram</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-
-<span class="c1"># Functions block (if custom functions needed)</span>
-<span class="n">functions</span> <span class="o">=</span> <span class="n">program</span><span class="o">.</span><span class="n">functions_block</span>
-
-<span class="c1"># Data block (observables and constants)</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">program</span><span class="o">.</span><span class="n">data_block</span>
-
-<span class="c1"># Transformed data block (data preprocessing)</span>
-<span class="n">transformed_data</span> <span class="o">=</span> <span class="n">program</span><span class="o">.</span><span class="n">transformed_data_block</span>
-
-<span class="c1"># Parameters block (model parameters)</span>
-<span class="n">parameters</span> <span class="o">=</span> <span class="n">program</span><span class="o">.</span><span class="n">parameters_block</span>
-
-<span class="c1"># Transformed parameters block (derived quantities)</span>
-<span class="n">transformed_parameters</span> <span class="o">=</span> <span class="n">program</span><span class="o">.</span><span class="n">transformed_parameters_block</span>
-
-<span class="c1"># Model block (log-probability statements)</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">program</span><span class="o">.</span><span class="n">model_block</span>
-
-<span class="c1"># Generated quantities block (posterior predictions)</span>
-<span class="n">generated_quantities</span> <span class="o">=</span> <span class="n">program</span><span class="o">.</span><span class="n">generated_quantities_block</span>
-</pre></div>
-</div>
-</section>
-<section id="stan-function-libraries">
-<h2>Stan Function Libraries<a class="headerlink" href="#stan-function-libraries" title="Link to this heading">¶</a></h2>
-<p><strong>Automatic Function Integration:</strong></p>
-<p>SciStanPy automatically includes required Stan function libraries based on model components:</p>
-<ul class="simple">
-<li><p><strong>Multinomial Functions</strong>: Enhanced multinomial distributions with multiple parameterizations</p></li>
-<li><p><strong>Exp-Distributions</strong>: Log-transformed distributions (Exp-Exponential, Exp-Dirichlet, etc.)</p></li>
-<li><p><strong>Growth Models</strong>: Specialized functions for temporal modeling</p></li>
-<li><p><strong>Sequence Operations</strong>: Convolution and pattern matching functions</p></li>
-</ul>
-<p><strong>Function Include Process:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Functions are automatically included based on model components</span>
-
-<span class="c1"># If model contains MultinomialLogit:</span>
-<span class="c1"># - Includes multinomial.stanfunctions</span>
-
-<span class="c1"># If model contains ExpExponential:</span>
-<span class="c1"># - Includes expexponential.stanfunctions</span>
-
-<span class="c1"># If model contains growth operations:</span>
-<span class="c1"># - Includes appropriate growth functions</span>
-</pre></div>
-</div>
-</section>
-<section id="performance-optimizations">
-<h2>Performance Optimizations<a class="headerlink" href="#performance-optimizations" title="Link to this heading">¶</a></h2>
-<p><strong>Loop Optimization:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic loop combination</span>
-<span class="c1"># Adjacent compatible loops are merged for efficiency</span>
-
-<span class="c1"># Singleton elimination</span>
-<span class="c1"># Single-iteration loops are removed</span>
-
-<span class="c1"># Depth optimization</span>
-<span class="c1"># Nested loops are organized for optimal Stan execution</span>
-</pre></div>
-</div>
-<p><strong>Memory Management:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Large dataset handling</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">large_data</span><span class="p">,</span>
-    <span class="n">precision</span><span class="o">=</span><span class="s1">&#39;single&#39;</span><span class="p">,</span>    <span class="c1"># Reduce memory usage</span>
-    <span class="n">mib_per_chunk</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>     <span class="c1"># Control chunk sizes</span>
-    <span class="n">use_dask</span><span class="o">=</span><span class="kc">True</span>         <span class="c1"># Enable distributed processing</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Compilation Caching:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Efficient recompilation</span>
-<span class="n">stan_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_stan</span><span class="p">(</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;./cache&#39;</span><span class="p">,</span>
-    <span class="n">force_compile</span><span class="o">=</span><span class="kc">False</span>   <span class="c1"># Reuse cached compilation</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="integration-with-cmdstanpy">
-<h2>Integration with CmdStanPy<a class="headerlink" href="#integration-with-cmdstanpy" title="Link to this heading">¶</a></h2>
-<p><strong>Enhanced CmdStanPy Methods:</strong></p>
-<p>All CmdStanPy methods are enhanced with automatic data gathering:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Enhanced sampling</span>
-<span class="n">mcmc_results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">observations</span><span class="p">})</span>
-
-<span class="c1"># Enhanced optimization (experimental)</span>
-<span class="n">mle_results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">observations</span><span class="p">})</span>
-
-<span class="c1"># Enhanced variational inference (experimental)</span>
-<span class="n">vi_results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">variational</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">observations</span><span class="p">})</span>
-
-<span class="c1"># Enhanced generated quantities (experimental)</span>
-<span class="n">gq_results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">generate_quantities</span><span class="p">(</span>
-    <span class="n">fitted_params</span><span class="o">=</span><span class="n">mcmc_results</span><span class="p">,</span>
-    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">new_observations</span><span class="p">}</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Result Processing:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comprehensive result objects</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">observations</span><span class="p">})</span>
-
-<span class="c1"># Access processed results</span>
-<span class="n">summary</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
-<span class="n">diagnostics</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">diagnose</span><span class="p">()</span>
-
-<span class="c1"># ArviZ integration</span>
-<span class="n">inference_data</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_arviz</span><span class="p">()</span>
-
-<span class="c1"># Custom analysis</span>
-<span class="n">posterior_mean</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-</pre></div>
-</div>
-</section>
-<section id="error-handling-and-debugging">
-<h2>Error Handling and Debugging<a class="headerlink" href="#error-handling-and-debugging" title="Link to this heading">¶</a></h2>
-<p><strong>Comprehensive Error Checking:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Model validation during compilation</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">stan_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_stan</span><span class="p">()</span>
-<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model compilation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="c1"># Data validation during sampling</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">invalid_data</span><span class="p">})</span>
-<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data validation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Stan Code Inspection:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Inspect generated Stan code</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generated Stan program:&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">stan_model</span><span class="o">.</span><span class="n">code</span><span class="p">())</span>
-
-<span class="c1"># Access Stan file location</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stan file: </span><span class="si">{</span><span class="n">stan_model</span><span class="o">.</span><span class="n">stan_program_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="c1"># Inspect variable mappings</span>
-<span class="n">varname_mapping</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">get_varnames_to_dimnames</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Variable dimensions: </span><span class="si">{</span><span class="n">varname_mapping</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="best-practices">
-<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
-<ol class="arabic simple">
-<li><p><strong>Use output directories</strong> for Stan file caching and debugging</p></li>
-<li><p><strong>Enable prior initialization</strong> for better MCMC convergence</p></li>
-<li><p><strong>Monitor memory usage</strong> with precision and chunking options</p></li>
-<li><p><strong>Validate data shapes</strong> before large sampling runs</p></li>
-<li><p><strong>Inspect generated Stan code</strong> for debugging and optimization</p></li>
-<li><p><strong>Use appropriate precision</strong> based on computational requirements</p></li>
-<li><p><strong>Cache compiled models</strong> for repeated use with consistent output directories</p></li>
-</ol>
-<p>The Stan integration provides a complete bridge between SciStanPy’s intuitive modeling interface and Stan’s high-performance probabilistic programming capabilities.</p>
-</section>
-</section>
 
 
           </div>
@@ -1749,7 +1426,7 @@ of SciStanPy for debugging or optimization purposes.</p>
   <li><a href="../../../index.html">Documentation overview</a><ul>
   <li><a href="../../index.html">SciStanPy API Reference</a><ul>
   <li><a href="../index.html">Model API Reference</a><ul>
-  <li><a href="index.html">Stan Integration</a><ul>
+  <li><a href="index.html">Stan Submodule API Reference</a><ul>
       <li>Previous: <a href="stan_functions.html" title="previous chapter">Stan Functions Library Reference</a></li>
       <li>Next: <a href="../../plotting/index.html" title="next chapter">Plotting Subpackage API Reference</a></li>
   </ul></li>

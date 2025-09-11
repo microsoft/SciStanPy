@@ -14,30 +14,11 @@ The module implements a code generation system that organizes SciStanPy model co
 into proper Stan program structure, including automatic handling of dependency
 relationships, loop optimization, and efficient Stan code patterns.
 
-Key Components:
-    - **StanCodeBase**: Abstract base for Stan code organization
-    - **StanForLoop**: Represents Stan for-loop constructs with optimization
-    - **StanProgram**: Complete Stan program generation and management
-    - **StanModel**: Enhanced CmdStanModel with SciStanPy integration
-
-Code Generation Features:
-    - Automatic dependency resolution and topological ordering
-    - Intelligent for-loop generation and combination
-    - Proper Stan block organization (data, parameters, model, etc.)
-
-Stan Integration:
-    - CmdStanPy integration with enhanced functionality
-    - Automatic data gathering and validation
-    - Prior-based initialization for MCMC sampling
-    - Comprehensive results processing and structuring
-
-Performance Optimizations:
-    - Loop combining and singleton elimination
-    - Parallel chain execution support
-
-The module maintains strict separation between SciStanPy's Python-based model
-specification and Stan's domain-specific language while providing integration between
-the two environments.
+Users will not normally interact with this module directly. Instead, they will either
+(1) use the :py:meth:`Model.to_stan() <scistanpy.model.model.Model.to_stan>` method
+to convert a SciStanPy model to a :py:class:`~scistanpy.model.stan.stan_model.StanModel`
+instance or (2) use this module implicitly when fitting a SciStanPy model via the
+:py:meth:`Model.mcmc() <scistanpy.model.model.Model.mcmc>` method.
 """
 
 from __future__ import annotations
@@ -118,6 +99,7 @@ class StanCodeBase(ABC, list):
     syntax for different program blocks (model, transformed parameters, etc.).
 
     Key Features:
+
     - Hierarchical organization of code blocks and loops
     - Automatic Stan syntax generation for different program sections
     - Component filtering and organization based on block requirements
@@ -221,6 +203,7 @@ class StanCodeBase(ABC, list):
         :rtype: str
 
         The method handles:
+
         - Component filtering based on block requirements
         - For-loop combination and optimization
         - Proper Stan syntax generation and formatting
@@ -458,6 +441,7 @@ class StanCodeBase(ABC, list):
         :rtype: str
 
         This method handles:
+
         - Consistent indentation based on scope depth
         - Automatic semicolon insertion for statements
         - Proper formatting for control structures and comments
@@ -596,6 +580,7 @@ class StanForLoop(StanCodeBase):
     :ivar parent_loop: Reference to parent code block
 
     Key Features:
+
     - Automatic loop range calculation based on component dimensions
     - Loop combination optimization for compatible adjacent loops
     - Singleton loop detection and elimination
@@ -854,17 +839,20 @@ class StanProgram(StanCodeBase):
         (i.e., the names of observable parameters).
 
     The class performs comprehensive analysis of the SciStanPy model to:
+
     - Build dependency graphs and determine component ordering
     - Generate appropriate variable names avoiding conflicts
     - Organize components into proper Stan program structure
     - Create optimized loop constructs for multi-dimensional components
     - Generate all required Stan program blocks with proper syntax
 
-    Key Features:
-    - Automatic dependency resolution and topological ordering
-    - Intelligent loop organization and optimization
-    - Complete Stan program block generation
-    - Variable name conflict resolution
+    The code is generated following the below procedure:
+
+    1. Dependency Analysis: Build component dependency graph
+    2. Depth Assignment: Determine nesting levels for components
+    3. Loop Organization: Create optimized for-loop structures
+    4. Block Generation: Generate all Stan program blocks
+    5. Code Formatting: Apply Stan canonical formatting
     """
 
     def __init__(self, model: "scistanpy.Model"):
