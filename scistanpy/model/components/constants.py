@@ -11,6 +11,32 @@ components that don't change during inference.
 The Constant class integrates with SciStanPy's model component hierarchy while
 providing specialized functionality for fixed-value components. It is particularly
 important for interactive model manipulation during prior predictive checks.
+
+**Basic Usage:**
+
+.. code-block:: python
+
+    import scistanpy as ssp
+    import numpy as np
+
+    # Scalar constants
+    learning_rate = ssp.constants.Constant(0.01)
+    n_samples = ssp.constants.Constant(100)
+
+    # Array constants
+    design_matrix = ssp.constants.Constant(X_data)
+    time_points = ssp.constants.Constant(np.linspace(0, 10, 11))
+
+    # Constants with bounds
+    probability = ssp.constants.Constant(0.5, lower_bound=0.0, upper_bound=1.0)
+
+    # Force constant to NOT be modifiable in interactive contexts
+    temperature = ssp.constants.Constant(
+        300.0,
+        lower_bound=250.0,
+        upper_bound=350.0,
+        togglable=False
+    )
 """
 
 from __future__ import annotations
@@ -60,25 +86,39 @@ class Constant(abstract_model_component.AbstractModelComponent):
     :raises ValueError: If enforce_uniformity=True but array has non-uniform values
 
     Key Features:
+
     - **Automatic Type Inference**: Determines appropriate Stan data types
     - **Bound Checking**: Validates values against optional constraints
     - **Interactive Support**: Configures sliders for model exploration
 
     The class automatically handles:
+
     - Conversion of Python scalars to NumPy arrays
     - Shape inference from array inputs
     - Data type detection for Stan code generation
     - Bound validation at initialization
 
-    Example:
-        >>> # Scalar constant
-        >>> mu_prior = Constant(0.0)
-        >>> # Array constant with bounds
-        >>> design_matrix = Constant(X_data, lower_bound=0.0)
-        >>> # Integer constant
-        >>> n_obs = Constant(100)
-        >>> # Uniform array (enforced)
-        >>> alpha_symmetric = Constant([1.0, 1.0, 1.0], enforce_uniformity=True)
+    .. hint::
+        Under the hood, the :py:meth:`Model.prior_predictive()
+        <scistanpy.model.model.Model.prior_predictive>` method parses the model
+        components to identify constants. Any identified constant with ``is_togglable=True``
+        is represented as an interactive slider in the generated interface. Updating
+        slider values updates the underlying constant value used in the model.
+
+    .. important::
+        By default, constants with floating-point values are considered ``togglable=True``,
+        allowing interactive modification. Integer-valued constants are ``togglable=False``
+        by default to prevent invalid states. As a result, it is important to specify
+        true data types when defining constants to ensure desired behavior. For example,
+
+        >>> n = ssp.Constant(100)  # n is not togglable
+        >>> n = ssp.Constant(100.0)  # n is togglable
+
+        This is also important when defining parameters, as raw Python integers and
+        floats are converted to constants interally. For example,
+
+        >>> mean = ssp.Normal(mu = 0, sigma = 1)  # Neither mu nor sigma are togglable
+        >>> mean = ssp.Normal(mu = 0.0, sigma = 1.0)  # Both mu and sigma are togglable
     """
 
     def __init__(
@@ -197,8 +237,9 @@ class Constant(abstract_model_component.AbstractModelComponent):
         :returns: Empty string (constants don't have right-hand side expressions)
         :rtype: str
 
-        Constants don't participate in Stan probability statements as they
-        represent fixed data values, so this method returns an empty string.
+        There is no right-hand side expression for constants, as they represent
+        fixed values rather than derived quantities. Thus, this method returns
+        an empty string.
         """
         return ""
 
@@ -255,7 +296,8 @@ class Constant(abstract_model_component.AbstractModelComponent):
 
     @property
     def slider_start(self) -> "custom_types.Float":
-        """Get starting value for interactive sliders.
+        """Get starting value for interactive sliders when constant is used for
+        interactive prior predictive checks.
 
         :returns: Appropriate starting value for sliders
         :rtype: custom_types.Float
@@ -272,7 +314,8 @@ class Constant(abstract_model_component.AbstractModelComponent):
 
     @property
     def slider_end(self) -> "custom_types.Float":
-        """Get ending value for interactive sliders.
+        """Get ending value for interactive sliders when constant is used for
+        interactive prior predictive checks.
 
         :returns: Appropriate ending value for sliders
         :rtype: custom_types.Float
@@ -289,7 +332,8 @@ class Constant(abstract_model_component.AbstractModelComponent):
 
     @property
     def slider_step_size(self) -> "custom_types.Float":
-        """Get step size for interactive sliders.
+        """Get step size for interactive sliders when constant is used for
+        interactive prior predictive checks.
 
         :returns: Appropriate step size for sliders
         :rtype: custom_types.Float

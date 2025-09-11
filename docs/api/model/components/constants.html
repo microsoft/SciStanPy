@@ -33,11 +33,8 @@
 
           <div class="body" role="main">
             
-  <section id="constants-api-reference">
-<h1>Constants API Reference<a class="headerlink" href="#constants-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference covers the constant value components used in SciStanPy models.</p>
-<section id="module-scistanpy.model.components.constants">
-<span id="constants-module"></span><h2>Constants Module<a class="headerlink" href="#module-scistanpy.model.components.constants" title="Link to this heading">¶</a></h2>
+  <section id="module-scistanpy.model.components.constants">
+<span id="constants-api-reference"></span><h1>Constants API Reference<a class="headerlink" href="#module-scistanpy.model.components.constants" title="Link to this heading">¶</a></h1>
 <p>Constant value components for SciStanPy models.</p>
 <p>This module provides the Constant class for representing fixed values in SciStanPy
 models. Constants serve as the foundational building blocks for model hierarchies,
@@ -46,9 +43,31 @@ components that don’t change during inference.</p>
 <p>The Constant class integrates with SciStanPy’s model component hierarchy while
 providing specialized functionality for fixed-value components. It is particularly
 important for interactive model manipulation during prior predictive checks.</p>
-</section>
-<section id="constant-class">
-<h2>Constant Class<a class="headerlink" href="#constant-class" title="Link to this heading">¶</a></h2>
+<p><strong>Basic Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Scalar constants</span>
+<span class="n">learning_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="n">n_samples</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># Array constants</span>
+<span class="n">design_matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">X_data</span><span class="p">)</span>
+<span class="n">time_points</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">))</span>
+
+<span class="c1"># Constants with bounds</span>
+<span class="n">probability</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">upper_bound</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="c1"># Force constant to NOT be modifiable in interactive contexts</span>
+<span class="n">temperature</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
+    <span class="mf">300.0</span><span class="p">,</span>
+    <span class="n">lower_bound</span><span class="o">=</span><span class="mf">250.0</span><span class="p">,</span>
+    <span class="n">upper_bound</span><span class="o">=</span><span class="mf">350.0</span><span class="p">,</span>
+    <span class="n">togglable</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>As of now, there is a single class in this module</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.constants.</span></span><span class="sig-name descname"><span class="pre">Constant</span></span><span class="sig-paren">(</span>
@@ -100,67 +119,42 @@ Defaults to False.</p></li>
 </ul>
 </dd>
 </dl>
-<p>Key Features:
-- <strong>Automatic Type Inference</strong>: Determines appropriate Stan data types
-- <strong>Bound Checking</strong>: Validates values against optional constraints
-- <strong>Interactive Support</strong>: Configures sliders for model exploration</p>
-<p>The class automatically handles:
-- Conversion of Python scalars to NumPy arrays
-- Shape inference from array inputs
-- Data type detection for Stan code generation
-- Bound validation at initialization</p>
-<dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Scalar constant</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mu_prior</span> <span class="o">=</span> <span class="n">Constant</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Array constant with bounds</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">design_matrix</span> <span class="o">=</span> <span class="n">Constant</span><span class="p">(</span><span class="n">X_data</span><span class="p">,</span> <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Integer constant</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">n_obs</span> <span class="o">=</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Uniform array (enforced)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">alpha_symmetric</span> <span class="o">=</span> <span class="n">Constant</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">enforce_uniformity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd>
-</dl>
-<p><strong>Key Features:</strong></p>
-<p>The Constant class provides essential functionality for representing fixed values in SciStanPy models:</p>
+<p>Key Features:</p>
 <ul class="simple">
-<li><p><strong>Automatic Type Inference</strong>: Determines appropriate Stan data types from Python values</p></li>
+<li><p><strong>Automatic Type Inference</strong>: Determines appropriate Stan data types</p></li>
 <li><p><strong>Bound Checking</strong>: Validates values against optional constraints</p></li>
 <li><p><strong>Interactive Support</strong>: Configures sliders for model exploration</p></li>
-<li><p><strong>Shape Handling</strong>: Automatically infers dimensions from array inputs</p></li>
 </ul>
-<p><strong>Basic Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="c1"># Scalar constants</span>
-<span class="n">learning_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
-<span class="n">n_samples</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
-
-<span class="c1"># Array constants</span>
-<span class="n">design_matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">X_data</span><span class="p">)</span>
-<span class="n">time_points</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">))</span>
-
-<span class="c1"># Constants with bounds</span>
-<span class="n">probability</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">upper_bound</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<p>The class automatically handles:</p>
+<ul class="simple">
+<li><p>Conversion of Python scalars to NumPy arrays</p></li>
+<li><p>Shape inference from array inputs</p></li>
+<li><p>Data type detection for Stan code generation</p></li>
+<li><p>Bound validation at initialization</p></li>
+</ul>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>Under the hood, the <a class="reference internal" href="../model.html#scistanpy.model.model.Model.prior_predictive" title="scistanpy.model.model.Model.prior_predictive"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.prior_predictive()</span></code></a> method parses the model
+components to identify constants. Any identified constant with <code class="docutils literal notranslate"><span class="pre">is_togglable=True</span></code>
+is represented as an interactive slider in the generated interface. Updating
+slider values updates the underlying constant value used in the model.</p>
+</div>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>By default, constants with floating-point values are considered <code class="docutils literal notranslate"><span class="pre">togglable=True</span></code>,
+allowing interactive modification. Integer-valued constants are <code class="docutils literal notranslate"><span class="pre">togglable=False</span></code>
+by default to prevent invalid states. As a result, it is important to specify
+true data types when defining constants to ensure desired behavior. For example,</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>  <span class="c1"># n is not togglable</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">100.0</span><span class="p">)</span>  <span class="c1"># n is togglable</span>
 </pre></div>
 </div>
-<p><strong>Advanced Features:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interactive constants for exploration</span>
-<span class="n">interactive_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-    <span class="mf">1.0</span><span class="p">,</span>
-    <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-    <span class="n">upper_bound</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
-    <span class="n">togglable</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Enable slider widgets</span>
-<span class="p">)</span>
-
-<span class="c1"># Uniform array enforcement</span>
-<span class="n">symmetric_prior</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-    <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
-    <span class="n">enforce_uniformity</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
+<p>This is also important when defining parameters, as raw Python integers and
+floats are converted to constants interally. For example,</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mean</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Neither mu nor sigma are togglable</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mean</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Both mu and sigma are togglable</span>
 </pre></div>
+</div>
 </div>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant.enforce_uniformity">
@@ -211,14 +205,16 @@ and other modeling contexts requiring uniform parameters.</p>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
-<p>Constants don’t participate in Stan probability statements as they
-represent fixed data values, so this method returns an empty string.</p>
+<p>There is no right-hand side expression for constants, as they represent
+fixed values rather than derived quantities. Thus, this method returns
+an empty string.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant.slider_end">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">slider_end</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><a class="headerlink" href="#scistanpy.model.components.constants.Constant.slider_end" title="Link to this definition">¶</a></dt>
-<dd><p>Get ending value for interactive sliders.</p>
+<dd><p>Get ending value for interactive sliders when constant is used for
+interactive prior predictive checks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Appropriate ending value for sliders</p>
@@ -234,7 +230,8 @@ upper limit based on the value’s order of magnitude.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant.slider_start">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">slider_start</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><a class="headerlink" href="#scistanpy.model.components.constants.Constant.slider_start" title="Link to this definition">¶</a></dt>
-<dd><p>Get starting value for interactive sliders.</p>
+<dd><p>Get starting value for interactive sliders when constant is used for
+interactive prior predictive checks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Appropriate starting value for sliders</p>
@@ -250,7 +247,8 @@ lower limit based on the value’s order of magnitude.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.components.constants.Constant.slider_step_size">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">slider_step_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><a class="headerlink" href="#scistanpy.model.components.constants.Constant.slider_step_size" title="Link to this definition">¶</a></dt>
-<dd><p>Get step size for interactive sliders.</p>
+<dd><p>Get step size for interactive sliders when constant is used for
+interactive prior predictive checks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Appropriate step size for sliders</p>
@@ -281,386 +279,6 @@ enabling integration with gradient-based operations.</p>
 
 </dd></dl>
 
-</section>
-<section id="constant-properties-and-methods">
-<h2>Constant Properties and Methods<a class="headerlink" href="#constant-properties-and-methods" title="Link to this heading">¶</a></h2>
-<section id="type-inference-and-validation">
-<h3>Type Inference and Validation<a class="headerlink" href="#type-inference-and-validation" title="Link to this heading">¶</a></h3>
-<p>Constants automatically infer Stan data types and validate values:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Integer constant</span>
-<span class="n">count</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">count</span><span class="o">.</span><span class="n">BASE_STAN_DTYPE</span><span class="p">)</span>  <span class="c1"># &quot;int&quot;</span>
-
-<span class="c1"># Float constant</span>
-<span class="n">rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">rate</span><span class="o">.</span><span class="n">BASE_STAN_DTYPE</span><span class="p">)</span>  <span class="c1"># &quot;real&quot;</span>
-
-<span class="c1"># Array constant</span>
-<span class="n">matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (3, 4)</span>
-</pre></div>
-</div>
-</section>
-<section id="interactive-slider-configuration">
-<h3>Interactive Slider Configuration<a class="headerlink" href="#interactive-slider-configuration" title="Link to this heading">¶</a></h3>
-<p>Constants can be configured for interactive exploration:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Configure slider properties</span>
-<span class="n">param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-    <span class="n">value</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
-    <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-    <span class="n">upper_bound</span><span class="o">=</span><span class="mf">10.0</span>
-<span class="p">)</span>
-
-<span class="c1"># Access slider configuration</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Start: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">slider_start</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>      <span class="c1"># 0.0</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;End: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">slider_end</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>          <span class="c1"># 10.0</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Step: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">slider_step_size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>   <span class="c1"># 0.1</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Togglable: </span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">is_togglable</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># True (for floats)</span>
-</pre></div>
-</div>
-</section>
-<section id="stan-code-integration">
-<h3>Stan Code Integration<a class="headerlink" href="#stan-code-integration" title="Link to this heading">¶</a></h3>
-<p>Constants integrate seamlessly with Stan code generation:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Stan data type</span>
-<span class="n">dtype</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># &quot;real&lt;lower=0, upper=10&gt;&quot;</span>
-
-<span class="c1"># Stan parameter declaration</span>
-<span class="n">declaration</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get_stan_parameter_declaration</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">declaration</span><span class="p">)</span>  <span class="c1"># &quot;real&lt;lower=0, upper=10&gt; param_name&quot;</span>
-</pre></div>
-</div>
-</section>
-<section id="pytorch-integration">
-<h3>PyTorch Integration<a class="headerlink" href="#pytorch-integration" title="Link to this heading">¶</a></h3>
-<p>Constants provide tensor representations for PyTorch compatibility:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-
-<span class="c1"># Create constant</span>
-<span class="n">weights</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]))</span>
-
-<span class="c1"># Get PyTorch tensor</span>
-<span class="n">tensor</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">torch_parametrization</span>
-<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">tensor</span><span class="p">))</span>  <span class="c1"># &lt;class &#39;torch.Tensor&#39;&gt;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># torch.float32</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="usage-patterns">
-<h2>Usage Patterns<a class="headerlink" href="#usage-patterns" title="Link to this heading">¶</a></h2>
-<section id="model-hyperparameters">
-<h3>Model Hyperparameters<a class="headerlink" href="#model-hyperparameters" title="Link to this heading">¶</a></h3>
-<p>Constants are commonly used for model hyperparameters:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BayesianRegression</span><span class="p">(</span><span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-        <span class="c1"># Hyperparameters as constants</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">prior_mu</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">prior_sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">noise_alpha</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">noise_beta</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-
-        <span class="c1"># Model parameters</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prior_mu</span><span class="p">,</span>
-            <span class="n">sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prior_sigma</span><span class="p">,</span>
-            <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],)</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">noise</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span>
-            <span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">noise_alpha</span><span class="p">,</span>
-            <span class="n">beta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">noise_beta</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Likelihood</span>
-        <span class="n">predictions</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">observations</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
-            <span class="n">mu</span><span class="o">=</span><span class="n">predictions</span><span class="p">,</span>
-            <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">noise</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">observations</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
-
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observations</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="design-matrices-and-fixed-data">
-<h3>Design Matrices and Fixed Data<a class="headerlink" href="#design-matrices-and-fixed-data" title="Link to this heading">¶</a></h3>
-<p>Constants handle experimental design and fixed data:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Experimental design</span>
-<span class="n">treatment_matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">design_matrix</span><span class="p">)</span>
-<span class="n">time_points</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">measurement_times</span><span class="p">)</span>
-
-<span class="c1"># Fixed experimental conditions</span>
-<span class="n">temperature</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">298.15</span><span class="p">)</span>  <span class="c1"># Kelvin</span>
-<span class="n">pressure</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">1.013</span><span class="p">)</span>      <span class="c1"># bar</span>
-
-<span class="c1"># Use in model</span>
-<span class="n">reaction_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">measured_rate</span> <span class="o">=</span> <span class="n">reaction_rate</span> <span class="o">*</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
-    <span class="o">-</span><span class="n">activation_energy</span> <span class="o">/</span> <span class="p">(</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">temperature</span><span class="p">)</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="prior-predictive-simulation">
-<h3>Prior Predictive Simulation<a class="headerlink" href="#prior-predictive-simulation" title="Link to this heading">¶</a></h3>
-<p>Constants enable prior predictive checks by providing fixed reference values:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define model with constant reference</span>
-<span class="n">true_effect_size</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># Known for simulation</span>
-
-<span class="c1"># Model parameters</span>
-<span class="n">estimated_effect</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">measurement_noise</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-
-<span class="c1"># Simulated observations</span>
-<span class="n">simulated_data</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
-    <span class="n">mu</span><span class="o">=</span><span class="n">true_effect_size</span><span class="p">,</span>  <span class="c1"># Use constant for simulation</span>
-    <span class="n">sigma</span><span class="o">=</span><span class="n">measurement_noise</span>
-<span class="p">)</span>
-
-<span class="c1"># Prior predictive sampling</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">simulated_data</span><span class="p">)</span>
-<span class="n">prior_samples</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">prior_predictive</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="interactive-model-exploration">
-<h3>Interactive Model Exploration<a class="headerlink" href="#interactive-model-exploration" title="Link to this heading">¶</a></h3>
-<p>Constants with slider support enable interactive model exploration:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interactive hyperparameters</span>
-<span class="n">explore_sigma</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-    <span class="n">value</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-    <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-    <span class="n">upper_bound</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
-    <span class="n">togglable</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-
-<span class="c1"># Model with interactive parameter</span>
-<span class="n">test_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">explore_sigma</span><span class="p">)</span>
-
-<span class="c1"># In Jupyter notebooks, this enables interactive widgets</span>
-<span class="c1"># Users can adjust explore_sigma and see effects on model</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="validation-and-error-handling">
-<h2>Validation and Error Handling<a class="headerlink" href="#validation-and-error-handling" title="Link to this heading">¶</a></h2>
-<section id="comprehensive-validation">
-<h3>Comprehensive Validation<a class="headerlink" href="#comprehensive-validation" title="Link to this heading">¶</a></h3>
-<p>Constants perform extensive validation during construction:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Bound checking</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">invalid</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-        <span class="n">value</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
-        <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">upper_bound</span><span class="o">=</span><span class="mf">3.0</span>  <span class="c1"># value exceeds upper bound</span>
-    <span class="p">)</span>
-<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Validation error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="c1"># Uniformity enforcement</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">non_uniform</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-        <span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>
-        <span class="n">enforce_uniformity</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># All values must be identical</span>
-    <span class="p">)</span>
-<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Uniformity error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="type-safety">
-<h3>Type Safety<a class="headerlink" href="#type-safety" title="Link to this heading">¶</a></h3>
-<p>Constants ensure type safety in model construction:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Automatic type detection prevents issues</span>
-<span class="n">integer_constant</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
-<span class="n">float_constant</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="mf">42.0</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="n">integer_constant</span><span class="o">.</span><span class="n">BASE_STAN_DTYPE</span><span class="p">)</span>  <span class="c1"># &quot;int&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">float_constant</span><span class="o">.</span><span class="n">BASE_STAN_DTYPE</span><span class="p">)</span>   <span class="c1"># &quot;real&quot;</span>
-
-<span class="c1"># This ensures proper Stan code generation</span>
-<span class="n">int_declaration</span> <span class="o">=</span> <span class="n">integer_constant</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">()</span>    <span class="c1"># &quot;int&quot;</span>
-<span class="n">real_declaration</span> <span class="o">=</span> <span class="n">float_constant</span><span class="o">.</span><span class="n">get_stan_dtype</span><span class="p">()</span>     <span class="c1"># &quot;real&quot;</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="best-practices">
-<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
-<ol class="arabic simple">
-<li><p><strong>Use descriptive names</strong> for constants to improve model readability</p></li>
-<li><p><strong>Set appropriate bounds</strong> for parameters that have natural constraints</p></li>
-<li><p><strong>Enable interactivity</strong> for constants you want to explore</p></li>
-<li><p><strong>Enforce uniformity</strong> when symmetric priors are required</p></li>
-<li><p><strong>Validate inputs</strong> by setting bounds on physical parameters</p></li>
-<li><p><strong>Document units</strong> and meanings of constant values</p></li>
-<li><p><strong>Group related constants</strong> in model construction for clarity</p></li>
-</ol>
-<p>Constants provide the foundation for robust, interpretable Bayesian models by ensuring that fixed values are properly handled throughout the modeling workflow.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prior_precision</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-    <span class="mf">1.0</span><span class="p">,</span>
-    <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-    <span class="n">upper_bound</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
-    <span class="n">togglable</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Allow interactive tuning</span>
-<span class="p">)</span>
-
-<span class="c1"># Prior distributions using constants</span>
-<span class="n">coefficients</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
-    <span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-    <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">prior_precision</span><span class="p">)</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Design Matrix Integration:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">build_design_matrix_model</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build model with design matrix constant.&quot;&quot;&quot;</span>
-
-    <span class="c1"># Create design matrix from formula and data</span>
-    <span class="c1"># (This would use a formula parser in practice)</span>
-    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)),</span>  <span class="c1"># Intercept</span>
-        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">],</span>
-        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;x2&#39;</span><span class="p">],</span>
-        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;x2&#39;</span><span class="p">]</span>  <span class="c1"># Interaction</span>
-    <span class="p">])</span>
-
-    <span class="c1"># Design matrix as constant</span>
-    <span class="n">design_matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-
-    <span class="c1"># Coefficients as parameters</span>
-    <span class="n">coefficients</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
-        <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],)</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Linear predictor</span>
-    <span class="n">linear_pred</span> <span class="o">=</span> <span class="n">design_matrix</span> <span class="o">@</span> <span class="n">coefficients</span>
-
-    <span class="k">return</span> <span class="n">linear_pred</span><span class="p">,</span> <span class="n">coefficients</span>
-</pre></div>
-</div>
-</section>
-<section id="memory-and-performance-considerations">
-<h2>Memory and Performance Considerations<a class="headerlink" href="#memory-and-performance-considerations" title="Link to this heading">¶</a></h2>
-<p><strong>Efficient Constant Sharing:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Share constants across model components</span>
-<span class="n">shared_design_matrix</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">X_data</span><span class="p">)</span>
-
-<span class="c1"># Multiple parameters using the same constant</span>
-<span class="n">beta1</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">shared_design_matrix</span> <span class="o">@</span> <span class="n">theta1</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">beta2</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">shared_design_matrix</span> <span class="o">@</span> <span class="n">theta2</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="c1"># shared_design_matrix is referenced, not copied</span>
-</pre></div>
-</div>
-<p><strong>Large Array Handling:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Constants handle large arrays efficiently</span>
-<span class="n">large_data</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10000</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
-
-<span class="c1"># NumPy array is stored directly, not copied</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Memory efficient: </span><span class="si">{</span><span class="n">large_data</span><span class="o">.</span><span class="n">value</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="n">large_data</span><span class="o">.</span><span class="n">_torch_parametrization</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="error-handling-and-validation">
-<h2>Error Handling and Validation<a class="headerlink" href="#error-handling-and-validation" title="Link to this heading">¶</a></h2>
-<p><strong>Comprehensive Input Validation:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Type validation</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">invalid_type</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="s2">&quot;not_a_number&quot;</span><span class="p">)</span>
-<span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Type validation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="c1"># Shape consistency validation</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="c1"># Explicit shape that doesn&#39;t match value</span>
-    <span class="n">inconsistent</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span>
-        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># Doesn&#39;t match actual shape</span>
-    <span class="p">)</span>
-<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Shape validation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Bound Checking:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">validate_constant_bounds</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate constant bounds before creation.&quot;&quot;&quot;</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">const</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-            <span class="n">value</span><span class="p">,</span>
-            <span class="n">lower_bound</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span>
-            <span class="n">upper_bound</span><span class="o">=</span><span class="n">upper</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">const</span>
-    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bound validation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
-</pre></div>
-</div>
-</section>
-<section id="interactive-model-building">
-<h2>Interactive Model Building<a class="headerlink" href="#interactive-model-building" title="Link to this heading">¶</a></h2>
-<p><strong>Dynamic Constant Modification:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">create_interactive_model</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create model with interactive constants.&quot;&quot;&quot;</span>
-
-    <span class="c1"># Togglable hyperparameters</span>
-    <span class="n">prior_mean</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-        <span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">lower_bound</span><span class="o">=-</span><span class="mf">5.0</span><span class="p">,</span>
-        <span class="n">upper_bound</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
-        <span class="n">togglable</span><span class="o">=</span><span class="kc">True</span>
-    <span class="p">)</span>
-
-    <span class="n">prior_scale</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-        <span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-        <span class="n">upper_bound</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
-        <span class="n">togglable</span><span class="o">=</span><span class="kc">True</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Model components using interactive constants</span>
-    <span class="n">theta</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">prior_mean</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">prior_scale</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s1">&#39;parameter&#39;</span><span class="p">:</span> <span class="n">theta</span><span class="p">,</span>
-        <span class="s1">&#39;interactive_constants&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">prior_mean</span><span class="p">,</span> <span class="n">prior_scale</span><span class="p">]</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-<p><strong>Slider Property Access:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Access slider configuration for UI building</span>
-<span class="n">const</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span>
-    <span class="mf">2.5</span><span class="p">,</span>
-    <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-    <span class="n">upper_bound</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
-    <span class="n">togglable</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-
-<span class="n">slider_config</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;start&#39;</span><span class="p">:</span> <span class="n">const</span><span class="o">.</span><span class="n">slider_start</span><span class="p">,</span>      <span class="c1"># 0.0</span>
-    <span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="n">const</span><span class="o">.</span><span class="n">slider_end</span><span class="p">,</span>          <span class="c1"># 10.0</span>
-    <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="n">const</span><span class="o">.</span><span class="n">slider_step_size</span><span class="p">,</span>   <span class="c1"># 0.1</span>
-    <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">const</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>       <span class="c1"># 2.5</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</section>
-<section id="id1">
-<h2>Best Practices<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
-<ol class="arabic simple">
-<li><p><strong>Use appropriate bounds</strong> to constrain constants to valid ranges</p></li>
-<li><p><strong>Enable togglability</strong> for hyperparameters you want to explore interactively</p></li>
-<li><p><strong>Share constants</strong> across model components to reduce memory usage</p></li>
-<li><p><strong>Validate inputs</strong> with bound checking for robust model specification</p></li>
-<li><p><strong>Use descriptive names</strong> for constants to improve model interpretability</p></li>
-<li><p><strong>Enforce uniformity</strong> when modeling symmetric priors or constraints</p></li>
-<li><p><strong>Consider data types</strong> (int vs float) for appropriate Stan code generation</p></li>
-</ol>
-<p>The Constant class provides essential infrastructure for incorporating fixed values into probabilistic models while maintaining consistency with SciStanPy’s component architecture and multi-backend support.</p>
-</section>
 </section>
 
 

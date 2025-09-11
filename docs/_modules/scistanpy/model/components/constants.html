@@ -44,6 +44,32 @@
 <span class="sd">The Constant class integrates with SciStanPy&#39;s model component hierarchy while</span>
 <span class="sd">providing specialized functionality for fixed-value components. It is particularly</span>
 <span class="sd">important for interactive model manipulation during prior predictive checks.</span>
+
+<span class="sd">**Basic Usage:**</span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">    import scistanpy as ssp</span>
+<span class="sd">    import numpy as np</span>
+
+<span class="sd">    # Scalar constants</span>
+<span class="sd">    learning_rate = ssp.constants.Constant(0.01)</span>
+<span class="sd">    n_samples = ssp.constants.Constant(100)</span>
+
+<span class="sd">    # Array constants</span>
+<span class="sd">    design_matrix = ssp.constants.Constant(X_data)</span>
+<span class="sd">    time_points = ssp.constants.Constant(np.linspace(0, 10, 11))</span>
+
+<span class="sd">    # Constants with bounds</span>
+<span class="sd">    probability = ssp.constants.Constant(0.5, lower_bound=0.0, upper_bound=1.0)</span>
+
+<span class="sd">    # Force constant to NOT be modifiable in interactive contexts</span>
+<span class="sd">    temperature = ssp.constants.Constant(</span>
+<span class="sd">        300.0,</span>
+<span class="sd">        lower_bound=250.0,</span>
+<span class="sd">        upper_bound=350.0,</span>
+<span class="sd">        togglable=False</span>
+<span class="sd">    )</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -95,25 +121,39 @@
 <span class="sd">    :raises ValueError: If enforce_uniformity=True but array has non-uniform values</span>
 
 <span class="sd">    Key Features:</span>
+
 <span class="sd">    - **Automatic Type Inference**: Determines appropriate Stan data types</span>
 <span class="sd">    - **Bound Checking**: Validates values against optional constraints</span>
 <span class="sd">    - **Interactive Support**: Configures sliders for model exploration</span>
 
 <span class="sd">    The class automatically handles:</span>
+
 <span class="sd">    - Conversion of Python scalars to NumPy arrays</span>
 <span class="sd">    - Shape inference from array inputs</span>
 <span class="sd">    - Data type detection for Stan code generation</span>
 <span class="sd">    - Bound validation at initialization</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Scalar constant</span>
-<span class="sd">        &gt;&gt;&gt; mu_prior = Constant(0.0)</span>
-<span class="sd">        &gt;&gt;&gt; # Array constant with bounds</span>
-<span class="sd">        &gt;&gt;&gt; design_matrix = Constant(X_data, lower_bound=0.0)</span>
-<span class="sd">        &gt;&gt;&gt; # Integer constant</span>
-<span class="sd">        &gt;&gt;&gt; n_obs = Constant(100)</span>
-<span class="sd">        &gt;&gt;&gt; # Uniform array (enforced)</span>
-<span class="sd">        &gt;&gt;&gt; alpha_symmetric = Constant([1.0, 1.0, 1.0], enforce_uniformity=True)</span>
+<span class="sd">    .. hint::</span>
+<span class="sd">        Under the hood, the :py:meth:`Model.prior_predictive()</span>
+<span class="sd">        &lt;scistanpy.model.model.Model.prior_predictive&gt;` method parses the model</span>
+<span class="sd">        components to identify constants. Any identified constant with ``is_togglable=True``</span>
+<span class="sd">        is represented as an interactive slider in the generated interface. Updating</span>
+<span class="sd">        slider values updates the underlying constant value used in the model.</span>
+
+<span class="sd">    .. important::</span>
+<span class="sd">        By default, constants with floating-point values are considered ``togglable=True``,</span>
+<span class="sd">        allowing interactive modification. Integer-valued constants are ``togglable=False``</span>
+<span class="sd">        by default to prevent invalid states. As a result, it is important to specify</span>
+<span class="sd">        true data types when defining constants to ensure desired behavior. For example,</span>
+
+<span class="sd">        &gt;&gt;&gt; n = ssp.Constant(100)  # n is not togglable</span>
+<span class="sd">        &gt;&gt;&gt; n = ssp.Constant(100.0)  # n is togglable</span>
+
+<span class="sd">        This is also important when defining parameters, as raw Python integers and</span>
+<span class="sd">        floats are converted to constants interally. For example,</span>
+
+<span class="sd">        &gt;&gt;&gt; mean = ssp.Normal(mu = 0, sigma = 1)  # Neither mu nor sigma are togglable</span>
+<span class="sd">        &gt;&gt;&gt; mean = ssp.Normal(mu = 0.0, sigma = 1.0)  # Both mu and sigma are togglable</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -234,8 +274,9 @@
 <span class="sd">        :returns: Empty string (constants don&#39;t have right-hand side expressions)</span>
 <span class="sd">        :rtype: str</span>
 
-<span class="sd">        Constants don&#39;t participate in Stan probability statements as they</span>
-<span class="sd">        represent fixed data values, so this method returns an empty string.</span>
+<span class="sd">        There is no right-hand side expression for constants, as they represent</span>
+<span class="sd">        fixed values rather than derived quantities. Thus, this method returns</span>
+<span class="sd">        an empty string.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
 
@@ -293,7 +334,8 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">slider_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get starting value for interactive sliders.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get starting value for interactive sliders when constant is used for</span>
+<span class="sd">        interactive prior predictive checks.</span>
 
 <span class="sd">        :returns: Appropriate starting value for sliders</span>
 <span class="sd">        :rtype: custom_types.Float</span>
@@ -310,7 +352,8 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">slider_end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get ending value for interactive sliders.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get ending value for interactive sliders when constant is used for</span>
+<span class="sd">        interactive prior predictive checks.</span>
 
 <span class="sd">        :returns: Appropriate ending value for sliders</span>
 <span class="sd">        :rtype: custom_types.Float</span>
@@ -327,7 +370,8 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">slider_step_size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;custom_types.Float&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get step size for interactive sliders.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get step size for interactive sliders when constant is used for</span>
+<span class="sd">        interactive prior predictive checks.</span>
 
 <span class="sd">        :returns: Appropriate step size for sliders</span>
 <span class="sd">        :rtype: custom_types.Float</span>
