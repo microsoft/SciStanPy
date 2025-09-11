@@ -5,18 +5,23 @@
 
 This module defines the foundational abstract class that forms the core
 architecture of SciStanPy model components, including parameters, constants, and
-transformations.
+transformations. Users typically do not interact with this module directly; instead,
+they use the concrete implementations provided in the
+:py:mod:`scistanpy.model.components.constants` and
+:py:mod:`scistanpy.model.components.parameters` submodules.
 
 The module establishes the common functionality that all model components must
 implement.
 
 Core Abstractions:
+
     - **Component Hierarchy**: Parent-child relationships between model elements
     - **Stan Code Generation**: Automatic translation to Stan programming language
     - **Shape Broadcasting**: Automatic handling of multi-dimensional parameters
     - **Dependency Management**: Tracking and validation of component relationships
 
 Key Responsibilities:
+
     - Define abstract interfaces for model component behavior
     - Implement common functionality for shape handling and validation
     - Provide Stan code generation template
@@ -24,15 +29,17 @@ Key Responsibilities:
     - Handle parameter bounds and constraints
     - Support sampling and drawing from component distributions
 
-Stan Integration:
-    The abstract base provides core Stan code generation capabilities including:
+Stan Integration: The abstract base provides core Stan code generation capabilities
+including:
+
     - Variable declarations with appropriate types and constraints
     - Index management for multi-dimensional arrays
     - Target increment and transformation assignment generation
     - Support function inclusion for custom distributions
 
-Component Relationships:
-    The hierarchy system enables complex model construction through:
+Component Relationships: The hierarchy system enables complex model construction
+through:
+
     - Parent-child linkage for dependency tracking
     - Parameter name resolution and validation
     - Automatic shape broadcasting across related components
@@ -75,7 +82,10 @@ class AbstractModelComponent(ABC):
 
     This class defines the fundamental interface and common functionality for
     all elements in a SciStanPy probabilistic model. It provides the foundation
-    for parameters, constants, transformations, and other model components.
+    for :py:mod:`~scistanpy.model.components.parameters`,
+    :py:mod:`~scistanpy.model.components.constants`,
+    :py:mod:`~scistanpy.model.components.transformations.transformed_parameters`,
+    and other model components.
 
     :param shape: Shape of the component array. Defaults to scalar ().
     :type shape: Union[tuple[custom_types.Integer, ...], custom_types.Integer]
@@ -94,13 +104,8 @@ class AbstractModelComponent(ABC):
     :cvar FORCE_PARENT_NAME: Whether to force naming of parent variables in Stan code
     :cvar FORCE_LOOP_RESET: Whether to force loop reset in Stan code
 
-    :ivar _model_varname: SciStanPy variable name for this component
-    :ivar _parents: Dictionary mapping parameter names to parent components
-    :ivar _component_to_paramname: Reverse mapping from components to parameter names
-    :ivar _shape: Shape tuple for this component
-    :ivar _children: List of child components that depend on this one
-
     The class provides core functionality for:
+
     - Component relationship management (parents and children)
     - Shape validation and broadcasting
     - Stan code generation for variable declarations and operations
@@ -113,24 +118,68 @@ class AbstractModelComponent(ABC):
 
     # Define allowed ranges for the parameters used to define this one
     POSITIVE_PARAMS: set[str] = set()
+    """Class variable giving the set of parent parameter names that must be positive."""
+
     NEGATIVE_PARAMS: set[str] = set()
+    """Class variable giving the set of parent parameter names that must be negative."""
+
     SIMPLEX_PARAMS: set[str] = set()
+    """
+    Class variable giving the set of parent parameter names that must be simplexes.
+    The sum over the last dimension for any parent parameter named here must equal 1.
+    """
+
     LOG_SIMPLEX_PARAMS: set[str] = set()
+    """
+    Class variable giving the set of parent parameter names that must be log-simplexes.
+    The sum of exponentials over the last dimension for any parent parameter named
+    here must equal 1
+    """
 
     # Define the stan data type
     BASE_STAN_DTYPE: Literal["real", "int", "simplex"] = "real"
+    """Class variable giving the base Stan data type for this component."""
 
     # Define the bounds for this parameter
     LOWER_BOUND: Optional["custom_types.Float" | "custom_types.Integer"] = None
+    """
+    Class variable giving the lower bound constraint for component values. None
+    if unbounded.
+    """
+
     UPPER_BOUND: Optional["custom_types.Float" | "custom_types.Integer"] = None
+    """
+    Class variable giving the upper bound constraint for component values. None
+    if unbounded.
+    """
+
     IS_SIMPLEX: bool = False
+    """
+    Class variable giving whether this component represents a simplex (elements
+    over last dim sum to 1).
+    """
+
     IS_LOG_SIMPLEX: bool = False
+    """
+    Class variable giving whether this component represents a log-simplex (exponentials
+    over last dim sum to 1).
+    """
 
     # Do we force parents of this parameter to be named in Stan code?
     FORCE_PARENT_NAME: bool = False
+    """
+    Class variable noting whether to force naming of parent variables in Stan code.
+    If ``True`` and not provided by the user, parent parameters will be assigned
+    names automatically in the Stan code.
+    """
 
     # Do we want the loop to be reset in Stan code?
     FORCE_LOOP_RESET: bool = False
+    """
+    Class variable noting whether to force loop reset in Stan code. This is useful
+    where this parameter's shape makes it appear nestable with another inside the
+    same loop, but it actually is not.
+    """
 
     def __init__(  # pylint: disable=unused-argument
         self,
@@ -402,12 +451,13 @@ class AbstractModelComponent(ABC):
 
         This method generates proper Stan variable names for multi-dimensional
         components, handling:
+
         - Singleton dimension skipping
         - Index offset management for broadcasting
         - Dimension range selection
         - Automatic vectorization of the last dimension
 
-        The offset parameter accounts for implicit singleton dimensions added
+        The offset parameter accounts for implicit singleton dimensions prepended
         during broadcasting between parent and child components.
         """
         # Offset must be >= 0
@@ -490,6 +540,7 @@ class AbstractModelComponent(ABC):
         :raises AssertionError: If drawn values violate component bounds or constraints
 
         This method implements the complete sampling workflow:
+
         1. Recursively draws from parent components if not already drawn
         2. Collects parent samples for the current level
         3. Draws n samples from this component using parent values
@@ -497,6 +548,7 @@ class AbstractModelComponent(ABC):
         5. Returns samples and updates the global draw cache
 
         The method enforces constraint validation including:
+
         - Lower and upper bound checking
         - Simplex sum-to-one validation
         - Parameter type constraint validation
@@ -579,11 +631,13 @@ class AbstractModelComponent(ABC):
 
         This method enables systematic traversal of the model dependency graph
         in either direction. Each tuple contains:
+
         - Recursion depth relative to the starting component
         - The current component in the traversal
         - The relative component (child if walking down, parent if walking up)
 
         Tree traversal is useful for:
+
         - Model structure analysis and visualization
         - Dependency validation and cycle detection
         - Code generation ordering
@@ -625,6 +679,7 @@ class AbstractModelComponent(ABC):
         if at least one of them is 1 (singleton).
 
         Shape compatibility is important for:
+
         - Determining indexing strategies
         - Validating broadcasting operations
         - Optimizing Stan code generation
@@ -662,6 +717,7 @@ class AbstractModelComponent(ABC):
         The default implementation returns an empty list.
 
         Custom components may override this method to include:
+
         - Custom distribution definitions
         - Helper function implementations
         - Include statements for external function libraries
@@ -672,7 +728,9 @@ class AbstractModelComponent(ABC):
     def get_transformation_assignment(
         self, index_opts: tuple[str, ...]  # pylint: disable=unused-argument
     ) -> str:
-        """Generate Stan code for parameter transformation assignments.
+        """Generate Stan code for parameter transformation assignments. This is
+        the statement that appears in the ``transformed parameters`` block of the
+        Stan program.
 
         :param index_opts: Index variable names for multi-dimensional access
         :type index_opts: tuple[str, ...]
@@ -693,7 +751,8 @@ class AbstractModelComponent(ABC):
     def get_target_incrementation(
         self, index_opts: tuple[str, ...]  # pylint: disable=unused-argument
     ) -> str:
-        """Generate Stan code for log-probability target increments.
+        """Generate Stan code for log-probability target increments. This is the
+        statement that appears in the ``model`` block of the Stan program.
 
         :param index_opts: Index variable names for multi-dimensional access
         :type index_opts: tuple[str, ...]
@@ -728,9 +787,11 @@ class AbstractModelComponent(ABC):
         This method calculates the appropriate index offset when accessing
         parent components that have different numbers of dimensions. The
         offset accounts for implicit singleton dimensions that are added
-        during broadcasting operations.
+        during broadcasting operations (e.g., the offset between ``x`` with shape
+        (10,) and ``y`` with shape (2, 10) would be "1").
 
         Index offsets are essential for:
+
         - Proper multi-dimensional array indexing in Stan code
         - Handling broadcasting between components of different shapes
         - Maintaining correct dimension alignment in generated code
@@ -773,6 +834,7 @@ class AbstractModelComponent(ABC):
 
         The base implementation in this abstract class provides common
         functionality for:
+
         - Processing parent component relationships
         - Handling index offsets and dimension slicing
         - Determining when to use variable names vs. inline expressions
@@ -833,7 +895,7 @@ class AbstractModelComponent(ABC):
         return model_components
 
     def declare_stan_variable(self, varname: str, force_basetype: bool = False) -> str:
-        """Generate Stan variable declaration with appropriate type.
+        """Generate Stan variable declaration with appropriate type and bounds.
 
         :param varname: Variable name to declare
         :type varname: str
@@ -843,8 +905,9 @@ class AbstractModelComponent(ABC):
         :returns: Complete Stan variable declaration
         :rtype: str
 
-        This method combines the Stan data type (from get_stan_dtype) with
-        the variable name to create a complete variable declaration suitable
+        This method combines the Stan data type (from
+        :py:meth:`~scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_stan_dtype`)
+        with the variable name to create a complete variable declaration suitable
         for use in Stan data, parameters, or other blocks.
         """
         return f"{self.get_stan_dtype(force_basetype)} {varname}"
@@ -857,11 +920,13 @@ class AbstractModelComponent(ABC):
 
         This method determines the appropriate loop nesting level for
         defining this component in Stan code. The depth is calculated as:
+
         - Number of dimensions minus one (last dimension is vectorized)
         - Minus trailing singleton dimensions (except the last)
         - Clipped to a minimum of zero
 
         Assignment depth affects:
+
         - Loop structure in generated Stan code
         - Index variable management
         - Vectorization opportunities
@@ -893,6 +958,7 @@ class AbstractModelComponent(ABC):
         :raises AssertionError: If unknown data type is encountered
 
         This method generates appropriate Stan data type declarations based on:
+
         - Base data type (real, int, simplex)
         - Component dimensionality
         - Bound constraints
@@ -1068,6 +1134,20 @@ class AbstractModelComponent(ABC):
 
         :returns: True if component has been assigned a model variable name
         :rtype: bool
+
+        Examples:
+            .. code-block:: python
+
+                # Example model with named and unnamed parameters
+                class MyModel(Model):
+                    def __init__(self):
+                        super().__init__()
+                        self.param1 = Parameter(...)  # is_named is True
+                        param2 = Parameter(...)       # is_named is False
+
+                # Outside of a model, is_named is always False
+                param = Parameter(...)
+                assert not param.is_named
         """
         return self._model_varname != ""
 
@@ -1078,8 +1158,10 @@ class AbstractModelComponent(ABC):
         :returns: Stan bounds specification (empty if no bounds)
         :rtype: str
 
-        This property formats lower and upper bounds into Stan's constraint
-        syntax. Returns an empty string if no bounds are specified.
+        This property formats
+        :py:attr:`~scistanpy.model.components.abstract_model_component.AbstractModelComponent.LOWER_BOUND`
+        and :py:attr:`~scistanpy.model.components.abstract_model_component.AbstractModelComponent.UPPER_BOUND`
+        into Stan's bound format. Returns an empty string if no bounds are specified.
         """
         # Format the lower and upper bounds
         lower = "" if self.LOWER_BOUND is None else f"lower={self.LOWER_BOUND}"
@@ -1105,15 +1187,17 @@ class AbstractModelComponent(ABC):
         :returns: Loop nesting level for this component
         :rtype: custom_types.Integer
 
-        This property provides convenient access to the assignment depth
-        calculation, which determines how deeply nested this component
-        should be in Stan's loop structure.
+        This is the property form of
+        :py:meth:`~scistanpy.model.components.abstract_model_component.AbstractModelComponent.get_assign_depth`
+        and provides convenient access to the assignment depth. It determines how
+        deeply nested this component should be in Stan's loop structure.
         """
         return self.get_assign_depth()
 
     @property
     def model_varname(self) -> str:
-        """Get or generate the SciStanPy variable name for this component.
+        """Get or generate the SciStanPy variable name for this component. Only
+        valid within a SciStanPy Model.
 
         :returns: Variable name for this component
         :rtype: str
@@ -1121,6 +1205,20 @@ class AbstractModelComponent(ABC):
         If a variable name has been explicitly assigned, returns that name.
         Otherwise, automatically generates a name based on child component
         relationships using dot notation for hierarchical names.
+
+        Examples:
+            .. code-block:: python
+
+                class MyModel(Model):
+                    def __init__(self):
+                        super().__init__()
+
+                        # Parameter without explicit name has auto-generated name
+                        # Name is "param2.mu" based on child relationship
+                        param1 = Parameter(...)  # model_varname is "param2.mu"
+
+                        # Explicitly named parameter
+                        param2 = Parameter(mu = self.param1) # model_varname is "param2"
         """
         # If the _model_varname variable is set, then we return it
         if self.is_named:
@@ -1161,13 +1259,12 @@ class AbstractModelComponent(ABC):
 
     @property
     def stan_model_varname(self) -> str:
-        """Get the Stan-compatible variable name for this component.
+        """Get the Stan-compatible variable name for this component. This is identical
+        to :py:attr:`~scistanpy.model.components.abstract_model_component.AbstractModelComponent.model_varname`,
+        but with dots replaced by double underscores.
 
         :returns: Stan variable name with dots replaced by double underscores
         :rtype: str
-
-        Converts the SciStanPy variable name to Stan-compatible format by
-        replacing dots with double underscores.
         """
         return self.model_varname.replace(".", "__")
 
@@ -1179,8 +1276,8 @@ class AbstractModelComponent(ABC):
         :rtype: dict[str, Constant]
 
         This property filters parent components to return only those that
-        are Constant instances, useful for identifying fixed values in
-        the model hierarchy.
+        are :py:class:`~scistanpy.model.components.constants.Constant` instances,
+        useful for identifying fixed values in the model hierarchy.
         """
         return {
             name: component
@@ -1204,8 +1301,8 @@ class AbstractModelComponent(ABC):
         :returns: Copy of the children list
         :rtype: list[AbstractModelComponent]
 
-        Returns a copy to prevent external modification of the internal
-        children list while allowing iteration and inspection.
+        Returns a shallow copy to prevent external modification of the internal
+        ``_children`` list while allowing iteration and inspection.
         """
         return self._children.copy()
 
@@ -1231,7 +1328,7 @@ class AbstractModelComponent(ABC):
 
         Observable components represent known data values rather than
         parameters to be inferred. The default implementation returns
-        False; subclasses may override for specific behavior.
+        ``False``; subclasses may override for specific behavior.
         """
         return False
 
@@ -1239,11 +1336,12 @@ class AbstractModelComponent(ABC):
     def force_name(self) -> bool:
         """Check whether this component should be explicitly named in Stan code.
 
-        :returns: True if any child forces parent naming
+        :returns: ``True`` if any child forces parent naming
         :rtype: bool
 
-        This property returns True if any child component has FORCE_PARENT_NAME
-        set to True, indicating that this component should be given an explicit
+        This property returns ``True`` if any child component has
+        :py:attr:`~scistanpy.model.components.abstract_model_component.AbstractModelComponent.FORCE_PARENT_NAME`
+        set to ``True``, indicating that this component should be given an explicit
         variable name in the generated Stan code rather than being inlined.
         """
         return any(child.FORCE_PARENT_NAME for child in self._children)
