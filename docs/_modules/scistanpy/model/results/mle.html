@@ -114,8 +114,6 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">model</span> <span class="k">as</span> <span class="n">ssp_model</span>
 
 
-<div class="viewcode-block" id="_log10_shift">
-<a class="viewcode-back" href="../../../../api/model/results/mle.html#scistanpy.model.results.mle._log10_shift">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">_log10_shift</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply log10 transformation with automatic shifting for non-positive values.</span>
 
@@ -147,14 +145,14 @@
     <span class="n">min_val</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
 
     <span class="c1"># Shift the arrays and apply log10</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">arg</span> <span class="o">-</span> <span class="n">min_val</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span></div>
-
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">arg</span> <span class="o">-</span> <span class="n">min_val</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="MLEInferenceRes">
 <a class="viewcode-back" href="../../../../api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MLEInferenceRes</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analysis interface for maximum likelihood estimation results.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analysis interface for bootstrapped samples from</span>
+<span class="sd">    :py:class`~scistanpy.model.results.mle.MLE` instances.</span>
 
 <span class="sd">    This class provides tools for analyzing and visualizing MLE</span>
 <span class="sd">    results from SciStanPy models. It wraps ArviZ InferenceData objects with</span>
@@ -170,21 +168,35 @@
 <span class="sd">    :raises ValueError: If required groups (posterior, posterior_predictive) are missing</span>
 
 <span class="sd">    The class expects the InferenceData object to contain:</span>
+
 <span class="sd">    - **posterior**: Samples from fitted parameter distributions</span>
 <span class="sd">    - **posterior_predictive**: Samples from observable distributions</span>
 <span class="sd">    - **observed_data**: Original observed data used for fitting</span>
 
 <span class="sd">    Key Capabilities:</span>
+
 <span class="sd">    - Posterior predictive checking with multiple visualization modes</span>
 <span class="sd">    - Quantitative model calibration assessment</span>
 <span class="sd">    - Interactive diagnostic dashboards</span>
 <span class="sd">    - Summary statistics computation and caching</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Load from MLE result</span>
-<span class="sd">        &gt;&gt;&gt; mle_analysis = mle_result.get_inference_obj()</span>
-<span class="sd">        &gt;&gt;&gt; # Run comprehensive diagnostics</span>
-<span class="sd">        &gt;&gt;&gt; dashboard = mle_analysis.run_ppc()</span>
+<span class="sd">       .. code-block:: python</span>
+
+<span class="sd">        import scistanpy as ssp</span>
+<span class="sd">        import numpy as np</span>
+
+<span class="sd">        # Get MLE results</span>
+<span class="sd">        mle_result = model.mle(data=observed_data)</span>
+
+<span class="sd">        # Create inference analysis object</span>
+<span class="sd">        mle_analysis = mle_result.get_inference_obj()</span>
+
+<span class="sd">        # Run comprehensive posterior predictive checking</span>
+<span class="sd">        dashboard = mle_analysis.run_ppc()</span>
+
+<span class="sd">        # Save results for later analysis</span>
+<span class="sd">        mle_analysis.save_netcdf(&#39;mle_analysis.nc&#39;)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inference_obj</span><span class="p">:</span> <span class="n">az</span><span class="o">.</span><span class="n">InferenceData</span> <span class="o">|</span> <span class="nb">str</span><span class="p">):</span>
@@ -310,7 +322,7 @@
 <span class="sd">        :raises ValueError: If diagnostics requested with single chain.</span>
 
 <span class="sd">        The computed statistics are automatically added to the InferenceData</span>
-<span class="sd">        object under the &#39;variable_summary_stats&#39; group for persistence.</span>
+<span class="sd">        object under the ``variable_summary_stats`` group for persistence.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # Compute basic statistics</span>
@@ -452,17 +464,10 @@
 
 <span class="sd">        :raises ValueError: If both display and return_deviance are True</span>
 
-<span class="sd">        Calibration Assessment Process:</span>
-<span class="sd">        1. Calculate quantiles of observed data relative to posterior predictive samples</span>
-<span class="sd">        2. Plot empirical CDF of these quantiles</span>
-<span class="sd">        3. Compare to ideal diagonal line (perfect calibration)</span>
-<span class="sd">        4. Compute absolute deviance as area difference between curves</span>
-
-<span class="sd">        Interpretation:</span>
-<span class="sd">        - Diagonal line indicates perfect calibration</span>
-<span class="sd">        - Curves above diagonal suggest model overconfidence or poor fit</span>
-<span class="sd">        - Curves below diagonal suggest model underconfidence or poor fit</span>
-<span class="sd">        - Deviance score of 0 indicates perfect calibration</span>
+<span class="sd">        Internally, this method is just a wrapper around</span>
+<span class="sd">        :py:func:`ssp.plotting.plot_calibration &lt;scistanpy.plotting.plot_calibration&gt;`.</span>
+<span class="sd">        See that function for a detailed description of the calibration assessment</span>
+<span class="sd">        method and returned plots.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # Visual assessment</span>
@@ -581,6 +586,7 @@
 <span class="sd">        :rtype: Union[hv.Layout, dict[str, hv.Overlay]]</span>
 
 <span class="sd">        Visualization Features:</span>
+
 <span class="sd">        - Confidence intervals shown as nested colored regions</span>
 <span class="sd">        - Observed data displayed as scatter points</span>
 <span class="sd">        - Optional rank transformation for better visualization of skewed data</span>
@@ -804,8 +810,12 @@
 
 <span class="sd">        This method provides a complete posterior predictive checking workflow by</span>
 <span class="sd">        combining multiple diagnostic approaches into a unified analysis. It runs</span>
-<span class="sd">        three complementary diagnostic procedures and presents them in an organized,</span>
-<span class="sd">        interactive dashboard.</span>
+<span class="sd">        the methods</span>
+<span class="sd">        :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.plot_posterior_predictive_samples`,</span>
+<span class="sd">        :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.plot_observed_quantiles`,</span>
+<span class="sd">        and :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.check_calibration`,</span>
+<span class="sd">        combining their outputs into either an interactive dashboard or a list of</span>
+<span class="sd">        individual plot dictionaries.</span>
 
 <span class="sd">        :param use_ranks: Whether to use ranks instead of raw values for x-axes.</span>
 <span class="sd">            Defaults to True.</span>
@@ -832,19 +842,14 @@
 <span class="sd">        :returns: Interactive dashboard or list of plot dictionaries</span>
 <span class="sd">        :rtype: Union[pn.Column, list[dict[str, hv.Overlay]]]</span>
 
-<span class="sd">        Comprehensive Analysis Components:</span>
-<span class="sd">        1. **Posterior Predictive Samples**: Shows observed data against uncertainty intervals</span>
-<span class="sd">        2. **Observed Quantiles**: Reveals systematic patterns in model calibration</span>
-<span class="sd">        3. **Calibration Assessment**: Quantifies overall model calibration quality</span>
-
 <span class="sd">        Dashboard Features:</span>
 <span class="sd">        - Interactive variable selection across all diagnostic types</span>
 <span class="sd">        - Consistent formatting and scaling across related plots</span>
 <span class="sd">        - Automatic layout optimization for comparison and analysis</span>
 <span class="sd">        - Widget-based navigation for multi-variable models</span>
 
-<span class="sd">        Analysis Workflow:</span>
-<span class="sd">        The method integrates three diagnostic perspectives:</span>
+<span class="sd">        Between the three plots generated, this method provides a holistic view of</span>
+<span class="sd">        model performance in terms of:</span>
 <span class="sd">        - **Predictive accuracy**: How well do predictions match observations?</span>
 <span class="sd">        - **Calibration quality**: Are prediction intervals properly calibrated?</span>
 <span class="sd">        - **Systematic bias**: Are there patterns indicating model inadequacy?</span>
@@ -923,12 +928,12 @@
 <a class="viewcode-back" href="../../../../api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes.from_disk">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_disk</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MLEInferenceRes&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load MLEInferenceRes object from saved NetCDF file.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load ``MLEInferenceRes`` object from saved NetCDF file.</span>
 
 <span class="sd">        :param path: Path to NetCDF file containing saved InferenceData</span>
 <span class="sd">        :type path: str</span>
 
-<span class="sd">        :returns: Reconstructed MLEInferenceRes object with all analysis capabilities</span>
+<span class="sd">        :returns: Reconstructed ``MLEInferenceRes`` object with all analysis capabilities</span>
 <span class="sd">        :rtype: MLEInferenceRes</span>
 
 <span class="sd">        This class method enables loading of previously saved analysis results,</span>
@@ -973,9 +978,14 @@
 <span class="sd">    sampling from the fitted distribution.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; param = MLEParam(&#39;mu&#39;, np.array([2.5]), fitted_normal_dist)</span>
-<span class="sd">        &gt;&gt;&gt; samples = param.draw(1000, seed=42)</span>
-<span class="sd">        &gt;&gt;&gt; print(f&quot;MLE estimate: {param.mle}&quot;)</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            # Run MLE fitting</span>
+<span class="sd">            mle_result = model.mle(data=observed_data)</span>
+
+<span class="sd">            # Access a specific parameter (an instance of `MLEParam`) describing</span>
+<span class="sd">            # the MLE results for that parameter</span>
+<span class="sd">            mle_param = mle_result.mu</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1052,8 +1062,9 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">MLE</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete maximum likelihood estimation results for a SciStanPy model.</span>
 
-<span class="sd">    This class encapsulates the full results of MLE parameter estimation,</span>
-<span class="sd">    including parameter estimates, fitted distributions, optimization</span>
+<span class="sd">    This class encapsulates the full results of a call to</span>
+<span class="sd">    :py:meth:`Model.mle() &lt;scistanpy.model.model.Model.mle&gt;` for MLE parameter</span>
+<span class="sd">    estimation, including parameter estimates, fitted distributions, optimization</span>
 <span class="sd">    diagnostics, and utilities for further analysis. It provides a</span>
 <span class="sd">    comprehensive interface for working with MLE results.</span>
 
@@ -1076,12 +1087,15 @@
 <span class="sd">    :raises ValueError: If MLE estimate keys are not subset of distribution keys</span>
 <span class="sd">    :raises ValueError: If parameter names conflict with existing attributes</span>
 
-<span class="sd">    The class automatically creates attributes for each parameter, allowing</span>
-<span class="sd">    direct access like `mle_result.mu` for a parameter named &#39;mu&#39;. It also</span>
-<span class="sd">    provides comprehensive utilities for visualization, sampling, and</span>
-<span class="sd">    integration with Bayesian analysis workflows.</span>
+<span class="sd">    The class automatically creates attributes for each parameter, allowing, e.g.,</span>
+<span class="sd">    direct access to a parameter named ``mu`` using the syntax ``mle_result.mu``.</span>
+<span class="sd">    It also exposes a</span>
+<span class="sd">    :py:meth:`method for bootstrapping &lt;scistanpy.model.results.mle.MLE.get_inference_obj&gt;`</span>
+<span class="sd">    samples from the fit model, providing a relatively cheap way to quantify uncertainty</span>
+<span class="sd">    around MLE estimates.</span>
 
 <span class="sd">    Key Features:</span>
+
 <span class="sd">    - Direct attribute access to individual parameter results</span>
 <span class="sd">    - Comprehensive loss trajectory tracking and visualization</span>
 <span class="sd">    - Efficient sampling from fitted parameter distributions</span>
@@ -1089,10 +1103,22 @@
 <span class="sd">    - Memory-efficient batch processing for large sample requests</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; mle_result = model.mle(data=observed_data)</span>
-<span class="sd">        &gt;&gt;&gt; mu_samples = mle_result.mu.draw(1000)  # Direct parameter access</span>
-<span class="sd">        &gt;&gt;&gt; loss_plot = mle_result.plot_loss_curve()</span>
-<span class="sd">        &gt;&gt;&gt; inference_data = mle_result.get_inference_obj()</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            # Run MLE fitting</span>
+<span class="sd">            mle_result = model.mle(data=observed_data)</span>
+
+<span class="sd">            # Access optimization diagnostics</span>
+<span class="sd">            loss_plot = mle_result.plot_loss_curve(logy=True)</span>
+
+<span class="sd">            # Sample from all fitted distributions</span>
+<span class="sd">            parameter_samples = mle_result.draw(n=1000, as_xarray=True)</span>
+
+<span class="sd">            # Sample from a specific parameter</span>
+<span class="sd">            mu_samples = mle_result.mu.draw(1000)</span>
+
+<span class="sd">            # Create inference object for detailed analysis</span>
+<span class="sd">            inference_obj = mle_result.get_inference_obj(n=2000)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1153,6 +1179,7 @@
 <span class="sd">        :returns: Interactive HoloViews plot of the loss curve</span>
 
 <span class="sd">        The plot automatically handles:</span>
+
 <span class="sd">        - Logarithmic scaling with proper handling of negative/zero values</span>
 <span class="sd">        - Appropriate axis labels and titles based on scaling choice</span>
 <span class="sd">        - Interactive features for detailed examination of convergence</span>
@@ -1230,10 +1257,12 @@
 <span class="sd">        :rtype: Union[dict[str, npt.NDArray], xr.Dataset]</span>
 
 <span class="sd">        Output Formats:</span>
+
 <span class="sd">        - Dictionary (default): Keys are parameter names, values are sample arrays</span>
 <span class="sd">        - xarray Dataset: Structured dataset with proper dimension labels and coordinates</span>
 
 <span class="sd">        This is particularly useful for:</span>
+
 <span class="sd">        - Uncertainty propagation through model predictions</span>
 <span class="sd">        - Bayesian model comparison and validation</span>
 <span class="sd">        - Posterior predictive checking with MLE-based approximations</span>
@@ -1278,9 +1307,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create ArviZ-compatible inference data object from MLE results.</span>
 
 <span class="sd">        This method constructs a comprehensive inference data structure that</span>
-<span class="sd">        integrates MLE results with the ArviZ ecosystem for Bayesian analysis.</span>
-<span class="sd">        It organizes parameter samples, observed data, and posterior predictive</span>
-<span class="sd">        samples into a standardized format.</span>
+<span class="sd">        integrates MLE results with the ArviZ ecosystem for Bayesian analysis. Samples</span>
+<span class="sd">        are bootstrapped from the fitted parameter distributions to approximate</span>
+<span class="sd">        posterior distributions. It organizes parameter samples, observed data,</span>
+<span class="sd">        and posterior predictive samples into a standardized format.</span>
 
 <span class="sd">        :param n: Number of samples to generate for the inference object. Defaults to 1000.</span>
 <span class="sd">        :type n: custom_types.Integer</span>
@@ -1293,21 +1323,41 @@
 <span class="sd">        :rtype: results.MLEInferenceRes</span>
 
 <span class="sd">        The resulting inference object contains:</span>
+
 <span class="sd">        - **Posterior samples**: Draws from fitted parameter distributions</span>
 <span class="sd">        - **Observed data**: Original data used for parameter estimation</span>
 <span class="sd">        - **Posterior predictive**: Samples from observable distributions</span>
 
 <span class="sd">        Data Organization:</span>
+
 <span class="sd">        - Latent parameters are stored in the main posterior group</span>
 <span class="sd">        - Observable parameters become posterior predictive samples</span>
 <span class="sd">        - Observed data is stored separately for comparison</span>
 <span class="sd">        - All data maintains proper dimensional structure and labeling</span>
 
 <span class="sd">        This enables:</span>
+
 <span class="sd">        - Integration with ArviZ plotting and diagnostic functions</span>
 <span class="sd">        - Model comparison</span>
 <span class="sd">        - Posterior predictive checking workflows</span>
 <span class="sd">        - Standardized reporting and visualization</span>
+
+<span class="sd">        .. important::</span>
+<span class="sd">            Samples are drawn using the optimized value of their parent parameters.</span>
+<span class="sd">            For example, if a parameter ``y`` is defined in the model as</span>
+<span class="sd">            ``y ~ Normal(mu, sigma)``, where ``mu`` and ``sigma`` are also parameters</span>
+<span class="sd">            in the model, then samples of ``y`` will be drawn using the MLE values</span>
+<span class="sd">            of ``mu`` and ``sigma``. This means that uncertainty in ``mu`` and</span>
+<span class="sd">            ``sigma`` is not propagated to ``y``. This is a limitation of the</span>
+<span class="sd">            MLE-based approach and should be considered when interpreting results.</span>
+
+<span class="sd">        .. important::</span>
+<span class="sd">            Related to the above, for root-level parameters with constant values</span>
+<span class="sd">            for parent parameters, sampling from the fit distribution is identical</span>
+<span class="sd">            to sampling from the prior distribution. For example, for a parameter,</span>
+<span class="sd">            ``y`` defined in the model as ``y ~ Normal(mu = 0.0, sigma = 1.0)``,</span>
+<span class="sd">            the values of ``mu`` and ``sigma`` will not change during fitting, so</span>
+<span class="sd">            the distribution of ``y`` will remain ``Normal(0.0, 1.0)``.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # Create inference object with default settings</span>

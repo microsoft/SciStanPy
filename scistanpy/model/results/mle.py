@@ -116,7 +116,8 @@ def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
 
 
 class MLEInferenceRes:
-    """Analysis interface for maximum likelihood estimation results.
+    """Analysis interface for bootstrapped samples from
+    :py:class`~scistanpy.model.results.mle.MLE` instances.
 
     This class provides tools for analyzing and visualizing MLE
     results from SciStanPy models. It wraps ArviZ InferenceData objects with
@@ -132,21 +133,35 @@ class MLEInferenceRes:
     :raises ValueError: If required groups (posterior, posterior_predictive) are missing
 
     The class expects the InferenceData object to contain:
+
     - **posterior**: Samples from fitted parameter distributions
     - **posterior_predictive**: Samples from observable distributions
     - **observed_data**: Original observed data used for fitting
 
     Key Capabilities:
+
     - Posterior predictive checking with multiple visualization modes
     - Quantitative model calibration assessment
     - Interactive diagnostic dashboards
     - Summary statistics computation and caching
 
     Example:
-        >>> # Load from MLE result
-        >>> mle_analysis = mle_result.get_inference_obj()
-        >>> # Run comprehensive diagnostics
-        >>> dashboard = mle_analysis.run_ppc()
+       .. code-block:: python
+
+        import scistanpy as ssp
+        import numpy as np
+
+        # Get MLE results
+        mle_result = model.mle(data=observed_data)
+
+        # Create inference analysis object
+        mle_analysis = mle_result.get_inference_obj()
+
+        # Run comprehensive posterior predictive checking
+        dashboard = mle_analysis.run_ppc()
+
+        # Save results for later analysis
+        mle_analysis.save_netcdf('mle_analysis.nc')
     """
 
     def __init__(self, inference_obj: az.InferenceData | str):
@@ -267,7 +282,7 @@ class MLEInferenceRes:
         :raises ValueError: If diagnostics requested with single chain.
 
         The computed statistics are automatically added to the InferenceData
-        object under the 'variable_summary_stats' group for persistence.
+        object under the ``variable_summary_stats`` group for persistence.
 
         Example:
             >>> # Compute basic statistics
@@ -406,17 +421,10 @@ class MLEInferenceRes:
 
         :raises ValueError: If both display and return_deviance are True
 
-        Calibration Assessment Process:
-        1. Calculate quantiles of observed data relative to posterior predictive samples
-        2. Plot empirical CDF of these quantiles
-        3. Compare to ideal diagonal line (perfect calibration)
-        4. Compute absolute deviance as area difference between curves
-
-        Interpretation:
-        - Diagonal line indicates perfect calibration
-        - Curves above diagonal suggest model overconfidence or poor fit
-        - Curves below diagonal suggest model underconfidence or poor fit
-        - Deviance score of 0 indicates perfect calibration
+        Internally, this method is just a wrapper around
+        :py:func:`ssp.plotting.plot_calibration <scistanpy.plotting.plot_calibration>`.
+        See that function for a detailed description of the calibration assessment
+        method and returned plots.
 
         Example:
             >>> # Visual assessment
@@ -532,6 +540,7 @@ class MLEInferenceRes:
         :rtype: Union[hv.Layout, dict[str, hv.Overlay]]
 
         Visualization Features:
+
         - Confidence intervals shown as nested colored regions
         - Observed data displayed as scatter points
         - Optional rank transformation for better visualization of skewed data
@@ -749,8 +758,12 @@ class MLEInferenceRes:
 
         This method provides a complete posterior predictive checking workflow by
         combining multiple diagnostic approaches into a unified analysis. It runs
-        three complementary diagnostic procedures and presents them in an organized,
-        interactive dashboard.
+        the methods
+        :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.plot_posterior_predictive_samples`,
+        :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.plot_observed_quantiles`,
+        and :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.check_calibration`,
+        combining their outputs into either an interactive dashboard or a list of
+        individual plot dictionaries.
 
         :param use_ranks: Whether to use ranks instead of raw values for x-axes.
             Defaults to True.
@@ -777,19 +790,14 @@ class MLEInferenceRes:
         :returns: Interactive dashboard or list of plot dictionaries
         :rtype: Union[pn.Column, list[dict[str, hv.Overlay]]]
 
-        Comprehensive Analysis Components:
-        1. **Posterior Predictive Samples**: Shows observed data against uncertainty intervals
-        2. **Observed Quantiles**: Reveals systematic patterns in model calibration
-        3. **Calibration Assessment**: Quantifies overall model calibration quality
-
         Dashboard Features:
         - Interactive variable selection across all diagnostic types
         - Consistent formatting and scaling across related plots
         - Automatic layout optimization for comparison and analysis
         - Widget-based navigation for multi-variable models
 
-        Analysis Workflow:
-        The method integrates three diagnostic perspectives:
+        Between the three plots generated, this method provides a holistic view of
+        model performance in terms of:
         - **Predictive accuracy**: How well do predictions match observations?
         - **Calibration quality**: Are prediction intervals properly calibrated?
         - **Systematic bias**: Are there patterns indicating model inadequacy?
@@ -865,12 +873,12 @@ class MLEInferenceRes:
 
     @classmethod
     def from_disk(cls, path: str) -> "MLEInferenceRes":
-        """Load MLEInferenceRes object from saved NetCDF file.
+        """Load ``MLEInferenceRes`` object from saved NetCDF file.
 
         :param path: Path to NetCDF file containing saved InferenceData
         :type path: str
 
-        :returns: Reconstructed MLEInferenceRes object with all analysis capabilities
+        :returns: Reconstructed ``MLEInferenceRes`` object with all analysis capabilities
         :rtype: MLEInferenceRes
 
         This class method enables loading of previously saved analysis results,
@@ -911,9 +919,14 @@ class MLEParam:
     sampling from the fitted distribution.
 
     Example:
-        >>> param = MLEParam('mu', np.array([2.5]), fitted_normal_dist)
-        >>> samples = param.draw(1000, seed=42)
-        >>> print(f"MLE estimate: {param.mle}")
+        .. code-block:: python
+
+            # Run MLE fitting
+            mle_result = model.mle(data=observed_data)
+
+            # Access a specific parameter (an instance of `MLEParam`) describing
+            # the MLE results for that parameter
+            mle_param = mle_result.mu
     """
 
     def __init__(
@@ -984,8 +997,9 @@ class MLEParam:
 class MLE:
     """Complete maximum likelihood estimation results for a SciStanPy model.
 
-    This class encapsulates the full results of MLE parameter estimation,
-    including parameter estimates, fitted distributions, optimization
+    This class encapsulates the full results of a call to
+    :py:meth:`Model.mle() <scistanpy.model.model.Model.mle>` for MLE parameter
+    estimation, including parameter estimates, fitted distributions, optimization
     diagnostics, and utilities for further analysis. It provides a
     comprehensive interface for working with MLE results.
 
@@ -1008,12 +1022,15 @@ class MLE:
     :raises ValueError: If MLE estimate keys are not subset of distribution keys
     :raises ValueError: If parameter names conflict with existing attributes
 
-    The class automatically creates attributes for each parameter, allowing
-    direct access like `mle_result.mu` for a parameter named 'mu'. It also
-    provides comprehensive utilities for visualization, sampling, and
-    integration with Bayesian analysis workflows.
+    The class automatically creates attributes for each parameter, allowing, e.g.,
+    direct access to a parameter named ``mu`` using the syntax ``mle_result.mu``.
+    It also exposes a
+    :py:meth:`method for bootstrapping <scistanpy.model.results.mle.MLE.get_inference_obj>`
+    samples from the fit model, providing a relatively cheap way to quantify uncertainty
+    around MLE estimates.
 
     Key Features:
+
     - Direct attribute access to individual parameter results
     - Comprehensive loss trajectory tracking and visualization
     - Efficient sampling from fitted parameter distributions
@@ -1021,10 +1038,22 @@ class MLE:
     - Memory-efficient batch processing for large sample requests
 
     Example:
-        >>> mle_result = model.mle(data=observed_data)
-        >>> mu_samples = mle_result.mu.draw(1000)  # Direct parameter access
-        >>> loss_plot = mle_result.plot_loss_curve()
-        >>> inference_data = mle_result.get_inference_obj()
+        .. code-block:: python
+
+            # Run MLE fitting
+            mle_result = model.mle(data=observed_data)
+
+            # Access optimization diagnostics
+            loss_plot = mle_result.plot_loss_curve(logy=True)
+
+            # Sample from all fitted distributions
+            parameter_samples = mle_result.draw(n=1000, as_xarray=True)
+
+            # Sample from a specific parameter
+            mu_samples = mle_result.mu.draw(1000)
+
+            # Create inference object for detailed analysis
+            inference_obj = mle_result.get_inference_obj(n=2000)
     """
 
     def __init__(
@@ -1083,6 +1112,7 @@ class MLE:
         :returns: Interactive HoloViews plot of the loss curve
 
         The plot automatically handles:
+
         - Logarithmic scaling with proper handling of negative/zero values
         - Appropriate axis labels and titles based on scaling choice
         - Interactive features for detailed examination of convergence
@@ -1157,10 +1187,12 @@ class MLE:
         :rtype: Union[dict[str, npt.NDArray], xr.Dataset]
 
         Output Formats:
+
         - Dictionary (default): Keys are parameter names, values are sample arrays
         - xarray Dataset: Structured dataset with proper dimension labels and coordinates
 
         This is particularly useful for:
+
         - Uncertainty propagation through model predictions
         - Bayesian model comparison and validation
         - Posterior predictive checking with MLE-based approximations
@@ -1202,9 +1234,10 @@ class MLE:
         """Create ArviZ-compatible inference data object from MLE results.
 
         This method constructs a comprehensive inference data structure that
-        integrates MLE results with the ArviZ ecosystem for Bayesian analysis.
-        It organizes parameter samples, observed data, and posterior predictive
-        samples into a standardized format.
+        integrates MLE results with the ArviZ ecosystem for Bayesian analysis. Samples
+        are bootstrapped from the fitted parameter distributions to approximate
+        posterior distributions. It organizes parameter samples, observed data,
+        and posterior predictive samples into a standardized format.
 
         :param n: Number of samples to generate for the inference object. Defaults to 1000.
         :type n: custom_types.Integer
@@ -1217,21 +1250,41 @@ class MLE:
         :rtype: results.MLEInferenceRes
 
         The resulting inference object contains:
+
         - **Posterior samples**: Draws from fitted parameter distributions
         - **Observed data**: Original data used for parameter estimation
         - **Posterior predictive**: Samples from observable distributions
 
         Data Organization:
+
         - Latent parameters are stored in the main posterior group
         - Observable parameters become posterior predictive samples
         - Observed data is stored separately for comparison
         - All data maintains proper dimensional structure and labeling
 
         This enables:
+
         - Integration with ArviZ plotting and diagnostic functions
         - Model comparison
         - Posterior predictive checking workflows
         - Standardized reporting and visualization
+
+        .. important::
+            Samples are drawn using the optimized value of their parent parameters.
+            For example, if a parameter ``y`` is defined in the model as
+            ``y ~ Normal(mu, sigma)``, where ``mu`` and ``sigma`` are also parameters
+            in the model, then samples of ``y`` will be drawn using the MLE values
+            of ``mu`` and ``sigma``. This means that uncertainty in ``mu`` and
+            ``sigma`` is not propagated to ``y``. This is a limitation of the
+            MLE-based approach and should be considered when interpreting results.
+
+        .. important::
+            Related to the above, for root-level parameters with constant values
+            for parent parameters, sampling from the fit distribution is identical
+            to sampling from the prior distribution. For example, for a parameter,
+            ``y`` defined in the model as ``y ~ Normal(mu = 0.0, sigma = 1.0)``,
+            the values of ``mu`` and ``sigma`` will not change during fitting, so
+            the distribution of ``y`` will remain ``Normal(0.0, 1.0)``.
 
         Example:
             >>> # Create inference object with default settings

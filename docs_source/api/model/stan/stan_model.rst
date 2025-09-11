@@ -15,21 +15,29 @@ Quickly navigate to a section:
 - :py:class:`~scistanpy.model.stan.stan_model.StanProgram`
 - :py:class:`~scistanpy.model.stan.stan_model.StanModel`
 
+Abstract Base for Stan Code Components
+--------------------------------------
 .. autoclass:: scistanpy.model.stan.stan_model.StanCodeBase
    :members:
    :undoc-members:
    :show-inheritance:
 
+For Loop Representation in Stan Code
+------------------------------------
 .. autoclass:: scistanpy.model.stan.stan_model.StanForLoop
    :members:
    :undoc-members:
    :show-inheritance:
 
+Base Stan Program Structure
+---------------------------
 .. autoclass:: scistanpy.model.stan.stan_model.StanProgram
    :members:
    :undoc-members:
    :show-inheritance:
 
+Stan Model Representation
+-------------------------
 .. autoclass:: scistanpy.model.stan.stan_model.StanModel
    :members:
    :undoc-members:

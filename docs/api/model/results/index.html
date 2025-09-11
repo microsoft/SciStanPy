@@ -33,45 +33,8 @@
 
           <div class="body" role="main">
             
-  <section id="model-results-api-reference">
-<h1>Model Results API Reference<a class="headerlink" href="#model-results-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference covers the comprehensive analysis and visualization tools for SciStanPy model results.</p>
-<p>The results submodule provides specialized analysis capabilities for both Maximum Likelihood Estimation (MLE) and Hamiltonian Monte Carlo (MCMC) inference methods, with a focus on model validation, diagnostic assessment, and scientific interpretation.</p>
-<section id="results-submodule-overview">
-<h2>Results Submodule Overview<a class="headerlink" href="#results-submodule-overview" title="Link to this heading">¶</a></h2>
-<p>The results submodule consists of two main analysis frameworks:</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="mle.html">Maximum Likelihood Estimation Results API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="mle.html#module-scistanpy.model.results.mle">MLE Results Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mle.html#core-mle-analysis-classes">Core MLE Analysis Classes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mle.html#diagnostic-capabilities">Diagnostic Capabilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mle.html#utility-functions">Utility Functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mle.html#advanced-analysis-workflows">Advanced Analysis Workflows</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mle.html#integration-with-arviz-ecosystem">Integration with ArviZ Ecosystem</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mle.html#interactive-dashboard-features">Interactive Dashboard Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mle.html#memory-management">Memory Management</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mle.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="hmc.html">Hamiltonian Monte Carlo Results API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="hmc.html#module-scistanpy.model.results.hmc">HMC Results Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hmc.html#core-hmc-analysis-classes">Core HMC Analysis Classes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hmc.html#efficient-data-processing">Efficient Data Processing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hmc.html#comprehensive-diagnostic-framework">Comprehensive Diagnostic Framework</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hmc.html#advanced-visualization-tools">Advanced Visualization Tools</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hmc.html#memory-efficient-processing">Memory-Efficient Processing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hmc.html#scientific-workflow-integration">Scientific Workflow Integration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hmc.html#performance-optimization">Performance Optimization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hmc.html#integration-with-external-tools">Integration with External Tools</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hmc.html#best-practices">Best Practices</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
-<section id="module-scistanpy.model.results">
-<span id="results-module"></span><h2>Results Module<a class="headerlink" href="#module-scistanpy.model.results" title="Link to this heading">¶</a></h2>
+  <section id="module-scistanpy.model.results">
+<span id="model-results-api-reference"></span><h1>Model Results API Reference<a class="headerlink" href="#module-scistanpy.model.results" title="Link to this heading">¶</a></h1>
 <p>Model results analysis and visualization for SciStanPy.</p>
 <p>This submodule provides comprehensive tools for analyzing and visualizing results
 from fitted SciStanPy models, supporting both maximum likelihood estimation (MLE)
@@ -80,501 +43,54 @@ classes and utilities for processing, diagnosing, and presenting model outputs
 in formats suitable for scientific analysis.</p>
 <p>The submodule is organized around two main result types, each with related analysis
 capabilities:</p>
-<dl>
-<dt>Maximum Likelihood Estimation Results (<code class="xref py py-class docutils literal notranslate"><span class="pre">MLEInferenceRes</span></code>):</dt><dd><p>Specialized analysis tools for MLE-based parameter estimation including:</p>
-<ul class="simple">
-<li><p><strong>Posterior Predictive Checking</strong>: Model validation workflows</p></li>
-<li><p><strong>Calibration Analysis</strong>: Quantitative assessment of model calibration quality</p></li>
-<li><p><strong>Uncertainty Quantification</strong>: Sampling from fitted parameter distributions</p></li>
-<li><p><strong>Interactive Visualization</strong>: Dashboard-style analysis interfaces</p></li>
-<li><p><strong>ArviZ Integration</strong>: Compatibility with Bayesian analysis workflows</p></li>
-</ul>
-</dd>
-<dt>MCMC Sampling Results (<code class="xref py py-class docutils literal notranslate"><span class="pre">SampleResults</span></code>):</dt><dd><p>Advanced diagnostic and analysis tools for HMC sampling that can perform all
-tasks of <cite>MLEInferenceRes</cite> as well as tasks specific to MCMC, including:</p>
-<ul class="simple">
-<li><p><strong>Convergence Diagnostics</strong>: R-hat, ESS, and other MCMC quality metrics</p></li>
-<li><p><strong>Sample Quality Assessment</strong>: Detection of divergences, energy issues, and saturation</p></li>
-<li><p><strong>Interactive Failure Analysis</strong>: Detailed examination of problematic parameters</p></li>
-<li><p><strong>Memory-Efficient Processing</strong>: Support for large datasets with Dask integration</p></li>
-<li><p><strong>Comprehensive Reporting</strong>: Automated diagnostic summaries and recommendations</p></li>
-</ul>
-</dd>
-<dt>Key Features:</dt><dd><ul class="simple">
-<li><p><strong>Unified Interface</strong>: Consistent API across different inference methods</p></li>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="mle.html#scistanpy.model.results.mle.MLE" title="scistanpy.model.results.mle.MLE"><code class="xref py py-class docutils literal notranslate"><span class="pre">scistanpy.model.results.mle.MLE</span></code></a>, which holds results from
+calls to <a class="reference internal" href="../model.html#scistanpy.model.model.Model.mle" title="scistanpy.model.model.Model.mle"><code class="xref py py-meth docutils literal notranslate"><span class="pre">scistanpy.model.model.Model.mle()</span></code></a> and provides tools for MLE-based
+parameter estimation analysis.</p></li>
+<li><p><a class="reference internal" href="mle.html#scistanpy.model.results.mle.MLEInferenceRes" title="scistanpy.model.results.mle.MLEInferenceRes"><code class="xref py py-class docutils literal notranslate"><span class="pre">scistanpy.model.results.mle.MLEInferenceRes</span></code></a>, which holds bootstrapped
+samples of observed data and parameters for uncertainty quantification and inference
+using MLE results.</p></li>
+<li><p><a class="reference internal" href="hmc.html#scistanpy.model.results.hmc.SampleResults" title="scistanpy.model.results.hmc.SampleResults"><code class="xref py py-class docutils literal notranslate"><span class="pre">scistanpy.model.results.hmc.SampleResults</span></code></a>, which holds results from
+calls to <a class="reference internal" href="../model.html#scistanpy.model.model.Model.mcmc" title="scistanpy.model.model.Model.mcmc"><code class="xref py py-meth docutils literal notranslate"><span class="pre">scistanpy.model.model.Model.mcmc()</span></code></a> and provides tools for MCMC-based
+sampling analysis.</p></li>
+</ol>
+<p>Some notable analysis features available to both results classes include:</p>
+<blockquote>
+<div><ul class="simple">
 <li><p><strong>Interactive Analysis</strong>: Widget-based interfaces for exploratory analysis</p></li>
 <li><p><strong>Scalable Processing</strong>: Efficient handling of large datasets and complex models</p></li>
 <li><p><strong>Comprehensive Diagnostics</strong>: Automated detection and reporting of model issues</p></li>
 <li><p><strong>Integration with Scientific Python</strong>: Interoperability with ArviZ, xarray, and Dask</p></li>
 </ul>
-</dd>
-<dt>Data Formats and Persistence:</dt><dd><p>The submodule supports multiple data formats for efficient storage and sharing:</p>
-<ul class="simple">
-<li><p><strong>NetCDF</strong>: Self-describing, efficient storage for large datasets</p></li>
-<li><p><strong>ArviZ InferenceData</strong>: Standardized format for Bayesian analysis workflows</p></li>
-<li><p><strong>CSV Integration</strong>: Backward compatibility with Stan’s native output format</p></li>
-<li><p><strong>Memory Mapping</strong>: Efficient access to large datasets without full loading</p></li>
-</ul>
-</dd>
-<dt>Workflow Integration:</dt><dd><p>Results classes are designed to integrate with SciStanPy modeling workflows
-and external analysis tools:</p>
-<ul class="simple">
-<li><p>Automatic creation from model fitting methods</p></li>
-<li><p>Direct loading from saved results files</p></li>
-<li><p>Export capabilities for downstream analysis</p></li>
-<li><p>Integration with visualization and reporting pipelines</p></li>
-</ul>
-</dd>
-<dt>Performance Considerations:</dt><dd><ul class="simple">
-<li><p>Lazy loading and chunked processing for memory efficiency</p></li>
-<li><p>Dask integration for parallel and out-of-core computation</p></li>
-<li><p>Optimized data structures for fast diagnostic computation</p></li>
-<li><p>Caching strategies to avoid redundant calculations</p></li>
-</ul>
-</dd>
-<dt>Example Usage:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+</div></blockquote>
+<p>Results classes are designed to integrate with SciStanPy modeling workflows and
+external analysis tools. For example, the <code class="docutils literal notranslate"><span class="pre">inference_obj</span></code> attribute shared by
+both results classes provides an ArviZ InferenceData object representing the results,
+allowing for further analysis using ArviZ’s rich set of diagnostics and plotting
+functions.</p>
+<p>Users will not typically instantiate result classes directly. Instead, they are
+returned by model fitting methods such as <a class="reference internal" href="../model.html#scistanpy.model.model.Model.mle" title="scistanpy.model.model.Model.mle"><code class="xref py py-meth docutils literal notranslate"><span class="pre">scistanpy.model.model.Model.mle()</span></code></a>
+and <a class="reference internal" href="../model.html#scistanpy.model.model.Model.mcmc" title="scistanpy.model.model.Model.mcmc"><code class="xref py py-meth docutils literal notranslate"><span class="pre">scistanpy.model.model.Model.mcmc()</span></code></a>, such as below:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
 <span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># MLE analysis workflow</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mle_analysis</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mle_analysis</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">()</span> <span class="c1"># Bootstrap observed data</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dashboard</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">run_ppc</span><span class="p">()</span>  <span class="c1"># Interactive analysis</span>
 <span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># MCMC analysis workflow</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mcmc_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mcmc_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="c1"># Sample from posterior</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sample_failures</span><span class="p">,</span> <span class="n">var_failures</span> <span class="o">=</span> <span class="n">mcmc_results</span><span class="o">.</span><span class="n">diagnose</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">analyzer</span> <span class="o">=</span> <span class="n">mcmc_results</span><span class="o">.</span><span class="n">plot_variable_failure_quantile_traces</span><span class="p">()</span>
 </pre></div>
 </div>
-</dd>
-<dt>See Also:</dt><dd><ul class="simple">
-<li><p><a class="reference internal" href="../../plotting/index.html#module-scistanpy.plotting" title="scistanpy.plotting"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scistanpy.plotting</span></code></a>: Visualization utilities used by results classes</p></li>
-<li><p><a class="reference internal" href="../index.html#module-scistanpy.model" title="scistanpy.model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scistanpy.model</span></code></a>: Model construction and fitting methods</p></li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">arviz</span></code>: External library for Bayesian analysis workflows</p></li>
+<p>This module is further broken down into the following submodules, each holding results and analysis tools for specific inference methods:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mle.html">Maximum Likelihood Estimation Results API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hmc.html">Hamiltonian Monte Carlo Results API Reference</a></li>
 </ul>
-</dd>
-</dl>
-</section>
-<section id="core-analysis-frameworks">
-<h2>Core Analysis Frameworks<a class="headerlink" href="#core-analysis-frameworks" title="Link to this heading">¶</a></h2>
-<dl class="simple">
-<dt><strong>Maximum Likelihood Estimation Analysis</strong></dt><dd><p>Comprehensive tools for analyzing MLE results including posterior predictive checking, calibration assessment, and uncertainty quantification</p>
-</dd>
-<dt><strong>Hamiltonian Monte Carlo Analysis</strong></dt><dd><p>Advanced diagnostic capabilities for MCMC results including convergence assessment, sample quality evaluation, and interactive failure analysis</p>
-</dd>
-</dl>
-</section>
-<section id="unified-analysis-interface">
-<h2>Unified Analysis Interface<a class="headerlink" href="#unified-analysis-interface" title="Link to this heading">¶</a></h2>
-<p><strong>Common Analysis Capabilities:</strong></p>
-<p>Both MLE and MCMC results share a common foundation providing:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
-
-<span class="c1"># MLE workflow</span>
-<span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">)</span>
-<span class="n">mle_analysis</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">()</span>
-
-<span class="c1"># MCMC workflow</span>
-<span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">)</span>
-<span class="c1"># mcmc_result is already an analysis object</span>
-
-<span class="c1"># Common analysis methods available for both:</span>
-<span class="c1"># - Posterior predictive checking</span>
-<span class="c1"># - Model calibration assessment</span>
-<span class="c1"># - Summary statistics computation</span>
-<span class="c1"># - Interactive visualization dashboards</span>
-</pre></div>
 </div>
-<p><strong>Specialized Capabilities:</strong></p>
-<p>Each framework provides method-specific tools:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># MLE-specific: Optimization diagnostics</span>
-<span class="n">loss_plot</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">plot_loss_curve</span><span class="p">()</span>
-<span class="n">fitted_distributions</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">model_varname_to_mle</span>
-
-<span class="c1"># MCMC-specific: Convergence diagnostics</span>
-<span class="n">sample_failures</span><span class="p">,</span> <span class="n">var_failures</span> <span class="o">=</span> <span class="n">mcmc_result</span><span class="o">.</span><span class="n">diagnose</span><span class="p">()</span>
-<span class="n">convergence_analyzer</span> <span class="o">=</span> <span class="n">mcmc_result</span><span class="o">.</span><span class="n">plot_variable_failure_quantile_traces</span><span class="p">()</span>
-</pre></div>
-</div>
-</section>
-<section id="key-features">
-<h2>Key Features<a class="headerlink" href="#key-features" title="Link to this heading">¶</a></h2>
-<dl class="simple">
-<dt><strong>Comprehensive Model Validation</strong></dt><dd><p>Systematic approaches to assess model adequacy and identify potential issues</p>
-</dd>
-<dt><strong>Interactive Analysis Tools</strong></dt><dd><p>Widget-based interfaces for exploratory analysis and problem diagnosis</p>
-</dd>
-<dt><strong>Memory-Efficient Processing</strong></dt><dd><p>Support for large datasets through chunked processing and Dask integration</p>
-</dd>
-<dt><strong>Scientific Workflow Integration</strong></dt><dd><p>Designed for integration with scientific analysis pipelines and reporting</p>
-</dd>
-<dt><strong>Standards Compatibility</strong></dt><dd><p>Full integration with ArviZ ecosystem and scientific Python tools</p>
-</dd>
-</dl>
-</section>
-<section id="analysis-workflow-patterns">
-<h2>Analysis Workflow Patterns<a class="headerlink" href="#analysis-workflow-patterns" title="Link to this heading">¶</a></h2>
-<section id="standard-mle-analysis-pipeline">
-<h3>Standard MLE Analysis Pipeline<a class="headerlink" href="#standard-mle-analysis-pipeline" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Complete MLE analysis workflow</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">analyze_mle_results</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard MLE analysis pipeline.&quot;&quot;&quot;</span>
-
-    <span class="c1"># 1. Fit model</span>
-    <span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
-
-    <span class="c1"># 2. Check optimization convergence</span>
-    <span class="n">loss_plot</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">plot_loss_curve</span><span class="p">()</span>
-
-    <span class="c1"># 3. Create inference object for detailed analysis</span>
-    <span class="n">analysis</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
-
-    <span class="c1"># 4. Run comprehensive posterior predictive checking</span>
-    <span class="n">ppc_dashboard</span> <span class="o">=</span> <span class="n">analysis</span><span class="o">.</span><span class="n">run_ppc</span><span class="p">()</span>
-
-    <span class="c1"># 5. Assess model calibration quantitatively</span>
-    <span class="n">cal_plots</span><span class="p">,</span> <span class="n">deviances</span> <span class="o">=</span> <span class="n">analysis</span><span class="o">.</span><span class="n">check_calibration</span><span class="p">(</span><span class="n">return_deviance</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="c1"># 6. Generate summary report</span>
-    <span class="n">summary_stats</span> <span class="o">=</span> <span class="n">analysis</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s1">&#39;mle_result&#39;</span><span class="p">:</span> <span class="n">mle_result</span><span class="p">,</span>
-        <span class="s1">&#39;analysis&#39;</span><span class="p">:</span> <span class="n">analysis</span><span class="p">,</span>
-        <span class="s1">&#39;dashboard&#39;</span><span class="p">:</span> <span class="n">ppc_dashboard</span><span class="p">,</span>
-        <span class="s1">&#39;calibration_deviances&#39;</span><span class="p">:</span> <span class="n">deviances</span><span class="p">,</span>
-        <span class="s1">&#39;summary&#39;</span><span class="p">:</span> <span class="n">summary_stats</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</section>
-<section id="standard-mcmc-analysis-pipeline">
-<h3>Standard MCMC Analysis Pipeline<a class="headerlink" href="#standard-mcmc-analysis-pipeline" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Complete MCMC analysis workflow</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">analyze_mcmc_results</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard MCMC analysis pipeline.&quot;&quot;&quot;</span>
-
-    <span class="c1"># 1. Sample from model</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
-
-    <span class="c1"># 2. Run comprehensive diagnostics</span>
-    <span class="n">sample_failures</span><span class="p">,</span> <span class="n">var_failures</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">diagnose</span><span class="p">()</span>
-
-    <span class="c1"># 3. Investigate any failures</span>
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">var_failures</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">sample_failures</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;⚠️  Diagnostic issues detected&quot;</span><span class="p">)</span>
-        <span class="n">failure_analyzer</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_variable_failure_quantile_traces</span><span class="p">()</span>
-        <span class="n">sample_plots</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_sample_failure_quantile_traces</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ All diagnostics passed&quot;</span><span class="p">)</span>
-
-    <span class="c1"># 4. Posterior predictive checking</span>
-    <span class="n">ppc_dashboard</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">run_ppc</span><span class="p">()</span>
-
-    <span class="c1"># 5. Model calibration assessment</span>
-    <span class="n">calibration_analysis</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">check_calibration</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s1">&#39;results&#39;</span><span class="p">:</span> <span class="n">results</span><span class="p">,</span>
-        <span class="s1">&#39;sample_failures&#39;</span><span class="p">:</span> <span class="n">sample_failures</span><span class="p">,</span>
-        <span class="s1">&#39;variable_failures&#39;</span><span class="p">:</span> <span class="n">var_failures</span><span class="p">,</span>
-        <span class="s1">&#39;ppc_dashboard&#39;</span><span class="p">:</span> <span class="n">ppc_dashboard</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</section>
-<section id="comparative-analysis">
-<h3>Comparative Analysis<a class="headerlink" href="#comparative-analysis" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compare MLE vs MCMC results</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">compare_inference_methods</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare MLE and MCMC inference for the same model.&quot;&quot;&quot;</span>
-
-    <span class="c1"># Fit with both methods</span>
-    <span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-    <span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-
-    <span class="c1"># Create comparable analysis objects</span>
-    <span class="n">mle_analysis</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-
-    <span class="c1"># Compare summary statistics</span>
-    <span class="n">mle_summary</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">()</span>
-    <span class="n">mcmc_summary</span> <span class="o">=</span> <span class="n">mcmc_result</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">()</span>
-
-    <span class="c1"># Compare posterior predictive performance</span>
-    <span class="n">mle_cal_plots</span><span class="p">,</span> <span class="n">mle_deviances</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">check_calibration</span><span class="p">(</span>
-        <span class="n">return_deviance</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span>
-    <span class="p">)</span>
-    <span class="n">mcmc_cal_plots</span><span class="p">,</span> <span class="n">mcmc_deviances</span> <span class="o">=</span> <span class="n">mcmc_result</span><span class="o">.</span><span class="n">check_calibration</span><span class="p">(</span>
-        <span class="n">return_deviance</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span>
-    <span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s1">&#39;mle&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;analysis&#39;</span><span class="p">:</span> <span class="n">mle_analysis</span><span class="p">,</span> <span class="s1">&#39;deviances&#39;</span><span class="p">:</span> <span class="n">mle_deviances</span><span class="p">},</span>
-        <span class="s1">&#39;mcmc&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;analysis&#39;</span><span class="p">:</span> <span class="n">mcmc_result</span><span class="p">,</span> <span class="s1">&#39;deviances&#39;</span><span class="p">:</span> <span class="n">mcmc_deviances</span><span class="p">},</span>
-        <span class="s1">&#39;comparison&#39;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;calibration_comparison&#39;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="n">var</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mle&#39;</span><span class="p">:</span> <span class="n">mle_deviances</span><span class="p">[</span><span class="n">var</span><span class="p">],</span> <span class="s1">&#39;mcmc&#39;</span><span class="p">:</span> <span class="n">mcmc_deviances</span><span class="p">[</span><span class="n">var</span><span class="p">]}</span>
-                <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">mle_deviances</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="data-management-and-persistence">
-<h2>Data Management and Persistence<a class="headerlink" href="#data-management-and-persistence" title="Link to this heading">¶</a></h2>
-<section id="efficient-storage-solutions">
-<h3>Efficient Storage Solutions<a class="headerlink" href="#efficient-storage-solutions" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Efficient storage and loading patterns</span>
-
-<span class="c1"># Save MLE analysis for later use</span>
-<span class="n">mle_analysis</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">()</span>
-<span class="n">mle_analysis</span><span class="o">.</span><span class="n">save_netcdf</span><span class="p">(</span><span class="s1">&#39;mle_analysis_results.nc&#39;</span><span class="p">)</span>
-
-<span class="c1"># Convert MCMC results to efficient format</span>
-<span class="n">netcdf_path</span> <span class="o">=</span> <span class="n">cmdstan_csv_to_netcdf</span><span class="p">(</span>
-    <span class="n">path</span><span class="o">=</span><span class="n">mcmc_csv_files</span><span class="p">,</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-    <span class="n">precision</span><span class="o">=</span><span class="s1">&#39;single&#39;</span><span class="p">,</span>  <span class="c1"># Optimize for storage</span>
-    <span class="n">mib_per_chunk</span><span class="o">=</span><span class="mi">64</span>
-<span class="p">)</span>
-
-<span class="c1"># Load results efficiently</span>
-<span class="n">mle_reloaded</span> <span class="o">=</span> <span class="n">MLEInferenceRes</span><span class="o">.</span><span class="n">from_disk</span><span class="p">(</span><span class="s1">&#39;mle_analysis_results.nc&#39;</span><span class="p">)</span>
-<span class="n">mcmc_reloaded</span> <span class="o">=</span> <span class="n">SampleResults</span><span class="o">.</span><span class="n">from_disk</span><span class="p">(</span><span class="n">netcdf_path</span><span class="p">,</span> <span class="n">use_dask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="cross-platform-compatibility">
-<h3>Cross-Platform Compatibility<a class="headerlink" href="#cross-platform-compatibility" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Export results for external analysis</span>
-
-<span class="c1"># Export to ArviZ format</span>
-<span class="n">arviz_data</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">inference_obj</span>
-<span class="n">arviz_data</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="s1">&#39;arviz_compatible.nc&#39;</span><span class="p">)</span>
-
-<span class="c1"># Export summary statistics to standard formats</span>
-<span class="n">summary</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">()</span>
-<span class="n">summary</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;model_summary.csv&#39;</span><span class="p">)</span>
-
-<span class="c1"># Export for visualization in other tools</span>
-<span class="n">posterior_samples</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span>
-<span class="n">posterior_samples</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="s1">&#39;posterior_samples.parquet&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="advanced-analysis-patterns">
-<h2>Advanced Analysis Patterns<a class="headerlink" href="#advanced-analysis-patterns" title="Link to this heading">¶</a></h2>
-<section id="model-selection-and-comparison">
-<h3>Model Selection and Comparison<a class="headerlink" href="#model-selection-and-comparison" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Systematic model comparison</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">model_selection_study</span><span class="p">(</span><span class="n">candidate_models</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare multiple candidate models systematically.&quot;&quot;&quot;</span>
-
-    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
-
-    <span class="k">for</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">candidate_models</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Analyzing </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Fit with both methods for robustness</span>
-        <span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-        <span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-
-        <span class="c1"># Diagnostic checks</span>
-        <span class="n">sample_fails</span><span class="p">,</span> <span class="n">var_fails</span> <span class="o">=</span> <span class="n">mcmc_result</span><span class="o">.</span><span class="n">diagnose</span><span class="p">(</span><span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">diagnostics_passed</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">var_fails</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span>
-                             <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fails</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">fails</span> <span class="ow">in</span> <span class="n">sample_fails</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-
-        <span class="c1"># Model performance metrics</span>
-        <span class="n">mle_analysis</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">()</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">mle_deviances</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">check_calibration</span><span class="p">(</span>
-            <span class="n">return_deviance</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span>
-        <span class="p">)</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">mcmc_deviances</span> <span class="o">=</span> <span class="n">mcmc_result</span><span class="o">.</span><span class="n">check_calibration</span><span class="p">(</span>
-            <span class="n">return_deviance</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span>
-        <span class="p">)</span>
-
-        <span class="n">results</span><span class="p">[</span><span class="n">model_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;mle_final_loss&#39;</span><span class="p">:</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">losses</span><span class="p">[</span><span class="s1">&#39;-log pdf/pmf&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="s1">&#39;diagnostics_passed&#39;</span><span class="p">:</span> <span class="n">diagnostics_passed</span><span class="p">,</span>
-            <span class="s1">&#39;mean_calibration_deviance_mle&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">mle_deviances</span><span class="o">.</span><span class="n">values</span><span class="p">())),</span>
-            <span class="s1">&#39;mean_calibration_deviance_mcmc&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">mcmc_deviances</span><span class="o">.</span><span class="n">values</span><span class="p">())),</span>
-            <span class="s1">&#39;mcmc_result&#39;</span><span class="p">:</span> <span class="n">mcmc_result</span><span class="p">,</span>
-            <span class="s1">&#39;mle_result&#39;</span><span class="p">:</span> <span class="n">mle_result</span>
-        <span class="p">}</span>
-
-    <span class="k">return</span> <span class="n">results</span>
-</pre></div>
-</div>
-</section>
-<section id="uncertainty-quantification-studies">
-<h3>Uncertainty Quantification Studies<a class="headerlink" href="#uncertainty-quantification-studies" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Comprehensive uncertainty analysis</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">uncertainty_analysis</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">n_bootstrap</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze parameter uncertainty through multiple approaches.&quot;&quot;&quot;</span>
-
-    <span class="c1"># 1. MCMC-based uncertainty (gold standard)</span>
-    <span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">2000</span><span class="p">)</span>
-    <span class="n">mcmc_summary</span> <span class="o">=</span> <span class="n">mcmc_result</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">()</span>
-
-    <span class="c1"># 2. Bootstrap uncertainty assessment</span>
-    <span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-
-    <span class="n">bootstrap_estimates</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_bootstrap</span><span class="p">):</span>
-        <span class="c1"># Parametric bootstrap</span>
-        <span class="n">bootstrap_data</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param_obj</span> <span class="ow">in</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">model_varname_to_mle</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">all_model_components_dict</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span><span class="o">.</span><span class="n">observable</span><span class="p">:</span>
-                <span class="n">bootstrap_data</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param_obj</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">boot_mle</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">bootstrap_data</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
-            <span class="n">bootstrap_estimates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">boot_mle</span><span class="o">.</span><span class="n">model_varname_to_mle</span><span class="p">)</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="k">continue</span>
-
-    <span class="c1"># 3. Compare uncertainty estimates</span>
-    <span class="n">uncertainty_comparison</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">mcmc_summary</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;variable&#39;</span><span class="p">]:</span>
-        <span class="n">param_name</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-
-        <span class="c1"># MCMC uncertainty</span>
-        <span class="n">mcmc_std</span> <span class="o">=</span> <span class="n">mcmc_summary</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">param_name</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;sd&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-
-        <span class="c1"># Bootstrap uncertainty</span>
-        <span class="n">boot_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">est</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span><span class="o">.</span><span class="n">mle</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="n">est</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span><span class="o">.</span><span class="n">mle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                      <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">for</span> <span class="n">est</span> <span class="ow">in</span> <span class="n">bootstrap_estimates</span><span class="p">]</span>
-        <span class="n">boot_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">boot_values</span><span class="p">)</span>
-
-        <span class="n">uncertainty_comparison</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;mcmc_std&#39;</span><span class="p">:</span> <span class="n">mcmc_std</span><span class="p">,</span>
-            <span class="s1">&#39;bootstrap_std&#39;</span><span class="p">:</span> <span class="n">boot_std</span><span class="p">,</span>
-            <span class="s1">&#39;ratio&#39;</span><span class="p">:</span> <span class="n">boot_std</span> <span class="o">/</span> <span class="n">mcmc_std</span> <span class="k">if</span> <span class="n">mcmc_std</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-        <span class="p">}</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s1">&#39;mcmc_result&#39;</span><span class="p">:</span> <span class="n">mcmc_result</span><span class="p">,</span>
-        <span class="s1">&#39;mle_result&#39;</span><span class="p">:</span> <span class="n">mle_result</span><span class="p">,</span>
-        <span class="s1">&#39;bootstrap_estimates&#39;</span><span class="p">:</span> <span class="n">bootstrap_estimates</span><span class="p">,</span>
-        <span class="s1">&#39;uncertainty_comparison&#39;</span><span class="p">:</span> <span class="n">uncertainty_comparison</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="integration-with-scientific-workflows">
-<h2>Integration with Scientific Workflows<a class="headerlink" href="#integration-with-scientific-workflows" title="Link to this heading">¶</a></h2>
-<section id="automated-reporting">
-<h3>Automated Reporting<a class="headerlink" href="#automated-reporting" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate automated analysis reports</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">generate_model_report</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;./model_report/&#39;</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate comprehensive automated model analysis report.&quot;&quot;&quot;</span>
-
-    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="c1"># Run both inference methods</span>
-    <span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-    <span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-
-    <span class="c1"># Generate analyses</span>
-    <span class="n">mle_analysis</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">()</span>
-
-    <span class="c1"># Save key plots</span>
-    <span class="n">loss_plot</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">plot_loss_curve</span><span class="p">()</span>
-    <span class="c1"># loss_plot.save(f&#39;{output_dir}/optimization_trajectory.html&#39;)</span>
-
-    <span class="c1"># Diagnostic dashboard</span>
-    <span class="n">ppc_dashboard</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">run_ppc</span><span class="p">()</span>
-    <span class="c1"># ppc_dashboard.save(f&#39;{output_dir}/posterior_predictive_checks.html&#39;)</span>
-
-    <span class="c1"># MCMC diagnostics</span>
-    <span class="n">sample_fails</span><span class="p">,</span> <span class="n">var_fails</span> <span class="o">=</span> <span class="n">mcmc_result</span><span class="o">.</span><span class="n">diagnose</span><span class="p">()</span>
-
-    <span class="c1"># Summary statistics</span>
-    <span class="n">summary</span> <span class="o">=</span> <span class="n">mcmc_result</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">()</span>
-    <span class="n">summary</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/parameter_summary.csv&#39;</span><span class="p">)</span>
-
-    <span class="c1"># Generate text report</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/analysis_summary.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Model Analysis Summary</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;=====================</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MLE Final Loss: </span><span class="si">{</span><span class="n">mle_result</span><span class="o">.</span><span class="n">losses</span><span class="p">[</span><span class="s1">&#39;-log pdf/pmf&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MCMC Chains: </span><span class="si">{</span><span class="n">mcmc_result</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MCMC Samples: </span><span class="si">{</span><span class="n">mcmc_result</span><span class="o">.</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s1">&#39;draw&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">var_fails</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;⚠️  DIAGNOSTIC WARNINGS:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">failures</span> <span class="ow">in</span> <span class="n">var_fails</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">failures</span><span class="p">:</span>
-                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failures</span><span class="p">)</span><span class="si">}</span><span class="s2"> variables failed </span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2"> test</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;✅ All MCMC diagnostics passed</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="batch-processing">
-<h3>Batch Processing<a class="headerlink" href="#batch-processing" title="Link to this heading">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Batch analysis for multiple datasets</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">batch_model_analysis</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">datasets</span><span class="p">,</span> <span class="n">output_base_dir</span><span class="o">=</span><span class="s1">&#39;./batch_analysis/&#39;</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze the same model across multiple datasets.&quot;&quot;&quot;</span>
-
-    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
-
-    <span class="k">for</span> <span class="n">dataset_name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing dataset: </span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="n">output_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_base_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">/&quot;</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># Run analysis</span>
-            <span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-            <span class="n">mcmc_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mcmc</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-
-            <span class="c1"># Save results</span>
-            <span class="n">mle_analysis</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">()</span>
-            <span class="n">mle_analysis</span><span class="o">.</span><span class="n">save_netcdf</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/mle_analysis.nc&#39;</span><span class="p">)</span>
-
-            <span class="c1"># Convert MCMC to NetCDF</span>
-            <span class="n">netcdf_path</span> <span class="o">=</span> <span class="n">cmdstan_csv_to_netcdf</span><span class="p">(</span>
-                <span class="n">path</span><span class="o">=</span><span class="n">mcmc_result</span><span class="o">.</span><span class="n">fit</span><span class="p">,</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-                <span class="n">output_filename</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/mcmc_results.nc&#39;</span>
-            <span class="p">)</span>
-
-            <span class="n">results</span><span class="p">[</span><span class="n">dataset_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s1">&#39;success&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                <span class="s1">&#39;mle_path&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s1">/mle_analysis.nc&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;mcmc_path&#39;</span><span class="p">:</span> <span class="n">netcdf_path</span>
-            <span class="p">}</span>
-
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to process </span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">results</span><span class="p">[</span><span class="n">dataset_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;success&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
-
-    <span class="k">return</span> <span class="n">results</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="best-practices">
-<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
-<ol class="arabic simple">
-<li><p><strong>Always validate models</strong> using posterior predictive checks before scientific interpretation</p></li>
-<li><p><strong>Use appropriate inference methods</strong> - MLE for speed, MCMC for uncertainty quantification</p></li>
-<li><p><strong>Monitor diagnostics systematically</strong> - convergence, calibration, and sample quality</p></li>
-<li><p><strong>Leverage interactive tools</strong> for exploratory analysis and problem identification</p></li>
-<li><p><strong>Save analysis objects</strong> using NetCDF format for efficient storage and sharing</p></li>
-<li><p><strong>Document analysis workflows</strong> for reproducible scientific research</p></li>
-<li><p><strong>Compare inference methods</strong> when computational resources allow</p></li>
-<li><p><strong>Use batch processing</strong> for systematic studies across multiple conditions</p></li>
-</ol>
-<p>The results submodule provides a comprehensive framework for analyzing and validating Bayesian models, enabling robust scientific inference with clear diagnostic feedback and interactive exploration capabilities.</p>
-</section>
 </section>
 
 
