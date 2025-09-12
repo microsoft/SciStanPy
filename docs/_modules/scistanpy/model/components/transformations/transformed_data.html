@@ -37,37 +37,32 @@
 <span class="sd">&quot;&quot;&quot;Transformed data components for Stan model generation.</span>
 
 <span class="sd">This module provides specialized transformation classes for components that</span>
-<span class="sd">belong in Stan&#39;s transformed data block. These transformations represent</span>
+<span class="sd">belong in Stan&#39;s ``transformed data`` block. These transformations represent</span>
 <span class="sd">deterministic computations that can be performed once at the beginning of</span>
 <span class="sd">Stan program execution, before any sampling begins.</span>
 
 <span class="sd">Transformed data components differ from regular transformations in that they:</span>
-<span class="sd">- Execute only once per Stan program run</span>
-<span class="sd">- Cannot depend on parameters (only on data)</span>
-<span class="sd">- Enable computational optimizations through pre-calculation</span>
-<span class="sd">- Reduce per-iteration computational overhead in Stan models</span>
-
-<span class="sd">Key Components:</span>
-<span class="sd">    - **TransformedData**: Abstract base class for transformed data components</span>
-<span class="sd">    - **LogMultinomialCoefficient**: Pre-computed multinomial coefficients for efficiency</span>
+<span class="sd">    - Execute only once per Stan program run</span>
+<span class="sd">    - Cannot depend on parameters (only on data)</span>
+<span class="sd">    - Reduce per-iteration computational overhead in Stan models</span>
 
 <span class="sd">The module integrates with SciStanPy&#39;s transformation system while providing</span>
-<span class="sd">the specialized behavior required for Stan&#39;s transformed data block, enabling</span>
+<span class="sd">the specialized behavior required for Stan&#39;s ``transformed data`` block, enabling</span>
 <span class="sd">significant performance improvements for models with expensive deterministic</span>
 <span class="sd">computations.</span>
 
-<span class="sd">Performance Benefits:</span>
-<span class="sd">    Transformed data components enable performance optimizations by:</span>
-<span class="sd">    - Pre-computing expensive deterministic functions</span>
-<span class="sd">    - Reducing per-iteration computational load</span>
-<span class="sd">    - Leveraging Stan&#39;s program structure for efficiency</span>
-<span class="sd">    - Avoiding redundant calculations during sampling</span>
-
 <span class="sd">These optimizations are particularly valuable for:</span>
-<span class="sd">- Complex likelihood functions with constant terms</span>
-<span class="sd">- Expensive matrix operations on fixed data</span>
-<span class="sd">- Normalization constants for custom distributions</span>
-<span class="sd">- Any deterministic computation independent of parameters</span>
+<span class="sd">    - Complex likelihood functions with constant terms</span>
+<span class="sd">    - Expensive matrix operations on fixed data</span>
+<span class="sd">    - Normalization constants for custom distributions</span>
+<span class="sd">    - Any deterministic computation independent of parameters</span>
+
+<span class="sd">Transformed data components are never directly accessed by users. Instead, they</span>
+<span class="sd">are used internally by certain :py:class:`~scistanpy.model.components.parameters.Parameter`</span>
+<span class="sd">subclasses to optimize model performance. For example, the :py:class:`~scistanpy.</span>
+<span class="sd">model.components.parameters.MultinomialLogTheta` class automatically adds a</span>
+<span class="sd">:py:class:`LogMultinomialCoefficient` transformed data component to pre-compute</span>
+<span class="sd">the multinomial coefficient when the counts are known data.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -92,24 +87,24 @@
 <span class="sd">    beginning of Stan execution, before any parameter sampling begins.</span>
 
 <span class="sd">    Transformed data components must satisfy strict requirements:</span>
-<span class="sd">    - Can only depend on data (not parameters)</span>
-<span class="sd">    - Must be deterministic (no random components)</span>
-<span class="sd">    - Execute exactly once per Stan program run</span>
-<span class="sd">    - Cannot be sampled from or optimized</span>
+<span class="sd">        - Can only depend on data (not parameters)</span>
+<span class="sd">        - Must be deterministic (no random components)</span>
+<span class="sd">        - Execute exactly once per Stan program run</span>
+<span class="sd">        - Cannot be sampled from or optimized</span>
 
 <span class="sd">    The class inherits from Transformation but disables sampling and PyTorch</span>
 <span class="sd">    optimization capabilities since transformed data components represent</span>
 <span class="sd">    fixed computations rather than random variables or learnable parameters.</span>
 
 <span class="sd">    Subclasses must implement:</span>
-<span class="sd">    - model_varname property for Stan variable naming</span>
-<span class="sd">    - write_stan_operation method for generating Stan code</span>
+<span class="sd">        - model_varname property for Stan variable naming</span>
+<span class="sd">        - write_stan_operation method for generating Stan code</span>
 
 <span class="sd">    The class provides performance benefits by:</span>
-<span class="sd">    - Pre-computing expensive deterministic functions</span>
-<span class="sd">    - Reducing per-iteration computational overhead</span>
-<span class="sd">    - Enabling Stan compiler optimizations</span>
-<span class="sd">    - Avoiding redundant calculations during sampling</span>
+<span class="sd">        - Pre-computing expensive deterministic functions</span>
+<span class="sd">        - Reducing per-iteration computational overhead</span>
+<span class="sd">        - Enabling Stan compiler optimizations</span>
+<span class="sd">        - Avoiding redundant calculations during sampling</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># The transformation is renamed to be more descriptive</span>
@@ -160,8 +155,10 @@
 
 
 
+<div class="viewcode-block" id="LogMultinomialCoefficient">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.LogMultinomialCoefficient">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogMultinomialCoefficient</span><span class="p">(</span><span class="n">TransformedData</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre-computed logarithmic multinomial coefficient for performance optimization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Pre-computed logarithmic multinomial coefficient for performance optimization.</span>
 
 <span class="sd">    This class implements a performance optimization for multinomial distributions</span>
 <span class="sd">    parameterized by log_theta. When the multinomial is used to model observable</span>
@@ -176,7 +173,8 @@
 
 <span class="sd">    Mathematical Background:</span>
 <span class="sd">        The multinomial probability mass function includes a coefficient term:</span>
-<span class="sd">        C(n; k₁, k₂, ..., kₘ) = n! / (k₁! × k₂! × ... × kₘ!)</span>
+<span class="sd">            .. math::</span>
+<span class="sd">                C(n; k_1, k_2, ..., k_m) = \frac{n!}{k_1! \times k_2! \times ... \times k_m!}</span>
 
 <span class="sd">        For fixed observed counts, this coefficient is constant across all</span>
 <span class="sd">        MCMC iterations and can be pre-computed for efficiency.</span>
@@ -216,6 +214,8 @@
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
+<div class="viewcode-block" id="LogMultinomialCoefficient.write_stan_operation">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_data.html#scistanpy.model.components.transformations.transformed_data.LogMultinomialCoefficient.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">counts</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -239,7 +239,8 @@
                 <span class="s2">&quot;We can only pre-calculate the multinomial coefficient for constant counts.&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log_multinomial_coeff(</span><span class="si">{</span><span class="n">counts</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log_multinomial_coeff(</span><span class="si">{</span><span class="n">counts</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">model_varname</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -254,7 +255,8 @@
 <span class="sd">        This provides clear identification of the coefficient&#39;s purpose and</span>
 <span class="sd">        its relationship to the associated multinomial parameter.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">.log_multinomial_coefficient&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2">.log_multinomial_coefficient&quot;</span></div>
+
 </pre></div>
 
           </div>

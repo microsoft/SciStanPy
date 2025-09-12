@@ -4,37 +4,32 @@
 """Transformed data components for Stan model generation.
 
 This module provides specialized transformation classes for components that
-belong in Stan's transformed data block. These transformations represent
+belong in Stan's ``transformed data`` block. These transformations represent
 deterministic computations that can be performed once at the beginning of
 Stan program execution, before any sampling begins.
 
 Transformed data components differ from regular transformations in that they:
-- Execute only once per Stan program run
-- Cannot depend on parameters (only on data)
-- Enable computational optimizations through pre-calculation
-- Reduce per-iteration computational overhead in Stan models
-
-Key Components:
-    - **TransformedData**: Abstract base class for transformed data components
-    - **LogMultinomialCoefficient**: Pre-computed multinomial coefficients for efficiency
+    - Execute only once per Stan program run
+    - Cannot depend on parameters (only on data)
+    - Reduce per-iteration computational overhead in Stan models
 
 The module integrates with SciStanPy's transformation system while providing
-the specialized behavior required for Stan's transformed data block, enabling
+the specialized behavior required for Stan's ``transformed data`` block, enabling
 significant performance improvements for models with expensive deterministic
 computations.
 
-Performance Benefits:
-    Transformed data components enable performance optimizations by:
-    - Pre-computing expensive deterministic functions
-    - Reducing per-iteration computational load
-    - Leveraging Stan's program structure for efficiency
-    - Avoiding redundant calculations during sampling
-
 These optimizations are particularly valuable for:
-- Complex likelihood functions with constant terms
-- Expensive matrix operations on fixed data
-- Normalization constants for custom distributions
-- Any deterministic computation independent of parameters
+    - Complex likelihood functions with constant terms
+    - Expensive matrix operations on fixed data
+    - Normalization constants for custom distributions
+    - Any deterministic computation independent of parameters
+
+Transformed data components are never directly accessed by users. Instead, they
+are used internally by certain :py:class:`~scistanpy.model.components.parameters.Parameter`
+subclasses to optimize model performance. For example, the :py:class:`~scistanpy.
+model.components.parameters.MultinomialLogTheta` class automatically adds a
+:py:class:`LogMultinomialCoefficient` transformed data component to pre-compute
+the multinomial coefficient when the counts are known data.
 """
 
 from __future__ import annotations
@@ -57,24 +52,24 @@ class TransformedData(transformed_parameters.Transformation):
     beginning of Stan execution, before any parameter sampling begins.
 
     Transformed data components must satisfy strict requirements:
-    - Can only depend on data (not parameters)
-    - Must be deterministic (no random components)
-    - Execute exactly once per Stan program run
-    - Cannot be sampled from or optimized
+        - Can only depend on data (not parameters)
+        - Must be deterministic (no random components)
+        - Execute exactly once per Stan program run
+        - Cannot be sampled from or optimized
 
     The class inherits from Transformation but disables sampling and PyTorch
     optimization capabilities since transformed data components represent
     fixed computations rather than random variables or learnable parameters.
 
     Subclasses must implement:
-    - model_varname property for Stan variable naming
-    - write_stan_operation method for generating Stan code
+        - model_varname property for Stan variable naming
+        - write_stan_operation method for generating Stan code
 
     The class provides performance benefits by:
-    - Pre-computing expensive deterministic functions
-    - Reducing per-iteration computational overhead
-    - Enabling Stan compiler optimizations
-    - Avoiding redundant calculations during sampling
+        - Pre-computing expensive deterministic functions
+        - Reducing per-iteration computational overhead
+        - Enabling Stan compiler optimizations
+        - Avoiding redundant calculations during sampling
     """
 
     # The transformation is renamed to be more descriptive
@@ -125,7 +120,7 @@ class TransformedData(transformed_parameters.Transformation):
 
 
 class LogMultinomialCoefficient(TransformedData):
-    """Pre-computed logarithmic multinomial coefficient for performance optimization.
+    r"""Pre-computed logarithmic multinomial coefficient for performance optimization.
 
     This class implements a performance optimization for multinomial distributions
     parameterized by log_theta. When the multinomial is used to model observable
@@ -140,7 +135,8 @@ class LogMultinomialCoefficient(TransformedData):
 
     Mathematical Background:
         The multinomial probability mass function includes a coefficient term:
-        C(n; k₁, k₂, ..., kₘ) = n! / (k₁! × k₂! × ... × kₘ!)
+            .. math::
+                C(n; k_1, k_2, ..., k_m) = \frac{n!}{k_1! \times k_2! \times ... \times k_m!}
 
         For fixed observed counts, this coefficient is constant across all
         MCMC iterations and can be pre-computed for efficiency.
