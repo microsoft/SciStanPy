@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scistanpy.model.components.transformations.cdfs &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for scistanpy.model.components.transformations.cdfs</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Cumulative distribution function transformations for SciStanPy parameters.</span>
+
+<span class="sd">This module provides specialized transformation classes for computing cumulative</span>
+<span class="sd">distribution functions (CDFs) and related probability functions for SciStanPy</span>
+<span class="sd">model parameters.</span>
+
+<span class="sd">The module implements a unified interface for CDF-like computations across</span>
+<span class="sd">multiple computational backends (NumPy/SciPy, PyTorch) while automatically</span>
+<span class="sd">generating appropriate Stan code for each transformation.</span>
+
+<span class="sd">CDF-like Transformation Types:</span>
+
+<span class="sd">    - :py:class:`~scistanpy.model.components.transformations.cdfs.CDF`</span>
+<span class="sd">    - :py:class:`~scistanpy.model.components.transformations.cdfs.SurvivalFunction`</span>
+<span class="sd">    - :py:class:`~scistanpy.model.components.transformations.cdfs.LogCDF`</span>
+<span class="sd">    - :py:class:`~scistanpy.model.components.transformations.cdfs.LogSurvivalFunction`</span>
+
+<span class="sd">Each CDF class automatically handles backend-specific implementations:</span>
+
+<span class="sd">    - **NumPy/SciPy**: Uses SciPy distribution methods with parameter transforms as needed</span>
+<span class="sd">    - **PyTorch**: Uses PyTorch distribution objects with appropriate methods</span>
+<span class="sd">    - **Stan**: Generates function calls with proper parameter ordering</span>
+
+<span class="sd">The classes are not intended to be accessed directly. Instead, they are used as</span>
+<span class="sd">templates by the :py:class:`~scistanpy.model.components.parameters.ParameterMeta`</span>
+<span class="sd">metaclass to build :py:class:`~scistanpy.model.components.parameters.ParameterMeta`</span>
+<span class="sd">-specific classes on module import, which are assigned to the ``CDF``, ``LOG_CDF``,</span>
+<span class="sd">``SF``, and ``LOG_SF`` properties of each :py:class:`~scistanpy.model.components.</span>
+<span class="sd">parameters.Parameter`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.transformations</span><span class="w"> </span><span class="kn">import</span> <span class="n">transformed_parameters</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">parameters</span>
+
+
+<div class="viewcode-block" id="CDFLike">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CDFLike</span><span class="p">(</span><span class="n">transformed_parameters</span><span class="o">.</span><span class="n">TransformedParameter</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for cumulative distribution function transformations.</span>
+
+<span class="sd">    This abstract base class provides the common infrastructure for all CDF-like</span>
+<span class="sd">    transformations including parameter validation, backend selection, and</span>
+<span class="sd">    Stan code generation. It cannot be instantiated directly but serves as the</span>
+<span class="sd">    foundation for specific CDF transformation types.</span>
+
+<span class="sd">    :param x: Input values for CDF evaluation</span>
+<span class="sd">    :type x: custom_types.CombinableParameterType</span>
+<span class="sd">    :param shape: Shape of the transformation output. Defaults to ().</span>
+<span class="sd">    :type shape: Union[tuple[custom_types.Integer, ...], custom_types.Integer]</span>
+<span class="sd">    :param params: Distribution parameters required for the CDF computation</span>
+<span class="sd">    :type params: custom_types.CombinableParameterType</span>
+
+<span class="sd">    :raises TypeError: If unexpected or missing parameters are provided</span>
+
+<span class="sd">    The class provides a unified interface for computing probability functions</span>
+<span class="sd">    across different computational backends while maintaining compatibility</span>
+<span class="sd">    with the SciStanPy model component system.</span>
+
+<span class="sd">    Key Responsibilities:</span>
+<span class="sd">        - Parameter validation against expected parameter sets</span>
+<span class="sd">        - Backend detection and appropriate method dispatch</span>
+<span class="sd">        - Parameter transformation for SciPy compatibility</span>
+<span class="sd">        - Stan code generation for probability function calls</span>
+
+<span class="sd">    The class automatically handles the complexities of:</span>
+<span class="sd">        - Converting between parameter naming conventions</span>
+<span class="sd">        - Applying parameter transformations for different backends</span>
+<span class="sd">        - Generating appropriate function calls for each backend</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Class variables for each CDF</span>
+    <span class="n">PARAMETER</span><span class="p">:</span> <span class="s2">&quot;parameters.Parameter&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reference to the :py:class:`~scistanpy.model.components.parameters.Parameter`</span>
+<span class="sd">    subclass for which this ``CDFLike`` class applies. Should be set by the metaclass.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SCIPY_FUNC</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># cdf, sf, log_cdf, log_sf</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Name of the SciPy method for this operation (e.g., &#39;cdf&#39;, &#39;sf&#39;, &#39;log_cdf&#39;,</span>
+<span class="sd">    &#39;log_sf&#39;). Should be set by subclasses.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">TORCH_FUNC</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># cdf, log_cdf, log_sf</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Name of the PyTorch method for this operation (e.g., &#39;cdf&#39;, &#39;log_cdf&#39;, &#39;log_sf&#39;).</span>
+<span class="sd">    Should be set by subclasses.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">STAN_SUFFIX</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># The suffix for the Stan operation, e.g., &quot;cdf&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Suffix for Stan function name generation (e.g., &quot;cdf&quot;). Should be set by subclasses.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">,</span>
+        <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">=</span> <span class="p">(),</span>
+        <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize CDF transformation with parameter validation.</span>
+
+<span class="sd">        :param x: Input values for CDF evaluation</span>
+<span class="sd">        :type x: custom_types.CombinableParameterType</span>
+<span class="sd">        :param shape: Shape of the transformation output</span>
+<span class="sd">        :type shape: Union[tuple[custom_types.Integer, ...], custom_types.Integer]</span>
+<span class="sd">        :param params: Distribution parameters for the CDF computation</span>
+<span class="sd">        :type params: custom_types.CombinableParameterType</span>
+
+<span class="sd">        :raises TypeError: If parameters don&#39;t match those required by the target distribution</span>
+
+<span class="sd">        The initialization process validates that all required distribution</span>
+<span class="sd">        parameters are provided and no unexpected parameters are included.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check if the parameters passed are the ones required for the CDF</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_parameters</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CDFLike.check_parameters">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.check_parameters">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargset</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that provided parameters match distribution requirements.</span>
+
+<span class="sd">        :param kwargset: Set of parameter names provided</span>
+<span class="sd">        :type kwargset: set[str]</span>
+
+<span class="sd">        :raises TypeError: If unexpected parameters are provided</span>
+<span class="sd">        :raises TypeError: If required parameters are missing</span>
+
+<span class="sd">        This method ensures that the CDF transformation receives exactly the</span>
+<span class="sd">        parameters required by the underlying probability distribution, with</span>
+<span class="sd">        no additional or missing parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Make sure that these are the only parameters passed</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">additional_params</span> <span class="o">:=</span> <span class="n">kwargset</span>
+            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_TO_SCIPY_NAMES</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unexpected parameters </span><span class="si">{</span><span class="n">additional_params</span><span class="si">}</span><span class="s2"> passed to &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">missing_params</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_TO_SCIPY_NAMES</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="o">-</span> <span class="n">kwargset</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Missing parameters </span><span class="si">{</span><span class="n">missing_params</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CDFLike.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.run_np_torch_op">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the CDF-like operation using NumPy or PyTorch backend as appropriate.</span>
+
+<span class="sd">        :param draws: Dictionary of parameter draws for the operation</span>
+<span class="sd">        :type draws: dict</span>
+
+<span class="sd">        :returns: CDFLike evaluation results</span>
+<span class="sd">        :rtype: Union[np.ndarray, torch.Tensor]</span>
+
+<span class="sd">        :raises TypeError: If unsupported module type is detected</span>
+
+<span class="sd">        This abstract method implements the core computational logic for</span>
+<span class="sd">        evaluating the CDFLike transformation. It automatically detects the</span>
+<span class="sd">        computational backend and applies appropriate parameter transformations.</span>
+
+<span class="sd">        Backend Handling:</span>
+<span class="sd">            - **NumPy**: Uses SciPy distribution methods with parameter transforms</span>
+<span class="sd">            - **PyTorch**: Creates distribution objects and calls appropriate methods</span>
+<span class="sd">            - **Other**: Raises TypeError for unsupported backends</span>
+
+<span class="sd">        The method separates the evaluation point (``x``) from distribution</span>
+<span class="sd">        parameters and handles backend-specific parameter naming and</span>
+<span class="sd">        transformation requirements.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the module for the CDF function</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">choose_module</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">draws</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
+
+        <span class="c1"># We need to separate the x value from the draws</span>
+        <span class="n">draws_copy</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">draws_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+
+        <span class="c1"># If numpy use scipy dist. If torch, use torch dist. Torch will always</span>
+        <span class="c1"># return the CDF, so child classes need to override this method.</span>
+        <span class="k">if</span> <span class="n">module</span> <span class="ow">is</span> <span class="n">np</span><span class="p">:</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_TO_SCIPY_NAMES</span><span class="p">[</span>
+                    <span class="n">name</span>
+                <span class="p">]:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_TO_SCIPY_TRANSFORMS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">name</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+                <span class="p">)(</span>
+                    <span class="n">draw</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">draw</span> <span class="ow">in</span> <span class="n">draws_copy</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">SCIPY_DIST</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SCIPY_FUNC</span><span class="p">)(</span>
+                <span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Torch separates distribution creation and function operation, so we need</span>
+        <span class="c1"># to split out the &#39;x&#39; value from the draws.</span>
+        <span class="k">elif</span> <span class="n">module</span> <span class="ow">is</span> <span class="n">torch</span><span class="p">:</span>
+
+            <span class="c1"># Build the distribution</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">TORCH_DIST</span><span class="p">(</span>
+                <span class="o">**</span><span class="p">{</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_TO_TORCH_NAMES</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span> <span class="n">draw</span>
+                    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">draw</span> <span class="ow">in</span> <span class="n">draws_copy</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Run the appropriate function. Some torch dists have custom functions</span>
+            <span class="c1"># that explicitly calculate the target value. Others extend the CDF.</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span>
+                <span class="n">dist</span><span class="p">,</span>
+                <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">TORCH_FUNC</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">TORCH_FUNC</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="s2">&quot;cdf&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unsupported module </span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2"> for CDF operation. &quot;</span>
+                <span class="s2">&quot;Expected numpy or torch.&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CDFLike.write_stan_operation">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.write_stan_operation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for the ``CDFLike`` operation.</span>
+
+<span class="sd">        :param kwargs: Formatted parameter strings for Stan code generation</span>
+<span class="sd">        :type kwargs: dict[str, str]</span>
+
+<span class="sd">        :returns: Stan function call string</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        This method constructs the appropriate Stan function call for the</span>
+<span class="sd">        CDF operation, using the distribution name, operation suffix, and</span>
+<span class="sd">        properly ordered parameters.</span>
+
+<span class="sd">        The generated Stan code follows the pattern:</span>
+<span class="sd">        distribution_suffix(x | param1, param2, ...)</span>
+
+<span class="sd">        Where the parameters are ordered according to the distribution&#39;s</span>
+<span class="sd">        Stan parameter ordering conventions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the function and arguments for the operation</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_DIST</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">STAN_SUFFIX</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_TO_SCIPY_NAMES</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">func</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CDF">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDF">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CDF</span><span class="p">(</span><span class="n">CDFLike</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Standard cumulative distribution function transformation.</span>
+
+<span class="sd">    Computes :math:`P(X \leq x)` for a given distribution and evaluation point.</span>
+
+<span class="sd">    :param x: Values at which to evaluate the CDF</span>
+<span class="sd">    :type x: custom_types.CombinableParameterType</span>
+<span class="sd">    :param shape: Shape of the output. Defaults to ().</span>
+<span class="sd">    :type shape: Union[tuple[custom_types.Integer, ...], custom_types.Integer]</span>
+<span class="sd">    :param params: Distribution parameters</span>
+<span class="sd">    :type params: custom_types.CombinableParameterType</span>
+
+<span class="sd">    Mathematical Definition:</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            F(X) = P(X \leq x) = \int_{-\infty}^{x} f(t) dt</span>
+
+<span class="sd">    Where :math:`f(t)` is the probability density function of the distribution.</span>
+
+<span class="sd">    Common Applications:</span>
+<span class="sd">        - Computing tail probabilities</span>
+<span class="sd">        - Implementing truncated distributions</span>
+<span class="sd">        - Calculating quantiles and percentiles</span>
+<span class="sd">        - Model validation through probability plots</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Via parameter instance (typical usage)</span>
+<span class="sd">        &gt;&gt;&gt; normal_param = Normal(mu=0.0, sigma=1.0)</span>
+<span class="sd">        &gt;&gt;&gt; cdf_transform = normal_param.cdf(x=data_points)</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # Direct instantiation (less common)</span>
+<span class="sd">        &gt;&gt;&gt; cdf_transform = Normal.CDF(x=values, mu=0.0, sigma=1.0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SCIPY_FUNC</span> <span class="o">=</span> <span class="s2">&quot;cdf&quot;</span>  <span class="c1"># The SciPy function for the CDF</span>
+    <span class="n">STAN_SUFFIX</span> <span class="o">=</span> <span class="s2">&quot;cdf&quot;</span>  <span class="c1"># The suffix for the Stan operation</span>
+    <span class="n">TORCH_FUNC</span> <span class="o">=</span> <span class="s2">&quot;cdf&quot;</span>
+
+<div class="viewcode-block" id="CDF.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDF.run_np_torch_op">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>  <span class="c1"># pylint: disable=useless-parent-delegation</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute CDF computation using appropriate backend.</span>
+
+<span class="sd">        :param draws: Parameter draws for the computation</span>
+<span class="sd">        :type draws: dict</span>
+
+<span class="sd">        :returns: CDF values P(X ≤ x)</span>
+<span class="sd">        :rtype: Union[np.ndarray, torch.Tensor]</span>
+
+<span class="sd">        This implementation uses the base class method directly as both</span>
+<span class="sd">        NumPy and PyTorch provide direct CDF computation methods.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Run using the function returned by the parent method.</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run_np_torch_op</span><span class="p">(</span><span class="o">**</span><span class="n">draws</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SurvivalFunction">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.SurvivalFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SurvivalFunction</span><span class="p">(</span><span class="n">CDFLike</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Survival function (complementary CDF) transformation.</span>
+
+<span class="sd">    Computes :math:`P(X \gt x) = 1 - P(X \leq x)` for a given distribution and</span>
+<span class="sd">    evaluation point.</span>
+
+<span class="sd">    :param x: Values at which to evaluate the survival function</span>
+<span class="sd">    :type x: custom_types.CombinableParameterType</span>
+<span class="sd">    :param shape: Shape of the output. Defaults to ().</span>
+<span class="sd">    :type shape: Union[tuple[custom_types.Integer, ...], custom_types.Integer]</span>
+<span class="sd">    :param params: Distribution parameters</span>
+<span class="sd">    :type params: custom_types.CombinableParameterType</span>
+
+<span class="sd">    Mathematical Definition:</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            S(x) = P(X \gt x) = 1 - F(x) = \int_{x}^{\infty} f(t) dt</span>
+
+<span class="sd">    Where :math:`F(x)` is the CDF and :math:`f(t)` is the probability density function.</span>
+
+<span class="sd">    Common Applications:</span>
+<span class="sd">        - Survival analysis and time-to-event modeling</span>
+<span class="sd">        - Reliability engineering and failure analysis</span>
+<span class="sd">        - Risk assessment and hazard modeling</span>
+<span class="sd">        - Complementary probability calculations</span>
+
+<span class="sd">    The implementation automatically handles backend differences:</span>
+<span class="sd">        - NumPy: Uses SciPy&#39;s direct survival function methods</span>
+<span class="sd">        - PyTorch: Computes 1 - CDF</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Survival analysis</span>
+<span class="sd">        &gt;&gt;&gt; survival_times = Exponential(rate=0.1)</span>
+<span class="sd">        &gt;&gt;&gt; survival_prob = survival_times.ccdf(x=time_points)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SCIPY_FUNC</span> <span class="o">=</span> <span class="s2">&quot;sf&quot;</span>  <span class="c1"># The SciPy function for the survival function</span>
+    <span class="n">STAN_SUFFIX</span> <span class="o">=</span> <span class="s2">&quot;ccdf&quot;</span>  <span class="c1"># The suffix for the Stan operation</span>
+    <span class="n">TORCH_FUNC</span> <span class="o">=</span> <span class="s2">&quot;cdf&quot;</span>
+
+<div class="viewcode-block" id="SurvivalFunction.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.SurvivalFunction.run_np_torch_op">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Execute survival function computation with backend-specific handling.</span>
+
+<span class="sd">        :param draws: Parameter draws for the computation</span>
+<span class="sd">        :type draws: dict</span>
+
+<span class="sd">        :returns: Survival function values :math:`P(X \gt x)`</span>
+<span class="sd">        :rtype: Union[np.ndarray, torch.Tensor]</span>
+
+<span class="sd">        :raises TypeError: If unsupported output type is encountered</span>
+
+<span class="sd">        This method handles the difference between NumPy and PyTorch:</span>
+<span class="sd">            - NumPy: SciPy provides direct survival function methods</span>
+<span class="sd">            - PyTorch: Computes 1 - CDF</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the output of the parent method</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run_np_torch_op</span><span class="p">(</span><span class="o">**</span><span class="n">draws</span><span class="p">)</span>
+
+        <span class="c1"># If using numpy, just return</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">output</span>
+
+        <span class="c1"># If using torch, subtract from 1 to get the survival function</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">output</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unsupported module </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">output</span><span class="p">)</span><span class="si">}</span><span class="s2"> for survival function operation. &quot;</span>
+                <span class="s2">&quot;Expected numpy or torch.&quot;</span>
+            <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LogCDF">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogCDF">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogCDF</span><span class="p">(</span><span class="n">CDFLike</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Logarithmic cumulative distribution function transformation.</span>
+
+<span class="sd">    Computes :math:`\log(P(X \leq x)) = \log(F(x))` for numerical stability when</span>
+<span class="sd">    dealing with very small probabilities. This is essential for</span>
+<span class="sd">    computations involving extreme tail probabilities.</span>
+
+<span class="sd">    :param x: Values at which to evaluate the log CDF</span>
+<span class="sd">    :type x: custom_types.CombinableParameterType</span>
+<span class="sd">    :param shape: Shape of the output. Defaults to ().</span>
+<span class="sd">    :type shape: Union[tuple[custom_types.Integer, ...], custom_types.Integer]</span>
+<span class="sd">    :param params: Distribution parameters</span>
+<span class="sd">    :type params: custom_types.CombinableParameterType</span>
+
+<span class="sd">    Mathematical Definition:</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \log F(x) = \log(P(X \leq x))</span>
+
+<span class="sd">    Numerical Advantages:</span>
+<span class="sd">        - Prevents underflow for very small probabilities</span>
+<span class="sd">        - Enables stable computation in log-space</span>
+<span class="sd">        - Essential for extreme value analysis</span>
+
+<span class="sd">    Common Applications:</span>
+<span class="sd">        - Extreme value analysis and rare event modeling</span>
+<span class="sd">        - Numerical optimization in log-space</span>
+<span class="sd">        - MCMC sampling with extreme parameter values</span>
+<span class="sd">        - Likelihood computations for tail events</span>
+
+<span class="sd">    The implementation handles backend-specific log CDF methods:</span>
+<span class="sd">        - NumPy: Uses SciPy&#39;s logcdf methods when available</span>
+<span class="sd">        - PyTorch: Uses log_cdf methods or log(cdf) fallback</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Extreme tail probability</span>
+<span class="sd">        &gt;&gt;&gt; normal_param = Normal(mu=0, sigma=1)</span>
+<span class="sd">        &gt;&gt;&gt; log_tail_prob = normal_param.log_cdf(x=extreme_values)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SCIPY_FUNC</span> <span class="o">=</span> <span class="s2">&quot;logcdf&quot;</span>  <span class="c1"># The SciPy function for the log CDF</span>
+    <span class="n">STAN_SUFFIX</span> <span class="o">=</span> <span class="s2">&quot;lcdf&quot;</span>  <span class="c1"># The suffix for the Stan operation</span>
+    <span class="n">TORCH_FUNC</span> <span class="o">=</span> <span class="s2">&quot;log_cdf&quot;</span>
+
+<div class="viewcode-block" id="LogCDF.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogCDF.run_np_torch_op">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Execute log CDF computation with appropriate numerical handling.</span>
+
+<span class="sd">        :param draws: Parameter draws for the computation</span>
+<span class="sd">        :type draws: dict</span>
+
+<span class="sd">        :returns: Log CDF values :math:`\log(P(X \leq x))`</span>
+<span class="sd">        :rtype: Union[np.ndarray, torch.Tensor]</span>
+
+<span class="sd">        :raises TypeError: If unsupported output type is encountered</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># As above, get the output of the parent method and return it directly</span>
+        <span class="c1"># if using numpy.</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run_np_torch_op</span><span class="p">(</span><span class="o">**</span><span class="n">draws</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">output</span>
+
+        <span class="c1"># If using torch, return the log CDF</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">TORCH_DIST</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">TORCH_FUNC</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">output</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+        <span class="c1"># If using an unsupported type, raise an error</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unsupported module </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">output</span><span class="p">)</span><span class="si">}</span><span class="s2"> for log CDF operation. &quot;</span>
+                <span class="s2">&quot;Expected numpy or torch.&quot;</span>
+            <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LogSurvivalFunction">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogSurvivalFunction</span><span class="p">(</span><span class="n">CDFLike</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Logarithmic survival function transformation.</span>
+
+<span class="sd">    Computes :math:`\log(P(X &gt; x)) = \log(1 - F(x))` for numerical stability</span>
+<span class="sd">    when dealing with survival probabilities that may be very close</span>
+<span class="sd">    to zero or one. Essential for stable survival analysis computations.</span>
+
+<span class="sd">    :param x: Values at which to evaluate the log survival function</span>
+<span class="sd">    :type x: custom_types.CombinableParameterType</span>
+<span class="sd">    :param shape: Shape of the output. Defaults to ().</span>
+<span class="sd">    :type shape: Union[tuple[custom_types.Integer, ...], custom_types.Integer]</span>
+<span class="sd">    :param params: Distribution parameters</span>
+<span class="sd">    :type params: custom_types.CombinableParameterType</span>
+
+<span class="sd">    Mathematical Definition:</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \log S(x) = \log(P(X &gt; x)) = \log(1 - F(x))</span>
+
+<span class="sd">    Where :math:`F(x)` is the CDF.</span>
+
+<span class="sd">    Numerical Advantages:</span>
+<span class="sd">        - Prevents underflow for probabilities near 0 or 1</span>
+<span class="sd">        - Maintains precision for extreme survival times</span>
+<span class="sd">        - Enables stable log-space arithmetic</span>
+<span class="sd">        - Critical for numerical stability in survival models</span>
+
+<span class="sd">    Common Applications:</span>
+<span class="sd">        - Survival analysis with extreme event times</span>
+<span class="sd">        - Reliability engineering with high reliability systems</span>
+<span class="sd">        - Hazard modeling with rare failure events</span>
+<span class="sd">        - Log-likelihood computations for survival models</span>
+
+<span class="sd">    The implementation provides numerically stable computation:</span>
+<span class="sd">        - NumPy: Uses SciPy&#39;s logsf methods for direct computation</span>
+<span class="sd">        - PyTorch: Uses log_sf methods or :math:`\text{log1p}(-cdf)` as fallback</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SCIPY_FUNC</span> <span class="o">=</span> <span class="s2">&quot;logsf&quot;</span>  <span class="c1"># The SciPy function for the log survival function</span>
+    <span class="n">STAN_SUFFIX</span> <span class="o">=</span> <span class="s2">&quot;lccdf&quot;</span>  <span class="c1"># The suffix for the Stan operation</span>
+    <span class="n">TORCH_FUNC</span> <span class="o">=</span> <span class="s2">&quot;log_sf&quot;</span>
+
+<div class="viewcode-block" id="LogSurvivalFunction.run_np_torch_op">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.run_np_torch_op">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">draws</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Execute log survival function computation with numerical stability.</span>
+
+<span class="sd">        :param draws: Parameter draws for the computation</span>
+<span class="sd">        :type draws: dict</span>
+
+<span class="sd">        :returns: Log survival function values :math:`\log(P(X \gt x))`</span>
+<span class="sd">        :rtype: Union[np.ndarray, torch.Tensor]</span>
+
+<span class="sd">        :raises TypeError: If unsupported output type is encountered</span>
+
+<span class="sd">        This method ensures numerical stability by:</span>
+<span class="sd">            - Using native log survival function methods when available</span>
+<span class="sd">            - Using :math:`\text{log1p}(-cdf)` for PyTorch when direct methods unavailable</span>
+<span class="sd">            - Handling precision issues near probability boundaries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the output of the parent method</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run_np_torch_op</span><span class="p">(</span><span class="o">**</span><span class="n">draws</span><span class="p">)</span>
+
+        <span class="c1"># If using numpy, return the log survival function directly</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">output</span>
+
+        <span class="c1"># If using torch, return the log of 1 minus the CDF</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">TORCH_DIST</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">TORCH_FUNC</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">output</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">output</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unsupported module </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">output</span><span class="p">)</span><span class="si">}</span><span class="s2"> for log survival function operation. &quot;</span>
+                <span class="s2">&quot;Expected numpy or torch.&quot;</span>
+            <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/index.html">SciStanPy API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../../index.html">Module code</a><ul>
+  <li><a href="../../../../scistanpy.html">scistanpy</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Microsoft Corporation.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

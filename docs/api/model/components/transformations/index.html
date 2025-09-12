@@ -33,66 +33,26 @@
 
           <div class="body" role="main">
             
-  <section id="transformations-api-reference">
-<h1>Transformations API Reference<a class="headerlink" href="#transformations-api-reference" title="Link to this heading">¶</a></h1>
-<p>This reference covers the mathematical transformations and operator overloading framework in SciStanPy.</p>
-<p>The transformations submodule provides the foundation for mathematical operations on model components, enabling complex model construction through operator overloading and automatic dependency tracking.</p>
-<section id="transformations-submodule-overview">
-<h2>Transformations Submodule Overview<a class="headerlink" href="#transformations-submodule-overview" title="Link to this heading">¶</a></h2>
-<p>The transformations submodule consists of several key components:</p>
-<div class="toctree-wrapper compound">
+  <section id="module-scistanpy.model.components.transformations">
+<span id="transformations-api-reference"></span><h1>Transformations API Reference<a class="headerlink" href="#module-scistanpy.model.components.transformations" title="Link to this heading">¶</a></h1>
+<p>Transformation components for mathematical operations on SciStanPy model parameters.</p>
+<p>This submodule provides a comprehensive framework for mathematical transformations
+that can be applied to model parameters in SciStanPy. These transformations enable
+the construction of complex probabilistic models through composition of simple
+mathematical operations while maintaining automatic differentiation capabilities
+and Stan code generation.</p>
+<dl>
+<dt>There are three main submodules within this package:</dt><dd><div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="cdfs.html">CDFs API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="transformed_data.html">Transformed Data API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="transformed_parameters.html">Transformed Parameters API Reference</a></li>
 </ul>
 </div>
-</section>
-<section id="mathematical-transformations">
-<h2>Mathematical Transformations<a class="headerlink" href="#mathematical-transformations" title="Link to this heading">¶</a></h2>
-<p>The transformations system allows you to create complex mathematical relationships:</p>
-<p><strong>Example Usage:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="c1"># Basic parameter</span>
-<span class="n">log_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="c1"># Transform to ensure positive values</span>
-<span class="n">rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_rate</span><span class="p">)</span>
-
-<span class="c1"># Use in further calculations</span>
-<span class="n">concentration</span> <span class="o">=</span> <span class="n">initial_conc</span> <span class="o">*</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">rate</span> <span class="o">*</span> <span class="n">time</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="transformation-types">
-<h2>Transformation Types<a class="headerlink" href="#transformation-types" title="Link to this heading">¶</a></h2>
-<p>SciStanPy provides several types of transformations:</p>
-<ul class="simple">
-<li><p><strong>Unary transformations</strong>: Operations on single parameters (exp, log, abs, etc.)</p></li>
-<li><p><strong>Binary transformations</strong>: Operations between parameters (+, -, *, /, etc.)</p></li>
-<li><p><strong>Specialized transformations</strong>: Domain-specific mathematical functions</p></li>
-</ul>
-<p>All transformations:</p>
-<ul class="simple">
-<li><p><strong>Preserve gradients</strong>: Support automatic differentiation</p></li>
-<li><p><strong>Generate Stan code</strong>: Automatically convert to Stan syntax</p></li>
-<li><p><strong>Handle broadcasting</strong>: Work with arrays and scalars consistently</p></li>
-<li><p><strong>Validate inputs</strong>: Check mathematical constraints</p></li>
-</ul>
-</section>
-<section id="stan-code-generation">
-<h2>Stan Code Generation<a class="headerlink" href="#stan-code-generation" title="Link to this heading">¶</a></h2>
-<p>Transformations automatically generate appropriate Stan code:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Python expression</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_param</span><span class="p">)</span> <span class="o">+</span> <span class="n">constant_value</span>
-
-<span class="c1"># Automatically generates Stan code like:</span>
-<span class="c1"># result = exp(log_param) + constant_value;</span>
-</pre></div>
-</div>
-</section>
+</dd>
+</dl>
+<p>Take a look at the documentation for each submodule for details on the specific
+transformations available and typical usage patterns.</p>
 </section>
 
 

@@ -12,31 +12,25 @@ The module implements a unified interface for CDF-like computations across
 multiple computational backends (NumPy/SciPy, PyTorch) while automatically
 generating appropriate Stan code for each transformation.
 
-CDF Transformation Types:
-    - **CDF**: Standard cumulative distribution function P(X ≤ x)
-    - **SurvivalFunction**: Complementary CDF (CCDF) P(X > x) = 1 - CDF(x)
-    - **LogCDF**: Logarithmic CDF for numerical stability
-    - **LogSurvivalFunction**: Logarithmic survival function for numerical stability
+CDF-like Transformation Types:
 
-Key Features:
-    - **Multi-Backend Support**: Works with NumPy, PyTorch, and Stan
-    - **Automatic Code Generation**: Generates appropriate Stan function calls
-    - **Parameter Validation**: Ensures correct parameter specifications
+    - :py:class:`~scistanpy.model.components.transformations.cdfs.CDF`
+    - :py:class:`~scistanpy.model.components.transformations.cdfs.SurvivalFunction`
+    - :py:class:`~scistanpy.model.components.transformations.cdfs.LogCDF`
+    - :py:class:`~scistanpy.model.components.transformations.cdfs.LogSurvivalFunction`
 
-Backend Integration:
-    Each CDF class automatically handles backend-specific implementations:
+Each CDF class automatically handles backend-specific implementations:
+
     - **NumPy/SciPy**: Uses SciPy distribution methods with parameter transforms as needed
     - **PyTorch**: Uses PyTorch distribution objects with appropriate methods
     - **Stan**: Generates function calls with proper parameter ordering
 
-The classes are designed to be instantiated automatically through the Parameter
-metaclass system, providing convenient access to probability functions for any
-parameter type in the SciStanPy framework.
-
-Usage Note:
-    These classes are typically not instantiated directly but are accessed through
-    the CDF properties of Parameter instances, which are automatically created by
-    the ParameterMeta metaclass.
+The classes are not intended to be accessed directly. Instead, they are used as
+templates by the :py:class:`~scistanpy.model.components.parameters.ParameterMeta`
+metaclass to build :py:class:`~scistanpy.model.components.parameters.ParameterMeta`
+-specific classes on module import, which are assigned to the ``CDF``, ``LOG_CDF``,
+``SF``, and ``LOG_SF`` properties of each :py:class:`~scistanpy.model.components.
+parameters.Parameter`.
 """
 
 from __future__ import annotations
@@ -70,11 +64,6 @@ class CDFLike(transformed_parameters.TransformedParameter):
     :param params: Distribution parameters required for the CDF computation
     :type params: custom_types.CombinableParameterType
 
-    :cvar PARAMETER: Reference to the Parameter class this CDF applies to
-    :cvar SCIPY_FUNC: Name of the SciPy method for this operation
-    :cvar TORCH_FUNC: Name of the PyTorch method for this operation
-    :cvar STAN_SUFFIX: Suffix for Stan function name generation
-
     :raises TypeError: If unexpected or missing parameters are provided
 
     The class provides a unified interface for computing probability functions
@@ -82,22 +71,40 @@ class CDFLike(transformed_parameters.TransformedParameter):
     with the SciStanPy model component system.
 
     Key Responsibilities:
-    - Parameter validation against expected parameter sets
-    - Backend detection and appropriate method dispatch
-    - Parameter transformation for SciPy compatibility
-    - Stan code generation for probability function calls
+        - Parameter validation against expected parameter sets
+        - Backend detection and appropriate method dispatch
+        - Parameter transformation for SciPy compatibility
+        - Stan code generation for probability function calls
 
     The class automatically handles the complexities of:
-    - Converting between parameter naming conventions
-    - Applying parameter transformations for different backends
-    - Generating appropriate function calls for each backend
+        - Converting between parameter naming conventions
+        - Applying parameter transformations for different backends
+        - Generating appropriate function calls for each backend
     """
 
     # Class variables for each CDF
     PARAMETER: "parameters.Parameter"
+    """
+    Reference to the :py:class:`~scistanpy.model.components.parameters.Parameter`
+    subclass for which this ``CDFLike`` class applies. Should be set by the metaclass.
+    """
+
     SCIPY_FUNC: str  # cdf, sf, log_cdf, log_sf
+    """
+    Name of the SciPy method for this operation (e.g., 'cdf', 'sf', 'log_cdf',
+    'log_sf'). Should be set by subclasses.
+    """
+
     TORCH_FUNC: str  # cdf, log_cdf, log_sf
+    """
+    Name of the PyTorch method for this operation (e.g., 'cdf', 'log_cdf', 'log_sf').
+    Should be set by subclasses.
+    """
+
     STAN_SUFFIX: str  # The suffix for the Stan operation, e.g., "cdf"
+    """
+    Suffix for Stan function name generation (e.g., "cdf"). Should be set by subclasses.
+    """
 
     def __init__(
         self,
@@ -156,7 +163,7 @@ class CDFLike(transformed_parameters.TransformedParameter):
 
     @abstractmethod
     def run_np_torch_op(self, **draws):
-        """Execute the CDF operation using NumPy or PyTorch backend.
+        """Execute the CDF-like operation using NumPy or PyTorch backend as appropriate.
 
         :param draws: Dictionary of parameter draws for the operation
         :type draws: dict
@@ -171,11 +178,11 @@ class CDFLike(transformed_parameters.TransformedParameter):
         computational backend and applies appropriate parameter transformations.
 
         Backend Handling:
-        - **NumPy**: Uses SciPy distribution methods with parameter transforms
-        - **PyTorch**: Creates distribution objects and calls appropriate methods
-        - **Other**: Raises TypeError for unsupported backends
+            - **NumPy**: Uses SciPy distribution methods with parameter transforms
+            - **PyTorch**: Creates distribution objects and calls appropriate methods
+            - **Other**: Raises TypeError for unsupported backends
 
-        The method separates the evaluation point (x) from distribution
+        The method separates the evaluation point (``x``) from distribution
         parameters and handles backend-specific parameter naming and
         transformation requirements.
         """
@@ -232,7 +239,7 @@ class CDFLike(transformed_parameters.TransformedParameter):
             )
 
     def write_stan_operation(self, **kwargs) -> str:
-        """Generate Stan code for the CDFLike operation.
+        """Generate Stan code for the ``CDFLike`` operation.
 
         :param kwargs: Formatted parameter strings for Stan code generation
         :type kwargs: dict[str, str]
@@ -260,9 +267,9 @@ class CDFLike(transformed_parameters.TransformedParameter):
 
 
 class CDF(CDFLike):
-    """Standard cumulative distribution function transformation.
+    r"""Standard cumulative distribution function transformation.
 
-    Computes P(X ≤ x) for a given distribution and evaluation point.
+    Computes :math:`P(X \leq x)` for a given distribution and evaluation point.
 
     :param x: Values at which to evaluate the CDF
     :type x: custom_types.CombinableParameterType
@@ -272,23 +279,24 @@ class CDF(CDFLike):
     :type params: custom_types.CombinableParameterType
 
     Mathematical Definition:
-        F(x) = P(X ≤ x) = ∫_{-∞}^x f(t) dt
+        .. math::
+            F(X) = P(X \leq x) = \int_{-\infty}^{x} f(t) dt
 
-    Where f(t) is the probability density function of the distribution.
+    Where :math:`f(t)` is the probability density function of the distribution.
 
     Common Applications:
-    - Computing tail probabilities
-    - Implementing truncated distributions
-    - Calculating quantiles and percentiles
-    - Model validation through probability plots
+        - Computing tail probabilities
+        - Implementing truncated distributions
+        - Calculating quantiles and percentiles
+        - Model validation through probability plots
 
     Example:
         >>> # Via parameter instance (typical usage)
-        >>> normal_param = Normal(mu=0, sigma=1)
+        >>> normal_param = Normal(mu=0.0, sigma=1.0)
         >>> cdf_transform = normal_param.cdf(x=data_points)
         >>>
         >>> # Direct instantiation (less common)
-        >>> cdf_transform = Normal.CDF(x=values, mu=0, sigma=1)
+        >>> cdf_transform = Normal.CDF(x=values, mu=0.0, sigma=1.0)
     """
 
     SCIPY_FUNC = "cdf"  # The SciPy function for the CDF
@@ -312,9 +320,9 @@ class CDF(CDFLike):
 
 
 class SurvivalFunction(CDFLike):
-    """Survival function (complementary CDF) transformation.
+    r"""Survival function (complementary CDF) transformation.
 
-    Computes P(X > x) = 1 - P(X ≤ x) for a given distribution and
+    Computes :math:`P(X \gt x) = 1 - P(X \leq x)` for a given distribution and
     evaluation point.
 
     :param x: Values at which to evaluate the survival function
@@ -325,19 +333,20 @@ class SurvivalFunction(CDFLike):
     :type params: custom_types.CombinableParameterType
 
     Mathematical Definition:
-        S(x) = P(X > x) = 1 - F(x) = ∫_x^∞ f(t) dt
+        .. math::
+            S(x) = P(X \gt x) = 1 - F(x) = \int_{x}^{\infty} f(t) dt
 
-    Where F(x) is the CDF and f(t) is the probability density function.
+    Where :math:`F(x)` is the CDF and :math:`f(t)` is the probability density function.
 
     Common Applications:
-    - Survival analysis and time-to-event modeling
-    - Reliability engineering and failure analysis
-    - Risk assessment and hazard modeling
-    - Complementary probability calculations
+        - Survival analysis and time-to-event modeling
+        - Reliability engineering and failure analysis
+        - Risk assessment and hazard modeling
+        - Complementary probability calculations
 
     The implementation automatically handles backend differences:
-    - NumPy: Uses SciPy's direct survival function methods
-    - PyTorch: Computes 1 - CDF
+        - NumPy: Uses SciPy's direct survival function methods
+        - PyTorch: Computes 1 - CDF
 
     Example:
         >>> # Survival analysis
@@ -350,19 +359,19 @@ class SurvivalFunction(CDFLike):
     TORCH_FUNC = "cdf"
 
     def run_np_torch_op(self, **draws):
-        """Execute survival function computation with backend-specific handling.
+        r"""Execute survival function computation with backend-specific handling.
 
         :param draws: Parameter draws for the computation
         :type draws: dict
 
-        :returns: Survival function values P(X > x)
+        :returns: Survival function values :math:`P(X \gt x)`
         :rtype: Union[np.ndarray, torch.Tensor]
 
         :raises TypeError: If unsupported output type is encountered
 
         This method handles the difference between NumPy and PyTorch:
-        - NumPy: SciPy provides direct survival function methods
-        - PyTorch: Computes 1 - CDF
+            - NumPy: SciPy provides direct survival function methods
+            - PyTorch: Computes 1 - CDF
         """
         # Get the output of the parent method
         output = super().run_np_torch_op(**draws)
@@ -383,9 +392,9 @@ class SurvivalFunction(CDFLike):
 
 
 class LogCDF(CDFLike):
-    """Logarithmic cumulative distribution function transformation.
+    r"""Logarithmic cumulative distribution function transformation.
 
-    Computes log(P(X ≤ x)) = log(F(x)) for numerical stability when
+    Computes :math:`\log(P(X \leq x)) = \log(F(x))` for numerical stability when
     dealing with very small probabilities. This is essential for
     computations involving extreme tail probabilities.
 
@@ -397,22 +406,23 @@ class LogCDF(CDFLike):
     :type params: custom_types.CombinableParameterType
 
     Mathematical Definition:
-        log F(x) = log(P(X ≤ x))
+        .. math::
+            \log F(x) = \log(P(X \leq x))
 
     Numerical Advantages:
-    - Prevents underflow for very small probabilities
-    - Enables stable computation in log-space
-    - Essential for extreme value analysis
+        - Prevents underflow for very small probabilities
+        - Enables stable computation in log-space
+        - Essential for extreme value analysis
 
     Common Applications:
-    - Extreme value analysis and rare event modeling
-    - Numerical optimization in log-space
-    - MCMC sampling with extreme parameter values
-    - Likelihood computations for tail events
+        - Extreme value analysis and rare event modeling
+        - Numerical optimization in log-space
+        - MCMC sampling with extreme parameter values
+        - Likelihood computations for tail events
 
     The implementation handles backend-specific log CDF methods:
-    - NumPy: Uses SciPy's logcdf methods when available
-    - PyTorch: Uses log_cdf methods or log(cdf) fallback
+        - NumPy: Uses SciPy's logcdf methods when available
+        - PyTorch: Uses log_cdf methods or log(cdf) fallback
 
     Example:
         >>> # Extreme tail probability
@@ -425,20 +435,15 @@ class LogCDF(CDFLike):
     TORCH_FUNC = "log_cdf"
 
     def run_np_torch_op(self, **draws):
-        """Execute log CDF computation with appropriate numerical handling.
+        r"""Execute log CDF computation with appropriate numerical handling.
 
         :param draws: Parameter draws for the computation
         :type draws: dict
 
-        :returns: Log CDF values log(P(X ≤ x))
+        :returns: Log CDF values :math:`\log(P(X \leq x))`
         :rtype: Union[np.ndarray, torch.Tensor]
 
         :raises TypeError: If unsupported output type is encountered
-
-        This method ensures numerical stability by:
-        - Using native log CDF methods when available
-        - Falling back to log(CDF) when necessary
-        - Handling backend-specific implementation differences
         """
         # As above, get the output of the parent method and return it directly
         # if using numpy.
@@ -461,9 +466,9 @@ class LogCDF(CDFLike):
 
 
 class LogSurvivalFunction(CDFLike):
-    """Logarithmic survival function transformation.
+    r"""Logarithmic survival function transformation.
 
-    Computes log(P(X > x)) = log(1 - F(x)) for numerical stability
+    Computes :math:`\log(P(X > x)) = \log(1 - F(x))` for numerical stability
     when dealing with survival probabilities that may be very close
     to zero or one. Essential for stable survival analysis computations.
 
@@ -475,28 +480,26 @@ class LogSurvivalFunction(CDFLike):
     :type params: custom_types.CombinableParameterType
 
     Mathematical Definition:
-        log S(x) = log(P(X > x)) = log(1 - F(x))
+        .. math::
+            \log S(x) = \log(P(X > x)) = \log(1 - F(x))
+
+        Where :math:`F(x)` is the CDF.
 
     Numerical Advantages:
-    - Prevents underflow for probabilities near 0 or 1
-    - Maintains precision for extreme survival times
-    - Enables stable log-space arithmetic
-    - Critical for numerical stability in survival models
+        - Prevents underflow for probabilities near 0 or 1
+        - Maintains precision for extreme survival times
+        - Enables stable log-space arithmetic
+        - Critical for numerical stability in survival models
 
     Common Applications:
-    - Survival analysis with extreme event times
-    - Reliability engineering with high reliability systems
-    - Hazard modeling with rare failure events
-    - Log-likelihood computations for survival models
+        - Survival analysis with extreme event times
+        - Reliability engineering with high reliability systems
+        - Hazard modeling with rare failure events
+        - Log-likelihood computations for survival models
 
     The implementation provides numerically stable computation:
-    - NumPy: Uses SciPy's logsf methods for direct computation
-    - PyTorch: Uses log_sf methods or log1p(-cdf) as fallback
-
-    Example:
-        >>> # Long-term survival probability
-        >>> survival_model = Weibull(shape=1.5, scale=10.0)
-        >>> log_survival = survival_model.log_ccdf(x=long_times)
+        - NumPy: Uses SciPy's logsf methods for direct computation
+        - PyTorch: Uses log_sf methods or :math:`\text{log1p}(-cdf)` as fallback
     """
 
     SCIPY_FUNC = "logsf"  # The SciPy function for the log survival function
@@ -504,20 +507,20 @@ class LogSurvivalFunction(CDFLike):
     TORCH_FUNC = "log_sf"
 
     def run_np_torch_op(self, **draws):
-        """Execute log survival function computation with numerical stability.
+        r"""Execute log survival function computation with numerical stability.
 
         :param draws: Parameter draws for the computation
         :type draws: dict
 
-        :returns: Log survival function values log(P(X > x))
+        :returns: Log survival function values :math:`\log(P(X \gt x))`
         :rtype: Union[np.ndarray, torch.Tensor]
 
         :raises TypeError: If unsupported output type is encountered
 
         This method ensures numerical stability by:
-        - Using native log survival function methods when available
-        - Using log1p(-cdf) for PyTorch when direct methods unavailable
-        - Handling precision issues near probability boundaries
+            - Using native log survival function methods when available
+            - Using :math:`\text{log1p}(-cdf)` for PyTorch when direct methods unavailable
+            - Handling precision issues near probability boundaries
         """
         # Get the output of the parent method
         output = super().run_np_torch_op(**draws)
