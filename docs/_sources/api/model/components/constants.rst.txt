@@ -5,7 +5,7 @@ Constants API Reference
    :undoc-members:
    :show-inheritance:
 
-As of now, there is a single class in this module
+As of now, there is a single class in this module:
 
 .. autoclass:: scistanpy.model.components.constants.Constant
    :members:

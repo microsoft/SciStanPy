@@ -9,46 +9,44 @@ variables with specific probability distributions and handle the complex task of
 translating between Python model specifications, PyTorch modules, and Stan probabilistic
 programming language code.
 
-Parameter Type Hierarchy:
-    - **Parameter**: Base class for all probabilistic model components
-    - **ContinuousDistribution**: Parameters with continuous sample spaces
-    - **DiscreteDistribution**: Parameters with discrete sample spaces
-
-Key Features:
-    - **Multi-Backend Support**: Integration with SciPy, PyTorch, and Stan
-    - **Automatic Parameterization**: Intelligent handling of parameter bounds and constraints
-    - **Non-Centered Parameterization**: Automatic reparameterization for improved sampling
-    - **Custom Distributions**: Extended distribution library beyond standard offerings
-    - **Type Safety**: Comprehensive type checking and validation
-
-Stan Code Generation:
-    Each parameter class automatically generates appropriate Stan code including:
-    - Variable declarations with proper constraints
-    - Target increment statements for log-probability
-    - Generated quantities for posterior predictive sampling
-    - Support for custom Stan functions when needed
-
-Distribution Support:
-    **Continuous Distributions:**
-    - Normal, HalfNormal, UnitNormal, LogNormal
-    - Beta, Gamma, InverseGamma, Exponential
-    - Dirichlet, ExpDirichlet (log-simplex)
-    - Custom: ExpExponential, Lomax, ExpLomax
-
-    **Discrete Distributions:**
-    - Binomial, Poisson
-    - Multinomial variants: standard, logit, log-theta parameterizations
-
-Advanced Features:
-    - **Automatic Reparameterization**: Non-centered parameterization for hierarchical models
-    - **Constraint Handling**: Automatic bound enforcement and transformations
-    - **Observable Support**: Automatic identification of observed data model components
-    - **PyTorch Integration**: Native support for gradient-based optimization
-    - **Custom Function Integration**: Automatic inclusion of required Stan functions
-
 The parameter classes are designed to be composable, allowing complex hierarchical
 models to be built through simple parameter relationships while maintaining
 mathematical rigor and computational efficiency.
+
+The following distributions are currently supported in SciStanPy:
+
+Continuous Univariate
+^^^^^^^^^^^^^^^^^^^^^
+- :py:class:`~scistanpy.model.components.parameters.Normal`
+- :py:class:`~scistanpy.model.components.parameters.HalfNormal`
+- :py:class:`~scistanpy.model.components.parameters.UnitNormal`
+- :py:class:`~scistanpy.model.components.parameters.LogNormal`
+- :py:class:`~scistanpy.model.components.parameters.Beta`
+- :py:class:`~scistanpy.model.components.parameters.Gamma`
+- :py:class:`~scistanpy.model.components.parameters.InverseGamma`
+- :py:class:`~scistanpy.model.components.parameters.Exponential`
+- :py:class:`~scistanpy.model.components.parameters.ExpExponential`
+- :py:class:`~scistanpy.model.components.parameters.Lomax`
+- :py:class:`~scistanpy.model.components.parameters.ExpLomax`
+
+Continuous Multivariate
+^^^^^^^^^^^^^^^^^^^^^^^
+- :py:class:`~scistanpy.model.components.parameters.Dirichlet`
+- :py:class:`~scistanpy.model.components.parameters.ExpDirichlet`
+
+Discrete Univariate
+^^^^^^^^^^^^^^^^^^^
+- :py:class:`~scistanpy.model.components.parameters.Binomial`
+- :py:class:`~scistanpy.model.components.parameters.Poisson`
+
+Discrete Multivariate
+^^^^^^^^^^^^^^^^^^^^^
+- :py:class:`~scistanpy.model.components.parameters.Multinomial`
+- :py:class:`~scistanpy.model.components.parameters.MultinomialLogit`
+- :py:class:`~scistanpy.model.components.parameters.MultinomialLogTheta`
+
+Is there a distribution you need that isn't listed here? Please open an issue or
+submit a PR!
 """
 
 from __future__ import annotations
@@ -144,47 +142,84 @@ def _exp_transform(x):
 class ParameterMeta(ABCMeta):
     """Metaclass for automatic CDF transform class generation.
 
+    :param name: Name of the class being created
+    :type name: str
+    :param bases: Base classes for the new class
+    :type bases: tuple
+    :param attrs: Class attributes dictionary
+    :type attrs: dict
+
     This metaclass automatically creates cumulative distribution function (CDF)
     and related transform classes for each Parameter subclass, enabling automatic
     generation of probabilistic transforms and survival functions.
 
-    The metaclass creates four transform classes for each parameter:
+    The metaclass creates four transform classes for each parameter and assigns
+    them to the following class variables:
 
-    - CDF: Cumulative distribution function
-    - SF: Survival function (complementary CDF)
-    - LOG_CDF: Logarithmic CDF
-    - LOG_SF: Logarithmic survival function
-
+        - :py:attr:`Parameter.CDF <scistanpy.model.components.parameters.Parameter.CDF>`,
+          based on the :py:class:`~scistanpy.model.components.transformations.
+          cdfs.CDF` class and describing the cumulative distribution function for
+          the parameter.
+        - :py:attr:`Parameter.SF <scistanpy.model.components.parameters.Parameter.SF>`,
+          based on the :py:class:`~scistanpy.model.components.transformations.
+          cdfs.SurvivalFunction` class and describing the survival function (1 - CDF)
+          for the parameter.
+        - :py:attr:`Parameter.LOG_CDF <scistanpy.model.components.parameters.Parameter.
+          LOG_CDF>`, based on the :py:class:`~scistanpy.model.components.transformations.
+          cdfs.LogCDF` class and describing the logarithmic cumulative distribution
+          function for the parameter.
+        - :py:attr:`Parameter.LOG_SF <scistanpy.model.components.parameters.Parameter.
+          LOG_SF>`, based on the :py:class:`~scistanpy.model.components.transformations.
+          cdfs.LogSurvivalFunction` class and describing the logarithmic survival
+          function for the parameter.
     """
 
     def __init__(cls, name, bases, attrs):
-        """Create CDF transform classes for the Parameter subclass.
-
-        :param name: Name of the class being created
-        :type name: str
-        :param bases: Base classes for the new class
-        :type bases: tuple
-        :param attrs: Class attributes dictionary
-        :type attrs: dict
-
-        This method automatically generates transform classes by creating
-        new class types that inherit from the appropriate CDF base classes
-        and reference the current parameter class.
-        """
+        """Create CDF transform classes for the Parameter subclass."""
         # Run the parent class's __init__ method
         super().__init__(name, bases, attrs)
 
         # Add CDF, SF, LOG_CDF, and LOG_SF classes to the Parameter subclass
-        cls.CDF = type(f"{name}CDF", (cdfs.CDF,), {"PARAMETER": cls})
-        cls.SF = type(f"{name}SF", (cdfs.SurvivalFunction,), {"PARAMETER": cls})
-        cls.LOG_CDF = type(f"{name}LOG_CDF", (cdfs.LogCDF,), {"PARAMETER": cls})
+        cls.CDF = type(
+            "CDF",
+            (cdfs.CDF,),
+            {
+                "PARAMETER": cls,
+                "__module__": cls.__module__,
+                "__qualname__": f"{cls.__qualname__}.CDF",
+            },
+        )
+        cls.SF = type(
+            "SF",
+            (cdfs.SurvivalFunction,),
+            {
+                "PARAMETER": cls,
+                "__module__": cls.__module__,
+                "__qualname__": f"{cls.__qualname__}.SF",
+            },
+        )
+        cls.LOG_CDF = type(
+            "LOG_CDF",
+            (cdfs.LogCDF,),
+            {
+                "PARAMETER": cls,
+                "__module__": cls.__module__,
+                "__qualname__": f"{cls.__qualname__}.LOG_CDF",
+            },
+        )
         cls.LOG_SF = type(
-            f"{name}LOG_SF", (cdfs.LogSurvivalFunction,), {"PARAMETER": cls}
+            "LOG_SF",
+            (cdfs.LogSurvivalFunction,),
+            {
+                "PARAMETER": cls,
+                "__module__": cls.__module__,
+                "__qualname__": f"{cls.__qualname__}.LOG_SF",
+            },
         )
 
 
 class ClassOrInstanceMethod:
-    """Descriptor enabling dual class/instance method behavior.
+    """Descriptor used as a decorator to enable dual class/instance method behavior.
 
     This descriptor allows methods to behave differently when called as class
     methods versus instance methods, enabling flexible parameter handling for
@@ -267,6 +302,12 @@ class Parameter(
     mapping between Python model specifications and Stan code generation while
     providing integration with SciPy and PyTorch ecosystems.
 
+    :param kwargs: Distribution parameters (mu, sigma, etc. depending on subclass)
+
+    :raises NotImplementedError: If required class attributes are missing (i.e.,
+        if subclass was incorrectly defined)
+    :raises TypeError: If required distribution parameters are missing
+
     :cvar STAN_DIST: Stan distribution name for code generation
     :type STAN_DIST: str
     :cvar HAS_RAW_VARNAME: Whether parameter uses a raw/transformed parameterization
@@ -282,63 +323,81 @@ class Parameter(
     :cvar STAN_TO_SCIPY_TRANSFORMS: Parameter transformation functions converting between
         Stan and SciPy parametrizations
     :type STAN_TO_SCIPY_TRANSFORMS: dict[str, Callable[[npt.NDArray], npt.NDArray]]
-    :cvar CDF: Automatically generated CDF transform class
+    :cvar CDF: Automatically generated :py:class:`~scistanpy.model.components.transformations.
+        cdfs.CDF` class.
     :type CDF: type[cdfs.CDF]
-    :cvar SF: Automatically generated SF transform class
+    :cvar SF: Automatically generated :py:class:`~scistanpy.model.components.transformations.
+        cdfs.SurvivalFunction` class.
     :type SF: type[cdfs.SurvivalFunction]
-    :cvar LOG_CDF: Automatically generated log CDF transform class
+    :cvar LOG_CDF: Automatically generated :py:class:`~scistanpy.model.components.
+        transformations.cdfs.LogCDF` class.
     :type LOG_CDF: type[cdfs.LogCDF]
-    :cvar LOG_SF: Automatically generated log SF transform class
+    :cvar LOG_SF: Automatically generated :py:class:`~scistanpy.model.components.
+        transformations.cdfs.LogSurvivalFunction` class.
     :type LOG_SF: type[cdfs.LogSurvivalFunction]
-
-    The class automatically handles:
-
-    - Parameter validation and type checking
-    - Stan code generation for all model blocks
-    - PyTorch parameter initialization and management
-    - Observable/latent parameter distinction
-    - Bound enforcement and constraint handling
-
-    Key Capabilities:
-
-    - **Multi-Backend Integration**: Works with SciPy, PyTorch, and Stan
-    - **Automatic Code Generation**: Generates appropriate Stan syntax
-    - **Type Safety**: Validates parameter types and constraints
-    - **Flexible Parameterization**: Supports both raw and transformed parameters
-    - **Observable Support**: Can represent both latent variables and observed data
     """
 
     STAN_DIST: str = ""
+    """Name of the distribution in Stan code (e.g. "normal", "binomial")."""
+
     HAS_RAW_VARNAME: bool = False
+    """Whether the parameter intrinsically uses a raw/transformed parameterization."""
+
     CDF: type[cdfs.CDF]
+    """
+    Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.CDF`
+    describing the cumulative distribution function for the parameter.
+    """
+
     SF: type[cdfs.SurvivalFunction]
+    """
+    Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.SurvivalFunction`
+    describing the survival function for the parameter.
+    """
+
     LOG_CDF: type[cdfs.LogCDF]
+    """
+    Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.LogCDF`
+    describing the log cumulative distribution function for the parameter.
+    """
+
     LOG_SF: type[cdfs.LogSurvivalFunction]
+    """
+    Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.LogSurvivalFunction`
+    describing the log survival function for the parameter.
+    """
+
     SCIPY_DIST: type[stats.rv_continuous] | type[stats.rv_discrete] | None = None
+    """Corresponding SciPy distribution class (e.g., `scipy.stats.norm`)."""
+
     TORCH_DIST: (
         type[dist.distribution.Distribution]
         | type[custom_torch_dists.CustomDistribution]
         | None
     ) = None
+    """Corresponding PyTorch distribution class (e.g., `torch.distributions.Normal`)."""
+
     STAN_TO_SCIPY_NAMES: dict[str, str] = {}
+    """
+    There can be differences in parameter names between Stan and SciPy. This dictionary
+    maps between the two naming conventions.
+    """
+
     STAN_TO_TORCH_NAMES: dict[str, str] = {}
+    """
+    There can be differences in parameter names between Stan and PyTorch. This dictionary
+    maps between the two naming conventions.
+    """
+
     STAN_TO_SCIPY_TRANSFORMS: dict[str, Callable[[npt.NDArray], npt.NDArray]] = {}
+    """
+    Some distributions are parametrized differently between Stan and SciPy. This
+    dictionary provides transformation functions to convert parameters from Stan's
+    parametrization to SciPy's parametrization.
+    """
 
     def __init__(self, **kwargs):
-        """Initialize parameter with distribution-specific arguments.
-
-        :param kwargs: Distribution parameters (mu, sigma, etc. depending on subclass)
-
-        :raises NotImplementedError: If required class attributes are missing (i.e.,
-            if subclass was incorrectly defined)
-        :raises TypeError: If required distribution parameters are missing
-
-        The initialization process:
-        1. Validates all required class attributes are defined
-        2. Checks that all required distribution parameters are provided
-        3. Initializes parent AbstractModelComponent
-        4. Sets up observability tracking and PyTorch parameter placeholders
-        """
+        """Initialize parameter with distribution-specific arguments."""
         # Confirm that class attributes are set correctly
         if missing_attributes := [
             attr
@@ -380,28 +439,31 @@ class Parameter(
         init_val: Optional[Union[npt.NDArray, torch.Tensor]] = None,
         seed: Optional[custom_types.Integer] = None,
     ) -> None:
-        """Initialize PyTorch parameter on **unconstrained** space for gradient-based
+        """Initialize PyTorch parameter on *unconstrained* space for gradient-based
         optimization.
 
-        :param init_val: Initial parameter values. Uniform between -1 and 1 if None.
-            Defaults to None.
+        :param init_val: Initial parameter values on *unconstrained* space. Uniform
+            between -1 and 1 if None. Defaults to None.
         :type init_val: Optional[Union[npt.NDArray, torch.Tensor]]
         :param seed: Random seed for initialization. Defaults to None.
         :type seed: Optional[custom_types.Integer]
 
         :raises ValueError: If called on observable parameters
-        :raises ValueError: If init_val shape doesn't match parameter shape
+        :raises ValueError: If ``init_val`` shape doesn't match parameter shape
 
         This method sets up the parameter for PyTorch-based optimization by
-        creating a trainable nn.Parameter with appropriate initialization.
-        The initialization strategy uses uniform random values in [-1, 1]
-        if no explicit values are provided. Note that initialization values are
-        on the unconstrained space. An appropriate transform is applied depending
-        on the bounds of the distribution represented by the class to take it to
-        a constrained space.
+        creating a trainable ``nn.Parameter``. The initialization strategy uses
+        uniform random values in [-1, 1] if no explicit values are provided.
 
-        Observable parameters cannot be initialized as they represent fixed
-        data rather than learnable parameters.
+        .. important::
+            Initialization values are considered to be in unconstrained space, whether
+            provided or otherwise. An appropriate transform is applied depending
+            on the bounds of the distribution represented by the class to take it to
+            a constrained space (e.g., exponentiation for positive distributions).
+
+        .. note::
+            Observable parameters cannot be initialized as they represent fixed
+            data rather than learnable parameters.
         """
         # This cannot be called if the parameter is an observable
         if self.observable:
@@ -472,6 +534,7 @@ class Parameter(
 
         Observable parameters represent known data rather than unknown variables
         to be inferred. This method:
+
         - Sets the observable flag to True
         - Removes PyTorch parameterization (observables aren't optimized)
         - Enables generation of appropriate Stan code for data blocks
@@ -493,16 +556,17 @@ class Parameter(
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         """Generate Stan target increment statement for log-probability.
 
-        :param index_opts: Indexing options for multi-dimensional parameters
+        :param index_opts: Potential names for indexing variables (e.g., ('i', 'j',
+            'k', ...)).
         :type index_opts: tuple[str, ...]
 
-        :returns: Stan code for target increment (e.g., "y ~ normal(mu, sigma)")
+        :returns: Stan target increment statement (e.g., "y ~ normal(mu, sigma)"
+            or target += normal_lpdf(y | mu, sigma)").
         :rtype: str
 
-        This method generates the Stan code that adds this parameter's
-        log-probability contribution to the target density. It handles
-        proper indexing for multi-dimensional parameters and constructs
-        the appropriate distribution call with parameter values.
+        This method generates the Stan code that adds this parameter's log-probability
+        (e.g., "target += normal_lpdf(y | mu, sigma)" or "y ~ normal(mu, sigma)")
+        contribution to the target density.
         """
         # Determine the left side and operator
         left_side = f"{self.get_indexed_varname(index_opts)} ~ "
@@ -523,8 +587,7 @@ class Parameter(
         :rtype: str
 
         This method creates Stan code for the generated quantities block,
-        enabling posterior predictive sampling by generating new samples
-        from the parameter's distribution using fitted parameter values.
+        enabling posterior predictive sampling.
         """
         return (
             self.get_indexed_varname(index_opts, _name_override=self.generated_varname)
@@ -536,7 +599,9 @@ class Parameter(
     ) -> torch.Tensor:
         """Compute log-probability using PyTorch backend for gradient computation.
 
-        :param observed: Observed values for observable parameters. Defaults to None.
+        :param observed: Observed values for observable parameters. Defaults to
+            None. Required if parameter is observable. Must be None if parameter
+            is latent.
         :type observed: Optional[torch.Tensor]
 
         :returns: Log-probability tensor with gradient tracking
@@ -546,9 +611,7 @@ class Parameter(
         :raises ValueError: If latent parameter has observed values
 
         This method computes log-probabilities using PyTorch distributions,
-        enabling gradient-based optimization. For observable parameters,
-        it evaluates the likelihood of observed data. For latent parameters,
-        it evaluates the prior probability of current parameter values.
+        enabling gradient-based optimization.
         """
 
         # Observed parameters must have an observed value.
@@ -574,9 +637,8 @@ class Parameter(
         :returns: NumPy random number generator
         :rtype: np.random.Generator
 
-        Returns the global SciStanPy RNG if no seed is provided, otherwise
-        creates a new generator with the specified seed for reproducible
-        sampling operations.
+        Returns the global :py:obj:`scistanpy.RNG` if no seed is provided, otherwise
+        creates a new generator with the specified seed.
         """
         # Return the global random number generator if no seed is provided. Otherwise,
         # return a new random number generator with the provided seed.
@@ -596,6 +658,11 @@ class Parameter(
         This method creates properly formatted argument lists for Stan
         distribution functions, ordering arguments according to Stan
         conventions and handling parameter name mappings.
+
+        Example:
+            >>> param = Normal(mu=0, sigma=1)
+            >>> param.write_dist_args(mu="mean", sigma="stddev")
+            'mean, stddev'
         """
         return ", ".join(to_format[name] for name in self.STAN_TO_SCIPY_NAMES)
 
@@ -607,9 +674,10 @@ class Parameter(
         offset_adjustment: int = 0,
         dist_suffix: str = "",
     ) -> str:
-        """Generate right-hand side of Stan distribution statements.
+        """Generate right-hand side of Stan statements.
 
-        :param index_opts: Indexing options for multi-dimensional parameters
+        :param index_opts: Options for indexing variable names (e.g., ('i', 'j',
+            'k', ...)). If None, no indexing is applied.
         :type index_opts: Optional[tuple[str, ...]]
         :param start_dims: First indexable dimension of parent model components.
             Defaults to None, meaning the first dimension is the first indexable
@@ -623,17 +691,15 @@ class Parameter(
             are ('a', 'b', 'c') and `offset_adjustment` is 1, the effective allowed
             indices will be ('b', 'c'). This argument is critical for aligning
             dimensions between parent and child model components that have different
-            numbers of dimensions. Defaults to 0.
+            numbers of dimensions (i.e., as a result of broadcasting). Defaults
+            to 0.
         :type offset_adjustment: int
-        :param dist_suffix: Distribution function suffix (e.g., "_rng"). Defaults to "".
+        :param dist_suffix: Distribution function suffix (e.g., "_rng"). Defaults
+            to "".
         :type dist_suffix: str
 
         :returns: Stan distribution call string
         :rtype: str
-
-        This method constructs the right-hand side of Stan statements,
-        handling parameter indexing, distribution suffixes for different
-        Stan blocks, and proper argument formatting.
         """
         # Get the formattables
         formattables = super().get_right_side(
@@ -650,14 +716,13 @@ class Parameter(
         return code
 
     def get_transformed_data_declaration(self) -> str:
-        """Generate Stan transformed data block declarations.
+        """Generate the ``transformed data`` block of Stan code.
 
         :returns: Stan code for transformed data declarations (empty by default)
         :rtype: str
 
-        Most parameters don't require transformed data declarations. This
-        method can be overridden by subclasses that need to declare
-        transformed data variables.
+        Most parameters don't require transformed data declarations. This method
+        can be overridden by subclasses that need to declare transformed data variables.
         """
         # None by default
         return ""
@@ -666,10 +731,10 @@ class Parameter(
         """Generate Stan variable declaration for generated quantities.
 
         :param force_basetype: Whether to force base type declaration. For example,
-            if `True` and the parameter is defined as a multidimension float, the
-            returned stan dtype will not be `array[...Ndim - 1...] vector`, but
-            `array[...NDim...] float`. Defaults to True, as this is the format
-            expected by generated quantities blocks.
+            if ``True`` and the parameter is defined as a multidimensional float,
+            the returned stan dtype will not be ``array[...Ndim - 1...] vector``,
+            but ``array[...NDim...] float``. Defaults to ``True``, as this is the
+            format expected by generated quantities blocks.
         :type force_basetype: bool
 
         :returns: Stan variable declaration for posterior predictive sampling
@@ -687,17 +752,18 @@ class Parameter(
         """Generate Stan parameter declaration for raw (untransformed) variables.
 
         :param force_basetype: Whether to force base type declaration. See
-            `get_generated_quantity_declaration` for more information. Defaults to False.
+            ``get_generated_quantity_declaration`` for more information. Defaults
+            to ``False``.
         :type force_basetype: bool
 
         :returns: Stan parameter declaration for raw variables
         :rtype: str
 
-        For parameters using non-centered or other reparameterizations,
-        this generates declarations for the underlying raw variables that
-        are transformed to create the actual parameters. The `get_transformation_assignment`
-        function will return Stan code that converts this raw parameter to the
-        desired parameter.
+        For parameters using non-centered or other reparameterizations, this generates
+        declarations for the underlying raw variables that are transformed to create
+        the actual parameters. The ``get_transformation_assignment`` function will
+        return Stan code that converts this raw parameter to the desired parameter.
+        For parameters that do not use a raw variable, this returns an empty string.
         """
         if self.HAS_RAW_VARNAME:
             return self.declare_stan_variable(
@@ -718,15 +784,18 @@ class Parameter(
         :returns: CDF transform object
         :rtype: cdfs.CDF
 
-        Can be used as either a class method (with explicit parameters) or
-        instance method (using instance parameter values) to create CDF
-        transform objects for probabilistic modeling.
+        .. note::
+            This is a convenience method for building an instance of the
+            :py:class:`~scistanpy.model.components.transforms.cdf.CDF` subclass
+            associated with the parameter. It can be used as either a class method,
+            in which case parameters must be explicitly provided, or an instance
+            method (in which case instance parameter values will be used).
 
         Example:
             >>> # As class method
-            >>> cdf = Normal.cdf(mu=0, sigma=1, x=data)
+            >>> cdf = Normal.cdf(mu=0.0, sigma=1.0, x=data)
             >>> # As instance method
-            >>> normal_param = Normal(mu=0, sigma=1)
+            >>> normal_param = Normal(mu=0.0, sigma=1.0)
             >>> cdf = normal_param.cdf(x=data)
         """
         return cls.CDF(**params)
@@ -746,6 +815,20 @@ class Parameter(
         :rtype: cdfs.SurvivalFunction
 
         Creates survival function (1 - CDF) transforms for survival analysis.
+
+        .. note::
+            This is a convenience method for building an instance of the
+            :py:class:`~scistanpy.model.components.transforms.cdf.SurvivalFunction`
+            subclass associated with the parameter. It can be used as either a class
+            method, in which case parameters must be explicitly provided, or an
+            instance method (in which case instance parameter values will be used).
+
+        Example:
+            >>> # As class method
+            >>> sf = Normal.ccdf(mu=0.0, sigma=1.0, x=data)
+            >>> # As instance method
+            >>> normal_param = Normal(mu=0.0, sigma=1.0)
+            >>> sf = normal_param.ccdf(x=data)
         """
         return cls.SF(**params)
 
@@ -762,6 +845,13 @@ class Parameter(
 
         Creates log-CDF transforms for numerical stability in extreme
         tail probability computations.
+
+        .. note::
+            This is a convenience method for building an instance of the
+            :py:class:`~scistanpy.model.components.transforms.cdf.LogCDF` subclass
+            associated with the parameter. It can be used as either a class method,
+            in which case parameters must be explicitly provided, or an instance
+            method (in which case instance parameter values will be used).
         """
         return cls.LOG_CDF(**params)
 
@@ -781,6 +871,13 @@ class Parameter(
 
         Creates log-survival function transforms for numerical stability
         in extreme tail probability computations.
+
+        .. note::
+            This is a convenience method for building an instance of the
+            :py:class:`~scistanpy.model.components.transforms.cdf.LogSurvivalFunction`
+            subclass associated with the parameter. It can be used as either a class
+            method, in which case parameters must be explicitly provided, or an
+            instance method (in which case instance parameter values will be used).
         """
         return cls.LOG_SF(**params)
 
@@ -810,8 +907,8 @@ class Parameter(
         :returns: Configured PyTorch distribution object
         :rtype: custom_types.SciStanPyDistribution
 
-        Creates a PyTorch distribution instance using the current parameter
-        values, enabling gradient-based computations and optimization.
+        Creates a PyTorch distribution instance using the current (constrained)
+        parameter values, enabling gradient-based computations and optimization.
         """
         return self.__class__.TORCH_DIST(  # pylint: disable=not-callable
             **{
@@ -889,7 +986,7 @@ class Parameter(
 
     @property
     def generated_varname(self) -> str:
-        """Get variable name for posterior predictive sampling.
+        """Variable name for posterior predictive sampling.
 
         :returns: Variable name with "_ppc" suffix for generated quantities
         :rtype: str
@@ -897,7 +994,8 @@ class Parameter(
         :raises ValueError: If called on non-observable parameters
 
         Observable parameters generate posterior predictive samples in the
-        generated quantities block using a modified variable name.
+        ``generated quantities`` block of Stan code using this modified variable
+        name.
         """
         # Only available for observables
         if not self.observable:
@@ -909,7 +1007,7 @@ class Parameter(
     def observable(self) -> bool:
         """Check if parameter represents observed data.
 
-        :returns: True if parameter is observable
+        :returns: ``True`` if parameter is observable
         :rtype: bool
 
         Parameters are observable if explicitly marked as such or if they
@@ -929,8 +1027,8 @@ class Parameter(
         :rtype: str
 
         Some parameters use reparameterization techniques (like non-centered
-        parameterization) that require separate raw variables. This property
-        returns the appropriate raw variable name when needed.
+        parameterization) that require separate raw variables in Stan code. This
+        property returns the appropriate raw variable name when needed.
         """
         return f"{self.stan_model_varname}_raw" if self.HAS_RAW_VARNAME else ""
 
@@ -938,28 +1036,40 @@ class Parameter(
 class ContinuousDistribution(Parameter, transformed_parameters.TransformableParameter):
     """Base class for parameters with continuous sample spaces.
 
-    This class extends Parameter to provide functionality specific to continuous
-    probability distributions. It inherits transformation capabilities that
-    enable complex hierarchical model construction.
+    This class extends :py:class:`~scistanpy.model.components.parameters.Parameter`
+    to provide functionality specific to continuous probability distributions. It
+    also inherits transformation capabilities that enable complex hierarchical model
+    construction using mathematical operators.
     """
 
 
 class DiscreteDistribution(Parameter):
     """Base class for parameters with discrete sample spaces.
 
-    This class extends Parameter for discrete probability distributions,
-    handling the specific requirements of integer-valued random variables.
+    This class extends :py:class:`~scistanpy.model.components.parameters.Parameter`
+    for discrete probability distributions, handling the specific requirements of
+    integer-valued random variables.
 
     :cvar BASE_STAN_DTYPE: Stan data type for discrete variables ("int")
     :cvar LOWER_BOUND: Default lower bound for discrete values (0)
     """
 
     BASE_STAN_DTYPE: str = "int"
+    """
+    Updated relative to :py:class:`~scistanpy.model.components.parameters.Parameter`
+    to reflect that discrete parameters are represented as integers in Stan.
+    """
+
     LOWER_BOUND: custom_types.Integer = 0
+    """
+    Updated relative to :py:class:`~scistanpy.model.components.parameters.Parameter`
+    to reflect that all discrete distributions currently implemented in SciStanPy
+    are defined for non-negative integers. This sets the default lower bound to 0.
+    """
 
 
 class Normal(ContinuousDistribution):
-    """Normal (Gaussian) distribution parameter.
+    r"""Normal (Gaussian) distribution parameter.
 
     Implements the normal distribution with location (mu) and scale (sigma)
     parameters. Supports automatic non-centered parameterization for improved
@@ -969,29 +1079,43 @@ class Normal(ContinuousDistribution):
     :type mu: custom_types.ContinuousParameterType
     :param sigma: Scale parameter (standard deviation)
     :type sigma: custom_types.ContinuousParameterType
-    :param noncentered: Whether to use non-centered parameterization. Defaults to True.
+    :param noncentered: Whether to use non-centered parameterization in hierarchical
+        models. Defaults to True.
     :type noncentered: bool
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ Normal(μ, σ) where f(x) = (1/(σ√(2π))) * exp(-½((x-μ)/σ)²)
+        .. math::
+            P(x | \mu, \sigma) = \frac{1}{\sigma\sqrt{2\pi}} *
+            \exp\left(-\frac{((x-\mu)/\sigma)^2}{2}\right)
 
-    Non-Centered Parameterization:
-        When enabled for hierarchical models:
-        - Raw variable: z ~ Normal(0, 1)
-        - Transformed: x = μ + σ * z
-        - Can improve MCMC sampling efficiency
 
-    The non-centered parameterization is automatically applied when:
-    - noncentered=True (default)
-    - Parameter is not a hyperparameter
-    - Parameter is not observable
+    Properties:
 
-    Example:
-        >>> # Standard normal parameter
-        >>> mu = Normal(mu=0.0, sigma=1.0)
-        >>> # Hierarchical parameter with automatic non-centering
-        >>> y = Normal(mu=mu, sigma=0.5)
+    .. list-table::
+
+        * - Support
+          - :math:`(-\infty, \infty)`
+        * - Mean
+          - :math:`\mu`
+        * - Median
+          - :math:`\mu`
+        * - Mode
+          - :math:`\mu`
+        * - Variance
+          - :math:`\sigma^2`
+
+    In hierarchical models, the non-centered parametrization is used by default.
+    In this case, a separate raw variable is introduced, and the actual parameter
+    is defined as a transformation of this raw variable. This can lead to
+    improved sampling efficiency in many scenarios:
+
+        .. math::
+            \begin{align*}
+            z &\sim \text{Normal}(0, 1) \\
+            x &= \mu + \sigma * z
+            \end{align*}
+
     """
 
     POSITIVE_PARAMS = {"sigma"}
@@ -1018,16 +1142,16 @@ class Normal(ContinuousDistribution):
     def get_transformation_assignment(self, index_opts: tuple[str, ...]) -> str:
         """Generate Stan code for parameter transformation.
 
-        :param index_opts: Indexing options for multi-dimensional parameters
+        :param index_opts: Potential names for indexing variables (e.g., ('i', 'j',
+            'k', ...)).
         :type index_opts: tuple[str, ...]
 
-        :returns: Stan transformation code (non-centered if applicable)
+        :returns: Stan transformation code.
         :rtype: str
 
-        For non-centered parameterization, generates:
-        x = mu + sigma .* z_raw
-
-        Otherwise uses the parent class default transformation.
+        For non-centered parameterization, returns Stan code that defines the
+        parameter as a transformation of a raw variable drawn from a unit normal
+        distribution. Otherwise,  uses the parent class default transformation.
         """
         # If this is centered, then we use the parent method
         if not self.is_noncentered:
@@ -1050,15 +1174,16 @@ class Normal(ContinuousDistribution):
     def get_target_incrementation(self, index_opts: tuple[str, ...]) -> str:
         """Generate Stan target increment with appropriate variable names.
 
-        :param index_opts: Indexing options for multi-dimensional parameters
+        :param index_opts: Potential names for indexing variables (e.g., ('i', 'j',
+            'k', ...)).
         :type index_opts: tuple[str, ...]
 
         :returns: Stan target increment statement
         :rtype: str
 
-        For non-centered parameterization, uses the raw variable name
-        in the target increment while the transformed variable is computed
-        in the transformed parameters block.
+        For non-centered parameterization, uses the raw variable name in the target
+        increment while the transformed variable is computed in the transformed
+        parameters block. Otherwise, uses the parent implementation.
         """
         # Run the parent method
         parent_incrementation = super().get_target_incrementation(index_opts)
@@ -1084,9 +1209,8 @@ class Normal(ContinuousDistribution):
     ) -> str:
         """Generate distribution call for Stan code.
 
-        For non-centered parameterization, returns "std_normal()" for the
-        raw variable. Otherwise uses the parent implementation with full
-        parameter specification.
+        For non-centered parameterization, returns "std_normal()" for the raw variable.
+        Otherwise uses the parent implementation.
         """
         # If not noncentered, run the parent method
         if not self.is_noncentered:
@@ -1110,11 +1234,12 @@ class Normal(ContinuousDistribution):
     def is_noncentered(self) -> bool:
         """Check if parameter uses non-centered parameterization.
 
-        :returns: True if using non-centered parameterization
+        :returns: ``True`` if using non-centered parameterization
         :rtype: bool
 
         Non-centered parameterization is used when:
-        - noncentered flag is True
+
+        - ``noncentered`` flag is ``True`` during initialization.
         - Parameter is not a hyperparameter
         - Parameter is not observable
         """
@@ -1124,7 +1249,7 @@ class Normal(ContinuousDistribution):
 
 
 class HalfNormal(ContinuousDistribution):
-    """Half-normal distribution parameter (normal truncated at zero).
+    r"""Half-normal distribution parameter (normal truncated at zero).
 
     Implements the half-normal distribution, which is a normal distribution
     truncated to positive values. Commonly used for scale parameters.
@@ -1134,13 +1259,24 @@ class HalfNormal(ContinuousDistribution):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ HalfNormal(σ) where f(x) = (2/(σ√(2π))) * exp(-x²/(2σ²)) for x ≥ 0
+        .. math::
+            P(x | \sigma) = \frac{2}{\sigma\sqrt{2\pi}} *
+            \exp\left(-\frac{x^2}{2\sigma^2}\right) \text{ for } x \geq 0
 
-    Example:
-        >>> # Scale parameter for hierarchical model
-        >>> tau = HalfNormal(sigma=1.0)
-        >>> # Individual-level scale
-        >>> sigma_i = HalfNormal(sigma=tau)
+    Properties:
+
+        .. list-table::
+
+            * - Support
+              - :math:`[0, \infty)`
+            * - Mean
+              - :math:`\sigma\sqrt{\dfrac{2}{\pi}}`
+            * - Median
+              - :math:`\sigma\sqrt{2}\operatorname{erf}^{-1}(0.5)`
+            * - Mode
+              - :math:`0`
+            * - Variance
+              - :math:`\sigma^2\left(1 - \dfrac{2}{\pi}\right)`
     """
 
     LOWER_BOUND: custom_types.Float = 0.0
@@ -1151,7 +1287,7 @@ class HalfNormal(ContinuousDistribution):
     STAN_TO_TORCH_NAMES = {"sigma": "scale"}
 
     def write_dist_args(self, sigma: str) -> str:  # pylint: disable=arguments-differ
-        """Format distribution arguments for Stan (location=0, scale=sigma).
+        """Format distribution arguments for Stan.
 
         :param sigma: Formatted sigma parameter string
         :type sigma: str
@@ -1163,7 +1299,7 @@ class HalfNormal(ContinuousDistribution):
 
 
 class UnitNormal(Normal):
-    """Standard normal distribution (mu=0, sigma=1).
+    r"""Standard normal distribution (mu=0, sigma=1).
 
     Implements the standard normal distribution with fixed parameters.
     This is a convenience class for the commonly used N(0,1) distribution.
@@ -1171,19 +1307,23 @@ class UnitNormal(Normal):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ N(0, 1) where f(x) = (1/√(2π)) * exp(-x²/2)
+        .. math::
+            P(x) = \frac{e^{-\frac{x^2}{2}}}{\sqrt{2\pi}}
 
-    The standard normal distribution:
-    - Has fixed parameters that cannot be toggled
-    - Uses the "std_normal" distribution in Stan
-    - Is commonly used for prior specifications
-    - Serves as the basis for non-centered parameterizations
+    Properties:
 
-    Example:
-        >>> # Standard normal prior
-        >>> z = UnitNormal()
-        >>> # Used in non-centered parameterization
-        >>> x = mu + sigma * z  # Conceptually
+    .. list-table::
+
+        * - Support
+          - :math:`(-\infty, \infty)`
+        * - Mean
+          - :math:`0`
+        * - Median
+          - :math:`0`
+        * - Mode
+          - :math:`0`
+        * - Variance
+          - :math:`1`
     """
 
     STAN_DIST = "std_normal"
@@ -1212,11 +1352,11 @@ class UnitNormal(Normal):
 
 
 class LogNormal(ContinuousDistribution):
-    """Log-normal distribution parameter.
+    r"""Log-normal distribution parameter.
 
-    Implements the log-normal distribution where log(X) follows a normal
-    distribution. Commonly used for modeling positive quantities with
-    multiplicative effects.
+    Implements the log-normal distribution where :math:`\log(X)` follows a normal
+    distribution. Commonly used for modeling positive quantities with multiplicative
+    effects.
 
     :param mu: Location parameter for underlying normal
     :type mu: custom_types.ContinuousParameterType
@@ -1225,13 +1365,28 @@ class LogNormal(ContinuousDistribution):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        If Y ~ Normal(μ, σ), then X = exp(Y) ~ LogNormal(μ, σ)
-        f(x) = (1/(xσ√(2π))) * exp(-½((ln(x)-μ)/σ)²) for x > 0
+        .. math::
+            \begin{align*}
+            \text{If } Y &\sim \text{Normal}(\mu, \sigma), \text{then } \\ \\
+            X &\sim \text{LogNormal}(\mu, \sigma), \text{where } \\ \\
+            P(x | \mu, \sigma) &= \frac{1}{x\sigma\sqrt{2\pi}} *
+            \exp\left(-\frac{(\ln(x)-\mu)^2}{2\sigma^2}\right) \text{ for } x > 0
+            \end{align*}
 
+    Properties:
 
-    Example:
-        >>> # Scale parameter with log-normal prior
-        >>> sigma = LogNormal(mu=0.0, sigma=1.0)
+        .. list-table::
+
+           * - Support
+             - :math:`(0, \infty)`
+           * - Mean
+             - :math:`\exp\left(\mu + \frac{\sigma^2}{2}\right)`
+           * - Median
+             - :math:`\exp(\mu)`
+           * - Mode
+             - :math:`\exp(\mu - \sigma^2)`
+           * - Variance
+             - :math:`\left(\exp(\sigma^2) - 1\right) \exp\left(2\mu + \sigma^2\right)`
     """
 
     POSITIVE_PARAMS = {"sigma"}
@@ -1245,7 +1400,7 @@ class LogNormal(ContinuousDistribution):
 
 
 class Beta(ContinuousDistribution):
-    """Beta distribution parameter.
+    r"""Beta distribution parameter.
 
     Implements the beta distribution with shape parameters alpha and beta.
     The distribution has support on (0, 1) and is commonly used for modeling
@@ -1258,25 +1413,33 @@ class Beta(ContinuousDistribution):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ Beta(α, β) where f(x) = (Γ(α+β)/(Γ(α)Γ(β))) * x^(α-1) * (1-x)^(β-1)
+
+        .. math::
+            \begin{align*}
+            P(x | \alpha, \beta) &= \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)} *
+            x^{\alpha - 1} (1 - x)^{\beta - 1} \text{ for } 0 < x < 1 \\
+            \text{where } \Gamma(z) &= \int_0^\infty t^{z-1} e^{-t} dt
+            \end{align*}
 
     Properties:
-    - Support: (0, 1)
-    - Mean: α/(α+β)
-    - Mode: (α-1)/(α+β-2) for α,β > 1
-    - Variance: αβ/((α+β)²(α+β+1))
+
+        .. list-table::
+
+           * - Support
+             - :math:`(0, 1)`
+           * - Mean
+             - :math:`\frac{\alpha}{\alpha + \beta}`
+           * - Mode
+             - :math:`\frac{\alpha - 1}{\alpha + \beta - 2}` for :math:`\alpha, \beta > 1`
+           * - Variance
+             - :math:`\frac{\alpha \beta}{(\alpha + \beta)^2 (\alpha + \beta + 1)}`
 
     Common Applications:
+
     - Prior distributions for probabilities
     - Modeling proportions and percentages
     - Bayesian A/B testing
     - Mixture model component weights
-
-    Example:
-        >>> # Uniform prior on probability
-        >>> p = Beta(alpha=1.0, beta=1.0)
-        >>> # Weakly informative prior favoring smaller probabilities
-        >>> p_rare = Beta(alpha=1.0, beta=3.0)
     """
 
     POSITIVE_PARAMS = {"alpha", "beta"}
@@ -1290,7 +1453,7 @@ class Beta(ContinuousDistribution):
 
 
 class Gamma(ContinuousDistribution):
-    """Gamma distribution parameter.
+    r"""Gamma distribution parameter.
 
     Implements the gamma distribution with shape (alpha) and rate (beta)
     parameters. Commonly used for modeling positive continuous quantities
@@ -1303,24 +1466,25 @@ class Gamma(ContinuousDistribution):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ Gamma(α, β) where f(x) = (β^α/Γ(α)) * x^(α-1) * exp(-βx)
+        .. math::
+            \begin{align*}
+            P(x | \alpha, \beta) &= \frac{\beta^\alpha}{\Gamma(\alpha)} *
+            x^{\alpha - 1} e^{-\beta x} \text{ for } x > 0 \\
+            \text{where } \Gamma(z) &= \int_0^\infty t^{z-1} e^{-t} dt
+            \end{align*}
 
     Properties:
-    - Support: (0, ∞)
-    - Mean: α/β
-    - Mode: (α-1)/β for α > 1
-    - Variance: α/β²
 
-    Note on Parameterization:
-    - Stan uses shape-rate parameterization: Gamma(α, β)
-    - SciPy uses shape-scale parameterization: Gamma(α, 1/β)
-    - Automatic transformation handles this difference
+        .. list-table::
 
-    Example:
-        >>> # Precision parameter (inverse variance)
-        >>> tau = Gamma(alpha=2.0, beta=1.0)
-        >>> # Positive continuous variable
-        >>> waiting_time = Gamma(alpha=shape_param, beta=rate_param)
+            * - Support
+              - :math:`(0, \infty)`
+            * - Mean
+              - :math:`\frac{\alpha}{\beta}`
+            * - Mode
+              - :math:`\frac{\alpha - 1}{\beta}` for :math:`\alpha > 1`
+            * - Variance
+              - :math:`\frac{\alpha}{\beta^2}`
     """
 
     POSITIVE_PARAMS = {"alpha", "beta"}
@@ -1336,7 +1500,7 @@ class Gamma(ContinuousDistribution):
 
 
 class InverseGamma(ContinuousDistribution):
-    """Inverse gamma distribution parameter.
+    r"""Inverse gamma distribution parameter.
 
     Implements the inverse gamma distribution, commonly used as a conjugate
     prior for variance parameters in Bayesian analysis.
@@ -1348,25 +1512,32 @@ class InverseGamma(ContinuousDistribution):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ InverseGamma(α, β) where f(x) = (β^α/Γ(α)) * x^(-α-1) * exp(-β/x)
+        .. math::
+            \begin{align*}
+            P(x | \alpha, \beta) &= \frac{\beta^\alpha}{\Gamma(\alpha)} *
+            x^{-\alpha - 1} e^{-\beta / x} \text{ for } x > 0 \\
+            \text{where } \Gamma(z) &= \int_0^\infty t^{z-1} e^{-t} dt
+            \end{align*}
 
     Properties:
-    - Support: (0, ∞)
-    - Mean: β/(α-1) for α > 1
-    - Mode: β/(α+1)
-    - Variance: β²/((α-1)²(α-2)) for α > 2
+
+        .. list-table::
+
+            * - Support
+              - :math:`(0, \infty)`
+            * - Mean
+              - :math:`\frac{\beta}{\alpha - 1}` for :math:`\alpha > 1`
+            * - Mode
+              - :math:`\frac{\beta}{\alpha + 1}`
+            * - Variance
+              - :math:`\frac{\beta^2}{(\alpha - 1)^2(\alpha - 2)}` for :math:`\alpha > 2`
 
     Common Applications:
+
     - Conjugate prior for normal variance
     - Hierarchical modeling of scale parameters
     - Bayesian regression variance modeling
-
-    Example:
-        >>> # Prior for variance parameter
-        >>> sigma_sq = InverseGamma(alpha=2.0, beta=1.0)
-        >>> # Hierarchical variance
-        >>> tau_sq = InverseGamma(alpha=a_tau, beta=b_tau)
-    """
+"""
 
     POSITIVE_PARAMS = {"alpha", "beta"}
     LOWER_BOUND: custom_types.Float = 0.0
@@ -1378,7 +1549,7 @@ class InverseGamma(ContinuousDistribution):
 
 
 class Exponential(ContinuousDistribution):
-    """Exponential distribution parameter.
+    r"""Exponential distribution parameter.
 
     Implements the exponential distribution with rate parameter beta.
     Commonly used for modeling waiting times and survival analysis.
@@ -1388,24 +1559,23 @@ class Exponential(ContinuousDistribution):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ Exponential(β) where f(x) = β * exp(-βx) for x ≥ 0
+        .. math::
+            \begin{align*}
+            P(x | \beta) &= \beta e^{-\beta x} \text{ for } x \geq 0
+            \end{align*}
 
     Properties:
-    - Support: [0, ∞)
-    - Mean: 1/β
-    - Mode: 0
-    - Variance: 1/β²
 
-    Note on Parameterization:
-    - Stan uses rate parameterization: Exponential(β)
-    - SciPy uses scale parameterization: Exponential(1/β)
-    - Automatic transformation handles this difference
+        .. list-table::
 
-    Example:
-        >>> # Waiting time parameter
-        >>> wait_time = Exponential(beta=1.5)
-        >>> # Scale parameter with exponential prior
-        >>> tau = Exponential(beta=rate_prior)
+           * - Support
+             - :math:`[0, \infty)`
+           * - Mean
+             - :math:`\frac{1}{\beta}`
+           * - Mode
+             - :math:`0`
+           * - Variance
+             - :math:`\frac{1}{\beta^2}`
     """
 
     POSITIVE_PARAMS = {"beta"}

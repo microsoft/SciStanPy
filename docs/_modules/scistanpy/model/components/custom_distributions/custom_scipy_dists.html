@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scistanpy.model.components.custom_distributions.custom_scipy_dists &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for scistanpy.model.components.custom_distributions.custom_scipy_dists</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
+<span class="c1"># Licensed under the MIT license.</span>
+
+<span class="sd">&quot;&quot;&quot;Custom SciPy distribution implementations for SciStanPy models.</span>
+
+<span class="sd">This module provides extended and custom SciPy distribution classes that address</span>
+<span class="sd">limitations in the standard SciPy distribution library for probabilistic modeling.</span>
+<span class="sd">These implementations enable advanced batch operations, support variable batch</span>
+<span class="sd">dimensions, and provide transformed distributions not available in the standard library.</span>
+
+<span class="sd">Key Features:</span>
+<span class="sd">    - **Enhanced Batch Support**: Extended multivariate distributions with variable batch dimensions</span>
+<span class="sd">    - **Custom Transformations**: Log-transformed distributions with proper Jacobian corrections</span>
+<span class="sd">    - **Alternative Parameterizations**: Logit and log-probability parameterizations for</span>
+<span class="sd">        multinomial distributions</span>
+<span class="sd">    - **Numerical Stability**: Improved implementations for edge cases and extreme values</span>
+
+<span class="sd">Distribution Categories:</span>
+
+<span class="sd">**Enhanced Multivariate Distributions**: Extended batch support</span>
+<span class="sd">    - CustomDirichlet: Dirichlet distribution with variable batch dimensions</span>
+<span class="sd">    - CustomMultinomial: Multinomial distribution with flexible batch handling</span>
+<span class="sd">    - MultinomialLogit: Logit-parameterized multinomial distribution</span>
+<span class="sd">    - MultinomialLogTheta: Log-probability parameterized multinomial distribution</span>
+
+<span class="sd">**Transformed Distributions**: Log-transformed variants</span>
+<span class="sd">    - ExpDirichlet: Log-transformed Dirichlet distribution</span>
+<span class="sd">    - LogUnivariateScipyTransform: General log-transformation framework</span>
+<span class="sd">    - TransformedScipyDist: Abstract base for distribution transformations</span>
+
+<span class="sd">**Pre-configured Distributions**: Ready-to-use distribution instances</span>
+<span class="sd">    - dirichlet: CustomDirichlet instance</span>
+<span class="sd">    - multinomial: CustomMultinomial instance</span>
+<span class="sd">    - expexponential: Log-transformed exponential distribution</span>
+<span class="sd">    - explomax: Log-transformed Lomax distribution</span>
+<span class="sd">    - expdirichlet: ExpDirichlet instance</span>
+
+<span class="sd">The distributions in this module are designed to work within SciPy&#39;s distribution</span>
+<span class="sd">framework while providing enhanced functionality for advanced probabilistic modeling</span>
+<span class="sd">scenarios commonly encountered in SciStanPy applications.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">special</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_combine_args_kwargs</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine positional and keyword arguments into a single dictionary.</span>
+
+<span class="sd">    :param function: Function whose signature determines parameter names</span>
+<span class="sd">    :type function: Callable</span>
+<span class="sd">    :param args: Positional arguments to the function</span>
+<span class="sd">    :type args: tuple</span>
+<span class="sd">    :param kwargs: Keyword arguments to the function</span>
+<span class="sd">    :type kwargs: dict</span>
+
+<span class="sd">    :returns: Combined arguments as a dictionary</span>
+<span class="sd">    :rtype: dict</span>
+
+<span class="sd">    :raises ValueError: If total arguments don&#39;t match function signature</span>
+
+<span class="sd">    This utility function inspects the function signature and maps positional</span>
+<span class="sd">    arguments to their corresponding parameter names, then merges them with</span>
+<span class="sd">    the provided keyword arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># We will need the function signature to determine the arg and kwarg names</span>
+    <span class="n">signature</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
+    <span class="n">paramnames</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">signature</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="c1"># Make sure that the number of args and kwargs matches the number of parameters</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">paramnames</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Expected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">paramnames</span><span class="p">)</span><span class="si">}</span><span class="s2"> arguments, but got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Combine args and kwargs</span>
+    <span class="n">combined_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">paramnames</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
+    <span class="n">combined_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">combined_kwargs</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomDirichlet</span><span class="p">(</span>
+    <span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">dirichlet_gen</span>  <span class="c1"># pylint: disable=protected-access</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enhanced Dirichlet distribution supporting variable batch dimensions.</span>
+
+<span class="sd">    This class extends SciPy&#39;s standard Dirichlet distribution to support</span>
+<span class="sd">    arbitrary batch dimensions while maintaining compatibility with the</span>
+<span class="sd">    SciPy distribution interface. The standard SciPy implementation has</span>
+<span class="sd">    limitations with batch operations that this class addresses.</span>
+
+<span class="sd">    Key Enhancements:</span>
+<span class="sd">    - Support for arbitrary batch dimensions in alpha parameters</span>
+<span class="sd">    - Proper broadcasting behavior across batch dimensions</span>
+<span class="sd">    - Consistent output shapes for all distribution methods</span>
+<span class="sd">    - Efficient vectorized operations over batch elements</span>
+
+<span class="sd">    The implementation uses a decorator pattern to extend existing SciPy</span>
+<span class="sd">    methods with batch dimension handling while preserving the original</span>
+<span class="sd">    mathematical properties of the Dirichlet distribution.</span>
+
+<span class="sd">    Mathematical Properties:</span>
+<span class="sd">    - Support: Probability simplex {x : Σxᵢ = 1, xᵢ ≥ 0}</span>
+<span class="sd">    - Parameters: α = (α₁, α₂, ..., αₖ) where αᵢ &gt; 0</span>
+<span class="sd">    - Mean: E[Xᵢ] = αᵢ / Σⱼ αⱼ</span>
+<span class="sd">    - Useful for modeling categorical probabilities and compositional data</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Standard usage with batch dimensions</span>
+<span class="sd">        &gt;&gt;&gt; alpha = np.array([[1, 2, 3], [2, 3, 1], [3, 1, 2]])</span>
+<span class="sd">        &gt;&gt;&gt; dirichlet = CustomDirichlet()</span>
+<span class="sd">        &gt;&gt;&gt; samples = dirichlet.rvs(alpha, size=100) # output_shape = (100, 3, 3)</span>
+<span class="sd">        &gt;&gt;&gt; log_probs = dirichlet.logpdf(samples, alpha)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expand_batch</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">expect_x</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator for adding batch dimension support to Dirichlet methods.</span>
+
+<span class="sd">        :param function: SciPy Dirichlet method to wrap</span>
+<span class="sd">        :type function: Callable</span>
+<span class="sd">        :param expect_x: Whether the function expects an &#39;x&#39; parameter. Defaults to False.</span>
+<span class="sd">        :type expect_x: bool</span>
+
+<span class="sd">        :returns: Wrapped function with batch dimension support</span>
+<span class="sd">        :rtype: Callable</span>
+
+<span class="sd">        :raises ValueError: If expected parameters are missing or unexpected</span>
+
+<span class="sd">        This decorator automatically handles:</span>
+<span class="sd">        - Parameter validation and broadcasting</span>
+<span class="sd">        - Reshaping for batch operations</span>
+<span class="sd">        - Vectorized computation across batch elements</span>
+<span class="sd">        - Proper output shape reconstruction</span>
+
+<span class="sd">        The decorator distinguishes between functions that operate on data (expect_x=True)</span>
+<span class="sd">        and those that only use distribution parameters (expect_x=False).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+            <span class="c1"># Combine args and kwargs</span>
+            <span class="n">combined_kwargs</span> <span class="o">=</span> <span class="n">_combine_args_kwargs</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="c1"># Check for &#39;x&#39;</span>
+            <span class="k">if</span> <span class="n">expect_x</span> <span class="ow">and</span> <span class="s2">&quot;x&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">combined_kwargs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Expected &#39;x&#39; parameter in the function signature.&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">expect_x</span> <span class="ow">and</span> <span class="s2">&quot;x&quot;</span> <span class="ow">in</span> <span class="n">combined_kwargs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unexpected &#39;x&#39; parameter in the function signature.&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Get the alpha parameter and the x, if present</span>
+            <span class="n">param_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">combined_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;alpha&quot;</span><span class="p">))}</span>
+            <span class="k">if</span> <span class="n">expect_x</span><span class="p">:</span>
+                <span class="n">param_kwargs</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">combined_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">))</span>
+
+            <span class="c1"># Broadcast the arrays in the param kwargs and reshape to be 2D</span>
+            <span class="n">broadcasted_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_shapes</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">param_kwargs</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+            <span class="p">)</span>
+            <span class="n">param_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">broadcasted_shape</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">param_kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+
+            <span class="c1"># Run the function and combine the results</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">function</span><span class="p">(</span>
+                        <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">param_kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span> <span class="o">**</span><span class="n">combined_kwargs</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">param_kwargs</span><span class="p">[</span><span class="s2">&quot;alpha&quot;</span><span class="p">]))</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Some sanity checks on the result</span>
+            <span class="k">assert</span> <span class="p">(</span>
+                <span class="n">res</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected result to be 1D, but got </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">D with shape </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">param_kwargs</span><span class="p">[</span><span class="s2">&quot;alpha&quot;</span><span class="p">]</span>
+            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected result length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">param_kwargs</span><span class="p">[</span><span class="s1">&#39;alpha&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">, but got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+
+            <span class="c1"># Always applied to a reduction, so we reshape the result to one less</span>
+            <span class="c1"># dimension than the broadcasted shape</span>
+            <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">broadcasted_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">inner</span>
+
+    <span class="c1"># Enhanced method implementations with batch support</span>
+    <span class="c1"># pylint: disable=protected-access</span>
+    <span class="n">logpdf</span> <span class="o">=</span> <span class="n">_expand_batch</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">dirichlet_gen</span><span class="o">.</span><span class="n">logpdf</span><span class="p">,</span> <span class="n">expect_x</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">pdf</span> <span class="o">=</span> <span class="n">_expand_batch</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">dirichlet_gen</span><span class="o">.</span><span class="n">pdf</span><span class="p">,</span> <span class="n">expect_x</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">_expand_batch</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">dirichlet_gen</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">_expand_batch</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">dirichlet_gen</span><span class="o">.</span><span class="n">var</span><span class="p">)</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">_expand_batch</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">dirichlet_gen</span><span class="o">.</span><span class="n">cov</span><span class="p">)</span>
+    <span class="n">entropy</span> <span class="o">=</span> <span class="n">_expand_batch</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">dirichlet_gen</span><span class="o">.</span><span class="n">entropy</span><span class="p">)</span>
+    <span class="c1"># pylint: enable=protected-access</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
+        <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate random samples from the Dirichlet distribution.</span>
+
+<span class="sd">        :param alpha: Concentration parameters with shape (..., k)</span>
+<span class="sd">        :type alpha: npt.NDArray[np.floating]</span>
+<span class="sd">        :param size: Output shape. Defaults to 1.</span>
+<span class="sd">        :type size: Union[tuple[custom_types.Integer, ...], custom_types.Integer, None]</span>
+<span class="sd">        :param random_state: Random state for reproducible sampling. Defaults to None.</span>
+<span class="sd">        :type random_state: Union[custom_types.Integer, np.random.Generator, None]</span>
+
+<span class="sd">        :returns: Random samples from Dirichlet distribution</span>
+<span class="sd">        :rtype: npt.NDArray[np.floating]</span>
+
+<span class="sd">        :raises ValueError: If alpha cannot be broadcast to the specified size</span>
+
+<span class="sd">        This method supports arbitrary batch dimensions in the alpha parameter</span>
+<span class="sd">        and properly broadcasts to the requested output size while maintaining</span>
+<span class="sd">        the simplex constraint for each sample.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Set the size</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">alpha</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="o">*</span><span class="n">alpha</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+
+        <span class="c1"># Broadcast alpha to the given size.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cannot broadcast alpha (</span><span class="si">{</span><span class="n">alpha</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">) to size (</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+
+        <span class="c1"># Now that alphas have been broadcasted to the correct size, we can proceed</span>
+        <span class="c1"># by sampling just once from the Dirichlet distribution for each alpha.</span>
+        <span class="c1"># Reshaping at the end will reconstruct the original dimensions.</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">alpha</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomMultinomial</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">multinomial_gen</span><span class="p">):</span>  <span class="c1"># pylint: disable=W0212</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enhanced multinomial distribution supporting variable batch dimensions.</span>
+
+<span class="sd">    This class extends SciPy&#39;s standard multinomial distribution to support</span>
+<span class="sd">    arbitrary batch dimensions in both the trial count (n) and probability</span>
+<span class="sd">    parameters (p), enabling flexible batch operations for discrete multivariate</span>
+<span class="sd">    modeling scenarios.</span>
+
+<span class="sd">    Key Enhancements:</span>
+<span class="sd">    - Variable batch dimensions for n and p parameters</span>
+<span class="sd">    - Proper broadcasting behavior between n and p</span>
+<span class="sd">    - Support for different trial counts across batch elements</span>
+<span class="sd">    - Consistent output shapes for sampling operations</span>
+
+<span class="sd">    Mathematical Properties:</span>
+<span class="sd">    - Support: {x ∈ ℕ₀ᵏ : Σxᵢ = n}</span>
+<span class="sd">    - Parameters: n (trial count), p = (p₁, ..., pₖ) where Σpᵢ = 1</span>
+<span class="sd">    - PMF: P(X = x) = n! / (∏xᵢ!) × ∏pᵢˣⁱ</span>
+<span class="sd">    - Useful for modeling categorical count data</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Batch multinomial with different trial counts</span>
+<span class="sd">        &gt;&gt;&gt; n = np.array([[10], [20], [15]])</span>
+<span class="sd">        &gt;&gt;&gt; p = np.array([[0.3, 0.4, 0.3],</span>
+<span class="sd">        ...               [0.2, 0.5, 0.3],</span>
+<span class="sd">        ...               [0.4, 0.3, 0.3]])</span>
+<span class="sd">        &gt;&gt;&gt; multinomial = CustomMultinomial()</span>
+<span class="sd">        &gt;&gt;&gt; samples = multinomial.rvs(n=n, p=p, size=100) # shape = (100, 3, 3)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">|</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">],</span>
+        <span class="n">p</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
+        <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate random samples from the multinomial distribution.</span>
+
+<span class="sd">        :param n: Number of trials (can be scalar or array)</span>
+<span class="sd">        :type n: Union[custom_types.Integer, npt.NDArray[np.integer]]</span>
+<span class="sd">        :param p: Event probabilities with shape (..., k)</span>
+<span class="sd">        :type p: npt.NDArray[np.floating]</span>
+<span class="sd">        :param size: Output shape. Defaults to 1.</span>
+<span class="sd">        :type size: Union[tuple[custom_types.Integer, ...], custom_types.Integer, None]</span>
+<span class="sd">        :param random_state: Random state for reproducible sampling. Defaults to None.</span>
+<span class="sd">        :type random_state: Union[custom_types.Integer, np.random.Generator, None]</span>
+
+<span class="sd">        :returns: Random samples from multinomial distribution</span>
+<span class="sd">        :rtype: npt.NDArray[np.integer]</span>
+
+<span class="sd">        :raises ValueError: If n and p cannot be broadcast to compatible shapes</span>
+
+<span class="sd">        This method supports different trial counts for each batch element</span>
+<span class="sd">        and handles broadcasting between scalar/array n and multi-dimensional p.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">try_broadcast</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">target_size</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Attempts to broadcast and raises an error if not possible&quot;&quot;&quot;</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">target_size</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Cannot broadcast shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">target_size</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+
+        <span class="c1"># Set the size of p</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">p_size</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">p_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="o">*</span><span class="n">p</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p_size</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+
+        <span class="c1"># Set the size of n</span>
+        <span class="n">n_size</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">p_size</span><span class="p">)</span>
+        <span class="n">n_size</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># n and p must be broadcastable to their respective sizes</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">try_broadcast</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n_size</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">try_broadcast</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p_size</span><span class="p">)</span>
+
+        <span class="c1"># Reshape to 2D</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">p_size</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+        <span class="c1"># Take the random samples. We take 1 for each n-p pair. Reshape to the</span>
+        <span class="c1"># target size</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_el</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p_el</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">n_el</span><span class="p">,</span> <span class="n">p_el</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogit</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with logit parameterization.</span>
+
+<span class="sd">    This class provides a logit-parameterized interface to the multinomial</span>
+<span class="sd">    distribution, where probabilities are specified as logits (log-odds)</span>
+<span class="sd">    rather than normalized probabilities. This parameterization is often</span>
+<span class="sd">    more convenient for modeling and optimization.</span>
+
+<span class="sd">    :ivar softmax_p: Decorator that transforms logits to probabilities</span>
+
+<span class="sd">    Mathematical Properties:</span>
+<span class="sd">    - Parameterization: logits ∈ ℝᵏ (unconstrained)</span>
+<span class="sd">    - Transformation: pᵢ = exp(logitᵢ) / Σⱼ exp(logitⱼ)</span>
+<span class="sd">    - Natural for neural network outputs and linear models</span>
+<span class="sd">    - Automatic normalization ensures valid probabilities</span>
+
+<span class="sd">    The logit parameterization offers several advantages:</span>
+<span class="sd">    - No normalization constraints on input parameters</span>
+<span class="sd">    - Better numerical properties for optimization</span>
+<span class="sd">    - Natural output space for many machine learning models</span>
+<span class="sd">    - Automatic softmax transformation to valid probabilities</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Logit parameterization (no normalization needed)</span>
+<span class="sd">        &gt;&gt;&gt; logits = np.random.randn(3, 4)</span>
+<span class="sd">        &gt;&gt;&gt; n = np.array([[50], [75], [100]])</span>
+<span class="sd">        &gt;&gt;&gt; multinomial_logit = MultinomialLogit()</span>
+<span class="sd">        &gt;&gt;&gt; samples = multinomial_logit.rvs(n=n, logits=logits)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">softmax_p</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator that transforms logits to probabilities using softmax.</span>
+
+<span class="sd">        :param function: Function to wrap with logit transformation</span>
+<span class="sd">        :type function: Callable</span>
+
+<span class="sd">        :returns: Wrapped function that accepts logits instead of probabilities</span>
+<span class="sd">        :rtype: Callable</span>
+
+<span class="sd">        This decorator automatically applies the softmax transformation to</span>
+<span class="sd">        convert logits to valid probabilities before calling the underlying</span>
+<span class="sd">        multinomial distribution methods.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="c1"># Apply the softmax transformation to the logits</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;p&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">special</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;logits&quot;</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inner</span>
+
+    <span class="c1"># Wrapped methods with logit transformation</span>
+    <span class="n">pmf</span> <span class="o">=</span> <span class="n">softmax_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">pmf</span><span class="p">)</span>
+    <span class="n">logpmf</span> <span class="o">=</span> <span class="n">softmax_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">logpmf</span><span class="p">)</span>
+    <span class="n">rvs</span> <span class="o">=</span> <span class="n">softmax_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">rvs</span><span class="p">)</span>
+    <span class="n">entropy</span> <span class="o">=</span> <span class="n">softmax_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">entropy</span><span class="p">)</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">softmax_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">cov</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogTheta</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with normalized log-probability parameterization.</span>
+
+<span class="sd">    This class provides a log-probability parameterized interface where the</span>
+<span class="sd">    input parameters are logarithms of probabilities that must already be</span>
+<span class="sd">    normalized (i.e., their exponentials sum to 1). This is useful when</span>
+<span class="sd">    working with log-probability vectors from other computations.</span>
+
+<span class="sd">    :ivar exp_p: Decorator that transforms log-probabilities to probabilities</span>
+
+<span class="sd">    Mathematical Properties:</span>
+<span class="sd">    - Parameterization: log_p ∈ ℝᵏ with Σexp(log_pᵢ) = 1</span>
+
+<span class="sd">    The log-probability parameterization is particularly useful when:</span>
+<span class="sd">    - Working with log-normalized probability vectors</span>
+<span class="sd">    - Interfacing with other log-space computations</span>
+<span class="sd">    - Ensuring consistency with log-space model components</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Normalized log-probabilities</span>
+<span class="sd">        &gt;&gt;&gt; logits = np.random.randn(3, 4)</span>
+<span class="sd">        &gt;&gt;&gt; log_probs = logits - scipy.special.logsumexp(logits, axis=-1, keepdims=True)</span>
+<span class="sd">        &gt;&gt;&gt; n = np.array([[100], [200], [150]])</span>
+<span class="sd">        &gt;&gt;&gt; multinomial_log_theta = MultinomialLogTheta()</span>
+<span class="sd">        &gt;&gt;&gt; samples = multinomial_log_theta.rvs(n=n, log_p=log_probs)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exp_p</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator that transforms log-probabilities to probabilities.</span>
+
+<span class="sd">        :param function: Function to wrap with log-probability transformation</span>
+<span class="sd">        :type function: Callable</span>
+
+<span class="sd">        :returns: Wrapped function that accepts log_p instead of probabilities</span>
+<span class="sd">        :rtype: Callable</span>
+
+<span class="sd">        :raises ValueError: If log-probabilities are not properly normalized</span>
+
+<span class="sd">        This decorator validates that the exponentials of log-probabilities</span>
+<span class="sd">        sum to 1 (within tolerance) and applies the exponential transformation</span>
+<span class="sd">        to convert to valid probabilities.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="c1"># Exponentiate the log probabilities</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;log_p&quot;</span><span class="p">))</span>
+
+            <span class="c1"># The rows of `p` must sum to 1 within a threshold</span>
+            <span class="n">p_sum</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">p_sum</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rows of `p` must sum to 1, but got </span><span class="si">{</span><span class="n">p_sum</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Ensure total normalization</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;p&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="n">p_sum</span>
+
+            <span class="k">return</span> <span class="n">function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inner</span>
+
+    <span class="c1"># Wrapped methods with log-probability transformation</span>
+    <span class="n">pmf</span> <span class="o">=</span> <span class="n">exp_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">pmf</span><span class="p">)</span>
+    <span class="n">logpmf</span> <span class="o">=</span> <span class="n">exp_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">logpmf</span><span class="p">)</span>
+    <span class="n">rvs</span> <span class="o">=</span> <span class="n">exp_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">rvs</span><span class="p">)</span>
+    <span class="n">entropy</span> <span class="o">=</span> <span class="n">exp_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">entropy</span><span class="p">)</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">exp_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">cov</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ExpDirichlet</span><span class="p">(</span><span class="n">CustomDirichlet</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-transformed Dirichlet distribution (Exponential-Dirichlet).</span>
+
+<span class="sd">    This class implements a distribution where the logarithm of a Dirichlet-distributed</span>
+<span class="sd">    random vector follows this distribution. It&#39;s useful for modeling log-scale</span>
+<span class="sd">    compositional data and log-probability vectors with proper Jacobian corrections.</span>
+
+<span class="sd">    Mathematical Properties:</span>
+<span class="sd">    - If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α)</span>
+<span class="sd">    - Support: (-∞, 0]ᵏ (log-simplex)</span>
+<span class="sd">    - Constraint: Σexp(yᵢ) = 1</span>
+<span class="sd">    - Natural for log-probability modeling</span>
+
+<span class="sd">    The log-transformation requires proper Jacobian correction for probability</span>
+<span class="sd">    calculations. This distribution is particularly valuable for:</span>
+<span class="sd">    - Log-space compositional data analysis</span>
+<span class="sd">    - Bayesian modeling of log-probability vectors</span>
+<span class="sd">    - Numerical stability in extreme probability regimes</span>
+<span class="sd">    - Integration with other log-space model components</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Log-compositional data modeling</span>
+<span class="sd">        &gt;&gt;&gt; alpha = np.array([2.0, 3.0, 1.0])</span>
+<span class="sd">        &gt;&gt;&gt; exp_dirichlet = ExpDirichlet()</span>
+<span class="sd">        &gt;&gt;&gt; log_samples = exp_dirichlet.rvs(alpha, size=(1000,))</span>
+<span class="sd">        &gt;&gt;&gt; # Verify constraint: np.exp(log_samples).sum(axis=-1) ≈ 1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log probability density with Jacobian correction.</span>
+
+<span class="sd">        :param x: Log-probability values</span>
+<span class="sd">        :param alpha: Concentration parameters</span>
+
+<span class="sd">        :returns: Log probability density values</span>
+
+<span class="sd">        The implementation includes the proper Jacobian correction for the</span>
+<span class="sd">        log-transformation, computed analytically for efficiency and numerical stability.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># pylint: disable=no-member</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute probability density function.</span>
+
+<span class="sd">        :param x: Log-probability values</span>
+<span class="sd">        :param alpha: Concentration parameters</span>
+
+<span class="sd">        :returns: Probability density values</span>
+
+<span class="sd">        Computed as the exponential of the log probability density for</span>
+<span class="sd">        numerical stability and consistency.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">alpha</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
+        <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">random_state</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate random samples from the log-transformed Dirichlet distribution.</span>
+
+<span class="sd">        :param alpha: Concentration parameters</span>
+<span class="sd">        :type alpha: npt.NDArray[np.floating]</span>
+<span class="sd">        :param size: Output shape. Defaults to 1.</span>
+<span class="sd">        :type size: Union[tuple[custom_types.Integer, ...], custom_types.Integer, None]</span>
+<span class="sd">        :param random_state: Random state. Defaults to None.</span>
+<span class="sd">        :type random_state: Union[custom_types.Integer, np.random.Generator, None]</span>
+
+<span class="sd">        :returns: Log-probability samples</span>
+<span class="sd">        :rtype: npt.NDArray[np.floating]</span>
+
+<span class="sd">        Samples are generated by first sampling from the standard Dirichlet</span>
+<span class="sd">        distribution and then applying the logarithmic transformation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Sample from the Dirichlet distribution and then take the logarithm</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined moments.</span>
+
+<span class="sd">        :raises NotImplementedError: Mean is not analytically available</span>
+
+<span class="sd">        The moments of the log-transformed Dirichlet distribution do not</span>
+<span class="sd">        have simple closed-form expressions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined moments.</span>
+
+<span class="sd">        :raises NotImplementedError: Variance is not analytically available</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined moments.</span>
+
+<span class="sd">        :raises NotImplementedError: Covariance is not analytically available</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined entropy.</span>
+
+<span class="sd">        :raises NotImplementedError: Entropy is not analytically available</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TransformedScipyDist</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for transformed SciPy distributions.</span>
+
+<span class="sd">    This class provides a framework for creating distributions that are</span>
+<span class="sd">    transformations of existing SciPy distributions. It handles the</span>
+<span class="sd">    mathematical details of transformation including Jacobian corrections</span>
+<span class="sd">    for probability density functions.</span>
+
+<span class="sd">    :param base_dist: Base SciPy distribution to transform</span>
+<span class="sd">    :type base_dist: stats.rv_continuous</span>
+
+<span class="sd">    Key Features:</span>
+<span class="sd">    - Automatic Jacobian correction for probability densities</span>
+<span class="sd">    - Proper transformation of all distribution methods</span>
+<span class="sd">    - Maintains SciPy distribution interface compatibility</span>
+<span class="sd">    - Support for arbitrary invertible transformations</span>
+
+<span class="sd">    Subclasses must implement:</span>
+<span class="sd">    - transform: Forward transformation function</span>
+<span class="sd">    - inverse_transform: Inverse transformation function</span>
+<span class="sd">    - log_jacobian_correction: Log determinant of Jacobian matrix</span>
+
+<span class="sd">    The framework automatically handles:</span>
+<span class="sd">    - PDF/log-PDF with Jacobian corrections</span>
+<span class="sd">    - CDF through inverse transformation</span>
+<span class="sd">    - Quantile functions through forward transformation</span>
+<span class="sd">    - Random sampling through transformation of base samples</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_dist</span><span class="p">:</span> <span class="n">stats</span><span class="o">.</span><span class="n">rv_continuous</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize transformed distribution with base distribution.</span>
+
+<span class="sd">        :param base_dist: Base distribution to transform</span>
+<span class="sd">        :type base_dist: stats.rv_continuous</span>
+
+<span class="sd">        Records the base distribution for use in transformation operations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span> <span class="o">=</span> <span class="n">base_dist</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply forward transformation to input values.</span>
+
+<span class="sd">        :param x: Input values from base distribution</span>
+<span class="sd">        :type x: npt.NDArray[np.floating]</span>
+
+<span class="sd">        :returns: Transformed values</span>
+<span class="sd">        :rtype: npt.NDArray[np.floating]</span>
+
+<span class="sd">        This method must implement the forward transformation function</span>
+<span class="sd">        that maps from the base distribution support to the transformed</span>
+<span class="sd">        distribution support.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inverse_transform</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply inverse transformation to input values.</span>
+
+<span class="sd">        :param x: Input values from transformed distribution</span>
+<span class="sd">        :type x: npt.NDArray[np.floating]</span>
+
+<span class="sd">        :returns: Values in base distribution space</span>
+<span class="sd">        :rtype: npt.NDArray[np.floating]</span>
+
+<span class="sd">        This method must implement the inverse transformation function</span>
+<span class="sd">        that maps from the transformed distribution support back to the</span>
+<span class="sd">        base distribution support.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_jacobian_correction</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log Jacobian correction for the transformation.</span>
+
+<span class="sd">        :param x: Input values in transformed space</span>
+<span class="sd">        :type x: npt.NDArray[np.floating]</span>
+
+<span class="sd">        :returns: Log Jacobian determinant values</span>
+<span class="sd">        :rtype: npt.NDArray[np.floating]</span>
+
+<span class="sd">        This method must compute the logarithm of the absolute value of</span>
+<span class="sd">        the Jacobian determinant for the transformation, which is required</span>
+<span class="sd">        for proper probability density calculations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute probability density function with Jacobian correction.</span>
+
+<span class="sd">        :param x: Values at which to evaluate PDF</span>
+<span class="sd">        :param args: Arguments for base distribution</span>
+<span class="sd">        :param kwargs: Keyword arguments for base distribution</span>
+
+<span class="sd">        :returns: Probability density values</span>
+
+<span class="sd">        Applies the change of variables formula with proper Jacobian correction.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_jacobian_correction</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log probability density function with Jacobian correction.</span>
+
+<span class="sd">        :param x: Values at which to evaluate log-PDF</span>
+<span class="sd">        :param args: Arguments for base distribution</span>
+<span class="sd">        :param kwargs: Keyword arguments for base distribution</span>
+
+<span class="sd">        :returns: Log probability density values</span>
+
+<span class="sd">        More numerically stable than computing log of PDF directly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_jacobian_correction</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute cumulative distribution function.</span>
+
+<span class="sd">        :param x: Values at which to evaluate CDF</span>
+<span class="sd">        :param args: Arguments for base distribution</span>
+<span class="sd">        :param kwargs: Keyword arguments for base distribution</span>
+
+<span class="sd">        :returns: Cumulative probability values</span>
+
+<span class="sd">        Uses inverse transformation to map to base distribution space.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">ppf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute percent point function (inverse CDF).</span>
+
+<span class="sd">        :param q: Probability values</span>
+<span class="sd">        :param args: Arguments for base distribution</span>
+<span class="sd">        :param kwargs: Keyword arguments for base distribution</span>
+
+<span class="sd">        :returns: Quantile values</span>
+
+<span class="sd">        Uses forward transformation of base distribution quantiles.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute survival function (1 - CDF).</span>
+
+<span class="sd">        :param x: Values at which to evaluate survival function</span>
+<span class="sd">        :param args: Arguments for base distribution</span>
+<span class="sd">        :param kwargs: Keyword arguments for base distribution</span>
+
+<span class="sd">        :returns: Survival probability values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">isf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute inverse survival function.</span>
+
+<span class="sd">        :param q: Probability values</span>
+<span class="sd">        :param args: Arguments for base distribution</span>
+<span class="sd">        :param kwargs: Keyword arguments for base distribution</span>
+
+<span class="sd">        :returns: Inverse survival function values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">isf</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">logsf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log survival function.</span>
+
+<span class="sd">        :param x: Values at which to evaluate log survival function</span>
+<span class="sd">        :param args: Arguments for base distribution</span>
+<span class="sd">        :param kwargs: Keyword arguments for base distribution</span>
+
+<span class="sd">        :returns: Log survival probability values</span>
+
+<span class="sd">        More numerically stable for small survival probabilities.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">logsf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate random samples from transformed distribution.</span>
+
+<span class="sd">        :param args: Arguments for base distribution</span>
+<span class="sd">        :param kwargs: Keyword arguments for base distribution</span>
+
+<span class="sd">        :returns: Random samples from transformed distribution</span>
+
+<span class="sd">        Generates samples from base distribution and applies transformation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LogUnivariateScipyTransform</span><span class="p">(</span><span class="n">TransformedScipyDist</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log transformation for univariate SciPy distributions.</span>
+
+<span class="sd">    This class implements the natural logarithm transformation for any</span>
+<span class="sd">    univariate SciPy distribution, creating a log-transformed variant</span>
+<span class="sd">    with proper Jacobian corrections.</span>
+
+<span class="sd">    This transformation is commonly used to:</span>
+<span class="sd">    - Convert positive-valued distributions to real-valued distributions</span>
+<span class="sd">    - Enable log-scale modeling of multiplicative processes</span>
+<span class="sd">    - Improve numerical stability for heavy-tailed distributions</span>
+<span class="sd">    - Create log-normal variants of arbitrary positive distributions</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Create log-transformed exponential distribution</span>
+<span class="sd">        &gt;&gt;&gt; log_exponential = LogUnivariateScipyTransform(stats.expon)</span>
+<span class="sd">        &gt;&gt;&gt; # This is equivalent to a Gumbel distribution</span>
+<span class="sd">        &gt;&gt;&gt; samples = log_exponential.rvs(scale=1.0, size=1000)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span>
+    <span class="n">inverse_transform</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_jacobian_correction</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log Jacobian correction for logarithmic transformation.</span>
+
+<span class="sd">        :param x: Values in transformed (log) space</span>
+<span class="sd">        :type x: npt.NDArray[np.floating]</span>
+
+<span class="sd">        :returns: Log Jacobian determinant (equal to x for log transform)</span>
+<span class="sd">        :rtype: npt.NDArray[np.floating]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+
+<span class="c1"># Pre-configured distribution instances for convenient use</span>
+<span class="n">dirichlet</span> <span class="o">=</span> <span class="n">CustomDirichlet</span><span class="p">()</span>
+<span class="n">expexponential</span> <span class="o">=</span> <span class="n">LogUnivariateScipyTransform</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">expon</span><span class="p">)</span>
+<span class="n">explomax</span> <span class="o">=</span> <span class="n">LogUnivariateScipyTransform</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">lomax</span><span class="p">)</span>
+<span class="n">expdirichlet</span> <span class="o">=</span> <span class="n">ExpDirichlet</span><span class="p">()</span>
+<span class="n">multinomial</span> <span class="o">=</span> <span class="n">CustomMultinomial</span><span class="p">()</span>
+<span class="n">multinomial_logit</span> <span class="o">=</span> <span class="n">MultinomialLogit</span><span class="p">()</span>
+<span class="n">multinomial_log_theta</span> <span class="o">=</span> <span class="n">MultinomialLogTheta</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/index.html">SciStanPy API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../../index.html">Module code</a><ul>
+  <li><a href="../../../../scistanpy.html">scistanpy</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Microsoft Corporation.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

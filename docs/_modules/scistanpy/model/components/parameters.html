@@ -42,46 +42,44 @@
 <span class="sd">translating between Python model specifications, PyTorch modules, and Stan probabilistic</span>
 <span class="sd">programming language code.</span>
 
-<span class="sd">Parameter Type Hierarchy:</span>
-<span class="sd">    - **Parameter**: Base class for all probabilistic model components</span>
-<span class="sd">    - **ContinuousDistribution**: Parameters with continuous sample spaces</span>
-<span class="sd">    - **DiscreteDistribution**: Parameters with discrete sample spaces</span>
-
-<span class="sd">Key Features:</span>
-<span class="sd">    - **Multi-Backend Support**: Integration with SciPy, PyTorch, and Stan</span>
-<span class="sd">    - **Automatic Parameterization**: Intelligent handling of parameter bounds and constraints</span>
-<span class="sd">    - **Non-Centered Parameterization**: Automatic reparameterization for improved sampling</span>
-<span class="sd">    - **Custom Distributions**: Extended distribution library beyond standard offerings</span>
-<span class="sd">    - **Type Safety**: Comprehensive type checking and validation</span>
-
-<span class="sd">Stan Code Generation:</span>
-<span class="sd">    Each parameter class automatically generates appropriate Stan code including:</span>
-<span class="sd">    - Variable declarations with proper constraints</span>
-<span class="sd">    - Target increment statements for log-probability</span>
-<span class="sd">    - Generated quantities for posterior predictive sampling</span>
-<span class="sd">    - Support for custom Stan functions when needed</span>
-
-<span class="sd">Distribution Support:</span>
-<span class="sd">    **Continuous Distributions:**</span>
-<span class="sd">    - Normal, HalfNormal, UnitNormal, LogNormal</span>
-<span class="sd">    - Beta, Gamma, InverseGamma, Exponential</span>
-<span class="sd">    - Dirichlet, ExpDirichlet (log-simplex)</span>
-<span class="sd">    - Custom: ExpExponential, Lomax, ExpLomax</span>
-
-<span class="sd">    **Discrete Distributions:**</span>
-<span class="sd">    - Binomial, Poisson</span>
-<span class="sd">    - Multinomial variants: standard, logit, log-theta parameterizations</span>
-
-<span class="sd">Advanced Features:</span>
-<span class="sd">    - **Automatic Reparameterization**: Non-centered parameterization for hierarchical models</span>
-<span class="sd">    - **Constraint Handling**: Automatic bound enforcement and transformations</span>
-<span class="sd">    - **Observable Support**: Automatic identification of observed data model components</span>
-<span class="sd">    - **PyTorch Integration**: Native support for gradient-based optimization</span>
-<span class="sd">    - **Custom Function Integration**: Automatic inclusion of required Stan functions</span>
-
 <span class="sd">The parameter classes are designed to be composable, allowing complex hierarchical</span>
 <span class="sd">models to be built through simple parameter relationships while maintaining</span>
 <span class="sd">mathematical rigor and computational efficiency.</span>
+
+<span class="sd">The following distributions are currently supported in SciStanPy:</span>
+
+<span class="sd">Continuous Univariate</span>
+<span class="sd">^^^^^^^^^^^^^^^^^^^^^</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.Normal`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.HalfNormal`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.UnitNormal`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.LogNormal`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.Beta`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.Gamma`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.InverseGamma`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.Exponential`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.ExpExponential`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.Lomax`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.ExpLomax`</span>
+
+<span class="sd">Continuous Multivariate</span>
+<span class="sd">^^^^^^^^^^^^^^^^^^^^^^^</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.Dirichlet`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.ExpDirichlet`</span>
+
+<span class="sd">Discrete Univariate</span>
+<span class="sd">^^^^^^^^^^^^^^^^^^^</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.Binomial`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.Poisson`</span>
+
+<span class="sd">Discrete Multivariate</span>
+<span class="sd">^^^^^^^^^^^^^^^^^^^^^</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.Multinomial`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.MultinomialLogit`</span>
+<span class="sd">- :py:class:`~scistanpy.model.components.parameters.MultinomialLogTheta`</span>
+
+<span class="sd">Is there a distribution you need that isn&#39;t listed here? Please open an issue or</span>
+<span class="sd">submit a PR!</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -179,42 +177,79 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ParameterMeta</span><span class="p">(</span><span class="n">ABCMeta</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Metaclass for automatic CDF transform class generation.</span>
 
+<span class="sd">    :param name: Name of the class being created</span>
+<span class="sd">    :type name: str</span>
+<span class="sd">    :param bases: Base classes for the new class</span>
+<span class="sd">    :type bases: tuple</span>
+<span class="sd">    :param attrs: Class attributes dictionary</span>
+<span class="sd">    :type attrs: dict</span>
+
 <span class="sd">    This metaclass automatically creates cumulative distribution function (CDF)</span>
 <span class="sd">    and related transform classes for each Parameter subclass, enabling automatic</span>
 <span class="sd">    generation of probabilistic transforms and survival functions.</span>
 
-<span class="sd">    The metaclass creates four transform classes for each parameter:</span>
+<span class="sd">    The metaclass creates four transform classes for each parameter and assigns</span>
+<span class="sd">    them to the following class variables:</span>
 
-<span class="sd">    - CDF: Cumulative distribution function</span>
-<span class="sd">    - SF: Survival function (complementary CDF)</span>
-<span class="sd">    - LOG_CDF: Logarithmic CDF</span>
-<span class="sd">    - LOG_SF: Logarithmic survival function</span>
-
+<span class="sd">        - :py:attr:`Parameter.CDF &lt;scistanpy.model.components.parameters.Parameter.CDF&gt;`,</span>
+<span class="sd">          based on the :py:class:`~scistanpy.model.components.transformations.</span>
+<span class="sd">          cdfs.CDF` class and describing the cumulative distribution function for</span>
+<span class="sd">          the parameter.</span>
+<span class="sd">        - :py:attr:`Parameter.SF &lt;scistanpy.model.components.parameters.Parameter.SF&gt;`,</span>
+<span class="sd">          based on the :py:class:`~scistanpy.model.components.transformations.</span>
+<span class="sd">          cdfs.SurvivalFunction` class and describing the survival function (1 - CDF)</span>
+<span class="sd">          for the parameter.</span>
+<span class="sd">        - :py:attr:`Parameter.LOG_CDF &lt;scistanpy.model.components.parameters.Parameter.</span>
+<span class="sd">          LOG_CDF&gt;`, based on the :py:class:`~scistanpy.model.components.transformations.</span>
+<span class="sd">          cdfs.LogCDF` class and describing the logarithmic cumulative distribution</span>
+<span class="sd">          function for the parameter.</span>
+<span class="sd">        - :py:attr:`Parameter.LOG_SF &lt;scistanpy.model.components.parameters.Parameter.</span>
+<span class="sd">          LOG_SF&gt;`, based on the :py:class:`~scistanpy.model.components.transformations.</span>
+<span class="sd">          cdfs.LogSurvivalFunction` class and describing the logarithmic survival</span>
+<span class="sd">          function for the parameter.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create CDF transform classes for the Parameter subclass.</span>
-
-<span class="sd">        :param name: Name of the class being created</span>
-<span class="sd">        :type name: str</span>
-<span class="sd">        :param bases: Base classes for the new class</span>
-<span class="sd">        :type bases: tuple</span>
-<span class="sd">        :param attrs: Class attributes dictionary</span>
-<span class="sd">        :type attrs: dict</span>
-
-<span class="sd">        This method automatically generates transform classes by creating</span>
-<span class="sd">        new class types that inherit from the appropriate CDF base classes</span>
-<span class="sd">        and reference the current parameter class.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create CDF transform classes for the Parameter subclass.&quot;&quot;&quot;</span>
         <span class="c1"># Run the parent class&#39;s __init__ method</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
 
         <span class="c1"># Add CDF, SF, LOG_CDF, and LOG_SF classes to the Parameter subclass</span>
-        <span class="bp">cls</span><span class="o">.</span><span class="n">CDF</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">CDF&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">cdfs</span><span class="o">.</span><span class="n">CDF</span><span class="p">,),</span> <span class="p">{</span><span class="s2">&quot;PARAMETER&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="p">})</span>
-        <span class="bp">cls</span><span class="o">.</span><span class="n">SF</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">SF&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">cdfs</span><span class="o">.</span><span class="n">SurvivalFunction</span><span class="p">,),</span> <span class="p">{</span><span class="s2">&quot;PARAMETER&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="p">})</span>
-        <span class="bp">cls</span><span class="o">.</span><span class="n">LOG_CDF</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">LOG_CDF&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">cdfs</span><span class="o">.</span><span class="n">LogCDF</span><span class="p">,),</span> <span class="p">{</span><span class="s2">&quot;PARAMETER&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="p">})</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">CDF</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
+            <span class="s2">&quot;CDF&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">cdfs</span><span class="o">.</span><span class="n">CDF</span><span class="p">,),</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;PARAMETER&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="p">,</span>
+                <span class="s2">&quot;__module__&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s2">&quot;__qualname__&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">.CDF&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">SF</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
+            <span class="s2">&quot;SF&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">cdfs</span><span class="o">.</span><span class="n">SurvivalFunction</span><span class="p">,),</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;PARAMETER&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="p">,</span>
+                <span class="s2">&quot;__module__&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s2">&quot;__qualname__&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">.SF&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">LOG_CDF</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
+            <span class="s2">&quot;LOG_CDF&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">cdfs</span><span class="o">.</span><span class="n">LogCDF</span><span class="p">,),</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;PARAMETER&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="p">,</span>
+                <span class="s2">&quot;__module__&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s2">&quot;__qualname__&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">.LOG_CDF&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">LOG_SF</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">LOG_SF&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">cdfs</span><span class="o">.</span><span class="n">LogSurvivalFunction</span><span class="p">,),</span> <span class="p">{</span><span class="s2">&quot;PARAMETER&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="p">}</span>
+            <span class="s2">&quot;LOG_SF&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">cdfs</span><span class="o">.</span><span class="n">LogSurvivalFunction</span><span class="p">,),</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;PARAMETER&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="p">,</span>
+                <span class="s2">&quot;__module__&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s2">&quot;__qualname__&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">.LOG_SF&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
         <span class="p">)</span></div>
 
 
@@ -222,7 +257,7 @@
 <div class="viewcode-block" id="ClassOrInstanceMethod">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ClassOrInstanceMethod">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClassOrInstanceMethod</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Descriptor enabling dual class/instance method behavior.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Descriptor used as a decorator to enable dual class/instance method behavior.</span>
 
 <span class="sd">    This descriptor allows methods to behave differently when called as class</span>
 <span class="sd">    methods versus instance methods, enabling flexible parameter handling for</span>
@@ -240,6 +275,8 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
 
+<div class="viewcode-block" id="ClassOrInstanceMethod.__get__">
+<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ClassOrInstanceMethod.__get__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return appropriate method based on call context.</span>
 
@@ -293,6 +330,7 @@
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">inner</span></div>
+</div>
 
 
 
@@ -307,6 +345,12 @@
 <span class="sd">    variables with specific probability distributions. It handles the complex</span>
 <span class="sd">    mapping between Python model specifications and Stan code generation while</span>
 <span class="sd">    providing integration with SciPy and PyTorch ecosystems.</span>
+
+<span class="sd">    :param kwargs: Distribution parameters (mu, sigma, etc. depending on subclass)</span>
+
+<span class="sd">    :raises NotImplementedError: If required class attributes are missing (i.e.,</span>
+<span class="sd">        if subclass was incorrectly defined)</span>
+<span class="sd">    :raises TypeError: If required distribution parameters are missing</span>
 
 <span class="sd">    :cvar STAN_DIST: Stan distribution name for code generation</span>
 <span class="sd">    :type STAN_DIST: str</span>
@@ -323,63 +367,81 @@
 <span class="sd">    :cvar STAN_TO_SCIPY_TRANSFORMS: Parameter transformation functions converting between</span>
 <span class="sd">        Stan and SciPy parametrizations</span>
 <span class="sd">    :type STAN_TO_SCIPY_TRANSFORMS: dict[str, Callable[[npt.NDArray], npt.NDArray]]</span>
-<span class="sd">    :cvar CDF: Automatically generated CDF transform class</span>
+<span class="sd">    :cvar CDF: Automatically generated :py:class:`~scistanpy.model.components.transformations.</span>
+<span class="sd">        cdfs.CDF` class.</span>
 <span class="sd">    :type CDF: type[cdfs.CDF]</span>
-<span class="sd">    :cvar SF: Automatically generated SF transform class</span>
+<span class="sd">    :cvar SF: Automatically generated :py:class:`~scistanpy.model.components.transformations.</span>
+<span class="sd">        cdfs.SurvivalFunction` class.</span>
 <span class="sd">    :type SF: type[cdfs.SurvivalFunction]</span>
-<span class="sd">    :cvar LOG_CDF: Automatically generated log CDF transform class</span>
+<span class="sd">    :cvar LOG_CDF: Automatically generated :py:class:`~scistanpy.model.components.</span>
+<span class="sd">        transformations.cdfs.LogCDF` class.</span>
 <span class="sd">    :type LOG_CDF: type[cdfs.LogCDF]</span>
-<span class="sd">    :cvar LOG_SF: Automatically generated log SF transform class</span>
+<span class="sd">    :cvar LOG_SF: Automatically generated :py:class:`~scistanpy.model.components.</span>
+<span class="sd">        transformations.cdfs.LogSurvivalFunction` class.</span>
 <span class="sd">    :type LOG_SF: type[cdfs.LogSurvivalFunction]</span>
-
-<span class="sd">    The class automatically handles:</span>
-
-<span class="sd">    - Parameter validation and type checking</span>
-<span class="sd">    - Stan code generation for all model blocks</span>
-<span class="sd">    - PyTorch parameter initialization and management</span>
-<span class="sd">    - Observable/latent parameter distinction</span>
-<span class="sd">    - Bound enforcement and constraint handling</span>
-
-<span class="sd">    Key Capabilities:</span>
-
-<span class="sd">    - **Multi-Backend Integration**: Works with SciPy, PyTorch, and Stan</span>
-<span class="sd">    - **Automatic Code Generation**: Generates appropriate Stan syntax</span>
-<span class="sd">    - **Type Safety**: Validates parameter types and constraints</span>
-<span class="sd">    - **Flexible Parameterization**: Supports both raw and transformed parameters</span>
-<span class="sd">    - **Observable Support**: Can represent both latent variables and observed data</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">STAN_DIST</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of the distribution in Stan code (e.g. &quot;normal&quot;, &quot;binomial&quot;).&quot;&quot;&quot;</span>
+
     <span class="n">HAS_RAW_VARNAME</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether the parameter intrinsically uses a raw/transformed parameterization.&quot;&quot;&quot;</span>
+
     <span class="n">CDF</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">cdfs</span><span class="o">.</span><span class="n">CDF</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.CDF`</span>
+<span class="sd">    describing the cumulative distribution function for the parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">SF</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">cdfs</span><span class="o">.</span><span class="n">SurvivalFunction</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.SurvivalFunction`</span>
+<span class="sd">    describing the survival function for the parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">LOG_CDF</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">cdfs</span><span class="o">.</span><span class="n">LogCDF</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.LogCDF`</span>
+<span class="sd">    describing the log cumulative distribution function for the parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">LOG_SF</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">cdfs</span><span class="o">.</span><span class="n">LogSurvivalFunction</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.LogSurvivalFunction`</span>
+<span class="sd">    describing the log survival function for the parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">SCIPY_DIST</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">stats</span><span class="o">.</span><span class="n">rv_continuous</span><span class="p">]</span> <span class="o">|</span> <span class="nb">type</span><span class="p">[</span><span class="n">stats</span><span class="o">.</span><span class="n">rv_discrete</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Corresponding SciPy distribution class (e.g., `scipy.stats.norm`).&quot;&quot;&quot;</span>
+
     <span class="n">TORCH_DIST</span><span class="p">:</span> <span class="p">(</span>
         <span class="nb">type</span><span class="p">[</span><span class="n">dist</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">Distribution</span><span class="p">]</span>
         <span class="o">|</span> <span class="nb">type</span><span class="p">[</span><span class="n">custom_torch_dists</span><span class="o">.</span><span class="n">CustomDistribution</span><span class="p">]</span>
         <span class="o">|</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Corresponding PyTorch distribution class (e.g., `torch.distributions.Normal`).&quot;&quot;&quot;</span>
+
     <span class="n">STAN_TO_SCIPY_NAMES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    There can be differences in parameter names between Stan and SciPy. This dictionary</span>
+<span class="sd">    maps between the two naming conventions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">STAN_TO_TORCH_NAMES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    There can be differences in parameter names between Stan and PyTorch. This dictionary</span>
+<span class="sd">    maps between the two naming conventions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">STAN_TO_SCIPY_TRANSFORMS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Some distributions are parametrized differently between Stan and SciPy. This</span>
+<span class="sd">    dictionary provides transformation functions to convert parameters from Stan&#39;s</span>
+<span class="sd">    parametrization to SciPy&#39;s parametrization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize parameter with distribution-specific arguments.</span>
-
-<span class="sd">        :param kwargs: Distribution parameters (mu, sigma, etc. depending on subclass)</span>
-
-<span class="sd">        :raises NotImplementedError: If required class attributes are missing (i.e.,</span>
-<span class="sd">            if subclass was incorrectly defined)</span>
-<span class="sd">        :raises TypeError: If required distribution parameters are missing</span>
-
-<span class="sd">        The initialization process:</span>
-<span class="sd">        1. Validates all required class attributes are defined</span>
-<span class="sd">        2. Checks that all required distribution parameters are provided</span>
-<span class="sd">        3. Initializes parent AbstractModelComponent</span>
-<span class="sd">        4. Sets up observability tracking and PyTorch parameter placeholders</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize parameter with distribution-specific arguments.&quot;&quot;&quot;</span>
         <span class="c1"># Confirm that class attributes are set correctly</span>
         <span class="k">if</span> <span class="n">missing_attributes</span> <span class="o">:=</span> <span class="p">[</span>
             <span class="n">attr</span>
@@ -423,28 +485,31 @@
         <span class="n">init_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize PyTorch parameter on **unconstrained** space for gradient-based</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize PyTorch parameter on *unconstrained* space for gradient-based</span>
 <span class="sd">        optimization.</span>
 
-<span class="sd">        :param init_val: Initial parameter values. Uniform between -1 and 1 if None.</span>
-<span class="sd">            Defaults to None.</span>
+<span class="sd">        :param init_val: Initial parameter values on *unconstrained* space. Uniform</span>
+<span class="sd">            between -1 and 1 if None. Defaults to None.</span>
 <span class="sd">        :type init_val: Optional[Union[npt.NDArray, torch.Tensor]]</span>
 <span class="sd">        :param seed: Random seed for initialization. Defaults to None.</span>
 <span class="sd">        :type seed: Optional[custom_types.Integer]</span>
 
 <span class="sd">        :raises ValueError: If called on observable parameters</span>
-<span class="sd">        :raises ValueError: If init_val shape doesn&#39;t match parameter shape</span>
+<span class="sd">        :raises ValueError: If ``init_val`` shape doesn&#39;t match parameter shape</span>
 
 <span class="sd">        This method sets up the parameter for PyTorch-based optimization by</span>
-<span class="sd">        creating a trainable nn.Parameter with appropriate initialization.</span>
-<span class="sd">        The initialization strategy uses uniform random values in [-1, 1]</span>
-<span class="sd">        if no explicit values are provided. Note that initialization values are</span>
-<span class="sd">        on the unconstrained space. An appropriate transform is applied depending</span>
-<span class="sd">        on the bounds of the distribution represented by the class to take it to</span>
-<span class="sd">        a constrained space.</span>
+<span class="sd">        creating a trainable ``nn.Parameter``. The initialization strategy uses</span>
+<span class="sd">        uniform random values in [-1, 1] if no explicit values are provided.</span>
 
-<span class="sd">        Observable parameters cannot be initialized as they represent fixed</span>
-<span class="sd">        data rather than learnable parameters.</span>
+<span class="sd">        .. important::</span>
+<span class="sd">            Initialization values are considered to be in unconstrained space, whether</span>
+<span class="sd">            provided or otherwise. An appropriate transform is applied depending</span>
+<span class="sd">            on the bounds of the distribution represented by the class to take it to</span>
+<span class="sd">            a constrained space (e.g., exponentiation for positive distributions).</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            Observable parameters cannot be initialized as they represent fixed</span>
+<span class="sd">            data rather than learnable parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># This cannot be called if the parameter is an observable</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">observable</span><span class="p">:</span>
@@ -518,6 +583,7 @@
 
 <span class="sd">        Observable parameters represent known data rather than unknown variables</span>
 <span class="sd">        to be inferred. This method:</span>
+
 <span class="sd">        - Sets the observable flag to True</span>
 <span class="sd">        - Removes PyTorch parameterization (observables aren&#39;t optimized)</span>
 <span class="sd">        - Enables generation of appropriate Stan code for data blocks</span>
@@ -542,16 +608,17 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_target_incrementation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan target increment statement for log-probability.</span>
 
-<span class="sd">        :param index_opts: Indexing options for multi-dimensional parameters</span>
+<span class="sd">        :param index_opts: Potential names for indexing variables (e.g., (&#39;i&#39;, &#39;j&#39;,</span>
+<span class="sd">            &#39;k&#39;, ...)).</span>
 <span class="sd">        :type index_opts: tuple[str, ...]</span>
 
-<span class="sd">        :returns: Stan code for target increment (e.g., &quot;y ~ normal(mu, sigma)&quot;)</span>
+<span class="sd">        :returns: Stan target increment statement (e.g., &quot;y ~ normal(mu, sigma)&quot;</span>
+<span class="sd">            or target += normal_lpdf(y | mu, sigma)&quot;).</span>
 <span class="sd">        :rtype: str</span>
 
-<span class="sd">        This method generates the Stan code that adds this parameter&#39;s</span>
-<span class="sd">        log-probability contribution to the target density. It handles</span>
-<span class="sd">        proper indexing for multi-dimensional parameters and constructs</span>
-<span class="sd">        the appropriate distribution call with parameter values.</span>
+<span class="sd">        This method generates the Stan code that adds this parameter&#39;s log-probability</span>
+<span class="sd">        (e.g., &quot;target += normal_lpdf(y | mu, sigma)&quot; or &quot;y ~ normal(mu, sigma)&quot;)</span>
+<span class="sd">        contribution to the target density.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Determine the left side and operator</span>
         <span class="n">left_side</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_indexed_varname</span><span class="p">(</span><span class="n">index_opts</span><span class="p">)</span><span class="si">}</span><span class="s2"> ~ &quot;</span>
@@ -575,8 +642,7 @@
 <span class="sd">        :rtype: str</span>
 
 <span class="sd">        This method creates Stan code for the generated quantities block,</span>
-<span class="sd">        enabling posterior predictive sampling by generating new samples</span>
-<span class="sd">        from the parameter&#39;s distribution using fitted parameter values.</span>
+<span class="sd">        enabling posterior predictive sampling.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">get_indexed_varname</span><span class="p">(</span><span class="n">index_opts</span><span class="p">,</span> <span class="n">_name_override</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">generated_varname</span><span class="p">)</span>
@@ -591,7 +657,9 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log-probability using PyTorch backend for gradient computation.</span>
 
-<span class="sd">        :param observed: Observed values for observable parameters. Defaults to None.</span>
+<span class="sd">        :param observed: Observed values for observable parameters. Defaults to</span>
+<span class="sd">            None. Required if parameter is observable. Must be None if parameter</span>
+<span class="sd">            is latent.</span>
 <span class="sd">        :type observed: Optional[torch.Tensor]</span>
 
 <span class="sd">        :returns: Log-probability tensor with gradient tracking</span>
@@ -601,9 +669,7 @@
 <span class="sd">        :raises ValueError: If latent parameter has observed values</span>
 
 <span class="sd">        This method computes log-probabilities using PyTorch distributions,</span>
-<span class="sd">        enabling gradient-based optimization. For observable parameters,</span>
-<span class="sd">        it evaluates the likelihood of observed data. For latent parameters,</span>
-<span class="sd">        it evaluates the prior probability of current parameter values.</span>
+<span class="sd">        enabling gradient-based optimization.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Observed parameters must have an observed value.</span>
@@ -632,9 +698,8 @@
 <span class="sd">        :returns: NumPy random number generator</span>
 <span class="sd">        :rtype: np.random.Generator</span>
 
-<span class="sd">        Returns the global SciStanPy RNG if no seed is provided, otherwise</span>
-<span class="sd">        creates a new generator with the specified seed for reproducible</span>
-<span class="sd">        sampling operations.</span>
+<span class="sd">        Returns the global :py:obj:`scistanpy.RNG` if no seed is provided, otherwise</span>
+<span class="sd">        creates a new generator with the specified seed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Return the global random number generator if no seed is provided. Otherwise,</span>
         <span class="c1"># return a new random number generator with the provided seed.</span>
@@ -657,6 +722,11 @@
 <span class="sd">        This method creates properly formatted argument lists for Stan</span>
 <span class="sd">        distribution functions, ordering arguments according to Stan</span>
 <span class="sd">        conventions and handling parameter name mappings.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; param = Normal(mu=0, sigma=1)</span>
+<span class="sd">            &gt;&gt;&gt; param.write_dist_args(mu=&quot;mean&quot;, sigma=&quot;stddev&quot;)</span>
+<span class="sd">            &#39;mean, stddev&#39;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">to_format</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">STAN_TO_SCIPY_NAMES</span><span class="p">)</span></div>
 
@@ -671,9 +741,10 @@
         <span class="n">offset_adjustment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">dist_suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate right-hand side of Stan distribution statements.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate right-hand side of Stan statements.</span>
 
-<span class="sd">        :param index_opts: Indexing options for multi-dimensional parameters</span>
+<span class="sd">        :param index_opts: Options for indexing variable names (e.g., (&#39;i&#39;, &#39;j&#39;,</span>
+<span class="sd">            &#39;k&#39;, ...)). If None, no indexing is applied.</span>
 <span class="sd">        :type index_opts: Optional[tuple[str, ...]]</span>
 <span class="sd">        :param start_dims: First indexable dimension of parent model components.</span>
 <span class="sd">            Defaults to None, meaning the first dimension is the first indexable</span>
@@ -687,17 +758,15 @@
 <span class="sd">            are (&#39;a&#39;, &#39;b&#39;, &#39;c&#39;) and `offset_adjustment` is 1, the effective allowed</span>
 <span class="sd">            indices will be (&#39;b&#39;, &#39;c&#39;). This argument is critical for aligning</span>
 <span class="sd">            dimensions between parent and child model components that have different</span>
-<span class="sd">            numbers of dimensions. Defaults to 0.</span>
+<span class="sd">            numbers of dimensions (i.e., as a result of broadcasting). Defaults</span>
+<span class="sd">            to 0.</span>
 <span class="sd">        :type offset_adjustment: int</span>
-<span class="sd">        :param dist_suffix: Distribution function suffix (e.g., &quot;_rng&quot;). Defaults to &quot;&quot;.</span>
+<span class="sd">        :param dist_suffix: Distribution function suffix (e.g., &quot;_rng&quot;). Defaults</span>
+<span class="sd">            to &quot;&quot;.</span>
 <span class="sd">        :type dist_suffix: str</span>
 
 <span class="sd">        :returns: Stan distribution call string</span>
 <span class="sd">        :rtype: str</span>
-
-<span class="sd">        This method constructs the right-hand side of Stan statements,</span>
-<span class="sd">        handling parameter indexing, distribution suffixes for different</span>
-<span class="sd">        Stan blocks, and proper argument formatting.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Get the formattables</span>
         <span class="n">formattables</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_right_side</span><span class="p">(</span>
@@ -717,14 +786,13 @@
 <div class="viewcode-block" id="Parameter.get_transformed_data_declaration">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Parameter.get_transformed_data_declaration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_transformed_data_declaration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan transformed data block declarations.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate the ``transformed data`` block of Stan code.</span>
 
 <span class="sd">        :returns: Stan code for transformed data declarations (empty by default)</span>
 <span class="sd">        :rtype: str</span>
 
-<span class="sd">        Most parameters don&#39;t require transformed data declarations. This</span>
-<span class="sd">        method can be overridden by subclasses that need to declare</span>
-<span class="sd">        transformed data variables.</span>
+<span class="sd">        Most parameters don&#39;t require transformed data declarations. This method</span>
+<span class="sd">        can be overridden by subclasses that need to declare transformed data variables.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># None by default</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
@@ -736,10 +804,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan variable declaration for generated quantities.</span>
 
 <span class="sd">        :param force_basetype: Whether to force base type declaration. For example,</span>
-<span class="sd">            if `True` and the parameter is defined as a multidimension float, the</span>
-<span class="sd">            returned stan dtype will not be `array[...Ndim - 1...] vector`, but</span>
-<span class="sd">            `array[...NDim...] float`. Defaults to True, as this is the format</span>
-<span class="sd">            expected by generated quantities blocks.</span>
+<span class="sd">            if ``True`` and the parameter is defined as a multidimensional float,</span>
+<span class="sd">            the returned stan dtype will not be ``array[...Ndim - 1...] vector``,</span>
+<span class="sd">            but ``array[...NDim...] float``. Defaults to ``True``, as this is the</span>
+<span class="sd">            format expected by generated quantities blocks.</span>
 <span class="sd">        :type force_basetype: bool</span>
 
 <span class="sd">        :returns: Stan variable declaration for posterior predictive sampling</span>
@@ -760,17 +828,18 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan parameter declaration for raw (untransformed) variables.</span>
 
 <span class="sd">        :param force_basetype: Whether to force base type declaration. See</span>
-<span class="sd">            `get_generated_quantity_declaration` for more information. Defaults to False.</span>
+<span class="sd">            ``get_generated_quantity_declaration`` for more information. Defaults</span>
+<span class="sd">            to ``False``.</span>
 <span class="sd">        :type force_basetype: bool</span>
 
 <span class="sd">        :returns: Stan parameter declaration for raw variables</span>
 <span class="sd">        :rtype: str</span>
 
-<span class="sd">        For parameters using non-centered or other reparameterizations,</span>
-<span class="sd">        this generates declarations for the underlying raw variables that</span>
-<span class="sd">        are transformed to create the actual parameters. The `get_transformation_assignment`</span>
-<span class="sd">        function will return Stan code that converts this raw parameter to the</span>
-<span class="sd">        desired parameter.</span>
+<span class="sd">        For parameters using non-centered or other reparameterizations, this generates</span>
+<span class="sd">        declarations for the underlying raw variables that are transformed to create</span>
+<span class="sd">        the actual parameters. The ``get_transformation_assignment`` function will</span>
+<span class="sd">        return Stan code that converts this raw parameter to the desired parameter.</span>
+<span class="sd">        For parameters that do not use a raw variable, this returns an empty string.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">HAS_RAW_VARNAME</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">declare_stan_variable</span><span class="p">(</span>
@@ -794,15 +863,18 @@
 <span class="sd">        :returns: CDF transform object</span>
 <span class="sd">        :rtype: cdfs.CDF</span>
 
-<span class="sd">        Can be used as either a class method (with explicit parameters) or</span>
-<span class="sd">        instance method (using instance parameter values) to create CDF</span>
-<span class="sd">        transform objects for probabilistic modeling.</span>
+<span class="sd">        .. note::</span>
+<span class="sd">            This is a convenience method for building an instance of the</span>
+<span class="sd">            :py:class:`~scistanpy.model.components.transforms.cdf.CDF` subclass</span>
+<span class="sd">            associated with the parameter. It can be used as either a class method,</span>
+<span class="sd">            in which case parameters must be explicitly provided, or an instance</span>
+<span class="sd">            method (in which case instance parameter values will be used).</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # As class method</span>
-<span class="sd">            &gt;&gt;&gt; cdf = Normal.cdf(mu=0, sigma=1, x=data)</span>
+<span class="sd">            &gt;&gt;&gt; cdf = Normal.cdf(mu=0.0, sigma=1.0, x=data)</span>
 <span class="sd">            &gt;&gt;&gt; # As instance method</span>
-<span class="sd">            &gt;&gt;&gt; normal_param = Normal(mu=0, sigma=1)</span>
+<span class="sd">            &gt;&gt;&gt; normal_param = Normal(mu=0.0, sigma=1.0)</span>
 <span class="sd">            &gt;&gt;&gt; cdf = normal_param.cdf(x=data)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">CDF</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
@@ -825,6 +897,20 @@
 <span class="sd">        :rtype: cdfs.SurvivalFunction</span>
 
 <span class="sd">        Creates survival function (1 - CDF) transforms for survival analysis.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            This is a convenience method for building an instance of the</span>
+<span class="sd">            :py:class:`~scistanpy.model.components.transforms.cdf.SurvivalFunction`</span>
+<span class="sd">            subclass associated with the parameter. It can be used as either a class</span>
+<span class="sd">            method, in which case parameters must be explicitly provided, or an</span>
+<span class="sd">            instance method (in which case instance parameter values will be used).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # As class method</span>
+<span class="sd">            &gt;&gt;&gt; sf = Normal.ccdf(mu=0.0, sigma=1.0, x=data)</span>
+<span class="sd">            &gt;&gt;&gt; # As instance method</span>
+<span class="sd">            &gt;&gt;&gt; normal_param = Normal(mu=0.0, sigma=1.0)</span>
+<span class="sd">            &gt;&gt;&gt; sf = normal_param.ccdf(x=data)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">SF</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
 
@@ -844,6 +930,13 @@
 
 <span class="sd">        Creates log-CDF transforms for numerical stability in extreme</span>
 <span class="sd">        tail probability computations.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            This is a convenience method for building an instance of the</span>
+<span class="sd">            :py:class:`~scistanpy.model.components.transforms.cdf.LogCDF` subclass</span>
+<span class="sd">            associated with the parameter. It can be used as either a class method,</span>
+<span class="sd">            in which case parameters must be explicitly provided, or an instance</span>
+<span class="sd">            method (in which case instance parameter values will be used).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">LOG_CDF</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
 
@@ -866,6 +959,13 @@
 
 <span class="sd">        Creates log-survival function transforms for numerical stability</span>
 <span class="sd">        in extreme tail probability computations.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            This is a convenience method for building an instance of the</span>
+<span class="sd">            :py:class:`~scistanpy.model.components.transforms.cdf.LogSurvivalFunction`</span>
+<span class="sd">            subclass associated with the parameter. It can be used as either a class</span>
+<span class="sd">            method, in which case parameters must be explicitly provided, or an</span>
+<span class="sd">            instance method (in which case instance parameter values will be used).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">LOG_SF</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
 
@@ -896,8 +996,8 @@
 <span class="sd">        :returns: Configured PyTorch distribution object</span>
 <span class="sd">        :rtype: custom_types.SciStanPyDistribution</span>
 
-<span class="sd">        Creates a PyTorch distribution instance using the current parameter</span>
-<span class="sd">        values, enabling gradient-based computations and optimization.</span>
+<span class="sd">        Creates a PyTorch distribution instance using the current (constrained)</span>
+<span class="sd">        parameter values, enabling gradient-based computations and optimization.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">TORCH_DIST</span><span class="p">(</span>  <span class="c1"># pylint: disable=not-callable</span>
             <span class="o">**</span><span class="p">{</span>
@@ -975,7 +1075,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">generated_varname</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get variable name for posterior predictive sampling.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Variable name for posterior predictive sampling.</span>
 
 <span class="sd">        :returns: Variable name with &quot;_ppc&quot; suffix for generated quantities</span>
 <span class="sd">        :rtype: str</span>
@@ -983,7 +1083,8 @@
 <span class="sd">        :raises ValueError: If called on non-observable parameters</span>
 
 <span class="sd">        Observable parameters generate posterior predictive samples in the</span>
-<span class="sd">        generated quantities block using a modified variable name.</span>
+<span class="sd">        ``generated quantities`` block of Stan code using this modified variable</span>
+<span class="sd">        name.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Only available for observables</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">observable</span><span class="p">:</span>
@@ -995,7 +1096,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">observable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if parameter represents observed data.</span>
 
-<span class="sd">        :returns: True if parameter is observable</span>
+<span class="sd">        :returns: ``True`` if parameter is observable</span>
 <span class="sd">        :rtype: bool</span>
 
 <span class="sd">        Parameters are observable if explicitly marked as such or if they</span>
@@ -1015,8 +1116,8 @@
 <span class="sd">        :rtype: str</span>
 
 <span class="sd">        Some parameters use reparameterization techniques (like non-centered</span>
-<span class="sd">        parameterization) that require separate raw variables. This property</span>
-<span class="sd">        returns the appropriate raw variable name when needed.</span>
+<span class="sd">        parameterization) that require separate raw variables in Stan code. This</span>
+<span class="sd">        property returns the appropriate raw variable name when needed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stan_model_varname</span><span class="si">}</span><span class="s2">_raw&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">HAS_RAW_VARNAME</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span></div>
 
@@ -1027,9 +1128,10 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ContinuousDistribution</span><span class="p">(</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">transformed_parameters</span><span class="o">.</span><span class="n">TransformableParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for parameters with continuous sample spaces.</span>
 
-<span class="sd">    This class extends Parameter to provide functionality specific to continuous</span>
-<span class="sd">    probability distributions. It inherits transformation capabilities that</span>
-<span class="sd">    enable complex hierarchical model construction.</span>
+<span class="sd">    This class extends :py:class:`~scistanpy.model.components.parameters.Parameter`</span>
+<span class="sd">    to provide functionality specific to continuous probability distributions. It</span>
+<span class="sd">    also inherits transformation capabilities that enable complex hierarchical model</span>
+<span class="sd">    construction using mathematical operators.</span>
 <span class="sd">    &quot;&quot;&quot;</span></div>
 
 
@@ -1039,22 +1141,33 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">DiscreteDistribution</span><span class="p">(</span><span class="n">Parameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for parameters with discrete sample spaces.</span>
 
-<span class="sd">    This class extends Parameter for discrete probability distributions,</span>
-<span class="sd">    handling the specific requirements of integer-valued random variables.</span>
+<span class="sd">    This class extends :py:class:`~scistanpy.model.components.parameters.Parameter`</span>
+<span class="sd">    for discrete probability distributions, handling the specific requirements of</span>
+<span class="sd">    integer-valued random variables.</span>
 
 <span class="sd">    :cvar BASE_STAN_DTYPE: Stan data type for discrete variables (&quot;int&quot;)</span>
 <span class="sd">    :cvar LOWER_BOUND: Default lower bound for discrete values (0)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">BASE_STAN_DTYPE</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;int&quot;</span>
-    <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">=</span> <span class="mi">0</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Updated relative to :py:class:`~scistanpy.model.components.parameters.Parameter`</span>
+<span class="sd">    to reflect that discrete parameters are represented as integers in Stan.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Updated relative to :py:class:`~scistanpy.model.components.parameters.Parameter`</span>
+<span class="sd">    to reflect that all discrete distributions currently implemented in SciStanPy</span>
+<span class="sd">    are defined for non-negative integers. This sets the default lower bound to 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="Normal">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Normal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Normal</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normal (Gaussian) distribution parameter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Normal (Gaussian) distribution parameter.</span>
 
 <span class="sd">    Implements the normal distribution with location (mu) and scale (sigma)</span>
 <span class="sd">    parameters. Supports automatic non-centered parameterization for improved</span>
@@ -1064,29 +1177,43 @@
 <span class="sd">    :type mu: custom_types.ContinuousParameterType</span>
 <span class="sd">    :param sigma: Scale parameter (standard deviation)</span>
 <span class="sd">    :type sigma: custom_types.ContinuousParameterType</span>
-<span class="sd">    :param noncentered: Whether to use non-centered parameterization. Defaults to True.</span>
+<span class="sd">    :param noncentered: Whether to use non-centered parameterization in hierarchical</span>
+<span class="sd">        models. Defaults to True.</span>
 <span class="sd">    :type noncentered: bool</span>
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ Normal(μ, σ) where f(x) = (1/(σ√(2π))) * exp(-½((x-μ)/σ)²)</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            P(x | \mu, \sigma) = \frac{1}{\sigma\sqrt{2\pi}} *</span>
+<span class="sd">            \exp\left(-\frac{((x-\mu)/\sigma)^2}{2}\right)</span>
 
-<span class="sd">    Non-Centered Parameterization:</span>
-<span class="sd">        When enabled for hierarchical models:</span>
-<span class="sd">        - Raw variable: z ~ Normal(0, 1)</span>
-<span class="sd">        - Transformed: x = μ + σ * z</span>
-<span class="sd">        - Can improve MCMC sampling efficiency</span>
 
-<span class="sd">    The non-centered parameterization is automatically applied when:</span>
-<span class="sd">    - noncentered=True (default)</span>
-<span class="sd">    - Parameter is not a hyperparameter</span>
-<span class="sd">    - Parameter is not observable</span>
+<span class="sd">    Properties:</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Standard normal parameter</span>
-<span class="sd">        &gt;&gt;&gt; mu = Normal(mu=0.0, sigma=1.0)</span>
-<span class="sd">        &gt;&gt;&gt; # Hierarchical parameter with automatic non-centering</span>
-<span class="sd">        &gt;&gt;&gt; y = Normal(mu=mu, sigma=0.5)</span>
+<span class="sd">    .. list-table::</span>
+
+<span class="sd">        * - Support</span>
+<span class="sd">          - :math:`(-\infty, \infty)`</span>
+<span class="sd">        * - Mean</span>
+<span class="sd">          - :math:`\mu`</span>
+<span class="sd">        * - Median</span>
+<span class="sd">          - :math:`\mu`</span>
+<span class="sd">        * - Mode</span>
+<span class="sd">          - :math:`\mu`</span>
+<span class="sd">        * - Variance</span>
+<span class="sd">          - :math:`\sigma^2`</span>
+
+<span class="sd">    In hierarchical models, the non-centered parametrization is used by default.</span>
+<span class="sd">    In this case, a separate raw variable is introduced, and the actual parameter</span>
+<span class="sd">    is defined as a transformation of this raw variable. This can lead to</span>
+<span class="sd">    improved sampling efficiency in many scenarios:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            z &amp;\sim \text{Normal}(0, 1) \\</span>
+<span class="sd">            x &amp;= \mu + \sigma * z</span>
+<span class="sd">            \end{align*}</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sigma&quot;</span><span class="p">}</span>
@@ -1115,16 +1242,16 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_transformation_assignment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for parameter transformation.</span>
 
-<span class="sd">        :param index_opts: Indexing options for multi-dimensional parameters</span>
+<span class="sd">        :param index_opts: Potential names for indexing variables (e.g., (&#39;i&#39;, &#39;j&#39;,</span>
+<span class="sd">            &#39;k&#39;, ...)).</span>
 <span class="sd">        :type index_opts: tuple[str, ...]</span>
 
-<span class="sd">        :returns: Stan transformation code (non-centered if applicable)</span>
+<span class="sd">        :returns: Stan transformation code.</span>
 <span class="sd">        :rtype: str</span>
 
-<span class="sd">        For non-centered parameterization, generates:</span>
-<span class="sd">        x = mu + sigma .* z_raw</span>
-
-<span class="sd">        Otherwise uses the parent class default transformation.</span>
+<span class="sd">        For non-centered parameterization, returns Stan code that defines the</span>
+<span class="sd">        parameter as a transformation of a raw variable drawn from a unit normal</span>
+<span class="sd">        distribution. Otherwise,  uses the parent class default transformation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># If this is centered, then we use the parent method</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_noncentered</span><span class="p">:</span>
@@ -1150,15 +1277,16 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_target_incrementation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan target increment with appropriate variable names.</span>
 
-<span class="sd">        :param index_opts: Indexing options for multi-dimensional parameters</span>
+<span class="sd">        :param index_opts: Potential names for indexing variables (e.g., (&#39;i&#39;, &#39;j&#39;,</span>
+<span class="sd">            &#39;k&#39;, ...)).</span>
 <span class="sd">        :type index_opts: tuple[str, ...]</span>
 
 <span class="sd">        :returns: Stan target increment statement</span>
 <span class="sd">        :rtype: str</span>
 
-<span class="sd">        For non-centered parameterization, uses the raw variable name</span>
-<span class="sd">        in the target increment while the transformed variable is computed</span>
-<span class="sd">        in the transformed parameters block.</span>
+<span class="sd">        For non-centered parameterization, uses the raw variable name in the target</span>
+<span class="sd">        increment while the transformed variable is computed in the transformed</span>
+<span class="sd">        parameters block. Otherwise, uses the parent implementation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Run the parent method</span>
         <span class="n">parent_incrementation</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_target_incrementation</span><span class="p">(</span><span class="n">index_opts</span><span class="p">)</span>
@@ -1187,9 +1315,8 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate distribution call for Stan code.</span>
 
-<span class="sd">        For non-centered parameterization, returns &quot;std_normal()&quot; for the</span>
-<span class="sd">        raw variable. Otherwise uses the parent implementation with full</span>
-<span class="sd">        parameter specification.</span>
+<span class="sd">        For non-centered parameterization, returns &quot;std_normal()&quot; for the raw variable.</span>
+<span class="sd">        Otherwise uses the parent implementation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># If not noncentered, run the parent method</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_noncentered</span><span class="p">:</span>
@@ -1214,11 +1341,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">is_noncentered</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if parameter uses non-centered parameterization.</span>
 
-<span class="sd">        :returns: True if using non-centered parameterization</span>
+<span class="sd">        :returns: ``True`` if using non-centered parameterization</span>
 <span class="sd">        :rtype: bool</span>
 
 <span class="sd">        Non-centered parameterization is used when:</span>
-<span class="sd">        - noncentered flag is True</span>
+
+<span class="sd">        - ``noncentered`` flag is ``True`` during initialization.</span>
 <span class="sd">        - Parameter is not a hyperparameter</span>
 <span class="sd">        - Parameter is not observable</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1231,7 +1359,7 @@
 <div class="viewcode-block" id="HalfNormal">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.HalfNormal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HalfNormal</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Half-normal distribution parameter (normal truncated at zero).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Half-normal distribution parameter (normal truncated at zero).</span>
 
 <span class="sd">    Implements the half-normal distribution, which is a normal distribution</span>
 <span class="sd">    truncated to positive values. Commonly used for scale parameters.</span>
@@ -1241,13 +1369,24 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ HalfNormal(σ) where f(x) = (2/(σ√(2π))) * exp(-x²/(2σ²)) for x ≥ 0</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            P(x | \sigma) = \frac{2}{\sigma\sqrt{2\pi}} *</span>
+<span class="sd">            \exp\left(-\frac{x^2}{2\sigma^2}\right) \text{ for } x \geq 0</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Scale parameter for hierarchical model</span>
-<span class="sd">        &gt;&gt;&gt; tau = HalfNormal(sigma=1.0)</span>
-<span class="sd">        &gt;&gt;&gt; # Individual-level scale</span>
-<span class="sd">        &gt;&gt;&gt; sigma_i = HalfNormal(sigma=tau)</span>
+<span class="sd">    Properties:</span>
+
+<span class="sd">        .. list-table::</span>
+
+<span class="sd">            * - Support</span>
+<span class="sd">              - :math:`[0, \infty)`</span>
+<span class="sd">            * - Mean</span>
+<span class="sd">              - :math:`\sigma\sqrt{\dfrac{2}{\pi}}`</span>
+<span class="sd">            * - Median</span>
+<span class="sd">              - :math:`\sigma\sqrt{2}\operatorname{erf}^{-1}(0.5)`</span>
+<span class="sd">            * - Mode</span>
+<span class="sd">              - :math:`0`</span>
+<span class="sd">            * - Variance</span>
+<span class="sd">              - :math:`\sigma^2\left(1 - \dfrac{2}{\pi}\right)`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Float</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -1257,10 +1396,8 @@
     <span class="n">STAN_TO_SCIPY_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="s2">&quot;scale&quot;</span><span class="p">}</span>
     <span class="n">STAN_TO_TORCH_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="s2">&quot;scale&quot;</span><span class="p">}</span>
 
-<div class="viewcode-block" id="HalfNormal.write_dist_args">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.HalfNormal.write_dist_args">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_dist_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># pylint: disable=arguments-differ</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Format distribution arguments for Stan (location=0, scale=sigma).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Format distribution arguments for Stan.</span>
 
 <span class="sd">        :param sigma: Formatted sigma parameter string</span>
 <span class="sd">        :type sigma: str</span>
@@ -1269,14 +1406,13 @@
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;0, </span><span class="si">{</span><span class="n">sigma</span><span class="si">}</span><span class="s2">&quot;</span></div>
-</div>
 
 
 
 <div class="viewcode-block" id="UnitNormal">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.UnitNormal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">UnitNormal</span><span class="p">(</span><span class="n">Normal</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard normal distribution (mu=0, sigma=1).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Standard normal distribution (mu=0, sigma=1).</span>
 
 <span class="sd">    Implements the standard normal distribution with fixed parameters.</span>
 <span class="sd">    This is a convenience class for the commonly used N(0,1) distribution.</span>
@@ -1284,19 +1420,23 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ N(0, 1) where f(x) = (1/√(2π)) * exp(-x²/2)</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            P(x) = \frac{e^{-\frac{x^2}{2}}}{\sqrt{2\pi}}</span>
 
-<span class="sd">    The standard normal distribution:</span>
-<span class="sd">    - Has fixed parameters that cannot be toggled</span>
-<span class="sd">    - Uses the &quot;std_normal&quot; distribution in Stan</span>
-<span class="sd">    - Is commonly used for prior specifications</span>
-<span class="sd">    - Serves as the basis for non-centered parameterizations</span>
+<span class="sd">    Properties:</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Standard normal prior</span>
-<span class="sd">        &gt;&gt;&gt; z = UnitNormal()</span>
-<span class="sd">        &gt;&gt;&gt; # Used in non-centered parameterization</span>
-<span class="sd">        &gt;&gt;&gt; x = mu + sigma * z  # Conceptually</span>
+<span class="sd">    .. list-table::</span>
+
+<span class="sd">        * - Support</span>
+<span class="sd">          - :math:`(-\infty, \infty)`</span>
+<span class="sd">        * - Mean</span>
+<span class="sd">          - :math:`0`</span>
+<span class="sd">        * - Median</span>
+<span class="sd">          - :math:`0`</span>
+<span class="sd">        * - Mode</span>
+<span class="sd">          - :math:`0`</span>
+<span class="sd">        * - Variance</span>
+<span class="sd">          - :math:`1`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">STAN_DIST</span> <span class="o">=</span> <span class="s2">&quot;std_normal&quot;</span>
@@ -1307,8 +1447,6 @@
         <span class="c1"># Sigma is not togglable</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="o">.</span><span class="n">is_togglable</span> <span class="o">=</span> <span class="kc">False</span>
 
-<div class="viewcode-block" id="UnitNormal.write_dist_args">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.UnitNormal.write_dist_args">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_dist_args</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ, unused-argument</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1324,18 +1462,17 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># No arguments needed for the unit normal distribution in Stan.</span>
         <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
-</div>
 
 
 
 <div class="viewcode-block" id="LogNormal">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.LogNormal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogNormal</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-normal distribution parameter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Log-normal distribution parameter.</span>
 
-<span class="sd">    Implements the log-normal distribution where log(X) follows a normal</span>
-<span class="sd">    distribution. Commonly used for modeling positive quantities with</span>
-<span class="sd">    multiplicative effects.</span>
+<span class="sd">    Implements the log-normal distribution where :math:`\log(X)` follows a normal</span>
+<span class="sd">    distribution. Commonly used for modeling positive quantities with multiplicative</span>
+<span class="sd">    effects.</span>
 
 <span class="sd">    :param mu: Location parameter for underlying normal</span>
 <span class="sd">    :type mu: custom_types.ContinuousParameterType</span>
@@ -1344,13 +1481,28 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        If Y ~ Normal(μ, σ), then X = exp(Y) ~ LogNormal(μ, σ)</span>
-<span class="sd">        f(x) = (1/(xσ√(2π))) * exp(-½((ln(x)-μ)/σ)²) for x &gt; 0</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \text{If } Y &amp;\sim \text{Normal}(\mu, \sigma), \text{then } \\ \\</span>
+<span class="sd">            X &amp;\sim \text{LogNormal}(\mu, \sigma), \text{where } \\ \\</span>
+<span class="sd">            P(x | \mu, \sigma) &amp;= \frac{1}{x\sigma\sqrt{2\pi}} *</span>
+<span class="sd">            \exp\left(-\frac{(\ln(x)-\mu)^2}{2\sigma^2}\right) \text{ for } x &gt; 0</span>
+<span class="sd">            \end{align*}</span>
 
+<span class="sd">    Properties:</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Scale parameter with log-normal prior</span>
-<span class="sd">        &gt;&gt;&gt; sigma = LogNormal(mu=0.0, sigma=1.0)</span>
+<span class="sd">        .. list-table::</span>
+
+<span class="sd">           * - Support</span>
+<span class="sd">             - :math:`(0, \infty)`</span>
+<span class="sd">           * - Mean</span>
+<span class="sd">             - :math:`\exp\left(\mu + \frac{\sigma^2}{2}\right)`</span>
+<span class="sd">           * - Median</span>
+<span class="sd">             - :math:`\exp(\mu)`</span>
+<span class="sd">           * - Mode</span>
+<span class="sd">             - :math:`\exp(\mu - \sigma^2)`</span>
+<span class="sd">           * - Variance</span>
+<span class="sd">             - :math:`\left(\exp(\sigma^2) - 1\right) \exp\left(2\mu + \sigma^2\right)`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sigma&quot;</span><span class="p">}</span>
@@ -1367,7 +1519,7 @@
 <div class="viewcode-block" id="Beta">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Beta">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Beta</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Beta distribution parameter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Beta distribution parameter.</span>
 
 <span class="sd">    Implements the beta distribution with shape parameters alpha and beta.</span>
 <span class="sd">    The distribution has support on (0, 1) and is commonly used for modeling</span>
@@ -1380,25 +1532,33 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ Beta(α, β) where f(x) = (Γ(α+β)/(Γ(α)Γ(β))) * x^(α-1) * (1-x)^(β-1)</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            P(x | \alpha, \beta) &amp;= \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)} *</span>
+<span class="sd">            x^{\alpha - 1} (1 - x)^{\beta - 1} \text{ for } 0 &lt; x &lt; 1 \\</span>
+<span class="sd">            \text{where } \Gamma(z) &amp;= \int_0^\infty t^{z-1} e^{-t} dt</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-<span class="sd">    - Support: (0, 1)</span>
-<span class="sd">    - Mean: α/(α+β)</span>
-<span class="sd">    - Mode: (α-1)/(α+β-2) for α,β &gt; 1</span>
-<span class="sd">    - Variance: αβ/((α+β)²(α+β+1))</span>
+
+<span class="sd">        .. list-table::</span>
+
+<span class="sd">           * - Support</span>
+<span class="sd">             - :math:`(0, 1)`</span>
+<span class="sd">           * - Mean</span>
+<span class="sd">             - :math:`\frac{\alpha}{\alpha + \beta}`</span>
+<span class="sd">           * - Mode</span>
+<span class="sd">             - :math:`\frac{\alpha - 1}{\alpha + \beta - 2}` for :math:`\alpha, \beta &gt; 1`</span>
+<span class="sd">           * - Variance</span>
+<span class="sd">             - :math:`\frac{\alpha \beta}{(\alpha + \beta)^2 (\alpha + \beta + 1)}`</span>
 
 <span class="sd">    Common Applications:</span>
+
 <span class="sd">    - Prior distributions for probabilities</span>
 <span class="sd">    - Modeling proportions and percentages</span>
 <span class="sd">    - Bayesian A/B testing</span>
 <span class="sd">    - Mixture model component weights</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Uniform prior on probability</span>
-<span class="sd">        &gt;&gt;&gt; p = Beta(alpha=1.0, beta=1.0)</span>
-<span class="sd">        &gt;&gt;&gt; # Weakly informative prior favoring smaller probabilities</span>
-<span class="sd">        &gt;&gt;&gt; p_rare = Beta(alpha=1.0, beta=3.0)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">}</span>
@@ -1415,7 +1575,7 @@
 <div class="viewcode-block" id="Gamma">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Gamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Gamma</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gamma distribution parameter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Gamma distribution parameter.</span>
 
 <span class="sd">    Implements the gamma distribution with shape (alpha) and rate (beta)</span>
 <span class="sd">    parameters. Commonly used for modeling positive continuous quantities</span>
@@ -1428,24 +1588,25 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ Gamma(α, β) where f(x) = (β^α/Γ(α)) * x^(α-1) * exp(-βx)</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            P(x | \alpha, \beta) &amp;= \frac{\beta^\alpha}{\Gamma(\alpha)} *</span>
+<span class="sd">            x^{\alpha - 1} e^{-\beta x} \text{ for } x &gt; 0 \\</span>
+<span class="sd">            \text{where } \Gamma(z) &amp;= \int_0^\infty t^{z-1} e^{-t} dt</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-<span class="sd">    - Support: (0, ∞)</span>
-<span class="sd">    - Mean: α/β</span>
-<span class="sd">    - Mode: (α-1)/β for α &gt; 1</span>
-<span class="sd">    - Variance: α/β²</span>
 
-<span class="sd">    Note on Parameterization:</span>
-<span class="sd">    - Stan uses shape-rate parameterization: Gamma(α, β)</span>
-<span class="sd">    - SciPy uses shape-scale parameterization: Gamma(α, 1/β)</span>
-<span class="sd">    - Automatic transformation handles this difference</span>
+<span class="sd">        .. list-table::</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Precision parameter (inverse variance)</span>
-<span class="sd">        &gt;&gt;&gt; tau = Gamma(alpha=2.0, beta=1.0)</span>
-<span class="sd">        &gt;&gt;&gt; # Positive continuous variable</span>
-<span class="sd">        &gt;&gt;&gt; waiting_time = Gamma(alpha=shape_param, beta=rate_param)</span>
+<span class="sd">            * - Support</span>
+<span class="sd">              - :math:`(0, \infty)`</span>
+<span class="sd">            * - Mean</span>
+<span class="sd">              - :math:`\frac{\alpha}{\beta}`</span>
+<span class="sd">            * - Mode</span>
+<span class="sd">              - :math:`\frac{\alpha - 1}{\beta}` for :math:`\alpha &gt; 1`</span>
+<span class="sd">            * - Variance</span>
+<span class="sd">              - :math:`\frac{\alpha}{\beta^2}`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">}</span>
@@ -1464,7 +1625,7 @@
 <div class="viewcode-block" id="InverseGamma">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.InverseGamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InverseGamma</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Inverse gamma distribution parameter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Inverse gamma distribution parameter.</span>
 
 <span class="sd">    Implements the inverse gamma distribution, commonly used as a conjugate</span>
 <span class="sd">    prior for variance parameters in Bayesian analysis.</span>
@@ -1476,25 +1637,32 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ InverseGamma(α, β) where f(x) = (β^α/Γ(α)) * x^(-α-1) * exp(-β/x)</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            P(x | \alpha, \beta) &amp;= \frac{\beta^\alpha}{\Gamma(\alpha)} *</span>
+<span class="sd">            x^{-\alpha - 1} e^{-\beta / x} \text{ for } x &gt; 0 \\</span>
+<span class="sd">            \text{where } \Gamma(z) &amp;= \int_0^\infty t^{z-1} e^{-t} dt</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-<span class="sd">    - Support: (0, ∞)</span>
-<span class="sd">    - Mean: β/(α-1) for α &gt; 1</span>
-<span class="sd">    - Mode: β/(α+1)</span>
-<span class="sd">    - Variance: β²/((α-1)²(α-2)) for α &gt; 2</span>
+
+<span class="sd">        .. list-table::</span>
+
+<span class="sd">            * - Support</span>
+<span class="sd">              - :math:`(0, \infty)`</span>
+<span class="sd">            * - Mean</span>
+<span class="sd">              - :math:`\frac{\beta}{\alpha - 1}` for :math:`\alpha &gt; 1`</span>
+<span class="sd">            * - Mode</span>
+<span class="sd">              - :math:`\frac{\beta}{\alpha + 1}`</span>
+<span class="sd">            * - Variance</span>
+<span class="sd">              - :math:`\frac{\beta^2}{(\alpha - 1)^2(\alpha - 2)}` for :math:`\alpha &gt; 2`</span>
 
 <span class="sd">    Common Applications:</span>
+
 <span class="sd">    - Conjugate prior for normal variance</span>
 <span class="sd">    - Hierarchical modeling of scale parameters</span>
 <span class="sd">    - Bayesian regression variance modeling</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Prior for variance parameter</span>
-<span class="sd">        &gt;&gt;&gt; sigma_sq = InverseGamma(alpha=2.0, beta=1.0)</span>
-<span class="sd">        &gt;&gt;&gt; # Hierarchical variance</span>
-<span class="sd">        &gt;&gt;&gt; tau_sq = InverseGamma(alpha=a_tau, beta=b_tau)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">}</span>
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Float</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -1509,7 +1677,7 @@
 <div class="viewcode-block" id="Exponential">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Exponential">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Exponential</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exponential distribution parameter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exponential distribution parameter.</span>
 
 <span class="sd">    Implements the exponential distribution with rate parameter beta.</span>
 <span class="sd">    Commonly used for modeling waiting times and survival analysis.</span>
@@ -1519,24 +1687,23 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ Exponential(β) where f(x) = β * exp(-βx) for x ≥ 0</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            P(x | \beta) &amp;= \beta e^{-\beta x} \text{ for } x \geq 0</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-<span class="sd">    - Support: [0, ∞)</span>
-<span class="sd">    - Mean: 1/β</span>
-<span class="sd">    - Mode: 0</span>
-<span class="sd">    - Variance: 1/β²</span>
 
-<span class="sd">    Note on Parameterization:</span>
-<span class="sd">    - Stan uses rate parameterization: Exponential(β)</span>
-<span class="sd">    - SciPy uses scale parameterization: Exponential(1/β)</span>
-<span class="sd">    - Automatic transformation handles this difference</span>
+<span class="sd">        .. list-table::</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Waiting time parameter</span>
-<span class="sd">        &gt;&gt;&gt; wait_time = Exponential(beta=1.5)</span>
-<span class="sd">        &gt;&gt;&gt; # Scale parameter with exponential prior</span>
-<span class="sd">        &gt;&gt;&gt; tau = Exponential(beta=rate_prior)</span>
+<span class="sd">           * - Support</span>
+<span class="sd">             - :math:`[0, \infty)`</span>
+<span class="sd">           * - Mean</span>
+<span class="sd">             - :math:`\frac{1}{\beta}`</span>
+<span class="sd">           * - Mode</span>
+<span class="sd">             - :math:`0`</span>
+<span class="sd">           * - Variance</span>
+<span class="sd">             - :math:`\frac{1}{\beta^2}`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;beta&quot;</span><span class="p">}</span>

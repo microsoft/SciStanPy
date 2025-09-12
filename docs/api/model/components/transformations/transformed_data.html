@@ -168,7 +168,8 @@ for use in transformed parameters or transformed data blocks.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_data.TransformedData.model_varname">
 <em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_varname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_data.TransformedData.model_varname" title="Link to this definition">¶</a></dt>
-<dd><p>Get or generate the SciStanPy variable name for this component.</p>
+<dd><p>Get or generate the SciStanPy variable name for this component. Only
+valid within a SciStanPy Model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Variable name for this component</p>
@@ -180,6 +181,21 @@ for use in transformed parameters or transformed data blocks.</p>
 <p>If a variable name has been explicitly assigned, returns that name.
 Otherwise, automatically generates a name based on child component
 relationships using dot notation for hierarchical names.</p>
+<dl>
+<dt>Examples:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyModel</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># Parameter without explicit name has auto-generated name</span>
+        <span class="c1"># Name is &quot;param2.mu&quot; based on child relationship</span>
+        <span class="n">param1</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># model_varname is &quot;param2.mu&quot;</span>
+
+        <span class="c1"># Explicitly named parameter</span>
+        <span class="n">param2</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param1</span><span class="p">)</span> <span class="c1"># model_varname is &quot;param2&quot;</span>
+</pre></div>
+</div>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py property">
