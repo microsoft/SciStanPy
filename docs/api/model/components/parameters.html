@@ -1434,12 +1434,14 @@ x^{\alpha - 1} (1 - x)^{\beta - 1} \text{ for } 0 &lt; x &lt; 1 \\
 </table>
 </div></blockquote>
 <p>Common Applications:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>Prior distributions for probabilities</p></li>
 <li><p>Modeling proportions and percentages</p></li>
 <li><p>Bayesian A/B testing</p></li>
 <li><p>Mixture model component weights</p></li>
 </ul>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Beta.LOWER_BOUND">
 <span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Beta.LOWER_BOUND" title="Link to this definition">¶</a></dt>
@@ -1627,11 +1629,13 @@ x^{-\alpha - 1} e^{-\beta / x} \text{ for } x &gt; 0 \\
 </table>
 </div></blockquote>
 <p>Common Applications:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>Conjugate prior for normal variance</p></li>
 <li><p>Hierarchical modeling of scale parameters</p></li>
 <li><p>Bayesian regression variance modeling</p></li>
 </ul>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.InverseGamma.LOWER_BOUND">
 <span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.InverseGamma.LOWER_BOUND" title="Link to this definition">¶</a></dt>
@@ -1768,8 +1772,8 @@ maps between the two naming conventions.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">ExpExponential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpExponential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpExponential" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.parameters.Exponential" title="scistanpy.model.components.parameters.Exponential"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exponential</span></code></a></p>
 <p>Exp-Exponential distribution (log of exponential random variable).</p>
-<p>Implements the distribution of Y where exp(Y) ~ Exponential(β).
-This is equivalent to Y = log(X) where X ~ Exponential(β).</p>
+<p>Implements the distribution of <span class="math notranslate nohighlight">\(Y\)</span> where <span class="math notranslate nohighlight">\(\exp(Y) \sim
+\text{Exponential}(\beta)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1778,27 +1782,26 @@ This is equivalent to Y = log(X) where X ~ Exponential(β).</p>
 </ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Mathematical Definition:</dt><dd><p>If X ~ Exponential(β), then Y = log(X) ~ ExpExponential(β)
-f(y) = β * exp(y - β*exp(y)) for y ∈ (-∞, ∞)</p>
-</dd>
-</dl>
-<p>Properties:
-- Support: (-∞, ∞)
-- Related to Gumbel distribution family
-- Useful for log-scale modeling of exponential processes</p>
-<p>This distribution requires custom Stan functions for implementation (see
-<cite>expexponential.stanfunctions</cite> in the <cite>stan</cite> submodule) which are automatically
-included in any Stan program defined using this distribution.</p>
 <dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-scale waiting time</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">log_wait</span> <span class="o">=</span> <span class="n">ExpExponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-transformed scale parameter</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">log_scale</span> <span class="o">=</span> <span class="n">ExpExponential</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="n">prior_rate</span><span class="p">)</span>
-</pre></div>
-</div>
+<dt>Mathematical Definition:</dt><dd><div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{If } X &amp;\sim \text{Exponential}(\beta), \text{then } \\ \\
+Y &amp;= \log(X) \sim \text{ExpExponential}(\beta), \text{where } \\ \\
+P(y | \beta) &amp;= \beta * \exp(y - \beta * \exp(y)) \text{ for } y \in (-\infty, \infty)
+\end{align*}\end{split}\]</div>
 </dd>
 </dl>
+<p>Properties:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Support: <span class="math notranslate nohighlight">\((-\infty, \infty)\)</span></p></li>
+<li><p>Related to Gumbel distribution family</p></li>
+<li><p>Useful for log-scale modeling of exponential processes</p></li>
+</ul>
+</div></blockquote>
+<p>This distribution requires custom Stan functions for implementation (see
+<a class="reference internal" href="../stan/stan_functions.html"><span class="doc">Stan Functions Library Reference</span></a>) which are automatically included in any Stan
+program defined using this distribution.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpExponential.LOWER_BOUND">
 <span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.ExpExponential.LOWER_BOUND" title="Link to this definition">¶</a></dt>
@@ -1880,29 +1883,42 @@ Pareto Type II distribution with location parameter set to 0.</p>
 </ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Mathematical Definition:</dt><dd><p>X ~ Lomax(λ, α) where f(x) = (α/λ) * (1 + x/λ)^(-α-1) for x ≥ 0</p>
-</dd>
-</dl>
-<p>Properties:
-- Support: [0, ∞)
-- Mean: λ/(α-1) for α &gt; 1
-- Mode: 0
-- Heavy-tailed distribution</p>
-<p>Common Applications:
-- Modeling income distributions
-- Network analysis (degree distributions)
-- Reliability engineering
-- Extreme value modeling</p>
 <dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Heavy-tailed positive variable</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">wealth</span> <span class="o">=</span> <span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">scale_param</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">shape_param</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Robust scale parameter</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sigma</span> <span class="o">=</span> <span class="n">Lomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
-</pre></div>
-</div>
+<dt>Mathematical Definition:</dt><dd><div class="math notranslate nohighlight">
+\[\begin{align*}
+P(x | \lambda, \alpha) &amp;= \frac{\alpha}{\lambda} *
+\left(1 + \frac{x}{\lambda}\right)^{-\alpha - 1} \text{ for } x \geq 0
+\end{align*}\]</div>
 </dd>
 </dl>
+<p>Properties:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>Support</p></td>
+<td><p><span class="math notranslate nohighlight">\([0, \infty)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Mean</p></td>
+<td><p><span class="math notranslate nohighlight">\(\frac{\lambda}{\alpha - 1}\)</span> for <span class="math notranslate nohighlight">\(\alpha &gt; 1\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Mode</p></td>
+<td><p><span class="math notranslate nohighlight">\(0\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Variance</p></td>
+<td><p><span class="math notranslate nohighlight">\(\frac{\lambda^2}{(\alpha - 1)^2(\alpha - 2)}\)</span> for <span class="math notranslate nohighlight">\(\alpha &gt; 2\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Common Applications:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Modeling income distributions</p></li>
+<li><p>Network analysis (degree distributions)</p></li>
+<li><p>Reliability engineering</p></li>
+<li><p>Extreme value modeling</p></li>
+</ul>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Lomax.LOWER_BOUND">
 <span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Float'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Lomax.LOWER_BOUND" title="Link to this definition">¶</a></dt>
@@ -1948,28 +1964,6 @@ maps between the two naming conventions.</p>
 <dd><p>alias of <a class="reference internal" href="custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Lomax" title="scistanpy.model.components.custom_distributions.custom_torch_dists.Lomax"><code class="xref py py-class docutils literal notranslate"><span class="pre">Lomax</span></code></a></p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Lomax.write_dist_args">
-<span class="sig-name descname"><span class="pre">write_dist_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lambda_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Lomax.write_dist_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Lomax.write_dist_args" title="Link to this definition">¶</a></dt>
-<dd><p>Format arguments for Stan pareto_type_2 distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lambda_</strong> (<em>str</em>) – Formatted lambda parameter string</p></li>
-<li><p><strong>alpha</strong> (<em>str</em>) – Formatted alpha parameter string</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>“0.0, lambda_, alpha” for Stan distribution call</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-<p>The Lomax distribution is implemented in Stan as Pareto Type II
-with location parameter fixed at 0.0.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -1977,7 +1971,8 @@ with location parameter fixed at 0.0.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">ExpLomax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpLomax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpLomax" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.parameters.ContinuousDistribution" title="scistanpy.model.components.parameters.ContinuousDistribution"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContinuousDistribution</span></code></a></p>
 <p>Exp-Lomax distribution (log of Lomax random variable).</p>
-<p>Implements the distribution of Y where exp(Y) ~ Lomax(λ, α).</p>
+<p>Implements the distribution of <span class="math notranslate nohighlight">\(Y\)</span> where <span class="math notranslate nohighlight">\(\exp(Y) \sim
+\text{Lomax}(\lambda, \alpha)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1987,27 +1982,20 @@ with location parameter fixed at 0.0.</p>
 </ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Mathematical Definition:</dt><dd><p>If X ~ Lomax(λ, α), then Y = log(X) ~ ExpLomax(λ, α)
-f(y) = (α/λ) * exp(y) * (1 + exp(y)/λ)^(-α-1) for y ∈ (-∞, ∞)</p>
-</dd>
-</dl>
-<p>Properties:
-- Support: (-∞, ∞)
-- Log-scale version of heavy-tailed Lomax
-- Useful for modeling log-transformed heavy-tailed data</p>
-<p>This distribution requires custom Stan functions for implementation (see
-<cite>explomax.stanfunctions</cite> in the <cite>stan</cite> submodule) which are automatically
-included in any Stan program defined using this distribution.</p>
 <dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-scale heavy-tailed variable</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">log_income</span> <span class="o">=</span> <span class="n">ExpLomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Robust log-scale parameter</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">log_sigma</span> <span class="o">=</span> <span class="n">ExpLomax</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
-</pre></div>
-</div>
+<dt>Mathematical Definition:</dt><dd><div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{If } X &amp;\sim \text{Lomax}(\lambda, \alpha), \text{then } \\ \\
+Y &amp;= \log(X) \sim \text{ExpLomax}(\lambda, \alpha), \text{where } \\ \\
+P(y | \lambda, \alpha) &amp;= \frac{\alpha}{\lambda} * \exp(y) *
+\left(1 + \frac{\exp(y)}{\lambda}\right)^{-\alpha - 1} \text{ for } y
+\in (-\infty, \infty)
+\end{align*}\end{split}\]</div>
 </dd>
 </dl>
+<p>This distribution requires custom Stan functions for implementation (see
+<a class="reference internal" href="../stan/stan_functions.html"><span class="doc">Stan Functions Library Reference</span></a>) which are automatically included in any Stan
+program defined using this distribution.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpLomax.LOWER_BOUND">
 <span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Float'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.ExpLomax.LOWER_BOUND" title="Link to this definition">¶</a></dt>
@@ -2053,22 +2041,6 @@ maps between the two naming conventions.</p>
 <dd><p>alias of <a class="reference internal" href="custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpLomax" title="scistanpy.model.components.custom_distributions.custom_torch_dists.ExpLomax"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExpLomax</span></code></a></p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpLomax.get_supporting_functions">
-<span class="sig-name descname"><span class="pre">get_supporting_functions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpLomax.get_supporting_functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpLomax.get_supporting_functions" title="Link to this definition">¶</a></dt>
-<dd><p>Return list of required Stan function includes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List containing the explomax.stanfunctions include</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[str]</p>
-</dd>
-</dl>
-<p>This distribution requires custom Stan functions for proper implementation
-of the exp-Lomax density and random number generation.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>
@@ -2090,25 +2062,40 @@ in a fixed number of independent Bernoulli trials.</p>
 </ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Mathematical Definition:</dt><dd><p>X ~ Binomial(N, θ) where P(X = k) = C(N,k) * θᵏ * (1-θ)^(N-k)</p>
-</dd>
-</dl>
-<p>Properties:
-- Support: {0, 1, 2, …, N}
-- Mean: N * θ
-- Variance: N * θ * (1-θ)
-- Mode: floor((N+1) * θ)</p>
-<p>Common Applications:
-- Number of successes in fixed trials
-- Proportion data with known denominators</p>
 <dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Number of successes in 10 trials</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">successes</span> <span class="o">=</span> <span class="n">Binomial</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">success_prob</span><span class="p">)</span>
-</pre></div>
-</div>
+<dt>Mathematical Definition:</dt><dd><div class="math notranslate nohighlight">
+\[\begin{align*}
+P(X = k | N, \theta) &amp;= \binom{N}{k} \theta^k (1 - \theta)^{N - k}
+\text{ for } k = 0, 1, ..., N
+\end{align*}\]</div>
 </dd>
 </dl>
+<p>Properties:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>Support</p></td>
+<td><p><span class="math notranslate nohighlight">\(\{0, 1, 2, ..., N\}\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Mean</p></td>
+<td><p><span class="math notranslate nohighlight">\(N \theta\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Variance</p></td>
+<td><p><span class="math notranslate nohighlight">\(N \theta (1 - \theta)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Mode</p></td>
+<td><p><span class="math notranslate nohighlight">\(\lfloor (N + 1) \theta \rfloor\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Common Applications:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Number of successes in fixed trials</p></li>
+<li><p>Proportion data with known denominators</p></li>
+</ul>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Binomial.POSITIVE_PARAMS">
 <span class="sig-name descname"><span class="pre">POSITIVE_PARAMS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'N',</span> <span class="pre">'theta'}</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Binomial.POSITIVE_PARAMS" title="Link to this definition">¶</a></dt>
@@ -2158,29 +2145,42 @@ a single rate parameter.</p>
 </ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Mathematical Definition:</dt><dd><p>X ~ Poisson(λ) where P(X = k) = (λᵏ * exp(-λ)) / k!</p>
-</dd>
-</dl>
-<p>Properties:
-- Support: {0, 1, 2, 3, …}
-- Mean: λ
-- Variance: λ
-- Mode: floor(λ)</p>
-<p>Common Applications:
-- Event counting (arrivals, defects, etc.)
-- Modeling rare events
-- Count regression
-- Queueing theory</p>
 <dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Number of events per time period</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">Poisson</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">event_rate</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Observed count data</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y_counts</span> <span class="o">=</span> <span class="n">Poisson</span><span class="p">(</span><span class="n">lambda_</span><span class="o">=</span><span class="n">fitted_rate</span><span class="p">)</span><span class="o">.</span><span class="n">as_observable</span><span class="p">()</span>
-</pre></div>
-</div>
+<dt>Mathematical Definition:</dt><dd><div class="math notranslate nohighlight">
+\[\begin{align*}
+P(X = k | \lambda) &amp;= \frac{\lambda^k e^{-\lambda}}{k!}
+\text{ for } k = 0, 1, 2, ...
+\end{align*}\]</div>
 </dd>
 </dl>
+<p>Properties:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>Support</p></td>
+<td><p><span class="math notranslate nohighlight">\(\{0, 1, 2, ...\}\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Mean</p></td>
+<td><p><span class="math notranslate nohighlight">\(\lambda\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Variance</p></td>
+<td><p><span class="math notranslate nohighlight">\(\lambda\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Mode</p></td>
+<td><p><span class="math notranslate nohighlight">\(\lfloor \lambda \rfloor\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Common Applications:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Event counting (arrivals, defects, etc.)</p></li>
+<li><p>Modeling rare events</p></li>
+<li><p>Count regression</p></li>
+<li><p>Queueing theory</p></li>
+</ul>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Poisson.POSITIVE_PARAMS">
 <span class="sig-name descname"><span class="pre">POSITIVE_PARAMS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'lambda_'}</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Poisson.POSITIVE_PARAMS" title="Link to this definition">¶</a></dt>
@@ -2243,52 +2243,63 @@ will be converted to the appropriate shape given by the <cite>shape</cite> kwarg
 </ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Mathematical Definition:</dt><dd><p>X ~ Dirichlet(α) where f(x) = (Γ(Σαᵢ)/Πᵢ Γ(αᵢ)) * Πᵢ xᵢ^(αᵢ-1)</p>
-</dd>
-</dl>
-<p>Properties:
-- Support: K-dimensional simplex (Σxᵢ = 1, xᵢ &gt; 0)
-- Mean: E[Xᵢ] = αᵢ/Σαⱼ
-- Mode: (αᵢ-1)/(Σαⱼ-K) for all αᵢ &gt; 1</p>
-<p>Parameter Handling:
-- If alpha is scalar, ‘shape’ must be provided to create uniform concentration
-- If alpha is array-like, it defines the concentration for each component</p>
 <dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Uniform Dirichlet (symmetric)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Non-uniform concentrations</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Hierarchical concentration</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Dirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha_prior</span><span class="p">)</span>
-</pre></div>
-</div>
+<dt>Mathematical Definition:</dt><dd><div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+P(x | \alpha) &amp;= \frac{\Gamma(\sum_{i=1}^K \alpha_i)}{\prod_{i=1}^K
+\Gamma(\alpha_i)} \prod_{i=1}^K x_i^{\alpha_i - 1} \text{ for } x_i &gt; 0,
+\sum_{i=1}^K x_i = 1 \\
+\text{where } \Gamma(z) &amp;= \int_0^\infty t^{z-1} e^{-t} dt
+\end{align*}\end{split}\]</div>
 </dd>
 </dl>
+<p>Properties:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>Support</p></td>
+<td><p><span class="math notranslate nohighlight">\(\{x : \sum_{i=1}^K x_i = 1, x_i &gt; 0\}\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Mean</p></td>
+<td><p><span class="math notranslate nohighlight">\(E[X_i] = \frac{\alpha_i}{\sum_{j=1}^K \alpha_j}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Mode</p></td>
+<td><p><span class="math notranslate nohighlight">\(\frac{\alpha_i - 1}{\sum_{j=1}^K \alpha_j - K}\)</span> for all <span class="math notranslate nohighlight">\(\alpha_i &gt; 1\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Variance</p></td>
+<td><p><span class="math notranslate nohighlight">\(\frac{\alpha_i (\sum_{j=1}^K \alpha_j - \alpha_i)}
+{(\sum_{j=1}^K \alpha_j)^2 (\sum_{j=1}^K \alpha_j + 1)}\)</span>
+for all <span class="math notranslate nohighlight">\(\alpha_i &gt; 1\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Covariance</p></td>
+<td><p><span class="math notranslate nohighlight">\(\frac{-\alpha_i \alpha_j}{(\sum_{k=1}^K \alpha_k)^2
+(\sum_{k=1}^K \alpha_k + 1)}\)</span> for all <span class="math notranslate nohighlight">\(i \neq j\)</span> and
+<span class="math notranslate nohighlight">\(\alpha_i, \alpha_j &gt; 1\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Common Applications:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Modeling categorical probabilities</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>SciStanPy’s implementation of the Dirichlet distribution allows for defining
+concentration parameters (<span class="math notranslate nohighlight">\(\alpha\)</span>) as either scalar values or arrays.
+If a scalar is provided, the <cite>shape</cite> keyword argument must also be specified
+to define the dimensionality of the simplex–the scalar will be expanded
+to a uniform array of that shape. This flexibility enables both symmetric
+Dirichlet distributions (where all components have the same concentration)
+and asymmetric distributions with distinct concentration parameters for each
+component.</p>
+</div>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet.BASE_STAN_DTYPE">
 <span class="sig-name descname"><span class="pre">BASE_STAN_DTYPE</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'real'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'int'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'simplex'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'simplex'</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.BASE_STAN_DTYPE" title="Link to this definition">¶</a></dt>
 <dd><p>Class variable giving the base Stan data type for this component.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet.CDF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CDF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.CDF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CDF</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet.CDF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.CDF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet" title="scistanpy.model.components.parameters.Dirichlet"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirichlet</span></code></a></p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py attribute">
@@ -2296,46 +2307,6 @@ will be converted to the appropriate shape given by the <cite>shape</cite> kwarg
 <span class="sig-name descname"><span class="pre">IS_SIMPLEX</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.IS_SIMPLEX" title="Link to this definition">¶</a></dt>
 <dd><p>Class variable giving whether this component represents a simplex (elements
 over last dim sum to 1).</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet.LOG_CDF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LOG_CDF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.LOG_CDF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LogCDF</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet.LOG_CDF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.LOG_CDF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet" title="scistanpy.model.components.parameters.Dirichlet"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirichlet</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet.LOG_SF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LOG_SF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.LOG_SF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LogSurvivalFunction</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet.LOG_SF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.LOG_SF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet" title="scistanpy.model.components.parameters.Dirichlet"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirichlet</span></code></a></p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py attribute">
@@ -2348,26 +2319,6 @@ over last dim sum to 1).</p>
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet.SCIPY_DIST">
 <span class="sig-name descname"><span class="pre">SCIPY_DIST</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_continuous</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_discrete</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.SCIPY_DIST" title="Link to this definition">¶</a></dt>
 <dd><p>Corresponding SciPy distribution class (e.g., <cite>scipy.stats.norm</cite>).</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet.SF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.SF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalFunction</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Dirichlet.SF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.Dirichlet.SF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet" title="scistanpy.model.components.parameters.Dirichlet"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirichlet</span></code></a></p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py attribute">
@@ -2405,7 +2356,7 @@ maps between the two naming conventions.</p>
 <span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpDirichlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet" title="scistanpy.model.components.parameters.Dirichlet"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirichlet</span></code></a></p>
 <p>Exp-Dirichlet distribution (log of Dirichlet random variable).</p>
-<p>Implements the distribution of Y where exp(Y) ~ Dirichlet(α).
+<p>Implements the distribution of <span class="math notranslate nohighlight">\(Y\)</span> where <span class="math notranslate nohighlight">\(\exp(Y) ~ \text{Dirichlet}(\alpha)\)</span>.
 This provides a log-simplex parameterization that can be more numerically
 stable for extreme concentration parameters and extremely high-dimensional
 simplexes, like those encountered when modeling deep mutational scanning data.</p>
@@ -2417,65 +2368,54 @@ simplexes, like those encountered when modeling deep mutational scanning data.</
 </ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Mathematical Definition:</dt><dd><p>If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α)
-where Σexp(Yᵢ) = 1 (log-simplex constraint)</p>
+<dl>
+<dt>Mathematical Definition:</dt><dd><div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{If } X &amp;\sim \text{Dirichlet}(\alpha), \text{then } \\ \\
+Y &amp;= \log(X) \sim \text{ExpDirichlet}(\alpha), \text{where } \\ \\
+P(y | \alpha) &amp;= \frac{\Gamma(\sum_{i=1}^K \alpha_i)}{\text{e}^{y_K}\prod_{i=1}^K
+\Gamma(\alpha_i)} \prod_{i=1}^K \exp(y_i \alpha_i) \text{ for }
+y_i \in (-\infty, \infty),
+\sum_{i=1}^K \exp(y_i) = 1 \\
+\text{where } \Gamma(z) &amp;= \int_0^\infty t^{z-1} e^{-t} dt
+\end{align*}\end{split}\]</div>
 </dd>
 </dl>
 <p>Properties:</p>
-<ul class="simple">
-<li><p>Support: Log-simplex {y : Σexp(yᵢ) = 1}</p></li>
-<li><p>Raw parameterization uses K-1 dimensions with constraint transformation</p></li>
-<li><p>More numerically stable for extreme concentrations</p></li>
+<blockquote>
+<div><ul class="simple">
+<li><p>Log-probability is computed in the log-simplex space</p></li>
+<li><p>More numerically stable for extreme concentration parameters</p></li>
+<li><p>Suitable for high-dimensional simplexes</p></li>
+<li><p>Useful for modeling compositional data on log scale</p></li>
 </ul>
-<p>Stan Implementation:</p>
-<ul class="simple">
-<li><p>Uses custom constraint functions for log-simplex transformation</p></li>
-<li><p>Raw parameter has K-1 dimensions (reduced for constraint)</p></li>
-<li><p>Special thanks to Sean Pinkney for assistance with deriving the log probability
-density function; thanks also to Bob Carpenter and others for developing the
-log-simplex constraint used in SciStanPy. See
-<cite>here &lt;https://discourse.mc-stan.org/t/log-simplex-constraints/39782&gt;_</cite> for
-derivations and
-<a class="reference external" href="https://github.com/bob-carpenter/transforms/tree/main/simplex_transforms/stan/transforms">here</a>
-for transforms.</p></li>
-</ul>
-<p>This distribution requires custom Stan functions for implementation (see
-<cite>expdirichlet.stanfunctions</cite> in the <cite>stan</cite> submodule) which are automatically
-included in any Stan program defined using this distribution.</p>
-<dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-simplex probabilities</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">log_p</span> <span class="o">=</span> <span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha_vec</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Numerically stable log-probabilities</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">log_weights</span> <span class="o">=</span> <span class="n">ExpDirichlet</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,))</span>
-</pre></div>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Exp-Dirichlet distribution is not natively supported in Stan, so this
+implementation includes custom Stan functions for the probability density,
+transformations, and random number generation. These functions are automatically
+included in any Stan program defined using this distribution. Special thanks
+to Sean Pinkney for assistance with deriving the log probability density
+function for the distribution; thanks also to Bob Carpenter and others for
+developing the log-simplex constraint used in SciStanPy. See
+<a class="reference external" href="https://discourse.mc-stan.org/t/log-simplex-constraints/39782">here</a>
+for derivations and <a class="reference external" href="https://github.com/bob-carpenter/transforms/tree/main/simplex_transforms/stan/transforms">here</a> for transforms.</p>
 </div>
-</dd>
-</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When used as a hyperparameter (i.e., <span class="math notranslate nohighlight">\(\alpha\)</span> is constant), the
+normalization constant of the distribution is also constant and can be
+ignored during MCMC sampling to improve computational efficiency. This
+implementation automatically detects when the Exp-Dirichlet is used as a
+hyperparameter and switches to the unnormalized version of the distribution
+in such cases. If <span class="math notranslate nohighlight">\(\alpha\)</span> is not constant, the normalized version
+is used.</p>
+</div>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.BASE_STAN_DTYPE">
 <span class="sig-name descname"><span class="pre">BASE_STAN_DTYPE</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'real'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'int'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'simplex'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'real'</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.BASE_STAN_DTYPE" title="Link to this definition">¶</a></dt>
 <dd><p>Class variable giving the base Stan data type for this component.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.CDF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CDF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.CDF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CDF</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.CDF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.CDF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet" title="scistanpy.model.components.parameters.ExpDirichlet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExpDirichlet</span></code></a></p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py attribute">
@@ -2498,46 +2438,6 @@ over last dim sum to 1).</p>
 over last dim sum to 1).</p>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.LOG_CDF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LOG_CDF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.LOG_CDF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LogCDF</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.LOG_CDF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.LOG_CDF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet" title="scistanpy.model.components.parameters.ExpDirichlet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExpDirichlet</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.LOG_SF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LOG_SF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.LOG_SF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LogSurvivalFunction</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.LOG_SF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.LOG_SF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet" title="scistanpy.model.components.parameters.ExpDirichlet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExpDirichlet</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.LOWER_BOUND">
 <span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Float'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.LOWER_BOUND" title="Link to this definition">¶</a></dt>
@@ -2549,26 +2449,6 @@ if unbounded.</p>
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.SCIPY_DIST">
 <span class="sig-name descname"><span class="pre">SCIPY_DIST</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_continuous</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_discrete</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.SCIPY_DIST" title="Link to this definition">¶</a></dt>
 <dd><p>Corresponding SciPy distribution class (e.g., <cite>scipy.stats.norm</cite>).</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.SF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.SF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalFunction</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.SF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.SF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet" title="scistanpy.model.components.parameters.ExpDirichlet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExpDirichlet</span></code></a></p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py attribute">
@@ -2604,82 +2484,6 @@ maps between the two naming conventions.</p>
 if unbounded.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.get_raw_stan_parameter_declaration">
-<span class="sig-name descname"><span class="pre">get_raw_stan_parameter_declaration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force_basetype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpDirichlet.get_raw_stan_parameter_declaration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.get_raw_stan_parameter_declaration" title="Link to this definition">¶</a></dt>
-<dd><p>Generate declaration for raw parameter with reduced dimensions.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>force_basetype</strong> (<em>bool</em>) – Whether to force base type declaration</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Stan parameter declaration for K-1 dimensional raw variable</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-<p>The raw parameter has K-1 dimensions instead of K to account for
-the simplex constraint. This raw variable is transformed to create the
-log-simplex constrained value.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.get_right_side">
-<span class="sig-name descname"><span class="pre">get_right_side</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">start_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">end_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">offset_adjustment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">dist_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpDirichlet.get_right_side"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.get_right_side" title="Link to this definition">¶</a></dt>
-<dd><p>Generate distribution call with appropriate normalization suffix.</p>
-<p>When ExpDirichlet is used as a hyperparameter, the normalization coefficient
-is a constant and so will be ignored during MCMC to improve computational
-efficiency. When ExpDirichlet is not a hyperparameter (values for <cite>alpha</cite>
-are not constant), the normalized version is used.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.get_supporting_functions">
-<span class="sig-name descname"><span class="pre">get_supporting_functions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpDirichlet.get_supporting_functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.get_supporting_functions" title="Link to this definition">¶</a></dt>
-<dd><p>Return list of required Stan function includes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List containing the expdirichlet.stanfunctions include</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[str]</p>
-</dd>
-</dl>
-<p>This distribution requires custom Stan functions for proper implementation
-of the exp-Dirichlet density, constraint functions, and transformations.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.ExpDirichlet.get_transformation_assignment">
-<span class="sig-name descname"><span class="pre">get_transformation_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#ExpDirichlet.get_transformation_assignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.ExpDirichlet.get_transformation_assignment" title="Link to this definition">¶</a></dt>
-<dd><p>Generate Stan code for log-simplex constraint transformation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>index_opts</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – Indexing options for multi-dimensional parameters</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Stan transformation code with Jacobian adjustment</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-<p>Applies the inverse ILR (isometric log-ratio) transformation to
-convert from unconstrained K-1 dimensional space to log-simplex
-while automatically handling the Jacobian adjustment.</p>
-</dd></dl>
-
 </dd></dl>
 
 </section>
@@ -2690,8 +2494,8 @@ while automatically handling the Jacobian adjustment.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">Multinomial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#Multinomial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_MultinomialBase</span></code></p>
 <p>Standard multinomial distribution parameter.</p>
-<p>Implements the multinomial distribution with probability vector theta
-and number of trials N. Models the number of observations in each
+<p>Implements the multinomial distribution with probability vector <span class="math notranslate nohighlight">\(\theta\)</span>
+and number of trials <span class="math notranslate nohighlight">\(N\)</span>. Models the number of observations in each
 category for a fixed number of trials.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2702,106 +2506,47 @@ category for a fixed number of trials.</p>
 </ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Mathematical Definition:</dt><dd><p>X ~ Multinomial(N, θ) where P(X = x) = (N! / Πᵢ xᵢ!) * Πᵢ θᵢ^xᵢ</p>
+<p>Mathematical Definition:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+P(X = x | N, \theta) &amp;= \frac{N!}{\prod_{i=1}^K x_i!} \prod_{i=1}^K
+\theta_i^{x_i} \text{ for } x_i \geq 0, \sum_{i=1}^K x_i = N \\
+\end{align*}\end{split}\]</div>
+</div></blockquote>
+<dl>
+<dt>Properties:</dt><dd><table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>Support</p></td>
+<td><p><span class="math notranslate nohighlight">\(\{x : \sum x_i = N, x_i \geq 0\}\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Mean</p></td>
+<td><p><span class="math notranslate nohighlight">\(N \theta_i\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Variance</p></td>
+<td><p><span class="math notranslate nohighlight">\(N \theta_i (1 - \theta_i)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Covariance</p></td>
+<td><p><span class="math notranslate nohighlight">\(-N \theta_i \theta_j\)</span></p></td>
+</tr>
+</tbody>
+</table>
 </dd>
 </dl>
-<p>Properties:
-- Support: {x : Σxᵢ = N, xᵢ ≥ 0}
-- Mean: E[Xᵢ] = N * θᵢ
-- Variance: Var[Xᵢ] = N * θᵢ * (1 - θᵢ)
-- Covariance: Cov[Xᵢ, Xⱼ] = -N * θᵢ * θⱼ</p>
-<dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Categorical data with known totals</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">Multinomial</span><span class="p">(</span><span class="n">theta</span><span class="o">=</span><span class="n">category_probs</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd>
-</dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial.CDF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CDF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial.CDF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CDF</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial.CDF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial.CDF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial" title="scistanpy.model.components.parameters.Multinomial"><code class="xref py py-class docutils literal notranslate"><span class="pre">Multinomial</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial.LOG_CDF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LOG_CDF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial.LOG_CDF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LogCDF</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial.LOG_CDF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial.LOG_CDF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial" title="scistanpy.model.components.parameters.Multinomial"><code class="xref py py-class docutils literal notranslate"><span class="pre">Multinomial</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial.LOG_SF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LOG_SF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial.LOG_SF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LogSurvivalFunction</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial.LOG_SF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial.LOG_SF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial" title="scistanpy.model.components.parameters.Multinomial"><code class="xref py py-class docutils literal notranslate"><span class="pre">Multinomial</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
+<p>Common Applications:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Categorical count data</p></li>
+<li><p>Multinomial logistic regression</p></li>
+<li><p>Natural language processing (word counts)</p></li>
+<li><p>Genetics (allele frequencies)</p></li>
+<li><p>Marketing (customer choice modeling)</p></li>
+</ul>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial.SCIPY_DIST">
 <span class="sig-name descname"><span class="pre">SCIPY_DIST</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_continuous</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_discrete</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial.SCIPY_DIST" title="Link to this definition">¶</a></dt>
 <dd><p>Corresponding SciPy distribution class (e.g., <cite>scipy.stats.norm</cite>).</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial.SF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial.SF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalFunction</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial.SF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial.SF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial" title="scistanpy.model.components.parameters.Multinomial"><code class="xref py py-class docutils literal notranslate"><span class="pre">Multinomial</span></code></a></p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py attribute">
@@ -2844,8 +2589,10 @@ maps between the two naming conventions.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.components.parameters.</span></span><span class="sig-name descname"><span class="pre">MultinomialLogit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#MultinomialLogit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_MultinomialBase</span></code></p>
 <p>Multinomial distribution with logit parameterization.</p>
-<p>Implements the multinomial distribution parameterized by logits (gamma)
-rather than probabilities.</p>
+<p>Implements the multinomial distribution parameterized by logits (<span class="math notranslate nohighlight">\(\gamma\)</span>)
+rather than probabilities. Logits are unconstrained real values that are transformed
+to probabilities via the softmax function. This parameterization is useful for
+models that naturally work with logits, such as logistic regression extensions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2855,106 +2602,24 @@ rather than probabilities.</p>
 </ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Mathematical Definition:</dt><dd><p>θᵢ = exp(γᵢ) / Σⱼ exp(γⱼ) (softmax transformation)
-X ~ Multinomial(N, θ)</p>
+<dl>
+<dt>Mathematical Definition:</dt><dd><div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\theta_i &amp;= \frac{\exp(\gamma_i)}{\sum_{j=1}^K \exp(\gamma_j)} \\ \\
+X &amp;\sim \text{Multinomial}(N, \theta)
+\end{align*}\end{split}\]</div>
 </dd>
 </dl>
-<p>Properties:
-- Unconstrained parameterization (γ ∈ ℝᴷ)
-- Natural for logistic regression extensions
-- Automatic softmax transformation applied</p>
-<dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Logit-parameterized multinomial</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">MultinomialLogit</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="n">logit_probs</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span><span class="p">)</span>
-</pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>It is easy to create non-identifiable models using this parameterization.
+Make sure to include appropriate priors or constraints on logits to ensure
+model identifiability.</p>
 </div>
-</dd>
-</dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogit.CDF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CDF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit.CDF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CDF</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogit.CDF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit.CDF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogit" title="scistanpy.model.components.parameters.MultinomialLogit"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultinomialLogit</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogit.LOG_CDF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LOG_CDF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit.LOG_CDF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LogCDF</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogit.LOG_CDF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit.LOG_CDF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogit" title="scistanpy.model.components.parameters.MultinomialLogit"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultinomialLogit</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogit.LOG_SF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LOG_SF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit.LOG_SF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LogSurvivalFunction</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogit.LOG_SF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit.LOG_SF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogit" title="scistanpy.model.components.parameters.MultinomialLogit"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultinomialLogit</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogit.SCIPY_DIST">
 <span class="sig-name descname"><span class="pre">SCIPY_DIST</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_continuous</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_discrete</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit.SCIPY_DIST" title="Link to this definition">¶</a></dt>
 <dd><p>Corresponding SciPy distribution class (e.g., <cite>scipy.stats.norm</cite>).</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogit.SF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit.SF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalFunction</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogit.SF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogit.SF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogit" title="scistanpy.model.components.parameters.MultinomialLogit"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultinomialLogit</span></code></a></p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py attribute">
@@ -3003,7 +2668,9 @@ maps between the two naming conventions.</p>
 parameter. This parameterization is useful for models that naturally
 work with log-probabilities. It can use the ExpDirichlet distribution as a
 prior to enforce the log-simplex constraint and keep computations completely
-in the log-probability space.</p>
+in the log-probability space. This is extremely useful for high-dimensional
+multinomials where categories may have very small probabilities (e.g., deep
+mutational scanning data).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -3013,93 +2680,29 @@ in the log-probability space.</p>
 </ul>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Mathematical Definition:</dt><dd><p>θᵢ = exp(log_θᵢ) (with normalization: Σⱼ exp(log_θⱼ) = 1)
-X ~ Multinomial(N, θ)</p>
+<dl>
+<dt>Mathematical Definition:</dt><dd><div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\theta_i &amp;= \exp(\log{\theta_i}) \quad \text{(with normalization: }
+\sum_j \exp(\log{\theta_j}) = 1) \\
+X &amp;\sim \text{Multinomial}(N, \theta)
+\end{align*}\end{split}\]</div>
 </dd>
 </dl>
-<p>Properties:</p>
-<ul class="simple">
-<li><p>Log-simplex parameterization</p></li>
-<li><p>Numerically stable for small probabilities</p></li>
-<li><p>Optional multinomial coefficient pre-computation</p></li>
-</ul>
-<p>Special Features:</p>
-<ul class="simple">
-<li><p>Automatic multinomial coefficient calculation when used as observable. This
-results in improved computational efficiency by eliminating redundant calculations.</p></li>
-<li><p>Coefficient removed when parameter has other children</p></li>
-</ul>
-<p>This distribution requires custom Stan functions for implementation (see
-<cite>multinomial.stanfunctions</cite> in the <cite>stan</cite> submodule) which are automatically
-included in any Stan program defined using this distribution.</p>
-<dl>
-<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Log-probability parameterized multinomial</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">counts</span> <span class="o">=</span> <span class="n">MultinomialLogTheta</span><span class="p">(</span><span class="n">log_theta</span><span class="o">=</span><span class="n">log_probs</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="n">total_trials</span><span class="p">)</span>
-</pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This distribution is not natively supported in Stan, so this implementation
+includes custom Stan functions for the probability density and random
+number generation. These functions are automatically included in any Stan
+program defined using this distribution.</p>
 </div>
-</dd>
-</dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.CDF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CDF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.CDF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CDF</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.CDF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.CDF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta" title="scistanpy.model.components.parameters.MultinomialLogTheta"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultinomialLogTheta</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.LOG_CDF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LOG_CDF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.LOG_CDF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LogCDF</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.LOG_CDF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.LOG_CDF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta" title="scistanpy.model.components.parameters.MultinomialLogTheta"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultinomialLogTheta</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.LOG_SF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LOG_SF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.LOG_SF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LogSurvivalFunction</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.LOG_SF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.LOG_SF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta" title="scistanpy.model.components.parameters.MultinomialLogTheta"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultinomialLogTheta</span></code></a></p>
-</dd></dl>
-
-</dd></dl>
-
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>When used to model observed data (i.e., as an observable parameter),
+the multinomial coefficient is automatically calculated and included in
+the <code class="docutils literal notranslate"><span class="pre">transformed</span> <span class="pre">data</span></code> block of Stan code. This improves computational
+efficiency by eliminating redundant calculations during MCMC sampling.</p>
+</div>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.LOG_SIMPLEX_PARAMS">
 <span class="sig-name descname"><span class="pre">LOG_SIMPLEX_PARAMS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'log_theta'}</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.LOG_SIMPLEX_PARAMS" title="Link to this definition">¶</a></dt>
@@ -3112,26 +2715,6 @@ here must equal 1</p>
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.SCIPY_DIST">
 <span class="sig-name descname"><span class="pre">SCIPY_DIST</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_continuous</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_discrete</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.SCIPY_DIST" title="Link to this definition">¶</a></dt>
 <dd><p>Corresponding SciPy distribution class (e.g., <cite>scipy.stats.norm</cite>).</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.SF">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SF</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">custom_types.CombinableParameterType</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.SF" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalFunction</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.SF.PARAMETER">
-<span class="sig-name descname"><span class="pre">PARAMETER</span></span><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.SF.PARAMETER" title="Link to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta" title="scistanpy.model.components.parameters.MultinomialLogTheta"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultinomialLogTheta</span></code></a></p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py attribute">
@@ -3175,80 +2758,6 @@ maps between the two naming conventions.</p>
 <p>The coefficient is automatically created for observable parameters
 and removed when the parameter gains other children, optimizing
 computation by pre-calculating constant terms.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.get_right_side">
-<span class="sig-name descname"><span class="pre">get_right_side</span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">start_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">end_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">custom_types.Integer</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">offset_adjustment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">dist_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>,</dd>
-</dl>
-
-<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#MultinomialLogTheta.get_right_side"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.get_right_side" title="Link to this definition">¶</a></dt>
-<dd><p>Generate distribution call with appropriate normalization and coefficients.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>index_opts</strong> (<em>Optional</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em><em>]</em>) – See parent method for details.</p></li>
-<li><p><strong>start_dims</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>custom_types.Integer</em><em>]</em><em>]</em>) – See parent method for details.</p></li>
-<li><p><strong>end_dims</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>custom_types.Integer</em><em>]</em><em>]</em>) – See parent method for details.</p></li>
-<li><p><strong>offset_adjustment</strong> (<em>int</em>) – See parent method for details.</p></li>
-<li><p><strong>dist_suffix</strong> (<em>str</em>) – Distribution function suffix</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Stan distribution call with proper normalization</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-<p>The method automatically selects between manual normalization (with
-coefficient) and standard normalization based on coefficient availability.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.get_supporting_functions">
-<span class="sig-name descname"><span class="pre">get_supporting_functions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#MultinomialLogTheta.get_supporting_functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.get_supporting_functions" title="Link to this definition">¶</a></dt>
-<dd><p>Return list of required Stan function includes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List containing the multinomial.stanfunctions include</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[str]</p>
-</dd>
-</dl>
-<p>This distribution requires custom Stan functions for efficient
-computation of the multinomial log-theta density and normalization.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="scistanpy.model.components.parameters.MultinomialLogTheta.write_dist_args">
-<span class="sig-name descname"><span class="pre">write_dist_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_theta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coeff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/components/parameters.html#MultinomialLogTheta.write_dist_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.parameters.MultinomialLogTheta.write_dist_args" title="Link to this definition">¶</a></dt>
-<dd><p>Format distribution arguments with optional coefficient.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>log_theta</strong> (<em>str</em>) – Formatted log_theta parameter string</p></li>
-<li><p><strong>N</strong> (<em>str</em>) – Formatted N parameter string</p></li>
-<li><p><strong>coeff</strong> (<em>str</em>) – Formatted coefficient string (optional). Defaults to “”.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Formatted argument string for Stan distribution call</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-<p>The method handles inclusion of the multinomial coefficient when available,
-enabling more efficient computation by pre-calculating constant terms.</p>
 </dd></dl>
 
 </dd></dl>

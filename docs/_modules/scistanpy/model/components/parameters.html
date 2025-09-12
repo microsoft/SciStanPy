@@ -359,7 +359,8 @@
 <span class="sd">    :cvar SCIPY_DIST: Corresponding SciPy distribution class</span>
 <span class="sd">    :type SCIPY_DIST: Optional[Union[type[stats.rv_continuous], type[stats.rv_discrete]]]</span>
 <span class="sd">    :cvar TORCH_DIST: Corresponding PyTorch distribution class</span>
-<span class="sd">    :type TORCH_DIST: Optional[Union[type[dist.distribution.Distribution], type[custom_torch_dists.CustomDistribution]]]</span>
+<span class="sd">    :type TORCH_DIST: Optional[Union[type[dist.distribution.Distribution],</span>
+<span class="sd">        type[custom_torch_dists.CustomDistribution]]]</span>
 <span class="sd">    :cvar STAN_TO_SCIPY_NAMES: Parameter name mapping for SciPy interface</span>
 <span class="sd">    :type STAN_TO_SCIPY_NAMES: dict[str, str]</span>
 <span class="sd">    :cvar STAN_TO_TORCH_NAMES: Parameter name mapping for PyTorch interface</span>
@@ -1555,10 +1556,10 @@
 
 <span class="sd">    Common Applications:</span>
 
-<span class="sd">    - Prior distributions for probabilities</span>
-<span class="sd">    - Modeling proportions and percentages</span>
-<span class="sd">    - Bayesian A/B testing</span>
-<span class="sd">    - Mixture model component weights</span>
+<span class="sd">        - Prior distributions for probabilities</span>
+<span class="sd">        - Modeling proportions and percentages</span>
+<span class="sd">        - Bayesian A/B testing</span>
+<span class="sd">        - Mixture model component weights</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">}</span>
@@ -1659,9 +1660,9 @@
 
 <span class="sd">    Common Applications:</span>
 
-<span class="sd">    - Conjugate prior for normal variance</span>
-<span class="sd">    - Hierarchical modeling of scale parameters</span>
-<span class="sd">    - Bayesian regression variance modeling</span>
+<span class="sd">        - Conjugate prior for normal variance</span>
+<span class="sd">        - Hierarchical modeling of scale parameters</span>
+<span class="sd">        - Bayesian regression variance modeling</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">}</span>
@@ -1722,33 +1723,32 @@
 <div class="viewcode-block" id="ExpExponential">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ExpExponential">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpExponential</span><span class="p">(</span><span class="n">Exponential</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exp-Exponential distribution (log of exponential random variable).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exp-Exponential distribution (log of exponential random variable).</span>
 
-<span class="sd">    Implements the distribution of Y where exp(Y) ~ Exponential(β).</span>
-<span class="sd">    This is equivalent to Y = log(X) where X ~ Exponential(β).</span>
+<span class="sd">    Implements the distribution of :math:`Y` where :math:`\exp(Y) \sim</span>
+<span class="sd">    \text{Exponential}(\beta)`.</span>
 
 <span class="sd">    :param beta: Rate parameter for the underlying exponential</span>
 <span class="sd">    :type beta: custom_types.ContinuousParameterType</span>
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        If X ~ Exponential(β), then Y = log(X) ~ ExpExponential(β)</span>
-<span class="sd">        f(y) = β * exp(y - β*exp(y)) for y ∈ (-∞, ∞)</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \text{If } X &amp;\sim \text{Exponential}(\beta), \text{then } \\ \\</span>
+<span class="sd">            Y &amp;= \log(X) \sim \text{ExpExponential}(\beta), \text{where } \\ \\</span>
+<span class="sd">            P(y | \beta) &amp;= \beta * \exp(y - \beta * \exp(y)) \text{ for } y \in (-\infty, \infty)</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-<span class="sd">    - Support: (-∞, ∞)</span>
-<span class="sd">    - Related to Gumbel distribution family</span>
-<span class="sd">    - Useful for log-scale modeling of exponential processes</span>
+
+<span class="sd">        - Support: :math:`(-\infty, \infty)`</span>
+<span class="sd">        - Related to Gumbel distribution family</span>
+<span class="sd">        - Useful for log-scale modeling of exponential processes</span>
 
 <span class="sd">    This distribution requires custom Stan functions for implementation (see</span>
-<span class="sd">    `expexponential.stanfunctions` in the `stan` submodule) which are automatically</span>
-<span class="sd">    included in any Stan program defined using this distribution.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Log-scale waiting time</span>
-<span class="sd">        &gt;&gt;&gt; log_wait = ExpExponential(beta=1.0)</span>
-<span class="sd">        &gt;&gt;&gt; # Log-transformed scale parameter</span>
-<span class="sd">        &gt;&gt;&gt; log_scale = ExpExponential(beta=prior_rate)</span>
+<span class="sd">    :doc:`../stan/stan_functions`) which are automatically included in any Stan</span>
+<span class="sd">    program defined using this distribution.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1784,7 +1784,7 @@
 <div class="viewcode-block" id="Lomax">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Lomax">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Lomax</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lomax distribution (Pareto Type II with location=0).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Lomax distribution (Pareto Type II with location=0).</span>
 
 <span class="sd">    Implements the Lomax distribution, which is a special case of the</span>
 <span class="sd">    Pareto Type II distribution with location parameter set to 0.</span>
@@ -1796,25 +1796,32 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ Lomax(λ, α) where f(x) = (α/λ) * (1 + x/λ)^(-α-1) for x ≥ 0</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            P(x | \lambda, \alpha) &amp;= \frac{\alpha}{\lambda} *</span>
+<span class="sd">            \left(1 + \frac{x}{\lambda}\right)^{-\alpha - 1} \text{ for } x \geq 0</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-<span class="sd">    - Support: [0, ∞)</span>
-<span class="sd">    - Mean: λ/(α-1) for α &gt; 1</span>
-<span class="sd">    - Mode: 0</span>
-<span class="sd">    - Heavy-tailed distribution</span>
+
+<span class="sd">        .. list-table::</span>
+
+<span class="sd">            * - Support</span>
+<span class="sd">              - :math:`[0, \infty)`</span>
+<span class="sd">            * - Mean</span>
+<span class="sd">              - :math:`\frac{\lambda}{\alpha - 1}` for :math:`\alpha &gt; 1`</span>
+<span class="sd">            * - Mode</span>
+<span class="sd">              - :math:`0`</span>
+<span class="sd">            * - Variance</span>
+<span class="sd">              - :math:`\frac{\lambda^2}{(\alpha - 1)^2(\alpha - 2)}` for :math:`\alpha &gt; 2`</span>
+
 
 <span class="sd">    Common Applications:</span>
-<span class="sd">    - Modeling income distributions</span>
-<span class="sd">    - Network analysis (degree distributions)</span>
-<span class="sd">    - Reliability engineering</span>
-<span class="sd">    - Extreme value modeling</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Heavy-tailed positive variable</span>
-<span class="sd">        &gt;&gt;&gt; wealth = Lomax(lambda_=scale_param, alpha=shape_param)</span>
-<span class="sd">        &gt;&gt;&gt; # Robust scale parameter</span>
-<span class="sd">        &gt;&gt;&gt; sigma = Lomax(lambda_=1.0, alpha=2.0)</span>
+<span class="sd">        - Modeling income distributions</span>
+<span class="sd">        - Network analysis (degree distributions)</span>
+<span class="sd">        - Reliability engineering</span>
+<span class="sd">        - Extreme value modeling</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -1825,8 +1832,6 @@
     <span class="n">STAN_TO_SCIPY_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lambda_&quot;</span><span class="p">:</span> <span class="s2">&quot;scale&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="s2">&quot;c&quot;</span><span class="p">}</span>
     <span class="n">STAN_TO_TORCH_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lambda_&quot;</span><span class="p">:</span> <span class="s2">&quot;lambda_&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha&quot;</span><span class="p">}</span>
 
-<div class="viewcode-block" id="Lomax.write_dist_args">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Lomax.write_dist_args">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_dist_args</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1844,16 +1849,16 @@
 <span class="sd">        with location parameter fixed at 0.0.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;0.0, </span><span class="si">{</span><span class="n">lambda_</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">alpha</span><span class="si">}</span><span class="s2">&quot;</span></div>
-</div>
 
 
 
 <div class="viewcode-block" id="ExpLomax">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ExpLomax">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpLomax</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exp-Lomax distribution (log of Lomax random variable).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exp-Lomax distribution (log of Lomax random variable).</span>
 
-<span class="sd">    Implements the distribution of Y where exp(Y) ~ Lomax(λ, α).</span>
+<span class="sd">    Implements the distribution of :math:`Y` where :math:`\exp(Y) \sim</span>
+<span class="sd">    \text{Lomax}(\lambda, \alpha)`.</span>
 
 <span class="sd">    :param lambda_: Scale parameter for underlying Lomax</span>
 <span class="sd">    :type lambda_: custom_types.ContinuousParameterType</span>
@@ -1862,24 +1867,19 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        If X ~ Lomax(λ, α), then Y = log(X) ~ ExpLomax(λ, α)</span>
-<span class="sd">        f(y) = (α/λ) * exp(y) * (1 + exp(y)/λ)^(-α-1) for y ∈ (-∞, ∞)</span>
-
-<span class="sd">    Properties:</span>
-<span class="sd">    - Support: (-∞, ∞)</span>
-<span class="sd">    - Log-scale version of heavy-tailed Lomax</span>
-<span class="sd">    - Useful for modeling log-transformed heavy-tailed data</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \text{If } X &amp;\sim \text{Lomax}(\lambda, \alpha), \text{then } \\ \\</span>
+<span class="sd">            Y &amp;= \log(X) \sim \text{ExpLomax}(\lambda, \alpha), \text{where } \\ \\</span>
+<span class="sd">            P(y | \lambda, \alpha) &amp;= \frac{\alpha}{\lambda} * \exp(y) *</span>
+<span class="sd">            \left(1 + \frac{\exp(y)}{\lambda}\right)^{-\alpha - 1} \text{ for } y</span>
+<span class="sd">            \in (-\infty, \infty)</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    This distribution requires custom Stan functions for implementation (see</span>
-<span class="sd">    `explomax.stanfunctions` in the `stan` submodule) which are automatically</span>
-<span class="sd">    included in any Stan program defined using this distribution.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Log-scale heavy-tailed variable</span>
-<span class="sd">        &gt;&gt;&gt; log_income = ExpLomax(lambda_=scale, alpha=shape)</span>
-<span class="sd">        &gt;&gt;&gt; # Robust log-scale parameter</span>
-<span class="sd">        &gt;&gt;&gt; log_sigma = ExpLomax(lambda_=1.0, alpha=2.0)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    :doc:`../stan/stan_functions`) which are automatically included in any Stan</span>
+<span class="sd">    program defined using this distribution.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lambda_&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">}</span>
@@ -1889,8 +1889,6 @@
     <span class="n">STAN_TO_SCIPY_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lambda_&quot;</span><span class="p">:</span> <span class="s2">&quot;scale&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="s2">&quot;c&quot;</span><span class="p">}</span>
     <span class="n">STAN_TO_TORCH_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lambda_&quot;</span><span class="p">:</span> <span class="s2">&quot;lambda_&quot;</span><span class="p">,</span> <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha&quot;</span><span class="p">}</span>
 
-<div class="viewcode-block" id="ExpLomax.get_supporting_functions">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ExpLomax.get_supporting_functions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of required Stan function includes.</span>
 
@@ -1903,14 +1901,13 @@
         <span class="c1"># We need to extend the set of supporting functions to include the custom</span>
         <span class="c1"># Stan functions for the Exp-Lomax distribution</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_supporting_functions</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;#include explomax.stanfunctions&quot;</span><span class="p">]</span></div>
-</div>
 
 
 
 <div class="viewcode-block" id="Dirichlet">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Dirichlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Dirichlet</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dirichlet distribution parameter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Dirichlet distribution parameter.</span>
 
 <span class="sd">    Implements the Dirichlet distribution for modeling probability simplexes.</span>
 <span class="sd">    The distribution generates vectors that sum to 1, making it ideal for</span>
@@ -1922,24 +1919,46 @@
 <span class="sd">    :param kwargs: Additional keyword arguments including &#39;shape&#39; if alpha is scalar</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ Dirichlet(α) where f(x) = (Γ(Σαᵢ)/Πᵢ Γ(αᵢ)) * Πᵢ xᵢ^(αᵢ-1)</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            P(x | \alpha) &amp;= \frac{\Gamma(\sum_{i=1}^K \alpha_i)}{\prod_{i=1}^K</span>
+<span class="sd">            \Gamma(\alpha_i)} \prod_{i=1}^K x_i^{\alpha_i - 1} \text{ for } x_i &gt; 0,</span>
+<span class="sd">            \sum_{i=1}^K x_i = 1 \\</span>
+<span class="sd">            \text{where } \Gamma(z) &amp;= \int_0^\infty t^{z-1} e^{-t} dt</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-<span class="sd">    - Support: K-dimensional simplex (Σxᵢ = 1, xᵢ &gt; 0)</span>
-<span class="sd">    - Mean: E[Xᵢ] = αᵢ/Σαⱼ</span>
-<span class="sd">    - Mode: (αᵢ-1)/(Σαⱼ-K) for all αᵢ &gt; 1</span>
 
-<span class="sd">    Parameter Handling:</span>
-<span class="sd">    - If alpha is scalar, &#39;shape&#39; must be provided to create uniform concentration</span>
-<span class="sd">    - If alpha is array-like, it defines the concentration for each component</span>
+<span class="sd">        .. list-table::</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Uniform Dirichlet (symmetric)</span>
-<span class="sd">        &gt;&gt;&gt; p = Dirichlet(alpha=1.0, shape=(3,))</span>
-<span class="sd">        &gt;&gt;&gt; # Non-uniform concentrations</span>
-<span class="sd">        &gt;&gt;&gt; p = Dirichlet(alpha=np.array([0.5, 1.0, 2.0]))</span>
-<span class="sd">        &gt;&gt;&gt; # Hierarchical concentration</span>
-<span class="sd">        &gt;&gt;&gt; p = Dirichlet(alpha=alpha_prior)</span>
+<span class="sd">            * - Support</span>
+<span class="sd">              - :math:`\{x : \sum_{i=1}^K x_i = 1, x_i &gt; 0\}`</span>
+<span class="sd">            * - Mean</span>
+<span class="sd">              - :math:`E[X_i] = \frac{\alpha_i}{\sum_{j=1}^K \alpha_j}`</span>
+<span class="sd">            * - Mode</span>
+<span class="sd">              - :math:`\frac{\alpha_i - 1}{\sum_{j=1}^K \alpha_j - K}` for all :math:`\alpha_i &gt; 1`</span>
+<span class="sd">            * - Variance</span>
+<span class="sd">              - :math:`\frac{\alpha_i (\sum_{j=1}^K \alpha_j - \alpha_i)}</span>
+<span class="sd">                {(\sum_{j=1}^K \alpha_j)^2 (\sum_{j=1}^K \alpha_j + 1)}`</span>
+<span class="sd">                for all :math:`\alpha_i &gt; 1`</span>
+<span class="sd">            * - Covariance</span>
+<span class="sd">              - :math:`\frac{-\alpha_i \alpha_j}{(\sum_{k=1}^K \alpha_k)^2</span>
+<span class="sd">                (\sum_{k=1}^K \alpha_k + 1)}` for all :math:`i \neq j` and</span>
+<span class="sd">                :math:`\alpha_i, \alpha_j &gt; 1`</span>
+
+<span class="sd">    Common Applications:</span>
+
+<span class="sd">        - Modeling categorical probabilities</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        SciStanPy&#39;s implementation of the Dirichlet distribution allows for defining</span>
+<span class="sd">        concentration parameters (:math:`\alpha`) as either scalar values or arrays.</span>
+<span class="sd">        If a scalar is provided, the `shape` keyword argument must also be specified</span>
+<span class="sd">        to define the dimensionality of the simplex--the scalar will be expanded</span>
+<span class="sd">        to a uniform array of that shape. This flexibility enables both symmetric</span>
+<span class="sd">        Dirichlet distributions (where all components have the same concentration)</span>
+<span class="sd">        and asymmetric distributions with distinct concentration parameters for each</span>
+<span class="sd">        component.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">BASE_STAN_DTYPE</span> <span class="o">=</span> <span class="s2">&quot;simplex&quot;</span>
@@ -1996,9 +2015,9 @@
 <div class="viewcode-block" id="ExpDirichlet">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpDirichlet</span><span class="p">(</span><span class="n">Dirichlet</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exp-Dirichlet distribution (log of Dirichlet random variable).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exp-Dirichlet distribution (log of Dirichlet random variable).</span>
 
-<span class="sd">    Implements the distribution of Y where exp(Y) ~ Dirichlet(α).</span>
+<span class="sd">    Implements the distribution of :math:`Y` where :math:`\exp(Y) ~ \text{Dirichlet}(\alpha)`.</span>
 <span class="sd">    This provides a log-simplex parameterization that can be more numerically</span>
 <span class="sd">    stable for extreme concentration parameters and extremely high-dimensional</span>
 <span class="sd">    simplexes, like those encountered when modeling deep mutational scanning data.</span>
@@ -2008,36 +2027,44 @@
 <span class="sd">    :param kwargs: Additional keyword arguments including &#39;shape&#39; if alpha is scalar</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α)</span>
-<span class="sd">        where Σexp(Yᵢ) = 1 (log-simplex constraint)</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \text{If } X &amp;\sim \text{Dirichlet}(\alpha), \text{then } \\ \\</span>
+<span class="sd">            Y &amp;= \log(X) \sim \text{ExpDirichlet}(\alpha), \text{where } \\ \\</span>
+<span class="sd">            P(y | \alpha) &amp;= \frac{\Gamma(\sum_{i=1}^K \alpha_i)}{\text{e}^{y_K}\prod_{i=1}^K</span>
+<span class="sd">            \Gamma(\alpha_i)} \prod_{i=1}^K \exp(y_i \alpha_i) \text{ for }</span>
+<span class="sd">            y_i \in (-\infty, \infty),</span>
+<span class="sd">            \sum_{i=1}^K \exp(y_i) = 1 \\</span>
+<span class="sd">            \text{where } \Gamma(z) &amp;= \int_0^\infty t^{z-1} e^{-t} dt</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
 
-<span class="sd">    - Support: Log-simplex {y : Σexp(yᵢ) = 1}</span>
-<span class="sd">    - Raw parameterization uses K-1 dimensions with constraint transformation</span>
-<span class="sd">    - More numerically stable for extreme concentrations</span>
+<span class="sd">        - Log-probability is computed in the log-simplex space</span>
+<span class="sd">        - More numerically stable for extreme concentration parameters</span>
+<span class="sd">        - Suitable for high-dimensional simplexes</span>
+<span class="sd">        - Useful for modeling compositional data on log scale</span>
 
-<span class="sd">    Stan Implementation:</span>
+<span class="sd">    .. note::</span>
+<span class="sd">        The Exp-Dirichlet distribution is not natively supported in Stan, so this</span>
+<span class="sd">        implementation includes custom Stan functions for the probability density,</span>
+<span class="sd">        transformations, and random number generation. These functions are automatically</span>
+<span class="sd">        included in any Stan program defined using this distribution. Special thanks</span>
+<span class="sd">        to Sean Pinkney for assistance with deriving the log probability density</span>
+<span class="sd">        function for the distribution; thanks also to Bob Carpenter and others for</span>
+<span class="sd">        developing the log-simplex constraint used in SciStanPy. See</span>
+<span class="sd">        `here &lt;https://discourse.mc-stan.org/t/log-simplex-constraints/39782&gt;`__</span>
+<span class="sd">        for derivations and `here &lt;https://github.com/bob-carpenter/transforms/tree</span>
+<span class="sd">        /main/simplex_transforms/stan/transforms&gt;`__ for transforms.</span>
 
-<span class="sd">    - Uses custom constraint functions for log-simplex transformation</span>
-<span class="sd">    - Raw parameter has K-1 dimensions (reduced for constraint)</span>
-<span class="sd">    - Special thanks to Sean Pinkney for assistance with deriving the log probability</span>
-<span class="sd">      density function; thanks also to Bob Carpenter and others for developing the</span>
-<span class="sd">      log-simplex constraint used in SciStanPy. See</span>
-<span class="sd">      `here &lt;https://discourse.mc-stan.org/t/log-simplex-constraints/39782&gt;_` for</span>
-<span class="sd">      derivations and</span>
-<span class="sd">      `here &lt;https://github.com/bob-carpenter/transforms/tree/main/simplex_transforms/stan/transforms&gt;`_</span>
-<span class="sd">      for transforms.</span>
-
-<span class="sd">    This distribution requires custom Stan functions for implementation (see</span>
-<span class="sd">    `expdirichlet.stanfunctions` in the `stan` submodule) which are automatically</span>
-<span class="sd">    included in any Stan program defined using this distribution.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Log-simplex probabilities</span>
-<span class="sd">        &gt;&gt;&gt; log_p = ExpDirichlet(alpha=alpha_vec)</span>
-<span class="sd">        &gt;&gt;&gt; # Numerically stable log-probabilities</span>
-<span class="sd">        &gt;&gt;&gt; log_weights = ExpDirichlet(alpha=1.0, shape=(10,))</span>
+<span class="sd">    .. note::</span>
+<span class="sd">        When used as a hyperparameter (i.e., :math:`\alpha` is constant), the</span>
+<span class="sd">        normalization constant of the distribution is also constant and can be</span>
+<span class="sd">        ignored during MCMC sampling to improve computational efficiency. This</span>
+<span class="sd">        implementation automatically detects when the Exp-Dirichlet is used as a</span>
+<span class="sd">        hyperparameter and switches to the unnormalized version of the distribution</span>
+<span class="sd">        in such cases. If :math:`\alpha` is not constant, the normalized version</span>
+<span class="sd">        is used.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">BASE_STAN_DTYPE</span> <span class="o">=</span> <span class="s2">&quot;real&quot;</span>
@@ -2052,8 +2079,6 @@
     <span class="n">STAN_TO_SCIPY_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="s2">&quot;alpha&quot;</span><span class="p">}</span>
     <span class="n">STAN_TO_TORCH_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="s2">&quot;concentration&quot;</span><span class="p">}</span>
 
-<div class="viewcode-block" id="ExpDirichlet.get_supporting_functions">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_supporting_functions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of required Stan function includes.</span>
 
@@ -2067,11 +2092,8 @@
         <span class="c1"># Stan functions for the Exp-Dirichlet distribution</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_supporting_functions</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span>
             <span class="s2">&quot;#include expdirichlet.stanfunctions&quot;</span>
-        <span class="p">]</span></div>
+        <span class="p">]</span>
 
-
-<div class="viewcode-block" id="ExpDirichlet.get_transformation_assignment">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_transformation_assignment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_transformation_assignment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for log-simplex constraint transformation.</span>
 
@@ -2091,11 +2113,8 @@
         <span class="p">)</span>
         <span class="n">transformed_varname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_indexed_varname</span><span class="p">(</span><span class="n">index_opts</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">transformed_varname</span><span class="si">}</span><span class="s2"> = inv_ilr_log_simplex_constrain_jacobian(</span><span class="si">{</span><span class="n">raw_varname</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">transformed_varname</span><span class="si">}</span><span class="s2"> = inv_ilr_log_simplex_constrain_jacobian(</span><span class="si">{</span><span class="n">raw_varname</span><span class="si">}</span><span class="s2">)&quot;</span>
 
-
-<div class="viewcode-block" id="ExpDirichlet.get_right_side">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_right_side">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -2124,11 +2143,8 @@
             <span class="n">end_dims</span><span class="o">=</span><span class="n">end_dims</span><span class="p">,</span>
             <span class="n">offset_adjustment</span><span class="o">=</span><span class="n">offset_adjustment</span><span class="p">,</span>
             <span class="n">dist_suffix</span><span class="o">=</span><span class="n">dist_suffix</span><span class="p">,</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
-
-<div class="viewcode-block" id="ExpDirichlet.get_raw_stan_parameter_declaration">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ExpDirichlet.get_raw_stan_parameter_declaration">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_raw_stan_parameter_declaration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_basetype</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate declaration for raw parameter with reduced dimensions.</span>
 
@@ -2160,14 +2176,13 @@
         <span class="c1"># Reconstruct the raw variable name with the correct number of dimensions.</span>
         <span class="c1"># Note that there is no upper bound on the raw variable</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">array_info</span><span class="si">}</span><span class="s2">vector[</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">]</span><span class="si">{</span><span class="n">var_info</span><span class="si">}</span><span class="s2">&quot;</span></div>
-</div>
 
 
 
 <div class="viewcode-block" id="Binomial">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Binomial">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Binomial</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Binomial distribution parameter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Binomial distribution parameter.</span>
 
 <span class="sd">    Implements the binomial distribution for modeling the number of successes</span>
 <span class="sd">    in a fixed number of independent Bernoulli trials.</span>
@@ -2179,21 +2194,29 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ Binomial(N, θ) where P(X = k) = C(N,k) * θᵏ * (1-θ)^(N-k)</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            P(X = k | N, \theta) &amp;= \binom{N}{k} \theta^k (1 - \theta)^{N - k}</span>
+<span class="sd">            \text{ for } k = 0, 1, ..., N</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-<span class="sd">    - Support: {0, 1, 2, ..., N}</span>
-<span class="sd">    - Mean: N * θ</span>
-<span class="sd">    - Variance: N * θ * (1-θ)</span>
-<span class="sd">    - Mode: floor((N+1) * θ)</span>
+
+<span class="sd">        .. list-table::</span>
+
+<span class="sd">              * - Support</span>
+<span class="sd">                - :math:`\{0, 1, 2, ..., N\}`</span>
+<span class="sd">              * - Mean</span>
+<span class="sd">                - :math:`N \theta`</span>
+<span class="sd">              * - Variance</span>
+<span class="sd">                - :math:`N \theta (1 - \theta)`</span>
+<span class="sd">              * - Mode</span>
+<span class="sd">                - :math:`\lfloor (N + 1) \theta \rfloor`</span>
 
 <span class="sd">    Common Applications:</span>
-<span class="sd">    - Number of successes in fixed trials</span>
-<span class="sd">    - Proportion data with known denominators</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Number of successes in 10 trials</span>
-<span class="sd">        &gt;&gt;&gt; successes = Binomial(N=10, theta=success_prob)</span>
+<span class="sd">        - Number of successes in fixed trials</span>
+<span class="sd">        - Proportion data with known denominators</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;theta&quot;</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">}</span>
@@ -2208,7 +2231,7 @@
 <div class="viewcode-block" id="Poisson">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Poisson">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Poisson</span><span class="p">(</span><span class="n">DiscreteDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Poisson distribution parameter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Poisson distribution parameter.</span>
 
 <span class="sd">    Implements the Poisson distribution for modeling count data with</span>
 <span class="sd">    a single rate parameter.</span>
@@ -2218,25 +2241,31 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ Poisson(λ) where P(X = k) = (λᵏ * exp(-λ)) / k!</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            P(X = k | \lambda) &amp;= \frac{\lambda^k e^{-\lambda}}{k!}</span>
+<span class="sd">            \text{ for } k = 0, 1, 2, ...</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-<span class="sd">    - Support: {0, 1, 2, 3, ...}</span>
-<span class="sd">    - Mean: λ</span>
-<span class="sd">    - Variance: λ</span>
-<span class="sd">    - Mode: floor(λ)</span>
+
+<span class="sd">        .. list-table::</span>
+
+<span class="sd">            *  - Support</span>
+<span class="sd">               - :math:`\{0, 1, 2, ...\}`</span>
+<span class="sd">            *  - Mean</span>
+<span class="sd">               - :math:`\lambda`</span>
+<span class="sd">            *  - Variance</span>
+<span class="sd">               - :math:`\lambda`</span>
+<span class="sd">            *  - Mode</span>
+<span class="sd">               - :math:`\lfloor \lambda \rfloor`</span>
 
 <span class="sd">    Common Applications:</span>
-<span class="sd">    - Event counting (arrivals, defects, etc.)</span>
-<span class="sd">    - Modeling rare events</span>
-<span class="sd">    - Count regression</span>
-<span class="sd">    - Queueing theory</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Number of events per time period</span>
-<span class="sd">        &gt;&gt;&gt; counts = Poisson(lambda_=event_rate)</span>
-<span class="sd">        &gt;&gt;&gt; # Observed count data</span>
-<span class="sd">        &gt;&gt;&gt; y_counts = Poisson(lambda_=fitted_rate).as_observable()</span>
+<span class="sd">        - Event counting (arrivals, defects, etc.)</span>
+<span class="sd">        - Modeling rare events</span>
+<span class="sd">        - Count regression</span>
+<span class="sd">        - Queueing theory</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lambda_&quot;</span><span class="p">}</span>
@@ -2290,10 +2319,10 @@
 <div class="viewcode-block" id="Multinomial">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.Multinomial">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Multinomial</span><span class="p">(</span><span class="n">_MultinomialBase</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Standard multinomial distribution parameter.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Standard multinomial distribution parameter.</span>
 
-<span class="sd">    Implements the multinomial distribution with probability vector theta</span>
-<span class="sd">    and number of trials N. Models the number of observations in each</span>
+<span class="sd">    Implements the multinomial distribution with probability vector :math:`\theta`</span>
+<span class="sd">    and number of trials :math:`N`. Models the number of observations in each</span>
 <span class="sd">    category for a fixed number of trials.</span>
 
 <span class="sd">    :param theta: Probability vector (must sum to 1)</span>
@@ -2303,17 +2332,32 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        X ~ Multinomial(N, θ) where P(X = x) = (N! / Πᵢ xᵢ!) * Πᵢ θᵢ^xᵢ</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            P(X = x | N, \theta) &amp;= \frac{N!}{\prod_{i=1}^K x_i!} \prod_{i=1}^K</span>
+<span class="sd">            \theta_i^{x_i} \text{ for } x_i \geq 0, \sum_{i=1}^K x_i = N \\</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-<span class="sd">    - Support: {x : Σxᵢ = N, xᵢ ≥ 0}</span>
-<span class="sd">    - Mean: E[Xᵢ] = N * θᵢ</span>
-<span class="sd">    - Variance: Var[Xᵢ] = N * θᵢ * (1 - θᵢ)</span>
-<span class="sd">    - Covariance: Cov[Xᵢ, Xⱼ] = -N * θᵢ * θⱼ</span>
+<span class="sd">        .. list-table::</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Categorical data with known totals</span>
-<span class="sd">        &gt;&gt;&gt; counts = Multinomial(theta=category_probs, N=total_trials)</span>
+<span class="sd">            * - Support</span>
+<span class="sd">              - :math:`\{x : \sum x_i = N, x_i \geq 0\}`</span>
+<span class="sd">            * - Mean</span>
+<span class="sd">              - :math:`N \theta_i`</span>
+<span class="sd">            * - Variance</span>
+<span class="sd">              - :math:`N \theta_i (1 - \theta_i)`</span>
+<span class="sd">            * - Covariance</span>
+<span class="sd">              - :math:`-N \theta_i \theta_j`</span>
+
+<span class="sd">    Common Applications:</span>
+
+<span class="sd">        - Categorical count data</span>
+<span class="sd">        - Multinomial logistic regression</span>
+<span class="sd">        - Natural language processing (word counts)</span>
+<span class="sd">        - Genetics (allele frequencies)</span>
+<span class="sd">        - Marketing (customer choice modeling)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">SIMPLEX_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;theta&quot;</span><span class="p">}</span>
@@ -2328,10 +2372,12 @@
 <div class="viewcode-block" id="MultinomialLogit">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogit">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogit</span><span class="p">(</span><span class="n">_MultinomialBase</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with logit parameterization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Multinomial distribution with logit parameterization.</span>
 
-<span class="sd">    Implements the multinomial distribution parameterized by logits (gamma)</span>
-<span class="sd">    rather than probabilities.</span>
+<span class="sd">    Implements the multinomial distribution parameterized by logits (:math:`\gamma`)</span>
+<span class="sd">    rather than probabilities. Logits are unconstrained real values that are transformed</span>
+<span class="sd">    to probabilities via the softmax function. This parameterization is useful for</span>
+<span class="sd">    models that naturally work with logits, such as logistic regression extensions.</span>
 
 <span class="sd">    :param gamma: Logit vector (unconstrained real values)</span>
 <span class="sd">    :type gamma: custom_types.ContinuousParameterType</span>
@@ -2340,17 +2386,17 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        θᵢ = exp(γᵢ) / Σⱼ exp(γⱼ) (softmax transformation)</span>
-<span class="sd">        X ~ Multinomial(N, θ)</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \theta_i &amp;= \frac{\exp(\gamma_i)}{\sum_{j=1}^K \exp(\gamma_j)} \\ \\</span>
+<span class="sd">            X &amp;\sim \text{Multinomial}(N, \theta)</span>
+<span class="sd">            \end{align*}</span>
 
-<span class="sd">    Properties:</span>
-<span class="sd">    - Unconstrained parameterization (γ ∈ ℝᴷ)</span>
-<span class="sd">    - Natural for logistic regression extensions</span>
-<span class="sd">    - Automatic softmax transformation applied</span>
+<span class="sd">    .. warning::</span>
+<span class="sd">        It is easy to create non-identifiable models using this parameterization.</span>
+<span class="sd">        Make sure to include appropriate priors or constraints on logits to ensure</span>
+<span class="sd">        model identifiability.</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Logit-parameterized multinomial</span>
-<span class="sd">        &gt;&gt;&gt; counts = MultinomialLogit(gamma=logit_probs, N=total_trials)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">STAN_DIST</span> <span class="o">=</span> <span class="s2">&quot;multinomial_logit&quot;</span>
@@ -2364,13 +2410,15 @@
 <div class="viewcode-block" id="MultinomialLogTheta">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogTheta</span><span class="p">(</span><span class="n">_MultinomialBase</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with log-probability parameterization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Multinomial distribution with log-probability parameterization.</span>
 
 <span class="sd">    Implements the multinomial distribution in terms of the log of the theta</span>
 <span class="sd">    parameter. This parameterization is useful for models that naturally</span>
 <span class="sd">    work with log-probabilities. It can use the ExpDirichlet distribution as a</span>
 <span class="sd">    prior to enforce the log-simplex constraint and keep computations completely</span>
-<span class="sd">    in the log-probability space.</span>
+<span class="sd">    in the log-probability space. This is extremely useful for high-dimensional</span>
+<span class="sd">    multinomials where categories may have very small probabilities (e.g., deep</span>
+<span class="sd">    mutational scanning data).</span>
 
 <span class="sd">    :param log_theta: Log probability vector (log-simplex constraint)</span>
 <span class="sd">    :type log_theta: custom_types.ContinuousParameterType</span>
@@ -2379,28 +2427,24 @@
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        θᵢ = exp(log_θᵢ) (with normalization: Σⱼ exp(log_θⱼ) = 1)</span>
-<span class="sd">        X ~ Multinomial(N, θ)</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \theta_i &amp;= \exp(\log{\theta_i}) \quad \text{(with normalization: }</span>
+<span class="sd">            \sum_j \exp(\log{\theta_j}) = 1) \\</span>
+<span class="sd">            X &amp;\sim \text{Multinomial}(N, \theta)</span>
+<span class="sd">            \end{align*}</span>
 
-<span class="sd">    Properties:</span>
+<span class="sd">    .. note::</span>
+<span class="sd">        This distribution is not natively supported in Stan, so this implementation</span>
+<span class="sd">        includes custom Stan functions for the probability density and random</span>
+<span class="sd">        number generation. These functions are automatically included in any Stan</span>
+<span class="sd">        program defined using this distribution.</span>
 
-<span class="sd">    - Log-simplex parameterization</span>
-<span class="sd">    - Numerically stable for small probabilities</span>
-<span class="sd">    - Optional multinomial coefficient pre-computation</span>
-
-<span class="sd">    Special Features:</span>
-
-<span class="sd">    - Automatic multinomial coefficient calculation when used as observable. This</span>
-<span class="sd">      results in improved computational efficiency by eliminating redundant calculations.</span>
-<span class="sd">    - Coefficient removed when parameter has other children</span>
-
-<span class="sd">    This distribution requires custom Stan functions for implementation (see</span>
-<span class="sd">    `multinomial.stanfunctions` in the `stan` submodule) which are automatically</span>
-<span class="sd">    included in any Stan program defined using this distribution.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Log-probability parameterized multinomial</span>
-<span class="sd">        &gt;&gt;&gt; counts = MultinomialLogTheta(log_theta=log_probs, N=total_trials)</span>
+<span class="sd">    .. hint::</span>
+<span class="sd">        When used to model observed data (i.e., as an observable parameter),</span>
+<span class="sd">        the multinomial coefficient is automatically calculated and included in</span>
+<span class="sd">        the ``transformed data`` block of Stan code. This improves computational</span>
+<span class="sd">        efficiency by eliminating redundant calculations during MCMC sampling.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOG_SIMPLEX_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;log_theta&quot;</span><span class="p">}</span>
@@ -2467,8 +2511,6 @@
         <span class="c1"># Run the parent method to record the child</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_record_child</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
 
-<div class="viewcode-block" id="MultinomialLogTheta.get_supporting_functions">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta.get_supporting_functions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of required Stan function includes.</span>
 
@@ -2480,11 +2522,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_supporting_functions</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span>
             <span class="s2">&quot;#include multinomial.stanfunctions&quot;</span>
-        <span class="p">]</span></div>
+        <span class="p">]</span>
 
-
-<div class="viewcode-block" id="MultinomialLogTheta.write_dist_args">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta.write_dist_args">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_dist_args</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ, arguments-renamed</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">log_theta</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">coeff</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="p">):</span>
@@ -2509,11 +2548,8 @@
         <span class="c1"># regardless of whether the coefficient is provided or not.</span>
         <span class="k">if</span> <span class="n">coeff</span><span class="p">:</span>
             <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_theta</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">coeff</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_theta</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_theta</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2">&quot;</span>
 
-
-<div class="viewcode-block" id="MultinomialLogTheta.get_right_side">
-<a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.MultinomialLogTheta.get_right_side">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -2560,8 +2596,7 @@
                 <span class="n">dist_suffix</span> <span class="o">=</span> <span class="s2">&quot;manual_norm&quot;</span>
 
         <span class="c1"># Build the right side</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">STAN_DIST</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">dist_suffix</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">write_dist_args</span><span class="p">(</span><span class="o">**</span><span class="n">formattables</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span></div>
-
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">STAN_DIST</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">dist_suffix</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">write_dist_args</span><span class="p">(</span><span class="o">**</span><span class="n">formattables</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">coefficient</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">transformed_data</span><span class="o">.</span><span class="n">LogMultinomialCoefficient</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>

@@ -315,7 +315,8 @@ class Parameter(
     :cvar SCIPY_DIST: Corresponding SciPy distribution class
     :type SCIPY_DIST: Optional[Union[type[stats.rv_continuous], type[stats.rv_discrete]]]
     :cvar TORCH_DIST: Corresponding PyTorch distribution class
-    :type TORCH_DIST: Optional[Union[type[dist.distribution.Distribution], type[custom_torch_dists.CustomDistribution]]]
+    :type TORCH_DIST: Optional[Union[type[dist.distribution.Distribution],
+        type[custom_torch_dists.CustomDistribution]]]
     :cvar STAN_TO_SCIPY_NAMES: Parameter name mapping for SciPy interface
     :type STAN_TO_SCIPY_NAMES: dict[str, str]
     :cvar STAN_TO_TORCH_NAMES: Parameter name mapping for PyTorch interface
@@ -1436,10 +1437,10 @@ class Beta(ContinuousDistribution):
 
     Common Applications:
 
-    - Prior distributions for probabilities
-    - Modeling proportions and percentages
-    - Bayesian A/B testing
-    - Mixture model component weights
+        - Prior distributions for probabilities
+        - Modeling proportions and percentages
+        - Bayesian A/B testing
+        - Mixture model component weights
     """
 
     POSITIVE_PARAMS = {"alpha", "beta"}
@@ -1534,9 +1535,9 @@ class InverseGamma(ContinuousDistribution):
 
     Common Applications:
 
-    - Conjugate prior for normal variance
-    - Hierarchical modeling of scale parameters
-    - Bayesian regression variance modeling
+        - Conjugate prior for normal variance
+        - Hierarchical modeling of scale parameters
+        - Bayesian regression variance modeling
 """
 
     POSITIVE_PARAMS = {"alpha", "beta"}
@@ -1591,33 +1592,32 @@ class Exponential(ContinuousDistribution):
 
 
 class ExpExponential(Exponential):
-    """Exp-Exponential distribution (log of exponential random variable).
+    r"""Exp-Exponential distribution (log of exponential random variable).
 
-    Implements the distribution of Y where exp(Y) ~ Exponential(β).
-    This is equivalent to Y = log(X) where X ~ Exponential(β).
+    Implements the distribution of :math:`Y` where :math:`\exp(Y) \sim
+    \text{Exponential}(\beta)`.
 
     :param beta: Rate parameter for the underlying exponential
     :type beta: custom_types.ContinuousParameterType
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        If X ~ Exponential(β), then Y = log(X) ~ ExpExponential(β)
-        f(y) = β * exp(y - β*exp(y)) for y ∈ (-∞, ∞)
+        .. math::
+            \begin{align*}
+            \text{If } X &\sim \text{Exponential}(\beta), \text{then } \\ \\
+            Y &= \log(X) \sim \text{ExpExponential}(\beta), \text{where } \\ \\
+            P(y | \beta) &= \beta * \exp(y - \beta * \exp(y)) \text{ for } y \in (-\infty, \infty)
+            \end{align*}
 
     Properties:
-    - Support: (-∞, ∞)
-    - Related to Gumbel distribution family
-    - Useful for log-scale modeling of exponential processes
+
+        - Support: :math:`(-\infty, \infty)`
+        - Related to Gumbel distribution family
+        - Useful for log-scale modeling of exponential processes
 
     This distribution requires custom Stan functions for implementation (see
-    `expexponential.stanfunctions` in the `stan` submodule) which are automatically
-    included in any Stan program defined using this distribution.
-
-    Example:
-        >>> # Log-scale waiting time
-        >>> log_wait = ExpExponential(beta=1.0)
-        >>> # Log-transformed scale parameter
-        >>> log_scale = ExpExponential(beta=prior_rate)
+    :doc:`../stan/stan_functions`) which are automatically included in any Stan
+    program defined using this distribution.
     """
 
     LOWER_BOUND = None
@@ -1647,7 +1647,7 @@ class ExpExponential(Exponential):
 
 
 class Lomax(ContinuousDistribution):
-    """Lomax distribution (Pareto Type II with location=0).
+    r"""Lomax distribution (Pareto Type II with location=0).
 
     Implements the Lomax distribution, which is a special case of the
     Pareto Type II distribution with location parameter set to 0.
@@ -1659,25 +1659,32 @@ class Lomax(ContinuousDistribution):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ Lomax(λ, α) where f(x) = (α/λ) * (1 + x/λ)^(-α-1) for x ≥ 0
+        .. math::
+            \begin{align*}
+            P(x | \lambda, \alpha) &= \frac{\alpha}{\lambda} *
+            \left(1 + \frac{x}{\lambda}\right)^{-\alpha - 1} \text{ for } x \geq 0
+            \end{align*}
 
     Properties:
-    - Support: [0, ∞)
-    - Mean: λ/(α-1) for α > 1
-    - Mode: 0
-    - Heavy-tailed distribution
+
+        .. list-table::
+
+            * - Support
+              - :math:`[0, \infty)`
+            * - Mean
+              - :math:`\frac{\lambda}{\alpha - 1}` for :math:`\alpha > 1`
+            * - Mode
+              - :math:`0`
+            * - Variance
+              - :math:`\frac{\lambda^2}{(\alpha - 1)^2(\alpha - 2)}` for :math:`\alpha > 2`
+
 
     Common Applications:
-    - Modeling income distributions
-    - Network analysis (degree distributions)
-    - Reliability engineering
-    - Extreme value modeling
 
-    Example:
-        >>> # Heavy-tailed positive variable
-        >>> wealth = Lomax(lambda_=scale_param, alpha=shape_param)
-        >>> # Robust scale parameter
-        >>> sigma = Lomax(lambda_=1.0, alpha=2.0)
+        - Modeling income distributions
+        - Network analysis (degree distributions)
+        - Reliability engineering
+        - Extreme value modeling
     """
 
     LOWER_BOUND = 0.0
@@ -1708,9 +1715,10 @@ class Lomax(ContinuousDistribution):
 
 
 class ExpLomax(ContinuousDistribution):
-    """Exp-Lomax distribution (log of Lomax random variable).
+    r"""Exp-Lomax distribution (log of Lomax random variable).
 
-    Implements the distribution of Y where exp(Y) ~ Lomax(λ, α).
+    Implements the distribution of :math:`Y` where :math:`\exp(Y) \sim
+    \text{Lomax}(\lambda, \alpha)`.
 
     :param lambda_: Scale parameter for underlying Lomax
     :type lambda_: custom_types.ContinuousParameterType
@@ -1719,24 +1727,19 @@ class ExpLomax(ContinuousDistribution):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        If X ~ Lomax(λ, α), then Y = log(X) ~ ExpLomax(λ, α)
-        f(y) = (α/λ) * exp(y) * (1 + exp(y)/λ)^(-α-1) for y ∈ (-∞, ∞)
-
-    Properties:
-    - Support: (-∞, ∞)
-    - Log-scale version of heavy-tailed Lomax
-    - Useful for modeling log-transformed heavy-tailed data
+        .. math::
+            \begin{align*}
+            \text{If } X &\sim \text{Lomax}(\lambda, \alpha), \text{then } \\ \\
+            Y &= \log(X) \sim \text{ExpLomax}(\lambda, \alpha), \text{where } \\ \\
+            P(y | \lambda, \alpha) &= \frac{\alpha}{\lambda} * \exp(y) *
+            \left(1 + \frac{\exp(y)}{\lambda}\right)^{-\alpha - 1} \text{ for } y
+            \in (-\infty, \infty)
+            \end{align*}
 
     This distribution requires custom Stan functions for implementation (see
-    `explomax.stanfunctions` in the `stan` submodule) which are automatically
-    included in any Stan program defined using this distribution.
-
-    Example:
-        >>> # Log-scale heavy-tailed variable
-        >>> log_income = ExpLomax(lambda_=scale, alpha=shape)
-        >>> # Robust log-scale parameter
-        >>> log_sigma = ExpLomax(lambda_=1.0, alpha=2.0)
-    """
+    :doc:`../stan/stan_functions`) which are automatically included in any Stan
+    program defined using this distribution.
+"""
 
     LOWER_BOUND = None
     POSITIVE_PARAMS = {"lambda_", "alpha"}
@@ -1761,7 +1764,7 @@ class ExpLomax(ContinuousDistribution):
 
 
 class Dirichlet(ContinuousDistribution):
-    """Dirichlet distribution parameter.
+    r"""Dirichlet distribution parameter.
 
     Implements the Dirichlet distribution for modeling probability simplexes.
     The distribution generates vectors that sum to 1, making it ideal for
@@ -1773,24 +1776,46 @@ class Dirichlet(ContinuousDistribution):
     :param kwargs: Additional keyword arguments including 'shape' if alpha is scalar
 
     Mathematical Definition:
-        X ~ Dirichlet(α) where f(x) = (Γ(Σαᵢ)/Πᵢ Γ(αᵢ)) * Πᵢ xᵢ^(αᵢ-1)
+        .. math::
+            \begin{align*}
+            P(x | \alpha) &= \frac{\Gamma(\sum_{i=1}^K \alpha_i)}{\prod_{i=1}^K
+            \Gamma(\alpha_i)} \prod_{i=1}^K x_i^{\alpha_i - 1} \text{ for } x_i > 0,
+            \sum_{i=1}^K x_i = 1 \\
+            \text{where } \Gamma(z) &= \int_0^\infty t^{z-1} e^{-t} dt
+            \end{align*}
 
     Properties:
-    - Support: K-dimensional simplex (Σxᵢ = 1, xᵢ > 0)
-    - Mean: E[Xᵢ] = αᵢ/Σαⱼ
-    - Mode: (αᵢ-1)/(Σαⱼ-K) for all αᵢ > 1
 
-    Parameter Handling:
-    - If alpha is scalar, 'shape' must be provided to create uniform concentration
-    - If alpha is array-like, it defines the concentration for each component
+        .. list-table::
 
-    Example:
-        >>> # Uniform Dirichlet (symmetric)
-        >>> p = Dirichlet(alpha=1.0, shape=(3,))
-        >>> # Non-uniform concentrations
-        >>> p = Dirichlet(alpha=np.array([0.5, 1.0, 2.0]))
-        >>> # Hierarchical concentration
-        >>> p = Dirichlet(alpha=alpha_prior)
+            * - Support
+              - :math:`\{x : \sum_{i=1}^K x_i = 1, x_i > 0\}`
+            * - Mean
+              - :math:`E[X_i] = \frac{\alpha_i}{\sum_{j=1}^K \alpha_j}`
+            * - Mode
+              - :math:`\frac{\alpha_i - 1}{\sum_{j=1}^K \alpha_j - K}` for all :math:`\alpha_i > 1`
+            * - Variance
+              - :math:`\frac{\alpha_i (\sum_{j=1}^K \alpha_j - \alpha_i)}
+                {(\sum_{j=1}^K \alpha_j)^2 (\sum_{j=1}^K \alpha_j + 1)}`
+                for all :math:`\alpha_i > 1`
+            * - Covariance
+              - :math:`\frac{-\alpha_i \alpha_j}{(\sum_{k=1}^K \alpha_k)^2
+                (\sum_{k=1}^K \alpha_k + 1)}` for all :math:`i \neq j` and
+                :math:`\alpha_i, \alpha_j > 1`
+
+    Common Applications:
+
+        - Modeling categorical probabilities
+
+    .. note::
+        SciStanPy's implementation of the Dirichlet distribution allows for defining
+        concentration parameters (:math:`\alpha`) as either scalar values or arrays.
+        If a scalar is provided, the `shape` keyword argument must also be specified
+        to define the dimensionality of the simplex--the scalar will be expanded
+        to a uniform array of that shape. This flexibility enables both symmetric
+        Dirichlet distributions (where all components have the same concentration)
+        and asymmetric distributions with distinct concentration parameters for each
+        component.
     """
 
     BASE_STAN_DTYPE = "simplex"
@@ -1844,9 +1869,9 @@ class Dirichlet(ContinuousDistribution):
 
 
 class ExpDirichlet(Dirichlet):
-    """Exp-Dirichlet distribution (log of Dirichlet random variable).
+    r"""Exp-Dirichlet distribution (log of Dirichlet random variable).
 
-    Implements the distribution of Y where exp(Y) ~ Dirichlet(α).
+    Implements the distribution of :math:`Y` where :math:`\exp(Y) ~ \text{Dirichlet}(\alpha)`.
     This provides a log-simplex parameterization that can be more numerically
     stable for extreme concentration parameters and extremely high-dimensional
     simplexes, like those encountered when modeling deep mutational scanning data.
@@ -1856,36 +1881,44 @@ class ExpDirichlet(Dirichlet):
     :param kwargs: Additional keyword arguments including 'shape' if alpha is scalar
 
     Mathematical Definition:
-        If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α)
-        where Σexp(Yᵢ) = 1 (log-simplex constraint)
+        .. math::
+            \begin{align*}
+            \text{If } X &\sim \text{Dirichlet}(\alpha), \text{then } \\ \\
+            Y &= \log(X) \sim \text{ExpDirichlet}(\alpha), \text{where } \\ \\
+            P(y | \alpha) &= \frac{\Gamma(\sum_{i=1}^K \alpha_i)}{\text{e}^{y_K}\prod_{i=1}^K
+            \Gamma(\alpha_i)} \prod_{i=1}^K \exp(y_i \alpha_i) \text{ for }
+            y_i \in (-\infty, \infty),
+            \sum_{i=1}^K \exp(y_i) = 1 \\
+            \text{where } \Gamma(z) &= \int_0^\infty t^{z-1} e^{-t} dt
+            \end{align*}
 
     Properties:
 
-    - Support: Log-simplex {y : Σexp(yᵢ) = 1}
-    - Raw parameterization uses K-1 dimensions with constraint transformation
-    - More numerically stable for extreme concentrations
+        - Log-probability is computed in the log-simplex space
+        - More numerically stable for extreme concentration parameters
+        - Suitable for high-dimensional simplexes
+        - Useful for modeling compositional data on log scale
 
-    Stan Implementation:
+    .. note::
+        The Exp-Dirichlet distribution is not natively supported in Stan, so this
+        implementation includes custom Stan functions for the probability density,
+        transformations, and random number generation. These functions are automatically
+        included in any Stan program defined using this distribution. Special thanks
+        to Sean Pinkney for assistance with deriving the log probability density
+        function for the distribution; thanks also to Bob Carpenter and others for
+        developing the log-simplex constraint used in SciStanPy. See
+        `here <https://discourse.mc-stan.org/t/log-simplex-constraints/39782>`__
+        for derivations and `here <https://github.com/bob-carpenter/transforms/tree
+        /main/simplex_transforms/stan/transforms>`__ for transforms.
 
-    - Uses custom constraint functions for log-simplex transformation
-    - Raw parameter has K-1 dimensions (reduced for constraint)
-    - Special thanks to Sean Pinkney for assistance with deriving the log probability
-      density function; thanks also to Bob Carpenter and others for developing the
-      log-simplex constraint used in SciStanPy. See
-      `here <https://discourse.mc-stan.org/t/log-simplex-constraints/39782>_` for
-      derivations and
-      `here <https://github.com/bob-carpenter/transforms/tree/main/simplex_transforms/stan/transforms>`_
-      for transforms.
-
-    This distribution requires custom Stan functions for implementation (see
-    `expdirichlet.stanfunctions` in the `stan` submodule) which are automatically
-    included in any Stan program defined using this distribution.
-
-    Example:
-        >>> # Log-simplex probabilities
-        >>> log_p = ExpDirichlet(alpha=alpha_vec)
-        >>> # Numerically stable log-probabilities
-        >>> log_weights = ExpDirichlet(alpha=1.0, shape=(10,))
+    .. note::
+        When used as a hyperparameter (i.e., :math:`\alpha` is constant), the
+        normalization constant of the distribution is also constant and can be
+        ignored during MCMC sampling to improve computational efficiency. This
+        implementation automatically detects when the Exp-Dirichlet is used as a
+        hyperparameter and switches to the unnormalized version of the distribution
+        in such cases. If :math:`\alpha` is not constant, the normalized version
+        is used.
     """
 
     BASE_STAN_DTYPE = "real"
@@ -2000,7 +2033,7 @@ class ExpDirichlet(Dirichlet):
 
 
 class Binomial(DiscreteDistribution):
-    """Binomial distribution parameter.
+    r"""Binomial distribution parameter.
 
     Implements the binomial distribution for modeling the number of successes
     in a fixed number of independent Bernoulli trials.
@@ -2012,21 +2045,29 @@ class Binomial(DiscreteDistribution):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ Binomial(N, θ) where P(X = k) = C(N,k) * θᵏ * (1-θ)^(N-k)
+        .. math::
+            \begin{align*}
+            P(X = k | N, \theta) &= \binom{N}{k} \theta^k (1 - \theta)^{N - k}
+            \text{ for } k = 0, 1, ..., N
+            \end{align*}
 
     Properties:
-    - Support: {0, 1, 2, ..., N}
-    - Mean: N * θ
-    - Variance: N * θ * (1-θ)
-    - Mode: floor((N+1) * θ)
+
+        .. list-table::
+
+              * - Support
+                - :math:`\{0, 1, 2, ..., N\}`
+              * - Mean
+                - :math:`N \theta`
+              * - Variance
+                - :math:`N \theta (1 - \theta)`
+              * - Mode
+                - :math:`\lfloor (N + 1) \theta \rfloor`
 
     Common Applications:
-    - Number of successes in fixed trials
-    - Proportion data with known denominators
 
-    Example:
-        >>> # Number of successes in 10 trials
-        >>> successes = Binomial(N=10, theta=success_prob)
+        - Number of successes in fixed trials
+        - Proportion data with known denominators
     """
 
     POSITIVE_PARAMS = {"theta", "N"}
@@ -2038,7 +2079,7 @@ class Binomial(DiscreteDistribution):
 
 
 class Poisson(DiscreteDistribution):
-    """Poisson distribution parameter.
+    r"""Poisson distribution parameter.
 
     Implements the Poisson distribution for modeling count data with
     a single rate parameter.
@@ -2048,25 +2089,31 @@ class Poisson(DiscreteDistribution):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ Poisson(λ) where P(X = k) = (λᵏ * exp(-λ)) / k!
+        .. math::
+            \begin{align*}
+            P(X = k | \lambda) &= \frac{\lambda^k e^{-\lambda}}{k!}
+            \text{ for } k = 0, 1, 2, ...
+            \end{align*}
 
     Properties:
-    - Support: {0, 1, 2, 3, ...}
-    - Mean: λ
-    - Variance: λ
-    - Mode: floor(λ)
+
+        .. list-table::
+
+            *  - Support
+               - :math:`\{0, 1, 2, ...\}`
+            *  - Mean
+               - :math:`\lambda`
+            *  - Variance
+               - :math:`\lambda`
+            *  - Mode
+               - :math:`\lfloor \lambda \rfloor`
 
     Common Applications:
-    - Event counting (arrivals, defects, etc.)
-    - Modeling rare events
-    - Count regression
-    - Queueing theory
 
-    Example:
-        >>> # Number of events per time period
-        >>> counts = Poisson(lambda_=event_rate)
-        >>> # Observed count data
-        >>> y_counts = Poisson(lambda_=fitted_rate).as_observable()
+        - Event counting (arrivals, defects, etc.)
+        - Modeling rare events
+        - Count regression
+        - Queueing theory
     """
 
     POSITIVE_PARAMS = {"lambda_"}
@@ -2117,10 +2164,10 @@ class _MultinomialBase(DiscreteDistribution):
 
 
 class Multinomial(_MultinomialBase):
-    """Standard multinomial distribution parameter.
+    r"""Standard multinomial distribution parameter.
 
-    Implements the multinomial distribution with probability vector theta
-    and number of trials N. Models the number of observations in each
+    Implements the multinomial distribution with probability vector :math:`\theta`
+    and number of trials :math:`N`. Models the number of observations in each
     category for a fixed number of trials.
 
     :param theta: Probability vector (must sum to 1)
@@ -2130,17 +2177,32 @@ class Multinomial(_MultinomialBase):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        X ~ Multinomial(N, θ) where P(X = x) = (N! / Πᵢ xᵢ!) * Πᵢ θᵢ^xᵢ
+
+        .. math::
+            \begin{align*}
+            P(X = x | N, \theta) &= \frac{N!}{\prod_{i=1}^K x_i!} \prod_{i=1}^K
+            \theta_i^{x_i} \text{ for } x_i \geq 0, \sum_{i=1}^K x_i = N \\
+            \end{align*}
 
     Properties:
-    - Support: {x : Σxᵢ = N, xᵢ ≥ 0}
-    - Mean: E[Xᵢ] = N * θᵢ
-    - Variance: Var[Xᵢ] = N * θᵢ * (1 - θᵢ)
-    - Covariance: Cov[Xᵢ, Xⱼ] = -N * θᵢ * θⱼ
+        .. list-table::
 
-    Example:
-        >>> # Categorical data with known totals
-        >>> counts = Multinomial(theta=category_probs, N=total_trials)
+            * - Support
+              - :math:`\{x : \sum x_i = N, x_i \geq 0\}`
+            * - Mean
+              - :math:`N \theta_i`
+            * - Variance
+              - :math:`N \theta_i (1 - \theta_i)`
+            * - Covariance
+              - :math:`-N \theta_i \theta_j`
+
+    Common Applications:
+
+        - Categorical count data
+        - Multinomial logistic regression
+        - Natural language processing (word counts)
+        - Genetics (allele frequencies)
+        - Marketing (customer choice modeling)
     """
 
     SIMPLEX_PARAMS = {"theta"}
@@ -2152,10 +2214,12 @@ class Multinomial(_MultinomialBase):
 
 
 class MultinomialLogit(_MultinomialBase):
-    """Multinomial distribution with logit parameterization.
+    r"""Multinomial distribution with logit parameterization.
 
-    Implements the multinomial distribution parameterized by logits (gamma)
-    rather than probabilities.
+    Implements the multinomial distribution parameterized by logits (:math:`\gamma`)
+    rather than probabilities. Logits are unconstrained real values that are transformed
+    to probabilities via the softmax function. This parameterization is useful for
+    models that naturally work with logits, such as logistic regression extensions.
 
     :param gamma: Logit vector (unconstrained real values)
     :type gamma: custom_types.ContinuousParameterType
@@ -2164,17 +2228,17 @@ class MultinomialLogit(_MultinomialBase):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        θᵢ = exp(γᵢ) / Σⱼ exp(γⱼ) (softmax transformation)
-        X ~ Multinomial(N, θ)
+        .. math::
+            \begin{align*}
+            \theta_i &= \frac{\exp(\gamma_i)}{\sum_{j=1}^K \exp(\gamma_j)} \\ \\
+            X &\sim \text{Multinomial}(N, \theta)
+            \end{align*}
 
-    Properties:
-    - Unconstrained parameterization (γ ∈ ℝᴷ)
-    - Natural for logistic regression extensions
-    - Automatic softmax transformation applied
+    .. warning::
+        It is easy to create non-identifiable models using this parameterization.
+        Make sure to include appropriate priors or constraints on logits to ensure
+        model identifiability.
 
-    Example:
-        >>> # Logit-parameterized multinomial
-        >>> counts = MultinomialLogit(gamma=logit_probs, N=total_trials)
     """
 
     STAN_DIST = "multinomial_logit"
@@ -2185,13 +2249,15 @@ class MultinomialLogit(_MultinomialBase):
 
 
 class MultinomialLogTheta(_MultinomialBase):
-    """Multinomial distribution with log-probability parameterization.
+    r"""Multinomial distribution with log-probability parameterization.
 
     Implements the multinomial distribution in terms of the log of the theta
     parameter. This parameterization is useful for models that naturally
     work with log-probabilities. It can use the ExpDirichlet distribution as a
     prior to enforce the log-simplex constraint and keep computations completely
-    in the log-probability space.
+    in the log-probability space. This is extremely useful for high-dimensional
+    multinomials where categories may have very small probabilities (e.g., deep
+    mutational scanning data).
 
     :param log_theta: Log probability vector (log-simplex constraint)
     :type log_theta: custom_types.ContinuousParameterType
@@ -2200,28 +2266,24 @@ class MultinomialLogTheta(_MultinomialBase):
     :param kwargs: Additional keyword arguments passed to parent class
 
     Mathematical Definition:
-        θᵢ = exp(log_θᵢ) (with normalization: Σⱼ exp(log_θⱼ) = 1)
-        X ~ Multinomial(N, θ)
+        .. math::
+            \begin{align*}
+            \theta_i &= \exp(\log{\theta_i}) \quad \text{(with normalization: }
+            \sum_j \exp(\log{\theta_j}) = 1) \\
+            X &\sim \text{Multinomial}(N, \theta)
+            \end{align*}
 
-    Properties:
+    .. note::
+        This distribution is not natively supported in Stan, so this implementation
+        includes custom Stan functions for the probability density and random
+        number generation. These functions are automatically included in any Stan
+        program defined using this distribution.
 
-    - Log-simplex parameterization
-    - Numerically stable for small probabilities
-    - Optional multinomial coefficient pre-computation
-
-    Special Features:
-
-    - Automatic multinomial coefficient calculation when used as observable. This
-      results in improved computational efficiency by eliminating redundant calculations.
-    - Coefficient removed when parameter has other children
-
-    This distribution requires custom Stan functions for implementation (see
-    `multinomial.stanfunctions` in the `stan` submodule) which are automatically
-    included in any Stan program defined using this distribution.
-
-    Example:
-        >>> # Log-probability parameterized multinomial
-        >>> counts = MultinomialLogTheta(log_theta=log_probs, N=total_trials)
+    .. hint::
+        When used to model observed data (i.e., as an observable parameter),
+        the multinomial coefficient is automatically calculated and included in
+        the ``transformed data`` block of Stan code. This improves computational
+        efficiency by eliminating redundant calculations during MCMC sampling.
     """
 
     LOG_SIMPLEX_PARAMS = {"log_theta"}

@@ -65,7 +65,7 @@ Univariate Continuous Distributions
 .. autoclass:: scistanpy.model.components.parameters.Exponential
    :members:
    :show-inheritance:
-   :exclude-members: CDF, SF, LOG_CDF, LOG_SF
+   :exclude-members: CDF, SF, LOG_CDF, LOG_SF, get_supporting_functions
 
 .. autoclass:: scistanpy.model.components.parameters.ExpExponential
    :members:
@@ -75,12 +75,12 @@ Univariate Continuous Distributions
 .. autoclass:: scistanpy.model.components.parameters.Lomax
    :members:
    :show-inheritance:
-   :exclude-members: CDF, SF, LOG_CDF, LOG_SF
+   :exclude-members: CDF, SF, LOG_CDF, LOG_SF, write_dist_args
 
 .. autoclass:: scistanpy.model.components.parameters.ExpLomax
    :members:
    :show-inheritance:
-   :exclude-members: CDF, SF, LOG_CDF, LOG_SF
+   :exclude-members: CDF, SF, LOG_CDF, LOG_SF, get_supporting_functions
 
 Univariate Discrete Distributions
 ---------------------------------
@@ -99,24 +99,31 @@ Multivariate Continuous Distributions
 .. autoclass:: scistanpy.model.components.parameters.Dirichlet
    :members:
    :show-inheritance:
+   :exclude-members: CDF, SF, LOG_CDF, LOG_SF
 
 .. autoclass:: scistanpy.model.components.parameters.ExpDirichlet
    :members:
    :show-inheritance:
+   :exclude-members: CDF, SF, LOG_CDF, LOG_SF, get_raw_stan_parameter_declaration,
+      get_right_side, get_supporting_functions, get_transformation_assignment
 
 Multivariate Discrete Distributions
 -----------------------------------
 .. autoclass:: scistanpy.model.components.parameters.Multinomial
    :members:
    :show-inheritance:
+   :exclude-members: CDF, SF, LOG_CDF, LOG_SF
 
 .. autoclass:: scistanpy.model.components.parameters.MultinomialLogit
    :members:
    :show-inheritance:
+   :exclude-members: CDF, SF, LOG_CDF, LOG_SF
 
 .. autoclass:: scistanpy.model.components.parameters.MultinomialLogTheta
    :members:
    :show-inheritance:
+   :exclude-members: CDF, SF, LOG_CDF, LOG_SF, get_supporting_functions, get_right_side,
+      write_dist_args
 
 Utilities
 ---------
