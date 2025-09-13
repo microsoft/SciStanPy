@@ -2841,7 +2841,303 @@ parameters and applying appropriate transformations.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../custom_types.html">Custom Types API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../defaults.html">Defaults API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../exceptions.html">Exceptions API Reference</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Model SubPackage API Reference</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Model SubPackage API Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">Model Components API Reference</a><ul class="current">
+<li class="toctree-l5 current"><a class="reference internal" href="index.html#model-components-submodule-overview">Model Components Submodule Overview</a><ul class="current">
+<li class="toctree-l6"><a class="reference internal" href="abstract_model_component.html">Abstract Model Component API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="constants.html">Constants API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="custom_distributions/index.html">Custom Distributions API Reference</a></li>
+<li class="toctree-l6 current"><a class="current reference internal" href="#">Parameters API Reference</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#continuous-univariate">Continuous Univariate</a></li>
+<li class="toctree-l7"><a class="reference internal" href="#continuous-multivariate">Continuous Multivariate</a></li>
+<li class="toctree-l7"><a class="reference internal" href="#discrete-univariate">Discrete Univariate</a></li>
+<li class="toctree-l7"><a class="reference internal" href="#discrete-multivariate">Discrete Multivariate</a></li>
+<li class="toctree-l7"><a class="reference internal" href="#base-classes">Base Classes</a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.ParameterMeta"><code class="docutils literal notranslate"><span class="pre">ParameterMeta</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter"><code class="docutils literal notranslate"><span class="pre">Parameter</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.CDF"><code class="docutils literal notranslate"><span class="pre">Parameter.CDF</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.CDF.PARAMETER"><code class="docutils literal notranslate"><span class="pre">Parameter.CDF.PARAMETER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.HAS_RAW_VARNAME"><code class="docutils literal notranslate"><span class="pre">Parameter.HAS_RAW_VARNAME</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.LOG_CDF"><code class="docutils literal notranslate"><span class="pre">Parameter.LOG_CDF</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.LOG_CDF.PARAMETER"><code class="docutils literal notranslate"><span class="pre">Parameter.LOG_CDF.PARAMETER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.LOG_SF"><code class="docutils literal notranslate"><span class="pre">Parameter.LOG_SF</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.LOG_SF.PARAMETER"><code class="docutils literal notranslate"><span class="pre">Parameter.LOG_SF.PARAMETER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">Parameter.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.SF"><code class="docutils literal notranslate"><span class="pre">Parameter.SF</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.SF.PARAMETER"><code class="docutils literal notranslate"><span class="pre">Parameter.SF.PARAMETER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">Parameter.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">Parameter.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.STAN_TO_SCIPY_TRANSFORMS"><code class="docutils literal notranslate"><span class="pre">Parameter.STAN_TO_SCIPY_TRANSFORMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">Parameter.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.TORCH_DIST"><code class="docutils literal notranslate"><span class="pre">Parameter.TORCH_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.as_observable"><code class="docutils literal notranslate"><span class="pre">Parameter.as_observable()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.ccdf"><code class="docutils literal notranslate"><span class="pre">Parameter.ccdf()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.cdf"><code class="docutils literal notranslate"><span class="pre">Parameter.cdf()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.generated_varname"><code class="docutils literal notranslate"><span class="pre">Parameter.generated_varname</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.get_generated_quantities"><code class="docutils literal notranslate"><span class="pre">Parameter.get_generated_quantities()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.get_generated_quantity_declaration"><code class="docutils literal notranslate"><span class="pre">Parameter.get_generated_quantity_declaration()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.get_raw_stan_parameter_declaration"><code class="docutils literal notranslate"><span class="pre">Parameter.get_raw_stan_parameter_declaration()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.get_right_side"><code class="docutils literal notranslate"><span class="pre">Parameter.get_right_side()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.get_rng"><code class="docutils literal notranslate"><span class="pre">Parameter.get_rng()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.get_target_incrementation"><code class="docutils literal notranslate"><span class="pre">Parameter.get_target_incrementation()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.get_torch_logprob"><code class="docutils literal notranslate"><span class="pre">Parameter.get_torch_logprob()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.get_transformed_data_declaration"><code class="docutils literal notranslate"><span class="pre">Parameter.get_transformed_data_declaration()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.init_pytorch"><code class="docutils literal notranslate"><span class="pre">Parameter.init_pytorch()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.is_hyperparameter"><code class="docutils literal notranslate"><span class="pre">Parameter.is_hyperparameter</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.log_ccdf"><code class="docutils literal notranslate"><span class="pre">Parameter.log_ccdf()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.log_cdf"><code class="docutils literal notranslate"><span class="pre">Parameter.log_cdf()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.observable"><code class="docutils literal notranslate"><span class="pre">Parameter.observable</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.raw_varname"><code class="docutils literal notranslate"><span class="pre">Parameter.raw_varname</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.torch_dist_instance"><code class="docutils literal notranslate"><span class="pre">Parameter.torch_dist_instance</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.torch_parametrization"><code class="docutils literal notranslate"><span class="pre">Parameter.torch_parametrization</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Parameter.write_dist_args"><code class="docutils literal notranslate"><span class="pre">Parameter.write_dist_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.ContinuousDistribution"><code class="docutils literal notranslate"><span class="pre">ContinuousDistribution</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.DiscreteDistribution"><code class="docutils literal notranslate"><span class="pre">DiscreteDistribution</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.DiscreteDistribution.BASE_STAN_DTYPE"><code class="docutils literal notranslate"><span class="pre">DiscreteDistribution.BASE_STAN_DTYPE</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.DiscreteDistribution.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">DiscreteDistribution.LOWER_BOUND</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="#univariate-continuous-distributions">Univariate Continuous Distributions</a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal"><code class="docutils literal notranslate"><span class="pre">Normal</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.CDF"><code class="docutils literal notranslate"><span class="pre">Normal.CDF</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.CDF.PARAMETER"><code class="docutils literal notranslate"><span class="pre">Normal.CDF.PARAMETER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.HAS_RAW_VARNAME"><code class="docutils literal notranslate"><span class="pre">Normal.HAS_RAW_VARNAME</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.LOG_CDF"><code class="docutils literal notranslate"><span class="pre">Normal.LOG_CDF</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.LOG_CDF.PARAMETER"><code class="docutils literal notranslate"><span class="pre">Normal.LOG_CDF.PARAMETER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.LOG_SF"><code class="docutils literal notranslate"><span class="pre">Normal.LOG_SF</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.LOG_SF.PARAMETER"><code class="docutils literal notranslate"><span class="pre">Normal.LOG_SF.PARAMETER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">Normal.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">Normal.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.SF"><code class="docutils literal notranslate"><span class="pre">Normal.SF</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.SF.PARAMETER"><code class="docutils literal notranslate"><span class="pre">Normal.SF.PARAMETER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">Normal.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">Normal.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">Normal.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.TORCH_DIST"><code class="docutils literal notranslate"><span class="pre">Normal.TORCH_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.get_right_side"><code class="docutils literal notranslate"><span class="pre">Normal.get_right_side()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.get_target_incrementation"><code class="docutils literal notranslate"><span class="pre">Normal.get_target_incrementation()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.get_transformation_assignment"><code class="docutils literal notranslate"><span class="pre">Normal.get_transformation_assignment()</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Normal.is_noncentered"><code class="docutils literal notranslate"><span class="pre">Normal.is_noncentered</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.HalfNormal"><code class="docutils literal notranslate"><span class="pre">HalfNormal</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.HalfNormal.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">HalfNormal.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.HalfNormal.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">HalfNormal.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.HalfNormal.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">HalfNormal.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.HalfNormal.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">HalfNormal.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.HalfNormal.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">HalfNormal.STAN_TO_TORCH_NAMES</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.UnitNormal"><code class="docutils literal notranslate"><span class="pre">UnitNormal</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.UnitNormal.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">UnitNormal.STAN_DIST</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.LogNormal"><code class="docutils literal notranslate"><span class="pre">LogNormal</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.LogNormal.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">LogNormal.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.LogNormal.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">LogNormal.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.LogNormal.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">LogNormal.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.LogNormal.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">LogNormal.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.LogNormal.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">LogNormal.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.LogNormal.STAN_TO_SCIPY_TRANSFORMS"><code class="docutils literal notranslate"><span class="pre">LogNormal.STAN_TO_SCIPY_TRANSFORMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.LogNormal.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">LogNormal.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.LogNormal.TORCH_DIST"><code class="docutils literal notranslate"><span class="pre">LogNormal.TORCH_DIST</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.Beta"><code class="docutils literal notranslate"><span class="pre">Beta</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Beta.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">Beta.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Beta.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">Beta.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Beta.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">Beta.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Beta.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">Beta.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Beta.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">Beta.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Beta.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">Beta.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Beta.UPPER_BOUND"><code class="docutils literal notranslate"><span class="pre">Beta.UPPER_BOUND</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.Gamma"><code class="docutils literal notranslate"><span class="pre">Gamma</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Gamma.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">Gamma.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Gamma.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">Gamma.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Gamma.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">Gamma.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Gamma.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">Gamma.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Gamma.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">Gamma.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Gamma.STAN_TO_SCIPY_TRANSFORMS"><code class="docutils literal notranslate"><span class="pre">Gamma.STAN_TO_SCIPY_TRANSFORMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Gamma.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">Gamma.STAN_TO_TORCH_NAMES</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.InverseGamma"><code class="docutils literal notranslate"><span class="pre">InverseGamma</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.InverseGamma.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">InverseGamma.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.InverseGamma.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">InverseGamma.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.InverseGamma.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">InverseGamma.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.InverseGamma.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">InverseGamma.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.InverseGamma.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">InverseGamma.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.InverseGamma.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">InverseGamma.STAN_TO_TORCH_NAMES</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.Exponential"><code class="docutils literal notranslate"><span class="pre">Exponential</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Exponential.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">Exponential.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Exponential.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">Exponential.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Exponential.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">Exponential.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Exponential.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">Exponential.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Exponential.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">Exponential.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Exponential.STAN_TO_SCIPY_TRANSFORMS"><code class="docutils literal notranslate"><span class="pre">Exponential.STAN_TO_SCIPY_TRANSFORMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Exponential.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">Exponential.STAN_TO_TORCH_NAMES</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpExponential"><code class="docutils literal notranslate"><span class="pre">ExpExponential</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpExponential.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">ExpExponential.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpExponential.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">ExpExponential.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpExponential.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">ExpExponential.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpExponential.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">ExpExponential.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpExponential.STAN_TO_SCIPY_TRANSFORMS"><code class="docutils literal notranslate"><span class="pre">ExpExponential.STAN_TO_SCIPY_TRANSFORMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpExponential.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">ExpExponential.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpExponential.TORCH_DIST"><code class="docutils literal notranslate"><span class="pre">ExpExponential.TORCH_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpExponential.get_supporting_functions"><code class="docutils literal notranslate"><span class="pre">ExpExponential.get_supporting_functions()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.Lomax"><code class="docutils literal notranslate"><span class="pre">Lomax</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Lomax.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">Lomax.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Lomax.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">Lomax.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Lomax.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">Lomax.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Lomax.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">Lomax.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Lomax.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">Lomax.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Lomax.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">Lomax.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Lomax.TORCH_DIST"><code class="docutils literal notranslate"><span class="pre">Lomax.TORCH_DIST</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpLomax"><code class="docutils literal notranslate"><span class="pre">ExpLomax</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpLomax.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">ExpLomax.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpLomax.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">ExpLomax.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpLomax.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">ExpLomax.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpLomax.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">ExpLomax.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpLomax.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">ExpLomax.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpLomax.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">ExpLomax.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpLomax.TORCH_DIST"><code class="docutils literal notranslate"><span class="pre">ExpLomax.TORCH_DIST</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="#univariate-discrete-distributions">Univariate Discrete Distributions</a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.Binomial"><code class="docutils literal notranslate"><span class="pre">Binomial</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Binomial.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">Binomial.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Binomial.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">Binomial.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Binomial.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">Binomial.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Binomial.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">Binomial.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Binomial.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">Binomial.STAN_TO_TORCH_NAMES</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.Poisson"><code class="docutils literal notranslate"><span class="pre">Poisson</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Poisson.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">Poisson.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Poisson.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">Poisson.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Poisson.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">Poisson.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Poisson.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">Poisson.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Poisson.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">Poisson.STAN_TO_TORCH_NAMES</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="#multivariate-continuous-distributions">Multivariate Continuous Distributions</a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet"><code class="docutils literal notranslate"><span class="pre">Dirichlet</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet.BASE_STAN_DTYPE"><code class="docutils literal notranslate"><span class="pre">Dirichlet.BASE_STAN_DTYPE</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet.IS_SIMPLEX"><code class="docutils literal notranslate"><span class="pre">Dirichlet.IS_SIMPLEX</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">Dirichlet.POSITIVE_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">Dirichlet.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">Dirichlet.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">Dirichlet.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Dirichlet.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">Dirichlet.STAN_TO_TORCH_NAMES</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.BASE_STAN_DTYPE"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.BASE_STAN_DTYPE</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.HAS_RAW_VARNAME"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.HAS_RAW_VARNAME</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.IS_LOG_SIMPLEX"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.IS_LOG_SIMPLEX</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.IS_SIMPLEX"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.IS_SIMPLEX</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.TORCH_DIST"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.TORCH_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ExpDirichlet.UPPER_BOUND"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.UPPER_BOUND</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="#multivariate-discrete-distributions">Multivariate Discrete Distributions</a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial"><code class="docutils literal notranslate"><span class="pre">Multinomial</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">Multinomial.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial.SIMPLEX_PARAMS"><code class="docutils literal notranslate"><span class="pre">Multinomial.SIMPLEX_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">Multinomial.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">Multinomial.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">Multinomial.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.Multinomial.TORCH_DIST"><code class="docutils literal notranslate"><span class="pre">Multinomial.TORCH_DIST</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogit"><code class="docutils literal notranslate"><span class="pre">MultinomialLogit</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogit.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">MultinomialLogit.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogit.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">MultinomialLogit.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogit.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">MultinomialLogit.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogit.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">MultinomialLogit.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogit.TORCH_DIST"><code class="docutils literal notranslate"><span class="pre">MultinomialLogit.TORCH_DIST</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta"><code class="docutils literal notranslate"><span class="pre">MultinomialLogTheta</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta.LOG_SIMPLEX_PARAMS"><code class="docutils literal notranslate"><span class="pre">MultinomialLogTheta.LOG_SIMPLEX_PARAMS</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta.SCIPY_DIST"><code class="docutils literal notranslate"><span class="pre">MultinomialLogTheta.SCIPY_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta.STAN_DIST"><code class="docutils literal notranslate"><span class="pre">MultinomialLogTheta.STAN_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta.STAN_TO_SCIPY_NAMES"><code class="docutils literal notranslate"><span class="pre">MultinomialLogTheta.STAN_TO_SCIPY_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta.STAN_TO_TORCH_NAMES"><code class="docutils literal notranslate"><span class="pre">MultinomialLogTheta.STAN_TO_TORCH_NAMES</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta.TORCH_DIST"><code class="docutils literal notranslate"><span class="pre">MultinomialLogTheta.TORCH_DIST</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.MultinomialLogTheta.coefficient"><code class="docutils literal notranslate"><span class="pre">MultinomialLogTheta.coefficient</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="#utilities">Utilities</a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.components.parameters.ClassOrInstanceMethod"><code class="docutils literal notranslate"><span class="pre">ClassOrInstanceMethod</span></code></a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.parameters.ClassOrInstanceMethod.__get__"><code class="docutils literal notranslate"><span class="pre">ClassOrInstanceMethod.__get__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="transformations/index.html">Transformations API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="index.html#key-design-principles">Key Design Principles</a></li>
+<li class="toctree-l5"><a class="reference internal" href="index.html#additional-usage-patterns">Additional Usage Patterns</a></li>
+<li class="toctree-l5"><a class="reference internal" href="index.html#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l5"><a class="reference internal" href="index.html#other-notable-features">Other Notable Features</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../model.html">Model API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nn_module.html">Neural Network Module API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../results/index.html">Model Results API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../stan/index.html">Stan Submodule API Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../plotting/index.html">Plotting Subpackage API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../operations.html">Operations API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>

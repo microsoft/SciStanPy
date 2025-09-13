@@ -735,7 +735,93 @@ See that class for details.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../../custom_types.html">Custom Types API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../defaults.html">Defaults API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../exceptions.html">Exceptions API Reference</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Model SubPackage API Reference</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Model SubPackage API Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">Model Components API Reference</a><ul class="current">
+<li class="toctree-l5 current"><a class="reference internal" href="../index.html#model-components-submodule-overview">Model Components Submodule Overview</a><ul class="current">
+<li class="toctree-l6"><a class="reference internal" href="../abstract_model_component.html">Abstract Model Component API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../constants.html">Constants API Reference</a></li>
+<li class="toctree-l6 current"><a class="reference internal" href="index.html">Custom Distributions API Reference</a><ul class="current">
+<li class="toctree-l7"><a class="reference internal" href="custom_torch_dists.html">Custom PyTorch Distributions API Reference</a></li>
+<li class="toctree-l7 current"><a class="current reference internal" href="#">Custom SciPy Distributions API Reference</a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#custom-built-scipy-distributions">Custom-Built SciPy Distributions</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet"><code class="docutils literal notranslate"><span class="pre">CustomDirichlet</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet.rvs"><code class="docutils literal notranslate"><span class="pre">CustomDirichlet.rvs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.cov"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.cov()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.entropy"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.entropy()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.logpdf"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.logpdf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.mean"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.mean()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.pdf"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.pdf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.rvs"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.rvs()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.var"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.var()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial"><code class="docutils literal notranslate"><span class="pre">CustomMultinomial</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial.rvs"><code class="docutils literal notranslate"><span class="pre">CustomMultinomial.rvs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit"><code class="docutils literal notranslate"><span class="pre">MultinomialLogit</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta"><code class="docutils literal notranslate"><span class="pre">MultinomialLogTheta</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#transforms-of-existing-scipy-distributions">Transforms of Existing SciPy Distributions</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.cdf"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.cdf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.inverse_transform"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.inverse_transform()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.isf"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.isf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.log_jacobian_correction"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.log_jacobian_correction()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.logpdf"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.logpdf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.logsf"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.logsf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.pdf"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.pdf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.ppf"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.ppf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.rvs"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.rvs()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.sf"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.sf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.transform"><code class="docutils literal notranslate"><span class="pre">TransformedScipyDist.transform()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform"><code class="docutils literal notranslate"><span class="pre">LogUnivariateScipyTransform</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform.inverse_transform"><code class="docutils literal notranslate"><span class="pre">LogUnivariateScipyTransform.inverse_transform()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform.log_jacobian_correction"><code class="docutils literal notranslate"><span class="pre">LogUnivariateScipyTransform.log_jacobian_correction()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform.transform"><code class="docutils literal notranslate"><span class="pre">LogUnivariateScipyTransform.transform()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#distribution-instances">Distribution Instances</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.dirichlet"><code class="docutils literal notranslate"><span class="pre">dirichlet</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.expdirichlet"><code class="docutils literal notranslate"><span class="pre">expdirichlet</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.expexponential"><code class="docutils literal notranslate"><span class="pre">expexponential</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.explomax"><code class="docutils literal notranslate"><span class="pre">explomax</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial"><code class="docutils literal notranslate"><span class="pre">multinomial</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial_logit"><code class="docutils literal notranslate"><span class="pre">multinomial_logit</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_scipy_dists.multinomial_log_theta"><code class="docutils literal notranslate"><span class="pre">multinomial_log_theta</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="../parameters.html">Parameters API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../transformations/index.html">Transformations API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#key-design-principles">Key Design Principles</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#additional-usage-patterns">Additional Usage Patterns</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#other-notable-features">Other Notable Features</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../../model.html">Model API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../nn_module.html">Neural Network Module API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../results/index.html">Model Results API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../stan/index.html">Stan Submodule API Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../plotting/index.html">Plotting Subpackage API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../operations.html">Operations API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>

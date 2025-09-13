@@ -283,7 +283,7 @@ class.</p>
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">exp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.exp" title="Link to this definition">¶</a></dt>
 <dd><p>Exponential operation.</p>
 <p>Computes the exponential (e^x) of the input parameter or numerical data. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">ExpParameter</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExpParameter" title="scistanpy.model.components.transformations.transformed_parameters.ExpParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExpParameter</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Exponential transformation</span>
 <span class="n">log_rate</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
@@ -297,7 +297,7 @@ class.</p>
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.log" title="Link to this definition">¶</a></dt>
 <dd><p>Natural logarithm operation.</p>
 <p>Computes the natural logarithm of the input parameter or numerical data. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">LogParameter</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogParameter" title="scistanpy.model.components.transformations.transformed_parameters.LogParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogParameter</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Natural logarithm</span>
 <span class="n">positive_param</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
@@ -311,7 +311,7 @@ class.</p>
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log1p_exp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.log1p_exp" title="Link to this definition">¶</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(\log(1 + \exp(x))\)</span> operation.</p>
 <p>Computes <span class="math notranslate nohighlight">\(\log(1 + \exp(x))\)</span> in a numerically stable way. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Log1pExpParameter</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter" title="scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Log1pExpParameter</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -319,7 +319,7 @@ class.</p>
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sigmoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.sigmoid" title="Link to this definition">¶</a></dt>
 <dd><p>Sigmoid operation.</p>
 <p>Computes the sigmoid function <span class="math notranslate nohighlight">\((1 + \exp(-x))^{-1}\)</span> of the input. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">SigmoidParameter</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter" title="scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">SigmoidParameter</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert logits to probabilities</span>
 <span class="n">logits</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
@@ -333,7 +333,7 @@ class.</p>
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log_sigmoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.log_sigmoid" title="Link to this definition">¶</a></dt>
 <dd><p>Log-sigmoid operation.</p>
 <p>Computes the logarithm of the sigmoid function in a numerically stable way. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">LogSigmoidParameter</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter" title="scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogSigmoidParameter</span></code></a>.</p>
 </dd></dl>
 
 </section>
@@ -350,7 +350,7 @@ class.</p>
 <dd><p>Normalization operation.</p>
 <p>Normalizes input data to unit sum. Note that when applied to SciStanPy parameters,
 this operation is always performed over the last dimension. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizeParameter</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter" title="scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizeParameter</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Normalize to unit sum (over last dimension)</span>
 <span class="n">weights</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
@@ -365,7 +365,7 @@ this operation is always performed over the last dimension. See also,
 <dd><p>Log-space normalization operation.</p>
 <p>This function ensures that the sum of exponentials is equal to 1 over the last dimension
 of the input. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizeLogParameter</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter" title="scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalizeLogParameter</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Normalize to unit sum (over last dimension)</span>
 <span class="n">weights</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
@@ -387,7 +387,7 @@ of the input. See also,
 <p>Computes the sum over an input parameter dimension or over numerical data. Note
 that for SciStanPy operations, the sum is always performed over the last dimension.
 See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">SumParameter</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SumParameter" title="scistanpy.model.components.transformations.transformed_parameters.SumParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">SumParameter</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sum over last dimension</span>
 <span class="n">values</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
@@ -406,7 +406,7 @@ See also,
 <p>Note that for SciStanPy operations, the sum is always performed over the last
 dimension.</p>
 <p>Computes log(sum(exp(x))) in a numerically stable way. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">LogSumExpParameter</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSumExpParameter" title="scistanpy.model.components.transformations.transformed_parameters.LogSumExpParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogSumExpParameter</span></code></a>.</p>
 </dd></dl>
 
 </section>
@@ -418,7 +418,7 @@ dimension.</p>
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">exponential_growth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.exponential_growth" title="Link to this definition">¶</a></dt>
 <dd><p>Exponential growth operation.</p>
 <p>Models exponential growth patterns in time series data. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialGrowth</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth" title="scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialGrowth</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Model exponential population growth</span>
 <span class="n">time_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
@@ -439,7 +439,7 @@ dimension.</p>
 <p>Models exponential growth over two timepoints, taking in the population size at
 the starting time (assumed to be at t = 0) and outputting the population size at
 the ending time (assumed to be at t = 1). See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryExponentialGrowth</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth" title="scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryExponentialGrowth</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Two-timepoint exponential growth</span>
 <span class="n">initial_size</span> <span class="o">=</span> <span class="n">ssp</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
@@ -458,7 +458,7 @@ the ending time (assumed to be at t = 1). See also,
 <dd><p>Log-exponential growth operation.</p>
 <p>Identical to <cite>~scistanpy.operations.exponential_growth</cite>, only models the <em>log</em> of
 the population size. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">LogExponentialGrowth</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth" title="scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogExponentialGrowth</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -467,7 +467,7 @@ the population size. See also,
 <dd><p>Binary log-exponential growth operation.</p>
 <p>Identical to <a class="reference internal" href="#scistanpy.operations.binary_exponential_growth" title="scistanpy.operations.binary_exponential_growth"><code class="xref py py-func docutils literal notranslate"><span class="pre">binary_exponential_growth()</span></code></a>, only models
 the <em>log</em> of the population size. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryLogExponentialGrowth</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth" title="scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryLogExponentialGrowth</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -475,7 +475,7 @@ the <em>log</em> of the population size. See also,
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sigmoid_growth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.sigmoid_growth" title="Link to this definition">¶</a></dt>
 <dd><p>Sigmoid growth operation.</p>
 <p>Models sigmoid growth patterns in time series data. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">SigmoidGrowth</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth" title="scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth"><code class="xref py py-class docutils literal notranslate"><span class="pre">SigmoidGrowth</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Logistic growth with carrying capacity</span>
 <span class="n">time_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">])</span>
@@ -496,7 +496,7 @@ the <em>log</em> of the population size. See also,
 <dd><p>Log-sigmoid growth operation.</p>
 <p>Identical to <a class="reference internal" href="#scistanpy.operations.log_sigmoid_growth" title="scistanpy.operations.log_sigmoid_growth"><code class="xref py py-func docutils literal notranslate"><span class="pre">log_sigmoid_growth()</span></code></a>, only models the
 <em>log</em> of the population size. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">LogSigmoidGrowth</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth" title="scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogSigmoidGrowth</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -504,7 +504,7 @@ the <em>log</em> of the population size. See also,
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">sigmoid_growth_init_param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.sigmoid_growth_init_param" title="Link to this definition">¶</a></dt>
 <dd><p>An alternate parametrization of <a class="reference internal" href="#scistanpy.operations.sigmoid_growth" title="scistanpy.operations.sigmoid_growth"><code class="xref py py-func docutils literal notranslate"><span class="pre">sigmoid_growth()</span></code></a>
 parametrized using initial population abundance rather than carrying capacity. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">SigmoidGrowthInitParametrization</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization" title="scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization"><code class="xref py py-class docutils literal notranslate"><span class="pre">SigmoidGrowthInitParametrization</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Alternative sigmoid parametrization using initial population</span>
 <span class="n">time_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
@@ -524,7 +524,7 @@ parametrized using initial population abundance rather than carrying capacity. S
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">log_sigmoid_growth_init_param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.log_sigmoid_growth_init_param" title="Link to this definition">¶</a></dt>
 <dd><p>An alternative parametrization of <a class="reference internal" href="#scistanpy.operations.log_sigmoid_growth" title="scistanpy.operations.log_sigmoid_growth"><code class="xref py py-func docutils literal notranslate"><span class="pre">log_sigmoid_growth()</span></code></a>
 parametrized using initial population abundance rather than carrying capacity. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">LogSigmoidGrowthInitParametrization</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization" title="scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogSigmoidGrowthInitParametrization</span></code></a>.</p>
 </dd></dl>
 
 </section>
@@ -536,7 +536,7 @@ parametrized using initial population abundance rather than carrying capacity. S
 <span class="sig-prename descclassname"><span class="pre">scistanpy.operations.</span></span><span class="sig-name descname"><span class="pre">convolve_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#scistanpy.operations.convolve_sequence" title="Link to this definition">¶</a></dt>
 <dd><p>Sequence convolution operation.</p>
 <p>Performs convolution operations on sequence data. See also,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">ConvolveSequence</span></code>.</p>
+<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence" title="scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConvolveSequence</span></code></a>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sequence convolution for pattern matching</span>
 <span class="n">weights</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">motif_length</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>  <span class="c1"># 4 nucleotides</span>
@@ -585,9 +585,59 @@ parametrized using initial population abundance rather than carrying capacity. S
 <li class="toctree-l2"><a class="reference internal" href="custom_types.html">Custom Types API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="defaults.html">Defaults API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions API Reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="model/index.html">Model API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model/index.html">Model SubPackage API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plotting/index.html">Plotting Subpackage API Reference</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Operations API Reference</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Operations API Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#operation-framework">Operation Framework</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scistanpy.operations.MetaOperation"><code class="docutils literal notranslate"><span class="pre">MetaOperation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scistanpy.operations.Operation"><code class="docutils literal notranslate"><span class="pre">Operation</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.Operation.DISTCLASS"><code class="docutils literal notranslate"><span class="pre">Operation.DISTCLASS</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.Operation.__call__"><code class="docutils literal notranslate"><span class="pre">Operation.__call__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#scistanpy.operations.build_operation"><code class="docutils literal notranslate"><span class="pre">build_operation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#operation-usage-patterns">Operation Usage Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#available-operations">Available Operations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mathematical-functions">Mathematical Functions</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.abs_"><code class="docutils literal notranslate"><span class="pre">abs_()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.exp"><code class="docutils literal notranslate"><span class="pre">exp()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.log"><code class="docutils literal notranslate"><span class="pre">log()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.log1p_exp"><code class="docutils literal notranslate"><span class="pre">log1p_exp()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.sigmoid"><code class="docutils literal notranslate"><span class="pre">sigmoid()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.log_sigmoid"><code class="docutils literal notranslate"><span class="pre">log_sigmoid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#normalization-operations">Normalization Operations</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.normalize_log"><code class="docutils literal notranslate"><span class="pre">normalize_log()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#reduction-operations">Reduction Operations</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.sum_"><code class="docutils literal notranslate"><span class="pre">sum_()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.logsumexp"><code class="docutils literal notranslate"><span class="pre">logsumexp()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#growth-model-operations">Growth Model Operations</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.exponential_growth"><code class="docutils literal notranslate"><span class="pre">exponential_growth()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.binary_exponential_growth"><code class="docutils literal notranslate"><span class="pre">binary_exponential_growth()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.log_exponential_growth"><code class="docutils literal notranslate"><span class="pre">log_exponential_growth()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.binary_log_exponential_growth"><code class="docutils literal notranslate"><span class="pre">binary_log_exponential_growth()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.sigmoid_growth"><code class="docutils literal notranslate"><span class="pre">sigmoid_growth()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.log_sigmoid_growth"><code class="docutils literal notranslate"><span class="pre">log_sigmoid_growth()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.sigmoid_growth_init_param"><code class="docutils literal notranslate"><span class="pre">sigmoid_growth_init_param()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.log_sigmoid_growth_init_param"><code class="docutils literal notranslate"><span class="pre">log_sigmoid_growth_init_param()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#specialized-operations">Specialized Operations</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#scistanpy.operations.convolve_sequence"><code class="docutils literal notranslate"><span class="pre">convolve_sequence()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils API Reference</a></li>
 </ul>
 </li>

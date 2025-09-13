@@ -1801,7 +1801,203 @@ and conversion from Python’s negative indexing convention.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../../custom_types.html">Custom Types API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../defaults.html">Defaults API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../exceptions.html">Exceptions API Reference</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Model SubPackage API Reference</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Model SubPackage API Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">Model Components API Reference</a><ul class="current">
+<li class="toctree-l5 current"><a class="reference internal" href="../index.html#model-components-submodule-overview">Model Components Submodule Overview</a><ul class="current">
+<li class="toctree-l6"><a class="reference internal" href="../abstract_model_component.html">Abstract Model Component API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../constants.html">Constants API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../custom_distributions/index.html">Custom Distributions API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../parameters.html">Parameters API Reference</a></li>
+<li class="toctree-l6 current"><a class="reference internal" href="index.html">Transformations API Reference</a><ul class="current">
+<li class="toctree-l7"><a class="reference internal" href="cdfs.html">CDFs API Reference</a></li>
+<li class="toctree-l7"><a class="reference internal" href="transformed_data.html">Transformed Data API Reference</a></li>
+<li class="toctree-l7 current"><a class="current reference internal" href="#">Transformed Parameters API Reference</a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#base-classes">Base Classes</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter"><code class="docutils literal notranslate"><span class="pre">TransformableParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__add__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__add__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__mul__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__mul__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__neg__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__neg__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__pow__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__pow__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__radd__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__radd__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__rmul__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__rmul__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__rpow__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__rpow__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__rsub__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__rsub__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__rtruediv__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__rtruediv__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__sub__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__sub__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__truediv__"><code class="docutils literal notranslate"><span class="pre">TransformableParameter.__truediv__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Transformation"><code class="docutils literal notranslate"><span class="pre">Transformation</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Transformation.SHAPE_CHECK"><code class="docutils literal notranslate"><span class="pre">Transformation.SHAPE_CHECK</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Transformation.get_right_side"><code class="docutils literal notranslate"><span class="pre">Transformation.get_right_side()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Transformation.write_stan_operation"><code class="docutils literal notranslate"><span class="pre">Transformation.write_stan_operation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.STAN_OPERATOR"><code class="docutils literal notranslate"><span class="pre">TransformedParameter.STAN_OPERATOR</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.__call__"><code class="docutils literal notranslate"><span class="pre">TransformedParameter.__call__()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.get_transformation_assignment"><code class="docutils literal notranslate"><span class="pre">TransformedParameter.get_transformation_assignment()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">TransformedParameter.run_np_torch_op()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.torch_parametrization"><code class="docutils literal notranslate"><span class="pre">TransformedParameter.torch_parametrization</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.write_stan_operation"><code class="docutils literal notranslate"><span class="pre">TransformedParameter.write_stan_operation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter"><code class="docutils literal notranslate"><span class="pre">UnaryTransformedParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">UnaryTransformedParameter.run_np_torch_op()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter.write_stan_operation"><code class="docutils literal notranslate"><span class="pre">UnaryTransformedParameter.write_stan_operation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter"><code class="docutils literal notranslate"><span class="pre">BinaryTransformedParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">BinaryTransformedParameter.run_np_torch_op()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter.write_stan_operation"><code class="docutils literal notranslate"><span class="pre">BinaryTransformedParameter.write_stan_operation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#basic-arithmetic-operations">Basic Arithmetic Operations</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.AddParameter"><code class="docutils literal notranslate"><span class="pre">AddParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.AddParameter.STAN_OPERATOR"><code class="docutils literal notranslate"><span class="pre">AddParameter.STAN_OPERATOR</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter"><code class="docutils literal notranslate"><span class="pre">SubtractParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.STAN_OPERATOR"><code class="docutils literal notranslate"><span class="pre">SubtractParameter.STAN_OPERATOR</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter"><code class="docutils literal notranslate"><span class="pre">MultiplyParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.STAN_OPERATOR"><code class="docutils literal notranslate"><span class="pre">MultiplyParameter.STAN_OPERATOR</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.DivideParameter"><code class="docutils literal notranslate"><span class="pre">DivideParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.DivideParameter.STAN_OPERATOR"><code class="docutils literal notranslate"><span class="pre">DivideParameter.STAN_OPERATOR</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.PowerParameter"><code class="docutils literal notranslate"><span class="pre">PowerParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.PowerParameter.STAN_OPERATOR"><code class="docutils literal notranslate"><span class="pre">PowerParameter.STAN_OPERATOR</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.NegateParameter"><code class="docutils literal notranslate"><span class="pre">NegateParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.NegateParameter.STAN_OPERATOR"><code class="docutils literal notranslate"><span class="pre">NegateParameter.STAN_OPERATOR</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#standard-mathematical-functions">Standard Mathematical Functions</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.AbsParameter"><code class="docutils literal notranslate"><span class="pre">AbsParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">AbsParameter.LOWER_BOUND</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.ExpParameter"><code class="docutils literal notranslate"><span class="pre">ExpParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.ExpParameter.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">ExpParameter.LOWER_BOUND</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogParameter"><code class="docutils literal notranslate"><span class="pre">LogParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogParameter.POSITIVE_PARAMS"><code class="docutils literal notranslate"><span class="pre">LogParameter.POSITIVE_PARAMS</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter"><code class="docutils literal notranslate"><span class="pre">SigmoidParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">SigmoidParameter.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter.UPPER_BOUND"><code class="docutils literal notranslate"><span class="pre">SigmoidParameter.UPPER_BOUND</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter"><code class="docutils literal notranslate"><span class="pre">LogSigmoidParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter.UPPER_BOUND"><code class="docutils literal notranslate"><span class="pre">LogSigmoidParameter.UPPER_BOUND</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter"><code class="docutils literal notranslate"><span class="pre">Log1pExpParameter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#normalization-transformations">Normalization Transformations</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter"><code class="docutils literal notranslate"><span class="pre">NormalizeParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">NormalizeParameter.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter.UPPER_BOUND"><code class="docutils literal notranslate"><span class="pre">NormalizeParameter.UPPER_BOUND</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter"><code class="docutils literal notranslate"><span class="pre">NormalizeLogParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter.UPPER_BOUND"><code class="docutils literal notranslate"><span class="pre">NormalizeLogParameter.UPPER_BOUND</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#reduction-operations">Reduction Operations</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction"><code class="docutils literal notranslate"><span class="pre">Reduction</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction.NP_FUNC"><code class="docutils literal notranslate"><span class="pre">Reduction.NP_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction.SHAPE_CHECK"><code class="docutils literal notranslate"><span class="pre">Reduction.SHAPE_CHECK</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction.TORCH_FUNC"><code class="docutils literal notranslate"><span class="pre">Reduction.TORCH_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_assign_depth"><code class="docutils literal notranslate"><span class="pre">Reduction.get_assign_depth()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_index_offset"><code class="docutils literal notranslate"><span class="pre">Reduction.get_index_offset()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SumParameter"><code class="docutils literal notranslate"><span class="pre">SumParameter</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogSumExpParameter"><code class="docutils literal notranslate"><span class="pre">LogSumExpParameter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#growth-model-transformations">Growth Model Transformations</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth"><code class="docutils literal notranslate"><span class="pre">ExponentialGrowth</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth"><code class="docutils literal notranslate"><span class="pre">LogExponentialGrowth</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth"><code class="docutils literal notranslate"><span class="pre">BinaryExponentialGrowth</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth"><code class="docutils literal notranslate"><span class="pre">BinaryLogExponentialGrowth</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth"><code class="docutils literal notranslate"><span class="pre">SigmoidGrowth</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">SigmoidGrowth.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth.UPPER_BOUND"><code class="docutils literal notranslate"><span class="pre">SigmoidGrowth.UPPER_BOUND</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth"><code class="docutils literal notranslate"><span class="pre">LogSigmoidGrowth</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">LogSigmoidGrowth.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth.UPPER_BOUND"><code class="docutils literal notranslate"><span class="pre">LogSigmoidGrowth.UPPER_BOUND</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization"><code class="docutils literal notranslate"><span class="pre">SigmoidGrowthInitParametrization</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">SigmoidGrowthInitParametrization.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization.UPPER_BOUND"><code class="docutils literal notranslate"><span class="pre">SigmoidGrowthInitParametrization.UPPER_BOUND</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization"><code class="docutils literal notranslate"><span class="pre">LogSigmoidGrowthInitParametrization</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization.LOWER_BOUND"><code class="docutils literal notranslate"><span class="pre">LogSigmoidGrowthInitParametrization.LOWER_BOUND</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization.UPPER_BOUND"><code class="docutils literal notranslate"><span class="pre">LogSigmoidGrowthInitParametrization.UPPER_BOUND</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#special-functions">Special Functions</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence"><code class="docutils literal notranslate"><span class="pre">ConvolveSequence</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.FORCE_LOOP_RESET"><code class="docutils literal notranslate"><span class="pre">ConvolveSequence.FORCE_LOOP_RESET</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.FORCE_PARENT_NAME"><code class="docutils literal notranslate"><span class="pre">ConvolveSequence.FORCE_PARENT_NAME</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence.SHAPE_CHECK"><code class="docutils literal notranslate"><span class="pre">ConvolveSequence.SHAPE_CHECK</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#indexing-and-array-operations">Indexing and Array Operations</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.IndexParameter"><code class="docutils literal notranslate"><span class="pre">IndexParameter</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.FORCE_PARENT_NAME"><code class="docutils literal notranslate"><span class="pre">IndexParameter.FORCE_PARENT_NAME</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.SHAPE_CHECK"><code class="docutils literal notranslate"><span class="pre">IndexParameter.SHAPE_CHECK</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.force_name"><code class="docutils literal notranslate"><span class="pre">IndexParameter.force_name</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.neg_to_pos"><code class="docutils literal notranslate"><span class="pre">IndexParameter.neg_to_pos()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#key-design-principles">Key Design Principles</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#additional-usage-patterns">Additional Usage Patterns</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#other-notable-features">Other Notable Features</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../../model.html">Model API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../nn_module.html">Neural Network Module API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../results/index.html">Model Results API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../stan/index.html">Stan Submodule API Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../plotting/index.html">Plotting Subpackage API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../operations.html">Operations API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>

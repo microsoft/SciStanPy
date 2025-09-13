@@ -1424,7 +1424,113 @@ of SciStanPy for debugging or optimization purposes.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../custom_types.html">Custom Types API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../defaults.html">Defaults API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../exceptions.html">Exceptions API Reference</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Model API Reference</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Model SubPackage API Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../components/index.html">Model Components API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../model.html">Model API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nn_module.html">Neural Network Module API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../results/index.html">Model Results API Reference</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">Stan Submodule API Reference</a><ul class="current">
+<li class="toctree-l5"><a class="reference internal" href="index.html#scistanpy.model.stan.STAN_INCLUDE_PATHS"><code class="docutils literal notranslate"><span class="pre">STAN_INCLUDE_PATHS</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="stan_functions.html">Stan Functions Library Reference</a></li>
+<li class="toctree-l5 current"><a class="current reference internal" href="#">Stan Model API Reference</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#abstract-base-for-stan-code-components">Abstract Base for Stan Code Components</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase"><code class="docutils literal notranslate"><span class="pre">StanCodeBase</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.allowed_index_names"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.allowed_index_names</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.combine_lines"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.combine_lines()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.depth"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.depth</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.finalize_line"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.finalize_line()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.generated_quantities_prefix"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.generated_quantities_prefix</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_generated_quantities"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.get_generated_quantities()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_parent_loop"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.get_parent_loop()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_target_incrementation"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.get_target_incrementation()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_transformation_assignment"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.get_transformation_assignment()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.get_transformed_data_assignment"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.get_transformed_data_assignment()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.model_components"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.model_components</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.nested_loops"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.nested_loops</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.recurse_for_loops"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.recurse_for_loops()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.recurse_model_components"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.recurse_model_components()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.target_inc_prefix"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.target_inc_prefix</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.transformation_assi_prefix"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.transformation_assi_prefix</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanCodeBase.transformed_data_prefix"><code class="docutils literal notranslate"><span class="pre">StanCodeBase.transformed_data_prefix</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="#for-loop-representation-in-stan-code">For Loop Representation in Stan Code</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop"><code class="docutils literal notranslate"><span class="pre">StanForLoop</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.allowed_index_names"><code class="docutils literal notranslate"><span class="pre">StanForLoop.allowed_index_names</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.ancestry"><code class="docutils literal notranslate"><span class="pre">StanForLoop.ancestry</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.append"><code class="docutils literal notranslate"><span class="pre">StanForLoop.append()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.copy"><code class="docutils literal notranslate"><span class="pre">StanForLoop.copy()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.depth"><code class="docutils literal notranslate"><span class="pre">StanForLoop.depth</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.end"><code class="docutils literal notranslate"><span class="pre">StanForLoop.end</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.generated_quantities_prefix"><code class="docutils literal notranslate"><span class="pre">StanForLoop.generated_quantities_prefix</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.get_parent_loop"><code class="docutils literal notranslate"><span class="pre">StanForLoop.get_parent_loop()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.loop_index"><code class="docutils literal notranslate"><span class="pre">StanForLoop.loop_index</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.program"><code class="docutils literal notranslate"><span class="pre">StanForLoop.program</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.squash"><code class="docutils literal notranslate"><span class="pre">StanForLoop.squash()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.target_inc_prefix"><code class="docutils literal notranslate"><span class="pre">StanForLoop.target_inc_prefix</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.transformation_assi_prefix"><code class="docutils literal notranslate"><span class="pre">StanForLoop.transformation_assi_prefix</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop.transformed_data_prefix"><code class="docutils literal notranslate"><span class="pre">StanForLoop.transformed_data_prefix</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="#base-stan-program-structure">Base Stan Program Structure</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram"><code class="docutils literal notranslate"><span class="pre">StanProgram</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.allowed_index_names"><code class="docutils literal notranslate"><span class="pre">StanProgram.allowed_index_names</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.append"><code class="docutils literal notranslate"><span class="pre">StanProgram.append()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.build_node_to_depth"><code class="docutils literal notranslate"><span class="pre">StanProgram.build_node_to_depth()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.code"><code class="docutils literal notranslate"><span class="pre">StanProgram.code</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.compile"><code class="docutils literal notranslate"><span class="pre">StanProgram.compile()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.data_block"><code class="docutils literal notranslate"><span class="pre">StanProgram.data_block</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.depth"><code class="docutils literal notranslate"><span class="pre">StanProgram.depth</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.functions_block"><code class="docutils literal notranslate"><span class="pre">StanProgram.functions_block</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.generated_quantities_block"><code class="docutils literal notranslate"><span class="pre">StanProgram.generated_quantities_block</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.generated_quantities_prefix"><code class="docutils literal notranslate"><span class="pre">StanProgram.generated_quantities_prefix</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.get_parent_loop"><code class="docutils literal notranslate"><span class="pre">StanProgram.get_parent_loop()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.get_varnames"><code class="docutils literal notranslate"><span class="pre">StanProgram.get_varnames()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.model_block"><code class="docutils literal notranslate"><span class="pre">StanProgram.model_block</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.parameters_block"><code class="docutils literal notranslate"><span class="pre">StanProgram.parameters_block</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.recurse_for_loops"><code class="docutils literal notranslate"><span class="pre">StanProgram.recurse_for_loops()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.target_inc_prefix"><code class="docutils literal notranslate"><span class="pre">StanProgram.target_inc_prefix</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.transformation_assi_prefix"><code class="docutils literal notranslate"><span class="pre">StanProgram.transformation_assi_prefix</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.transformed_data_block"><code class="docutils literal notranslate"><span class="pre">StanProgram.transformed_data_block</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.transformed_data_prefix"><code class="docutils literal notranslate"><span class="pre">StanProgram.transformed_data_prefix</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanProgram.transformed_parameters_block"><code class="docutils literal notranslate"><span class="pre">StanProgram.transformed_parameters_block</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="#stan-model-representation">Stan Model Representation</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel"><code class="docutils literal notranslate"><span class="pre">StanModel</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.all_varnames"><code class="docutils literal notranslate"><span class="pre">StanModel.all_varnames</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.autogathered_data"><code class="docutils literal notranslate"><span class="pre">StanModel.autogathered_data</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.code"><code class="docutils literal notranslate"><span class="pre">StanModel.code()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.gather_inputs"><code class="docutils literal notranslate"><span class="pre">StanModel.gather_inputs()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.generate_quantities"><code class="docutils literal notranslate"><span class="pre">StanModel.generate_quantities()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.get_varnames_to_dimnames"><code class="docutils literal notranslate"><span class="pre">StanModel.get_varnames_to_dimnames()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.laplace_sample"><code class="docutils literal notranslate"><span class="pre">StanModel.laplace_sample()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.log_prob"><code class="docutils literal notranslate"><span class="pre">StanModel.log_prob()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.optimize"><code class="docutils literal notranslate"><span class="pre">StanModel.optimize()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.pathfinder"><code class="docutils literal notranslate"><span class="pre">StanModel.pathfinder()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.sample"><code class="docutils literal notranslate"><span class="pre">StanModel.sample()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.stan_program_path"><code class="docutils literal notranslate"><span class="pre">StanModel.stan_program_path</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.variational"><code class="docutils literal notranslate"><span class="pre">StanModel.variational()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanModel.write_stan_program"><code class="docutils literal notranslate"><span class="pre">StanModel.write_stan_program()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../plotting/index.html">Plotting Subpackage API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../operations.html">Operations API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
@@ -1437,7 +1543,7 @@ of SciStanPy for debugging or optimization purposes.</p>
 <ul>
   <li><a href="../../../index.html">Documentation overview</a><ul>
   <li><a href="../../index.html">SciStanPy API Reference</a><ul>
-  <li><a href="../index.html">Model API Reference</a><ul>
+  <li><a href="../index.html">Model SubPackage API Reference</a><ul>
   <li><a href="index.html">Stan Submodule API Reference</a><ul>
       <li>Previous: <a href="stan_functions.html" title="previous chapter">Stan Functions Library Reference</a></li>
       <li>Next: <a href="../../plotting/index.html" title="next chapter">Plotting Subpackage API Reference</a></li>

@@ -274,6 +274,13 @@ Stan parameter ordering conventions.</p>
 </dd>
 </dl>
 <dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.CDF.PARAMETER">
+<span class="sig-name descname"><span class="pre">PARAMETER</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../parameters.html#scistanpy.model.components.parameters.Parameter" title="scistanpy.model.components.parameters.Parameter"><span class="pre">parameters.Parameter</span></a></em><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.CDF.PARAMETER" title="Link to this definition">¶</a></dt>
+<dd><p>Reference to the <a class="reference internal" href="../parameters.html#scistanpy.model.components.parameters.Parameter" title="scistanpy.model.components.parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>
+subclass for which this <code class="docutils literal notranslate"><span class="pre">CDFLike</span></code> class applies. Should be set by the metaclass.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.CDF.SCIPY_FUNC">
 <span class="sig-name descname"><span class="pre">SCIPY_FUNC</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cdf'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.CDF.SCIPY_FUNC" title="Link to this definition">¶</a></dt>
 <dd><p>Name of the SciPy method for this operation (e.g., ‘cdf’, ‘sf’, ‘log_cdf’,
@@ -369,6 +376,13 @@ computations involving extreme tail probabilities.</p>
 </dd>
 </dl>
 <dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.LogCDF.PARAMETER">
+<span class="sig-name descname"><span class="pre">PARAMETER</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../parameters.html#scistanpy.model.components.parameters.Parameter" title="scistanpy.model.components.parameters.Parameter"><span class="pre">parameters.Parameter</span></a></em><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.LogCDF.PARAMETER" title="Link to this definition">¶</a></dt>
+<dd><p>Reference to the <a class="reference internal" href="../parameters.html#scistanpy.model.components.parameters.Parameter" title="scistanpy.model.components.parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>
+subclass for which this <code class="docutils literal notranslate"><span class="pre">CDFLike</span></code> class applies. Should be set by the metaclass.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.LogCDF.SCIPY_FUNC">
 <span class="sig-name descname"><span class="pre">SCIPY_FUNC</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'logcdf'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.LogCDF.SCIPY_FUNC" title="Link to this definition">¶</a></dt>
 <dd><p>Name of the SciPy method for this operation (e.g., ‘cdf’, ‘sf’, ‘log_cdf’,
@@ -460,6 +474,13 @@ evaluation point.</p>
 </div>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.SurvivalFunction.PARAMETER">
+<span class="sig-name descname"><span class="pre">PARAMETER</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../parameters.html#scistanpy.model.components.parameters.Parameter" title="scistanpy.model.components.parameters.Parameter"><span class="pre">parameters.Parameter</span></a></em><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.SurvivalFunction.PARAMETER" title="Link to this definition">¶</a></dt>
+<dd><p>Reference to the <a class="reference internal" href="../parameters.html#scistanpy.model.components.parameters.Parameter" title="scistanpy.model.components.parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>
+subclass for which this <code class="docutils literal notranslate"><span class="pre">CDFLike</span></code> class applies. Should be set by the metaclass.</p>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.SurvivalFunction.SCIPY_FUNC">
 <span class="sig-name descname"><span class="pre">SCIPY_FUNC</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sf'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.SurvivalFunction.SCIPY_FUNC" title="Link to this definition">¶</a></dt>
@@ -560,6 +581,13 @@ to zero or one. Essential for stable survival analysis computations.</p>
 </dd>
 </dl>
 <dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.PARAMETER">
+<span class="sig-name descname"><span class="pre">PARAMETER</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../parameters.html#scistanpy.model.components.parameters.Parameter" title="scistanpy.model.components.parameters.Parameter"><span class="pre">parameters.Parameter</span></a></em><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.PARAMETER" title="Link to this definition">¶</a></dt>
+<dd><p>Reference to the <a class="reference internal" href="../parameters.html#scistanpy.model.components.parameters.Parameter" title="scistanpy.model.components.parameters.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>
+subclass for which this <code class="docutils literal notranslate"><span class="pre">CDFLike</span></code> class applies. Should be set by the metaclass.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.SCIPY_FUNC">
 <span class="sig-name descname"><span class="pre">SCIPY_FUNC</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'logsf'</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.SCIPY_FUNC" title="Link to this definition">¶</a></dt>
 <dd><p>Name of the SciPy method for this operation (e.g., ‘cdf’, ‘sf’, ‘log_cdf’,
@@ -643,7 +671,86 @@ Should be set by subclasses.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../../custom_types.html">Custom Types API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../defaults.html">Defaults API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../exceptions.html">Exceptions API Reference</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Model API Reference</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Model SubPackage API Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">Model Components API Reference</a><ul class="current">
+<li class="toctree-l5 current"><a class="reference internal" href="../index.html#model-components-submodule-overview">Model Components Submodule Overview</a><ul class="current">
+<li class="toctree-l6"><a class="reference internal" href="../abstract_model_component.html">Abstract Model Component API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../constants.html">Constants API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../custom_distributions/index.html">Custom Distributions API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../parameters.html">Parameters API Reference</a></li>
+<li class="toctree-l6 current"><a class="reference internal" href="index.html">Transformations API Reference</a><ul class="current">
+<li class="toctree-l7 current"><a class="current reference internal" href="#">CDFs API Reference</a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#base-class">Base Class</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike"><code class="docutils literal notranslate"><span class="pre">CDFLike</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.PARAMETER"><code class="docutils literal notranslate"><span class="pre">CDFLike.PARAMETER</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.SCIPY_FUNC"><code class="docutils literal notranslate"><span class="pre">CDFLike.SCIPY_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.STAN_SUFFIX"><code class="docutils literal notranslate"><span class="pre">CDFLike.STAN_SUFFIX</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.TORCH_FUNC"><code class="docutils literal notranslate"><span class="pre">CDFLike.TORCH_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.check_parameters"><code class="docutils literal notranslate"><span class="pre">CDFLike.check_parameters()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">CDFLike.run_np_torch_op()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.write_stan_operation"><code class="docutils literal notranslate"><span class="pre">CDFLike.write_stan_operation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#concrete-classes">Concrete Classes</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDF"><code class="docutils literal notranslate"><span class="pre">CDF</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDF.PARAMETER"><code class="docutils literal notranslate"><span class="pre">CDF.PARAMETER</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDF.SCIPY_FUNC"><code class="docutils literal notranslate"><span class="pre">CDF.SCIPY_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDF.STAN_SUFFIX"><code class="docutils literal notranslate"><span class="pre">CDF.STAN_SUFFIX</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDF.TORCH_FUNC"><code class="docutils literal notranslate"><span class="pre">CDF.TORCH_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDF.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">CDF.run_np_torch_op()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF"><code class="docutils literal notranslate"><span class="pre">LogCDF</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF.PARAMETER"><code class="docutils literal notranslate"><span class="pre">LogCDF.PARAMETER</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF.SCIPY_FUNC"><code class="docutils literal notranslate"><span class="pre">LogCDF.SCIPY_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF.STAN_SUFFIX"><code class="docutils literal notranslate"><span class="pre">LogCDF.STAN_SUFFIX</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF.TORCH_FUNC"><code class="docutils literal notranslate"><span class="pre">LogCDF.TORCH_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">LogCDF.run_np_torch_op()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.SurvivalFunction"><code class="docutils literal notranslate"><span class="pre">SurvivalFunction</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.SurvivalFunction.PARAMETER"><code class="docutils literal notranslate"><span class="pre">SurvivalFunction.PARAMETER</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.SurvivalFunction.SCIPY_FUNC"><code class="docutils literal notranslate"><span class="pre">SurvivalFunction.SCIPY_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.SurvivalFunction.STAN_SUFFIX"><code class="docutils literal notranslate"><span class="pre">SurvivalFunction.STAN_SUFFIX</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.SurvivalFunction.TORCH_FUNC"><code class="docutils literal notranslate"><span class="pre">SurvivalFunction.TORCH_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.SurvivalFunction.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">SurvivalFunction.run_np_torch_op()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.PARAMETER"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction.PARAMETER</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.SCIPY_FUNC"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction.SCIPY_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.STAN_SUFFIX"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction.STAN_SUFFIX</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.TORCH_FUNC"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction.TORCH_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction.run_np_torch_op()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="transformed_data.html">Transformed Data API Reference</a></li>
+<li class="toctree-l7"><a class="reference internal" href="transformed_parameters.html">Transformed Parameters API Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#key-design-principles">Key Design Principles</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#additional-usage-patterns">Additional Usage Patterns</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#other-notable-features">Other Notable Features</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../../model.html">Model API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../nn_module.html">Neural Network Module API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../results/index.html">Model Results API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../stan/index.html">Stan Submodule API Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../plotting/index.html">Plotting Subpackage API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../operations.html">Operations API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>
@@ -656,7 +763,7 @@ Should be set by subclasses.</p>
 <ul>
   <li><a href="../../../../index.html">Documentation overview</a><ul>
   <li><a href="../../../index.html">SciStanPy API Reference</a><ul>
-  <li><a href="../../index.html">Model API Reference</a><ul>
+  <li><a href="../../index.html">Model SubPackage API Reference</a><ul>
   <li><a href="../index.html">Model Components API Reference</a><ul>
   <li><a href="index.html">Transformations API Reference</a><ul>
       <li>Previous: <a href="index.html" title="previous chapter">Transformations API Reference</a></li>

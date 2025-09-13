@@ -721,9 +721,7 @@
         <span class="c1"># Get the base log probability from the parent class</span>
         <span class="n">base_log_prob</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
-        <span class="c1"># The last element of the array is not a free variable, so we need to</span>
-        <span class="c1"># subtract off its contribution to the log probability. We also need to</span>
-        <span class="c1"># adjust for the size of the simplex.</span>
+        <span class="c1"># Make adjustments</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">base_log_prob</span>
             <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>

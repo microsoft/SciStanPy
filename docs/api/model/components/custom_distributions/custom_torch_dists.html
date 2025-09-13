@@ -656,7 +656,75 @@ on the Stan forums.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../../custom_types.html">Custom Types API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../defaults.html">Defaults API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../exceptions.html">Exceptions API Reference</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Model SubPackage API Reference</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Model SubPackage API Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">Model Components API Reference</a><ul class="current">
+<li class="toctree-l5 current"><a class="reference internal" href="../index.html#model-components-submodule-overview">Model Components Submodule Overview</a><ul class="current">
+<li class="toctree-l6"><a class="reference internal" href="../abstract_model_component.html">Abstract Model Component API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../constants.html">Constants API Reference</a></li>
+<li class="toctree-l6 current"><a class="reference internal" href="index.html">Custom Distributions API Reference</a><ul class="current">
+<li class="toctree-l7 current"><a class="current reference internal" href="#">Custom PyTorch Distributions API Reference</a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#base-classes">Base Classes</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.CustomDistribution"><code class="docutils literal notranslate"><span class="pre">CustomDistribution</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#multinomial-extensions">Multinomial Extensions</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial"><code class="docutils literal notranslate"><span class="pre">Multinomial</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial.log_prob"><code class="docutils literal notranslate"><span class="pre">Multinomial.log_prob()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial.sample"><code class="docutils literal notranslate"><span class="pre">Multinomial.sample()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialProb"><code class="docutils literal notranslate"><span class="pre">MultinomialProb</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit"><code class="docutils literal notranslate"><span class="pre">MultinomialLogit</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogTheta"><code class="docutils literal notranslate"><span class="pre">MultinomialLogTheta</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#numerically-stable-distributions">Numerically Stable Distributions</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal"><code class="docutils literal notranslate"><span class="pre">Normal</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal.log_cdf"><code class="docutils literal notranslate"><span class="pre">Normal.log_cdf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal.log_sf"><code class="docutils literal notranslate"><span class="pre">Normal.log_sf()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal"><code class="docutils literal notranslate"><span class="pre">LogNormal</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal.log_cdf"><code class="docutils literal notranslate"><span class="pre">LogNormal.log_cdf()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal.log_sf"><code class="docutils literal notranslate"><span class="pre">LogNormal.log_sf()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l8"><a class="reference internal" href="#custom-distribution-implementations">Custom Distribution Implementations</a><ul>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.Lomax"><code class="docutils literal notranslate"><span class="pre">Lomax</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpLomax"><code class="docutils literal notranslate"><span class="pre">ExpLomax</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpExponential"><code class="docutils literal notranslate"><span class="pre">ExpExponential</span></code></a></li>
+<li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpDirichlet"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet</span></code></a><ul>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpDirichlet.log_prob"><code class="docutils literal notranslate"><span class="pre">ExpDirichlet.log_prob()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="custom_scipy_dists.html">Custom SciPy Distributions API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="../parameters.html">Parameters API Reference</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../transformations/index.html">Transformations API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#key-design-principles">Key Design Principles</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#additional-usage-patterns">Additional Usage Patterns</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../index.html#other-notable-features">Other Notable Features</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../../model.html">Model API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../nn_module.html">Neural Network Module API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../results/index.html">Model Results API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../stan/index.html">Stan Submodule API Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../plotting/index.html">Plotting Subpackage API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../operations.html">Operations API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>

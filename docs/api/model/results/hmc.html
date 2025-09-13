@@ -1061,7 +1061,59 @@ full memory loading of the original CSV files.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../custom_types.html">Custom Types API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../defaults.html">Defaults API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../exceptions.html">Exceptions API Reference</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Model API Reference</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Model SubPackage API Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../components/index.html">Model Components API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../model.html">Model API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nn_module.html">Neural Network Module API Reference</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">Model Results API Reference</a><ul class="current">
+<li class="toctree-l5"><a class="reference internal" href="mle.html">Maximum Likelihood Estimation Results API Reference</a></li>
+<li class="toctree-l5 current"><a class="current reference internal" href="#">Hamiltonian Monte Carlo Results API Reference</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#sample-results-analysis">Sample Results Analysis</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults"><code class="docutils literal notranslate"><span class="pre">SampleResults</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults.calculate_diagnostics"><code class="docutils literal notranslate"><span class="pre">SampleResults.calculate_diagnostics()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults.calculate_summaries"><code class="docutils literal notranslate"><span class="pre">SampleResults.calculate_summaries()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults.diagnose"><code class="docutils literal notranslate"><span class="pre">SampleResults.diagnose()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults.evaluate_sample_stats"><code class="docutils literal notranslate"><span class="pre">SampleResults.evaluate_sample_stats()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults.evaluate_variable_diagnostic_stats"><code class="docutils literal notranslate"><span class="pre">SampleResults.evaluate_variable_diagnostic_stats()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults.from_disk"><code class="docutils literal notranslate"><span class="pre">SampleResults.from_disk()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults.identify_failed_diagnostics"><code class="docutils literal notranslate"><span class="pre">SampleResults.identify_failed_diagnostics()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults.plot_sample_failure_quantile_traces"><code class="docutils literal notranslate"><span class="pre">SampleResults.plot_sample_failure_quantile_traces()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces"><code class="docutils literal notranslate"><span class="pre">SampleResults.plot_variable_failure_quantile_traces()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="#variable-failure-analyzer">Variable Failure Analyzer</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.hmc.VariableAnalyzer"><code class="docutils literal notranslate"><span class="pre">VariableAnalyzer</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.VariableAnalyzer.display"><code class="docutils literal notranslate"><span class="pre">VariableAnalyzer.display()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="#csv-to-netcdf-conversion">CSV to NetCDF Conversion</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.hmc.cmdstan_csv_to_netcdf"><code class="docutils literal notranslate"><span class="pre">cmdstan_csv_to_netcdf()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter"><code class="docutils literal notranslate"><span class="pre">CmdStanMCMCToNetCDFConverter</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter.write_netcdf"><code class="docutils literal notranslate"><span class="pre">CmdStanMCMCToNetCDFConverter.write_netcdf()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="#utility-functions">Utility Functions</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.hmc.dask_enabled_summary_stats"><code class="docutils literal notranslate"><span class="pre">dask_enabled_summary_stats()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.hmc.dask_enabled_diagnostics"><code class="docutils literal notranslate"><span class="pre">dask_enabled_diagnostics()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.hmc.fit_from_csv_noload"><code class="docutils literal notranslate"><span class="pre">fit_from_csv_noload()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../stan/index.html">Stan Submodule API Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../plotting/index.html">Plotting Subpackage API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../operations.html">Operations API Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
@@ -1074,7 +1126,7 @@ full memory loading of the original CSV files.</p>
 <ul>
   <li><a href="../../../index.html">Documentation overview</a><ul>
   <li><a href="../../index.html">SciStanPy API Reference</a><ul>
-  <li><a href="../index.html">Model API Reference</a><ul>
+  <li><a href="../index.html">Model SubPackage API Reference</a><ul>
   <li><a href="index.html">Model Results API Reference</a><ul>
       <li>Previous: <a href="mle.html" title="previous chapter">Maximum Likelihood Estimation Results API Reference</a></li>
       <li>Next: <a href="../stan/index.html" title="next chapter">Stan Submodule API Reference</a></li>
