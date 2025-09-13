@@ -84,7 +84,7 @@ transformed_data = utils.lazy_import(
 if TYPE_CHECKING:
     from scistanpy import custom_types
 
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines, line-too-long
 
 
 @overload
@@ -1885,7 +1885,7 @@ class ExpDirichlet(Dirichlet):
             \begin{align*}
             \text{If } X &\sim \text{Dirichlet}(\alpha), \text{then } \\ \\
             Y &= \log(X) \sim \text{ExpDirichlet}(\alpha), \text{where } \\ \\
-            P(y | \alpha) &= \frac{\Gamma(\sum_{i=1}^K \alpha_i)}{\text{e}^{y_K}\prod_{i=1}^K
+            P(y | \alpha) &= \frac{\sqrt{K}}{\exp{(y_K)}}\frac{\Gamma(\sum_{i=1}^K \alpha_i)}{\prod_{i=1}^K
             \Gamma(\alpha_i)} \prod_{i=1}^K \exp(y_i \alpha_i) \text{ for }
             y_i \in (-\infty, \infty),
             \sum_{i=1}^K \exp(y_i) = 1 \\

@@ -14,28 +14,6 @@ Key Features:
     - **Numerical Stability**: Improved log-space probability computations
     - **Custom Distributions**: Implementations of distributions not in PyTorch
     - **SciStanPy Integration**: Designed for compatibility with SciStanPy parameter types
-
-Distribution Categories:
-
-**Multinomial Extensions**: Enhanced multinomial distributions
-    - Multinomial: Base class with inhomogeneous total count support
-    - MultinomialProb: Probability-parameterized multinomial
-    - MultinomialLogit: Logit-parameterized multinomial
-    - MultinomialLogTheta: Normalized log-probability multinomial
-
-**Numerically Stable Distributions**: Improved standard distributions
-    - Normal: Enhanced with stable log-CDF and log-survival functions
-    - LogNormal: Enhanced with stable log-space probability functions
-
-**Custom Distribution Implementations**: New distribution types
-    - Lomax: Shifted Pareto distribution
-    - ExpLomax: Exponential-Lomax distribution
-    - ExpExponential: Exponential-Exponential distribution
-    - ExpDirichlet: Exponential-Dirichlet distribution
-
-The distributions in this module are designed to work within PyTorch's
-distribution framework while providing the specific functionality required
-for probabilistic modeling in SciStanPy.
 """
 
 from __future__ import annotations
@@ -85,10 +63,10 @@ class Multinomial(CustomDistribution):
     :raises ValueError: If neither or both probs and logits are provided
 
     Key Features:
-    - Supports different total counts per batch element
-    - Maintains PyTorch distribution interface compatibility
-    - Efficient batched computation through internal distribution creation
-    - Proper shape handling for multi-dimensional batch operations
+        - Supports different total counts per batch element
+        - Maintains PyTorch distribution interface compatibility
+        - Efficient batched computation through internal distribution creation
+        - Proper shape handling for multi-dimensional batch operations
 
     The implementation creates individual multinomial distributions for each
     batch element, allowing for flexible modeling scenarios where trial
@@ -221,8 +199,10 @@ class MultinomialProb(Multinomial, CustomDistribution):
     """Multinomial distribution parameterized by probabilities.
 
     This class provides a specialized interface for multinomial distributions
-    where the parameters are specified as probabilities rather than logits.
-    It's a convenience wrapper around the base Multinomial class.
+    where the parameters are specified as probabilities rather than logits. It's
+    a convenience wrapper around the base
+    :py:class:`~scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial`
+    class.
 
     :param total_count: Total number of trials for each batch element. Defaults to 1.
     :type total_count: Union[custom_types.Integer, torch.Tensor]
@@ -265,8 +245,9 @@ class MultinomialLogit(Multinomial, CustomDistribution):
 
     This class provides a specialized interface for multinomial distributions
     where the parameters are specified as logits (log-odds) rather than
-    probabilities. This parameterization is often more convenient for
-    modeling and optimization.
+    probabilities. It's a convenience wrapper around the base
+    :py:class:`~scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial`
+    class.
 
     :param total_count: Total number of trials for each batch element. Defaults to 1.
     :type total_count: Union[custom_types.Integer, torch.Tensor]
@@ -274,12 +255,6 @@ class MultinomialLogit(Multinomial, CustomDistribution):
     :type logits: Optional[torch.Tensor]
     :param validate_args: Whether to validate arguments. Defaults to None.
     :type validate_args: Optional[bool]
-
-    The logit parameterization is advantageous because:
-    - No normalization constraints (logits can be any real numbers)
-    - Better numerical properties for optimization
-    - Natural output of neural networks and linear models
-    - Automatic normalization through softmax transformation
 
     Example:
         >>> # Logit parameterization
@@ -309,7 +284,9 @@ class MultinomialLogit(Multinomial, CustomDistribution):
 class MultinomialLogTheta(MultinomialLogit):
     """Multinomial distribution with normalized log-probabilities.
 
-    This class extends MultinomialLogit with the additional constraint that
+    This class extends
+    :py:class:`~scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit`
+    with the additional constraint that
     the input log-probabilities must already be normalized (i.e., their
     exponentials sum to 1). This is useful when working with log-probability
     vectors that are guaranteed to be valid probability distributions.
@@ -325,9 +302,9 @@ class MultinomialLogTheta(MultinomialLogit):
     :raises AssertionError: If log_probs are not properly normalized
 
     This parameterization is particularly useful when:
-    - Working with log-space normalized probability vectors
-    - Ensuring numerical precision in log-space computations
-    - Interfacing with other log-space probability calculations
+        - Working with log-space normalized probability vectors
+        - Ensuring numerical precision in log-space computations
+        - Interfacing with other log-space probability calculations
 
     The normalization constraint is enforced at initialization to prevent
     invalid probability distributions.
@@ -379,15 +356,15 @@ class Normal(dist.Normal):
     designed for numerical stability in extreme value computations.
 
     Key Improvements:
-    - Numerically stable log-CDF computation using log_ndtr
-    - Stable log-survival function using symmetry properties
-    - Maintains full compatibility with PyTorch's Normal interface
-    - Better precision for extreme tail probabilities
+        - Numerically stable log-CDF computation using ``log_ndtr``
+        - Stable log-survival function using symmetry properties
+        - Maintains full compatibility with PyTorch's Normal interface
+        - Better precision for extreme tail probabilities
 
     These improvements are particularly important for:
-    - Extreme value analysis
-    - Tail probability computations
-    - Log-likelihood calculations with extreme parameter values
+        - Extreme value analysis
+        - Tail probability computations
+        - Log-likelihood calculations with extreme parameter values
 
     Example:
         >>> # Enhanced normal distribution
@@ -407,7 +384,7 @@ class Normal(dist.Normal):
         :returns: Log-CDF values
         :rtype: torch.Tensor
 
-        Uses PyTorch's special.log_ndtr function for numerical stability,
+        Uses PyTorch's ``special.log_ndtr`` function for numerical stability,
         which is specifically designed to handle extreme values without
         overflow or underflow issues.
         """
@@ -440,10 +417,10 @@ class LogNormal(dist.LogNormal):
     stability, particularly important given the log-normal's heavy tail behavior.
 
     Key Improvements:
-    - Stable log-CDF computation using the underlying normal distribution
-    - Numerically stable log-survival function
-    - Maintains compatibility with PyTorch's LogNormal interface
-    - Better handling of extreme values in both tails
+        - Stable log-CDF computation using ``log_ndtr``
+        - Numerically stable log-survival function
+        - Maintains compatibility with PyTorch's LogNormal interface
+        - Better handling of extreme values in both tails
 
     The log-normal distribution is particularly sensitive to numerical issues
     because of its relationship to the normal distribution through logarithmic
@@ -489,7 +466,7 @@ class LogNormal(dist.LogNormal):
 
 # pylint: disable=abstract-method
 class Lomax(dist.transformed_distribution.TransformedDistribution, CustomDistribution):
-    """Lomax distribution implementation (shifted Pareto distribution).
+    r"""Lomax distribution implementation (shifted Pareto distribution).
 
     The Lomax distribution is a shifted version of the Pareto distribution,
     also known as the Pareto Type II distribution. It's implemented as a
@@ -503,12 +480,12 @@ class Lomax(dist.transformed_distribution.TransformedDistribution, CustomDistrib
     :param kwargs: Additional keyword arguments for the base distribution
 
     Mathematical Definition:
-        If X ~ Pareto(scale=λ, shape=α), then Y = X - λ ~ Lomax(λ, α)
-
-    Properties:
-    - Support: [0, ∞)
-    - Heavy-tailed distribution
-    - Power-law behavior in the tail
+        .. math::
+            \begin{align*}
+            \text{If } X &\sim \text{Pareto}(\lambda, \alpha), \text{then } \\ \\
+                Y &\sim \text{Lomax}(\lambda, \alpha), \text{where } \\ \\
+                    Y &= X - \lambda
+            \end{align*}
 
     The distribution is implemented using PyTorch's TransformedDistribution
     framework with a Pareto base distribution and an affine transformation.
@@ -538,7 +515,7 @@ class Lomax(dist.transformed_distribution.TransformedDistribution, CustomDistrib
 class ExpLomax(
     dist.transformed_distribution.TransformedDistribution, CustomDistribution
 ):
-    """Exponential-Lomax distribution implementation.
+    r"""Exponential-Lomax distribution implementation.
 
     This distribution is created by taking the logarithm of a Lomax-distributed
     random variable. It's useful for modeling log-scale phenomena that exhibit
@@ -552,23 +529,11 @@ class ExpLomax(
     :param kwargs: Additional keyword arguments for the base distribution
 
     Mathematical Definition:
-        If X ~ Lomax(λ, α), then Y = log(X) ~ ExpLomax(λ, α)
-
-    Properties:
-    - Support: (-∞, ∞)
-    - Heavy-tailed in log-space
-    - Useful for log-scale modeling of power-law phenomena
-    - Natural for multiplicative processes
-
-    This distribution combines the heavy-tail properties of the Lomax
-    distribution with the convenience of log-scale modeling.
-
-    Example:
-        >>> # Modeling log-scale heavy-tailed data
-        >>> lambda_param = torch.tensor(1.0)
-        >>> alpha_param = torch.tensor(2.0)
-        >>> exp_lomax = ExpLomax(lambda_=lambda_param, alpha=alpha_param)
-        >>> log_samples = exp_lomax.sample((1000,))
+        .. math::
+            \begin{align*}
+            \text{If } X &\sim \text{Lomax}(\lambda, \alpha), \text{then } \\ \\
+                Y &= \log(X) \sim \text{ExpLomax}(\lambda, \alpha)
+            \end{align*}
     """
 
     def __init__(self, lambda_: torch.Tensor, alpha: torch.Tensor, *args, **kwargs):
@@ -588,7 +553,7 @@ class ExpLomax(
 class ExpExponential(
     dist.transformed_distribution.TransformedDistribution, CustomDistribution
 ):
-    """Exponential-Exponential distribution implementation.
+    r"""Exponential-Exponential distribution implementation.
 
     This distribution is created by taking the logarithm of an exponentially
     distributed random variable. It's also known as the Gumbel distribution
@@ -600,19 +565,11 @@ class ExpExponential(
     :param kwargs: Additional keyword arguments for the base distribution
 
     Mathematical Definition:
-        If X ~ Exponential(rate), then Y = log(X) ~ ExpExponential(rate)
-
-    Properties:
-    - Support: (-∞, ∞)
-    - Type I extreme value distribution (Gumbel)
-    - Useful for modeling minima of exponential random variables
-    - Common in survival analysis and reliability engineering
-
-    Example:
-        >>> # Extreme value modeling
-        >>> rate_param = torch.tensor(1.0)
-        >>> exp_exp = ExpExponential(rate=rate_param)
-        >>> extreme_values = exp_exp.sample((1000,))
+        .. math::
+            \begin{align*}
+            \text{If } X &\sim \text{Exponential}(\text{rate}), \text{then } \\ \\
+                Y &= \log(X) \sim \text{ExpExponential}(\text{rate})
+            \end{align*}
     """
 
     def __init__(self, rate: torch.Tensor, *args, **kwargs):
@@ -631,7 +588,7 @@ class ExpExponential(
 class ExpDirichlet(
     dist.transformed_distribution.TransformedDistribution, CustomDistribution
 ):
-    """Exponential-Dirichlet distribution implementation.
+    r"""Exponential-Dirichlet distribution implementation.
 
     This distribution is created by taking the element-wise logarithm of a
     Dirichlet-distributed random vector. It's useful for modeling log-scale
@@ -643,24 +600,15 @@ class ExpDirichlet(
     :param kwargs: Additional keyword arguments for the base distribution
 
     Mathematical Definition:
-        If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α)
-
-    Properties:
-    - Support: (-∞, 0]^K where K is the number of categories
-    - Log-scale simplex (sum of exponentials equals 1)
-    - Natural for log-probability modeling
-    - Useful in Bayesian analysis of categorical data
+        .. math::
+            \begin{align*}
+            \text{If } X &\sim \text{Dirichlet}(\alpha), \text{then } \\ \\
+            Y &= \log(X) \sim \text{ExpDirichlet}(\alpha)
+            \end{align*}
 
     This distribution is particularly valuable when working with probability
     vectors in log-space, where it maintains the simplex constraint through
     the exponential transformation.
-
-    Example:
-        >>> # Log-probability vector modeling
-        >>> concentration = torch.tensor([2.0, 3.0, 1.0])
-        >>> exp_dirichlet = ExpDirichlet(concentration=concentration)
-        >>> log_probs = exp_dirichlet.sample((100,))
-        >>> # Verify simplex constraint: exp(log_probs).sum(dim=-1) ≈ 1
     """
 
     def __init__(self, concentration: torch.Tensor, *args, **kwargs):
@@ -674,6 +622,26 @@ class ExpDirichlet(
         base_dist = dist.Dirichlet(concentration=concentration)
         transforms = [dist.transforms.ExpTransform().inv]
         super().__init__(base_dist, transforms, *args, **kwargs)
+
+    def log_prob(self, value: torch.Tensor) -> torch.Tensor:
+        """
+        Compute log-probabilities for Exponential-Dirichlet outcomes. The PyTorch
+        implementation applies a Jacobian correction element-wise, neglecting the
+        simplex constraint. This method adjusts the elementwise log probability to
+        correct for this.
+
+        See `discussion <https://discourse.mc-stan.org/t/log-simplex-constraints/39782/5>`_
+        on the Stan forums.
+        """
+        # Get the base log probability from the parent class
+        base_log_prob = super().log_prob(value)
+
+        # Make adjustments
+        return (
+            base_log_prob
+            + 0.5 * torch.log(value.size(-1))
+            - value[..., torch.tensor([-1], device=value.device)]
+        )
 
 
 # pylint: enable=abstract-method

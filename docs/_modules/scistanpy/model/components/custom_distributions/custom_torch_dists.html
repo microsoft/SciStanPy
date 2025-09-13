@@ -47,28 +47,6 @@
 <span class="sd">    - **Numerical Stability**: Improved log-space probability computations</span>
 <span class="sd">    - **Custom Distributions**: Implementations of distributions not in PyTorch</span>
 <span class="sd">    - **SciStanPy Integration**: Designed for compatibility with SciStanPy parameter types</span>
-
-<span class="sd">Distribution Categories:</span>
-
-<span class="sd">**Multinomial Extensions**: Enhanced multinomial distributions</span>
-<span class="sd">    - Multinomial: Base class with inhomogeneous total count support</span>
-<span class="sd">    - MultinomialProb: Probability-parameterized multinomial</span>
-<span class="sd">    - MultinomialLogit: Logit-parameterized multinomial</span>
-<span class="sd">    - MultinomialLogTheta: Normalized log-probability multinomial</span>
-
-<span class="sd">**Numerically Stable Distributions**: Improved standard distributions</span>
-<span class="sd">    - Normal: Enhanced with stable log-CDF and log-survival functions</span>
-<span class="sd">    - LogNormal: Enhanced with stable log-space probability functions</span>
-
-<span class="sd">**Custom Distribution Implementations**: New distribution types</span>
-<span class="sd">    - Lomax: Shifted Pareto distribution</span>
-<span class="sd">    - ExpLomax: Exponential-Lomax distribution</span>
-<span class="sd">    - ExpExponential: Exponential-Exponential distribution</span>
-<span class="sd">    - ExpDirichlet: Exponential-Dirichlet distribution</span>
-
-<span class="sd">The distributions in this module are designed to work within PyTorch&#39;s</span>
-<span class="sd">distribution framework while providing the specific functionality required</span>
-<span class="sd">for probabilistic modeling in SciStanPy.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -100,6 +78,8 @@
 
 
 
+<div class="viewcode-block" id="Multinomial">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Multinomial</span><span class="p">(</span><span class="n">CustomDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extended multinomial distribution supporting inhomogeneous total counts.</span>
 
@@ -121,10 +101,10 @@
 <span class="sd">    :raises ValueError: If neither or both probs and logits are provided</span>
 
 <span class="sd">    Key Features:</span>
-<span class="sd">    - Supports different total counts per batch element</span>
-<span class="sd">    - Maintains PyTorch distribution interface compatibility</span>
-<span class="sd">    - Efficient batched computation through internal distribution creation</span>
-<span class="sd">    - Proper shape handling for multi-dimensional batch operations</span>
+<span class="sd">        - Supports different total counts per batch element</span>
+<span class="sd">        - Maintains PyTorch distribution interface compatibility</span>
+<span class="sd">        - Efficient batched computation through internal distribution creation</span>
+<span class="sd">        - Proper shape handling for multi-dimensional batch operations</span>
 
 <span class="sd">    The implementation creates individual multinomial distributions for each</span>
 <span class="sd">    batch element, allowing for flexible modeling scenarios where trial</span>
@@ -197,6 +177,8 @@
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">N</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">total_count</span><span class="p">)</span>
         <span class="p">]</span>
 
+<div class="viewcode-block" id="Multinomial.log_prob">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial.log_prob">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log-probabilities for observed multinomial outcomes.</span>
 
@@ -230,8 +212,11 @@
 
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
             <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distributions</span><span class="p">,</span> <span class="n">value</span><span class="p">)]</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="Multinomial.sample">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial.sample">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate samples from the multinomial distribution.</span>
 
@@ -250,15 +235,21 @@
         <span class="c1"># appropriate sample dimension</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
             <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">distributions</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">*</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_categories</span><span class="p">))</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">*</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_categories</span><span class="p">))</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="MultinomialProb">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialProb">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialProb</span><span class="p">(</span><span class="n">Multinomial</span><span class="p">,</span> <span class="n">CustomDistribution</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution parameterized by probabilities.</span>
 
 <span class="sd">    This class provides a specialized interface for multinomial distributions</span>
-<span class="sd">    where the parameters are specified as probabilities rather than logits.</span>
-<span class="sd">    It&#39;s a convenience wrapper around the base Multinomial class.</span>
+<span class="sd">    where the parameters are specified as probabilities rather than logits. It&#39;s</span>
+<span class="sd">    a convenience wrapper around the base</span>
+<span class="sd">    :py:class:`~scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial`</span>
+<span class="sd">    class.</span>
 
 <span class="sd">    :param total_count: Total number of trials for each batch element. Defaults to 1.</span>
 <span class="sd">    :type total_count: Union[custom_types.Integer, torch.Tensor]</span>
@@ -293,7 +284,8 @@
         <span class="c1"># Call the parent class with probs</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">total_count</span><span class="o">=</span><span class="n">total_count</span><span class="p">,</span> <span class="n">probs</span><span class="o">=</span><span class="n">probs</span><span class="p">,</span> <span class="n">validate_args</span><span class="o">=</span><span class="n">validate_args</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="MultinomialLogit">
@@ -303,8 +295,9 @@
 
 <span class="sd">    This class provides a specialized interface for multinomial distributions</span>
 <span class="sd">    where the parameters are specified as logits (log-odds) rather than</span>
-<span class="sd">    probabilities. This parameterization is often more convenient for</span>
-<span class="sd">    modeling and optimization.</span>
+<span class="sd">    probabilities. It&#39;s a convenience wrapper around the base</span>
+<span class="sd">    :py:class:`~scistanpy.model.components.custom_distributions.custom_torch_dists.Multinomial`</span>
+<span class="sd">    class.</span>
 
 <span class="sd">    :param total_count: Total number of trials for each batch element. Defaults to 1.</span>
 <span class="sd">    :type total_count: Union[custom_types.Integer, torch.Tensor]</span>
@@ -312,12 +305,6 @@
 <span class="sd">    :type logits: Optional[torch.Tensor]</span>
 <span class="sd">    :param validate_args: Whether to validate arguments. Defaults to None.</span>
 <span class="sd">    :type validate_args: Optional[bool]</span>
-
-<span class="sd">    The logit parameterization is advantageous because:</span>
-<span class="sd">    - No normalization constraints (logits can be any real numbers)</span>
-<span class="sd">    - Better numerical properties for optimization</span>
-<span class="sd">    - Natural output of neural networks and linear models</span>
-<span class="sd">    - Automatic normalization through softmax transformation</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # Logit parameterization</span>
@@ -350,7 +337,9 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogTheta</span><span class="p">(</span><span class="n">MultinomialLogit</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with normalized log-probabilities.</span>
 
-<span class="sd">    This class extends MultinomialLogit with the additional constraint that</span>
+<span class="sd">    This class extends</span>
+<span class="sd">    :py:class:`~scistanpy.model.components.custom_distributions.custom_torch_dists.MultinomialLogit`</span>
+<span class="sd">    with the additional constraint that</span>
 <span class="sd">    the input log-probabilities must already be normalized (i.e., their</span>
 <span class="sd">    exponentials sum to 1). This is useful when working with log-probability</span>
 <span class="sd">    vectors that are guaranteed to be valid probability distributions.</span>
@@ -366,9 +355,9 @@
 <span class="sd">    :raises AssertionError: If log_probs are not properly normalized</span>
 
 <span class="sd">    This parameterization is particularly useful when:</span>
-<span class="sd">    - Working with log-space normalized probability vectors</span>
-<span class="sd">    - Ensuring numerical precision in log-space computations</span>
-<span class="sd">    - Interfacing with other log-space probability calculations</span>
+<span class="sd">        - Working with log-space normalized probability vectors</span>
+<span class="sd">        - Ensuring numerical precision in log-space computations</span>
+<span class="sd">        - Interfacing with other log-space probability calculations</span>
 
 <span class="sd">    The normalization constraint is enforced at initialization to prevent</span>
 <span class="sd">    invalid probability distributions.</span>
@@ -410,6 +399,8 @@
 
 
 
+<div class="viewcode-block" id="Normal">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Normal</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">Normal</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Enhanced normal distribution with numerically stable log-space functions.</span>
 
@@ -421,15 +412,15 @@
 <span class="sd">    designed for numerical stability in extreme value computations.</span>
 
 <span class="sd">    Key Improvements:</span>
-<span class="sd">    - Numerically stable log-CDF computation using log_ndtr</span>
-<span class="sd">    - Stable log-survival function using symmetry properties</span>
-<span class="sd">    - Maintains full compatibility with PyTorch&#39;s Normal interface</span>
-<span class="sd">    - Better precision for extreme tail probabilities</span>
+<span class="sd">        - Numerically stable log-CDF computation using ``log_ndtr``</span>
+<span class="sd">        - Stable log-survival function using symmetry properties</span>
+<span class="sd">        - Maintains full compatibility with PyTorch&#39;s Normal interface</span>
+<span class="sd">        - Better precision for extreme tail probabilities</span>
 
 <span class="sd">    These improvements are particularly important for:</span>
-<span class="sd">    - Extreme value analysis</span>
-<span class="sd">    - Tail probability computations</span>
-<span class="sd">    - Log-likelihood calculations with extreme parameter values</span>
+<span class="sd">        - Extreme value analysis</span>
+<span class="sd">        - Tail probability computations</span>
+<span class="sd">        - Log-likelihood calculations with extreme parameter values</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # Enhanced normal distribution</span>
@@ -440,6 +431,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># pylint: disable=not-callable, abstract-method</span>
+<div class="viewcode-block" id="Normal.log_cdf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal.log_cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute logarithm of cumulative distribution function.</span>
 
@@ -449,12 +442,15 @@
 <span class="sd">        :returns: Log-CDF values</span>
 <span class="sd">        :rtype: torch.Tensor</span>
 
-<span class="sd">        Uses PyTorch&#39;s special.log_ndtr function for numerical stability,</span>
+<span class="sd">        Uses PyTorch&#39;s ``special.log_ndtr`` function for numerical stability,</span>
 <span class="sd">        which is specifically designed to handle extreme values without</span>
 <span class="sd">        overflow or underflow issues.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">((</span><span class="n">value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">loc</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">((</span><span class="n">value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">loc</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="Normal.log_sf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Normal.log_sf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute logarithm of survival function (1 - CDF).</span>
 
@@ -471,9 +467,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># We take advantage of the symmetry of the normal distribution. The CDF</span>
         <span class="c1"># evaluated at the reflection about the mean will be the survival function.</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">loc</span> <span class="o">-</span> <span class="n">value</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">loc</span> <span class="o">-</span> <span class="n">value</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="LogNormal">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogNormal</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Enhanced log-normal distribution with numerically stable log-space functions.</span>
 
@@ -482,10 +482,10 @@
 <span class="sd">    stability, particularly important given the log-normal&#39;s heavy tail behavior.</span>
 
 <span class="sd">    Key Improvements:</span>
-<span class="sd">    - Stable log-CDF computation using the underlying normal distribution</span>
-<span class="sd">    - Numerically stable log-survival function</span>
-<span class="sd">    - Maintains compatibility with PyTorch&#39;s LogNormal interface</span>
-<span class="sd">    - Better handling of extreme values in both tails</span>
+<span class="sd">        - Stable log-CDF computation using ``log_ndtr``</span>
+<span class="sd">        - Numerically stable log-survival function</span>
+<span class="sd">        - Maintains compatibility with PyTorch&#39;s LogNormal interface</span>
+<span class="sd">        - Better handling of extreme values in both tails</span>
 
 <span class="sd">    The log-normal distribution is particularly sensitive to numerical issues</span>
 <span class="sd">    because of its relationship to the normal distribution through logarithmic</span>
@@ -500,6 +500,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># pylint: disable=not-callable, abstract-method</span>
+<div class="viewcode-block" id="LogNormal.log_cdf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal.log_cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute logarithm of cumulative distribution function.</span>
 
@@ -512,8 +514,11 @@
 <span class="sd">        Transforms the problem to the underlying normal distribution for</span>
 <span class="sd">        stable computation using log_ndtr.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">((</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">loc</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">((</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">loc</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="LogNormal.log_sf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.LogNormal.log_sf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute logarithm of survival function.</span>
 
@@ -526,14 +531,16 @@
 <span class="sd">        Uses the relationship between log-normal and normal distributions</span>
 <span class="sd">        to compute stable log-survival probabilities.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">loc</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">value</span><span class="p">))</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">loc</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">value</span><span class="p">))</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="c1"># pylint: disable=abstract-method</span>
 <div class="viewcode-block" id="Lomax">
 <a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.Lomax">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Lomax</span><span class="p">(</span><span class="n">dist</span><span class="o">.</span><span class="n">transformed_distribution</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">,</span> <span class="n">CustomDistribution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lomax distribution implementation (shifted Pareto distribution).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Lomax distribution implementation (shifted Pareto distribution).</span>
 
 <span class="sd">    The Lomax distribution is a shifted version of the Pareto distribution,</span>
 <span class="sd">    also known as the Pareto Type II distribution. It&#39;s implemented as a</span>
@@ -547,12 +554,12 @@
 <span class="sd">    :param kwargs: Additional keyword arguments for the base distribution</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        If X ~ Pareto(scale=λ, shape=α), then Y = X - λ ~ Lomax(λ, α)</span>
-
-<span class="sd">    Properties:</span>
-<span class="sd">    - Support: [0, ∞)</span>
-<span class="sd">    - Heavy-tailed distribution</span>
-<span class="sd">    - Power-law behavior in the tail</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \text{If } X &amp;\sim \text{Pareto}(\lambda, \alpha), \text{then } \\ \\</span>
+<span class="sd">                Y &amp;\sim \text{Lomax}(\lambda, \alpha), \text{where } \\ \\</span>
+<span class="sd">                    Y &amp;= X - \lambda</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    The distribution is implemented using PyTorch&#39;s TransformedDistribution</span>
 <span class="sd">    framework with a Pareto base distribution and an affine transformation.</span>
@@ -585,7 +592,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpLomax</span><span class="p">(</span>
     <span class="n">dist</span><span class="o">.</span><span class="n">transformed_distribution</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">,</span> <span class="n">CustomDistribution</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exponential-Lomax distribution implementation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exponential-Lomax distribution implementation.</span>
 
 <span class="sd">    This distribution is created by taking the logarithm of a Lomax-distributed</span>
 <span class="sd">    random variable. It&#39;s useful for modeling log-scale phenomena that exhibit</span>
@@ -599,23 +606,11 @@
 <span class="sd">    :param kwargs: Additional keyword arguments for the base distribution</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        If X ~ Lomax(λ, α), then Y = log(X) ~ ExpLomax(λ, α)</span>
-
-<span class="sd">    Properties:</span>
-<span class="sd">    - Support: (-∞, ∞)</span>
-<span class="sd">    - Heavy-tailed in log-space</span>
-<span class="sd">    - Useful for log-scale modeling of power-law phenomena</span>
-<span class="sd">    - Natural for multiplicative processes</span>
-
-<span class="sd">    This distribution combines the heavy-tail properties of the Lomax</span>
-<span class="sd">    distribution with the convenience of log-scale modeling.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Modeling log-scale heavy-tailed data</span>
-<span class="sd">        &gt;&gt;&gt; lambda_param = torch.tensor(1.0)</span>
-<span class="sd">        &gt;&gt;&gt; alpha_param = torch.tensor(2.0)</span>
-<span class="sd">        &gt;&gt;&gt; exp_lomax = ExpLomax(lambda_=lambda_param, alpha=alpha_param)</span>
-<span class="sd">        &gt;&gt;&gt; log_samples = exp_lomax.sample((1000,))</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \text{If } X &amp;\sim \text{Lomax}(\lambda, \alpha), \text{then } \\ \\</span>
+<span class="sd">                Y &amp;= \log(X) \sim \text{ExpLomax}(\lambda, \alpha)</span>
+<span class="sd">            \end{align*}</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -638,7 +633,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpExponential</span><span class="p">(</span>
     <span class="n">dist</span><span class="o">.</span><span class="n">transformed_distribution</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">,</span> <span class="n">CustomDistribution</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exponential-Exponential distribution implementation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exponential-Exponential distribution implementation.</span>
 
 <span class="sd">    This distribution is created by taking the logarithm of an exponentially</span>
 <span class="sd">    distributed random variable. It&#39;s also known as the Gumbel distribution</span>
@@ -650,19 +645,11 @@
 <span class="sd">    :param kwargs: Additional keyword arguments for the base distribution</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        If X ~ Exponential(rate), then Y = log(X) ~ ExpExponential(rate)</span>
-
-<span class="sd">    Properties:</span>
-<span class="sd">    - Support: (-∞, ∞)</span>
-<span class="sd">    - Type I extreme value distribution (Gumbel)</span>
-<span class="sd">    - Useful for modeling minima of exponential random variables</span>
-<span class="sd">    - Common in survival analysis and reliability engineering</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Extreme value modeling</span>
-<span class="sd">        &gt;&gt;&gt; rate_param = torch.tensor(1.0)</span>
-<span class="sd">        &gt;&gt;&gt; exp_exp = ExpExponential(rate=rate_param)</span>
-<span class="sd">        &gt;&gt;&gt; extreme_values = exp_exp.sample((1000,))</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \text{If } X &amp;\sim \text{Exponential}(\text{rate}), \text{then } \\ \\</span>
+<span class="sd">                Y &amp;= \log(X) \sim \text{ExpExponential}(\text{rate})</span>
+<span class="sd">            \end{align*}</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rate</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -684,7 +671,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpDirichlet</span><span class="p">(</span>
     <span class="n">dist</span><span class="o">.</span><span class="n">transformed_distribution</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">,</span> <span class="n">CustomDistribution</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exponential-Dirichlet distribution implementation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exponential-Dirichlet distribution implementation.</span>
 
 <span class="sd">    This distribution is created by taking the element-wise logarithm of a</span>
 <span class="sd">    Dirichlet-distributed random vector. It&#39;s useful for modeling log-scale</span>
@@ -696,24 +683,15 @@
 <span class="sd">    :param kwargs: Additional keyword arguments for the base distribution</span>
 
 <span class="sd">    Mathematical Definition:</span>
-<span class="sd">        If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α)</span>
-
-<span class="sd">    Properties:</span>
-<span class="sd">    - Support: (-∞, 0]^K where K is the number of categories</span>
-<span class="sd">    - Log-scale simplex (sum of exponentials equals 1)</span>
-<span class="sd">    - Natural for log-probability modeling</span>
-<span class="sd">    - Useful in Bayesian analysis of categorical data</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \text{If } X &amp;\sim \text{Dirichlet}(\alpha), \text{then } \\ \\</span>
+<span class="sd">            Y &amp;= \log(X) \sim \text{ExpDirichlet}(\alpha)</span>
+<span class="sd">            \end{align*}</span>
 
 <span class="sd">    This distribution is particularly valuable when working with probability</span>
 <span class="sd">    vectors in log-space, where it maintains the simplex constraint through</span>
 <span class="sd">    the exponential transformation.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Log-probability vector modeling</span>
-<span class="sd">        &gt;&gt;&gt; concentration = torch.tensor([2.0, 3.0, 1.0])</span>
-<span class="sd">        &gt;&gt;&gt; exp_dirichlet = ExpDirichlet(concentration=concentration)</span>
-<span class="sd">        &gt;&gt;&gt; log_probs = exp_dirichlet.sample((100,))</span>
-<span class="sd">        &gt;&gt;&gt; # Verify simplex constraint: exp(log_probs).sum(dim=-1) ≈ 1</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concentration</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -726,7 +704,32 @@
         <span class="c1"># Build the base distribution (Dirichlet) and transforms (log)</span>
         <span class="n">base_dist</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">Dirichlet</span><span class="p">(</span><span class="n">concentration</span><span class="o">=</span><span class="n">concentration</span><span class="p">)</span>
         <span class="n">transforms</span> <span class="o">=</span> <span class="p">[</span><span class="n">dist</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">ExpTransform</span><span class="p">()</span><span class="o">.</span><span class="n">inv</span><span class="p">]</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">base_dist</span><span class="p">,</span> <span class="n">transforms</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">base_dist</span><span class="p">,</span> <span class="n">transforms</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExpDirichlet.log_prob">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpDirichlet.log_prob">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute log-probabilities for Exponential-Dirichlet outcomes. The PyTorch</span>
+<span class="sd">        implementation applies a Jacobian correction element-wise, neglecting the</span>
+<span class="sd">        simplex constraint. This method adjusts the elementwise log probability to</span>
+<span class="sd">        correct for this.</span>
+
+<span class="sd">        See `discussion &lt;https://discourse.mc-stan.org/t/log-simplex-constraints/39782/5&gt;`_</span>
+<span class="sd">        on the Stan forums.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the base log probability from the parent class</span>
+        <span class="n">base_log_prob</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="c1"># The last element of the array is not a free variable, so we need to</span>
+        <span class="c1"># subtract off its contribution to the log probability. We also need to</span>
+        <span class="c1"># adjust for the size of the simplex.</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">base_log_prob</span>
+            <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="o">-</span> <span class="n">value</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">device</span><span class="p">)]</span>
+        <span class="p">)</span></div>
+</div>
 
 
 
