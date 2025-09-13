@@ -1,49 +1,12 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-"""Parameter transformation components for SciStanPy models.
+r"""Parameter transformation components for SciStanPy models.
 
 This module provides a comprehensive library of mathematical transformations that
 can be applied to model parameters. These transformations enable complex model
 construction through composition of simple mathematical operations while maintaining
 automatic differentiation capabilities and Stan code generation.
-
-The transformation system supports:
-
-Transformation Categories:
-    - **Arithmetic Operations**: Addition, subtraction, multiplication, division, powers
-    - **Mathematical Functions**: Logarithms, exponentials, absolute values, sigmoids
-    - **Statistical Operations**: Normalization, log-sum-exp, reductions
-    - **Growth Models**: Exponential and sigmoid growth parameterizations
-    - **Array Operations**: Indexing, slicing, convolution
-
-Key Features:
-    - **Multi-Backend Support**: Works with NumPy, PyTorch, and Stan
-    - **Automatic Differentiation**: Maintains gradient flow for PyTorch optimization
-    - **Stan Code Generation**: Automatic translation to Stan programming language
-    - **Operator Overloading**: Natural mathematical syntax through Python operators
-    - **Shape Broadcasting**: Automatic handling of multi-dimensional operations
-    - **Type Safety**: Comprehensive validation and error checking
-
-Transformation Architecture:
-    The module provides several base classes that establish the transformation framework:
-    - **TransformableParameter**: Mixin enabling operator overloading
-    - **Transformation**: Base class for all transformation types
-    - **TransformedParameter**: Foundation for parameter transformations
-    - **BinaryTransformedParameter**: Two-operand mathematical operations
-    - **UnaryTransformedParameter**: Single-operand mathematical operations
-
-Advanced Transformations:
-    Beyond basic arithmetic, the module includes specialized transformations for:
-    - Growth modeling (exponential, sigmoid) with multiple parameterizations
-    - Sequence processing (convolution operations)
-    - Array manipulation (indexing with NumPy-compatible syntax)
-    - Numerical stability (log-space operations, stable sigmoid)
-    - Statistical operations (normalization, reductions)
-
-Note that these will not typically be instantiated directly. Instead, use Python's
-inbuilt operators between other model components or else use SciStanPy's `operations`
-submodule.
 """
 
 from __future__ import annotations
@@ -74,11 +37,12 @@ class TransformableParameter:
     creates an appropriate TransformedParameter instance that represents the
     mathematical operation.
 
-    The mixin supports all standard arithmetic operators:
-    - Addition (+), subtraction (-)
-    - Multiplication (*), division (/)
-    - Exponentiation (**)
-    - Unary negation (-)
+    The mixin supports the following Python arithmetic operators:
+
+    - Addition (``+``), subtraction (``-``)
+    - Multiplication (``*``), division (``/``)
+    - Exponentiation (``**``)
+    - Unary negation (``-``)
 
     Each operation supports both left and right operand positioning, enabling
     flexible mathematical expressions with mixed parameter and constant types.
@@ -95,36 +59,49 @@ class TransformableParameter:
     """
 
     def __add__(self, other: "custom_types.CombinableParameterType"):
+        """
+        See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.AddParameter`.
+        """
         return AddParameter(self, other)
 
     def __radd__(self, other: "custom_types.CombinableParameterType"):
+        """See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.AddParameter`."""
         return AddParameter(other, self)
 
     def __sub__(self, other: "custom_types.CombinableParameterType"):
+        """See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.SubtractParameter`."""
         return SubtractParameter(self, other)
 
     def __rsub__(self, other: "custom_types.CombinableParameterType"):
+        """See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.SubtractParameter`."""
         return SubtractParameter(other, self)
 
     def __mul__(self, other: "custom_types.CombinableParameterType"):
+        """See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter`."""
         return MultiplyParameter(self, other)
 
     def __rmul__(self, other: "custom_types.CombinableParameterType"):
+        """See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter`."""
         return MultiplyParameter(other, self)
 
     def __truediv__(self, other: "custom_types.CombinableParameterType"):
+        """See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.DivideParameter`."""
         return DivideParameter(self, other)
 
     def __rtruediv__(self, other: "custom_types.CombinableParameterType"):
+        """See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.DivideParameter`."""
         return DivideParameter(other, self)
 
     def __pow__(self, other: "custom_types.CombinableParameterType"):
+        """See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.PowerParameter`."""
         return PowerParameter(self, other)
 
     def __rpow__(self, other: "custom_types.CombinableParameterType"):
+        """See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.PowerParameter`."""
         return PowerParameter(other, self)
 
     def __neg__(self):
+        """See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.NegateParameter`."""
         return NegateParameter(self)
 
 
@@ -139,14 +116,14 @@ class Transformation(abstract_model_component.AbstractModelComponent):
     :cvar SHAPE_CHECK: Whether to perform automatic shape checking. Defaults to True.
 
     Key Responsibilities:
-    - Coordinate transformation assignment code generation
-    - Manage shape validation for transformation outputs
-    - Provide abstract interface for Stan operation writing
-    - Handle index options and assignment formatting
+        - Coordinate transformation assignment code generation
+        - Manage shape validation for transformation outputs
+        - Provide abstract interface for Stan operation writing
+        - Handle index options and assignment formatting
 
     The class provides methods for generating Stan code assignments and manages
     the interaction between transformation inputs and outputs. Subclasses must
-    implement the write_stan_operation method to define their specific
+    implement the ``write_stan_operation`` method to define their specific
     mathematical operations.
 
     Shape handling can be disabled for transformations that perform reductions
@@ -278,8 +255,6 @@ class TransformedParameter(Transformation, TransformableParameter):
     operations on other parameters. It handles both the computational aspects
     (sampling, PyTorch operations) and code generation aspects (Stan assignments).
 
-    :cvar STAN_OPERATOR: Stan operator string for simple operations
-
     Transformed parameters support:
     - Sampling through parent parameter sampling and operation application
     - PyTorch operations with automatic differentiation
@@ -300,6 +275,12 @@ class TransformedParameter(Transformation, TransformableParameter):
     """
 
     STAN_OPERATOR: str = ""
+    """Stan operator string or function name for simple operations
+
+    This operator is used in the Stan code generation for the transformation.
+    Subclasses should define this variable to specify the appropriate operator
+    or function for their specific transformation.
+    """
 
     # The transformation is renamed to be more specific in the child classes
     get_transformation_assignment = Transformation._transformation
@@ -356,7 +337,8 @@ class TransformedParameter(Transformation, TransformableParameter):
         :returns: Stan code for the operation
         :rtype: str
 
-        :raises NotImplementedError: If STAN_OPERATOR is not defined for simple operations
+        :raises NotImplementedError: If ``STAN_OPERATOR`` is not defined for simple
+            operations
 
         This method must be implemented to provide appropriate Stan code
         for the mathematical operation represented by this transformation.
@@ -417,8 +399,8 @@ class BinaryTransformedParameter(TransformedParameter):
     the building blocks for more complex mathematical relationships between
     parameters.
 
-    Subclasses must implement run_np_torch_op with the (dist1, dist2) signature
-    and can optionally override write_stan_operation for custom Stan formatting.
+    Subclasses must implement ``run_np_torch_op`` with the (``dist1, dist2``) signature
+    and can optionally override ``write_stan_operation`` for custom Stan formatting.
     """
 
     def __init__(
@@ -464,7 +446,7 @@ class BinaryTransformedParameter(TransformedParameter):
         :returns: Stan code with infix operator
         :rtype: str
 
-        Generates Stan code in the format "dist1 OPERATOR dist2" for
+        Generates Stan code in the format ``"dist1 OPERATOR dist2"`` for
         standard binary operations.
         """
         super().write_stan_operation()
@@ -487,8 +469,8 @@ class UnaryTransformedParameter(TransformedParameter):
     Unary operations are essential for mathematical transformations and provide
     common functions needed in statistical modeling and parameter reparameterization.
 
-    Subclasses must implement run_np_torch_op with the single-parameter signature
-    and can optionally override write_stan_operation for custom Stan formatting.
+    Subclasses must implement ``run_np_torch_op`` with the single-parameter signature
+    and can optionally override ``write_stan_operation`` for custom Stan formatting.
     """
 
     def __init__(
@@ -526,7 +508,7 @@ class UnaryTransformedParameter(TransformedParameter):
         :returns: Stan code with prefix operator
         :rtype: str
 
-        Generates Stan code in the format "OPERATOR dist1" for
+        Generates Stan code in the format ``"OPERATOR dist1"`` for
         standard unary operations.
         """
         super().write_stan_operation()
@@ -539,15 +521,18 @@ class UnaryTransformedParameter(TransformedParameter):
 class AddParameter(BinaryTransformedParameter):
     """Addition transformation for two parameters.
 
-    Implements element-wise addition of two parameters: result = dist1 + dist2
+    Implements element-wise addition of two parameters: ``result = dist1 + dist2``
 
-    Mathematical Properties:
-    - Commutative: a + b = b + a
-    - Associative: (a + b) + c = a + (b + c)
-    - Identity element: 0
+    Example:
+        .. code-block:: python
 
-    This transformation preserves the shape through broadcasting and is commonly
-    used for combining effects, offsets, and linear combinations of parameters.
+            # Binary operations automatically handle broadcasting
+            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))
+            y = ssp.parameters.Normal(mu=0, sigma=1, shape=(3, 1))
+
+            # Result has shape (3, 5) through broadcasting
+            combined = x + y
+
     """
 
     STAN_OPERATOR: str = "+"
@@ -566,15 +551,17 @@ class AddParameter(BinaryTransformedParameter):
 class SubtractParameter(BinaryTransformedParameter):
     """Subtraction transformation for two parameters.
 
-    Implements element-wise subtraction of two parameters: result = dist1 - dist2
+    Implements element-wise subtraction of two parameters: ``result = dist1 - dist2``
 
-    Mathematical Properties:
-    - Non-commutative: a - b ≠ b - a (generally)
-    - Non-associative: (a - b) - c ≠ a - (b - c) (generally)
-    - Identity element: 0 (for right operand)
+    Example:
+        .. code-block:: python
 
-    This transformation is commonly used for computing differences, residuals,
-    and relative measures between parameters.
+            # Binary operations automatically handle broadcasting
+            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))
+            y = ssp.parameters.Normal(mu=0, sigma=1, shape=(3, 1))
+
+            # Result has shape (3, 5) through broadcasting
+            difference = x - y
     """
 
     STAN_OPERATOR: str = "-"
@@ -593,15 +580,20 @@ class SubtractParameter(BinaryTransformedParameter):
 class MultiplyParameter(BinaryTransformedParameter):
     """Element-wise multiplication transformation for two parameters.
 
-    Implements element-wise multiplication of two parameters: result = dist1 * dist2
-
-    Mathematical Properties:
-    - Commutative: a * b = b * a
-    - Associative: (a * b) * c = a * (b * c)
-    - Identity element: 1
+    Implements element-wise multiplication of two parameters: ``result = dist1 * dist2``
 
     This transformation is fundamental for scaling, interaction effects, and
     product relationships between parameters.
+
+    Example:
+        .. code-block:: python
+
+            # Binary operations automatically handle broadcasting
+            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))
+            y = ssp.parameters.Normal(mu=0, sigma=1, shape=(3, 1))
+
+            # Result has shape (3, 5) through broadcasting
+            product = x * y
     """
 
     STAN_OPERATOR: str = ".*"
@@ -620,15 +612,20 @@ class MultiplyParameter(BinaryTransformedParameter):
 class DivideParameter(BinaryTransformedParameter):
     """Element-wise division transformation for two parameters.
 
-    Implements element-wise division of two parameters: result = dist1 / dist2
-
-    Mathematical Properties:
-    - Non-commutative: a / b ≠ b / a (generally)
-    - Non-associative: (a / b) / c ≠ a / (b / c) (generally)
-    - Identity element: 1 (for right operand)
+    Implements element-wise division of two parameters: ``result = dist1 / dist2``
 
     This transformation is used for ratios, rates, normalized quantities,
     and relative measures. Care must be taken to avoid division by zero.
+
+    Example:
+        .. code-block:: python
+
+            # Binary operations automatically handle broadcasting
+            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))
+            y = ssp.parameters.Normal(mu=1, sigma=0.5, shape=(3, 1))
+
+            # Result has shape (3, 5) through broadcasting
+            ratio = x / y
     """
 
     STAN_OPERATOR: str = "./"
@@ -647,15 +644,20 @@ class DivideParameter(BinaryTransformedParameter):
 class PowerParameter(BinaryTransformedParameter):
     """Element-wise exponentiation transformation for two parameters.
 
-    Implements element-wise exponentiation: result = dist1 ^ dist2
-
-    Mathematical Properties:
-    - Non-commutative: a^b ≠ b^a (generally)
-    - Non-associative: (a^b)^c ≠ a^(b^c) (generally)
-    - Identity element: 1 (for exponent), any base^1 = base
+    Implements element-wise exponentiation: ``result = dist1 ^ dist2``
 
     This transformation is used for power relationships, polynomial terms,
     and exponential scaling effects.
+
+    Example:
+        .. code-block:: python
+
+            # Binary operations automatically handle broadcasting
+            x = ssp.parameters.Normal(mu=2, sigma=1, shape=(5,))
+            y = ssp.parameters.Normal(mu=3, sigma=0.5, shape=(3, 1))
+
+            # Result has shape (3, 5) through broadcasting
+            exponentiated = x ** y
     """
 
     STAN_OPERATOR: str = ".^"
@@ -674,15 +676,13 @@ class PowerParameter(BinaryTransformedParameter):
 class NegateParameter(UnaryTransformedParameter):
     """Unary negation transformation for parameters.
 
-    Implements element-wise negation of a parameter: result = -dist1
+    Implements element-wise negation of a parameter: ``result = -dist1``
 
-    Mathematical Properties:
-    - Involutory: -(-a) = a
-    - Distributive over addition: -(a + b) = -a + -b
-    - Anti-distributive over multiplication: -(a * b) = (-a) * b = a * (-b)
+    Example:
+        .. code-block:: python
 
-    This transformation is used for sign changes, directional effects,
-    and creating opposite relationships.
+            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))
+            negated = -x
     """
 
     STAN_OPERATOR: str = "-"
@@ -700,17 +700,19 @@ class NegateParameter(UnaryTransformedParameter):
 class AbsParameter(UnaryTransformedParameter):
     r"""Absolute value transformation for parameters.
 
-    Implements element-wise absolute value: result = \|dist1\|
-
-    :cvar LOWER_BOUND: Absolute values are always non-negative (0.0)
-
-    Mathematical Properties:
-    - Non-negative output: \|a\| ≥ 0
-    - Idempotent for non-negative inputs: \|\|a\|\| = \|a\|
-    - Triangle inequality: \|a + b\| ≤ \|a\| + \|b\|
+    Implements element-wise absolute value: ``result = \|dist1\|``
 
     This transformation ensures non-negative values and is commonly used
     for magnitudes, distances, and ensuring positive parameters.
+
+    This transformation is accessed through the :py:func:`~scistanpy.operations.abs_`
+    function.
+
+    Example:
+        .. code-block:: python
+
+            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))
+            abs_x = ssp.operations.abs_(x) # Effectively half-normal distribution
     """
 
     LOWER_BOUND: "custom_types.Float" = 0.0
@@ -730,7 +732,7 @@ class AbsParameter(UnaryTransformedParameter):
         :param dist1: Formatted parameter string
         :type dist1: str
 
-        :returns: Stan abs() function call
+        :returns: Stan ``abs()`` function call
         :rtype: str
         """
         return f"abs({dist1})"
@@ -739,18 +741,19 @@ class AbsParameter(UnaryTransformedParameter):
 class LogParameter(UnaryTransformedParameter):
     """Natural logarithm transformation for parameters.
 
-    Implements element-wise natural logarithm: result = ln(dist1)
-
-    :cvar POSITIVE_PARAMS: Input must be positive ({"dist1"})
-
-    Mathematical Properties:
-    - Domain: (0, ∞)
-    - Range: (-∞, ∞)
-    - Logarithm laws: ln(ab) = ln(a) + ln(b), ln(a^b) = b*ln(a)
-    - Inverse: exp(ln(a)) = a for a > 0
+    Implements element-wise natural logarithm: ``result = ln(dist1)``
 
     This transformation is fundamental for log-scale modeling, multiplicative
     effects on additive scales, and ensuring positive-valued parameters.
+
+    This transformation is accessed through the :py:func:`~scistanpy.operations.log`
+    function.
+
+    Example:
+        .. code-block:: python
+
+            x = ssp.parameters.LogNormal(mu=0, sigma=1, shape=(5,))
+            log_x = ssp.operations.log(x) # Normally distributed
     """
 
     POSITIVE_PARAMS = {"dist1"}
@@ -770,7 +773,7 @@ class LogParameter(UnaryTransformedParameter):
         :param dist1: Formatted parameter string
         :type dist1: str
 
-        :returns: Stan log() function call
+        :returns: Stan ``log()`` function call
         :rtype: str
         """
         return f"log({dist1})"
@@ -779,18 +782,19 @@ class LogParameter(UnaryTransformedParameter):
 class ExpParameter(UnaryTransformedParameter):
     """Exponential transformation for parameters.
 
-    Implements element-wise exponential function: result = exp(dist1)
-
-    :cvar LOWER_BOUND: Exponential values are always positive (0.0)
-
-    Mathematical Properties:
-    - Domain: (-∞, ∞)
-    - Range: (0, ∞)
-    - Exponential laws: exp(a+b) = exp(a)*exp(b), exp(a*b) ≠ exp(a)*exp(b)
-    - Inverse: ln(exp(a)) = a
+    Implements element-wise exponential function: ``result = exp(dist1)``
 
     This transformation is used for ensuring positive values, exponential
     growth models, and converting from log-scale to natural scale.
+
+    This transformation is accessed through the :py:func:`~scistanpy.operations.exp`
+    function.
+
+    Example:
+        .. code-block:: python
+
+            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))
+            exp_x = ssp.operations.exp(x) # Log-normally distributed
     """
 
     LOWER_BOUND: "custom_types.Float" = 0.0
@@ -818,23 +822,24 @@ class NormalizeParameter(UnaryTransformedParameter):
     Implements element-wise normalization where each vector is divided by its sum,
     creating probability vectors or normalized weights that sum to unity.
 
-    :cvar LOWER_BOUND: Normalized values are non-negative (0.0)
-    :cvar UPPER_BOUND: Normalized values are bounded above by 1.0
+    This transformation is essential for creating probability vectors from non-negative
+    weights.
 
-    Mathematical Properties:
-    - Domain: [0, ∞)^n (non-negative input required)
-    - Range: Probability simplex {x : Σxᵢ = 1, xᵢ ≥ 0}
-    - Operation: xᵢ' = xᵢ / Σⱼ xⱼ
-    - Preserves ratios between elements
+    This transformation is accessed through the :py:func:`~scistanpy.operations.normalize`
+    function.
 
-    This transformation is essential for:
-    - Converting counts to proportions
-    - Creating probability vectors from non-negative weights
-    - Normalizing attention weights or mixture components
-    - Ensuring categorical probabilities sum to one
+    .. important::
+        The normalization is applied along the last dimension only. This cannot
+        be changed to other dimensions in the current implementation.
 
-    The normalization is applied along the last dimension only, making it suitable
-    for batch processing of multiple probability vectors.
+    Example:
+        .. code-block:: python
+
+            x = ssp.parameters.Exponential(rate=1.0, shape=(4, 5))
+
+            # Normalize along last dimension (size 5)
+            normalized_x = ssp.operations.normalize(x)
+            # Each of the 4 vectors of length 5 sums to 1
     """
 
     LOWER_BOUND: "custom_types.Float" = 0.0
@@ -877,23 +882,29 @@ class NormalizeLogParameter(UnaryTransformedParameter):
     so that their exponentiated values sum to 1. This is equivalent to
     subtracting the log-sum-exp from each element.
 
-    :cvar UPPER_BOUND: Log-probabilities are bounded above by 0.0
-
-    Mathematical Properties:
-    - Domain: (-∞, ∞)^n
-    - Range: Log-simplex {x : Σexp(xᵢ) = 1}
-    - Operation: xᵢ' = xᵢ - log(Σⱼ exp(xⱼ))
-    - Numerically stable for extreme log-probabilities
-
     This transformation is crucial for:
-    - Normalizing log-probabilities without exponentiation
-    - Stable computation with very small probabilities
-    - Log-space categorical distributions
-    - Attention mechanisms in log-space
+        - Normalizing log-probabilities without exponentiation
+        - Stable computation with very small probabilities
+        - Log-space categorical distributions
 
     The log-sum-exp operation provides numerical stability by avoiding
-    overflow/underflow issues common with direct exponentiation. As with the `NormalizeParameter`,
-    this is performed over the last dimension only.
+    overflow/underflow issues common with direct exponentiation.
+
+    This transformation is accessed through the :py:func:`~scistanpy.operations.normalize_log`
+    function.
+
+    .. important::
+        As with
+        :py:class:`~scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter`,
+        this is performed over the last dimension only.
+
+    Example:
+        .. code-block:: python
+
+            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(4, 5))
+            log_probs = ssp.operations.normalize_log(x)
+            # Each of the exponentials of the 4 vectors of length 5 sums to 1 in
+            # probability space
     """
 
     UPPER_BOUND: "custom_types.Float" = 0.0
@@ -930,13 +941,9 @@ class Reduction(UnaryTransformedParameter):
     """Base class for operations that reduce dimensionality.
 
     This abstract base class provides infrastructure for transformations that
-    reduce the size of the last dimension through operations like sum, mean,
-    or log-sum-exp. It handles shape management and provides specialized
-    indexing behavior for reductions.
-
-    :cvar SHAPE_CHECK: Disabled for reductions (False)
-    :cvar TORCH_FUNC: PyTorch function for the reduction operation
-    :cvar NP_FUNC: NumPy function for the reduction operation
+    reduce the size of the last dimension through operations like ``sum`` or ``log-sum-exp``.
+    It handles shape management and provides specialized indexing behavior for
+    reductions.
 
     :param dist1: Parameter to reduce
     :type dist1: custom_types.CombinableParameterType
@@ -944,23 +951,18 @@ class Reduction(UnaryTransformedParameter):
     :type keepdims: bool
     :param kwargs: Additional arguments passed to parent class
 
-    Key Features:
-    - Automatic shape calculation for reduced dimensions
-    - Specialized index offset handling (always returns 0)
-    - Increased assignment depth for proper Stan loop structure
-    - Support for keepdims option to preserve dimensionality
-
-    Subclasses must define TORCH_FUNC and NP_FUNC class variables that
-    point to the appropriate reduction functions in each library.
-
-    Example:
-        Subclasses like SumParameter and LogSumExpParameter inherit from
-        this base class and define their specific reduction operations.
+    .. important::
+        Currently, all reductions in SciStanPy are performed along the last dimension
+        of the input parameter. This cannot be changed to other dimensions in the
+        current implementation.
     """
 
     SHAPE_CHECK = False
     TORCH_FUNC: Callable[[npt.NDArray], npt.NDArray]
+    """The PyTorch function to use for the reduction operation."""
+
     NP_FUNC: Callable[[npt.NDArray], npt.NDArray]
+    """The NumPy function to use for the reduction operation."""
 
     def __init__(
         self,
@@ -978,7 +980,7 @@ class Reduction(UnaryTransformedParameter):
         :param kwargs: Additional arguments for parent initialization
 
         The initialization automatically calculates the output shape by
-        removing the last dimension (or keeping it as size 1 if keepdims=True).
+        removing the last dimension (or keeping it as size 1 if ``keepdims=True``).
         """
         # Record whether to keep the last dimension
         self.keepdims = keepdims
@@ -1043,13 +1045,9 @@ class Reduction(UnaryTransformedParameter):
         return 0
 
     def get_assign_depth(self) -> int:
-        """Return assignment depth one level higher than normal.
-
-        :returns: Assignment depth + 1
-        :rtype: int
-
-        Reductions require one additional level of loop nesting to properly
-        iterate over the dimension being reduced.
+        """Reductions require one additional level of loop nesting to properly
+        iterate over the dimension being reduced. Thus, the assignment depth
+        is always one greater than the parent class.
         """
         return super().get_assign_depth() + 1
 
@@ -1057,17 +1055,7 @@ class Reduction(UnaryTransformedParameter):
 class LogSumExpParameter(Reduction):
     """Log-sum-exp reduction transformation.
 
-    Computes the logarithm of the sum of exponentials along the last dimension,
-    providing a numerically stable way to compute log(Σᵢ exp(xᵢ)).
-
-    :cvar TORCH_FUNC: torch.logsumexp
-    :cvar NP_FUNC: scipy.special.logsumexp
-
-    Mathematical Properties:
-    - Operation: log(Σᵢ exp(xᵢ))
-    - Numerically stable for extreme values
-    - Maintains precision in log-space
-    - Essential for probabilistic computations
+    Computes the logarithm of the sum of exponentials along the last dimension.
 
     This transformation is fundamental for:
     - Normalizing log-probabilities
@@ -1075,13 +1063,20 @@ class LogSumExpParameter(Reduction):
     - Stable softmax computations
     - Log-space mixture models
 
-    The log-sum-exp function is the smooth maximum approximation and
-    appears frequently in machine learning and statistics.
+    This transformation is accessed through the :py:func:`~scistanpy.operations.logsumexp`
+    function.
+
+    .. important::
+        The log-sum-exp is performed over the last dimension only. This cannot
+        be changed to other dimensions in the current implementation.
 
     Example:
-        >>> log_weights = LogParameter(weights)
-        >>> log_partition = LogSumExpParameter(log_weights)
-        >>> normalized_log_weights = log_weights - log_partition
+        .. code-block:: python
+
+            weights = ssp.parameters.Exponential(rate=1.0, shape=(10, 5))
+            log_weights = ssp.operations.log(weights)  # Log-space weights
+            log_partition = ssp.operations.logsumexp(log_weights)  # Shape (10,)
+            log_partition2 = ssp.operations.logsumexp(log_weights, keepdims=True)  # Shape (10, 1)
     """
 
     TORCH_FUNC = torch.logsumexp
@@ -1102,26 +1097,15 @@ class LogSumExpParameter(Reduction):
 class SumParameter(Reduction):
     """Sum reduction transformation.
 
-    Computes the sum of values along the last dimension: Σᵢ xᵢ
-
-    :cvar TORCH_FUNC: torch.sum
-    :cvar NP_FUNC: numpy.sum
-
-    Mathematical Properties:
-    - Operation: Σᵢ xᵢ
-    - Linear operation
-    - Preserves units and scale
-    - Fundamental aggregation operation
-
-    This transformation is used for:
-    - Computing totals and aggregates
-    - Reducing dimensionality through summation
-    - Calculating marginal quantities
-    - Creating scalar summaries from vectors
+    Computes the sum of values along the last dimension. This is accessed through
+    the :py:func:`~scistanpy.operations.sum` function.
 
     Example:
-        >>> category_counts = Poisson(lambda_=rates)
-        >>> total_count = SumParameter(category_counts)
+        .. code-block:: python
+
+            rates = ssp.parameters.Exponential(rate=1.0, shape=(10, 5))
+            summed = ssp.operations.sum(rates, keepdims=False) # Shape (10,)
+            summed2 = ssp.operations.sum(rates, keepdims=True)  # Shape (10, 1)
     """
 
     TORCH_FUNC = torch.sum
@@ -1140,24 +1124,11 @@ class SumParameter(Reduction):
 
 
 class Log1pExpParameter(UnaryTransformedParameter):
-    """Log(1 + exp(x)) transformation with numerical stability.
+    r"""Calculates :math:`\log(1 + \exp(x))` transformation in a numerically stable
+    way.
 
-    Computes log(1 + exp(x)) using numerically stable implementations that
-    avoid overflow for large positive values and underflow for large negative values.
-
-    Mathematical Properties:
-    - Domain: (-∞, ∞)
-    - Range: [0, ∞)
-    - Smooth approximation to max(0, x)
-    - Also known as "softplus" function
-
-    This transformation is essential for:
-    - Numerical stability in probabilistic models
-    - Log-space computations avoiding direct exponentiation
-
-    Example:
-        >>> log_odds = Normal(mu=0, sigma=1)
-        >>> log_prob = Log1pExpParameter(log_odds)
+    This transformation is accessed through the :py:func:`~scistanpy.operations.log1p_exp`
+    function.
     """
 
     def run_np_torch_op(self, dist1):
@@ -1188,34 +1159,36 @@ class Log1pExpParameter(UnaryTransformedParameter):
         :param dist1: Formatted parameter string
         :type dist1: str
 
-        :returns: Stan log1p_exp function call
+        :returns: Stan ``log1p_exp`` function call
         :rtype: str
         """
         return f"log1p_exp({dist1})"
 
 
 class SigmoidParameter(UnaryTransformedParameter):
-    """Sigmoid (logistic) transformation for parameters.
+    r"""Sigmoid (logistic) transformation for parameters.
 
-    Implements the sigmoid function: result = 1 / (1 + exp(-dist1))
-
-    :cvar LOWER_BOUND: Sigmoid values are bounded below by 0.0
-    :cvar UPPER_BOUND: Sigmoid values are bounded above by 1.0
-
-    Mathematical Properties:
-    - Domain: (-∞, ∞)
-    - Range: (0, 1)
-    - S-shaped curve with inflection point at x=0, y=0.5
-    - Inverse: logit function ln(p/(1-p))
+    Implements the sigmoid function: :math:`result = \frac{1}{1 + \exp(-dist1)}`
 
     The sigmoid function is essential for:
-    - Converting unbounded values to probabilities
-    - Logistic regression and classification
-    - Smooth transitions between bounds
-    - Activation functions in neural networks
+        - Converting unbounded values to probabilities
+        - Logistic regression and classification
+        - Smooth transitions between bounds
+        - Activation functions in neural networks
 
     This implementation uses numerically stable computation methods to
     avoid overflow/underflow issues.
+
+    This is accessed through the :py:func:`~scistanpy.operations.sigmoid` function.
+
+    .. warning::
+        It is easy to define a model that is not identifiable when using
+        the sigmoid transformation. Make sure that there are sufficient constraints
+        on the input parameter to ensure a well-defined posterior distribution.
+
+    Example:
+        >>> logits = Normal(mu=0, sigma=1)
+        >>> probabilities = SigmoidParameter(logits)
     """
 
     UPPER_BOUND: "custom_types.Float" = 1.0
@@ -1232,8 +1205,8 @@ class SigmoidParameter(UnaryTransformedParameter):
         :raises TypeError: If input type is not supported
 
         Uses numerically stable implementations:
-        - PyTorch: Built-in torch.sigmoid function
-        - NumPy: Custom stable implementation from utils
+            - PyTorch: Built-in torch.sigmoid function
+            - NumPy: Custom stable implementation from utils
         """
         # If using torch, use the sigmoid function directly.
         if isinstance(dist1, torch.Tensor):
@@ -1256,14 +1229,23 @@ class SigmoidParameter(UnaryTransformedParameter):
         :param dist1: Formatted parameter string
         :type dist1: str
 
-        :returns: Stan inv_logit() function call
+        :returns: Stan ``inv_logit()`` function call
         :rtype: str
         """
         return f"inv_logit({dist1})"
 
 
 class LogSigmoidParameter(UnaryTransformedParameter):
-    """Defines a parameter that is the log of the sigmoid of another."""
+    r"""Performs the sigmoid transformation followed by the natural logarithm in
+    a numerically stable manner: :math:`\log(\text{sigmoid}(x)) = -\log(1 + \exp(-x))`.
+
+    This transformation is useful for converting unbounded values to log-probabilities
+    in the range (-∞, 0). It is commonly used in logistic regression, binary
+    classification, and scenarios where log-probabilities are required.
+
+    This transformation is accessed through the :py:func:`~scistanpy.operations.logsigmoid`
+    function.
+    """
 
     UPPER_BOUND: "custom_types.Float" = 0.0
 
@@ -1284,11 +1266,19 @@ class LogSigmoidParameter(UnaryTransformedParameter):
 class ExponentialGrowth(ExpParameter):
     r"""
     A transformed parameter that models exponential growth. Specifically, parameters
-    `t`, `A`, and `r` are used to calculate the exponential growth model as follows:
+    ``t``, ``A``, and ``r`` are used to calculate the exponential growth model as follows:
 
-    $$
-    x = A\textrm{e}^{rt)
-    $$
+    .. math::
+        x = A \text{e}^{rt}
+
+    This transformation is accessed through the :py:func:`~scistanpy.operations.exponential_growth`
+    function.
+
+    Example:
+        >>> time = np.array([[0], [1], [2], [3], [4]]) # Shape (5, 1)
+        >>> baseline = Dirichlet(alpha = 1.0, shape = (10,))
+        >>> rate = Exponential(beta = 1.0)
+        >>> growth = ssp.operations.exponential_growth(t=time, A=baseline, r=rate)
     """
 
     def __init__(
@@ -1323,7 +1313,7 @@ class ExponentialGrowth(ExpParameter):
     ) -> npt.NDArray: ...
 
     def run_np_torch_op(self, *, t, A, r):
-        """Compute exponential growth: A * exp(r * t).
+        r"""Compute exponential growth: :math:`A\text{e}^{rt}`.
 
         :param t: Time values
         :param A: Amplitude values
@@ -1343,33 +1333,15 @@ class ExponentialGrowth(ExpParameter):
 
 
 class BinaryExponentialGrowth(ExpParameter):
-    """Binary exponential growth for two time points.
+    r"""Binary exponential growth for two time points, which is a special case of
+    exponential growth for modeling with only two time points assuming
+    :math:`t_0 = 0` and :math:`t_1 = 1`. This reduces to
 
-    Special case of exponential growth for modeling with only two time points,
-    assuming t₀ = 0 and t₁ = 1. This reduces to: x = A * exp(r)
+    .. math::
+        x = A\text{e}^r
 
-    :param A: Amplitude parameter (value at t=0)
-    :type A: custom_types.CombinableParameterType
-    :param r: Growth rate parameter
-    :type r: custom_types.CombinableParameterType
-    :param kwargs: Additional arguments passed to parent class
-
-    Mathematical Properties:
-    - Simplified exponential model for binary time points
-    - A represents initial value
-    - exp(r) represents fold-change from t=0 to t=1
-    - r is log-fold-change
-
-    This transformation is useful for:
-    - Before/after comparisons
-    - Treatment effect modeling
-    - Two-timepoint studies
-    - Fold-change analysis
-
-    Example:
-        >>> baseline = Normal(mu=100, sigma=10)
-        >>> log_fold_change = Normal(mu=0, sigma=0.5)
-        >>> final_value = BinaryExponentialGrowth(A=baseline, r=log_fold_change)
+    This transformation is accessed through the
+    :py:func:`~scistanpy.operations.binary_exponential_growth` function.
     """
 
     def __init__(
@@ -1420,9 +1392,12 @@ class BinaryExponentialGrowth(ExpParameter):
 
 
 class LogExponentialGrowth(TransformedParameter):
-    """Log-scale exponential growth model transformation.
+    r"""Log-scale exponential growth model transformation.
 
-    Implements the logarithm of exponential growth: log(x) = log_A + r * t
+    Implements the logarithm of exponential growth:
+
+    .. math::
+        \log(x) = logA + r * t
 
     :param t: Time parameter
     :type t: custom_types.CombinableParameterType
@@ -1432,27 +1407,17 @@ class LogExponentialGrowth(TransformedParameter):
     :type r: custom_types.CombinableParameterType
     :param kwargs: Additional arguments passed to parent class
 
-    Mathematical Properties:
-    - Linear in log-space: log(x) = log_A + r * t
-    - Guaranteed positive output: x = exp(log_A + r * t) > 0
-    - Growth rate r directly additive in log-space
-    - Natural for multiplicative processes
-
     This transformation is particularly useful for:
-    - Population modeling where values must be positive
-    - Multiplicative growth processes
-    - Log-scale regression models
-    - Ensuring positive-valued outcomes
+        - Population modeling where values must be positive
+        - Multiplicative growth processes
+        - Log-scale regression models
+        - Ensuring positive-valued outcomes
 
     The log-scale parameterization avoids issues with negative values
     and provides numerical stability for extreme growth rates.
 
-    Example:
-        >>> time_points = Constant([0, 1, 2, 3])
-        >>> log_initial_pop = Normal(mu=4.6, sigma=0.1)  # log(100) ≈ 4.6
-        >>> growth_rate = Normal(mu=0.1, sigma=0.02)
-        >>> log_population = LogExponentialGrowth(t=time_points, log_A=log_initial_pop,
-        >>>                                         r=growth_rate)
+    This transformation is accessed through the
+    :py:func:`~scistanpy.operations.log_exponential_growth` function.
     """
 
     def __init__(
@@ -1506,10 +1471,14 @@ class LogExponentialGrowth(TransformedParameter):
 
 
 class BinaryLogExponentialGrowth(TransformedParameter):
-    """Binary log-exponential growth for two time points.
+    r"""Binary log-exponential growth for two time points.
 
-    Special case of log-exponential growth for two time points,
-    reducing to: log(x) = log_A + r
+    This is identical to
+    :py:class:`~scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth`,
+    but operates in log-space. Mathematically,
+
+    .. math::
+        \log(x) = logA + r
 
     :param log_A: Log-amplitude parameter (log of initial value)
     :type log_A: custom_types.CombinableParameterType
@@ -1517,22 +1486,17 @@ class BinaryLogExponentialGrowth(TransformedParameter):
     :type r: custom_types.CombinableParameterType
     :param kwargs: Additional arguments passed to parent class
 
-    Mathematical Properties:
-    - Simple additive model in log-space
-    - r represents log-fold-change
-    - Guaranteed positive output when exponentiated
-    - Linear relationship in log-scale
+    This transformation is useful for:
+        - Modeling growth between two time points
+        - Ensuring positive-valued outcomes
+        - Log-scale regression models
+        - Multiplicative growth processes
 
-    This transformation is ideal for:
-    - Binary treatment effects in log-space
-    - Fold-change modeling
-    - Two-timepoint growth analysis
-    - Log-scale before/after comparisons
+    The log-scale parameterization avoids issues with negative values
+    and provides numerical stability for extreme growth rates.
 
-    Example:
-        >>> log_baseline = Normal(mu=4.6, sigma=0.1)  # log(100)
-        >>> log_fold_change = Normal(mu=0, sigma=0.5)
-        >>> log_final = BinaryLogExponentialGrowth(log_A=log_baseline, r=log_fold_change)
+    This transformation is accessed through the
+    :py:func:`~scistanpy.operations.binary_log_exponential_growth` function.
     """
 
     def __init__(
@@ -1583,10 +1547,12 @@ class BinaryLogExponentialGrowth(TransformedParameter):
 
 
 class SigmoidGrowth(SigmoidParameter):
-    """Sigmoid growth model transformation.
+    r"""Sigmoid growth model transformation.
 
-    Implements sigmoid growth: x = A / (1 + exp(-r*(t - c)))
-    This models S-shaped growth curves with carrying capacity A.
+    Implements sigmoid growth:
+
+    .. math::
+        x = \frac{A}{1 + \exp(-r(t - c))}
 
     :param t: Time parameter
     :type t: custom_types.CombinableParameterType
@@ -1598,27 +1564,12 @@ class SigmoidGrowth(SigmoidParameter):
     :type c: custom_types.CombinableParameterType
     :param kwargs: Additional arguments passed to parent class
 
-    :cvar LOWER_BOUND: Values are bounded below by 0.0
-    :cvar UPPER_BOUND: No upper bound (None) as A can be any positive value
-
-    Mathematical Properties:
-    - S-shaped growth curve
-    - A represents carrying capacity (maximum value)
-    - c represents inflection point (time of fastest growth)
-    - r controls steepness of growth
-    - Approaches 0 as t → -∞ and A as t → +∞
-
     This transformation is essential for:
-    - Population growth with carrying capacity
-    - Any growth process with saturation
+        - Population growth with carrying capacity
+        - Any growth process with saturation
 
-    Example:
-        >>> time_points = Constant(np.linspace(0, 10, 100))
-        >>> carrying_capacity = Normal(mu=1000, sigma=50)
-        >>> growth_rate = Normal(mu=1.0, sigma=0.1)
-        >>> inflection_time = Normal(mu=5.0, sigma=0.5)
-        >>> population = SigmoidGrowth(t=time_points, A=carrying_capacity,
-        >>>                             r=growth_rate, c=inflection_time)
+    This transformation is accessed through the
+    :py:func:`~scistanpy.operations.sigmoid_growth` function.
     """
 
     LOWER_BOUND: "custom_types.Float" = 0.0
@@ -1680,10 +1631,14 @@ class SigmoidGrowth(SigmoidParameter):
 
 
 class LogSigmoidGrowth(LogSigmoidParameter):
-    """Log-scale sigmoid growth model transformation.
+    r"""Log-scale sigmoid growth model transformation.
 
-    Implements the logarithm of sigmoid growth: log(x) = log_A + log_sigmoid(r*(t - c))
-    This provides numerical stability and ensures positive values.
+    Implements the logarithm of sigmoid growth:
+        .. math::
+            \log(x) = logA - \log(1 + \exp(-r(t - c)))
+
+    Under the hood, this uses the numerically stable log-sigmoid to calculate the
+    ``1 + exp(-...)`` term.
 
     :param t: Time parameter
     :type t: custom_types.CombinableParameterType
@@ -1695,22 +1650,14 @@ class LogSigmoidGrowth(LogSigmoidParameter):
     :type c: custom_types.CombinableParameterType
     :param kwargs: Additional arguments passed to parent class
 
-    :cvar LOWER_BOUND: No lower bound (None)
-    :cvar UPPER_BOUND: No upper bound (None)
-
     This parameterization is ideal for:
     - Extreme parameter regimes
     - Log-scale statistical modeling
     - When initial conditions are naturally in log-space
     - Maximum numerical precision requirements
 
-    Example:
-        >>> time_points = Constant(np.linspace(0, 10, 100))
-        >>> log_carrying_capacity = Normal(mu=6.9, sigma=0.1)  # log(1000)
-        >>> growth_rate = Normal(mu=1.0, sigma=0.1)
-        >>> inflection_time = Normal(mu=5.0, sigma=0.5)
-        >>> log_population = LogSigmoidGrowth(t=time_points, log_A=log_carrying_capacity,
-        >>>                                     r=growth_rate, c=inflection_time)
+    This transformation is accessed through the
+    :py:func:`~scistanpy.operations.log_sigmoid_growth` function.
     """
 
     LOWER_BOUND: None = None
@@ -1777,7 +1724,7 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
     """Sigmoid growth with initial value parameterization.
 
     Alternative parameterization of sigmoid growth in terms of initial abundances
-    rather than carrying capacity. Uses numerically stable log-add-exp computation.
+    rather than carrying capacity.
 
     :param t: Time parameter
     :type t: custom_types.CombinableParameterType
@@ -1789,9 +1736,6 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
     :type c: custom_types.CombinableParameterType
     :param kwargs: Additional arguments passed to parent class
 
-    :cvar LOWER_BOUND: Values are bounded below by 0.0
-    :cvar UPPER_BOUND: No upper bound (None)
-
     Mathematical Properties:
     - Parameterizes sigmoid growth by initial value x0
     - Uses log-add-exp trick for numerical stability
@@ -1799,13 +1743,13 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
     - Maintains sigmoid growth dynamics
 
     This parameterization is useful when:
-    - Initial conditions are better known than carrying capacity
+    - Initial conditions are better known than carrying capacity (e.g., biological systems)
     - Numerical stability is crucial
     - Working with extreme parameter values
     - Modeling relative growth from baseline
 
-    The transformation uses the identity:
-    x(t) = x0 * exp(log(1+exp(r*c)) - log(1+exp(r*(c-t))))
+    This transformation is accessed through the
+    :py:func:`~scistanpy.operations.sigmoid_growth_init_param` function.
     """
 
     LOWER_BOUND: "custom_types.Float" = 0.0
@@ -1896,13 +1840,9 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
     :type c: custom_types.CombinableParameterType
     :param kwargs: Additional arguments passed to parent class
 
-    :cvar LOWER_BOUND: No lower bound (None)
-    :cvar UPPER_BOUND: No upper bound (None)
-
     Mathematical Properties:
     - Fully operates in log-space for numerical stability
     - Parameterized by log of initial conditions
-    - Uses log-add-exp computations throughout
     - Maintains sigmoid growth dynamics
 
     This parameterization is ideal for:
@@ -1910,14 +1850,6 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
     - Log-scale statistical modeling
     - When initial conditions are naturally in log-space
     - Maximum numerical precision requirements
-
-    Example:
-        >>> time_points = Constant(np.linspace(0, 10, 100))
-        >>> log_initial = Normal(mu=4.6, sigma=0.1)  # log(100)
-        >>> growth_rate = Normal(mu=1.0, sigma=0.1)
-        >>> offset = Normal(mu=5.0, sigma=0.5)
-        >>> log_abundance = LogSigmoidGrowthInitParametrization(t=time_points,
-        >>>                 log_x0=log_initial, r=growth_rate, c=offset)
     """
 
     LOWER_BOUND: None = None
@@ -2003,25 +1935,28 @@ class ConvolveSequence(TransformedParameter):
     :type ordinals: custom_types.CombinableParameterType
     :param kwargs: Additional arguments passed to parent class
 
-    :cvar SHAPE_CHECK: Disabled for complex shape operations (False)
-    :cvar FORCE_LOOP_RESET: Forces loop reset in Stan code (True)
-    :cvar FORCE_PARENT_NAME: Forces parent naming in Stan code (True)
+    :raises ValueError: If weights is not at least 2D
+    :raises ValueError: If ordinals is not at least 1D
+    :raises ValueError: If shapes are incompatible for broadcasting
 
     Shape Requirements:
-    - Weights: (..., kernel_size, alphabet_size)
-    - Ordinals: (..., sequence_length)
-    - Output: (..., sequence_length - kernel_size + 1)
+        - Weights: (..., kernel_size, alphabet_size)
+        - Ordinals: (..., sequence_length)
+        - Output: (..., sequence_length - kernel_size + 1)
 
     The transformation applies convolution by:
-    1. Sliding a kernel of size kernel_size over the sequence
-    2. Using ordinal values to index into the weight matrix
-    3. Summing weighted values for each position
+        1. Sliding a kernel of size kernel_size over the sequence
+        2. Using ordinal values to index into the weight matrix
+        3. Summing weighted values for each position
 
     This is commonly used for:
-    - DNA/RNA sequence analysis
-    - Protein sequence modeling
-    - Text processing with character-level models
-    - Pattern recognition in discrete sequences
+        - DNA/RNA sequence analysis
+        - Protein sequence modeling
+        - Text processing with character-level models
+        - Pattern recognition in discrete sequences
+
+    This transformation is accessed through the
+    :py:func:`~scistanpy.operations.convolve_sequence` function.
 
     Example:
         >>> # DNA sequence convolution
@@ -2041,16 +1976,7 @@ class ConvolveSequence(TransformedParameter):
         ordinals: "custom_types.CombinableParameterType",
         **kwargs,
     ):
-        """Initialize sequence convolution with shape validation.
-
-        :param weights: Weight matrix (kernel_size × alphabet_size in last 2 dims)
-        :param ordinals: Ordinal sequence array
-        :param kwargs: Additional arguments
-
-        :raises ValueError: If weights is not at least 2D
-        :raises ValueError: If ordinals is not at least 1D
-        :raises ValueError: If shapes are incompatible for broadcasting
-        """
+        """Initialize sequence convolution with shape validation."""
         # Weights must be at least 2D.
         if weights.ndim < 2:
             raise ValueError("Weights must be at least a 2D parameter.")
@@ -2262,27 +2188,42 @@ class IndexParameter(TransformedParameter):
     :param indices: Indexing specifications (slices, integers, arrays)
     :type indices: custom_types.IndexType
 
-    :cvar SHAPE_CHECK: Disabled for complex indexing operations (False)
-    :cvar FORCE_PARENT_NAME: Forces parent naming in Stan code (True)
-
     Supported Index Types:
-    - **slice**: Standard Python slicing with start:stop (step=1 only)
-    - **int**: Single element selection
-    - **np.ndarray**: Advanced indexing with integer arrays. 1D only. Follows numpy convention.
-    - **Ellipsis**: Automatic dimension filling
-    - **None**: New axis insertion
+        - **slice**: Standard Python slicing with start:stop (step=1 only)
+        - **int**: Single element selection
+        - **np.ndarray**: Advanced indexing with integer arrays. 1D only.
+          Follows numpy convention.
+        - **Ellipsis**: Automatic dimension filling
+        - **None**: New axis insertion
 
     Important Differences from Stan:
-    - Uses 0-based indexing (Python convention)
-    - Advanced indexing follows NumPy broadcasting rules
-    - Negative indices are supported and converted appropriately
+        - Uses 0-based indexing (Python convention)
+        - Advanced indexing follows NumPy broadcasting rules, not Stan rules
+        - Negative indices are supported and converted appropriately
+
+    This transformation is never applied directly. Instead index a parameter as
+    in normal Python/NumPy:
 
     Example:
-        >>> data = Normal(mu=0, sigma=1, shape=(10, 5))
-        >>> # Slice first 5 rows
-        >>> subset = IndexParameter(data, slice(0, 5))
-        >>> # Select specific elements
-        >>> selected = IndexParameter(data, [0, 2, 4], [1, 3, 0])  # NumPy-style
+        .. code-block:: python
+
+            # Define any parameter
+            param = Normal(mu=0, sigma=1, shape=(10, 5))
+
+            # Standard indexing (last element of first dimension)
+            last_elem = param[-1]
+
+            # Slice first 5 rows
+            subset = param[:5]
+
+            # Select specific elements with NumPy-style advanced indexing
+            selected = param[np.array([0, 2, 4])]
+
+            # Use Ellipsis to fill in dimensions
+            first_col = param[..., 0]  # All leading dimensions, first of last
+
+            # Insert new axis
+            new_axis = param[:, None, :]
     """
 
     SHAPE_CHECK = False
@@ -2583,10 +2524,10 @@ class IndexParameter(TransformedParameter):
         :rtype: str
 
         Handles complex indexing patterns including:
-        - Multiple array indices (creates separate bracket groups)
-        - Mixed slicing and array indexing
-        - Proper 1-based index conversion for Stan
-        - Colon notation for full dimension slicing
+            - Multiple array indices (creates separate bracket groups)
+            - Mixed slicing and array indexing
+            - Proper 1-based index conversion for Stan
+            - Colon notation for full dimension slicing
         """
         # Compile all indices. Every time we encounter an array index, we start
         # a new indexing operation. This allows us to mimic numpy behavior in Stan.

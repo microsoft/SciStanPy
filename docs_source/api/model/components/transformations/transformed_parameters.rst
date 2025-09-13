@@ -1,343 +1,268 @@
 Transformed Parameters API Reference
 ====================================
 
-This reference covers the transformed parameter framework that enables mathematical operations and operator overloading in SciStanPy.
-
-Transformed Parameters Module
------------------------------
-
 .. automodule:: scistanpy.model.components.transformations.transformed_parameters
    :undoc-members:
    :show-inheritance:
 
-Core Transformation Classes
----------------------------
 
-Abstract Base Class
-~~~~~~~~~~~~~~~~~~~
+The transformation system supports the following classes of operations:
+
+**Basic Arithmetic via Python Operators**
+    - Addition (``+``) via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.AddParameter`
+    - Subtraction (``-``) via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.SubtractParameter`
+    - Multiplication (``*``) via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter`
+    - Division (``/``) via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.DivideParameter`
+    - Power (``**``) via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.PowerParameter`
+    - Negation (Unary ``-``) via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.NegateParameter`
+
+**Standard Mathematical Functions**
+    - Absolute Value via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.AbsParameter`
+    - Natural Logarithm via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.LogParameter`
+    - Exponential via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.ExpParameter`
+    - Sigmoid via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter`
+    - Log Sigmoid via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter`
+    - :math:`\log{1 + \exp{x}}` via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter`
+
+**Normalization Operations**
+    - Normalization (sum to 1) via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter`
+    - Log-Space Normalization (sum of exponents to 1) via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter`
+
+**Reduction Operations**
+    - Sum Reduction via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.SumParameter`
+    - Log-Sum-Exp via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.LogSumExpParameter`
+
+**Growth Models**
+    - Exponential Growth via :py:class:`~scistanpy.model.components. transformations.transformed_parameters.ExponentialGrowth` or :py:class:`~scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth`
+    - Log Exponential Growth via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth` or :py:class:`~scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth`
+    - Sigmoid Growth via :py:class:`~scistanpy.model.components.transformations.
+      transformed_parameters.SigmoidGrowth` or :py:class:`~scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization`
+    - Log Sigmoid Growth via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth` or :py:class:`~scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization`
+
+**Special Functions**
+    - Sequence Convolution via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence`
+
+**Indexing and Array Operations**
+    - Indexing and slicing via :py:class:`~scistanpy.model.components.transformations.transformed_parameters.IndexParameter`
+
+Note that none of these classes will typically be instantiated directly. Instead, end users will access them either via Python's inbuilt operators between other model components or else use SciStanPy's :py:mod:`~scistanpy.operations` submodule.
+
+Base Classes
+------------
+Transformed parameters are composed using a hierarchy of base classes that define their behavior and interfaces. The main base classes are:
+
+   - :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformableParameter`, which activates operator overloading for mathematical expressions. Note that, in addition to :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter` subclasses, all :py:class:`~scistanpy.model.components.parameters.ContinuousDistribution` subclasses also inherit from this class. Classes that inherit from this base are, as the name suggests, transformable via any Python operators or functions defined in the :py:mod:`~scistanpy.operations` module.
+   - :py:class:`~scistanpy.model.components.transformations.transformed_parameters.Transformation`, which is the abstract base class for all transformations (i.e., both :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter` and :py:class:`~scistanpy.model.components.transformations.transformed_data.TransformedData`). This class defines the core interface and behavior for all transformed parameters, including methods for drawing samples, generating Stan code, and managing parent components.
+   - :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter`, which is the base class for all SciStanPy transformed parameters.
+   - :py:class:`~scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter`, which is a convenience base class for transformations that take a single input parameter.
+   - :py:class:`~scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter`, which is a convenience base class for transformations that take two input parameters.
+
+Documentation for each of these base classes is provided below:
+
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.TransformableParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __add__, __radd__, __sub__, __rsub__, __mul__, __rmul__, __truediv__, __rtruediv__, __pow__, __rpow__, __neg__
+
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.Transformation
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.TransformedParameter
    :members:
    :undoc-members:
    :show-inheritance:
-
-   **Unified Transformation Interface:**
-
-   .. code-block:: python
-
-      # All transformations are TransformedParameters
-      transformation = x + y
-
-      # Access parent components
-      parents = transformation.parents
-
-      # Generate Stan code
-      stan_code = transformation.get_transformation_assignment(('i', 'j'))
-
-      # Check if explicitly named
-      is_named = transformation.is_named
-
-Binary and Unary Operations
----------------------------
-
-BinaryTransformedParameter
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-   **Two-Operand Transformations:**
-
-   .. code-block:: python
-
-      # Binary operations automatically handle broadcasting
-      x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))
-      y = ssp.parameters.Normal(mu=0, sigma=1, shape=(3, 1))
-
-      # Result has shape (3, 5) through broadcasting
-      combined = x + y
-
-UnaryTransformedParameter
-~~~~~~~~~~~~~~~~~~~~~~~~~
+   :special-members: __call__
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.UnaryTransformedParameter
    :members:
    :undoc-members:
    :show-inheritance:
 
-   **Single-Operand Transformations:**
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.BinaryTransformedParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-   .. code-block:: python
-
-      # Unary operations preserve shape
-      x = ssp.parameters.Normal(mu=0, sigma=1, shape=(3, 4))
-      neg_x = -x                           # Shape remains (3, 4)
-      abs_x = ssp.operations.abs(x)        # Shape remains (3, 4)
-
-Arithmetic Operations
----------------------
-
-Basic Arithmetic
-~~~~~~~~~~~~~~~~
-
+Basic Arithmetic Operations
+---------------------------
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.AddParameter
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.SubtractParameter
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.DivideParameter
    :members:
    :undoc-members:
    :show-inheritance:
-
-   **Arithmetic Operation Examples:**
-
-   .. code-block:: python
-
-      # Basic arithmetic
-      a = ssp.parameters.Normal(mu=0, sigma=1)
-      b = ssp.parameters.Normal(mu=0, sigma=1)
-
-      addition = a + b          # AddParameter
-      subtraction = a - b       # SubtractParameter
-      multiplication = a * b    # MultiplyParameter
-      division = a / b          # DivideParameter
-
-Power and Unary Operations
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+   :exclude-members: run_np_torch_op, write_stan_operation
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.PowerParameter
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.NegateParameter
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
+
+Standard Mathematical Functions
+-------------------------------
 
 .. autoclass:: scistanpy.model.components.transformations.transformed_parameters.AbsParameter
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-   **Advanced Arithmetic Examples:**
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.ExpParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-   .. code-block:: python
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.LogParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-      # Power operations
-      squared = x ** 2                     # PowerParameter
-      cube_root = x ** (1/3)               # PowerParameter
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-      # Unary operations
-      negated = -x                         # NegateParameter
-      absolute = ssp.operations.abs(x)     # AbsParameter
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-Mathematical Functions
-----------------------
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-The transformed parameters framework enables complex mathematical expressions:
+Normalization Transformations
+-----------------------------
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-**Function Composition:**
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-.. code-block:: python
+Reduction Operations
+--------------------
+Reductions are built from an additional intermediate base class, :py:class:`~scistanpy.model.components.transformations.transformed_parameters.Reduction`, which provides shared functionality for all reduction operations. It is documented below followed by the specific reduction transformations.
 
-   # Complex mathematical expressions
-   mu = ssp.parameters.Normal(mu=0, sigma=1)
-   sigma = ssp.parameters.LogNormal(mu=0, sigma=0.5)
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.Reduction
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-   # Standardized normal
-   standardized = (x - mu) / sigma
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.SumParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: NP_FUNC, TORCH_FUNC, write_stan_operation
 
-   # Log-normal parameterization
-   log_normal_mean = ssp.operations.exp(mu + 0.5 * sigma**2)
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.LogSumExpParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: NP_FUNC, TORCH_FUNC, write_stan_operation
 
-**Growth Model Applications:**
+Growth Model Transformations
+----------------------------
+SciStanPy has been thoroughly applied to modeling biological growth processes, particularly in the context of deep mutational scanning experiments. The following transformations provide a suite of growth model operations that can be used to define complex growth dynamics in a probabilistic framework. Note that all of these transformations could also be implemented using the basic arithmetic and mathematical functions provided above, but these classes provide a more convenient interface and better integration with SciStanPy's model component system. If there are other compound functions that would be useful to include in SciStanPy (whether growth-related or not), please consider raising an issue on the SciStanPy GitHub repository or contributing a custom transformation.
 
-.. code-block:: python
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-   # Exponential growth model
-   time_points = ssp.constants.Constant([0, 1, 2, 3, 4])
-   initial_pop = ssp.parameters.LogNormal(mu=np.log(100), sigma=0.1)
-   growth_rate = ssp.parameters.Normal(mu=0.1, sigma=0.02)
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-   # Population over time
-   population = initial_pop * ssp.operations.exp(growth_rate * time_points)
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-Advanced Transformation Features
---------------------------------
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-Shape Broadcasting
-~~~~~~~~~~~~~~~~~~
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-.. code-block:: python
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-   # Automatic shape broadcasting
-   scalar_param = ssp.parameters.Normal(mu=0, sigma=1)           # Shape: ()
-   vector_param = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))  # Shape: (5,)
-   matrix_param = ssp.parameters.Normal(mu=0, sigma=1, shape=(3, 5))  # Shape: (3, 5)
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-   # Broadcasting follows NumPy rules
-   result1 = scalar_param + vector_param    # Shape: (5,)
-   result2 = vector_param + matrix_param    # Shape: (3, 5)
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation
 
-Stan Code Generation
-~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   # Transformations generate optimized Stan code
-   complex_expr = (x + y) * ssp.operations.exp(z)
-
-   # Automatic variable naming and code generation
-   stan_code = complex_expr.get_transformation_assignment(('i', 'j'))
-
-   # Custom naming for complex expressions
-   complex_expr.model_varname = "complex_transformation"
-
-Custom Transformations
-----------------------
-
-**Creating Custom Binary Operations:**
-
-.. code-block:: python
-
-   class CustomBinaryOp(BinaryTransformedParameter):
-       """Custom binary transformation."""
-
-       def _draw(self, level_draws, seed):
-           left = level_draws['left']
-           right = level_draws['right']
-           return np.custom_operation(left, right)
-
-       def get_right_side(self, index_opts, **kwargs):
-           components = super().get_right_side(index_opts, **kwargs)
-           return f"custom_function({components['left']}, {components['right']})"
-
-**Creating Custom Unary Operations:**
-
-.. code-block:: python
-
-   class CustomUnaryOp(UnaryTransformedParameter):
-       """Custom unary transformation."""
-
-       def _draw(self, level_draws, seed):
-           operand = level_draws['operand']
-           return np.custom_function(operand)
-
-       def get_right_side(self, index_opts, **kwargs):
-           components = super().get_right_side(index_opts, **kwargs)
-           return f"custom_transform({components['operand']})"
+Special Functions
+-----------------
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation, get_index_offset, get_right_side, get_supporting_functions
 
 Indexing and Array Operations
 -----------------------------
-
-**Array Indexing Support:**
-
-.. code-block:: python
-
-   # Multi-dimensional parameter indexing
-   matrix_param = ssp.parameters.Normal(mu=0, sigma=1, shape=(10, 5))
-
-   # Advanced indexing creates IndexParameter transformations
-   row_slice = matrix_param[2, :]           # Third row
-   column_slice = matrix_param[:, 1]        # Second column
-   submatrix = matrix_param[1:4, 2:4]      # Submatrix selection
-
-   # NumPy-style advanced indexing
-   diagonal = matrix_param[np.arange(5), np.arange(5)]
-
-**Reduction Operations:**
-
-.. code-block:: python
-
-   # Statistical reductions
-   vector_param = ssp.parameters.Normal(mu=0, sigma=1, shape=(10,))
-
-   # Built-in reductions
-   total = ssp.operations.sum_(vector_param)
-   average = ssp.operations.mean(vector_param)
-   variance = ssp.operations.var(vector_param)
-
-Integration with Stan
----------------------
-
-**Automatic Stan Translation:**
-
-.. code-block:: python
-
-   # Complex expression
-   result = (x + y) * ssp.operations.exp(z / w)
-
-   # Generates efficient Stan code like:
-   # result = (x + y) * exp(z / w);
-
-**Vectorization Optimization:**
-
-.. code-block:: python
-
-   # Vector operations are automatically vectorized in Stan
-   vector_x = ssp.parameters.Normal(mu=0, sigma=1, shape=(100,))
-   vector_y = ssp.parameters.Normal(mu=0, sigma=1, shape=(100,))
-
-   # Generates vectorized Stan code
-   sum_vectors = vector_x + vector_y
-
-Performance Considerations
---------------------------
-
-**Efficient Expression Building:**
-
-.. code-block:: python
-
-   # Efficient: Direct expression building
-   efficient_expr = x + y * z
-
-   # Less efficient: Multiple intermediate variables
-   temp1 = y * z
-   temp2 = x + temp1
-
-**Memory Management:**
-
-.. code-block:: python
-
-   # Share parent references rather than copying
-   shared_base = ssp.parameters.Normal(mu=0, sigma=1)
-
-   transform1 = shared_base + 1         # References shared_base
-   transform2 = shared_base * 2         # References shared_base
-   transform3 = shared_base ** 2        # References shared_base
-
-**Stan Code Optimization:**
-
-.. code-block:: python
-
-   # Transformations are optimized for Stan execution:
-   # - Automatic vectorization where possible
-   # - Efficient loop structures for multi-dimensional operations
-   # - Proper variable scoping and memory management
-
-Best Practices
---------------
-
-1. **Use natural mathematical syntax** for clear model expression
-2. **Name complex transformations** for better model interpretation
-3. **Leverage broadcasting** to avoid manual shape management
-4. **Build expressions incrementally** for complex mathematical models
-5. **Validate shapes early** to catch dimension mismatches
-6. **Use operations module** for specialized mathematical functions
-7. **Monitor expression complexity** to maintain model interpretability
-
-The transformed parameters framework provides the mathematical foundation for expressing complex scientific models while maintaining computational efficiency and Stan code generation capabilities.
+.. autoclass:: scistanpy.model.components.transformations.transformed_parameters.IndexParameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: run_np_torch_op, write_stan_operation, get_assign_depth, get_right_side, get_transformation_assignment

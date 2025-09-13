@@ -34,49 +34,12 @@
 <span></span><span class="c1"># Copyright (c) Microsoft Corporation.</span>
 <span class="c1"># Licensed under the MIT license.</span>
 
-<span class="sd">&quot;&quot;&quot;Parameter transformation components for SciStanPy models.</span>
+<span class="sa">r</span><span class="sd">&quot;&quot;&quot;Parameter transformation components for SciStanPy models.</span>
 
 <span class="sd">This module provides a comprehensive library of mathematical transformations that</span>
 <span class="sd">can be applied to model parameters. These transformations enable complex model</span>
 <span class="sd">construction through composition of simple mathematical operations while maintaining</span>
 <span class="sd">automatic differentiation capabilities and Stan code generation.</span>
-
-<span class="sd">The transformation system supports:</span>
-
-<span class="sd">Transformation Categories:</span>
-<span class="sd">    - **Arithmetic Operations**: Addition, subtraction, multiplication, division, powers</span>
-<span class="sd">    - **Mathematical Functions**: Logarithms, exponentials, absolute values, sigmoids</span>
-<span class="sd">    - **Statistical Operations**: Normalization, log-sum-exp, reductions</span>
-<span class="sd">    - **Growth Models**: Exponential and sigmoid growth parameterizations</span>
-<span class="sd">    - **Array Operations**: Indexing, slicing, convolution</span>
-
-<span class="sd">Key Features:</span>
-<span class="sd">    - **Multi-Backend Support**: Works with NumPy, PyTorch, and Stan</span>
-<span class="sd">    - **Automatic Differentiation**: Maintains gradient flow for PyTorch optimization</span>
-<span class="sd">    - **Stan Code Generation**: Automatic translation to Stan programming language</span>
-<span class="sd">    - **Operator Overloading**: Natural mathematical syntax through Python operators</span>
-<span class="sd">    - **Shape Broadcasting**: Automatic handling of multi-dimensional operations</span>
-<span class="sd">    - **Type Safety**: Comprehensive validation and error checking</span>
-
-<span class="sd">Transformation Architecture:</span>
-<span class="sd">    The module provides several base classes that establish the transformation framework:</span>
-<span class="sd">    - **TransformableParameter**: Mixin enabling operator overloading</span>
-<span class="sd">    - **Transformation**: Base class for all transformation types</span>
-<span class="sd">    - **TransformedParameter**: Foundation for parameter transformations</span>
-<span class="sd">    - **BinaryTransformedParameter**: Two-operand mathematical operations</span>
-<span class="sd">    - **UnaryTransformedParameter**: Single-operand mathematical operations</span>
-
-<span class="sd">Advanced Transformations:</span>
-<span class="sd">    Beyond basic arithmetic, the module includes specialized transformations for:</span>
-<span class="sd">    - Growth modeling (exponential, sigmoid) with multiple parameterizations</span>
-<span class="sd">    - Sequence processing (convolution operations)</span>
-<span class="sd">    - Array manipulation (indexing with NumPy-compatible syntax)</span>
-<span class="sd">    - Numerical stability (log-space operations, stable sigmoid)</span>
-<span class="sd">    - Statistical operations (normalization, reductions)</span>
-
-<span class="sd">Note that these will not typically be instantiated directly. Instead, use Python&#39;s</span>
-<span class="sd">inbuilt operators between other model components or else use SciStanPy&#39;s `operations`</span>
-<span class="sd">submodule.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -99,6 +62,8 @@
 <span class="c1"># pylint: disable=too-many-lines</span>
 
 
+<div class="viewcode-block" id="TransformableParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransformableParameter</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin class enabling mathematical operator overloading for parameters.</span>
 
@@ -107,11 +72,12 @@
 <span class="sd">    creates an appropriate TransformedParameter instance that represents the</span>
 <span class="sd">    mathematical operation.</span>
 
-<span class="sd">    The mixin supports all standard arithmetic operators:</span>
-<span class="sd">    - Addition (+), subtraction (-)</span>
-<span class="sd">    - Multiplication (*), division (/)</span>
-<span class="sd">    - Exponentiation (**)</span>
-<span class="sd">    - Unary negation (-)</span>
+<span class="sd">    The mixin supports the following Python arithmetic operators:</span>
+
+<span class="sd">    - Addition (``+``), subtraction (``-``)</span>
+<span class="sd">    - Multiplication (``*``), division (``/``)</span>
+<span class="sd">    - Exponentiation (``**``)</span>
+<span class="sd">    - Unary negation (``-``)</span>
 
 <span class="sd">    Each operation supports both left and right operand positioning, enabling</span>
 <span class="sd">    flexible mathematical expressions with mixed parameter and constant types.</span>
@@ -127,40 +93,89 @@
 <span class="sd">        &gt;&gt;&gt; negated_param = -param1</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="TransformableParameter.__add__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__add__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">AddParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.AddParameter`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">AddParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformableParameter.__radd__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__radd__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">AddParameter</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.AddParameter`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">AddParameter</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformableParameter.__sub__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__sub__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">SubtractParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.SubtractParameter`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SubtractParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformableParameter.__rsub__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__rsub__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__rsub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">SubtractParameter</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.SubtractParameter`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SubtractParameter</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformableParameter.__mul__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__mul__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">MultiplyParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">MultiplyParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformableParameter.__rmul__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__rmul__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">MultiplyParameter</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">MultiplyParameter</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformableParameter.__truediv__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__truediv__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">DivideParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.DivideParameter`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DivideParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformableParameter.__rtruediv__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__rtruediv__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__rtruediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">DivideParameter</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.DivideParameter`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DivideParameter</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformableParameter.__pow__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__pow__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__pow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">PowerParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.PowerParameter`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">PowerParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformableParameter.__rpow__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__rpow__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__rpow__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">PowerParameter</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.PowerParameter`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">PowerParameter</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformableParameter.__neg__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformableParameter.__neg__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">NegateParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;See :py:class:`~scistanpy.model.components.transformations.transformed_parameters.NegateParameter`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">NegateParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="Transformation">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Transformation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Transformation</span><span class="p">(</span><span class="n">abstract_model_component</span><span class="o">.</span><span class="n">AbstractModelComponent</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all parameter transformations in SciStanPy.</span>
 
@@ -172,14 +187,14 @@
 <span class="sd">    :cvar SHAPE_CHECK: Whether to perform automatic shape checking. Defaults to True.</span>
 
 <span class="sd">    Key Responsibilities:</span>
-<span class="sd">    - Coordinate transformation assignment code generation</span>
-<span class="sd">    - Manage shape validation for transformation outputs</span>
-<span class="sd">    - Provide abstract interface for Stan operation writing</span>
-<span class="sd">    - Handle index options and assignment formatting</span>
+<span class="sd">        - Coordinate transformation assignment code generation</span>
+<span class="sd">        - Manage shape validation for transformation outputs</span>
+<span class="sd">        - Provide abstract interface for Stan operation writing</span>
+<span class="sd">        - Handle index options and assignment formatting</span>
 
 <span class="sd">    The class provides methods for generating Stan code assignments and manages</span>
 <span class="sd">    the interaction between transformation inputs and outputs. Subclasses must</span>
-<span class="sd">    implement the write_stan_operation method to define their specific</span>
+<span class="sd">    implement the ``write_stan_operation`` method to define their specific</span>
 <span class="sd">    mathematical operations.</span>
 
 <span class="sd">    Shape handling can be disabled for transformations that perform reductions</span>
@@ -220,6 +235,8 @@
             <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_right_side</span><span class="p">(</span><span class="n">index_opts</span><span class="p">,</span> <span class="o">**</span><span class="n">right_side_kwargs</span><span class="p">)</span>
         <span class="p">)</span>
 
+<div class="viewcode-block" id="Transformation.write_stan_operation">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Transformation.write_stan_operation">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">to_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan code for the specific transformation operation.</span>
@@ -233,8 +250,11 @@
 <span class="sd">        This abstract method must be implemented by all concrete transformation</span>
 <span class="sd">        classes to define how their specific mathematical operation is represented</span>
 <span class="sd">        in Stan code.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
 
+
+<div class="viewcode-block" id="Transformation.get_right_side">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Transformation.get_right_side">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_right_side</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">index_opts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -276,7 +296,8 @@
         <span class="n">stan_op</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_stan_operation</span><span class="p">(</span><span class="o">**</span><span class="n">components</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_named</span><span class="p">:</span>
             <span class="n">stan_op</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">stan_op</span><span class="si">}</span><span class="s2">)&quot;</span>
-        <span class="k">return</span> <span class="n">stan_op</span>
+        <span class="k">return</span> <span class="n">stan_op</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set component shape with optional shape checking bypass.</span>
@@ -301,7 +322,8 @@
         <span class="n">right_side</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">get_right_side</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;[start:end]&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">right_side</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_varname</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">right_side</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
 
 
 <div class="viewcode-block" id="TransformedParameter">
@@ -312,8 +334,6 @@
 <span class="sd">    This class provides the foundation for parameters that result from mathematical</span>
 <span class="sd">    operations on other parameters. It handles both the computational aspects</span>
 <span class="sd">    (sampling, PyTorch operations) and code generation aspects (Stan assignments).</span>
-
-<span class="sd">    :cvar STAN_OPERATOR: Stan operator string for simple operations</span>
 
 <span class="sd">    Transformed parameters support:</span>
 <span class="sd">    - Sampling through parent parameter sampling and operation application</span>
@@ -335,6 +355,12 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stan operator string or function name for simple operations</span>
+
+<span class="sd">    This operator is used in the Stan code generation for the transformation.</span>
+<span class="sd">    Subclasses should define this variable to specify the appropriate operator</span>
+<span class="sd">    or function for their specific transformation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># The transformation is renamed to be more specific in the child classes</span>
     <span class="n">get_transformation_assignment</span> <span class="o">=</span> <span class="n">Transformation</span><span class="o">.</span><span class="n">_transformation</span>
@@ -396,7 +422,8 @@
 <span class="sd">        :returns: Stan code for the operation</span>
 <span class="sd">        :rtype: str</span>
 
-<span class="sd">        :raises NotImplementedError: If STAN_OPERATOR is not defined for simple operations</span>
+<span class="sd">        :raises NotImplementedError: If ``STAN_OPERATOR`` is not defined for simple</span>
+<span class="sd">            operations</span>
 
 <span class="sd">        This method must be implemented to provide appropriate Stan code</span>
 <span class="sd">        for the mathematical operation represented by this transformation.</span>
@@ -408,6 +435,8 @@
         <span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
 
 
+<div class="viewcode-block" id="TransformedParameter.__call__">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.__call__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Enable calling transformed parameters as functions.</span>
 
@@ -419,7 +448,8 @@
 <span class="sd">        This allows transformed parameters to be used as callable functions,</span>
 <span class="sd">        providing a convenient interface for applying operations directly.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_np_torch_op</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_np_torch_op</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">torch_parametrization</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
@@ -461,8 +491,8 @@
 <span class="sd">    the building blocks for more complex mathematical relationships between</span>
 <span class="sd">    parameters.</span>
 
-<span class="sd">    Subclasses must implement run_np_torch_op with the (dist1, dist2) signature</span>
-<span class="sd">    and can optionally override write_stan_operation for custom Stan formatting.</span>
+<span class="sd">    Subclasses must implement ``run_np_torch_op`` with the (``dist1, dist2``) signature</span>
+<span class="sd">    and can optionally override ``write_stan_operation`` for custom Stan formatting.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -513,7 +543,7 @@
 <span class="sd">        :returns: Stan code with infix operator</span>
 <span class="sd">        :rtype: str</span>
 
-<span class="sd">        Generates Stan code in the format &quot;dist1 OPERATOR dist2&quot; for</span>
+<span class="sd">        Generates Stan code in the format ``&quot;dist1 OPERATOR dist2&quot;`` for</span>
 <span class="sd">        standard binary operations.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write_stan_operation</span><span class="p">()</span>
@@ -540,8 +570,8 @@
 <span class="sd">    Unary operations are essential for mathematical transformations and provide</span>
 <span class="sd">    common functions needed in statistical modeling and parameter reparameterization.</span>
 
-<span class="sd">    Subclasses must implement run_np_torch_op with the single-parameter signature</span>
-<span class="sd">    and can optionally override write_stan_operation for custom Stan formatting.</span>
+<span class="sd">    Subclasses must implement ``run_np_torch_op`` with the single-parameter signature</span>
+<span class="sd">    and can optionally override ``write_stan_operation`` for custom Stan formatting.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -584,7 +614,7 @@
 <span class="sd">        :returns: Stan code with prefix operator</span>
 <span class="sd">        :rtype: str</span>
 
-<span class="sd">        Generates Stan code in the format &quot;OPERATOR dist1&quot; for</span>
+<span class="sd">        Generates Stan code in the format ``&quot;OPERATOR dist1&quot;`` for</span>
 <span class="sd">        standard unary operations.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write_stan_operation</span><span class="p">()</span>
@@ -601,21 +631,22 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">AddParameter</span><span class="p">(</span><span class="n">BinaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Addition transformation for two parameters.</span>
 
-<span class="sd">    Implements element-wise addition of two parameters: result = dist1 + dist2</span>
+<span class="sd">    Implements element-wise addition of two parameters: ``result = dist1 + dist2``</span>
 
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Commutative: a + b = b + a</span>
-<span class="sd">    - Associative: (a + b) + c = a + (b + c)</span>
-<span class="sd">    - Identity element: 0</span>
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
 
-<span class="sd">    This transformation preserves the shape through broadcasting and is commonly</span>
-<span class="sd">    used for combining effects, offsets, and linear combinations of parameters.</span>
+<span class="sd">            # Binary operations automatically handle broadcasting</span>
+<span class="sd">            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))</span>
+<span class="sd">            y = ssp.parameters.Normal(mu=0, sigma=1, shape=(3, 1))</span>
+
+<span class="sd">            # Result has shape (3, 5) through broadcasting</span>
+<span class="sd">            combined = x + y</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;+&quot;</span>
 
-<div class="viewcode-block" id="AddParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AddParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise addition.</span>
 
@@ -625,7 +656,6 @@
 <span class="sd">        :returns: Sum of the two inputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">dist1</span> <span class="o">+</span> <span class="n">dist2</span></div>
-</div>
 
 
 
@@ -634,21 +664,21 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">SubtractParameter</span><span class="p">(</span><span class="n">BinaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Subtraction transformation for two parameters.</span>
 
-<span class="sd">    Implements element-wise subtraction of two parameters: result = dist1 - dist2</span>
+<span class="sd">    Implements element-wise subtraction of two parameters: ``result = dist1 - dist2``</span>
 
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Non-commutative: a - b ≠ b - a (generally)</span>
-<span class="sd">    - Non-associative: (a - b) - c ≠ a - (b - c) (generally)</span>
-<span class="sd">    - Identity element: 0 (for right operand)</span>
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
 
-<span class="sd">    This transformation is commonly used for computing differences, residuals,</span>
-<span class="sd">    and relative measures between parameters.</span>
+<span class="sd">            # Binary operations automatically handle broadcasting</span>
+<span class="sd">            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))</span>
+<span class="sd">            y = ssp.parameters.Normal(mu=0, sigma=1, shape=(3, 1))</span>
+
+<span class="sd">            # Result has shape (3, 5) through broadcasting</span>
+<span class="sd">            difference = x - y</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
 
-<div class="viewcode-block" id="SubtractParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SubtractParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise subtraction.</span>
 
@@ -658,7 +688,6 @@
 <span class="sd">        :returns: Difference of the two inputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">dist1</span> <span class="o">-</span> <span class="n">dist2</span></div>
-</div>
 
 
 
@@ -667,21 +696,24 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">MultiplyParameter</span><span class="p">(</span><span class="n">BinaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Element-wise multiplication transformation for two parameters.</span>
 
-<span class="sd">    Implements element-wise multiplication of two parameters: result = dist1 * dist2</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Commutative: a * b = b * a</span>
-<span class="sd">    - Associative: (a * b) * c = a * (b * c)</span>
-<span class="sd">    - Identity element: 1</span>
+<span class="sd">    Implements element-wise multiplication of two parameters: ``result = dist1 * dist2``</span>
 
 <span class="sd">    This transformation is fundamental for scaling, interaction effects, and</span>
 <span class="sd">    product relationships between parameters.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            # Binary operations automatically handle broadcasting</span>
+<span class="sd">            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))</span>
+<span class="sd">            y = ssp.parameters.Normal(mu=0, sigma=1, shape=(3, 1))</span>
+
+<span class="sd">            # Result has shape (3, 5) through broadcasting</span>
+<span class="sd">            product = x * y</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.*&quot;</span>
 
-<div class="viewcode-block" id="MultiplyParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.MultiplyParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise multiplication.</span>
 
@@ -691,7 +723,6 @@
 <span class="sd">        :returns: Product of the two inputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">dist1</span> <span class="o">*</span> <span class="n">dist2</span></div>
-</div>
 
 
 
@@ -700,21 +731,24 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">DivideParameter</span><span class="p">(</span><span class="n">BinaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Element-wise division transformation for two parameters.</span>
 
-<span class="sd">    Implements element-wise division of two parameters: result = dist1 / dist2</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Non-commutative: a / b ≠ b / a (generally)</span>
-<span class="sd">    - Non-associative: (a / b) / c ≠ a / (b / c) (generally)</span>
-<span class="sd">    - Identity element: 1 (for right operand)</span>
+<span class="sd">    Implements element-wise division of two parameters: ``result = dist1 / dist2``</span>
 
 <span class="sd">    This transformation is used for ratios, rates, normalized quantities,</span>
 <span class="sd">    and relative measures. Care must be taken to avoid division by zero.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            # Binary operations automatically handle broadcasting</span>
+<span class="sd">            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))</span>
+<span class="sd">            y = ssp.parameters.Normal(mu=1, sigma=0.5, shape=(3, 1))</span>
+
+<span class="sd">            # Result has shape (3, 5) through broadcasting</span>
+<span class="sd">            ratio = x / y</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;./&quot;</span>
 
-<div class="viewcode-block" id="DivideParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.DivideParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise division.</span>
 
@@ -724,7 +758,6 @@
 <span class="sd">        :returns: Quotient of the two inputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">dist1</span> <span class="o">/</span> <span class="n">dist2</span></div>
-</div>
 
 
 
@@ -733,21 +766,24 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">PowerParameter</span><span class="p">(</span><span class="n">BinaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Element-wise exponentiation transformation for two parameters.</span>
 
-<span class="sd">    Implements element-wise exponentiation: result = dist1 ^ dist2</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Non-commutative: a^b ≠ b^a (generally)</span>
-<span class="sd">    - Non-associative: (a^b)^c ≠ a^(b^c) (generally)</span>
-<span class="sd">    - Identity element: 1 (for exponent), any base^1 = base</span>
+<span class="sd">    Implements element-wise exponentiation: ``result = dist1 ^ dist2``</span>
 
 <span class="sd">    This transformation is used for power relationships, polynomial terms,</span>
 <span class="sd">    and exponential scaling effects.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            # Binary operations automatically handle broadcasting</span>
+<span class="sd">            x = ssp.parameters.Normal(mu=2, sigma=1, shape=(5,))</span>
+<span class="sd">            y = ssp.parameters.Normal(mu=3, sigma=0.5, shape=(3, 1))</span>
+
+<span class="sd">            # Result has shape (3, 5) through broadcasting</span>
+<span class="sd">            exponentiated = x ** y</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.^&quot;</span>
 
-<div class="viewcode-block" id="PowerParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.PowerParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">,</span> <span class="n">dist2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise exponentiation.</span>
 
@@ -757,7 +793,6 @@
 <span class="sd">        :returns: dist1 raised to the power of dist2</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">dist1</span><span class="o">**</span><span class="n">dist2</span></div>
-</div>
 
 
 
@@ -766,21 +801,17 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">NegateParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Unary negation transformation for parameters.</span>
 
-<span class="sd">    Implements element-wise negation of a parameter: result = -dist1</span>
+<span class="sd">    Implements element-wise negation of a parameter: ``result = -dist1``</span>
 
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Involutory: -(-a) = a</span>
-<span class="sd">    - Distributive over addition: -(a + b) = -a + -b</span>
-<span class="sd">    - Anti-distributive over multiplication: -(a * b) = (-a) * b = a * (-b)</span>
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
 
-<span class="sd">    This transformation is used for sign changes, directional effects,</span>
-<span class="sd">    and creating opposite relationships.</span>
+<span class="sd">            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))</span>
+<span class="sd">            negated = -x</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">STAN_OPERATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
 
-<div class="viewcode-block" id="NegateParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NegateParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform element-wise negation.</span>
 
@@ -789,7 +820,6 @@
 <span class="sd">        :returns: Negated input</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="o">-</span><span class="n">dist1</span></div>
-</div>
 
 
 
@@ -798,23 +828,23 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">AbsParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Absolute value transformation for parameters.</span>
 
-<span class="sd">    Implements element-wise absolute value: result = \|dist1\|</span>
-
-<span class="sd">    :cvar LOWER_BOUND: Absolute values are always non-negative (0.0)</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Non-negative output: \|a\| ≥ 0</span>
-<span class="sd">    - Idempotent for non-negative inputs: \|\|a\|\| = \|a\|</span>
-<span class="sd">    - Triangle inequality: \|a + b\| ≤ \|a\| + \|b\|</span>
+<span class="sd">    Implements element-wise absolute value: ``result = \|dist1\|``</span>
 
 <span class="sd">    This transformation ensures non-negative values and is commonly used</span>
 <span class="sd">    for magnitudes, distances, and ensuring positive parameters.</span>
+
+<span class="sd">    This transformation is accessed through the :py:func:`~scistanpy.operations.abs_`</span>
+<span class="sd">    function.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))</span>
+<span class="sd">            abs_x = ssp.operations.abs_(x) # Effectively half-normal distribution</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-<div class="viewcode-block" id="AbsParameter.run_np_torch_op">
-<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.run_np_torch_op">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute element-wise absolute value.</span>
 
@@ -822,40 +852,39 @@
 
 <span class="sd">        :returns: Absolute value of input</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">choose_module</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">choose_module</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dist1</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="AbsParameter.write_stan_operation">
-<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.AbsParameter.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate Stan absolute value function call.</span>
 
 <span class="sd">        :param dist1: Formatted parameter string</span>
 <span class="sd">        :type dist1: str</span>
 
-<span class="sd">        :returns: Stan abs() function call</span>
+<span class="sd">        :returns: Stan ``abs()`` function call</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;abs(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
-</div>
 
 
 
+<div class="viewcode-block" id="LogParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Natural logarithm transformation for parameters.</span>
 
-<span class="sd">    Implements element-wise natural logarithm: result = ln(dist1)</span>
-
-<span class="sd">    :cvar POSITIVE_PARAMS: Input must be positive ({&quot;dist1&quot;})</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Domain: (0, ∞)</span>
-<span class="sd">    - Range: (-∞, ∞)</span>
-<span class="sd">    - Logarithm laws: ln(ab) = ln(a) + ln(b), ln(a^b) = b*ln(a)</span>
-<span class="sd">    - Inverse: exp(ln(a)) = a for a &gt; 0</span>
+<span class="sd">    Implements element-wise natural logarithm: ``result = ln(dist1)``</span>
 
 <span class="sd">    This transformation is fundamental for log-scale modeling, multiplicative</span>
 <span class="sd">    effects on additive scales, and ensuring positive-valued parameters.</span>
+
+<span class="sd">    This transformation is accessed through the :py:func:`~scistanpy.operations.log`</span>
+<span class="sd">    function.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = ssp.parameters.LogNormal(mu=0, sigma=1, shape=(5,))</span>
+<span class="sd">            log_x = ssp.operations.log(x) # Normally distributed</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">POSITIVE_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;dist1&quot;</span><span class="p">}</span>
@@ -875,27 +904,31 @@
 <span class="sd">        :param dist1: Formatted parameter string</span>
 <span class="sd">        :type dist1: str</span>
 
-<span class="sd">        :returns: Stan log() function call</span>
+<span class="sd">        :returns: Stan ``log()`` function call</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="ExpParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExpParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Exponential transformation for parameters.</span>
 
-<span class="sd">    Implements element-wise exponential function: result = exp(dist1)</span>
-
-<span class="sd">    :cvar LOWER_BOUND: Exponential values are always positive (0.0)</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Domain: (-∞, ∞)</span>
-<span class="sd">    - Range: (0, ∞)</span>
-<span class="sd">    - Exponential laws: exp(a+b) = exp(a)*exp(b), exp(a*b) ≠ exp(a)*exp(b)</span>
-<span class="sd">    - Inverse: ln(exp(a)) = a</span>
+<span class="sd">    Implements element-wise exponential function: ``result = exp(dist1)``</span>
 
 <span class="sd">    This transformation is used for ensuring positive values, exponential</span>
 <span class="sd">    growth models, and converting from log-scale to natural scale.</span>
+
+<span class="sd">    This transformation is accessed through the :py:func:`~scistanpy.operations.exp`</span>
+<span class="sd">    function.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(5,))</span>
+<span class="sd">            exp_x = ssp.operations.exp(x) # Log-normally distributed</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -913,9 +946,12 @@
 <span class="sd">        :returns: Stan exp() function call</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;exp(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;exp(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="NormalizeParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NormalizeParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalization transformation that scales values to sum to 1 in the last dimension</span>
 <span class="sd">    of the input.</span>
@@ -923,23 +959,24 @@
 <span class="sd">    Implements element-wise normalization where each vector is divided by its sum,</span>
 <span class="sd">    creating probability vectors or normalized weights that sum to unity.</span>
 
-<span class="sd">    :cvar LOWER_BOUND: Normalized values are non-negative (0.0)</span>
-<span class="sd">    :cvar UPPER_BOUND: Normalized values are bounded above by 1.0</span>
+<span class="sd">    This transformation is essential for creating probability vectors from non-negative</span>
+<span class="sd">    weights.</span>
 
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Domain: [0, ∞)^n (non-negative input required)</span>
-<span class="sd">    - Range: Probability simplex {x : Σxᵢ = 1, xᵢ ≥ 0}</span>
-<span class="sd">    - Operation: xᵢ&#39; = xᵢ / Σⱼ xⱼ</span>
-<span class="sd">    - Preserves ratios between elements</span>
+<span class="sd">    This transformation is accessed through the :py:func:`~scistanpy.operations.normalize`</span>
+<span class="sd">    function.</span>
 
-<span class="sd">    This transformation is essential for:</span>
-<span class="sd">    - Converting counts to proportions</span>
-<span class="sd">    - Creating probability vectors from non-negative weights</span>
-<span class="sd">    - Normalizing attention weights or mixture components</span>
-<span class="sd">    - Ensuring categorical probabilities sum to one</span>
+<span class="sd">    .. important::</span>
+<span class="sd">        The normalization is applied along the last dimension only. This cannot</span>
+<span class="sd">        be changed to other dimensions in the current implementation.</span>
 
-<span class="sd">    The normalization is applied along the last dimension only, making it suitable</span>
-<span class="sd">    for batch processing of multiple probability vectors.</span>
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = ssp.parameters.Exponential(rate=1.0, shape=(4, 5))</span>
+
+<span class="sd">            # Normalize along last dimension (size 5)</span>
+<span class="sd">            normalized_x = ssp.operations.normalize(x)</span>
+<span class="sd">            # Each of the 4 vectors of length 5 sums to 1</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -971,9 +1008,12 @@
 <span class="sd">        :returns: Stan code dividing by sum</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2"> / sum(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2"> / sum(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="NormalizeLogParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.NormalizeLogParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NormalizeLogParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-space normalization transformation for log-probability vectors over the</span>
 <span class="sd">    last dimension of the input.</span>
@@ -982,23 +1022,29 @@
 <span class="sd">    so that their exponentiated values sum to 1. This is equivalent to</span>
 <span class="sd">    subtracting the log-sum-exp from each element.</span>
 
-<span class="sd">    :cvar UPPER_BOUND: Log-probabilities are bounded above by 0.0</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Domain: (-∞, ∞)^n</span>
-<span class="sd">    - Range: Log-simplex {x : Σexp(xᵢ) = 1}</span>
-<span class="sd">    - Operation: xᵢ&#39; = xᵢ - log(Σⱼ exp(xⱼ))</span>
-<span class="sd">    - Numerically stable for extreme log-probabilities</span>
-
 <span class="sd">    This transformation is crucial for:</span>
-<span class="sd">    - Normalizing log-probabilities without exponentiation</span>
-<span class="sd">    - Stable computation with very small probabilities</span>
-<span class="sd">    - Log-space categorical distributions</span>
-<span class="sd">    - Attention mechanisms in log-space</span>
+<span class="sd">        - Normalizing log-probabilities without exponentiation</span>
+<span class="sd">        - Stable computation with very small probabilities</span>
+<span class="sd">        - Log-space categorical distributions</span>
 
 <span class="sd">    The log-sum-exp operation provides numerical stability by avoiding</span>
-<span class="sd">    overflow/underflow issues common with direct exponentiation. As with the `NormalizeParameter`,</span>
-<span class="sd">    this is performed over the last dimension only.</span>
+<span class="sd">    overflow/underflow issues common with direct exponentiation.</span>
+
+<span class="sd">    This transformation is accessed through the :py:func:`~scistanpy.operations.normalize_log`</span>
+<span class="sd">    function.</span>
+
+<span class="sd">    .. important::</span>
+<span class="sd">        As with</span>
+<span class="sd">        :py:class:`~scistanpy.model.components.transformations.transformed_parameters.NormalizeParameter`,</span>
+<span class="sd">        this is performed over the last dimension only.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            x = ssp.parameters.Normal(mu=0, sigma=1, shape=(4, 5))</span>
+<span class="sd">            log_probs = ssp.operations.normalize_log(x)</span>
+<span class="sd">            # Each of the exponentials of the 4 vectors of length 5 sums to 1 in</span>
+<span class="sd">            # probability space</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">UPPER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -1028,20 +1074,19 @@
 <span class="sd">        :returns: Stan code using log_sum_exp function</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2"> - log_sum_exp(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2"> - log_sum_exp(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="Reduction">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Reduction</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for operations that reduce dimensionality.</span>
 
 <span class="sd">    This abstract base class provides infrastructure for transformations that</span>
-<span class="sd">    reduce the size of the last dimension through operations like sum, mean,</span>
-<span class="sd">    or log-sum-exp. It handles shape management and provides specialized</span>
-<span class="sd">    indexing behavior for reductions.</span>
-
-<span class="sd">    :cvar SHAPE_CHECK: Disabled for reductions (False)</span>
-<span class="sd">    :cvar TORCH_FUNC: PyTorch function for the reduction operation</span>
-<span class="sd">    :cvar NP_FUNC: NumPy function for the reduction operation</span>
+<span class="sd">    reduce the size of the last dimension through operations like ``sum`` or ``log-sum-exp``.</span>
+<span class="sd">    It handles shape management and provides specialized indexing behavior for</span>
+<span class="sd">    reductions.</span>
 
 <span class="sd">    :param dist1: Parameter to reduce</span>
 <span class="sd">    :type dist1: custom_types.CombinableParameterType</span>
@@ -1049,23 +1094,18 @@
 <span class="sd">    :type keepdims: bool</span>
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
-<span class="sd">    Key Features:</span>
-<span class="sd">    - Automatic shape calculation for reduced dimensions</span>
-<span class="sd">    - Specialized index offset handling (always returns 0)</span>
-<span class="sd">    - Increased assignment depth for proper Stan loop structure</span>
-<span class="sd">    - Support for keepdims option to preserve dimensionality</span>
-
-<span class="sd">    Subclasses must define TORCH_FUNC and NP_FUNC class variables that</span>
-<span class="sd">    point to the appropriate reduction functions in each library.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        Subclasses like SumParameter and LogSumExpParameter inherit from</span>
-<span class="sd">        this base class and define their specific reduction operations.</span>
+<span class="sd">    .. important::</span>
+<span class="sd">        Currently, all reductions in SciStanPy are performed along the last dimension</span>
+<span class="sd">        of the input parameter. This cannot be changed to other dimensions in the</span>
+<span class="sd">        current implementation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">SHAPE_CHECK</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">TORCH_FUNC</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The PyTorch function to use for the reduction operation.&quot;&quot;&quot;</span>
+
     <span class="n">NP_FUNC</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The NumPy function to use for the reduction operation.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1083,7 +1123,7 @@
 <span class="sd">        :param kwargs: Additional arguments for parent initialization</span>
 
 <span class="sd">        The initialization automatically calculates the output shape by</span>
-<span class="sd">        removing the last dimension (or keeping it as size 1 if keepdims=True).</span>
+<span class="sd">        removing the last dimension (or keeping it as size 1 if ``keepdims=True``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Record whether to keep the last dimension</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keepdims</span> <span class="o">=</span> <span class="n">keepdims</span>
@@ -1129,6 +1169,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">NP_FUNC</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="n">keepdim</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
+<div class="viewcode-block" id="Reduction.get_index_offset">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_index_offset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_index_offset</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;abstract_model_component.AbstractModelComponent&quot;</span><span class="p">],</span>
@@ -1145,34 +1187,27 @@
 <span class="sd">        Reductions always return zero offset because they operate on the</span>
 <span class="sd">        last dimension and don&#39;t require complex indexing adjustments.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
 
+
+<div class="viewcode-block" id="Reduction.get_assign_depth">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_assign_depth">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_assign_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return assignment depth one level higher than normal.</span>
-
-<span class="sd">        :returns: Assignment depth + 1</span>
-<span class="sd">        :rtype: int</span>
-
-<span class="sd">        Reductions require one additional level of loop nesting to properly</span>
-<span class="sd">        iterate over the dimension being reduced.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reductions require one additional level of loop nesting to properly</span>
+<span class="sd">        iterate over the dimension being reduced. Thus, the assignment depth</span>
+<span class="sd">        is always one greater than the parent class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_assign_depth</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_assign_depth</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="LogSumExpParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSumExpParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogSumExpParameter</span><span class="p">(</span><span class="n">Reduction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-sum-exp reduction transformation.</span>
 
-<span class="sd">    Computes the logarithm of the sum of exponentials along the last dimension,</span>
-<span class="sd">    providing a numerically stable way to compute log(Σᵢ exp(xᵢ)).</span>
-
-<span class="sd">    :cvar TORCH_FUNC: torch.logsumexp</span>
-<span class="sd">    :cvar NP_FUNC: scipy.special.logsumexp</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Operation: log(Σᵢ exp(xᵢ))</span>
-<span class="sd">    - Numerically stable for extreme values</span>
-<span class="sd">    - Maintains precision in log-space</span>
-<span class="sd">    - Essential for probabilistic computations</span>
+<span class="sd">    Computes the logarithm of the sum of exponentials along the last dimension.</span>
 
 <span class="sd">    This transformation is fundamental for:</span>
 <span class="sd">    - Normalizing log-probabilities</span>
@@ -1180,13 +1215,20 @@
 <span class="sd">    - Stable softmax computations</span>
 <span class="sd">    - Log-space mixture models</span>
 
-<span class="sd">    The log-sum-exp function is the smooth maximum approximation and</span>
-<span class="sd">    appears frequently in machine learning and statistics.</span>
+<span class="sd">    This transformation is accessed through the :py:func:`~scistanpy.operations.logsumexp`</span>
+<span class="sd">    function.</span>
+
+<span class="sd">    .. important::</span>
+<span class="sd">        The log-sum-exp is performed over the last dimension only. This cannot</span>
+<span class="sd">        be changed to other dimensions in the current implementation.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; log_weights = LogParameter(weights)</span>
-<span class="sd">        &gt;&gt;&gt; log_partition = LogSumExpParameter(log_weights)</span>
-<span class="sd">        &gt;&gt;&gt; normalized_log_weights = log_weights - log_partition</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            weights = ssp.parameters.Exponential(rate=1.0, shape=(10, 5))</span>
+<span class="sd">            log_weights = ssp.operations.log(weights)  # Log-space weights</span>
+<span class="sd">            log_partition = ssp.operations.logsumexp(log_weights)  # Shape (10,)</span>
+<span class="sd">            log_partition2 = ssp.operations.logsumexp(log_weights, keepdims=True)  # Shape (10, 1)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">TORCH_FUNC</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">logsumexp</span>
@@ -1201,32 +1243,24 @@
 <span class="sd">        :returns: Stan log_sum_exp function call</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log_sum_exp(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log_sum_exp(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="SumParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SumParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SumParameter</span><span class="p">(</span><span class="n">Reduction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sum reduction transformation.</span>
 
-<span class="sd">    Computes the sum of values along the last dimension: Σᵢ xᵢ</span>
-
-<span class="sd">    :cvar TORCH_FUNC: torch.sum</span>
-<span class="sd">    :cvar NP_FUNC: numpy.sum</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Operation: Σᵢ xᵢ</span>
-<span class="sd">    - Linear operation</span>
-<span class="sd">    - Preserves units and scale</span>
-<span class="sd">    - Fundamental aggregation operation</span>
-
-<span class="sd">    This transformation is used for:</span>
-<span class="sd">    - Computing totals and aggregates</span>
-<span class="sd">    - Reducing dimensionality through summation</span>
-<span class="sd">    - Calculating marginal quantities</span>
-<span class="sd">    - Creating scalar summaries from vectors</span>
+<span class="sd">    Computes the sum of values along the last dimension. This is accessed through</span>
+<span class="sd">    the :py:func:`~scistanpy.operations.sum` function.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; category_counts = Poisson(lambda_=rates)</span>
-<span class="sd">        &gt;&gt;&gt; total_count = SumParameter(category_counts)</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            rates = ssp.parameters.Exponential(rate=1.0, shape=(10, 5))</span>
+<span class="sd">            summed = ssp.operations.sum(rates, keepdims=False) # Shape (10,)</span>
+<span class="sd">            summed2 = ssp.operations.sum(rates, keepdims=True)  # Shape (10, 1)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">TORCH_FUNC</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span>
@@ -1241,28 +1275,18 @@
 <span class="sd">        :returns: Stan sum function call</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;sum(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;sum(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="Log1pExpParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.Log1pExpParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Log1pExpParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log(1 + exp(x)) transformation with numerical stability.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculates :math:`\log(1 + \exp(x))` transformation in a numerically stable</span>
+<span class="sd">    way.</span>
 
-<span class="sd">    Computes log(1 + exp(x)) using numerically stable implementations that</span>
-<span class="sd">    avoid overflow for large positive values and underflow for large negative values.</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Domain: (-∞, ∞)</span>
-<span class="sd">    - Range: [0, ∞)</span>
-<span class="sd">    - Smooth approximation to max(0, x)</span>
-<span class="sd">    - Also known as &quot;softplus&quot; function</span>
-
-<span class="sd">    This transformation is essential for:</span>
-<span class="sd">    - Numerical stability in probabilistic models</span>
-<span class="sd">    - Log-space computations avoiding direct exponentiation</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; log_odds = Normal(mu=0, sigma=1)</span>
-<span class="sd">        &gt;&gt;&gt; log_prob = Log1pExpParameter(log_odds)</span>
+<span class="sd">    This transformation is accessed through the :py:func:`~scistanpy.operations.log1p_exp`</span>
+<span class="sd">    function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">):</span>
@@ -1293,34 +1317,39 @@
 <span class="sd">        :param dist1: Formatted parameter string</span>
 <span class="sd">        :type dist1: str</span>
 
-<span class="sd">        :returns: Stan log1p_exp function call</span>
+<span class="sd">        :returns: Stan ``log1p_exp`` function call</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log1p_exp(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log1p_exp(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="SigmoidParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SigmoidParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sigmoid (logistic) transformation for parameters.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sigmoid (logistic) transformation for parameters.</span>
 
-<span class="sd">    Implements the sigmoid function: result = 1 / (1 + exp(-dist1))</span>
-
-<span class="sd">    :cvar LOWER_BOUND: Sigmoid values are bounded below by 0.0</span>
-<span class="sd">    :cvar UPPER_BOUND: Sigmoid values are bounded above by 1.0</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Domain: (-∞, ∞)</span>
-<span class="sd">    - Range: (0, 1)</span>
-<span class="sd">    - S-shaped curve with inflection point at x=0, y=0.5</span>
-<span class="sd">    - Inverse: logit function ln(p/(1-p))</span>
+<span class="sd">    Implements the sigmoid function: :math:`result = \frac{1}{1 + \exp(-dist1)}`</span>
 
 <span class="sd">    The sigmoid function is essential for:</span>
-<span class="sd">    - Converting unbounded values to probabilities</span>
-<span class="sd">    - Logistic regression and classification</span>
-<span class="sd">    - Smooth transitions between bounds</span>
-<span class="sd">    - Activation functions in neural networks</span>
+<span class="sd">        - Converting unbounded values to probabilities</span>
+<span class="sd">        - Logistic regression and classification</span>
+<span class="sd">        - Smooth transitions between bounds</span>
+<span class="sd">        - Activation functions in neural networks</span>
 
 <span class="sd">    This implementation uses numerically stable computation methods to</span>
 <span class="sd">    avoid overflow/underflow issues.</span>
+
+<span class="sd">    This is accessed through the :py:func:`~scistanpy.operations.sigmoid` function.</span>
+
+<span class="sd">    .. warning::</span>
+<span class="sd">        It is easy to define a model that is not identifiable when using</span>
+<span class="sd">        the sigmoid transformation. Make sure that there are sufficient constraints</span>
+<span class="sd">        on the input parameter to ensure a well-defined posterior distribution.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; logits = Normal(mu=0, sigma=1)</span>
+<span class="sd">        &gt;&gt;&gt; probabilities = SigmoidParameter(logits)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">UPPER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">1.0</span>
@@ -1337,8 +1366,8 @@
 <span class="sd">        :raises TypeError: If input type is not supported</span>
 
 <span class="sd">        Uses numerically stable implementations:</span>
-<span class="sd">        - PyTorch: Built-in torch.sigmoid function</span>
-<span class="sd">        - NumPy: Custom stable implementation from utils</span>
+<span class="sd">            - PyTorch: Built-in torch.sigmoid function</span>
+<span class="sd">            - NumPy: Custom stable implementation from utils</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># If using torch, use the sigmoid function directly.</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dist1</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
@@ -1361,14 +1390,26 @@
 <span class="sd">        :param dist1: Formatted parameter string</span>
 <span class="sd">        :type dist1: str</span>
 
-<span class="sd">        :returns: Stan inv_logit() function call</span>
+<span class="sd">        :returns: Stan ``inv_logit()`` function call</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;inv_logit(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;inv_logit(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="LogSigmoidParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogSigmoidParameter</span><span class="p">(</span><span class="n">UnaryTransformedParameter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Defines a parameter that is the log of the sigmoid of another.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Performs the sigmoid transformation followed by the natural logarithm in</span>
+<span class="sd">    a numerically stable manner: :math:`\log(\text{sigmoid}(x)) = -\log(1 + \exp(-x))`.</span>
+
+<span class="sd">    This transformation is useful for converting unbounded values to log-probabilities</span>
+<span class="sd">    in the range (-∞, 0). It is commonly used in logistic regression, binary</span>
+<span class="sd">    classification, and scenarios where log-probabilities are required.</span>
+
+<span class="sd">    This transformation is accessed through the :py:func:`~scistanpy.operations.logsigmoid`</span>
+<span class="sd">    function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">UPPER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
 
@@ -1383,17 +1424,28 @@
             <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist1</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log_inv_logit(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;log_inv_logit(</span><span class="si">{</span><span class="n">dist1</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="ExponentialGrowth">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ExponentialGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExponentialGrowth</span><span class="p">(</span><span class="n">ExpParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A transformed parameter that models exponential growth. Specifically, parameters</span>
-<span class="sd">    `t`, `A`, and `r` are used to calculate the exponential growth model as follows:</span>
+<span class="sd">    ``t``, ``A``, and ``r`` are used to calculate the exponential growth model as follows:</span>
 
-<span class="sd">    $$</span>
-<span class="sd">    x = A\textrm{e}^{rt)</span>
-<span class="sd">    $$</span>
+<span class="sd">    .. math::</span>
+<span class="sd">        x = A \text{e}^{rt}</span>
+
+<span class="sd">    This transformation is accessed through the :py:func:`~scistanpy.operations.exponential_growth`</span>
+<span class="sd">    function.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; time = np.array([[0], [1], [2], [3], [4]]) # Shape (5, 1)</span>
+<span class="sd">        &gt;&gt;&gt; baseline = Dirichlet(alpha = 1.0, shape = (10,))</span>
+<span class="sd">        &gt;&gt;&gt; rate = Exponential(beta = 1.0)</span>
+<span class="sd">        &gt;&gt;&gt; growth = ssp.operations.exponential_growth(t=time, A=baseline, r=rate)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1428,7 +1480,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span> <span class="o">...</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">run_np_torch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute exponential growth: A * exp(r * t).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute exponential growth: :math:`A\text{e}^{rt}`.</span>
 
 <span class="sd">        :param t: Time values</span>
 <span class="sd">        :param A: Amplitude values</span>
@@ -1444,37 +1496,22 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">par_string</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write_stan_operation</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">A</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">par_string</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">A</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">par_string</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="BinaryExponentialGrowth">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BinaryExponentialGrowth</span><span class="p">(</span><span class="n">ExpParameter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Binary exponential growth for two time points.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Binary exponential growth for two time points, which is a special case of</span>
+<span class="sd">    exponential growth for modeling with only two time points assuming</span>
+<span class="sd">    :math:`t_0 = 0` and :math:`t_1 = 1`. This reduces to</span>
 
-<span class="sd">    Special case of exponential growth for modeling with only two time points,</span>
-<span class="sd">    assuming t₀ = 0 and t₁ = 1. This reduces to: x = A * exp(r)</span>
+<span class="sd">    .. math::</span>
+<span class="sd">        x = A\text{e}^r</span>
 
-<span class="sd">    :param A: Amplitude parameter (value at t=0)</span>
-<span class="sd">    :type A: custom_types.CombinableParameterType</span>
-<span class="sd">    :param r: Growth rate parameter</span>
-<span class="sd">    :type r: custom_types.CombinableParameterType</span>
-<span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Simplified exponential model for binary time points</span>
-<span class="sd">    - A represents initial value</span>
-<span class="sd">    - exp(r) represents fold-change from t=0 to t=1</span>
-<span class="sd">    - r is log-fold-change</span>
-
-<span class="sd">    This transformation is useful for:</span>
-<span class="sd">    - Before/after comparisons</span>
-<span class="sd">    - Treatment effect modeling</span>
-<span class="sd">    - Two-timepoint studies</span>
-<span class="sd">    - Fold-change analysis</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; baseline = Normal(mu=100, sigma=10)</span>
-<span class="sd">        &gt;&gt;&gt; log_fold_change = Normal(mu=0, sigma=0.5)</span>
-<span class="sd">        &gt;&gt;&gt; final_value = BinaryExponentialGrowth(A=baseline, r=log_fold_change)</span>
+<span class="sd">    This transformation is accessed through the</span>
+<span class="sd">    :py:func:`~scistanpy.operations.binary_exponential_growth` function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1521,13 +1558,19 @@
 <span class="sd">        :returns: Stan code for A .* exp(r)</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">A</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write_stan_operation</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">A</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write_stan_operation</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="LogExponentialGrowth">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogExponentialGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogExponentialGrowth</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-scale exponential growth model transformation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Log-scale exponential growth model transformation.</span>
 
-<span class="sd">    Implements the logarithm of exponential growth: log(x) = log_A + r * t</span>
+<span class="sd">    Implements the logarithm of exponential growth:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \log(x) = logA + r * t</span>
 
 <span class="sd">    :param t: Time parameter</span>
 <span class="sd">    :type t: custom_types.CombinableParameterType</span>
@@ -1537,27 +1580,17 @@
 <span class="sd">    :type r: custom_types.CombinableParameterType</span>
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Linear in log-space: log(x) = log_A + r * t</span>
-<span class="sd">    - Guaranteed positive output: x = exp(log_A + r * t) &gt; 0</span>
-<span class="sd">    - Growth rate r directly additive in log-space</span>
-<span class="sd">    - Natural for multiplicative processes</span>
-
 <span class="sd">    This transformation is particularly useful for:</span>
-<span class="sd">    - Population modeling where values must be positive</span>
-<span class="sd">    - Multiplicative growth processes</span>
-<span class="sd">    - Log-scale regression models</span>
-<span class="sd">    - Ensuring positive-valued outcomes</span>
+<span class="sd">        - Population modeling where values must be positive</span>
+<span class="sd">        - Multiplicative growth processes</span>
+<span class="sd">        - Log-scale regression models</span>
+<span class="sd">        - Ensuring positive-valued outcomes</span>
 
 <span class="sd">    The log-scale parameterization avoids issues with negative values</span>
 <span class="sd">    and provides numerical stability for extreme growth rates.</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; time_points = Constant([0, 1, 2, 3])</span>
-<span class="sd">        &gt;&gt;&gt; log_initial_pop = Normal(mu=4.6, sigma=0.1)  # log(100) ≈ 4.6</span>
-<span class="sd">        &gt;&gt;&gt; growth_rate = Normal(mu=0.1, sigma=0.02)</span>
-<span class="sd">        &gt;&gt;&gt; log_population = LogExponentialGrowth(t=time_points, log_A=log_initial_pop,</span>
-<span class="sd">        &gt;&gt;&gt;                                         r=growth_rate)</span>
+<span class="sd">    This transformation is accessed through the</span>
+<span class="sd">    :py:func:`~scistanpy.operations.log_exponential_growth` function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1607,14 +1640,21 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">log_A</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_A</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_A</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="BinaryLogExponentialGrowth">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.BinaryLogExponentialGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BinaryLogExponentialGrowth</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Binary log-exponential growth for two time points.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Binary log-exponential growth for two time points.</span>
 
-<span class="sd">    Special case of log-exponential growth for two time points,</span>
-<span class="sd">    reducing to: log(x) = log_A + r</span>
+<span class="sd">    This is identical to</span>
+<span class="sd">    :py:class:`~scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth`,</span>
+<span class="sd">    but operates in log-space. Mathematically,</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \log(x) = logA + r</span>
 
 <span class="sd">    :param log_A: Log-amplitude parameter (log of initial value)</span>
 <span class="sd">    :type log_A: custom_types.CombinableParameterType</span>
@@ -1622,22 +1662,17 @@
 <span class="sd">    :type r: custom_types.CombinableParameterType</span>
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Simple additive model in log-space</span>
-<span class="sd">    - r represents log-fold-change</span>
-<span class="sd">    - Guaranteed positive output when exponentiated</span>
-<span class="sd">    - Linear relationship in log-scale</span>
+<span class="sd">    This transformation is useful for:</span>
+<span class="sd">        - Modeling growth between two time points</span>
+<span class="sd">        - Ensuring positive-valued outcomes</span>
+<span class="sd">        - Log-scale regression models</span>
+<span class="sd">        - Multiplicative growth processes</span>
 
-<span class="sd">    This transformation is ideal for:</span>
-<span class="sd">    - Binary treatment effects in log-space</span>
-<span class="sd">    - Fold-change modeling</span>
-<span class="sd">    - Two-timepoint growth analysis</span>
-<span class="sd">    - Log-scale before/after comparisons</span>
+<span class="sd">    The log-scale parameterization avoids issues with negative values</span>
+<span class="sd">    and provides numerical stability for extreme growth rates.</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; log_baseline = Normal(mu=4.6, sigma=0.1)  # log(100)</span>
-<span class="sd">        &gt;&gt;&gt; log_fold_change = Normal(mu=0, sigma=0.5)</span>
-<span class="sd">        &gt;&gt;&gt; log_final = BinaryLogExponentialGrowth(log_A=log_baseline, r=log_fold_change)</span>
+<span class="sd">    This transformation is accessed through the</span>
+<span class="sd">    :py:func:`~scistanpy.operations.binary_log_exponential_growth` function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1684,14 +1719,19 @@
 <span class="sd">        :returns: Stan code for log_A + r</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_A</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_A</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="SigmoidGrowth">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SigmoidGrowth</span><span class="p">(</span><span class="n">SigmoidParameter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sigmoid growth model transformation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Sigmoid growth model transformation.</span>
 
-<span class="sd">    Implements sigmoid growth: x = A / (1 + exp(-r*(t - c)))</span>
-<span class="sd">    This models S-shaped growth curves with carrying capacity A.</span>
+<span class="sd">    Implements sigmoid growth:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        x = \frac{A}{1 + \exp(-r(t - c))}</span>
 
 <span class="sd">    :param t: Time parameter</span>
 <span class="sd">    :type t: custom_types.CombinableParameterType</span>
@@ -1703,27 +1743,12 @@
 <span class="sd">    :type c: custom_types.CombinableParameterType</span>
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
-<span class="sd">    :cvar LOWER_BOUND: Values are bounded below by 0.0</span>
-<span class="sd">    :cvar UPPER_BOUND: No upper bound (None) as A can be any positive value</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - S-shaped growth curve</span>
-<span class="sd">    - A represents carrying capacity (maximum value)</span>
-<span class="sd">    - c represents inflection point (time of fastest growth)</span>
-<span class="sd">    - r controls steepness of growth</span>
-<span class="sd">    - Approaches 0 as t → -∞ and A as t → +∞</span>
-
 <span class="sd">    This transformation is essential for:</span>
-<span class="sd">    - Population growth with carrying capacity</span>
-<span class="sd">    - Any growth process with saturation</span>
+<span class="sd">        - Population growth with carrying capacity</span>
+<span class="sd">        - Any growth process with saturation</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; time_points = Constant(np.linspace(0, 10, 100))</span>
-<span class="sd">        &gt;&gt;&gt; carrying_capacity = Normal(mu=1000, sigma=50)</span>
-<span class="sd">        &gt;&gt;&gt; growth_rate = Normal(mu=1.0, sigma=0.1)</span>
-<span class="sd">        &gt;&gt;&gt; inflection_time = Normal(mu=5.0, sigma=0.5)</span>
-<span class="sd">        &gt;&gt;&gt; population = SigmoidGrowth(t=time_points, A=carrying_capacity,</span>
-<span class="sd">        &gt;&gt;&gt;                             r=growth_rate, c=inflection_time)</span>
+<span class="sd">    This transformation is accessed through the</span>
+<span class="sd">    :py:func:`~scistanpy.operations.sigmoid_growth` function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -1781,14 +1806,21 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">par_string</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write_stan_operation</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* (</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">A</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">par_string</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">A</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">par_string</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="LogSigmoidGrowth">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowth">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogSigmoidGrowth</span><span class="p">(</span><span class="n">LogSigmoidParameter</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-scale sigmoid growth model transformation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Log-scale sigmoid growth model transformation.</span>
 
-<span class="sd">    Implements the logarithm of sigmoid growth: log(x) = log_A + log_sigmoid(r*(t - c))</span>
-<span class="sd">    This provides numerical stability and ensures positive values.</span>
+<span class="sd">    Implements the logarithm of sigmoid growth:</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \log(x) = logA - \log(1 + \exp(-r(t - c)))</span>
+
+<span class="sd">    Under the hood, this uses the numerically stable log-sigmoid to calculate the</span>
+<span class="sd">    ``1 + exp(-...)`` term.</span>
 
 <span class="sd">    :param t: Time parameter</span>
 <span class="sd">    :type t: custom_types.CombinableParameterType</span>
@@ -1800,22 +1832,14 @@
 <span class="sd">    :type c: custom_types.CombinableParameterType</span>
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
-<span class="sd">    :cvar LOWER_BOUND: No lower bound (None)</span>
-<span class="sd">    :cvar UPPER_BOUND: No upper bound (None)</span>
-
 <span class="sd">    This parameterization is ideal for:</span>
 <span class="sd">    - Extreme parameter regimes</span>
 <span class="sd">    - Log-scale statistical modeling</span>
 <span class="sd">    - When initial conditions are naturally in log-space</span>
 <span class="sd">    - Maximum numerical precision requirements</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; time_points = Constant(np.linspace(0, 10, 100))</span>
-<span class="sd">        &gt;&gt;&gt; log_carrying_capacity = Normal(mu=6.9, sigma=0.1)  # log(1000)</span>
-<span class="sd">        &gt;&gt;&gt; growth_rate = Normal(mu=1.0, sigma=0.1)</span>
-<span class="sd">        &gt;&gt;&gt; inflection_time = Normal(mu=5.0, sigma=0.5)</span>
-<span class="sd">        &gt;&gt;&gt; log_population = LogSigmoidGrowth(t=time_points, log_A=log_carrying_capacity,</span>
-<span class="sd">        &gt;&gt;&gt;                                     r=growth_rate, c=inflection_time)</span>
+<span class="sd">    This transformation is accessed through the</span>
+<span class="sd">    :py:func:`~scistanpy.operations.log_sigmoid_growth` function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1875,14 +1899,17 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">log_A</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">par_string</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">write_stan_operation</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* (</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_A</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="n">par_string</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_A</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="n">par_string</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="SigmoidGrowthInitParametrization">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.SigmoidGrowthInitParametrization">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SigmoidGrowthInitParametrization</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sigmoid growth with initial value parameterization.</span>
 
 <span class="sd">    Alternative parameterization of sigmoid growth in terms of initial abundances</span>
-<span class="sd">    rather than carrying capacity. Uses numerically stable log-add-exp computation.</span>
+<span class="sd">    rather than carrying capacity.</span>
 
 <span class="sd">    :param t: Time parameter</span>
 <span class="sd">    :type t: custom_types.CombinableParameterType</span>
@@ -1894,9 +1921,6 @@
 <span class="sd">    :type c: custom_types.CombinableParameterType</span>
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
-<span class="sd">    :cvar LOWER_BOUND: Values are bounded below by 0.0</span>
-<span class="sd">    :cvar UPPER_BOUND: No upper bound (None)</span>
-
 <span class="sd">    Mathematical Properties:</span>
 <span class="sd">    - Parameterizes sigmoid growth by initial value x0</span>
 <span class="sd">    - Uses log-add-exp trick for numerical stability</span>
@@ -1904,13 +1928,13 @@
 <span class="sd">    - Maintains sigmoid growth dynamics</span>
 
 <span class="sd">    This parameterization is useful when:</span>
-<span class="sd">    - Initial conditions are better known than carrying capacity</span>
+<span class="sd">    - Initial conditions are better known than carrying capacity (e.g., biological systems)</span>
 <span class="sd">    - Numerical stability is crucial</span>
 <span class="sd">    - Working with extreme parameter values</span>
 <span class="sd">    - Modeling relative growth from baseline</span>
 
-<span class="sd">    The transformation uses the identity:</span>
-<span class="sd">    x(t) = x0 * exp(log(1+exp(r*c)) - log(1+exp(r*(c-t))))</span>
+<span class="sd">    This transformation is accessed through the</span>
+<span class="sd">    :py:func:`~scistanpy.operations.sigmoid_growth_init_param` function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="s2">&quot;custom_types.Float&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -1980,11 +2004,14 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># pylint: disable=invalid-name</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate using Stan&#39;s log1p_exp function.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x0</span><span class="si">}</span><span class="s2"> .* exp(log1p_exp(</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">) - log1p_exp(</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* (</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">)))&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x0</span><span class="si">}</span><span class="s2"> .* exp(log1p_exp(</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">) - log1p_exp(</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* (</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">)))&quot;</span></div>
+
 
     <span class="c1"># pylint: enable=arguments-renamed, arguments-differ</span>
 
 
+<div class="viewcode-block" id="LogSigmoidGrowthInitParametrization">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogSigmoidGrowthInitParametrization</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-scale sigmoid growth with initial value parameterization.</span>
 
@@ -2001,13 +2028,9 @@
 <span class="sd">    :type c: custom_types.CombinableParameterType</span>
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
-<span class="sd">    :cvar LOWER_BOUND: No lower bound (None)</span>
-<span class="sd">    :cvar UPPER_BOUND: No upper bound (None)</span>
-
 <span class="sd">    Mathematical Properties:</span>
 <span class="sd">    - Fully operates in log-space for numerical stability</span>
 <span class="sd">    - Parameterized by log of initial conditions</span>
-<span class="sd">    - Uses log-add-exp computations throughout</span>
 <span class="sd">    - Maintains sigmoid growth dynamics</span>
 
 <span class="sd">    This parameterization is ideal for:</span>
@@ -2015,14 +2038,6 @@
 <span class="sd">    - Log-scale statistical modeling</span>
 <span class="sd">    - When initial conditions are naturally in log-space</span>
 <span class="sd">    - Maximum numerical precision requirements</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; time_points = Constant(np.linspace(0, 10, 100))</span>
-<span class="sd">        &gt;&gt;&gt; log_initial = Normal(mu=4.6, sigma=0.1)  # log(100)</span>
-<span class="sd">        &gt;&gt;&gt; growth_rate = Normal(mu=1.0, sigma=0.1)</span>
-<span class="sd">        &gt;&gt;&gt; offset = Normal(mu=5.0, sigma=0.5)</span>
-<span class="sd">        &gt;&gt;&gt; log_abundance = LogSigmoidGrowthInitParametrization(t=time_points,</span>
-<span class="sd">        &gt;&gt;&gt;                 log_x0=log_initial, r=growth_rate, c=offset)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -2092,9 +2107,12 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">log_x0</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># pylint: disable=invalid-name</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate using Stan&#39;s log1p_exp function.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_x0</span><span class="si">}</span><span class="s2"> + log1p_exp(</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">) - log1p_exp(</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* (</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">))&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log_x0</span><span class="si">}</span><span class="s2"> + log1p_exp(</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">) - log1p_exp(</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2"> .* (</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">))&quot;</span></div>
 
 
+
+<div class="viewcode-block" id="ConvolveSequence">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.ConvolveSequence">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConvolveSequence</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sequence convolution transformation using weight matrices.</span>
 
@@ -2108,25 +2126,28 @@
 <span class="sd">    :type ordinals: custom_types.CombinableParameterType</span>
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
-<span class="sd">    :cvar SHAPE_CHECK: Disabled for complex shape operations (False)</span>
-<span class="sd">    :cvar FORCE_LOOP_RESET: Forces loop reset in Stan code (True)</span>
-<span class="sd">    :cvar FORCE_PARENT_NAME: Forces parent naming in Stan code (True)</span>
+<span class="sd">    :raises ValueError: If weights is not at least 2D</span>
+<span class="sd">    :raises ValueError: If ordinals is not at least 1D</span>
+<span class="sd">    :raises ValueError: If shapes are incompatible for broadcasting</span>
 
 <span class="sd">    Shape Requirements:</span>
-<span class="sd">    - Weights: (..., kernel_size, alphabet_size)</span>
-<span class="sd">    - Ordinals: (..., sequence_length)</span>
-<span class="sd">    - Output: (..., sequence_length - kernel_size + 1)</span>
+<span class="sd">        - Weights: (..., kernel_size, alphabet_size)</span>
+<span class="sd">        - Ordinals: (..., sequence_length)</span>
+<span class="sd">        - Output: (..., sequence_length - kernel_size + 1)</span>
 
 <span class="sd">    The transformation applies convolution by:</span>
-<span class="sd">    1. Sliding a kernel of size kernel_size over the sequence</span>
-<span class="sd">    2. Using ordinal values to index into the weight matrix</span>
-<span class="sd">    3. Summing weighted values for each position</span>
+<span class="sd">        1. Sliding a kernel of size kernel_size over the sequence</span>
+<span class="sd">        2. Using ordinal values to index into the weight matrix</span>
+<span class="sd">        3. Summing weighted values for each position</span>
 
 <span class="sd">    This is commonly used for:</span>
-<span class="sd">    - DNA/RNA sequence analysis</span>
-<span class="sd">    - Protein sequence modeling</span>
-<span class="sd">    - Text processing with character-level models</span>
-<span class="sd">    - Pattern recognition in discrete sequences</span>
+<span class="sd">        - DNA/RNA sequence analysis</span>
+<span class="sd">        - Protein sequence modeling</span>
+<span class="sd">        - Text processing with character-level models</span>
+<span class="sd">        - Pattern recognition in discrete sequences</span>
+
+<span class="sd">    This transformation is accessed through the</span>
+<span class="sd">    :py:func:`~scistanpy.operations.convolve_sequence` function.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # DNA sequence convolution</span>
@@ -2146,16 +2167,7 @@
         <span class="n">ordinals</span><span class="p">:</span> <span class="s2">&quot;custom_types.CombinableParameterType&quot;</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize sequence convolution with shape validation.</span>
-
-<span class="sd">        :param weights: Weight matrix (kernel_size × alphabet_size in last 2 dims)</span>
-<span class="sd">        :param ordinals: Ordinal sequence array</span>
-<span class="sd">        :param kwargs: Additional arguments</span>
-
-<span class="sd">        :raises ValueError: If weights is not at least 2D</span>
-<span class="sd">        :raises ValueError: If ordinals is not at least 1D</span>
-<span class="sd">        :raises ValueError: If shapes are incompatible for broadcasting</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize sequence convolution with shape validation.&quot;&quot;&quot;</span>
         <span class="c1"># Weights must be at least 2D.</span>
         <span class="k">if</span> <span class="n">weights</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Weights must be at least a 2D parameter.&quot;</span><span class="p">)</span>
@@ -2352,9 +2364,12 @@
 <span class="sd">        :returns: List including pssm.stanfunctions for convolution support</span>
 <span class="sd">        :rtype: list[str]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_supporting_functions</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;#include pssm.stanfunctions&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_supporting_functions</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;#include pssm.stanfunctions&quot;</span><span class="p">]</span></div>
 
 
+
+<div class="viewcode-block" id="IndexParameter">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">IndexParameter</span><span class="p">(</span><span class="n">TransformedParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Array indexing transformation with NumPy-compatible semantics.</span>
 
@@ -2367,27 +2382,42 @@
 <span class="sd">    :param indices: Indexing specifications (slices, integers, arrays)</span>
 <span class="sd">    :type indices: custom_types.IndexType</span>
 
-<span class="sd">    :cvar SHAPE_CHECK: Disabled for complex indexing operations (False)</span>
-<span class="sd">    :cvar FORCE_PARENT_NAME: Forces parent naming in Stan code (True)</span>
-
 <span class="sd">    Supported Index Types:</span>
-<span class="sd">    - **slice**: Standard Python slicing with start:stop (step=1 only)</span>
-<span class="sd">    - **int**: Single element selection</span>
-<span class="sd">    - **np.ndarray**: Advanced indexing with integer arrays. 1D only. Follows numpy convention.</span>
-<span class="sd">    - **Ellipsis**: Automatic dimension filling</span>
-<span class="sd">    - **None**: New axis insertion</span>
+<span class="sd">        - **slice**: Standard Python slicing with start:stop (step=1 only)</span>
+<span class="sd">        - **int**: Single element selection</span>
+<span class="sd">        - **np.ndarray**: Advanced indexing with integer arrays. 1D only.</span>
+<span class="sd">          Follows numpy convention.</span>
+<span class="sd">        - **Ellipsis**: Automatic dimension filling</span>
+<span class="sd">        - **None**: New axis insertion</span>
 
 <span class="sd">    Important Differences from Stan:</span>
-<span class="sd">    - Uses 0-based indexing (Python convention)</span>
-<span class="sd">    - Advanced indexing follows NumPy broadcasting rules</span>
-<span class="sd">    - Negative indices are supported and converted appropriately</span>
+<span class="sd">        - Uses 0-based indexing (Python convention)</span>
+<span class="sd">        - Advanced indexing follows NumPy broadcasting rules, not Stan rules</span>
+<span class="sd">        - Negative indices are supported and converted appropriately</span>
+
+<span class="sd">    This transformation is never applied directly. Instead index a parameter as</span>
+<span class="sd">    in normal Python/NumPy:</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; data = Normal(mu=0, sigma=1, shape=(10, 5))</span>
-<span class="sd">        &gt;&gt;&gt; # Slice first 5 rows</span>
-<span class="sd">        &gt;&gt;&gt; subset = IndexParameter(data, slice(0, 5))</span>
-<span class="sd">        &gt;&gt;&gt; # Select specific elements</span>
-<span class="sd">        &gt;&gt;&gt; selected = IndexParameter(data, [0, 2, 4], [1, 3, 0])  # NumPy-style</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            # Define any parameter</span>
+<span class="sd">            param = Normal(mu=0, sigma=1, shape=(10, 5))</span>
+
+<span class="sd">            # Standard indexing (last element of first dimension)</span>
+<span class="sd">            last_elem = param[-1]</span>
+
+<span class="sd">            # Slice first 5 rows</span>
+<span class="sd">            subset = param[:5]</span>
+
+<span class="sd">            # Select specific elements with NumPy-style advanced indexing</span>
+<span class="sd">            selected = param[np.array([0, 2, 4])]</span>
+
+<span class="sd">            # Use Ellipsis to fill in dimensions</span>
+<span class="sd">            first_col = param[..., 0]  # All leading dimensions, first of last</span>
+
+<span class="sd">            # Insert new axis</span>
+<span class="sd">            new_axis = param[:, None, :]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">SHAPE_CHECK</span> <span class="o">=</span> <span class="kc">False</span>
@@ -2430,6 +2460,8 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">neg_ind</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">],</span> <span class="n">dim</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]:</span> <span class="o">...</span>
 
+<div class="viewcode-block" id="IndexParameter.neg_to_pos">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.IndexParameter.neg_to_pos">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">neg_to_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neg_ind</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert negative indices to positive indices.</span>
 
@@ -2485,7 +2517,8 @@
         <span class="c1"># Error if the type is not supported</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Unsupported index type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">neg_ind</span><span class="p">)</span><span class="si">}</span><span class="s2">. Expected int or numpy array.&quot;</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_indices</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2688,10 +2721,10 @@
 <span class="sd">        :rtype: str</span>
 
 <span class="sd">        Handles complex indexing patterns including:</span>
-<span class="sd">        - Multiple array indices (creates separate bracket groups)</span>
-<span class="sd">        - Mixed slicing and array indexing</span>
-<span class="sd">        - Proper 1-based index conversion for Stan</span>
-<span class="sd">        - Colon notation for full dimension slicing</span>
+<span class="sd">            - Multiple array indices (creates separate bracket groups)</span>
+<span class="sd">            - Mixed slicing and array indexing</span>
+<span class="sd">            - Proper 1-based index conversion for Stan</span>
+<span class="sd">            - Colon notation for full dimension slicing</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Compile all indices. Every time we encounter an array index, we start</span>
         <span class="c1"># a new indexing operation. This allows us to mimic numpy behavior in Stan.</span>
@@ -2775,7 +2808,8 @@
 <span class="sd">        Indexed parameters must be explicitly named in Stan code to</span>
 <span class="sd">        enable proper variable reference and assignment.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
 </pre></div>
 
           </div>
