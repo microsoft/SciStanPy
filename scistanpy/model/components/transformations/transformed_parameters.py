@@ -26,7 +26,7 @@ from scistanpy.model.components import abstract_model_component, constants
 if TYPE_CHECKING:
     from scistanpy import custom_types
 
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines, line-too-long
 
 
 class TransformableParameter:

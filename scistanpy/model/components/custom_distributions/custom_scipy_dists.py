@@ -3,41 +3,17 @@
 
 """Custom SciPy distribution implementations for SciStanPy models.
 
-This module provides extended and custom SciPy distribution classes that address
-limitations in the standard SciPy distribution library for probabilistic modeling.
-These implementations enable advanced batch operations, support variable batch
-dimensions, and provide transformed distributions not available in the standard library.
+This module provides extended and custom SciPy distribution classes. Among other
+things, these implementations provide:
 
-Key Features:
-    - **Enhanced Batch Support**: Extended multivariate distributions with variable batch dimensions
-    - **Custom Transformations**: Log-transformed distributions with proper Jacobian corrections
-    - **Alternative Parameterizations**: Logit and log-probability parameterizations for
-        multinomial distributions
-    - **Numerical Stability**: Improved implementations for edge cases and extreme values
-
-Distribution Categories:
-
-**Enhanced Multivariate Distributions**: Extended batch support
-    - CustomDirichlet: Dirichlet distribution with variable batch dimensions
-    - CustomMultinomial: Multinomial distribution with flexible batch handling
-    - MultinomialLogit: Logit-parameterized multinomial distribution
-    - MultinomialLogTheta: Log-probability parameterized multinomial distribution
-
-**Transformed Distributions**: Log-transformed variants
-    - ExpDirichlet: Log-transformed Dirichlet distribution
-    - LogUnivariateScipyTransform: General log-transformation framework
-    - TransformedScipyDist: Abstract base for distribution transformations
-
-**Pre-configured Distributions**: Ready-to-use distribution instances
-    - dirichlet: CustomDirichlet instance
-    - multinomial: CustomMultinomial instance
-    - expexponential: Log-transformed exponential distribution
-    - explomax: Log-transformed Lomax distribution
-    - expdirichlet: ExpDirichlet instance
-
-The distributions in this module are designed to work within SciPy's distribution
-framework while providing enhanced functionality for advanced probabilistic modeling
-scenarios commonly encountered in SciStanPy applications.
+    - **Enhanced Batch Support**: Extended multivariate distributions with variable
+      batch dimensions
+    - **Custom Transformations**: Log-transformed distributions with proper Jacobian
+      corrections
+    - **Alternative Parameterizations**: Logit and log-probability parameterizations
+      for multinomial distributions
+    - **Numerical Stability**: Improved implementations for edge cases and extreme
+      values
 """
 
 from __future__ import annotations
@@ -56,6 +32,8 @@ from scipy import stats
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
+
+# pylint: disable=line-too-long
 
 
 def _combine_args_kwargs(function: Callable, args: tuple, kwargs: dict) -> dict:
@@ -105,27 +83,14 @@ class CustomDirichlet(
     limitations with batch operations that this class addresses.
 
     Key Enhancements:
-    - Support for arbitrary batch dimensions in alpha parameters
-    - Proper broadcasting behavior across batch dimensions
-    - Consistent output shapes for all distribution methods
-    - Efficient vectorized operations over batch elements
+        - Support for arbitrary batch dimensions in alpha parameters
+        - Proper broadcasting behavior across batch dimensions
+        - Consistent output shapes for all distribution methods
+        - Efficient vectorized operations over batch elements
 
     The implementation uses a decorator pattern to extend existing SciPy
     methods with batch dimension handling while preserving the original
     mathematical properties of the Dirichlet distribution.
-
-    Mathematical Properties:
-    - Support: Probability simplex {x : Σxᵢ = 1, xᵢ ≥ 0}
-    - Parameters: α = (α₁, α₂, ..., αₖ) where αᵢ > 0
-    - Mean: E[Xᵢ] = αᵢ / Σⱼ αⱼ
-    - Useful for modeling categorical probabilities and compositional data
-
-    Example:
-        >>> # Standard usage with batch dimensions
-        >>> alpha = np.array([[1, 2, 3], [2, 3, 1], [3, 1, 2]])
-        >>> dirichlet = CustomDirichlet()
-        >>> samples = dirichlet.rvs(alpha, size=100) # output_shape = (100, 3, 3)
-        >>> log_probs = dirichlet.logpdf(samples, alpha)
     """
 
     @staticmethod
@@ -272,16 +237,10 @@ class CustomMultinomial(stats._multivariate.multinomial_gen):  # pylint: disable
     modeling scenarios.
 
     Key Enhancements:
-    - Variable batch dimensions for n and p parameters
-    - Proper broadcasting behavior between n and p
-    - Support for different trial counts across batch elements
-    - Consistent output shapes for sampling operations
-
-    Mathematical Properties:
-    - Support: {x ∈ ℕ₀ᵏ : Σxᵢ = n}
-    - Parameters: n (trial count), p = (p₁, ..., pₖ) where Σpᵢ = 1
-    - PMF: P(X = x) = n! / (∏xᵢ!) × ∏pᵢˣⁱ
-    - Useful for modeling categorical count data
+        - Variable batch dimensions for n and p parameters
+        - Proper broadcasting behavior between n and p
+        - Support for different trial counts across batch elements
+        - Consistent output shapes for sampling operations
 
     Example:
         >>> # Batch multinomial with different trial counts
@@ -361,33 +320,9 @@ class CustomMultinomial(stats._multivariate.multinomial_gen):  # pylint: disable
 
 
 class MultinomialLogit(CustomMultinomial):
-    """Multinomial distribution with logit parameterization.
-
-    This class provides a logit-parameterized interface to the multinomial
-    distribution, where probabilities are specified as logits (log-odds)
-    rather than normalized probabilities. This parameterization is often
-    more convenient for modeling and optimization.
-
-    :ivar softmax_p: Decorator that transforms logits to probabilities
-
-    Mathematical Properties:
-    - Parameterization: logits ∈ ℝᵏ (unconstrained)
-    - Transformation: pᵢ = exp(logitᵢ) / Σⱼ exp(logitⱼ)
-    - Natural for neural network outputs and linear models
-    - Automatic normalization ensures valid probabilities
-
-    The logit parameterization offers several advantages:
-    - No normalization constraints on input parameters
-    - Better numerical properties for optimization
-    - Natural output space for many machine learning models
-    - Automatic softmax transformation to valid probabilities
-
-    Example:
-        >>> # Logit parameterization (no normalization needed)
-        >>> logits = np.random.randn(3, 4)
-        >>> n = np.array([[50], [75], [100]])
-        >>> multinomial_logit = MultinomialLogit()
-        >>> samples = multinomial_logit.rvs(n=n, logits=logits)
+    """Multinomial distribution with logit parameterization. This is identical to
+    :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial`
+    except that the probabilities need not be normalized and are specified as logits.
     """
 
     @staticmethod
@@ -423,29 +358,10 @@ class MultinomialLogit(CustomMultinomial):
 
 class MultinomialLogTheta(CustomMultinomial):
     """Multinomial distribution with normalized log-probability parameterization.
-
-    This class provides a log-probability parameterized interface where the
-    input parameters are logarithms of probabilities that must already be
-    normalized (i.e., their exponentials sum to 1). This is useful when
-    working with log-probability vectors from other computations.
-
-    :ivar exp_p: Decorator that transforms log-probabilities to probabilities
-
-    Mathematical Properties:
-    - Parameterization: log_p ∈ ℝᵏ with Σexp(log_pᵢ) = 1
-
-    The log-probability parameterization is particularly useful when:
-    - Working with log-normalized probability vectors
-    - Interfacing with other log-space computations
-    - Ensuring consistency with log-space model components
-
-    Example:
-        >>> # Normalized log-probabilities
-        >>> logits = np.random.randn(3, 4)
-        >>> log_probs = logits - scipy.special.logsumexp(logits, axis=-1, keepdims=True)
-        >>> n = np.array([[100], [200], [150]])
-        >>> multinomial_log_theta = MultinomialLogTheta()
-        >>> samples = multinomial_log_theta.rvs(n=n, log_p=log_probs)
+    This is identical to
+    :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial`
+    except that the probabilities are specified as log-probabilities that must
+    already be normalized (i.e., their exponentials sum to 1).
     """
 
     @staticmethod
@@ -496,26 +412,6 @@ class ExpDirichlet(CustomDirichlet):
     This class implements a distribution where the logarithm of a Dirichlet-distributed
     random vector follows this distribution. It's useful for modeling log-scale
     compositional data and log-probability vectors with proper Jacobian corrections.
-
-    Mathematical Properties:
-    - If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α)
-    - Support: (-∞, 0]ᵏ (log-simplex)
-    - Constraint: Σexp(yᵢ) = 1
-    - Natural for log-probability modeling
-
-    The log-transformation requires proper Jacobian correction for probability
-    calculations. This distribution is particularly valuable for:
-    - Log-space compositional data analysis
-    - Bayesian modeling of log-probability vectors
-    - Numerical stability in extreme probability regimes
-    - Integration with other log-space model components
-
-    Example:
-        >>> # Log-compositional data modeling
-        >>> alpha = np.array([2.0, 3.0, 1.0])
-        >>> exp_dirichlet = ExpDirichlet()
-        >>> log_samples = exp_dirichlet.rvs(alpha, size=(1000,))
-        >>> # Verify constraint: np.exp(log_samples).sum(axis=-1) ≈ 1
     """
 
     def logpdf(self, x, alpha):
@@ -575,33 +471,30 @@ class ExpDirichlet(CustomDirichlet):
         return np.log(super().rvs(alpha, size=size, random_state=random_state))
 
     def mean(self, alpha):
-        """Raise error for undefined moments.
+        """This is not implemented.
 
-        :raises NotImplementedError: Mean is not analytically available
-
-        The moments of the log-transformed Dirichlet distribution do not
-        have simple closed-form expressions.
+        :raises NotImplementedError:
         """
         raise NotImplementedError("Not defined for this custom distribution")
 
     def var(self, alpha):
-        """Raise error for undefined moments.
+        """This is not implemented.
 
-        :raises NotImplementedError: Variance is not analytically available
+        :raises NotImplementedError:
         """
         raise NotImplementedError("Not defined for this custom distribution")
 
     def cov(self, alpha):
-        """Raise error for undefined moments.
+        """This is not implemented.
 
-        :raises NotImplementedError: Covariance is not analytically available
+        :raises NotImplementedError:
         """
         raise NotImplementedError("Not defined for this custom distribution")
 
     def entropy(self, alpha):
-        """Raise error for undefined entropy.
+        """This is not implemented.
 
-        :raises NotImplementedError: Entropy is not analytically available
+        :raises NotImplementedError:
         """
         raise NotImplementedError("Not defined for this custom distribution")
 
@@ -618,21 +511,15 @@ class TransformedScipyDist(ABC):
     :type base_dist: stats.rv_continuous
 
     Key Features:
-    - Automatic Jacobian correction for probability densities
-    - Proper transformation of all distribution methods
-    - Maintains SciPy distribution interface compatibility
-    - Support for arbitrary invertible transformations
+        - Automatic Jacobian correction for probability densities
+        - Proper transformation of all distribution methods
+        - Maintains SciPy distribution interface compatibility
+        - Support for arbitrary invertible transformations
 
     Subclasses must implement:
-    - transform: Forward transformation function
-    - inverse_transform: Inverse transformation function
-    - log_jacobian_correction: Log determinant of Jacobian matrix
-
-    The framework automatically handles:
-    - PDF/log-PDF with Jacobian corrections
-    - CDF through inverse transformation
-    - Quantile functions through forward transformation
-    - Random sampling through transformation of base samples
+        - transform: Forward transformation function
+        - inverse_transform: Inverse transformation function
+        - log_jacobian_correction: Log determinant of Jacobian matrix
     """
 
     def __init__(self, base_dist: stats.rv_continuous):
@@ -807,20 +694,43 @@ class LogUnivariateScipyTransform(TransformedScipyDist):
     with proper Jacobian corrections.
 
     This transformation is commonly used to:
-    - Convert positive-valued distributions to real-valued distributions
-    - Enable log-scale modeling of multiplicative processes
-    - Improve numerical stability for heavy-tailed distributions
-    - Create log-normal variants of arbitrary positive distributions
+        - Convert positive-valued distributions to real-valued distributions
+        - Enable log-scale modeling of multiplicative processes
+        - Improve numerical stability for heavy-tailed distributions
+        - Create log-normal variants of arbitrary positive distributions
 
     Example:
         >>> # Create log-transformed exponential distribution
-        >>> log_exponential = LogUnivariateScipyTransform(stats.expon)
+        >>> exp_exponential = LogUnivariateScipyTransform(stats.expon)
         >>> # This is equivalent to a Gumbel distribution
-        >>> samples = log_exponential.rvs(scale=1.0, size=1000)
+        >>> samples = exp_exponential.rvs(scale=1.0, size=1000)
     """
 
-    transform = np.log
-    inverse_transform = np.exp
+    def transform(self, x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
+        """Apply logarithmic transformation to input values.
+
+        :param x: Input values from base distribution
+        :type x: npt.NDArray[np.floating]
+
+        :returns: Log-transformed values
+        :rtype: npt.NDArray[np.floating]
+
+        This method implements the natural logarithm transformation.
+        """
+        return np.log(x)
+
+    def inverse_transform(
+        self, x: npt.NDArray[np.floating]
+    ) -> npt.NDArray[np.floating]:
+        """Apply inverse logarithmic transformation to input values.
+
+        :param x: Input values from transformed distribution
+        :type x: npt.NDArray[np.floating]
+
+        :returns: Inverse log-transformed values
+        :rtype: npt.NDArray[np.floating]
+        """
+        return np.exp(x)
 
     def log_jacobian_correction(
         self, x: npt.NDArray[np.floating]
@@ -838,9 +748,43 @@ class LogUnivariateScipyTransform(TransformedScipyDist):
 
 # Pre-configured distribution instances for convenient use
 dirichlet = CustomDirichlet()
+"""
+Instance of :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet`.
+See that class for details.
+"""
+
 expexponential = LogUnivariateScipyTransform(stats.expon)
+"""
+``scipy.stats.expon`` transformed to the log scale using
+:py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform`.
+"""
+
 explomax = LogUnivariateScipyTransform(stats.lomax)
+"""
+``scipy.stats.lomax`` transformed to the log scale using
+:py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform`.
+"""
+
 expdirichlet = ExpDirichlet()
+"""
+Instance of :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet`.
+See that class for details.
+"""
+
 multinomial = CustomMultinomial()
+"""
+Instance of :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial`.
+See that class for details.
+"""
+
 multinomial_logit = MultinomialLogit()
+"""
+Instance of :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit`.
+See that class for details.
+"""
+
 multinomial_log_theta = MultinomialLogTheta()
+"""
+Instance of :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta`.
+See that class for details.
+"""

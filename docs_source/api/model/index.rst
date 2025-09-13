@@ -1,5 +1,5 @@
-Model API Reference
-===================
+Model SubPackage API Reference
+==============================
 
 .. automodule:: scistanpy.model
 

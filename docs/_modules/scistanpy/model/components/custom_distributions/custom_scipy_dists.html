@@ -36,41 +36,17 @@
 
 <span class="sd">&quot;&quot;&quot;Custom SciPy distribution implementations for SciStanPy models.</span>
 
-<span class="sd">This module provides extended and custom SciPy distribution classes that address</span>
-<span class="sd">limitations in the standard SciPy distribution library for probabilistic modeling.</span>
-<span class="sd">These implementations enable advanced batch operations, support variable batch</span>
-<span class="sd">dimensions, and provide transformed distributions not available in the standard library.</span>
+<span class="sd">This module provides extended and custom SciPy distribution classes. Among other</span>
+<span class="sd">things, these implementations provide:</span>
 
-<span class="sd">Key Features:</span>
-<span class="sd">    - **Enhanced Batch Support**: Extended multivariate distributions with variable batch dimensions</span>
-<span class="sd">    - **Custom Transformations**: Log-transformed distributions with proper Jacobian corrections</span>
-<span class="sd">    - **Alternative Parameterizations**: Logit and log-probability parameterizations for</span>
-<span class="sd">        multinomial distributions</span>
-<span class="sd">    - **Numerical Stability**: Improved implementations for edge cases and extreme values</span>
-
-<span class="sd">Distribution Categories:</span>
-
-<span class="sd">**Enhanced Multivariate Distributions**: Extended batch support</span>
-<span class="sd">    - CustomDirichlet: Dirichlet distribution with variable batch dimensions</span>
-<span class="sd">    - CustomMultinomial: Multinomial distribution with flexible batch handling</span>
-<span class="sd">    - MultinomialLogit: Logit-parameterized multinomial distribution</span>
-<span class="sd">    - MultinomialLogTheta: Log-probability parameterized multinomial distribution</span>
-
-<span class="sd">**Transformed Distributions**: Log-transformed variants</span>
-<span class="sd">    - ExpDirichlet: Log-transformed Dirichlet distribution</span>
-<span class="sd">    - LogUnivariateScipyTransform: General log-transformation framework</span>
-<span class="sd">    - TransformedScipyDist: Abstract base for distribution transformations</span>
-
-<span class="sd">**Pre-configured Distributions**: Ready-to-use distribution instances</span>
-<span class="sd">    - dirichlet: CustomDirichlet instance</span>
-<span class="sd">    - multinomial: CustomMultinomial instance</span>
-<span class="sd">    - expexponential: Log-transformed exponential distribution</span>
-<span class="sd">    - explomax: Log-transformed Lomax distribution</span>
-<span class="sd">    - expdirichlet: ExpDirichlet instance</span>
-
-<span class="sd">The distributions in this module are designed to work within SciPy&#39;s distribution</span>
-<span class="sd">framework while providing enhanced functionality for advanced probabilistic modeling</span>
-<span class="sd">scenarios commonly encountered in SciStanPy applications.</span>
+<span class="sd">    - **Enhanced Batch Support**: Extended multivariate distributions with variable</span>
+<span class="sd">      batch dimensions</span>
+<span class="sd">    - **Custom Transformations**: Log-transformed distributions with proper Jacobian</span>
+<span class="sd">      corrections</span>
+<span class="sd">    - **Alternative Parameterizations**: Logit and log-probability parameterizations</span>
+<span class="sd">      for multinomial distributions</span>
+<span class="sd">    - **Numerical Stability**: Improved implementations for edge cases and extreme</span>
+<span class="sd">      values</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -89,6 +65,8 @@
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
+
+<span class="c1"># pylint: disable=line-too-long</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_combine_args_kwargs</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -127,6 +105,8 @@
     <span class="k">return</span> <span class="n">combined_kwargs</span>
 
 
+<div class="viewcode-block" id="CustomDirichlet">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CustomDirichlet</span><span class="p">(</span>
     <span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">dirichlet_gen</span>  <span class="c1"># pylint: disable=protected-access</span>
 <span class="p">):</span>
@@ -138,27 +118,14 @@
 <span class="sd">    limitations with batch operations that this class addresses.</span>
 
 <span class="sd">    Key Enhancements:</span>
-<span class="sd">    - Support for arbitrary batch dimensions in alpha parameters</span>
-<span class="sd">    - Proper broadcasting behavior across batch dimensions</span>
-<span class="sd">    - Consistent output shapes for all distribution methods</span>
-<span class="sd">    - Efficient vectorized operations over batch elements</span>
+<span class="sd">        - Support for arbitrary batch dimensions in alpha parameters</span>
+<span class="sd">        - Proper broadcasting behavior across batch dimensions</span>
+<span class="sd">        - Consistent output shapes for all distribution methods</span>
+<span class="sd">        - Efficient vectorized operations over batch elements</span>
 
 <span class="sd">    The implementation uses a decorator pattern to extend existing SciPy</span>
 <span class="sd">    methods with batch dimension handling while preserving the original</span>
 <span class="sd">    mathematical properties of the Dirichlet distribution.</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Support: Probability simplex {x : Σxᵢ = 1, xᵢ ≥ 0}</span>
-<span class="sd">    - Parameters: α = (α₁, α₂, ..., αₖ) where αᵢ &gt; 0</span>
-<span class="sd">    - Mean: E[Xᵢ] = αᵢ / Σⱼ αⱼ</span>
-<span class="sd">    - Useful for modeling categorical probabilities and compositional data</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Standard usage with batch dimensions</span>
-<span class="sd">        &gt;&gt;&gt; alpha = np.array([[1, 2, 3], [2, 3, 1], [3, 1, 2]])</span>
-<span class="sd">        &gt;&gt;&gt; dirichlet = CustomDirichlet()</span>
-<span class="sd">        &gt;&gt;&gt; samples = dirichlet.rvs(alpha, size=100) # output_shape = (100, 3, 3)</span>
-<span class="sd">        &gt;&gt;&gt; log_probs = dirichlet.logpdf(samples, alpha)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@staticmethod</span>
@@ -245,6 +212,8 @@
     <span class="n">entropy</span> <span class="o">=</span> <span class="n">_expand_batch</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">dirichlet_gen</span><span class="o">.</span><span class="n">entropy</span><span class="p">)</span>
     <span class="c1"># pylint: enable=protected-access</span>
 
+<div class="viewcode-block" id="CustomDirichlet.rvs">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
@@ -293,9 +262,13 @@
                 <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">alpha</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
             <span class="p">]</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span><span class="p">)</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="CustomMultinomial">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CustomMultinomial</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">_multivariate</span><span class="o">.</span><span class="n">multinomial_gen</span><span class="p">):</span>  <span class="c1"># pylint: disable=W0212</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Enhanced multinomial distribution supporting variable batch dimensions.</span>
 
@@ -305,16 +278,10 @@
 <span class="sd">    modeling scenarios.</span>
 
 <span class="sd">    Key Enhancements:</span>
-<span class="sd">    - Variable batch dimensions for n and p parameters</span>
-<span class="sd">    - Proper broadcasting behavior between n and p</span>
-<span class="sd">    - Support for different trial counts across batch elements</span>
-<span class="sd">    - Consistent output shapes for sampling operations</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Support: {x ∈ ℕ₀ᵏ : Σxᵢ = n}</span>
-<span class="sd">    - Parameters: n (trial count), p = (p₁, ..., pₖ) where Σpᵢ = 1</span>
-<span class="sd">    - PMF: P(X = x) = n! / (∏xᵢ!) × ∏pᵢˣⁱ</span>
-<span class="sd">    - Useful for modeling categorical count data</span>
+<span class="sd">        - Variable batch dimensions for n and p parameters</span>
+<span class="sd">        - Proper broadcasting behavior between n and p</span>
+<span class="sd">        - Support for different trial counts across batch elements</span>
+<span class="sd">        - Consistent output shapes for sampling operations</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # Batch multinomial with different trial counts</span>
@@ -326,6 +293,8 @@
 <span class="sd">        &gt;&gt;&gt; samples = multinomial.rvs(n=n, p=p, size=100) # shape = (100, 3, 3)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="CustomMultinomial.rvs">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">n</span><span class="p">:</span> <span class="s2">&quot;custom_types.Integer&quot;</span> <span class="o">|</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">],</span>
@@ -390,37 +359,17 @@
                 <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_el</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p_el</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">n_el</span><span class="p">,</span> <span class="n">p_el</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
             <span class="p">]</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span><span class="p">)</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="MultinomialLogit">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogit</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with logit parameterization.</span>
-
-<span class="sd">    This class provides a logit-parameterized interface to the multinomial</span>
-<span class="sd">    distribution, where probabilities are specified as logits (log-odds)</span>
-<span class="sd">    rather than normalized probabilities. This parameterization is often</span>
-<span class="sd">    more convenient for modeling and optimization.</span>
-
-<span class="sd">    :ivar softmax_p: Decorator that transforms logits to probabilities</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Parameterization: logits ∈ ℝᵏ (unconstrained)</span>
-<span class="sd">    - Transformation: pᵢ = exp(logitᵢ) / Σⱼ exp(logitⱼ)</span>
-<span class="sd">    - Natural for neural network outputs and linear models</span>
-<span class="sd">    - Automatic normalization ensures valid probabilities</span>
-
-<span class="sd">    The logit parameterization offers several advantages:</span>
-<span class="sd">    - No normalization constraints on input parameters</span>
-<span class="sd">    - Better numerical properties for optimization</span>
-<span class="sd">    - Natural output space for many machine learning models</span>
-<span class="sd">    - Automatic softmax transformation to valid probabilities</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Logit parameterization (no normalization needed)</span>
-<span class="sd">        &gt;&gt;&gt; logits = np.random.randn(3, 4)</span>
-<span class="sd">        &gt;&gt;&gt; n = np.array([[50], [75], [100]])</span>
-<span class="sd">        &gt;&gt;&gt; multinomial_logit = MultinomialLogit()</span>
-<span class="sd">        &gt;&gt;&gt; samples = multinomial_logit.rvs(n=n, logits=logits)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with logit parameterization. This is identical to</span>
+<span class="sd">    :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial`</span>
+<span class="sd">    except that the probabilities need not be normalized and are specified as logits.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@staticmethod</span>
@@ -451,34 +400,18 @@
     <span class="n">logpmf</span> <span class="o">=</span> <span class="n">softmax_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">logpmf</span><span class="p">)</span>
     <span class="n">rvs</span> <span class="o">=</span> <span class="n">softmax_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">rvs</span><span class="p">)</span>
     <span class="n">entropy</span> <span class="o">=</span> <span class="n">softmax_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">entropy</span><span class="p">)</span>
-    <span class="n">cov</span> <span class="o">=</span> <span class="n">softmax_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">cov</span><span class="p">)</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">softmax_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">cov</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="MultinomialLogTheta">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MultinomialLogTheta</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multinomial distribution with normalized log-probability parameterization.</span>
-
-<span class="sd">    This class provides a log-probability parameterized interface where the</span>
-<span class="sd">    input parameters are logarithms of probabilities that must already be</span>
-<span class="sd">    normalized (i.e., their exponentials sum to 1). This is useful when</span>
-<span class="sd">    working with log-probability vectors from other computations.</span>
-
-<span class="sd">    :ivar exp_p: Decorator that transforms log-probabilities to probabilities</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Parameterization: log_p ∈ ℝᵏ with Σexp(log_pᵢ) = 1</span>
-
-<span class="sd">    The log-probability parameterization is particularly useful when:</span>
-<span class="sd">    - Working with log-normalized probability vectors</span>
-<span class="sd">    - Interfacing with other log-space computations</span>
-<span class="sd">    - Ensuring consistency with log-space model components</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Normalized log-probabilities</span>
-<span class="sd">        &gt;&gt;&gt; logits = np.random.randn(3, 4)</span>
-<span class="sd">        &gt;&gt;&gt; log_probs = logits - scipy.special.logsumexp(logits, axis=-1, keepdims=True)</span>
-<span class="sd">        &gt;&gt;&gt; n = np.array([[100], [200], [150]])</span>
-<span class="sd">        &gt;&gt;&gt; multinomial_log_theta = MultinomialLogTheta()</span>
-<span class="sd">        &gt;&gt;&gt; samples = multinomial_log_theta.rvs(n=n, log_p=log_probs)</span>
+<span class="sd">    This is identical to</span>
+<span class="sd">    :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial`</span>
+<span class="sd">    except that the probabilities are specified as log-probabilities that must</span>
+<span class="sd">    already be normalized (i.e., their exponentials sum to 1).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@staticmethod</span>
@@ -520,37 +453,22 @@
     <span class="n">logpmf</span> <span class="o">=</span> <span class="n">exp_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">logpmf</span><span class="p">)</span>
     <span class="n">rvs</span> <span class="o">=</span> <span class="n">exp_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">rvs</span><span class="p">)</span>
     <span class="n">entropy</span> <span class="o">=</span> <span class="n">exp_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">entropy</span><span class="p">)</span>
-    <span class="n">cov</span> <span class="o">=</span> <span class="n">exp_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">cov</span><span class="p">)</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">exp_p</span><span class="p">(</span><span class="n">CustomMultinomial</span><span class="o">.</span><span class="n">cov</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="ExpDirichlet">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpDirichlet</span><span class="p">(</span><span class="n">CustomDirichlet</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log-transformed Dirichlet distribution (Exponential-Dirichlet).</span>
 
 <span class="sd">    This class implements a distribution where the logarithm of a Dirichlet-distributed</span>
 <span class="sd">    random vector follows this distribution. It&#39;s useful for modeling log-scale</span>
 <span class="sd">    compositional data and log-probability vectors with proper Jacobian corrections.</span>
-
-<span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - If X ~ Dirichlet(α), then Y = log(X) ~ ExpDirichlet(α)</span>
-<span class="sd">    - Support: (-∞, 0]ᵏ (log-simplex)</span>
-<span class="sd">    - Constraint: Σexp(yᵢ) = 1</span>
-<span class="sd">    - Natural for log-probability modeling</span>
-
-<span class="sd">    The log-transformation requires proper Jacobian correction for probability</span>
-<span class="sd">    calculations. This distribution is particularly valuable for:</span>
-<span class="sd">    - Log-space compositional data analysis</span>
-<span class="sd">    - Bayesian modeling of log-probability vectors</span>
-<span class="sd">    - Numerical stability in extreme probability regimes</span>
-<span class="sd">    - Integration with other log-space model components</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; # Log-compositional data modeling</span>
-<span class="sd">        &gt;&gt;&gt; alpha = np.array([2.0, 3.0, 1.0])</span>
-<span class="sd">        &gt;&gt;&gt; exp_dirichlet = ExpDirichlet()</span>
-<span class="sd">        &gt;&gt;&gt; log_samples = exp_dirichlet.rvs(alpha, size=(1000,))</span>
-<span class="sd">        &gt;&gt;&gt; # Verify constraint: np.exp(log_samples).sum(axis=-1) ≈ 1</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="ExpDirichlet.logpdf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.logpdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log probability density with Jacobian correction.</span>
 
@@ -568,8 +486,11 @@
             <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="o">+</span> <span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
             <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">special</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">alpha</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="ExpDirichlet.pdf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.pdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute probability density function.</span>
 
@@ -581,8 +502,11 @@
 <span class="sd">        Computed as the exponential of the log probability density for</span>
 <span class="sd">        numerical stability and consistency.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">alpha</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">alpha</span><span class="p">))</span></div>
 
+
+<div class="viewcode-block" id="ExpDirichlet.rvs">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span>
@@ -605,40 +529,53 @@
 <span class="sd">        distribution and then applying the logarithmic transformation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Sample from the Dirichlet distribution and then take the logarithm</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">))</span></div>
 
+
+<div class="viewcode-block" id="ExpDirichlet.mean">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined moments.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This is not implemented.</span>
 
-<span class="sd">        :raises NotImplementedError: Mean is not analytically available</span>
-
-<span class="sd">        The moments of the log-transformed Dirichlet distribution do not</span>
-<span class="sd">        have simple closed-form expressions.</span>
+<span class="sd">        :raises NotImplementedError:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="ExpDirichlet.var">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.var">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined moments.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This is not implemented.</span>
 
-<span class="sd">        :raises NotImplementedError: Variance is not analytically available</span>
+<span class="sd">        :raises NotImplementedError:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="ExpDirichlet.cov">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.cov">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined moments.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This is not implemented.</span>
 
-<span class="sd">        :raises NotImplementedError: Covariance is not analytically available</span>
+<span class="sd">        :raises NotImplementedError:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="ExpDirichlet.entropy">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet.entropy">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise error for undefined entropy.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This is not implemented.</span>
 
-<span class="sd">        :raises NotImplementedError: Entropy is not analytically available</span>
+<span class="sd">        :raises NotImplementedError:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not defined for this custom distribution&quot;</span><span class="p">)</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="TransformedScipyDist">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransformedScipyDist</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for transformed SciPy distributions.</span>
 
@@ -651,21 +588,15 @@
 <span class="sd">    :type base_dist: stats.rv_continuous</span>
 
 <span class="sd">    Key Features:</span>
-<span class="sd">    - Automatic Jacobian correction for probability densities</span>
-<span class="sd">    - Proper transformation of all distribution methods</span>
-<span class="sd">    - Maintains SciPy distribution interface compatibility</span>
-<span class="sd">    - Support for arbitrary invertible transformations</span>
+<span class="sd">        - Automatic Jacobian correction for probability densities</span>
+<span class="sd">        - Proper transformation of all distribution methods</span>
+<span class="sd">        - Maintains SciPy distribution interface compatibility</span>
+<span class="sd">        - Support for arbitrary invertible transformations</span>
 
 <span class="sd">    Subclasses must implement:</span>
-<span class="sd">    - transform: Forward transformation function</span>
-<span class="sd">    - inverse_transform: Inverse transformation function</span>
-<span class="sd">    - log_jacobian_correction: Log determinant of Jacobian matrix</span>
-
-<span class="sd">    The framework automatically handles:</span>
-<span class="sd">    - PDF/log-PDF with Jacobian corrections</span>
-<span class="sd">    - CDF through inverse transformation</span>
-<span class="sd">    - Quantile functions through forward transformation</span>
-<span class="sd">    - Random sampling through transformation of base samples</span>
+<span class="sd">        - transform: Forward transformation function</span>
+<span class="sd">        - inverse_transform: Inverse transformation function</span>
+<span class="sd">        - log_jacobian_correction: Log determinant of Jacobian matrix</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_dist</span><span class="p">:</span> <span class="n">stats</span><span class="o">.</span><span class="n">rv_continuous</span><span class="p">):</span>
@@ -678,6 +609,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span> <span class="o">=</span> <span class="n">base_dist</span>
 
+<div class="viewcode-block" id="TransformedScipyDist.transform">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.transform">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply forward transformation to input values.</span>
@@ -691,8 +624,11 @@
 <span class="sd">        This method must implement the forward transformation function</span>
 <span class="sd">        that maps from the base distribution support to the transformed</span>
 <span class="sd">        distribution support.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
 
+
+<div class="viewcode-block" id="TransformedScipyDist.inverse_transform">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.inverse_transform">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">inverse_transform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]</span>
@@ -708,8 +644,11 @@
 <span class="sd">        This method must implement the inverse transformation function</span>
 <span class="sd">        that maps from the transformed distribution support back to the</span>
 <span class="sd">        base distribution support.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
 
+
+<div class="viewcode-block" id="TransformedScipyDist.log_jacobian_correction">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.log_jacobian_correction">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_jacobian_correction</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -726,8 +665,11 @@
 <span class="sd">        This method must compute the logarithm of the absolute value of</span>
 <span class="sd">        the Jacobian determinant for the transformation, which is required</span>
 <span class="sd">        for proper probability density calculations.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
 
+
+<div class="viewcode-block" id="TransformedScipyDist.pdf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.pdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute probability density function with Jacobian correction.</span>
 
@@ -741,8 +683,11 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log_jacobian_correction</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformedScipyDist.logpdf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.logpdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log probability density function with Jacobian correction.</span>
 
@@ -756,8 +701,11 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-        <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_jacobian_correction</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_jacobian_correction</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformedScipyDist.cdf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.cdf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute cumulative distribution function.</span>
 
@@ -769,8 +717,11 @@
 
 <span class="sd">        Uses inverse transformation to map to base distribution space.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformedScipyDist.ppf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.ppf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">ppf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute percent point function (inverse CDF).</span>
 
@@ -782,8 +733,11 @@
 
 <span class="sd">        Uses forward transformation of base distribution quantiles.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span></div>
 
+
+<div class="viewcode-block" id="TransformedScipyDist.sf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.sf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute survival function (1 - CDF).</span>
 
@@ -793,8 +747,11 @@
 
 <span class="sd">        :returns: Survival probability values</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformedScipyDist.isf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.isf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">isf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute inverse survival function.</span>
 
@@ -804,8 +761,11 @@
 
 <span class="sd">        :returns: Inverse survival function values</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">isf</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">isf</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span></div>
 
+
+<div class="viewcode-block" id="TransformedScipyDist.logsf">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.logsf">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">logsf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute log survival function.</span>
 
@@ -817,8 +777,11 @@
 
 <span class="sd">        More numerically stable for small survival probabilities.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">logsf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">logsf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="TransformedScipyDist.rvs">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.TransformedScipyDist.rvs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate random samples from transformed distribution.</span>
 
@@ -829,9 +792,13 @@
 
 <span class="sd">        Generates samples from base distribution and applies transformation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_dist</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="LogUnivariateScipyTransform">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LogUnivariateScipyTransform</span><span class="p">(</span><span class="n">TransformedScipyDist</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Log transformation for univariate SciPy distributions.</span>
 
@@ -840,21 +807,52 @@
 <span class="sd">    with proper Jacobian corrections.</span>
 
 <span class="sd">    This transformation is commonly used to:</span>
-<span class="sd">    - Convert positive-valued distributions to real-valued distributions</span>
-<span class="sd">    - Enable log-scale modeling of multiplicative processes</span>
-<span class="sd">    - Improve numerical stability for heavy-tailed distributions</span>
-<span class="sd">    - Create log-normal variants of arbitrary positive distributions</span>
+<span class="sd">        - Convert positive-valued distributions to real-valued distributions</span>
+<span class="sd">        - Enable log-scale modeling of multiplicative processes</span>
+<span class="sd">        - Improve numerical stability for heavy-tailed distributions</span>
+<span class="sd">        - Create log-normal variants of arbitrary positive distributions</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # Create log-transformed exponential distribution</span>
-<span class="sd">        &gt;&gt;&gt; log_exponential = LogUnivariateScipyTransform(stats.expon)</span>
+<span class="sd">        &gt;&gt;&gt; exp_exponential = LogUnivariateScipyTransform(stats.expon)</span>
 <span class="sd">        &gt;&gt;&gt; # This is equivalent to a Gumbel distribution</span>
-<span class="sd">        &gt;&gt;&gt; samples = log_exponential.rvs(scale=1.0, size=1000)</span>
+<span class="sd">        &gt;&gt;&gt; samples = exp_exponential.rvs(scale=1.0, size=1000)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">transform</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span>
-    <span class="n">inverse_transform</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span>
+<div class="viewcode-block" id="LogUnivariateScipyTransform.transform">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform.transform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply logarithmic transformation to input values.</span>
 
+<span class="sd">        :param x: Input values from base distribution</span>
+<span class="sd">        :type x: npt.NDArray[np.floating]</span>
+
+<span class="sd">        :returns: Log-transformed values</span>
+<span class="sd">        :rtype: npt.NDArray[np.floating]</span>
+
+<span class="sd">        This method implements the natural logarithm transformation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LogUnivariateScipyTransform.inverse_transform">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform.inverse_transform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inverse_transform</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply inverse logarithmic transformation to input values.</span>
+
+<span class="sd">        :param x: Input values from transformed distribution</span>
+<span class="sd">        :type x: npt.NDArray[np.floating]</span>
+
+<span class="sd">        :returns: Inverse log-transformed values</span>
+<span class="sd">        :rtype: npt.NDArray[np.floating]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LogUnivariateScipyTransform.log_jacobian_correction">
+<a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_scipy_dists.html#scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform.log_jacobian_correction">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_jacobian_correction</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">]:</span>
@@ -866,17 +864,53 @@
 <span class="sd">        :returns: Log Jacobian determinant (equal to x for log transform)</span>
 <span class="sd">        :rtype: npt.NDArray[np.floating]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+</div>
+
 
 
 <span class="c1"># Pre-configured distribution instances for convenient use</span>
 <span class="n">dirichlet</span> <span class="o">=</span> <span class="n">CustomDirichlet</span><span class="p">()</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Instance of :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomDirichlet`.</span>
+<span class="sd">See that class for details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="n">expexponential</span> <span class="o">=</span> <span class="n">LogUnivariateScipyTransform</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">expon</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">`scipy.stats.expon` transformed to the log scale using</span>
+<span class="sd">:py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="n">explomax</span> <span class="o">=</span> <span class="n">LogUnivariateScipyTransform</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">lomax</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">`scipy.stats.lomax` transformed to the log scale using</span>
+<span class="sd">:py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="n">expdirichlet</span> <span class="o">=</span> <span class="n">ExpDirichlet</span><span class="p">()</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Instance of :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.ExpDirichlet`.</span>
+<span class="sd">See that class for details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="n">multinomial</span> <span class="o">=</span> <span class="n">CustomMultinomial</span><span class="p">()</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Instance of :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial`.</span>
+<span class="sd">See that class for details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="n">multinomial_logit</span> <span class="o">=</span> <span class="n">MultinomialLogit</span><span class="p">()</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Instance of :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogit`.</span>
+<span class="sd">See that class for details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="n">multinomial_log_theta</span> <span class="o">=</span> <span class="n">MultinomialLogTheta</span><span class="p">()</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Instance of :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.MultinomialLogTheta`.</span>
+<span class="sd">See that class for details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 </pre></div>
 
           </div>
