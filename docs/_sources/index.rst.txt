@@ -50,27 +50,9 @@ In SciStanPy, parameters and observations are defined using distributions.
 
 Quick Start
 -----------
+This section assumes that you have followed the installation instructions found on GitHub. If not, return to the `GitHub repository <https://github.com/microsoft/scistanpy>`_ for detailed setup instructions.
 
-To start, clone SciStanPy from GitHub:
-
-.. code-block:: bash
-
-   git clone https://github.com/microsoft/SciStanPy.git
-
-Then, you can either install into your current active environment with
-
-.. code-block:: bash
-
-   pip install -e .
-
-or build a SciStanPy-specific environment using conda, mamba, or micromamba with
-
-.. code-block:: bash
-
-   conda env create -f conda.yml
-   conda activate scistanpy
-
-Compehensive documentation for the SciStanPy API can be found :doc:`here <api/index>`. For starting quickly, however, the most important modules and objects are :doc:`model <api/model/model>`, :doc:`parameters <api/model/components/parameters>`, and :doc:`operations <api/operations>`. Less frequently used, but also important, is the :doc:`constants <api/model/components/constants>` module. Follow the links for detailed API references.
+Comprehensive documentation for the SciStanPy API can be found :doc:`here <api/index>`. For starting quickly, however, the most important modules and objects are :doc:`model <api/model/model>`, :doc:`parameters <api/model/components/parameters>`, and :doc:`operations <api/operations>`. Less frequently used, but also important, is the :doc:`constants <api/model/components/constants>` module. Follow the links for detailed API references.
 
 The :py:class:`~scistanpy.model.model.Model` object forms the backbone of all SciStanPy models, distributions defined in :doc:`parameters <api/model/components/parameters>` define those models' variables, :doc:`operations <api/operations>` define transformations of those variables, and :doc:`constants <api/model/components/constants>` provide fixed values used throughout the model. If you work with PyTorch, defining models in SciStanPy will feel quite familiar:
 

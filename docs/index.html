@@ -74,20 +74,8 @@ and taught by Justin Bois at Caltech is an excellent resource.</p>
 </section>
 <section id="quick-start">
 <h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
-<p>To start, clone SciStanPy from GitHub:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/microsoft/SciStanPy.git
-</pre></div>
-</div>
-<p>Then, you can either install into your current active environment with</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
-</pre></div>
-</div>
-<p>or build a SciStanPy-specific environment using conda, mamba, or micromamba with</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>conda.yml
-conda<span class="w"> </span>activate<span class="w"> </span>scistanpy
-</pre></div>
-</div>
-<p>Compehensive documentation for the SciStanPy API can be found <a class="reference internal" href="api/index.html"><span class="doc">here</span></a>. For starting quickly, however, the most important modules and objects are <a class="reference internal" href="api/model/model.html"><span class="doc">model</span></a>, <a class="reference internal" href="api/model/components/parameters.html"><span class="doc">parameters</span></a>, and <a class="reference internal" href="api/operations.html"><span class="doc">operations</span></a>. Less frequently used, but also important, is the <a class="reference internal" href="api/model/components/constants.html"><span class="doc">constants</span></a> module. Follow the links for detailed API references.</p>
+<p>This section assumes that you have followed the installation instructions found on GitHub. If not, return to the <a class="reference external" href="https://github.com/microsoft/scistanpy">GitHub repository</a> for detailed setup instructions.</p>
+<p>Comprehensive documentation for the SciStanPy API can be found <a class="reference internal" href="api/index.html"><span class="doc">here</span></a>. For starting quickly, however, the most important modules and objects are <a class="reference internal" href="api/model/model.html"><span class="doc">model</span></a>, <a class="reference internal" href="api/model/components/parameters.html"><span class="doc">parameters</span></a>, and <a class="reference internal" href="api/operations.html"><span class="doc">operations</span></a>. Less frequently used, but also important, is the <a class="reference internal" href="api/model/components/constants.html"><span class="doc">constants</span></a> module. Follow the links for detailed API references.</p>
 <p>The <a class="reference internal" href="api/model/model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> object forms the backbone of all SciStanPy models, distributions defined in <a class="reference internal" href="api/model/components/parameters.html"><span class="doc">parameters</span></a> define those models’ variables, <a class="reference internal" href="api/operations.html"><span class="doc">operations</span></a> define transformations of those variables, and <a class="reference internal" href="api/model/components/constants.html"><span class="doc">constants</span></a> provide fixed values used throughout the model. If you work with PyTorch, defining models in SciStanPy will feel quite familiar:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
