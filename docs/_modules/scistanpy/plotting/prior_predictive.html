@@ -296,9 +296,9 @@
 <span class="sd">        like cumulative probabilities for ECDF plots.</span>
 
 <span class="sd">        The processing logic adapts based on the selected plot type:</span>
-<span class="sd">        - ECDF plots: Computes cumulative probabilities and sorts appropriately</span>
-<span class="sd">        - Relationship plots: Sorts by independent variable and adds separators</span>
-<span class="sd">        - Other plots: Basic reshaping and filtering</span>
+<span class="sd">            - ECDF plots: Computes cumulative probabilities and sorts appropriately</span>
+<span class="sd">            - Relationship plots: Sorts by independent variable and adds separators</span>
+<span class="sd">            - Other plots: Basic reshaping and filtering</span>
 
 <span class="sd">        The method respects the current widget selections for target parameter,</span>
 <span class="sd">        grouping dimension, and independent variable.</span>
@@ -551,10 +551,9 @@
 <span class="sd">        :type event: Event</span>
 
 <span class="sd">        Plot Type Logic:</span>
-
-<span class="sd">        - ECDF and KDE: Always available for any parameter</span>
-<span class="sd">        - Violin: Available when grouping dimension is selected</span>
-<span class="sd">        - Relationship: Available when both grouping and independent variable are selected</span>
+<span class="sd">            - ECDF and KDE: Always available for any parameter</span>
+<span class="sd">            - Violin: Available when grouping dimension is selected</span>
+<span class="sd">            - Relationship: Available when both grouping and independent variable are selected</span>
 
 <span class="sd">        The method automatically selects the most sophisticated available plot</span>
 <span class="sd">        type as the default when options change.</span>
@@ -595,9 +594,8 @@
 <span class="sd">        :rtype: pn.Row</span>
 
 <span class="sd">        The layout consists of:</span>
-
-<span class="sd">        - Left panel: Model hyperparameter sliders and viewing options</span>
-<span class="sd">        - Right panel: Interactive plot display that updates based on selections</span>
+<span class="sd">            - Left panel: Model hyperparameter sliders and viewing options</span>
+<span class="sd">            - Right panel: Interactive plot display that updates based on selections</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; check = PriorPredictiveCheck(model)</span>
@@ -640,12 +638,11 @@
 <span class="sd">        :rtype: dict</span>
 
 <span class="sd">        The returned dictionary includes:</span>
-
-<span class="sd">        - &#39;kind&#39;: Set to &#39;kde&#39; for kernel density estimation</span>
-<span class="sd">        - &#39;x&#39;: `None` for KDE plots.</span>
-<span class="sd">        - &#39;y&#39;: Target parameter name for the y-axis</span>
-<span class="sd">        - &#39;by&#39;: Independent label for grouping (if applicable)</span>
-<span class="sd">        - &#39;datashade&#39;: Disabled (False) for KDE plots to maintain clarity</span>
+<span class="sd">            - &#39;kind&#39;: Set to &#39;kde&#39; for kernel density estimation</span>
+<span class="sd">            - &#39;x&#39;: `None` for KDE plots.</span>
+<span class="sd">            - &#39;y&#39;: Target parameter name for the y-axis</span>
+<span class="sd">            - &#39;by&#39;: Independent label for grouping (if applicable)</span>
+<span class="sd">            - &#39;datashade&#39;: Disabled (False) for KDE plots to maintain clarity</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;kind&quot;</span><span class="p">:</span> <span class="s2">&quot;kde&quot;</span><span class="p">,</span>
@@ -669,13 +666,12 @@
 <span class="sd">        :rtype: dict</span>
 
 <span class="sd">        The returned dictionary includes:</span>
-
-<span class="sd">        - &#39;kind&#39;: Set to &#39;line&#39; for step-like ECDF appearance</span>
-<span class="sd">        - &#39;x&#39;: Target parameter values</span>
-<span class="sd">        - &#39;y&#39;: &#39;Cumulative Probability&#39; (computed during data processing)</span>
-<span class="sd">        - &#39;by&#39;: Independent label for grouping multiple ECDFs</span>
-<span class="sd">        - &#39;datashade&#39;: Disabled (False) for ECDF plots to maintain clarity</span>
-<span class="sd">        - &#39;hover&#39;: Set to &#39;hline&#39; for horizontal hover lines</span>
+<span class="sd">            - &#39;kind&#39;: Set to &#39;line&#39; for step-like ECDF appearance</span>
+<span class="sd">            - &#39;x&#39;: Target parameter values</span>
+<span class="sd">            - &#39;y&#39;: &#39;Cumulative Probability&#39; (computed during data processing)</span>
+<span class="sd">            - &#39;by&#39;: Independent label for grouping multiple ECDFs</span>
+<span class="sd">            - &#39;datashade&#39;: Disabled (False) for ECDF plots to maintain clarity</span>
+<span class="sd">            - &#39;hover&#39;: Set to &#39;hline&#39; for horizontal hover lines</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;kind&quot;</span><span class="p">:</span> <span class="s2">&quot;line&quot;</span><span class="p">,</span>
@@ -700,16 +696,14 @@
 <span class="sd">        :rtype: dict</span>
 
 <span class="sd">        The method handles multiple grouping scenarios:</span>
-
-<span class="sd">        - Single grouping by dimension index</span>
-<span class="sd">        - Grouping by both dimension and independent variable</span>
-<span class="sd">        - Automatic determination of primary vs. secondary grouping</span>
+<span class="sd">            - Single grouping by dimension index</span>
+<span class="sd">            - Grouping by both dimension and independent variable</span>
+<span class="sd">            - Automatic determination of primary vs. secondary grouping</span>
 
 <span class="sd">        The returned dictionary includes:</span>
-
-<span class="sd">        - &#39;args&#39;: Tuple of (groups..., values) for HoloViews Violin constructor</span>
-<span class="sd">        - &#39;kdims&#39;: List of key dimension names</span>
-<span class="sd">        - &#39;vdims&#39;: Value dimension name (target parameter)</span>
+<span class="sd">            - &#39;args&#39;: Tuple of (groups..., values) for HoloViews Violin constructor</span>
+<span class="sd">            - &#39;kdims&#39;: List of key dimension names</span>
+<span class="sd">            - &#39;vdims&#39;: Value dimension name (target parameter)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># This is only an option if we have a grouping dimension</span>
         <span class="n">group_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_processed_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">group_dim_dropdown</span><span class="o">.</span><span class="n">value</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
@@ -762,13 +756,13 @@
 <span class="sd">        :rtype: dict</span>
 
 <span class="sd">        The returned dictionary includes:</span>
-<span class="sd">        - kind: Set to &#39;line&#39; for continuous relationships</span>
-<span class="sd">        - x: Independent variable name</span>
-<span class="sd">        - y: Target parameter name</span>
-<span class="sd">        - datashade: Enabled (True) for performance with large datasets</span>
-<span class="sd">        - dynamic: Disabled (False), resulting in all data being embedded in output</span>
-<span class="sd">        - aggregator: Set to &#39;count&#39; for density-based coloring</span>
-<span class="sd">        - cmap: &#39;inferno&#39; colormap</span>
+<span class="sd">            - kind: Set to &#39;line&#39; for continuous relationships</span>
+<span class="sd">            - x: Independent variable name</span>
+<span class="sd">            - y: Target parameter name</span>
+<span class="sd">            - datashade: Enabled (True) for performance with large datasets</span>
+<span class="sd">            - dynamic: Disabled (False), resulting in all data being embedded in output</span>
+<span class="sd">            - aggregator: Set to &#39;count&#39; for density-based coloring</span>
+<span class="sd">            - cmap: &#39;inferno&#39; colormap</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;kind&quot;</span><span class="p">:</span> <span class="s2">&quot;line&quot;</span><span class="p">,</span>
@@ -794,9 +788,9 @@
 <span class="sd">        :rtype: Optional[str]</span>
 
 <span class="sd">        Priority order:</span>
-<span class="sd">        1. Independent variable dropdown selection (if not empty)</span>
-<span class="sd">        2. Group dimension dropdown selection (if not empty)</span>
-<span class="sd">        3. None (for simple univariate plots)</span>
+<span class="sd">            1. Independent variable dropdown selection (if not empty)</span>
+<span class="sd">            2. Group dimension dropdown selection (if not empty)</span>
+<span class="sd">            3. None (for simple univariate plots)</span>
 
 <span class="sd">        This property enables consistent handling of grouping and independent</span>
 <span class="sd">        variables across different visualization types.</span>
@@ -835,6 +829,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

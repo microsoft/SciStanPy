@@ -9,11 +9,10 @@ SciStanPy package, including fitting parameters, naming conventions, and
 Stan model configuration options, among others.
 
 The module is organized into logical groups covering:
-
-- Model fitting and optimization defaults
-- Variable and dimension naming conventions
-- Stan model compilation and execution settings
-- Diagnostic thresholds for model validation
+    - Model fitting and optimization defaults
+    - Variable and dimension naming conventions
+    - Stan model compilation and execution settings
+    - Diagnostic thresholds for model validation
 
 Default values cannot be programmatically altered. This documentation serves as a
 reference for users and developers to understand the standard configuration used

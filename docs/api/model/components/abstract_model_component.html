@@ -44,18 +44,15 @@ they use the concrete implementations provided in the
 <a class="reference internal" href="parameters.html#module-scistanpy.model.components.parameters" title="scistanpy.model.components.parameters"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scistanpy.model.components.parameters</span></code></a> submodules.</p>
 <p>The module establishes the common functionality that all model components must
 implement.</p>
-<p>Core Abstractions:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>Core Abstractions:</dt><dd><ul class="simple">
 <li><p><strong>Component Hierarchy</strong>: Parent-child relationships between model elements</p></li>
 <li><p><strong>Stan Code Generation</strong>: Automatic translation to Stan programming language</p></li>
 <li><p><strong>Shape Broadcasting</strong>: Automatic handling of multi-dimensional parameters</p></li>
 <li><p><strong>Dependency Management</strong>: Tracking and validation of component relationships</p></li>
 </ul>
-</div></blockquote>
-<p>Key Responsibilities:</p>
-<blockquote>
-<div><ul class="simple">
+</dd>
+<dt>Key Responsibilities:</dt><dd><ul class="simple">
 <li><p>Define abstract interfaces for model component behavior</p></li>
 <li><p>Implement common functionality for shape handling and validation</p></li>
 <li><p>Provide Stan code generation template</p></li>
@@ -63,27 +60,22 @@ implement.</p>
 <li><p>Handle parameter bounds and constraints</p></li>
 <li><p>Support sampling and drawing from component distributions</p></li>
 </ul>
-</div></blockquote>
-<p>Stan Integration: The abstract base provides core Stan code generation capabilities
-including:</p>
-<blockquote>
-<div><ul class="simple">
+</dd>
+<dt>Stan Integration: The abstract base provides core Stan code generation capabilities including:</dt><dd><ul class="simple">
 <li><p>Variable declarations with appropriate types and constraints</p></li>
 <li><p>Index management for multi-dimensional arrays</p></li>
 <li><p>Target increment and transformation assignment generation</p></li>
 <li><p>Support function inclusion for custom distributions</p></li>
 </ul>
-</div></blockquote>
-<p>Component Relationships: The hierarchy system enables complex model construction
-through:</p>
-<blockquote>
-<div><ul class="simple">
+</dd>
+<dt>Component Relationships: The hierarchy system enables complex model construction through:</dt><dd><ul class="simple">
 <li><p>Parent-child linkage for dependency tracking</p></li>
 <li><p>Parameter name resolution and validation</p></li>
 <li><p>Automatic shape broadcasting across related components</p></li>
 <li><p>Tree traversal for model analysis and code generation</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <p>This foundational layer enables the construction of sophisticated probabilistic
 models while maintaining type safety and automatic Stan code generation.</p>
 <section id="abstractmodelcomponent">
@@ -130,14 +122,16 @@ and other model components.</p>
 </ul>
 </dd>
 </dl>
-<p>The class provides core functionality for:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The class provides core functionality for:</dt><dd><ul class="simple">
 <li><p>Component relationship management (parents and children)</p></li>
 <li><p>Shape validation and broadcasting</p></li>
 <li><p>Stan code generation for variable declarations and operations</p></li>
 <li><p>Sampling and drawing from component distributions</p></li>
 <li><p>Tree traversal for model analysis</p></li>
 </ul>
+</dd>
+</dl>
 <p>All model components must implement the abstract methods for drawing samples
 and generating Stan code appropriate to their type.</p>
 <dl class="py attribute">
@@ -327,20 +321,22 @@ Internal use only. Used to cache draws throughout recursion.</p></li>
 </ul>
 </dd>
 </dl>
-<p>This method implements the complete sampling workflow:</p>
-<ol class="arabic simple">
+<dl class="simple">
+<dt>This method implements the complete sampling workflow:</dt><dd><ol class="arabic simple">
 <li><p>Recursively draws from parent components if not already drawn</p></li>
 <li><p>Collects parent samples for the current level</p></li>
 <li><p>Draws n samples from this component using parent values</p></li>
 <li><p>Validates drawn samples against bounds and constraints</p></li>
 <li><p>Returns samples and updates the global draw cache</p></li>
 </ol>
-<p>The method enforces constraint validation including:</p>
-<ul class="simple">
+</dd>
+<dt>The method enforces constraint validation including:</dt><dd><ul class="simple">
 <li><p>Lower and upper bound checking</p></li>
 <li><p>Simplex sum-to-one validation</p></li>
 <li><p>Parameter type constraint validation</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py property">
@@ -375,17 +371,21 @@ variable name in the generated Stan code rather than being inlined.</p>
 </dl>
 <p>This method determines the appropriate loop nesting level for
 defining this component in Stan code. The depth is calculated as:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>Number of dimensions minus one (last dimension is vectorized)</p></li>
 <li><p>Minus trailing singleton dimensions (except the last)</p></li>
 <li><p>Clipped to a minimum of zero</p></li>
 </ul>
-<p>Assignment depth affects:</p>
-<ul class="simple">
+</div></blockquote>
+<dl class="simple">
+<dt>Assignment depth affects:</dt><dd><ul class="simple">
 <li><p>Loop structure in generated Stan code</p></li>
 <li><p>Index variable management</p></li>
 <li><p>Vectorization opportunities</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -441,12 +441,14 @@ parent components that have different numbers of dimensions. The
 offset accounts for implicit singleton dimensions that are added
 during broadcasting operations (e.g., the offset between <code class="docutils literal notranslate"><span class="pre">x</span></code> with shape
 (10,) and <code class="docutils literal notranslate"><span class="pre">y</span></code> with shape (2, 10) would be “1”).</p>
-<p>Index offsets are essential for:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>Index offsets are essential for:</dt><dd><ul class="simple">
 <li><p>Proper multi-dimensional array indexing in Stan code</p></li>
 <li><p>Handling broadcasting between components of different shapes</p></li>
 <li><p>Maintaining correct dimension alignment in generated code</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -483,12 +485,14 @@ Internal use only.</p></li>
 </dl>
 <p>This method generates proper Stan variable names for multi-dimensional
 components, handling:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>Singleton dimension skipping</p></li>
 <li><p>Index offset management for broadcasting</p></li>
 <li><p>Dimension range selection</p></li>
 <li><p>Automatic vectorization of the last dimension</p></li>
 </ul>
+</div></blockquote>
 <p>The offset parameter accounts for implicit singleton dimensions prepended
 during broadcasting between parent and child components.</p>
 </dd></dl>
@@ -530,12 +534,14 @@ and assignments. The method processes parent components and returns
 properly formatted Stan expressions.</p>
 <p>The base implementation in this abstract class provides common
 functionality for:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>Processing parent component relationships</p></li>
 <li><p>Handling index offsets and dimension slicing</p></li>
 <li><p>Determining when to use variable names vs. inline expressions</p></li>
 <li><p>Managing transformed parameter code generation</p></li>
 </ul>
+</div></blockquote>
 <p>Subclasses extend this foundation to generate component-specific
 Stan code patterns.</p>
 </dd></dl>
@@ -559,12 +565,14 @@ Stan code patterns.</p>
 the number of leading dimensions that are compatible according to
 broadcasting rules. Dimensions are compatible if they are equal or
 if at least one of them is 1 (singleton).</p>
-<p>Shape compatibility is important for:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>Shape compatibility is important for:</dt><dd><ul class="simple">
 <li><p>Determining indexing strategies</p></li>
 <li><p>Validating broadcasting operations</p></li>
 <li><p>Optimizing Stan code generation</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -586,13 +594,15 @@ Defaults to False.</p>
 <dd class="field-even"><p><strong>AssertionError</strong> – If unknown data type is encountered</p>
 </dd>
 </dl>
-<p>This method generates appropriate Stan data type declarations based on:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>This method generates appropriate Stan data type declarations based on:</dt><dd><ul class="simple">
 <li><p>Base data type (real, int, simplex)</p></li>
 <li><p>Component dimensionality</p></li>
 <li><p>Bound constraints</p></li>
 <li><p>Whether vector/array format is preferred</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -629,12 +639,14 @@ component’s Stan model variable name and appropriate data type.</p>
 <p>This method returns Stan function definitions or include statements
 that must be added to the Stan program to support this component.
 The default implementation returns an empty list.</p>
-<p>Custom components may override this method to include:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>Custom components may override this method to include:</dt><dd><ul class="simple">
 <li><p>Custom distribution definitions</p></li>
 <li><p>Helper function implementations</p></li>
 <li><p>Include statements for external function libraries</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -874,18 +886,22 @@ Defaults to 1.</p></li>
 </dl>
 <p>This method enables systematic traversal of the model dependency graph
 in either direction. Each tuple contains:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>Recursion depth relative to the starting component</p></li>
 <li><p>The current component in the traversal</p></li>
 <li><p>The relative component (child if walking down, parent if walking up)</p></li>
 </ul>
-<p>Tree traversal is useful for:</p>
-<ul class="simple">
+</div></blockquote>
+<dl class="simple">
+<dt>Tree traversal is useful for:</dt><dd><ul class="simple">
 <li><p>Model structure analysis and visualization</p></li>
 <li><p>Dependency validation and cycle detection</p></li>
 <li><p>Code generation ordering</p></li>
 <li><p>Model component discovery</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -1000,6 +1016,7 @@ in either direction. Each tuple contains:</p>
 <li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

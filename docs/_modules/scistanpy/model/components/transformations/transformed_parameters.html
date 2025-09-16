@@ -73,11 +73,10 @@
 <span class="sd">    mathematical operation.</span>
 
 <span class="sd">    The mixin supports the following Python arithmetic operators:</span>
-
-<span class="sd">    - Addition (``+``), subtraction (``-``)</span>
-<span class="sd">    - Multiplication (``*``), division (``/``)</span>
-<span class="sd">    - Exponentiation (``**``)</span>
-<span class="sd">    - Unary negation (``-``)</span>
+<span class="sd">        - Addition (``+``), subtraction (``-``)</span>
+<span class="sd">        - Multiplication (``*``), division (``/``)</span>
+<span class="sd">        - Exponentiation (``**``)</span>
+<span class="sd">        - Unary negation (``-``)</span>
 
 <span class="sd">    Each operation supports both left and right operand positioning, enabling</span>
 <span class="sd">    flexible mathematical expressions with mixed parameter and constant types.</span>
@@ -336,17 +335,17 @@
 <span class="sd">    (sampling, PyTorch operations) and code generation aspects (Stan assignments).</span>
 
 <span class="sd">    Transformed parameters support:</span>
-<span class="sd">    - Sampling through parent parameter sampling and operation application</span>
-<span class="sd">    - PyTorch operations with automatic differentiation</span>
-<span class="sd">    - Stan code generation for transformed parameters block</span>
-<span class="sd">    - Further transformation through operator overloading</span>
+<span class="sd">        - Sampling through parent parameter sampling and operation application</span>
+<span class="sd">        - PyTorch operations with automatic differentiation</span>
+<span class="sd">        - Stan code generation for transformed parameters block</span>
+<span class="sd">        - Further transformation through operator overloading</span>
 
 <span class="sd">    The class provides the infrastructure for creating complex mathematical</span>
 <span class="sd">    expressions while maintaining compatibility with all SciStanPy backends.</span>
 
 <span class="sd">    Subclasses must implement:</span>
-<span class="sd">    - run_np_torch_op: The core mathematical operation</span>
-<span class="sd">    - write_stan_operation: Stan code generation for the operation</span>
+<span class="sd">        - run_np_torch_op: The core mathematical operation</span>
+<span class="sd">        - write_stan_operation: Stan code generation for the operation</span>
 
 <span class="sd">    Example Usage:</span>
 <span class="sd">        TransformedParameter subclasses are typically created through operator</span>
@@ -1210,10 +1209,10 @@
 <span class="sd">    Computes the logarithm of the sum of exponentials along the last dimension.</span>
 
 <span class="sd">    This transformation is fundamental for:</span>
-<span class="sd">    - Normalizing log-probabilities</span>
-<span class="sd">    - Computing partition functions</span>
-<span class="sd">    - Stable softmax computations</span>
-<span class="sd">    - Log-space mixture models</span>
+<span class="sd">        - Normalizing log-probabilities</span>
+<span class="sd">        - Computing partition functions</span>
+<span class="sd">        - Stable softmax computations</span>
+<span class="sd">        - Log-space mixture models</span>
 
 <span class="sd">    This transformation is accessed through the :py:func:`~scistanpy.operations.logsumexp`</span>
 <span class="sd">    function.</span>
@@ -1833,10 +1832,10 @@
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
 <span class="sd">    This parameterization is ideal for:</span>
-<span class="sd">    - Extreme parameter regimes</span>
-<span class="sd">    - Log-scale statistical modeling</span>
-<span class="sd">    - When initial conditions are naturally in log-space</span>
-<span class="sd">    - Maximum numerical precision requirements</span>
+<span class="sd">        - Extreme parameter regimes</span>
+<span class="sd">        - Log-scale statistical modeling</span>
+<span class="sd">        - When initial conditions are naturally in log-space</span>
+<span class="sd">        - Maximum numerical precision requirements</span>
 
 <span class="sd">    This transformation is accessed through the</span>
 <span class="sd">    :py:func:`~scistanpy.operations.log_sigmoid_growth` function.</span>
@@ -1922,16 +1921,16 @@
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Parameterizes sigmoid growth by initial value x0</span>
-<span class="sd">    - Uses log-add-exp trick for numerical stability</span>
-<span class="sd">    - Avoids direct computation of large exponentials</span>
-<span class="sd">    - Maintains sigmoid growth dynamics</span>
+<span class="sd">        - Parameterizes sigmoid growth by initial value x0</span>
+<span class="sd">        - Uses log-add-exp trick for numerical stability</span>
+<span class="sd">        - Avoids direct computation of large exponentials</span>
+<span class="sd">        - Maintains sigmoid growth dynamics</span>
 
 <span class="sd">    This parameterization is useful when:</span>
-<span class="sd">    - Initial conditions are better known than carrying capacity (e.g., biological systems)</span>
-<span class="sd">    - Numerical stability is crucial</span>
-<span class="sd">    - Working with extreme parameter values</span>
-<span class="sd">    - Modeling relative growth from baseline</span>
+<span class="sd">        - Initial conditions are better known than carrying capacity (e.g., biological systems)</span>
+<span class="sd">        - Numerical stability is crucial</span>
+<span class="sd">        - Working with extreme parameter values</span>
+<span class="sd">        - Modeling relative growth from baseline</span>
 
 <span class="sd">    This transformation is accessed through the</span>
 <span class="sd">    :py:func:`~scistanpy.operations.sigmoid_growth_init_param` function.</span>
@@ -2029,15 +2028,15 @@
 <span class="sd">    :param kwargs: Additional arguments passed to parent class</span>
 
 <span class="sd">    Mathematical Properties:</span>
-<span class="sd">    - Fully operates in log-space for numerical stability</span>
-<span class="sd">    - Parameterized by log of initial conditions</span>
-<span class="sd">    - Maintains sigmoid growth dynamics</span>
+<span class="sd">        - Fully operates in log-space for numerical stability</span>
+<span class="sd">        - Parameterized by log of initial conditions</span>
+<span class="sd">        - Maintains sigmoid growth dynamics</span>
 
 <span class="sd">    This parameterization is ideal for:</span>
-<span class="sd">    - Extreme parameter regimes</span>
-<span class="sd">    - Log-scale statistical modeling</span>
-<span class="sd">    - When initial conditions are naturally in log-space</span>
-<span class="sd">    - Maximum numerical precision requirements</span>
+<span class="sd">        - Extreme parameter regimes</span>
+<span class="sd">        - Log-scale statistical modeling</span>
+<span class="sd">        - When initial conditions are naturally in log-space</span>
+<span class="sd">        - Maximum numerical precision requirements</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">LOWER_BOUND</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -2535,11 +2534,11 @@
 <span class="sd">        :returns: Tuple of (output_shape, processed_indices, constant_parents)</span>
 
 <span class="sd">        This method handles the complex logic of:</span>
-<span class="sd">        - Processing different index types (slices, integers, arrays, ellipsis)</span>
-<span class="sd">        - Calculating output shapes</span>
-<span class="sd">        - Converting to Stan-compatible 1-based indexing</span>
-<span class="sd">        - Creating constant parameters for array indices</span>
-<span class="sd">        - Validating consistency across multiple array indices</span>
+<span class="sd">            - Processing different index types (slices, integers, arrays, ellipsis)</span>
+<span class="sd">            - Calculating output shapes</span>
+<span class="sd">            - Converting to Stan-compatible 1-based indexing</span>
+<span class="sd">            - Creating constant parameters for array indices</span>
+<span class="sd">            - Validating consistency across multiple array indices</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">process_ellipsis</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;custom_types.Integer&quot;</span><span class="p">:</span>
@@ -2839,6 +2838,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

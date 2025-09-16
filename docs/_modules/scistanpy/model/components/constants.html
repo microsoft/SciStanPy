@@ -121,17 +121,15 @@
 <span class="sd">    :raises ValueError: If enforce_uniformity=True but array has non-uniform values</span>
 
 <span class="sd">    Key Features:</span>
-
-<span class="sd">    - **Automatic Type Inference**: Determines appropriate Stan data types</span>
-<span class="sd">    - **Bound Checking**: Validates values against optional constraints</span>
-<span class="sd">    - **Interactive Support**: Configures sliders for model exploration</span>
+<span class="sd">        - **Automatic Type Inference**: Determines appropriate Stan data types</span>
+<span class="sd">        - **Bound Checking**: Validates values against optional constraints</span>
+<span class="sd">        - **Interactive Support**: Configures sliders for model exploration</span>
 
 <span class="sd">    The class automatically handles:</span>
-
-<span class="sd">    - Conversion of Python scalars to NumPy arrays</span>
-<span class="sd">    - Shape inference from array inputs</span>
-<span class="sd">    - Data type detection for Stan code generation</span>
-<span class="sd">    - Bound validation at initialization</span>
+<span class="sd">        - Conversion of Python scalars to NumPy arrays</span>
+<span class="sd">        - Shape inference from array inputs</span>
+<span class="sd">        - Data type detection for Stan code generation</span>
+<span class="sd">        - Bound validation at initialization</span>
 
 <span class="sd">    .. hint::</span>
 <span class="sd">        Under the hood, the :py:meth:`Model.prior_predictive()</span>
@@ -175,11 +173,11 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a constant value component with validation and type inference.</span>
 
 <span class="sd">        The initialization process:</span>
-<span class="sd">        1. Converts input values to NumPy arrays</span>
-<span class="sd">        2. Infers appropriate Stan data types</span>
-<span class="sd">        3. Validates bounds if specified</span>
-<span class="sd">        4. Sets up PyTorch tensor representations</span>
-<span class="sd">        5. Configures interactive properties</span>
+<span class="sd">            1. Converts input values to NumPy arrays</span>
+<span class="sd">            2. Infers appropriate Stan data types</span>
+<span class="sd">            3. Validates bounds if specified</span>
+<span class="sd">            4. Sets up PyTorch tensor representations</span>
+<span class="sd">            5. Configures interactive properties</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># If the value is a numpy array, get the shape</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
@@ -460,6 +458,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

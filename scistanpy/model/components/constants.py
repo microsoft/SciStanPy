@@ -86,17 +86,15 @@ class Constant(abstract_model_component.AbstractModelComponent):
     :raises ValueError: If enforce_uniformity=True but array has non-uniform values
 
     Key Features:
-
-    - **Automatic Type Inference**: Determines appropriate Stan data types
-    - **Bound Checking**: Validates values against optional constraints
-    - **Interactive Support**: Configures sliders for model exploration
+        - **Automatic Type Inference**: Determines appropriate Stan data types
+        - **Bound Checking**: Validates values against optional constraints
+        - **Interactive Support**: Configures sliders for model exploration
 
     The class automatically handles:
-
-    - Conversion of Python scalars to NumPy arrays
-    - Shape inference from array inputs
-    - Data type detection for Stan code generation
-    - Bound validation at initialization
+        - Conversion of Python scalars to NumPy arrays
+        - Shape inference from array inputs
+        - Data type detection for Stan code generation
+        - Bound validation at initialization
 
     .. hint::
         Under the hood, the :py:meth:`Model.prior_predictive()
@@ -140,11 +138,11 @@ class Constant(abstract_model_component.AbstractModelComponent):
         """Initialize a constant value component with validation and type inference.
 
         The initialization process:
-        1. Converts input values to NumPy arrays
-        2. Infers appropriate Stan data types
-        3. Validates bounds if specified
-        4. Sets up PyTorch tensor representations
-        5. Configures interactive properties
+            1. Converts input values to NumPy arrays
+            2. Infers appropriate Stan data types
+            3. Validates bounds if specified
+            4. Sets up PyTorch tensor representations
+            5. Configures interactive properties
         """
         # If the value is a numpy array, get the shape
         if isinstance(value, np.ndarray):

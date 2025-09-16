@@ -140,15 +140,15 @@ It also exposes a
 <a class="reference internal" href="#scistanpy.model.results.mle.MLE.get_inference_obj" title="scistanpy.model.results.mle.MLE.get_inference_obj"><code class="xref py py-meth docutils literal notranslate"><span class="pre">method</span> <span class="pre">for</span> <span class="pre">bootstrapping</span></code></a>
 samples from the fit model, providing a relatively cheap way to quantify uncertainty
 around MLE estimates.</p>
-<p>Key Features:</p>
-<ul class="simple">
+<dl>
+<dt>Key Features:</dt><dd><ul class="simple">
 <li><p>Direct attribute access to individual parameter results</p></li>
 <li><p>Comprehensive loss trajectory tracking and visualization</p></li>
 <li><p>Efficient sampling from fitted parameter distributions</p></li>
 <li><p>Integration with ArviZ for Bayesian workflow compatibility</p></li>
 <li><p>Memory-efficient batch processing for large sample requests</p></li>
 </ul>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run MLE fitting</span>
 <span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">)</span>
 
@@ -213,19 +213,19 @@ different analysis workflows.</p>
 <dd class="field-odd"><p>Union[dict[str, npt.NDArray], xr.Dataset]</p>
 </dd>
 </dl>
-<p>Output Formats:</p>
-<ul class="simple">
+<dl>
+<dt>Output Formats:</dt><dd><ul class="simple">
 <li><p>Dictionary (default): Keys are parameter names, values are sample arrays</p></li>
 <li><p>xarray Dataset: Structured dataset with proper dimension labels and coordinates</p></li>
 </ul>
-<p>This is particularly useful for:</p>
-<ul class="simple">
+</dd>
+<dt>This is particularly useful for:</dt><dd><ul class="simple">
 <li><p>Uncertainty propagation through model predictions</p></li>
 <li><p>Bayesian model comparison and validation</p></li>
 <li><p>Posterior predictive checking with MLE-based approximations</p></li>
 <li><p>Sensitivity analysis of parameter estimates</p></li>
 </ul>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Draw samples as dictionary</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Draw as structured xarray Dataset</span>
@@ -269,26 +269,28 @@ and posterior predictive samples into a standardized format.</p>
 <dd class="field-odd"><p>results.MLEInferenceRes</p>
 </dd>
 </dl>
-<p>The resulting inference object contains:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The resulting inference object contains:</dt><dd><ul class="simple">
 <li><p><strong>Posterior samples</strong>: Draws from fitted parameter distributions</p></li>
 <li><p><strong>Observed data</strong>: Original data used for parameter estimation</p></li>
 <li><p><strong>Posterior predictive</strong>: Samples from observable distributions</p></li>
 </ul>
-<p>Data Organization:</p>
-<ul class="simple">
+</dd>
+<dt>Data Organization:</dt><dd><ul class="simple">
 <li><p>Latent parameters are stored in the main posterior group</p></li>
 <li><p>Observable parameters become posterior predictive samples</p></li>
 <li><p>Observed data is stored separately for comparison</p></li>
 <li><p>All data maintains proper dimensional structure and labeling</p></li>
 </ul>
-<p>This enables:</p>
-<ul class="simple">
+</dd>
+<dt>This enables:</dt><dd><ul class="simple">
 <li><p>Integration with ArviZ plotting and diagnostic functions</p></li>
 <li><p>Model comparison</p></li>
 <li><p>Posterior predictive checking workflows</p></li>
 <li><p>Standardized reporting and visualization</p></li>
 </ul>
+</dd>
+</dl>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p>Samples are drawn using the optimized value of their parent parameters.
@@ -336,13 +338,15 @@ behavior and optimization effectiveness.</p>
 <dd class="field-even"><p>Interactive HoloViews plot of the loss curve</p>
 </dd>
 </dl>
-<p>The plot automatically handles:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The plot automatically handles:</dt><dd><ul class="simple">
 <li><p>Logarithmic scaling with proper handling of negative/zero values</p></li>
 <li><p>Appropriate axis labels and titles based on scaling choice</p></li>
 <li><p>Interactive features for detailed examination of convergence</p></li>
 <li><p>Warning messages for problematic loss trajectories</p></li>
 </ul>
+</dd>
+</dl>
 <p>For logarithmic scaling with non-positive loss values, the method
 automatically switches to a shifted logarithmic scale to maintain
 visualization quality while issuing appropriate warnings.</p>
@@ -453,7 +457,7 @@ working with GPU-based computations.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.mle.</span></span><span class="sig-name descname"><span class="pre">MLEInferenceRes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inference_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">InferenceData</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/results/mle.html#MLEInferenceRes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.mle.MLEInferenceRes" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Analysis interface for bootstrapped samples from
-:py:class`~scistanpy.model.results.mle.MLE` instances.</p>
+<a class="reference internal" href="#scistanpy.model.results.mle.MLE" title="scistanpy.model.results.mle.MLE"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLE</span></code></a> instances.</p>
 <p>This class provides tools for analyzing and visualizing MLE
 results from SciStanPy models. It wraps ArviZ InferenceData objects with
 specialized methods for posterior predictive checking, calibration analysis,
@@ -472,20 +476,20 @@ and model validation.</p>
 </ul>
 </dd>
 </dl>
-<p>The class expects the InferenceData object to contain:</p>
-<ul class="simple">
+<dl>
+<dt>The class expects the InferenceData object to contain:</dt><dd><ul class="simple">
 <li><p><strong>posterior</strong>: Samples from fitted parameter distributions</p></li>
 <li><p><strong>posterior_predictive</strong>: Samples from observable distributions</p></li>
 <li><p><strong>observed_data</strong>: Original observed data used for fitting</p></li>
 </ul>
-<p>Key Capabilities:</p>
-<ul class="simple">
+</dd>
+<dt>Key Capabilities:</dt><dd><ul class="simple">
 <li><p>Posterior predictive checking with multiple visualization modes</p></li>
 <li><p>Quantitative model calibration assessment</p></li>
 <li><p>Interactive diagnostic dashboards</p></li>
 <li><p>Summary statistics computation and caching</p></li>
 </ul>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -728,18 +732,20 @@ highlights systematic trends.</p>
 <dd class="field-odd"><p>Union[hv.Layout, dict[str, hv.Overlay]]</p>
 </dd>
 </dl>
-<p>Visualization Components:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>Visualization Components:</dt><dd><ul class="simple">
 <li><p>Hexagonal binning showing density of (value, quantile) pairs</p></li>
 <li><p>Rolling mean trend line highlighting systematic patterns</p></li>
 <li><p>Colormap indicating point density for pattern identification</p></li>
 </ul>
-<p>Pattern Interpretation:</p>
-<ul class="simple">
+</dd>
+<dt>Pattern Interpretation:</dt><dd><ul class="simple">
 <li><p>Horizontal trend line around 0.5 with uniformly distributed points indicates
 good calibration</p></li>
 <li><p>Systematic deviations suggest model bias or miscalibration</p></li>
 </ul>
+</dd>
+</dl>
 <p>The hexagonal binning is particularly effective for visualizing large
 datasets where individual points would create overplotting issues.</p>
 <dl>
@@ -809,14 +815,16 @@ Defaults to True.</p></li>
 <dd class="field-odd"><p>Union[hv.Layout, dict[str, hv.Overlay]]</p>
 </dd>
 </dl>
-<p>Visualization Features:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>Visualization Features:</dt><dd><ul class="simple">
 <li><p>Confidence intervals shown as nested colored regions</p></li>
 <li><p>Observed data displayed as scatter points</p></li>
 <li><p>Optional rank transformation for better visualization of skewed data</p></li>
 <li><p>Logarithmic scaling with automatic shifting for non-positive values</p></li>
 <li><p>Interactive hover labels showing data point identifiers</p></li>
 </ul>
+</dd>
+</dl>
 <p>The rank transformation is particularly useful when observed values have
 highly skewed distributions, as it emphasizes the ordering rather than
 the absolute magnitudes.</p>
@@ -900,16 +908,24 @@ plots. Defaults to False.</p></li>
 <dd class="field-odd"><p>Union[pn.Column, list[dict[str, hv.Overlay]]]</p>
 </dd>
 </dl>
-<p>Dashboard Features:
-- Interactive variable selection across all diagnostic types
-- Consistent formatting and scaling across related plots
-- Automatic layout optimization for comparison and analysis
-- Widget-based navigation for multi-variable models</p>
+<dl class="simple">
+<dt>Dashboard Features:</dt><dd><ul class="simple">
+<li><p>Interactive variable selection across all diagnostic types</p></li>
+<li><p>Consistent formatting and scaling across related plots</p></li>
+<li><p>Automatic layout optimization for comparison and analysis</p></li>
+<li><p>Widget-based navigation for multi-variable models</p></li>
+</ul>
+</dd>
+</dl>
 <p>Between the three plots generated, this method provides a holistic view of
-model performance in terms of:
-- <strong>Predictive accuracy</strong>: How well do predictions match observations?
-- <strong>Calibration quality</strong>: Are prediction intervals properly calibrated?
-- <strong>Systematic bias</strong>: Are there patterns indicating model inadequacy?</p>
+model performance in terms of:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>Predictive accuracy</strong>: How well do predictions match observations?</p></li>
+<li><p><strong>Calibration quality</strong>: Are prediction intervals properly calibrated?</p></li>
+<li><p><strong>Systematic bias</strong>: Are there patterns indicating model inadequacy?</p></li>
+</ul>
+</div></blockquote>
 <dl>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Complete interactive analysis</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dashboard</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">run_ppc</span><span class="p">()</span>
@@ -1026,6 +1042,7 @@ model performance in terms of:
 <li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

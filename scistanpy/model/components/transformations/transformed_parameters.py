@@ -38,11 +38,10 @@ class TransformableParameter:
     mathematical operation.
 
     The mixin supports the following Python arithmetic operators:
-
-    - Addition (``+``), subtraction (``-``)
-    - Multiplication (``*``), division (``/``)
-    - Exponentiation (``**``)
-    - Unary negation (``-``)
+        - Addition (``+``), subtraction (``-``)
+        - Multiplication (``*``), division (``/``)
+        - Exponentiation (``**``)
+        - Unary negation (``-``)
 
     Each operation supports both left and right operand positioning, enabling
     flexible mathematical expressions with mixed parameter and constant types.
@@ -256,17 +255,17 @@ class TransformedParameter(Transformation, TransformableParameter):
     (sampling, PyTorch operations) and code generation aspects (Stan assignments).
 
     Transformed parameters support:
-    - Sampling through parent parameter sampling and operation application
-    - PyTorch operations with automatic differentiation
-    - Stan code generation for transformed parameters block
-    - Further transformation through operator overloading
+        - Sampling through parent parameter sampling and operation application
+        - PyTorch operations with automatic differentiation
+        - Stan code generation for transformed parameters block
+        - Further transformation through operator overloading
 
     The class provides the infrastructure for creating complex mathematical
     expressions while maintaining compatibility with all SciStanPy backends.
 
     Subclasses must implement:
-    - run_np_torch_op: The core mathematical operation
-    - write_stan_operation: Stan code generation for the operation
+        - run_np_torch_op: The core mathematical operation
+        - write_stan_operation: Stan code generation for the operation
 
     Example Usage:
         TransformedParameter subclasses are typically created through operator
@@ -1058,10 +1057,10 @@ class LogSumExpParameter(Reduction):
     Computes the logarithm of the sum of exponentials along the last dimension.
 
     This transformation is fundamental for:
-    - Normalizing log-probabilities
-    - Computing partition functions
-    - Stable softmax computations
-    - Log-space mixture models
+        - Normalizing log-probabilities
+        - Computing partition functions
+        - Stable softmax computations
+        - Log-space mixture models
 
     This transformation is accessed through the :py:func:`~scistanpy.operations.logsumexp`
     function.
@@ -1651,10 +1650,10 @@ class LogSigmoidGrowth(LogSigmoidParameter):
     :param kwargs: Additional arguments passed to parent class
 
     This parameterization is ideal for:
-    - Extreme parameter regimes
-    - Log-scale statistical modeling
-    - When initial conditions are naturally in log-space
-    - Maximum numerical precision requirements
+        - Extreme parameter regimes
+        - Log-scale statistical modeling
+        - When initial conditions are naturally in log-space
+        - Maximum numerical precision requirements
 
     This transformation is accessed through the
     :py:func:`~scistanpy.operations.log_sigmoid_growth` function.
@@ -1737,16 +1736,16 @@ class SigmoidGrowthInitParametrization(TransformedParameter):
     :param kwargs: Additional arguments passed to parent class
 
     Mathematical Properties:
-    - Parameterizes sigmoid growth by initial value x0
-    - Uses log-add-exp trick for numerical stability
-    - Avoids direct computation of large exponentials
-    - Maintains sigmoid growth dynamics
+        - Parameterizes sigmoid growth by initial value x0
+        - Uses log-add-exp trick for numerical stability
+        - Avoids direct computation of large exponentials
+        - Maintains sigmoid growth dynamics
 
     This parameterization is useful when:
-    - Initial conditions are better known than carrying capacity (e.g., biological systems)
-    - Numerical stability is crucial
-    - Working with extreme parameter values
-    - Modeling relative growth from baseline
+        - Initial conditions are better known than carrying capacity (e.g., biological systems)
+        - Numerical stability is crucial
+        - Working with extreme parameter values
+        - Modeling relative growth from baseline
 
     This transformation is accessed through the
     :py:func:`~scistanpy.operations.sigmoid_growth_init_param` function.
@@ -1841,15 +1840,15 @@ class LogSigmoidGrowthInitParametrization(TransformedParameter):
     :param kwargs: Additional arguments passed to parent class
 
     Mathematical Properties:
-    - Fully operates in log-space for numerical stability
-    - Parameterized by log of initial conditions
-    - Maintains sigmoid growth dynamics
+        - Fully operates in log-space for numerical stability
+        - Parameterized by log of initial conditions
+        - Maintains sigmoid growth dynamics
 
     This parameterization is ideal for:
-    - Extreme parameter regimes
-    - Log-scale statistical modeling
-    - When initial conditions are naturally in log-space
-    - Maximum numerical precision requirements
+        - Extreme parameter regimes
+        - Log-scale statistical modeling
+        - When initial conditions are naturally in log-space
+        - Maximum numerical precision requirements
     """
 
     LOWER_BOUND: None = None
@@ -2338,11 +2337,11 @@ class IndexParameter(TransformedParameter):
         :returns: Tuple of (output_shape, processed_indices, constant_parents)
 
         This method handles the complex logic of:
-        - Processing different index types (slices, integers, arrays, ellipsis)
-        - Calculating output shapes
-        - Converting to Stan-compatible 1-based indexing
-        - Creating constant parameters for array indices
-        - Validating consistency across multiple array indices
+            - Processing different index types (slices, integers, arrays, ellipsis)
+            - Calculating output shapes
+            - Converting to Stan-compatible 1-based indexing
+            - Creating constant parameters for array indices
+            - Validating consistency across multiple array indices
         """
 
         def process_ellipsis() -> "custom_types.Integer":

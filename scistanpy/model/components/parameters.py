@@ -536,9 +536,9 @@ class Parameter(
         Observable parameters represent known data rather than unknown variables
         to be inferred. This method:
 
-        - Sets the observable flag to True
-        - Removes PyTorch parameterization (observables aren't optimized)
-        - Enables generation of appropriate Stan code for data blocks
+            - Sets the observable flag to True
+            - Removes PyTorch parameterization (observables aren't optimized)
+            - Enables generation of appropriate Stan code for data blocks
 
         This method will typically not be needed, as SciStanPy automatically assigns
         parameters with no children in the depenency graph as observables.
@@ -1436,7 +1436,6 @@ class Beta(ContinuousDistribution):
              - :math:`\frac{\alpha \beta}{(\alpha + \beta)^2 (\alpha + \beta + 1)}`
 
     Common Applications:
-
         - Prior distributions for probabilities
         - Modeling proportions and percentages
         - Bayesian A/B testing
@@ -1534,7 +1533,6 @@ class InverseGamma(ContinuousDistribution):
               - :math:`\frac{\beta^2}{(\alpha - 1)^2(\alpha - 2)}` for :math:`\alpha > 2`
 
     Common Applications:
-
         - Conjugate prior for normal variance
         - Hierarchical modeling of scale parameters
         - Bayesian regression variance modeling
@@ -1610,7 +1608,6 @@ class ExpExponential(Exponential):
             \end{align*}
 
     Properties:
-
         - Support: :math:`(-\infty, \infty)`
         - Related to Gumbel distribution family
         - Useful for log-scale modeling of exponential processes
@@ -1680,7 +1677,6 @@ class Lomax(ContinuousDistribution):
 
 
     Common Applications:
-
         - Modeling income distributions
         - Network analysis (degree distributions)
         - Reliability engineering
@@ -1804,7 +1800,6 @@ class Dirichlet(ContinuousDistribution):
                 :math:`\alpha_i, \alpha_j > 1`
 
     Common Applications:
-
         - Modeling categorical probabilities
 
     .. note::
@@ -1893,7 +1888,6 @@ class ExpDirichlet(Dirichlet):
             \end{align*}
 
     Properties:
-
         - Log-probability is computed in the log-simplex space
         - More numerically stable for extreme concentration parameters
         - Suitable for high-dimensional simplexes
@@ -2065,7 +2059,6 @@ class Binomial(DiscreteDistribution):
                 - :math:`\lfloor (N + 1) \theta \rfloor`
 
     Common Applications:
-
         - Number of successes in fixed trials
         - Proportion data with known denominators
     """
@@ -2109,7 +2102,6 @@ class Poisson(DiscreteDistribution):
                - :math:`\lfloor \lambda \rfloor`
 
     Common Applications:
-
         - Event counting (arrivals, defects, etc.)
         - Modeling rare events
         - Count regression
@@ -2197,7 +2189,6 @@ class Multinomial(_MultinomialBase):
               - :math:`-N \theta_i \theta_j`
 
     Common Applications:
-
         - Categorical count data
         - Multinomial logistic regression
         - Natural language processing (word counts)

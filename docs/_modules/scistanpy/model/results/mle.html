@@ -128,9 +128,9 @@
 <span class="sd">    :rtype: tuple[npt.NDArray, ...]</span>
 
 <span class="sd">    The function:</span>
-<span class="sd">    1. Finds the absolute minimum value across all input arrays</span>
-<span class="sd">    2. Shifts all arrays by (1 - min_value) to ensure minimum becomes 1</span>
-<span class="sd">    3. Applies log10 transformation to all shifted arrays</span>
+<span class="sd">        1. Finds the absolute minimum value across all input arrays</span>
+<span class="sd">        2. Shifts all arrays by (1 - min_value) to ensure minimum becomes 1</span>
+<span class="sd">        3. Applies log10 transformation to all shifted arrays</span>
 
 <span class="sd">    This ensures logarithmic scaling is possible even when data contains</span>
 <span class="sd">    zero or negative values, which is common in certain statistical contexts.</span>
@@ -152,7 +152,7 @@
 <a class="viewcode-back" href="../../../../api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MLEInferenceRes</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Analysis interface for bootstrapped samples from</span>
-<span class="sd">    :py:class`~scistanpy.model.results.mle.MLE` instances.</span>
+<span class="sd">    :py:class:`~scistanpy.model.results.mle.MLE` instances.</span>
 
 <span class="sd">    This class provides tools for analyzing and visualizing MLE</span>
 <span class="sd">    results from SciStanPy models. It wraps ArviZ InferenceData objects with</span>
@@ -168,17 +168,15 @@
 <span class="sd">    :raises ValueError: If required groups (posterior, posterior_predictive) are missing</span>
 
 <span class="sd">    The class expects the InferenceData object to contain:</span>
-
-<span class="sd">    - **posterior**: Samples from fitted parameter distributions</span>
-<span class="sd">    - **posterior_predictive**: Samples from observable distributions</span>
-<span class="sd">    - **observed_data**: Original observed data used for fitting</span>
+<span class="sd">        - **posterior**: Samples from fitted parameter distributions</span>
+<span class="sd">        - **posterior_predictive**: Samples from observable distributions</span>
+<span class="sd">        - **observed_data**: Original observed data used for fitting</span>
 
 <span class="sd">    Key Capabilities:</span>
-
-<span class="sd">    - Posterior predictive checking with multiple visualization modes</span>
-<span class="sd">    - Quantitative model calibration assessment</span>
-<span class="sd">    - Interactive diagnostic dashboards</span>
-<span class="sd">    - Summary statistics computation and caching</span>
+<span class="sd">        - Posterior predictive checking with multiple visualization modes</span>
+<span class="sd">        - Quantitative model calibration assessment</span>
+<span class="sd">        - Interactive diagnostic dashboards</span>
+<span class="sd">        - Summary statistics computation and caching</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">       .. code-block:: python</span>
@@ -377,8 +375,8 @@
 <span class="sd">        reshaping and alignment automatically.</span>
 
 <span class="sd">        The yielded arrays are formatted as:</span>
-<span class="sd">        - reference_samples: 2D array (n_samples, n_features)</span>
-<span class="sd">        - observed_data: 1D array (n_features,)</span>
+<span class="sd">            - reference_samples: 2D array (n_samples, n_features)</span>
+<span class="sd">            - observed_data: 1D array (n_features,)</span>
 
 <span class="sd">        This standardization enables consistent processing across all</span>
 <span class="sd">        diagnostic and visualization methods.</span>
@@ -586,12 +584,11 @@
 <span class="sd">        :rtype: Union[hv.Layout, dict[str, hv.Overlay]]</span>
 
 <span class="sd">        Visualization Features:</span>
-
-<span class="sd">        - Confidence intervals shown as nested colored regions</span>
-<span class="sd">        - Observed data displayed as scatter points</span>
-<span class="sd">        - Optional rank transformation for better visualization of skewed data</span>
-<span class="sd">        - Logarithmic scaling with automatic shifting for non-positive values</span>
-<span class="sd">        - Interactive hover labels showing data point identifiers</span>
+<span class="sd">            - Confidence intervals shown as nested colored regions</span>
+<span class="sd">            - Observed data displayed as scatter points</span>
+<span class="sd">            - Optional rank transformation for better visualization of skewed data</span>
+<span class="sd">            - Logarithmic scaling with automatic shifting for non-positive values</span>
+<span class="sd">            - Interactive hover labels showing data point identifiers</span>
 
 <span class="sd">        The rank transformation is particularly useful when observed values have</span>
 <span class="sd">        highly skewed distributions, as it emphasizes the ordering rather than</span>
@@ -711,16 +708,14 @@
 <span class="sd">        :rtype: Union[hv.Layout, dict[str, hv.Overlay]]</span>
 
 <span class="sd">        Visualization Components:</span>
-
-<span class="sd">        - Hexagonal binning showing density of (value, quantile) pairs</span>
-<span class="sd">        - Rolling mean trend line highlighting systematic patterns</span>
-<span class="sd">        - Colormap indicating point density for pattern identification</span>
+<span class="sd">            - Hexagonal binning showing density of (value, quantile) pairs</span>
+<span class="sd">            - Rolling mean trend line highlighting systematic patterns</span>
+<span class="sd">            - Colormap indicating point density for pattern identification</span>
 
 <span class="sd">        Pattern Interpretation:</span>
-
-<span class="sd">        - Horizontal trend line around 0.5 with uniformly distributed points indicates</span>
-<span class="sd">          good calibration</span>
-<span class="sd">        - Systematic deviations suggest model bias or miscalibration</span>
+<span class="sd">            - Horizontal trend line around 0.5 with uniformly distributed points indicates</span>
+<span class="sd">              good calibration</span>
+<span class="sd">            - Systematic deviations suggest model bias or miscalibration</span>
 
 <span class="sd">        The hexagonal binning is particularly effective for visualizing large</span>
 <span class="sd">        datasets where individual points would create overplotting issues.</span>
@@ -843,16 +838,17 @@
 <span class="sd">        :rtype: Union[pn.Column, list[dict[str, hv.Overlay]]]</span>
 
 <span class="sd">        Dashboard Features:</span>
-<span class="sd">        - Interactive variable selection across all diagnostic types</span>
-<span class="sd">        - Consistent formatting and scaling across related plots</span>
-<span class="sd">        - Automatic layout optimization for comparison and analysis</span>
-<span class="sd">        - Widget-based navigation for multi-variable models</span>
+<span class="sd">            - Interactive variable selection across all diagnostic types</span>
+<span class="sd">            - Consistent formatting and scaling across related plots</span>
+<span class="sd">            - Automatic layout optimization for comparison and analysis</span>
+<span class="sd">            - Widget-based navigation for multi-variable models</span>
 
 <span class="sd">        Between the three plots generated, this method provides a holistic view of</span>
 <span class="sd">        model performance in terms of:</span>
-<span class="sd">        - **Predictive accuracy**: How well do predictions match observations?</span>
-<span class="sd">        - **Calibration quality**: Are prediction intervals properly calibrated?</span>
-<span class="sd">        - **Systematic bias**: Are there patterns indicating model inadequacy?</span>
+
+<span class="sd">            - **Predictive accuracy**: How well do predictions match observations?</span>
+<span class="sd">            - **Calibration quality**: Are prediction intervals properly calibrated?</span>
+<span class="sd">            - **Systematic bias**: Are there patterns indicating model inadequacy?</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # Complete interactive analysis</span>
@@ -1095,12 +1091,11 @@
 <span class="sd">    around MLE estimates.</span>
 
 <span class="sd">    Key Features:</span>
-
-<span class="sd">    - Direct attribute access to individual parameter results</span>
-<span class="sd">    - Comprehensive loss trajectory tracking and visualization</span>
-<span class="sd">    - Efficient sampling from fitted parameter distributions</span>
-<span class="sd">    - Integration with ArviZ for Bayesian workflow compatibility</span>
-<span class="sd">    - Memory-efficient batch processing for large sample requests</span>
+<span class="sd">        - Direct attribute access to individual parameter results</span>
+<span class="sd">        - Comprehensive loss trajectory tracking and visualization</span>
+<span class="sd">        - Efficient sampling from fitted parameter distributions</span>
+<span class="sd">        - Integration with ArviZ for Bayesian workflow compatibility</span>
+<span class="sd">        - Memory-efficient batch processing for large sample requests</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        .. code-block:: python</span>
@@ -1179,11 +1174,10 @@
 <span class="sd">        :returns: Interactive HoloViews plot of the loss curve</span>
 
 <span class="sd">        The plot automatically handles:</span>
-
-<span class="sd">        - Logarithmic scaling with proper handling of negative/zero values</span>
-<span class="sd">        - Appropriate axis labels and titles based on scaling choice</span>
-<span class="sd">        - Interactive features for detailed examination of convergence</span>
-<span class="sd">        - Warning messages for problematic loss trajectories</span>
+<span class="sd">            - Logarithmic scaling with proper handling of negative/zero values</span>
+<span class="sd">            - Appropriate axis labels and titles based on scaling choice</span>
+<span class="sd">            - Interactive features for detailed examination of convergence</span>
+<span class="sd">            - Warning messages for problematic loss trajectories</span>
 
 <span class="sd">        For logarithmic scaling with non-positive loss values, the method</span>
 <span class="sd">        automatically switches to a shifted logarithmic scale to maintain</span>
@@ -1257,16 +1251,14 @@
 <span class="sd">        :rtype: Union[dict[str, npt.NDArray], xr.Dataset]</span>
 
 <span class="sd">        Output Formats:</span>
-
-<span class="sd">        - Dictionary (default): Keys are parameter names, values are sample arrays</span>
-<span class="sd">        - xarray Dataset: Structured dataset with proper dimension labels and coordinates</span>
+<span class="sd">            - Dictionary (default): Keys are parameter names, values are sample arrays</span>
+<span class="sd">            - xarray Dataset: Structured dataset with proper dimension labels and coordinates</span>
 
 <span class="sd">        This is particularly useful for:</span>
-
-<span class="sd">        - Uncertainty propagation through model predictions</span>
-<span class="sd">        - Bayesian model comparison and validation</span>
-<span class="sd">        - Posterior predictive checking with MLE-based approximations</span>
-<span class="sd">        - Sensitivity analysis of parameter estimates</span>
+<span class="sd">            - Uncertainty propagation through model predictions</span>
+<span class="sd">            - Bayesian model comparison and validation</span>
+<span class="sd">            - Posterior predictive checking with MLE-based approximations</span>
+<span class="sd">            - Sensitivity analysis of parameter estimates</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # Draw samples as dictionary</span>
@@ -1323,24 +1315,21 @@
 <span class="sd">        :rtype: results.MLEInferenceRes</span>
 
 <span class="sd">        The resulting inference object contains:</span>
-
-<span class="sd">        - **Posterior samples**: Draws from fitted parameter distributions</span>
-<span class="sd">        - **Observed data**: Original data used for parameter estimation</span>
-<span class="sd">        - **Posterior predictive**: Samples from observable distributions</span>
+<span class="sd">            - **Posterior samples**: Draws from fitted parameter distributions</span>
+<span class="sd">            - **Observed data**: Original data used for parameter estimation</span>
+<span class="sd">            - **Posterior predictive**: Samples from observable distributions</span>
 
 <span class="sd">        Data Organization:</span>
-
-<span class="sd">        - Latent parameters are stored in the main posterior group</span>
-<span class="sd">        - Observable parameters become posterior predictive samples</span>
-<span class="sd">        - Observed data is stored separately for comparison</span>
-<span class="sd">        - All data maintains proper dimensional structure and labeling</span>
+<span class="sd">            - Latent parameters are stored in the main posterior group</span>
+<span class="sd">            - Observable parameters become posterior predictive samples</span>
+<span class="sd">            - Observed data is stored separately for comparison</span>
+<span class="sd">            - All data maintains proper dimensional structure and labeling</span>
 
 <span class="sd">        This enables:</span>
-
-<span class="sd">        - Integration with ArviZ plotting and diagnostic functions</span>
-<span class="sd">        - Model comparison</span>
-<span class="sd">        - Posterior predictive checking workflows</span>
-<span class="sd">        - Standardized reporting and visualization</span>
+<span class="sd">            - Integration with ArviZ plotting and diagnostic functions</span>
+<span class="sd">            - Model comparison</span>
+<span class="sd">            - Posterior predictive checking workflows</span>
+<span class="sd">            - Standardized reporting and visualization</span>
 
 <span class="sd">        .. important::</span>
 <span class="sd">            Samples are drawn using the optimized value of their parent parameters.</span>
@@ -1437,6 +1426,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

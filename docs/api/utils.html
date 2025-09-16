@@ -15,6 +15,7 @@
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples" href="../examples/index.html" />
     <link rel="prev" title="Operations API Reference" href="operations.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -38,13 +39,15 @@
 <p>Utility functions and classes for the SciStanPy package.</p>
 <p>This module provides various utility functions and classes that support
 the core functionality of SciStanPy, including:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>Lazy importing mechanisms for performance optimization</p></li>
 <li><p>Mathematical utility functions for numerical stability</p></li>
 <li><p>Array chunking utilities for efficient memory management</p></li>
 <li><p>Context managers for external library integration</p></li>
 <li><p>Optimized statistical computation functions</p></li>
 </ul>
+</div></blockquote>
 <p>Users will not typically need to interact with this module directly–it is designed
 to be used internally by SciStanPy.</p>
 <section id="lazy-import-system">
@@ -267,8 +270,8 @@ It respects frozen dimensions that should not be chunked.</p>
 </ul>
 </dd>
 </dl>
-<p>The algorithm:</p>
-<ol class="arabic simple">
+<dl>
+<dt>The algorithm:</dt><dd><ol class="arabic simple">
 <li><p>Calculates memory usage per array element based on precision</p></li>
 <li><p>Sets frozen dimensions to their full size</p></li>
 <li><p>Iteratively determines chunk sizes for remaining dimensions</p></li>
@@ -276,7 +279,7 @@ It respects frozen dimensions that should not be chunked.</p>
 it as possible if frozen dimensions result in a smallest possible size above
 the limit)</p></li>
 </ol>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Chunk a (1000, 2000, 100) array, keeping last dim intact</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">shape</span> <span class="o">=</span> <span class="n">get_chunk_shape</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="s2">&quot;double&quot;</span><span class="p">,</span>
@@ -385,6 +388,7 @@ ensuring clean state management.</p>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">
@@ -393,6 +397,7 @@ ensuring clean state management.</p>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">SciStanPy API Reference</a><ul>
       <li>Previous: <a href="operations.html" title="previous chapter">Operations API Reference</a></li>
+      <li>Next: <a href="../examples/index.html" title="next chapter">Examples</a></li>
   </ul></li>
   </ul></li>
 </ul>

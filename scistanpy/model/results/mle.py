@@ -95,9 +95,9 @@ def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
     :rtype: tuple[npt.NDArray, ...]
 
     The function:
-    1. Finds the absolute minimum value across all input arrays
-    2. Shifts all arrays by (1 - min_value) to ensure minimum becomes 1
-    3. Applies log10 transformation to all shifted arrays
+        1. Finds the absolute minimum value across all input arrays
+        2. Shifts all arrays by (1 - min_value) to ensure minimum becomes 1
+        3. Applies log10 transformation to all shifted arrays
 
     This ensures logarithmic scaling is possible even when data contains
     zero or negative values, which is common in certain statistical contexts.
@@ -133,17 +133,15 @@ class MLEInferenceRes:
     :raises ValueError: If required groups (posterior, posterior_predictive) are missing
 
     The class expects the InferenceData object to contain:
-
-    - **posterior**: Samples from fitted parameter distributions
-    - **posterior_predictive**: Samples from observable distributions
-    - **observed_data**: Original observed data used for fitting
+        - **posterior**: Samples from fitted parameter distributions
+        - **posterior_predictive**: Samples from observable distributions
+        - **observed_data**: Original observed data used for fitting
 
     Key Capabilities:
-
-    - Posterior predictive checking with multiple visualization modes
-    - Quantitative model calibration assessment
-    - Interactive diagnostic dashboards
-    - Summary statistics computation and caching
+        - Posterior predictive checking with multiple visualization modes
+        - Quantitative model calibration assessment
+        - Interactive diagnostic dashboards
+        - Summary statistics computation and caching
 
     Example:
        .. code-block:: python
@@ -336,8 +334,8 @@ class MLEInferenceRes:
         reshaping and alignment automatically.
 
         The yielded arrays are formatted as:
-        - reference_samples: 2D array (n_samples, n_features)
-        - observed_data: 1D array (n_features,)
+            - reference_samples: 2D array (n_samples, n_features)
+            - observed_data: 1D array (n_features,)
 
         This standardization enables consistent processing across all
         diagnostic and visualization methods.
@@ -540,12 +538,11 @@ class MLEInferenceRes:
         :rtype: Union[hv.Layout, dict[str, hv.Overlay]]
 
         Visualization Features:
-
-        - Confidence intervals shown as nested colored regions
-        - Observed data displayed as scatter points
-        - Optional rank transformation for better visualization of skewed data
-        - Logarithmic scaling with automatic shifting for non-positive values
-        - Interactive hover labels showing data point identifiers
+            - Confidence intervals shown as nested colored regions
+            - Observed data displayed as scatter points
+            - Optional rank transformation for better visualization of skewed data
+            - Logarithmic scaling with automatic shifting for non-positive values
+            - Interactive hover labels showing data point identifiers
 
         The rank transformation is particularly useful when observed values have
         highly skewed distributions, as it emphasizes the ordering rather than
@@ -662,16 +659,14 @@ class MLEInferenceRes:
         :rtype: Union[hv.Layout, dict[str, hv.Overlay]]
 
         Visualization Components:
-
-        - Hexagonal binning showing density of (value, quantile) pairs
-        - Rolling mean trend line highlighting systematic patterns
-        - Colormap indicating point density for pattern identification
+            - Hexagonal binning showing density of (value, quantile) pairs
+            - Rolling mean trend line highlighting systematic patterns
+            - Colormap indicating point density for pattern identification
 
         Pattern Interpretation:
-
-        - Horizontal trend line around 0.5 with uniformly distributed points indicates
-          good calibration
-        - Systematic deviations suggest model bias or miscalibration
+            - Horizontal trend line around 0.5 with uniformly distributed points indicates
+              good calibration
+            - Systematic deviations suggest model bias or miscalibration
 
         The hexagonal binning is particularly effective for visualizing large
         datasets where individual points would create overplotting issues.
@@ -791,16 +786,17 @@ class MLEInferenceRes:
         :rtype: Union[pn.Column, list[dict[str, hv.Overlay]]]
 
         Dashboard Features:
-        - Interactive variable selection across all diagnostic types
-        - Consistent formatting and scaling across related plots
-        - Automatic layout optimization for comparison and analysis
-        - Widget-based navigation for multi-variable models
+            - Interactive variable selection across all diagnostic types
+            - Consistent formatting and scaling across related plots
+            - Automatic layout optimization for comparison and analysis
+            - Widget-based navigation for multi-variable models
 
         Between the three plots generated, this method provides a holistic view of
         model performance in terms of:
-        - **Predictive accuracy**: How well do predictions match observations?
-        - **Calibration quality**: Are prediction intervals properly calibrated?
-        - **Systematic bias**: Are there patterns indicating model inadequacy?
+
+            - **Predictive accuracy**: How well do predictions match observations?
+            - **Calibration quality**: Are prediction intervals properly calibrated?
+            - **Systematic bias**: Are there patterns indicating model inadequacy?
 
         Example:
             >>> # Complete interactive analysis
@@ -1030,12 +1026,11 @@ class MLE:
     around MLE estimates.
 
     Key Features:
-
-    - Direct attribute access to individual parameter results
-    - Comprehensive loss trajectory tracking and visualization
-    - Efficient sampling from fitted parameter distributions
-    - Integration with ArviZ for Bayesian workflow compatibility
-    - Memory-efficient batch processing for large sample requests
+        - Direct attribute access to individual parameter results
+        - Comprehensive loss trajectory tracking and visualization
+        - Efficient sampling from fitted parameter distributions
+        - Integration with ArviZ for Bayesian workflow compatibility
+        - Memory-efficient batch processing for large sample requests
 
     Example:
         .. code-block:: python
@@ -1112,11 +1107,10 @@ class MLE:
         :returns: Interactive HoloViews plot of the loss curve
 
         The plot automatically handles:
-
-        - Logarithmic scaling with proper handling of negative/zero values
-        - Appropriate axis labels and titles based on scaling choice
-        - Interactive features for detailed examination of convergence
-        - Warning messages for problematic loss trajectories
+            - Logarithmic scaling with proper handling of negative/zero values
+            - Appropriate axis labels and titles based on scaling choice
+            - Interactive features for detailed examination of convergence
+            - Warning messages for problematic loss trajectories
 
         For logarithmic scaling with non-positive loss values, the method
         automatically switches to a shifted logarithmic scale to maintain
@@ -1187,16 +1181,14 @@ class MLE:
         :rtype: Union[dict[str, npt.NDArray], xr.Dataset]
 
         Output Formats:
-
-        - Dictionary (default): Keys are parameter names, values are sample arrays
-        - xarray Dataset: Structured dataset with proper dimension labels and coordinates
+            - Dictionary (default): Keys are parameter names, values are sample arrays
+            - xarray Dataset: Structured dataset with proper dimension labels and coordinates
 
         This is particularly useful for:
-
-        - Uncertainty propagation through model predictions
-        - Bayesian model comparison and validation
-        - Posterior predictive checking with MLE-based approximations
-        - Sensitivity analysis of parameter estimates
+            - Uncertainty propagation through model predictions
+            - Bayesian model comparison and validation
+            - Posterior predictive checking with MLE-based approximations
+            - Sensitivity analysis of parameter estimates
 
         Example:
             >>> # Draw samples as dictionary
@@ -1250,24 +1242,21 @@ class MLE:
         :rtype: results.MLEInferenceRes
 
         The resulting inference object contains:
-
-        - **Posterior samples**: Draws from fitted parameter distributions
-        - **Observed data**: Original data used for parameter estimation
-        - **Posterior predictive**: Samples from observable distributions
+            - **Posterior samples**: Draws from fitted parameter distributions
+            - **Observed data**: Original data used for parameter estimation
+            - **Posterior predictive**: Samples from observable distributions
 
         Data Organization:
-
-        - Latent parameters are stored in the main posterior group
-        - Observable parameters become posterior predictive samples
-        - Observed data is stored separately for comparison
-        - All data maintains proper dimensional structure and labeling
+            - Latent parameters are stored in the main posterior group
+            - Observable parameters become posterior predictive samples
+            - Observed data is stored separately for comparison
+            - All data maintains proper dimensional structure and labeling
 
         This enables:
-
-        - Integration with ArviZ plotting and diagnostic functions
-        - Model comparison
-        - Posterior predictive checking workflows
-        - Standardized reporting and visualization
+            - Integration with ArviZ plotting and diagnostic functions
+            - Model comparison
+            - Posterior predictive checking workflows
+            - Standardized reporting and visualization
 
         .. important::
             Samples are drawn using the optimized value of their parent parameters.

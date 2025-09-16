@@ -16,7 +16,6 @@ functions support both standard NumPy arrays and interactive widgets
 for dynamic exploration of model results.
 
 Key Features:
-
     - ECDF and KDE plots for distribution visualization
     - Quantile plots with confidence intervals
     - Model calibration diagnostics
@@ -84,7 +83,6 @@ def aggregate_data(
     :rtype: npt.NDArray
 
     Aggregation Rules:
-
         - If independent_dim is None: Returns flattened 1D array
         - If independent_dim is specified: Returns 2D array with shape
           (-1, n_independent) where -1 represents the product of all other dimensions
@@ -185,7 +183,6 @@ def plot_ecdf_kde(plotting_df, /, paramname):
     :rtype: Union[list[HVType], hvplot.interactive.Interactive]
 
     The function creates:
-
         - KDE plot: Smooth density estimate with automatic bandwidth
         - ECDF plot: Step function showing cumulative probabilities
 
@@ -232,7 +229,6 @@ def plot_ecdf_violin(plotting_df, /, paramname):
     :rtype: Union[list[HVType], hvplot.interactive.Interactive]
 
     The visualization includes:
-
         - Multi-line ECDF plot: One curve per group with color coding
         - Violin plot: Density distributions by group with colorbar
 
@@ -302,7 +298,6 @@ def plot_relationship(plotting_df, /, paramname, datashade=True):
     :rtype: Union[HVType, hvplot.interactive.Interactive]
 
     Datashading options:
-
         - True: Uses count aggregation with Inferno colormap (large data)
         - False: Uses dynamic line plotting with lime color (small data)
 
@@ -353,7 +348,6 @@ def choose_plotting_function(
     :rtype: Callable
 
     Selection Logic:
-
         - No independent_dim: Returns ``plot_ecdf_kde`` (univariate analysis)
         - Independent_dim but no labels: Returns ``plot_ecdf_violin`` (multi-group)
         - Both independent_dim and labels: Returns ``plot_relationship`` (dependency)
@@ -396,7 +390,6 @@ def build_plotting_df(
     :rtype: pd.DataFrame
 
     The function handles:
-
         - Data aggregation according to independent dimension
         - Automatic label generation when not provided
         - ECDF calculation for cumulative plots
@@ -696,7 +689,6 @@ def plot_calibration(
     :rtype: tuple[hv.Overlay, npt.NDArray[np.floating]]
 
     The calibration plot shows:
-
         - ECDF curves for each observation. Note that the curve represents observations
             for the full set of parameters, not individual parameters.
         - Ideal calibration line (diagonal from (0,0) to (1,1))
@@ -891,7 +883,6 @@ def quantile_plot(
         are invalid
 
     Features:
-
         - Automatic quantile symmetrization (adds complement quantiles)
         - Nested confidence intervals with graduated transparency
         - Customizable styling for all plot components
@@ -1059,13 +1050,11 @@ def hexgrid_with_mean(
     :raises ValueError: If x and y arrays have different shapes or are not 1D
 
     The hexagonal binning:
-
         - Aggregates points into hexagonal cells
         - Colors cells by point density using viridis colormap
         - Includes colorbar for density interpretation
 
     The rolling mean:
-
         - Computed over sorted x values to show trend
         - Window size automatically scaled to data size
         - Styled for clear visibility over density plot

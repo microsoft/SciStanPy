@@ -14,14 +14,12 @@ The module establishes the common functionality that all model components must
 implement.
 
 Core Abstractions:
-
     - **Component Hierarchy**: Parent-child relationships between model elements
     - **Stan Code Generation**: Automatic translation to Stan programming language
     - **Shape Broadcasting**: Automatic handling of multi-dimensional parameters
     - **Dependency Management**: Tracking and validation of component relationships
 
 Key Responsibilities:
-
     - Define abstract interfaces for model component behavior
     - Implement common functionality for shape handling and validation
     - Provide Stan code generation template
@@ -29,17 +27,13 @@ Key Responsibilities:
     - Handle parameter bounds and constraints
     - Support sampling and drawing from component distributions
 
-Stan Integration: The abstract base provides core Stan code generation capabilities
-including:
-
+Stan Integration: The abstract base provides core Stan code generation capabilities including:
     - Variable declarations with appropriate types and constraints
     - Index management for multi-dimensional arrays
     - Target increment and transformation assignment generation
     - Support function inclusion for custom distributions
 
-Component Relationships: The hierarchy system enables complex model construction
-through:
-
+Component Relationships: The hierarchy system enables complex model construction through:
     - Parent-child linkage for dependency tracking
     - Parameter name resolution and validation
     - Automatic shape broadcasting across related components
@@ -105,12 +99,11 @@ class AbstractModelComponent(ABC):
     :cvar FORCE_LOOP_RESET: Whether to force loop reset in Stan code
 
     The class provides core functionality for:
-
-    - Component relationship management (parents and children)
-    - Shape validation and broadcasting
-    - Stan code generation for variable declarations and operations
-    - Sampling and drawing from component distributions
-    - Tree traversal for model analysis
+        - Component relationship management (parents and children)
+        - Shape validation and broadcasting
+        - Stan code generation for variable declarations and operations
+        - Sampling and drawing from component distributions
+        - Tree traversal for model analysis
 
     All model components must implement the abstract methods for drawing samples
     and generating Stan code appropriate to their type.
@@ -195,11 +188,11 @@ class AbstractModelComponent(ABC):
         :type model_params: custom_types.CombinableParameterType
 
         The initialization process:
-        1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
-        2. Validates parameter constraints and bounds
-        3. Converts non-component parameters to constants
-        4. Establishes parent-child relationships
-        5. Validates and sets component shape through broadcasting
+            1. Normalizes shape specification to tuple format (i.e., integer to 1-element tuple)
+            2. Validates parameter constraints and bounds
+            3. Converts non-component parameters to constants
+            4. Establishes parent-child relationships
+            5. Validates and sets component shape through broadcasting
         """
         # Convert shape to the appropriate type
         try:
@@ -242,9 +235,9 @@ class AbstractModelComponent(ABC):
         :raises ValueError: If log-simplex parameters have incompatible bounds
 
         This method ensures that:
-        - All bounded parameters are present in the parameter dictionary
-        - Lower bounds are less than upper bounds
-        - Simplex and log-simplex parameters have appropriate bound constraints
+            - All bounded parameters are present in the parameter dictionary
+            - Lower bounds are less than upper bounds
+            - Simplex and log-simplex parameters have appropriate bound constraints
         """
         # All bounded parameters must be named in the parameter dictionary
         if missing_names := (
@@ -292,10 +285,10 @@ class AbstractModelComponent(ABC):
         :type model_params: dict[str, custom_types.CombinableParameterType]
 
         This method processes the input parameters and:
-        1. Preserves existing AbstractModelComponent instances as parents
-        2. Converts non-component values to Constant instances with appropriate bounds
-        3. Creates bidirectional mapping between components and parameter names
-        4. Applies parameter type constraints (positive, negative, simplex, etc.)
+            1. Preserves existing AbstractModelComponent instances as parents
+            2. Converts non-component values to Constant instances with appropriate bounds
+            3. Creates bidirectional mapping between components and parameter names
+            4. Applies parameter type constraints (positive, negative, simplex, etc.)
         """
         # Convert any non-model components to model components, making sure to
         # propagate any restrictions on
@@ -357,10 +350,10 @@ class AbstractModelComponent(ABC):
         :raises ValueError: If provided shape conflicts with broadcasted shape
 
         This method:
-        1. Collects shapes from all parent components
-        2. Attempts to broadcast the component shape with parent shapes
-        3. Validates that the final shape is consistent
-        4. Sets the component's shape to the broadcasted result
+            1. Collects shapes from all parent components
+            2. Attempts to broadcast the component shape with parent shapes
+            3. Validates that the final shape is consistent
+            4. Sets the component's shape to the broadcasted result
 
         Shape broadcasting follows NumPy broadcasting rules, ensuring that
         multi-dimensional model components can interact properly.
@@ -452,10 +445,10 @@ class AbstractModelComponent(ABC):
         This method generates proper Stan variable names for multi-dimensional
         components, handling:
 
-        - Singleton dimension skipping
-        - Index offset management for broadcasting
-        - Dimension range selection
-        - Automatic vectorization of the last dimension
+            - Singleton dimension skipping
+            - Index offset management for broadcasting
+            - Dimension range selection
+            - Automatic vectorization of the last dimension
 
         The offset parameter accounts for implicit singleton dimensions prepended
         during broadcasting between parent and child components.
@@ -540,18 +533,16 @@ class AbstractModelComponent(ABC):
         :raises AssertionError: If drawn values violate component bounds or constraints
 
         This method implements the complete sampling workflow:
-
-        1. Recursively draws from parent components if not already drawn
-        2. Collects parent samples for the current level
-        3. Draws n samples from this component using parent values
-        4. Validates drawn samples against bounds and constraints
-        5. Returns samples and updates the global draw cache
+            1. Recursively draws from parent components if not already drawn
+            2. Collects parent samples for the current level
+            3. Draws n samples from this component using parent values
+            4. Validates drawn samples against bounds and constraints
+            5. Returns samples and updates the global draw cache
 
         The method enforces constraint validation including:
-
-        - Lower and upper bound checking
-        - Simplex sum-to-one validation
-        - Parameter type constraint validation
+            - Lower and upper bound checking
+            - Simplex sum-to-one validation
+            - Parameter type constraint validation
         """
         # Build the _drawn dictionary if it is not already built
         if _drawn is None:
@@ -632,16 +623,15 @@ class AbstractModelComponent(ABC):
         This method enables systematic traversal of the model dependency graph
         in either direction. Each tuple contains:
 
-        - Recursion depth relative to the starting component
-        - The current component in the traversal
-        - The relative component (child if walking down, parent if walking up)
+            - Recursion depth relative to the starting component
+            - The current component in the traversal
+            - The relative component (child if walking down, parent if walking up)
 
         Tree traversal is useful for:
-
-        - Model structure analysis and visualization
-        - Dependency validation and cycle detection
-        - Code generation ordering
-        - Model component discovery
+            - Model structure analysis and visualization
+            - Dependency validation and cycle detection
+            - Code generation ordering
+            - Model component discovery
         """
         # Get the variables to loop over
         relatives = self.children if walk_down else self.parents
@@ -679,10 +669,9 @@ class AbstractModelComponent(ABC):
         if at least one of them is 1 (singleton).
 
         Shape compatibility is important for:
-
-        - Determining indexing strategies
-        - Validating broadcasting operations
-        - Optimizing Stan code generation
+            - Determining indexing strategies
+            - Validating broadcasting operations
+            - Optimizing Stan code generation
         """
         # Define the compatibility level
         compat_level = 0
@@ -717,10 +706,9 @@ class AbstractModelComponent(ABC):
         The default implementation returns an empty list.
 
         Custom components may override this method to include:
-
-        - Custom distribution definitions
-        - Helper function implementations
-        - Include statements for external function libraries
+            - Custom distribution definitions
+            - Helper function implementations
+            - Include statements for external function libraries
         """
         # The default is no supporting functions
         return []
@@ -791,10 +779,9 @@ class AbstractModelComponent(ABC):
         (10,) and ``y`` with shape (2, 10) would be "1").
 
         Index offsets are essential for:
-
-        - Proper multi-dimensional array indexing in Stan code
-        - Handling broadcasting between components of different shapes
-        - Maintaining correct dimension alignment in generated code
+            - Proper multi-dimensional array indexing in Stan code
+            - Handling broadcasting between components of different shapes
+            - Maintaining correct dimension alignment in generated code
         """
         # Get the query if we need to
         if isinstance(query, str):
@@ -835,10 +822,10 @@ class AbstractModelComponent(ABC):
         The base implementation in this abstract class provides common
         functionality for:
 
-        - Processing parent component relationships
-        - Handling index offsets and dimension slicing
-        - Determining when to use variable names vs. inline expressions
-        - Managing transformed parameter code generation
+            - Processing parent component relationships
+            - Handling index offsets and dimension slicing
+            - Determining when to use variable names vs. inline expressions
+            - Managing transformed parameter code generation
 
         Subclasses extend this foundation to generate component-specific
         Stan code patterns.
@@ -921,15 +908,14 @@ class AbstractModelComponent(ABC):
         This method determines the appropriate loop nesting level for
         defining this component in Stan code. The depth is calculated as:
 
-        - Number of dimensions minus one (last dimension is vectorized)
-        - Minus trailing singleton dimensions (except the last)
-        - Clipped to a minimum of zero
+            - Number of dimensions minus one (last dimension is vectorized)
+            - Minus trailing singleton dimensions (except the last)
+            - Clipped to a minimum of zero
 
         Assignment depth affects:
-
-        - Loop structure in generated Stan code
-        - Index variable management
-        - Vectorization opportunities
+            - Loop structure in generated Stan code
+            - Index variable management
+            - Vectorization opportunities
         """
         # Default is number of dimensions minus one. We subtract one because the
         # last dimension is always vectorized.
@@ -958,11 +944,10 @@ class AbstractModelComponent(ABC):
         :raises AssertionError: If unknown data type is encountered
 
         This method generates appropriate Stan data type declarations based on:
-
-        - Base data type (real, int, simplex)
-        - Component dimensionality
-        - Bound constraints
-        - Whether vector/array format is preferred
+            - Base data type (real, int, simplex)
+            - Component dimensionality
+            - Bound constraints
+            - Whether vector/array format is preferred
         """
         # Get the base datatype
         dtype = self.BASE_STAN_DTYPE
@@ -1060,8 +1045,8 @@ class AbstractModelComponent(ABC):
         :rtype: Union[AbstractModelComponent, IndexParameter]
 
         This method provides two access patterns:
-        1. String keys return parent components by parameter name
-        2. Index specifications create IndexParameter subcomponents for array slicing
+            1. String keys return parent components by parameter name
+            2. Index specifications create IndexParameter subcomponents for array slicing
         """
         # If a string, check the parents
         if isinstance(key, str):

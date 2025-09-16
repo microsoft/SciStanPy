@@ -43,23 +43,21 @@ model parameters.</p>
 <p>The module implements a unified interface for CDF-like computations across
 multiple computational backends (NumPy/SciPy, PyTorch) while automatically
 generating appropriate Stan code for each transformation.</p>
-<p>CDF-like Transformation Types:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>CDF-like Transformation Types:</dt><dd><ul class="simple">
 <li><p><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDF" title="scistanpy.model.components.transformations.cdfs.CDF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CDF</span></code></a></p></li>
 <li><p><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.SurvivalFunction" title="scistanpy.model.components.transformations.cdfs.SurvivalFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurvivalFunction</span></code></a></p></li>
 <li><p><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF" title="scistanpy.model.components.transformations.cdfs.LogCDF"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogCDF</span></code></a></p></li>
 <li><p><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction" title="scistanpy.model.components.transformations.cdfs.LogSurvivalFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogSurvivalFunction</span></code></a></p></li>
 </ul>
-</div></blockquote>
-<p>Each CDF class automatically handles backend-specific implementations:</p>
-<blockquote>
-<div><ul class="simple">
+</dd>
+<dt>Each CDF class automatically handles backend-specific implementations:</dt><dd><ul class="simple">
 <li><p><strong>NumPy/SciPy</strong>: Uses SciPy distribution methods with parameter transforms as needed</p></li>
 <li><p><strong>PyTorch</strong>: Uses PyTorch distribution objects with appropriate methods</p></li>
 <li><p><strong>Stan</strong>: Generates function calls with proper parameter ordering</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <p>The classes are not intended to be accessed directly. Instead, they are used as
 templates by the <a class="reference internal" href="../parameters.html#scistanpy.model.components.parameters.ParameterMeta" title="scistanpy.model.components.parameters.ParameterMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterMeta</span></code></a>
 metaclass to build <a class="reference internal" href="../parameters.html#scistanpy.model.components.parameters.ParameterMeta" title="scistanpy.model.components.parameters.ParameterMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterMeta</span></code></a>
@@ -756,6 +754,7 @@ Should be set by subclasses.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

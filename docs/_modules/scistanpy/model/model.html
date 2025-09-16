@@ -52,13 +52,15 @@
 <span class="sd">estimation.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="c1"># pylint: disable=too-many-lines</span>
+<span class="c1"># pylint: disable=too-many-lines, line-too-long</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">weakref</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemporaryDirectory</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -122,6 +124,8 @@
     <span class="k">return</span> <span class="p">{</span><span class="n">comp</span><span class="o">.</span><span class="n">model_varname</span><span class="p">:</span> <span class="n">comp</span> <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">model_comps</span><span class="p">}</span>
 
 
+<div class="viewcode-block" id="run_delayed_mcmc">
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.run_delayed_mcmc">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_delayed_mcmc</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;hmc_results.SampleResults&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a delayed MCMC run from a pickled configuration file.</span>
 
@@ -157,7 +161,8 @@
         <span class="n">inits</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;inits&quot;</span><span class="p">],</span>
         <span class="n">data</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">],</span>
         <span class="o">**</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;sample_kwargs&quot;</span><span class="p">],</span>
-    <span class="p">)</span>
+    <span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="Model">
@@ -221,13 +226,12 @@
 
 <span class="sd">    .. hint::</span>
 <span class="sd">        Follow these best practices when building models:</span>
-
-<span class="sd">        1. Use descriptive component names that reflect their scientific meaning</span>
-<span class="sd">        2. Set ``default_data`` for models with fixed datasets to streamline workflows</span>
-<span class="sd">        3. Start with prior predictive checks before fitting to real data</span>
-<span class="sd">        4. Use simulation methods to validate model implementation</span>
-<span class="sd">        5. Choose appropriate backends for different tasks (PyTorch for MLE, Stan for MCMC)</span>
-<span class="sd">        6. Validate models incrementally by building from simple to complex</span>
+<span class="sd">            1. Use descriptive component names that reflect their scientific meaning</span>
+<span class="sd">            2. Set ``default_data`` for models with fixed datasets to streamline workflows</span>
+<span class="sd">            3. Start with prior predictive checks before fitting to real data</span>
+<span class="sd">            4. Use simulation methods to validate model implementation</span>
+<span class="sd">            5. Choose appropriate backends for different tasks (PyTorch for MLE, Stan for MCMC)</span>
+<span class="sd">            6. Validate models incrementally by building from simple to complex</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -357,10 +361,10 @@
 <span class="sd">        :rtype: dict[str, abstract_model_component.AbstractModelComponent]</span>
 
 <span class="sd">        The mapping includes:</span>
-<span class="sd">        - All observable parameters and their dependencies</span>
-<span class="sd">        - Transformed data components</span>
-<span class="sd">        - Constants and hyperparameters</span>
-<span class="sd">        - Transformed parameters used in the model</span>
+<span class="sd">            - All observable parameters and their dependencies</span>
+<span class="sd">            - Transformed data components</span>
+<span class="sd">            - Constants and hyperparameters</span>
+<span class="sd">            - Transformed parameters used in the model</span>
 
 <span class="sd">        The method ensures no duplicate variable names exist and validates</span>
 <span class="sd">        the integrity of the component dependency graph.</span>
@@ -482,10 +486,10 @@
 <span class="sd">        :raises ValueError: If array dimensions don&#39;t match expected model structure</span>
 
 <span class="sd">        The method:</span>
-<span class="sd">        - Identifies and removes singleton dimensions</span>
-<span class="sd">        - Assigns appropriate dimension names based on model structure</span>
-<span class="sd">        - Handles sample dimensions for drawn data (e.g., from prior predictive checks)</span>
-<span class="sd">        - Ensures dimensional consistency across all processed arrays</span>
+<span class="sd">            - Identifies and removes singleton dimensions</span>
+<span class="sd">            - Assigns appropriate dimension names based on model structure</span>
+<span class="sd">            - Handles sample dimensions for drawn data (e.g., from prior predictive checks)</span>
+<span class="sd">            - Ensures dimensional consistency across all processed arrays</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Get a mapping from dimension keys to dimension names</span>
         <span class="n">dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimname_map</span><span class="p">()</span>
@@ -542,9 +546,9 @@
 <span class="sd">        :rtype: xr.Dataset</span>
 
 <span class="sd">        The resulting dataset includes:</span>
-<span class="sd">        - Data variables for all non-constant components</span>
-<span class="sd">        - Coordinates for multi-dimensional constants</span>
-<span class="sd">        - Proper dimension naming and alignment</span>
+<span class="sd">            - Data variables for all non-constant components</span>
+<span class="sd">            - Coordinates for multi-dimensional constants</span>
+<span class="sd">            - Proper dimension naming and alignment</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Split into components and draws and components and values</span>
         <span class="n">model_comps</span><span class="p">,</span> <span class="n">unpacked_draws</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span>
@@ -762,12 +766,11 @@
 <span class="sd">        :rtype: mle_module.MLE</span>
 
 <span class="sd">        The optimization process:</span>
-
-<span class="sd">        - Converts model to PyTorch and moves to specified device</span>
-<span class="sd">        - Trains for `epochs` number of epochs or until there has been no improvement</span>
-<span class="sd">          for `early_stop` number epochs.</span>
-<span class="sd">        - Tracks loss trajectory for convergence assessment</span>
-<span class="sd">        - Returns parameter estimates and fitted distributions</span>
+<span class="sd">            - Converts model to PyTorch and moves to specified device</span>
+<span class="sd">            - Trains for `epochs` number of epochs or until there has been no improvement</span>
+<span class="sd">              for `early_stop` number epochs.</span>
+<span class="sd">            - Tracks loss trajectory for convergence assessment</span>
+<span class="sd">            - Returns parameter estimates and fitted distributions</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # Basic MLE with default settings</span>
@@ -864,10 +867,9 @@
 <span class="sd">        :rtype: tuple[dict[str, npt.NDArray], mle_module.MLE]</span>
 
 <span class="sd">        This is particularly useful for:</span>
-
-<span class="sd">        - Model validation and debugging</span>
-<span class="sd">        - Assessing parameter identifiability (e.g. by running multiple simulations)</span>
-<span class="sd">        - Verifying implementation correctness</span>
+<span class="sd">            - Model validation and debugging</span>
+<span class="sd">            - Assessing parameter identifiability (e.g. by running multiple simulations)</span>
+<span class="sd">            - Verifying implementation correctness</span>
 
 <span class="sd">        The simulated data is automatically passed to the MLE fitting</span>
 <span class="sd">        procedure, overriding any data specification in kwargs.</span>
@@ -940,7 +942,7 @@
 
 <span class="sd">        :param output_dir: Directory for compilation and output files. Defaults to None,</span>
 <span class="sd">            in which case all raw outputs will be saved to a temporary directory and</span>
-<span class="sd">            be accessible only for the lifetime of this Python process.</span>
+<span class="sd">            be accessible only for the lifetime of this object.</span>
 <span class="sd">        :type output_dir: Optional[str]</span>
 <span class="sd">        :param force_compile: Whether to force recompilation of Stan model. Defaults</span>
 <span class="sd">            to False.</span>
@@ -997,6 +999,16 @@
                 <span class="s2">&quot;An output directory must be provided if `delay_run` is True.&quot;</span>
             <span class="p">)</span>
 
+        <span class="c1"># Build the output directory if not provided</span>
+        <span class="k">if</span> <span class="n">output_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tempdir</span> <span class="o">=</span> <span class="n">TemporaryDirectory</span><span class="p">()</span>
+            <span class="n">weakref</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tempdir</span><span class="o">.</span><span class="n">cleanup</span><span class="p">)</span>
+            <span class="n">output_dir</span> <span class="o">=</span> <span class="n">tempdir</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="c1"># Full path of output directory</span>
+        <span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="n">sample_kwargs</span><span class="p">[</span><span class="s2">&quot;output_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_dir</span>
+
         <span class="c1"># Build the Stan model</span>
         <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_stan</span><span class="p">(</span>
             <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
@@ -1006,9 +1018,6 @@
             <span class="n">user_header</span><span class="o">=</span><span class="n">user_header</span><span class="p">,</span>
             <span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
         <span class="p">)</span>
-
-        <span class="c1"># Update the output directory in the sample kwargs</span>
-        <span class="n">sample_kwargs</span><span class="p">[</span><span class="s2">&quot;output_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
 
         <span class="c1"># If delaying, then we save the data needed for sampling and return</span>
         <span class="k">if</span> <span class="n">delay_run</span><span class="p">:</span>
@@ -1065,11 +1074,10 @@
 <span class="sd">        simulated from real data analyses.</span>
 
 <span class="sd">        This is crucial for:</span>
-
-<span class="sd">        - Validating MCMC implementation correctness</span>
-<span class="sd">        - Testing posterior recovery in known-truth scenarios</span>
-<span class="sd">        - Assessing sampler efficiency and convergence</span>
-<span class="sd">        - Debugging model specification issues</span>
+<span class="sd">            - Validating MCMC implementation correctness</span>
+<span class="sd">            - Testing posterior recovery in known-truth scenarios</span>
+<span class="sd">            - Assessing sampler efficiency and convergence</span>
+<span class="sd">            - Debugging model specification issues</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # Simulate and sample with immediate execution</span>
@@ -1105,17 +1113,15 @@
 <span class="sd">        :rtype: pn.Row</span>
 
 <span class="sd">        The dashboard includes:</span>
-
-<span class="sd">        - Sliders for all adjustable model hyperparameters</span>
-<span class="sd">        - Multiple visualization modes (ECDF, KDE, violin, relationship plots)</span>
-<span class="sd">        - Real-time updates as parameters are modified</span>
-<span class="sd">        - Options for different grouping and display configurations</span>
+<span class="sd">            - Sliders for all adjustable model hyperparameters</span>
+<span class="sd">            - Multiple visualization modes (ECDF, KDE, violin, relationship plots)</span>
+<span class="sd">            - Real-time updates as parameters are modified</span>
+<span class="sd">            - Options for different grouping and display configurations</span>
 
 <span class="sd">        This is useful for:</span>
-
-<span class="sd">        - Prior specification and calibration</span>
-<span class="sd">        - Understanding model behavior before data fitting</span>
-<span class="sd">        - Identifying unrealistic prior assumptions</span>
+<span class="sd">            - Prior specification and calibration</span>
+<span class="sd">            - Understanding model behavior before data fitting</span>
+<span class="sd">            - Identifying unrealistic prior assumptions</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # Create interactive dashboard</span>
@@ -1138,10 +1144,10 @@
 <span class="sd">        :rtype: str</span>
 
 <span class="sd">        The representation includes organized sections for:</span>
-<span class="sd">        - Constants and hyperparameters</span>
-<span class="sd">        - Transformed parameters</span>
-<span class="sd">        - Regular parameters</span>
-<span class="sd">        - Observable parameters</span>
+<span class="sd">            - Constants and hyperparameters</span>
+<span class="sd">            - Transformed parameters</span>
+<span class="sd">            - Regular parameters</span>
+<span class="sd">            - Observable parameters</span>
 
 <span class="sd">        Each section lists components with their specifications and</span>
 <span class="sd">        current values, providing a complete overview of model structure.</span>
@@ -1532,6 +1538,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

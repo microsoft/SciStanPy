@@ -43,7 +43,8 @@ classes and utilities for processing, diagnosing, and presenting model outputs
 in formats suitable for scientific analysis.</p>
 <p>The submodule is organized around two main result types, each with related analysis
 capabilities:</p>
-<ol class="arabic simple">
+<blockquote>
+<div><ol class="arabic simple">
 <li><p><a class="reference internal" href="mle.html#scistanpy.model.results.mle.MLE" title="scistanpy.model.results.mle.MLE"><code class="xref py py-class docutils literal notranslate"><span class="pre">scistanpy.model.results.mle.MLE</span></code></a>, which holds results from
 calls to <a class="reference internal" href="../model.html#scistanpy.model.model.Model.mle" title="scistanpy.model.model.Model.mle"><code class="xref py py-meth docutils literal notranslate"><span class="pre">scistanpy.model.model.Model.mle()</span></code></a> and provides tools for MLE-based
 parameter estimation analysis.</p></li>
@@ -54,15 +55,16 @@ using MLE results.</p></li>
 calls to <a class="reference internal" href="../model.html#scistanpy.model.model.Model.mcmc" title="scistanpy.model.model.Model.mcmc"><code class="xref py py-meth docutils literal notranslate"><span class="pre">scistanpy.model.model.Model.mcmc()</span></code></a> and provides tools for MCMC-based
 sampling analysis.</p></li>
 </ol>
-<p>Some notable analysis features available to both results classes include:</p>
-<blockquote>
-<div><ul class="simple">
+</div></blockquote>
+<dl class="simple">
+<dt>Some notable analysis features available to both results classes include:</dt><dd><ul class="simple">
 <li><p><strong>Interactive Analysis</strong>: Widget-based interfaces for exploratory analysis</p></li>
 <li><p><strong>Scalable Processing</strong>: Efficient handling of large datasets and complex models</p></li>
 <li><p><strong>Comprehensive Diagnostics</strong>: Automated detection and reporting of model issues</p></li>
 <li><p><strong>Integration with Scientific Python</strong>: Interoperability with ArviZ, xarray, and Dask</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <p>Results classes are designed to integrate with SciStanPy modeling workflows and
 external analysis tools. For example, the <code class="docutils literal notranslate"><span class="pre">inference_obj</span></code> attribute shared by
 both results classes provides an ArviZ InferenceData object representing the results,
@@ -144,6 +146,7 @@ and <a class="reference internal" href="../model.html#scistanpy.model.model.Mode
 <li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

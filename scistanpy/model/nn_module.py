@@ -59,9 +59,9 @@ def check_observable_data(model: "ssp_model.Model", data: dict[str, torch.Tensor
     :raises ValueError: If data shapes don't match observable shapes
 
     The validation checks:
-    - Perfect correspondence between provided and expected observable names
-    - Exact shape matching between data tensors and observable specifications
-    - Proper tensor formatting for PyTorch computation
+        - Perfect correspondence between provided and expected observable names
+        - Exact shape matching between data tensors and observable specifications
+        - Proper tensor formatting for PyTorch computation
 
     Example:
         >>> data = {'y': torch.randn(100), 'x': torch.randn(100, 5)}
@@ -114,11 +114,10 @@ class PyTorchModel(nn.Module):
     :ivar learnable_params: PyTorch ParameterList containing optimizable parameters
 
     The conversion process:
-
-    - Initializes all model parameters for PyTorch optimization
-    - Sets up proper gradient computation graphs
-    - Configures device placement and memory management
-    - Preserves probabilistic model structure and relationships
+        - Initializes all model parameters for PyTorch optimization
+        - Sets up proper gradient computation graphs
+        - Configures device placement and memory management
+        - Preserves probabilistic model structure and relationships
 
     The resulting PyTorch model can be treated like any other nn.Module.
 
@@ -230,12 +229,11 @@ class PyTorchModel(nn.Module):
         :raises UserWarning: If early stopping is not triggered within epoch limit
 
         The training loop:
-
-        1. Converts input data to appropriate tensor format
-        2. Validates data compatibility with model observables
-        3. Iteratively optimizes parameters using gradient descent
-        4. Monitors convergence and applies early stopping
-        5. Returns complete loss trajectory for analysis
+            1. Converts input data to appropriate tensor format
+            2. Validates data compatibility with model observables
+            3. Iteratively optimizes parameters using gradient descent
+            4. Monitors convergence and applies early stopping
+            5. Returns complete loss trajectory for analysis
 
         Example:
             >>> loss_history = pytorch_model.fit(
@@ -338,10 +336,9 @@ class PyTorchModel(nn.Module):
         :rtype: dict[str, torch.Tensor]
 
         Excluded from export:
-
-        - Observable parameters (representing data, not learnable parameters)
-        - Unnamed parameters
-        - Intermediate computational results from transformations
+            - Observable parameters (representing data, not learnable parameters)
+            - Unnamed parameters
+            - Intermediate computational results from transformations
 
         This is typically used after model fitting to extract the estimated
         parameter values for further analysis or model comparison.
@@ -368,17 +365,15 @@ class PyTorchModel(nn.Module):
         :rtype: dict[str, torch.distributions.Distribution]
 
         The exported distributions include:
-
-        - Parameter distributions with updated hyperparameter values
-        - Observable distributions with fitted parameter values
-        - All distributions in their PyTorch format for further computation
+            - Parameter distributions with updated hyperparameter values
+            - Observable distributions with fitted parameter values
+            - All distributions in their PyTorch format for further computation
 
         This is useful for:
-
-        - Posterior predictive sampling
-        - Model diagnostics and validation
-        - Uncertainty quantification
-        - Distribution comparison and analysis
+            - Posterior predictive sampling
+            - Model diagnostics and validation
+            - Uncertainty quantification
+            - Distribution comparison and analysis
 
         Example:
             >>> distributions = pytorch_model.export_distributions()

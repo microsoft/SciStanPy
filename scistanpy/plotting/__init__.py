@@ -14,7 +14,6 @@ The plotting utilities are built on top of holoviews, providing interactive visu
 with sensible defaults while maintaining full customization capabilities.
 
 Key Functionality:
-
     - Distribution visualization and comparison
     - Model calibration and diagnostic plots
     - Quantile-quantile plots for model validation

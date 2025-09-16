@@ -59,11 +59,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">weakref</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemporaryDirectory</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
@@ -134,12 +132,11 @@
 <span class="sd">    syntax for different program blocks (model, transformed parameters, etc.).</span>
 
 <span class="sd">    Key Features:</span>
-
-<span class="sd">    - Hierarchical organization of code blocks and loops</span>
-<span class="sd">    - Automatic Stan syntax generation for different program sections</span>
-<span class="sd">    - Component filtering and organization based on block requirements</span>
-<span class="sd">    - Proper indentation and formatting management</span>
-<span class="sd">    - Loop optimization and combination capabilities</span>
+<span class="sd">        - Hierarchical organization of code blocks and loops</span>
+<span class="sd">        - Automatic Stan syntax generation for different program sections</span>
+<span class="sd">        - Component filtering and organization based on block requirements</span>
+<span class="sd">        - Proper indentation and formatting management</span>
+<span class="sd">        - Loop optimization and combination capabilities</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_loop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;StanCodeBase&quot;</span><span class="p">]):</span>
@@ -247,11 +244,10 @@
 <span class="sd">        :rtype: str</span>
 
 <span class="sd">        The method handles:</span>
-
-<span class="sd">        - Component filtering based on block requirements</span>
-<span class="sd">        - For-loop combination and optimization</span>
-<span class="sd">        - Proper Stan syntax generation and formatting</span>
-<span class="sd">        - Empty block handling and omission</span>
+<span class="sd">            - Component filtering based on block requirements</span>
+<span class="sd">            - For-loop combination and optimization</span>
+<span class="sd">            - Proper Stan syntax generation and formatting</span>
+<span class="sd">            - Empty block handling and omission</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">filter_generated_quantities</span><span class="p">(</span>
@@ -499,10 +495,9 @@
 <span class="sd">        :rtype: str</span>
 
 <span class="sd">        This method handles:</span>
-
-<span class="sd">        - Consistent indentation based on scope depth</span>
-<span class="sd">        - Automatic semicolon insertion for statements</span>
-<span class="sd">        - Proper formatting for control structures and comments</span>
+<span class="sd">            - Consistent indentation based on scope depth</span>
+<span class="sd">            - Automatic semicolon insertion for statements</span>
+<span class="sd">            - Proper formatting for control structures and comments</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Get the indentation level</span>
         <span class="n">indendation_level</span> <span class="o">=</span> <span class="p">(</span>
@@ -645,12 +640,11 @@
 <span class="sd">    :ivar parent_loop: Reference to parent code block</span>
 
 <span class="sd">    Key Features:</span>
-
-<span class="sd">    - Automatic loop range calculation based on component dimensions</span>
-<span class="sd">    - Loop combination optimization for compatible adjacent loops</span>
-<span class="sd">    - Singleton loop detection and elimination</span>
-<span class="sd">    - Proper index variable management and scope resolution</span>
-<span class="sd">    - Hierarchical ancestry tracking for scope navigation</span>
+<span class="sd">        - Automatic loop range calculation based on component dimensions</span>
+<span class="sd">        - Loop combination optimization for compatible adjacent loops</span>
+<span class="sd">        - Singleton loop detection and elimination</span>
+<span class="sd">        - Proper index variable management and scope resolution</span>
+<span class="sd">        - Hierarchical ancestry tracking for scope navigation</span>
 
 <span class="sd">    The class automatically determines loop ranges by analyzing the dimensions</span>
 <span class="sd">    of nested model components and provides optimization features like loop</span>
@@ -919,20 +913,18 @@
 <span class="sd">        (i.e., the names of observable parameters).</span>
 
 <span class="sd">    The class performs comprehensive analysis of the SciStanPy model to:</span>
-
-<span class="sd">    - Build dependency graphs and determine component ordering</span>
-<span class="sd">    - Generate appropriate variable names avoiding conflicts</span>
-<span class="sd">    - Organize components into proper Stan program structure</span>
-<span class="sd">    - Create optimized loop constructs for multi-dimensional components</span>
-<span class="sd">    - Generate all required Stan program blocks with proper syntax</span>
+<span class="sd">        - Build dependency graphs and determine component ordering</span>
+<span class="sd">        - Generate appropriate variable names avoiding conflicts</span>
+<span class="sd">        - Organize components into proper Stan program structure</span>
+<span class="sd">        - Create optimized loop constructs for multi-dimensional components</span>
+<span class="sd">        - Generate all required Stan program blocks with proper syntax</span>
 
 <span class="sd">    The code is generated following the below procedure:</span>
-
-<span class="sd">    1. Dependency Analysis: Build component dependency graph</span>
-<span class="sd">    2. Depth Assignment: Determine nesting levels for components</span>
-<span class="sd">    3. Loop Organization: Create optimized for-loop structures</span>
-<span class="sd">    4. Block Generation: Generate all Stan program blocks</span>
-<span class="sd">    5. Code Formatting: Apply Stan canonical formatting</span>
+<span class="sd">        1. Dependency Analysis: Build component dependency graph</span>
+<span class="sd">        2. Depth Assignment: Determine nesting levels for components</span>
+<span class="sd">        3. Loop Organization: Create optimized for-loop structures</span>
+<span class="sd">        4. Block Generation: Generate all Stan program blocks</span>
+<span class="sd">        5. Code Formatting: Apply Stan canonical formatting</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;scistanpy.Model&quot;</span><span class="p">):</span>
@@ -1022,10 +1014,10 @@
 <span class="sd">        :raises ValueError: If variable name collisions are detected</span>
 
 <span class="sd">        Analyzes the model to categorize variables into:</span>
-<span class="sd">        - All variable names (for conflict detection)</span>
-<span class="sd">        - Parameter names (for Stan parameters block)</span>
-<span class="sd">        - Auto-gathered names (constants from model)</span>
-<span class="sd">        - User-provided names (observables requiring external data)</span>
+<span class="sd">            - All variable names (for conflict detection)</span>
+<span class="sd">            - Parameter names (for Stan parameters block)</span>
+<span class="sd">            - Auto-gathered names (constants from model)</span>
+<span class="sd">            - User-provided names (observables requiring external data)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Get the names of all the variables in the model</span>
         <span class="n">name_counts</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">model_varname</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_to_depth</span><span class="p">)</span>
@@ -1079,10 +1071,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Organize model components into proper Stan program structure.</span>
 
 <span class="sd">        This method performs the core compilation process:</span>
-<span class="sd">        1. Determines topological ordering of components based on dependencies</span>
-<span class="sd">        2. Organizes components into appropriate loop structures</span>
-<span class="sd">        3. Creates and optimizes for-loop constructs</span>
-<span class="sd">        4. Eliminates singleton loops for efficiency</span>
+<span class="sd">            1. Determines topological ordering of components based on dependencies</span>
+<span class="sd">            2. Organizes components into appropriate loop structures</span>
+<span class="sd">            3. Creates and optimizes for-loop constructs</span>
+<span class="sd">            4. Eliminates singleton loops for efficiency</span>
 
 <span class="sd">        The compilation process ensures that all dependencies are satisfied</span>
 <span class="sd">        and that the resulting Stan code is properly structured and efficient.</span>
@@ -1499,10 +1491,10 @@
 <span class="sd">    :rtype: Callable[P, R]</span>
 
 <span class="sd">    The inner function handles:</span>
-<span class="sd">    - Automatic seed generation from global RNG if not provided</span>
-<span class="sd">    - Data gathering and validation from SciStanPy model</span>
-<span class="sd">    - Warning messages for experimental functions</span>
-<span class="sd">    - Proper argument handling and forwarding</span>
+<span class="sd">        - Automatic seed generation from global RNG if not provided</span>
+<span class="sd">        - Data gathering and validation from SciStanPy model</span>
+<span class="sd">        - Warning messages for experimental functions</span>
+<span class="sd">        - Proper argument handling and forwarding</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
@@ -1555,8 +1547,8 @@
 
 <span class="sd">    :param model: SciStanPy model to compile to Stan</span>
 <span class="sd">    :type model: scistanpy.Model</span>
-<span class="sd">    :param output_dir: Directory for Stan files and compilation. Defaults to None (temporary).</span>
-<span class="sd">    :type output_dir: Optional[str]</span>
+<span class="sd">    :param output_dir: Directory for Stan files and compilation.</span>
+<span class="sd">    :type output_dir: str</span>
 <span class="sd">    :param force_compile: Whether to force recompilation. Defaults to False.</span>
 <span class="sd">    :type force_compile: bool</span>
 <span class="sd">    :param stanc_options: Options for Stan compiler. Defaults to None (uses defaults).</span>
@@ -1574,11 +1566,11 @@
 <span class="sd">    :ivar stan_executable_path: Path to compiled Stan executable</span>
 
 <span class="sd">    Key Features:</span>
-<span class="sd">    - Automatic Stan code generation from SciStanPy models</span>
-<span class="sd">    - Enhanced sampling with prior initialization and validation</span>
-<span class="sd">    - Automatic data gathering for observables and constants</span>
-<span class="sd">    - Comprehensive result processing and structuring</span>
-<span class="sd">    - Integration with ArviZ for Bayesian workflow support</span>
+<span class="sd">        - Automatic Stan code generation from SciStanPy models</span>
+<span class="sd">        - Enhanced sampling with prior initialization and validation</span>
+<span class="sd">        - Automatic data gathering for observables and constants</span>
+<span class="sd">        - Comprehensive result processing and structuring</span>
+<span class="sd">        - Integration with ArviZ for Bayesian workflow support</span>
 
 <span class="sd">    The class handles the complete workflow from SciStanPy model to Stan</span>
 <span class="sd">    execution, providing an interface that abstracts away the complexities of Stan</span>
@@ -1589,7 +1581,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;scistanpy.Model&quot;</span><span class="p">,</span>
-        <span class="n">output_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">force_compile</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">DEFAULT_FORCE_COMPILE</span><span class="p">,</span>
         <span class="n">stanc_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">cpp_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1612,7 +1604,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">program</span> <span class="o">=</span> <span class="n">StanProgram</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
         <span class="c1"># Set the output directory</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_output_dir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output directory </span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2"> does not exist&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">output_dir</span>
 
         <span class="c1"># Get the model name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stan_executable_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">model_name</span><span class="p">)</span>
@@ -1633,31 +1627,6 @@
             <span class="n">cpp_options</span><span class="o">=</span><span class="n">cpp_options</span><span class="p">,</span>
             <span class="n">user_header</span><span class="o">=</span><span class="n">user_header</span><span class="p">,</span>
         <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_set_output_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Configure output directory with automatic cleanup for temporary directories.</span>
-
-<span class="sd">        :param output_dir: Directory path or None for temporary directory</span>
-<span class="sd">        :type output_dir: Optional[str]</span>
-
-<span class="sd">        :raises FileNotFoundError: If specified directory doesn&#39;t exist</span>
-
-<span class="sd">        Sets up the output directory for Stan files, creating a temporary</span>
-<span class="sd">        directory with automatic cleanup if none is specified.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Make a temporary directory if none is specified. Set up a weak reference</span>
-        <span class="c1"># to clean up the temporary directory when the model is deleted.</span>
-        <span class="k">if</span> <span class="n">output_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">tempdir</span> <span class="o">=</span> <span class="n">TemporaryDirectory</span><span class="p">()</span>
-            <span class="n">weakref</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tempdir</span><span class="o">.</span><span class="n">cleanup</span><span class="p">)</span>
-            <span class="n">output_dir</span> <span class="o">=</span> <span class="n">tempdir</span><span class="o">.</span><span class="n">name</span>
-
-        <span class="c1"># Make sure the output directory exists</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output directory </span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2"> does not exist.&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Set the output directory</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">output_dir</span>
 
 <div class="viewcode-block" id="StanModel.write_stan_program">
 <a class="viewcode-back" href="../../../../api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanModel.write_stan_program">[docs]</a>
@@ -1705,10 +1674,10 @@
 <span class="sd">        input required for Stan sampling.</span>
 
 <span class="sd">        Data Processing:</span>
-<span class="sd">        - Validates all required observables are provided</span>
-<span class="sd">        - Checks shape compatibility between data and model specifications</span>
-<span class="sd">        - Automatically gathers constants and hyperparameters from model</span>
-<span class="sd">        - Handles variable name transformation (dots to double underscores)</span>
+<span class="sd">            - Validates all required observables are provided</span>
+<span class="sd">            - Checks shape compatibility between data and model specifications</span>
+<span class="sd">            - Automatically gathers constants and hyperparameters from model</span>
+<span class="sd">            - Handles variable name transformation (dots to double underscores)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Make sure we have all the observables that the user must provide. Report</span>
         <span class="c1"># any missing or extra observables</span>
@@ -1848,11 +1817,11 @@
 <span class="sd">        :rtype: results.SampleResults</span>
 
 <span class="sd">        Enhanced Features:</span>
-<span class="sd">        - Automatic data gathering from SciStanPy model</span>
-<span class="sd">        - Prior-based initialization when requested</span>
-<span class="sd">        - Result processing and structuring</span>
-<span class="sd">        - Memory-efficient handling of large result arrays</span>
-<span class="sd">        - Integration with SciStanPy&#39;s result analysis tools</span>
+<span class="sd">            - Automatic data gathering from SciStanPy model</span>
+<span class="sd">            - Prior-based initialization when requested</span>
+<span class="sd">            - Result processing and structuring</span>
+<span class="sd">            - Memory-efficient handling of large result arrays</span>
+<span class="sd">            - Integration with SciStanPy&#39;s result analysis tools</span>
 
 <span class="sd">        The method provides an interface that handles all the complexities of data</span>
 <span class="sd">        preparation and result processing while maintaining full compatibility with</span>
@@ -1998,6 +1967,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

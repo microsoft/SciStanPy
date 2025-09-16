@@ -80,13 +80,15 @@ parameter estimation and other machine learning techniques.</p>
 </ul>
 </dd>
 </dl>
-<p>The conversion process:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The conversion process:</dt><dd><ul class="simple">
 <li><p>Initializes all model parameters for PyTorch optimization</p></li>
 <li><p>Sets up proper gradient computation graphs</p></li>
 <li><p>Configures device placement and memory management</p></li>
 <li><p>Preserves probabilistic model structure and relationships</p></li>
 </ul>
+</dd>
+</dl>
 <p>The resulting PyTorch model can be treated like any other nn.Module.</p>
 <dl>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pytorch_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_pytorch</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
@@ -176,20 +178,20 @@ parameter values.</p>
 <dd class="field-even"><p>dict[str, torch.distributions.Distribution]</p>
 </dd>
 </dl>
-<p>The exported distributions include:</p>
-<ul class="simple">
+<dl>
+<dt>The exported distributions include:</dt><dd><ul class="simple">
 <li><p>Parameter distributions with updated hyperparameter values</p></li>
 <li><p>Observable distributions with fitted parameter values</p></li>
 <li><p>All distributions in their PyTorch format for further computation</p></li>
 </ul>
-<p>This is useful for:</p>
-<ul class="simple">
+</dd>
+<dt>This is useful for:</dt><dd><ul class="simple">
 <li><p>Posterior predictive sampling</p></li>
 <li><p>Model diagnostics and validation</p></li>
 <li><p>Uncertainty quantification</p></li>
 <li><p>Distribution comparison and analysis</p></li>
 </ul>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">distributions</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">export_distributions</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fitted_normal</span> <span class="o">=</span> <span class="n">distributions</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>  <span class="c1"># torch.distributions.Normal</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">fitted_normal</span><span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="mi">1000</span><span class="p">,))</span>  <span class="c1"># Sample from fit distribution</span>
@@ -215,12 +217,14 @@ data) and focuses on the learnable model parameters.</p>
 <dd class="field-even"><p>dict[str, torch.Tensor]</p>
 </dd>
 </dl>
-<p>Excluded from export:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>Excluded from export:</dt><dd><ul class="simple">
 <li><p>Observable parameters (representing data, not learnable parameters)</p></li>
 <li><p>Unnamed parameters</p></li>
 <li><p>Intermediate computational results from transformations</p></li>
 </ul>
+</dd>
+</dl>
 <p>This is typically used after model fitting to extract the estimated
 parameter values for further analysis or model comparison.</p>
 <dl>
@@ -273,15 +277,15 @@ and convergence monitoring.</p>
 <dd class="field-even"><p><strong>UserWarning</strong> – If early stopping is not triggered within epoch limit</p>
 </dd>
 </dl>
-<p>The training loop:</p>
-<ol class="arabic simple">
+<dl>
+<dt>The training loop:</dt><dd><ol class="arabic simple">
 <li><p>Converts input data to appropriate tensor format</p></li>
 <li><p>Validates data compatibility with model observables</p></li>
 <li><p>Iteratively optimizes parameters using gradient descent</p></li>
 <li><p>Monitors convergence and applies early stopping</p></li>
 <li><p>Returns complete loss trajectory for analysis</p></li>
 </ol>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">loss_history</span> <span class="o">=</span> <span class="n">pytorch_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">observed_data</span><span class="p">},</span>
 <span class="gp">... </span>    <span class="n">epochs</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
@@ -428,6 +432,7 @@ constant tensors.</p>
 <li class="toctree-l2"><a class="reference internal" href="../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

@@ -48,7 +48,6 @@
 <span class="sd">behavior.</span>
 
 <span class="sd">Key Features:</span>
-
 <span class="sd">    - MCMC diagnostic test suites</span>
 <span class="sd">    - Interactive visualization tools for failed diagnostics</span>
 <span class="sd">    - Efficient CSV to NetCDF conversion for large datasets</span>
@@ -57,7 +56,6 @@
 <span class="sd">    - Automated detection and reporting of sampling issues</span>
 
 <span class="sd">Diagnostic Capabilities:</span>
-
 <span class="sd">    - R-hat convergence assessment</span>
 <span class="sd">    - Effective sample size (ESS) evaluation</span>
 <span class="sd">    - Energy fraction of missing information (E-BFMI) analysis</span>
@@ -145,10 +143,10 @@
 <span class="sd">    :raises AssertionError: If result doesn&#39;t have odd length or include median</span>
 
 <span class="sd">    The function ensures:</span>
-<span class="sd">    - All quantiles are between 0 and 1 (exclusive)</span>
-<span class="sd">    - Complementary quantiles are added (e.g., 0.1 → 0.1, 0.9)</span>
-<span class="sd">    - Median (0.5) is always included</span>
-<span class="sd">    - Result has odd length for symmetric confidence intervals</span>
+<span class="sd">        - All quantiles are between 0 and 1 (exclusive)</span>
+<span class="sd">        - Complementary quantiles are added (e.g., 0.1 → 0.1, 0.9)</span>
+<span class="sd">        - Median (0.5) is always included</span>
+<span class="sd">        - Result has odd length for symmetric confidence intervals</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; quantiles = _symmetrize_quantiles([0.1, 0.2])</span>
@@ -210,12 +208,11 @@
 <span class="sd">    samples, helping identify the nature of sampling problems.</span>
 
 <span class="sd">    Key Features:</span>
-
-<span class="sd">    - Automatic identification of failed variables and metrics</span>
-<span class="sd">    - Interactive widget-based navigation</span>
-<span class="sd">    - Trace plots with chain-specific coloring</span>
-<span class="sd">    - Quantile-based analysis for identifying sampling bias</span>
-<span class="sd">    - Real-time plot updates based on widget selections</span>
+<span class="sd">        - Automatic identification of failed variables and metrics</span>
+<span class="sd">        - Interactive widget-based navigation</span>
+<span class="sd">        - Trace plots with chain-specific coloring</span>
+<span class="sd">        - Quantile-based analysis for identifying sampling bias</span>
+<span class="sd">        - Real-time plot updates based on widget selections</span>
 
 <span class="sd">    .. note::</span>
 <span class="sd">        This class should not be instantiated directly. Use the</span>
@@ -575,11 +572,10 @@
 <span class="sd">    :ivar varname_to_column_order: Mapping from variables to csv column indices</span>
 
 <span class="sd">    The converter handles:</span>
-
-<span class="sd">    - Automatic detection of variable types and dimensions</span>
-<span class="sd">    - Proper NetCDF group organization</span>
-<span class="sd">    - Chunking strategies for large datasets</span>
-<span class="sd">    - Data type optimization based on precision requirements</span>
+<span class="sd">        - Automatic detection of variable types and dimensions</span>
+<span class="sd">        - Proper NetCDF group organization</span>
+<span class="sd">        - Chunking strategies for large datasets</span>
+<span class="sd">        - Data type optimization based on precision requirements</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -689,10 +685,10 @@
 <span class="sd">        :rtype: str</span>
 
 <span class="sd">        This method orchestrates the complete conversion process:</span>
-<span class="sd">        1. Creates NetCDF file with appropriate structure</span>
-<span class="sd">        2. Sets up dimensions based on model and data characteristics</span>
-<span class="sd">        3. Creates variables with optimal chunking strategies</span>
-<span class="sd">        4. Populates data from CSV files with progress tracking</span>
+<span class="sd">            1. Creates NetCDF file with appropriate structure</span>
+<span class="sd">            2. Sets up dimensions based on model and data characteristics</span>
+<span class="sd">            3. Creates variables with optimal chunking strategies</span>
+<span class="sd">            4. Populates data from CSV files with progress tracking</span>
 
 <span class="sd">        The resulting NetCDF file contains properly organized groups for</span>
 <span class="sd">        posterior samples, posterior predictive samples, sample statistics,</span>
@@ -1031,18 +1027,16 @@
 <span class="sd">    :rtype: str</span>
 
 <span class="sd">    The conversion process:</span>
-
-<span class="sd">    1. Analyzes model structure to determine optimal storage layout</span>
-<span class="sd">    2. Creates NetCDF file with appropriate groups and dimensions</span>
-<span class="sd">    3. Converts CSV data with proper chunking for memory efficiency</span>
-<span class="sd">    4. Organizes results into ArviZ-compatible structure</span>
+<span class="sd">        1. Analyzes model structure to determine optimal storage layout</span>
+<span class="sd">        2. Creates NetCDF file with appropriate groups and dimensions</span>
+<span class="sd">        3. Converts CSV data with proper chunking for memory efficiency</span>
+<span class="sd">        4. Organizes results into ArviZ-compatible structure</span>
 
 <span class="sd">    Benefits of NetCDF format:</span>
-
-<span class="sd">    - Significantly faster loading compared to CSV</span>
-<span class="sd">    - Memory-efficient access with chunking support</span>
-<span class="sd">    - Metadata preservation and self-describing format</span>
-<span class="sd">    - Integration with scientific Python ecosystem</span>
+<span class="sd">        - Significantly faster loading compared to CSV</span>
+<span class="sd">        - Memory-efficient access with chunking support</span>
+<span class="sd">        - Metadata preservation and self-describing format</span>
+<span class="sd">        - Integration with scientific Python ecosystem</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; netcdf_path = cmdstan_csv_to_netcdf(</span>
@@ -1086,16 +1080,14 @@
 <span class="sd">    on large datasets that might not fit in memory.</span>
 
 <span class="sd">    The function leverages Dask&#39;s lazy evaluation to:</span>
-
-<span class="sd">    - Queue multiple computations for efficient execution</span>
-<span class="sd">    - Minimize memory usage through chunked processing</span>
-<span class="sd">    - Provide progress tracking for long-running computations</span>
+<span class="sd">        - Queue multiple computations for efficient execution</span>
+<span class="sd">        - Minimize memory usage through chunked processing</span>
+<span class="sd">        - Provide progress tracking for long-running computations</span>
 
 <span class="sd">    Computed Statistics:</span>
-
-<span class="sd">    - Mean across chains and draws</span>
-<span class="sd">    - Standard deviation across chains and draws</span>
-<span class="sd">    - 94% highest density intervals</span>
+<span class="sd">        - Mean across chains and draws</span>
+<span class="sd">        - Standard deviation across chains and draws</span>
+<span class="sd">        - 94% highest density intervals</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; stats = dask_enabled_summary_stats(inference_data)</span>
@@ -1147,16 +1139,14 @@
 <span class="sd">    computed simultaneously to maximize efficiency.</span>
 
 <span class="sd">    Computed Diagnostics:</span>
-
-<span class="sd">    - Monte Carlo standard errors (mean and sd methods)</span>
-<span class="sd">    - Effective sample sizes (bulk and tail)</span>
-<span class="sd">    - R-hat convergence diagnostic</span>
+<span class="sd">        - Monte Carlo standard errors (mean and sd methods)</span>
+<span class="sd">        - Effective sample sizes (bulk and tail)</span>
+<span class="sd">        - R-hat convergence diagnostic</span>
 
 <span class="sd">    The Dask implementation enables:</span>
-
-<span class="sd">    - Parallel computation across available cores</span>
-<span class="sd">    - Memory-efficient processing of large datasets</span>
-<span class="sd">    - Automatic load balancing and optimization</span>
+<span class="sd">        - Parallel computation across available cores</span>
+<span class="sd">        - Memory-efficient processing of large datasets</span>
+<span class="sd">        - Automatic load balancing and optimization</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; diagnostics = dask_enabled_diagnostics(inference_data)</span>
@@ -1216,20 +1206,18 @@
 <span class="sd">    :ivar use_dask: Flag controlling Dask usage for computation</span>
 
 <span class="sd">    The class provides comprehensive functionality for:</span>
-
-<span class="sd">    - MCMC convergence diagnostics and reporting</span>
-<span class="sd">    - Sample quality assessment and visualization</span>
-<span class="sd">    - Interactive analysis of problematic variables</span>
-<span class="sd">    - Efficient handling of large datasets with Dask integration</span>
-<span class="sd">    - Automated detection and reporting of sampling issues</span>
+<span class="sd">        - MCMC convergence diagnostics and reporting</span>
+<span class="sd">        - Sample quality assessment and visualization</span>
+<span class="sd">        - Interactive analysis of problematic variables</span>
+<span class="sd">        - Efficient handling of large datasets with Dask integration</span>
+<span class="sd">        - Automated detection and reporting of sampling issues</span>
 
 <span class="sd">    Key Diagnostic Features:</span>
-
-<span class="sd">    - R-hat convergence assessment</span>
-<span class="sd">    - Effective sample size evaluation</span>
-<span class="sd">    - Energy-based diagnostics (E-BFMI)</span>
-<span class="sd">    - Divergence detection and analysis</span>
-<span class="sd">    - Tree depth saturation monitoring</span>
+<span class="sd">        - R-hat convergence assessment</span>
+<span class="sd">        - Effective sample size evaluation</span>
+<span class="sd">        - Energy-based diagnostics (E-BFMI)</span>
+<span class="sd">        - Divergence detection and analysis</span>
+<span class="sd">        - Tree depth saturation monitoring</span>
 
 <span class="sd">    The class automatically handles NetCDF conversion for efficient storage</span>
 <span class="sd">    and supports both in-memory and out-of-core computation depending on</span>
@@ -1366,15 +1354,13 @@
 <span class="sd">        :rtype: xr.Dataset</span>
 
 <span class="sd">        Enhanced Features:</span>
-
-<span class="sd">        - Automatic Dask acceleration for large datasets</span>
-<span class="sd">        - Separation of statistics and diagnostics into appropriate groups</span>
-<span class="sd">        - Memory-efficient computation strategies</span>
+<span class="sd">            - Automatic Dask acceleration for large datasets</span>
+<span class="sd">            - Separation of statistics and diagnostics into appropriate groups</span>
+<span class="sd">            - Memory-efficient computation strategies</span>
 
 <span class="sd">        The method automatically updates the InferenceData object with new groups:</span>
-
-<span class="sd">        - variable_summary_stats: Basic summary statistics</span>
-<span class="sd">        - variable_diagnostic_stats: MCMC diagnostic metrics</span>
+<span class="sd">            - variable_summary_stats: Basic summary statistics</span>
+<span class="sd">            - variable_diagnostic_stats: MCMC diagnostic metrics</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># We use custom functions if we are using dask</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_dask</span><span class="p">:</span>
@@ -1462,9 +1448,9 @@
 <span class="sd">        problematic samples in the MCMC chains. Tests are considered failures</span>
 <span class="sd">        when samples exhibit the following characteristics:</span>
 
-<span class="sd">        - **Tree Depth**: Sample reached maximum tree depth (saturation)</span>
-<span class="sd">        - **E-BFMI**: Energy-based fraction of missing information below threshold</span>
-<span class="sd">        - **Divergence**: Sample diverged during Hamiltonian dynamics</span>
+<span class="sd">            - **Tree Depth**: Sample reached maximum tree depth (saturation)</span>
+<span class="sd">            - **E-BFMI**: Energy-based fraction of missing information below threshold</span>
+<span class="sd">            - **Divergence**: Sample diverged during Hamiltonian dynamics</span>
 
 <span class="sd">        The resulting boolean arrays have ``True`` values indicating failed samples</span>
 <span class="sd">        and ``False`` values indicating successful samples. This information is</span>
@@ -1522,10 +1508,9 @@
 <span class="sd">        failures when variables meet the following criteria:</span>
 
 <span class="sd">        Failure Conditions:</span>
-
-<span class="sd">        - **R-hat**: Split R-hat statistic &gt;= threshold (poor convergence)</span>
-<span class="sd">        - **ESS Bulk**: Bulk effective sample size / n_chains &lt;= threshold per chain</span>
-<span class="sd">        - **ESS Tail**: Tail effective sample size / n_chains &lt;= threshold per chain</span>
+<span class="sd">            - **R-hat**: Split R-hat statistic &gt;= threshold (poor convergence)</span>
+<span class="sd">            - **ESS Bulk**: Bulk effective sample size / n_chains &lt;= threshold per chain</span>
+<span class="sd">            - **ESS Tail**: Tail effective sample size / n_chains &lt;= threshold per chain</span>
 
 <span class="sd">        Results are stored in the &#39;variable_diagnostic_tests&#39; group with boolean</span>
 <span class="sd">        arrays indicating which variables failed which tests.</span>
@@ -1597,23 +1582,20 @@
 <span class="sd">        It requires that diagnostic evaluation methods have been run previously.</span>
 
 <span class="sd">        Return Structure:</span>
-
-<span class="sd">        - **sample_failures**: Dictionary mapping test names to arrays of failed</span>
-<span class="sd">          sample indices</span>
-<span class="sd">        - **variable_failures**: Dictionary mapping metric names to dictionaries</span>
-<span class="sd">          of failed variables</span>
+<span class="sd">            - **sample_failures**: Dictionary mapping test names to arrays of failed</span>
+<span class="sd">              sample indices</span>
+<span class="sd">            - **variable_failures**: Dictionary mapping metric names to dictionaries</span>
+<span class="sd">              of failed variables</span>
 
 <span class="sd">        The method processes test results to extract:</span>
-
-<span class="sd">        - Indices of samples that failed each diagnostic test</span>
-<span class="sd">        - Names of variables that failed each diagnostic metric</span>
-<span class="sd">        - Summary statistics showing failure rates and percentages</span>
+<span class="sd">            - Indices of samples that failed each diagnostic test</span>
+<span class="sd">            - Names of variables that failed each diagnostic metric</span>
+<span class="sd">            - Summary statistics showing failure rates and percentages</span>
 
 <span class="sd">        When not silent, provides detailed reporting including:</span>
-
-<span class="sd">        - Failure counts and percentages for each test type</span>
-<span class="sd">        - Variable-specific failure information organized by metric</span>
-<span class="sd">        - Clear categorization of sample vs. variable-level issues</span>
+<span class="sd">            - Failure counts and percentages for each test type</span>
+<span class="sd">            - Variable-specific failure information organized by metric</span>
+<span class="sd">            - Clear categorization of sample vs. variable-level issues</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">process_test_results</span><span class="p">(</span>
@@ -1749,11 +1731,10 @@
         <span class="s2">&quot;custom_types.StrippedTestRes&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;custom_types.StrippedTestRes&quot;</span><span class="p">]</span>
     <span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Runs the complete MCMC diagnostic pipeline. This involves running, in order:</span>
-
-<span class="sd">        1. :py:meth:`~scistanpy.model.results.hmc.SampleResults.calculate_diagnostics`</span>
-<span class="sd">        2. :py:meth:`~scistanpy.model.results.hmc.SampleResults.evaluate_sample_stats`</span>
-<span class="sd">        3. :py:meth:`~scistanpy.model.results.hmc.SampleResults.evaluate_variable_diagnostic_stats`</span>
-<span class="sd">        4. :py:meth:`~scistanpy.model.results.hmc.SampleResults.identify_failed_diagnostics`</span>
+<span class="sd">            1. :py:meth:`~scistanpy.model.results.hmc.SampleResults.calculate_diagnostics`</span>
+<span class="sd">            2. :py:meth:`~scistanpy.model.results.hmc.SampleResults.evaluate_sample_stats`</span>
+<span class="sd">            3. :py:meth:`~scistanpy.model.results.hmc.SampleResults.evaluate_variable_diagnostic_stats`</span>
+<span class="sd">            4. :py:meth:`~scistanpy.model.results.hmc.SampleResults.identify_failed_diagnostics`</span>
 
 <span class="sd">        Typically, users will want to use this method rather than calling the individual</span>
 <span class="sd">        methods themselves.</span>
@@ -1834,19 +1815,17 @@
 <span class="sd">        helps identify systematic patterns in sampling failures.</span>
 
 <span class="sd">        Plot Structure:</span>
-
-<span class="sd">        - **X-axis**: Cumulative fraction of parameters (0 to 1, sorted by typical</span>
-<span class="sd">          quantile of failed samples)</span>
-<span class="sd">        - **Y-axis**: Quantiles of failed samples relative to passing samples</span>
-<span class="sd">        - **Individual traces**: Semi-transparent lines for each failed sample</span>
-<span class="sd">        - **Typical trace**: Bold line showing median behavior across failures</span>
-<span class="sd">        - **Reference line**: Diagonal indicating perfect calibration</span>
+<span class="sd">            - **X-axis**: Cumulative fraction of parameters (0 to 1, sorted by typical</span>
+<span class="sd">              quantile of failed samples)</span>
+<span class="sd">            - **Y-axis**: Quantiles of failed samples relative to passing samples</span>
+<span class="sd">            - **Individual traces**: Semi-transparent lines for each failed sample</span>
+<span class="sd">            - **Typical trace**: Bold line showing median behavior across failures</span>
+<span class="sd">            - **Reference line**: Diagonal indicating perfect calibration</span>
 
 <span class="sd">        The plots reveal:</span>
-
-<span class="sd">        - Whether failures are systematic across parameters</span>
-<span class="sd">        - Patterns in how failed samples deviate from typical behavior</span>
-<span class="sd">        - The severity and consistency of sampling problems</span>
+<span class="sd">            - Whether failures are systematic across parameters</span>
+<span class="sd">            - Patterns in how failed samples deviate from typical behavior</span>
+<span class="sd">            - The severity and consistency of sampling problems</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # Display interactive traces</span>
@@ -2032,24 +2011,21 @@
 <span class="sd">        selecting specific variables, diagnostic metrics, and array indices.</span>
 
 <span class="sd">        Interactive Features:</span>
-
-<span class="sd">        - **Variable Selection**: Choose from variables that failed any test</span>
-<span class="sd">        - **Metric Selection**: Focus on specific diagnostic failures</span>
-<span class="sd">        - **Index Selection**: Examine individual array elements for multi-dimensional parameters</span>
+<span class="sd">            - **Variable Selection**: Choose from variables that failed any test</span>
+<span class="sd">            - **Metric Selection**: Focus on specific diagnostic failures</span>
+<span class="sd">            - **Index Selection**: Examine individual array elements for multi-dimensional parameters</span>
 
 <span class="sd">        The resulting trace plots show:</span>
-
-<span class="sd">        - Sample trajectories across MCMC chains with distinct colors</span>
-<span class="sd">        - Quantile analysis relative to parameters that passed tests</span>
-<span class="sd">        - Hover information with detailed sample metadata</span>
-<span class="sd">        - Chain-specific behavior identification</span>
+<span class="sd">            - Sample trajectories across MCMC chains with distinct colors</span>
+<span class="sd">            - Quantile analysis relative to parameters that passed tests</span>
+<span class="sd">            - Hover information with detailed sample metadata</span>
+<span class="sd">            - Chain-specific behavior identification</span>
 
 <span class="sd">        This tool is particularly valuable for:</span>
-
-<span class="sd">        - Understanding the nature of convergence problems</span>
-<span class="sd">        - Identifying problematic parameter regions</span>
-<span class="sd">        - Diagnosing systematic vs. sporadic sampling issues</span>
-<span class="sd">        - Planning model reparameterization strategies</span>
+<span class="sd">            - Understanding the nature of convergence problems</span>
+<span class="sd">            - Identifying problematic parameter regions</span>
+<span class="sd">            - Diagnosing systematic vs. sporadic sampling issues</span>
+<span class="sd">            - Planning model reparameterization strategies</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # Interactive analysis in notebook</span>
@@ -2102,10 +2078,9 @@
 <span class="sd">        functionality.</span>
 
 <span class="sd">        Loading Modes:</span>
-
-<span class="sd">        - **Full loading**: NetCDF + CSV metadata (complete functionality)</span>
-<span class="sd">        - **NetCDF only**: Fast loading without CSV metadata (limited functionality)</span>
-<span class="sd">        - **Auto-detection**: Automatically finds CSV files based on NetCDF path</span>
+<span class="sd">            - **Full loading**: NetCDF + CSV metadata (complete functionality)</span>
+<span class="sd">            - **NetCDF only**: Fast loading without CSV metadata (limited functionality)</span>
+<span class="sd">            - **Auto-detection**: Automatically finds CSV files based on NetCDF path</span>
 
 <span class="sd">        When use_dask=True, the loaded data supports out-of-core computation</span>
 <span class="sd">        for memory-efficient analysis of large datasets. Management of Dask happens</span>
@@ -2179,18 +2154,16 @@
 <span class="sd">    usage is a concern.</span>
 
 <span class="sd">    Path Specifications:</span>
-
-<span class="sd">    - **Single file**: Direct path to one CSV file</span>
-<span class="sd">    - **File list**: List of paths to multiple CSV files</span>
-<span class="sd">    - **Glob pattern**: Wildcard pattern for automatic file discovery</span>
-<span class="sd">    - **Directory**: Directory containing CSV files (loads all .csv files)</span>
+<span class="sd">        - **Single file**: Direct path to one CSV file</span>
+<span class="sd">        - **File list**: List of paths to multiple CSV files</span>
+<span class="sd">        - **Glob pattern**: Wildcard pattern for automatic file discovery</span>
+<span class="sd">        - **Directory**: Directory containing CSV files (loads all .csv files)</span>
 
 <span class="sd">    The function performs validation to ensure:</span>
-
-<span class="sd">    - All specified files exist and are readable</span>
-<span class="sd">    - Files contain valid Stan CSV output</span>
-<span class="sd">    - Sampling method is compatible (only &#39;sample&#39; method supported)</span>
-<span class="sd">    - Configuration is consistent across files</span>
+<span class="sd">        - All specified files exist and are readable</span>
+<span class="sd">        - Files contain valid Stan CSV output</span>
+<span class="sd">        - Sampling method is compatible (only &#39;sample&#39; method supported)</span>
+<span class="sd">        - Configuration is consistent across files</span>
 
 <span class="sd">    This approach enables efficient processing workflows where sample data</span>
 <span class="sd">    is converted to more efficient formats (like NetCDF) without requiring</span>
@@ -2352,6 +2325,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

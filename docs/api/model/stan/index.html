@@ -43,26 +43,26 @@ inference through Hamiltonian Monte Carlo (HMC).</p>
 to Stan code generation, compilation, and execution. It automatically translates
 Python model definitions into Stan code while preserving the probabilistic structure
 and mathematical relationships.</p>
-<p><strong>Key Components:</strong></p>
-<blockquote>
-<div><ul class="simple">
+<dl>
+<dt><strong>Key Components:</strong></dt><dd><ul class="simple">
 <li><p>Automatic Code Generation: Converts SciStanPy models to Stan language</p></li>
 <li><p>Compilation Management: Handles Stan-to-C++ compilation with caching</p></li>
 <li><p>Sampling Interface: Provides high-level interface to Stan sampling algorithms</p></li>
 <li><p>Custom Functions: Extends Stan with SciStanPy-specific mathematical functions</p></li>
 <li><p>Diagnostics Integration: Incorporates Stan’s comprehensive MCMC diagnostics</p></li>
 </ul>
-</div></blockquote>
-<dl class="simple">
+</dd>
 <dt><strong>Custom Extensions:</strong></dt><dd><p>The submodule includes custom Stan functions that extend the base language
 with SciStanPy-specific mathematical operations. These functions are
 automatically included in generated Stan programs and provide:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>Specialized probability distributions</p></li>
 <li><p>Custom transformation functions</p></li>
 <li><p>Optimized mathematical operations</p></li>
 <li><p>SciStanPy-specific utility functions</p></li>
 </ul>
+</div></blockquote>
 </dd>
 </dl>
 <p>This submodule is organized into two main components:</p>
@@ -134,6 +134,7 @@ function snippets and headers.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

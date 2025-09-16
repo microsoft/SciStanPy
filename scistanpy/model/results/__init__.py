@@ -13,18 +13,17 @@ in formats suitable for scientific analysis.
 The submodule is organized around two main result types, each with related analysis
 capabilities:
 
-1. :py:class:`scistanpy.model.results.mle.MLE`, which holds results from
-   calls to :py:meth:`scistanpy.model.model.Model.mle` and provides tools for MLE-based
-   parameter estimation analysis.
-2. :py:class:`scistanpy.model.results.mle.MLEInferenceRes`, which holds bootstrapped
-   samples of observed data and parameters for uncertainty quantification and inference
-   using MLE results.
-3. :py:class:`scistanpy.model.results.hmc.SampleResults`, which holds results from
-   calls to :py:meth:`scistanpy.model.model.Model.mcmc` and provides tools for MCMC-based
-   sampling analysis.
+   1. :py:class:`scistanpy.model.results.mle.MLE`, which holds results from
+      calls to :py:meth:`scistanpy.model.model.Model.mle` and provides tools for MLE-based
+      parameter estimation analysis.
+   2. :py:class:`scistanpy.model.results.mle.MLEInferenceRes`, which holds bootstrapped
+      samples of observed data and parameters for uncertainty quantification and inference
+      using MLE results.
+   3. :py:class:`scistanpy.model.results.hmc.SampleResults`, which holds results from
+      calls to :py:meth:`scistanpy.model.model.Model.mcmc` and provides tools for MCMC-based
+      sampling analysis.
 
 Some notable analysis features available to both results classes include:
-
     - **Interactive Analysis**: Widget-based interfaces for exploratory analysis
     - **Scalable Processing**: Efficient handling of large datasets and complex models
     - **Comprehensive Diagnostics**: Automated detection and reporting of model issues

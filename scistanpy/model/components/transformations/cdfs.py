@@ -13,14 +13,12 @@ multiple computational backends (NumPy/SciPy, PyTorch) while automatically
 generating appropriate Stan code for each transformation.
 
 CDF-like Transformation Types:
-
     - :py:class:`~scistanpy.model.components.transformations.cdfs.CDF`
     - :py:class:`~scistanpy.model.components.transformations.cdfs.SurvivalFunction`
     - :py:class:`~scistanpy.model.components.transformations.cdfs.LogCDF`
     - :py:class:`~scistanpy.model.components.transformations.cdfs.LogSurvivalFunction`
 
 Each CDF class automatically handles backend-specific implementations:
-
     - **NumPy/SciPy**: Uses SciPy distribution methods with parameter transforms as needed
     - **PyTorch**: Uses PyTorch distribution objects with appropriate methods
     - **Stan**: Generates function calls with proper parameter ordering

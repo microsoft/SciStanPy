@@ -92,9 +92,9 @@
 <span class="sd">    :raises ValueError: If data shapes don&#39;t match observable shapes</span>
 
 <span class="sd">    The validation checks:</span>
-<span class="sd">    - Perfect correspondence between provided and expected observable names</span>
-<span class="sd">    - Exact shape matching between data tensors and observable specifications</span>
-<span class="sd">    - Proper tensor formatting for PyTorch computation</span>
+<span class="sd">        - Perfect correspondence between provided and expected observable names</span>
+<span class="sd">        - Exact shape matching between data tensors and observable specifications</span>
+<span class="sd">        - Proper tensor formatting for PyTorch computation</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; data = {&#39;y&#39;: torch.randn(100), &#39;x&#39;: torch.randn(100, 5)}</span>
@@ -149,11 +149,10 @@
 <span class="sd">    :ivar learnable_params: PyTorch ParameterList containing optimizable parameters</span>
 
 <span class="sd">    The conversion process:</span>
-
-<span class="sd">    - Initializes all model parameters for PyTorch optimization</span>
-<span class="sd">    - Sets up proper gradient computation graphs</span>
-<span class="sd">    - Configures device placement and memory management</span>
-<span class="sd">    - Preserves probabilistic model structure and relationships</span>
+<span class="sd">        - Initializes all model parameters for PyTorch optimization</span>
+<span class="sd">        - Sets up proper gradient computation graphs</span>
+<span class="sd">        - Configures device placement and memory management</span>
+<span class="sd">        - Preserves probabilistic model structure and relationships</span>
 
 <span class="sd">    The resulting PyTorch model can be treated like any other nn.Module.</span>
 
@@ -270,12 +269,11 @@
 <span class="sd">        :raises UserWarning: If early stopping is not triggered within epoch limit</span>
 
 <span class="sd">        The training loop:</span>
-
-<span class="sd">        1. Converts input data to appropriate tensor format</span>
-<span class="sd">        2. Validates data compatibility with model observables</span>
-<span class="sd">        3. Iteratively optimizes parameters using gradient descent</span>
-<span class="sd">        4. Monitors convergence and applies early stopping</span>
-<span class="sd">        5. Returns complete loss trajectory for analysis</span>
+<span class="sd">            1. Converts input data to appropriate tensor format</span>
+<span class="sd">            2. Validates data compatibility with model observables</span>
+<span class="sd">            3. Iteratively optimizes parameters using gradient descent</span>
+<span class="sd">            4. Monitors convergence and applies early stopping</span>
+<span class="sd">            5. Returns complete loss trajectory for analysis</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; loss_history = pytorch_model.fit(</span>
@@ -381,10 +379,9 @@
 <span class="sd">        :rtype: dict[str, torch.Tensor]</span>
 
 <span class="sd">        Excluded from export:</span>
-
-<span class="sd">        - Observable parameters (representing data, not learnable parameters)</span>
-<span class="sd">        - Unnamed parameters</span>
-<span class="sd">        - Intermediate computational results from transformations</span>
+<span class="sd">            - Observable parameters (representing data, not learnable parameters)</span>
+<span class="sd">            - Unnamed parameters</span>
+<span class="sd">            - Intermediate computational results from transformations</span>
 
 <span class="sd">        This is typically used after model fitting to extract the estimated</span>
 <span class="sd">        parameter values for further analysis or model comparison.</span>
@@ -414,17 +411,15 @@
 <span class="sd">        :rtype: dict[str, torch.distributions.Distribution]</span>
 
 <span class="sd">        The exported distributions include:</span>
-
-<span class="sd">        - Parameter distributions with updated hyperparameter values</span>
-<span class="sd">        - Observable distributions with fitted parameter values</span>
-<span class="sd">        - All distributions in their PyTorch format for further computation</span>
+<span class="sd">            - Parameter distributions with updated hyperparameter values</span>
+<span class="sd">            - Observable distributions with fitted parameter values</span>
+<span class="sd">            - All distributions in their PyTorch format for further computation</span>
 
 <span class="sd">        This is useful for:</span>
-
-<span class="sd">        - Posterior predictive sampling</span>
-<span class="sd">        - Model diagnostics and validation</span>
-<span class="sd">        - Uncertainty quantification</span>
-<span class="sd">        - Distribution comparison and analysis</span>
+<span class="sd">            - Posterior predictive sampling</span>
+<span class="sd">            - Model diagnostics and validation</span>
+<span class="sd">            - Uncertainty quantification</span>
+<span class="sd">            - Distribution comparison and analysis</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; distributions = pytorch_model.export_distributions()</span>
@@ -564,6 +559,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

@@ -108,10 +108,10 @@ class CustomDirichlet(
         :raises ValueError: If expected parameters are missing or unexpected
 
         This decorator automatically handles:
-        - Parameter validation and broadcasting
-        - Reshaping for batch operations
-        - Vectorized computation across batch elements
-        - Proper output shape reconstruction
+            - Parameter validation and broadcasting
+            - Reshaping for batch operations
+            - Vectorized computation across batch elements
+            - Proper output shape reconstruction
 
         The decorator distinguishes between functions that operate on data (expect_x=True)
         and those that only use distribution parameters (expect_x=False).

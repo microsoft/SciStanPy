@@ -153,7 +153,7 @@ and taught by Justin Bois at Caltech is an excellent resource.</p>
 </div>
 <p>As with the PyTorch model, if the <code class="docutils literal notranslate"><span class="pre">default_data</span></code> argument was provided to the parent class on initialization, that data will be used for sampling. Otherwise, it should be provided as the <code class="docutils literal notranslate"><span class="pre">data</span></code> kwarg to <a class="reference internal" href="api/model/model.html#scistanpy.model.model.Model.mcmc" title="scistanpy.model.model.Model.mcmc"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mcmc()</span></code></a>.</p>
 <p>The <a class="reference internal" href="api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults" title="scistanpy.model.results.hmc.SampleResults"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleResults</span></code></a> instance that is returned by the <a class="reference internal" href="api/model/model.html#scistanpy.model.model.Model.mcmc" title="scistanpy.model.model.Model.mcmc"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mcmc()</span></code></a> method contains the samples drawn during sampling. The <a class="reference internal" href="api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults" title="scistanpy.model.results.hmc.SampleResults"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleResults</span></code></a> class is an extension of the <a class="reference internal" href="api/model/results/mle.html#scistanpy.model.results.mle.MLEInferenceRes" title="scistanpy.model.results.mle.MLEInferenceRes"><code class="xref py py-class docutils literal notranslate"><span class="pre">MLEInferenceRes</span></code></a> class introduced above. It shares the same methods and properties, plus some others. Most notable among the additional methods are <a class="reference internal" href="api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.diagnose" title="scistanpy.model.results.hmc.SampleResults.diagnose"><code class="xref py py-meth docutils literal notranslate"><span class="pre">diagnose()</span></code></a>, which runs diagnostic checks on MCMC samples (see <a class="reference external" href="https://mc-stan.org/learn-stan/diagnostics-warnings.html">Stan’s documentation</a> for a review of the different diagnostics), <a class="reference internal" href="api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.plot_sample_failure_quantile_traces" title="scistanpy.model.results.hmc.SampleResults.plot_sample_failure_quantile_traces"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_sample_failure_quantile_traces()</span></code></a>, which provides an interactive dashboard for visualizing <em>samples</em> that failed diagnostic checks, and <a class="reference internal" href="api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces" title="scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_variable_failure_quantile_traces()</span></code></a>, which provides an interactive dashboard for visualizing <em>variables</em> (i.e., parameters) that failed diagnostic checks.</p>
-<p>Additional examples demonstrating usage of the above features can be found in the <a class="reference internal" href="examples/index.html"><span class="doc">Examples</span></a> section of the documentation.</p>
+<p>For additional examples for specific use cases, check the <a class="reference internal" href="examples/index.html"><span class="doc">Examples</span></a> section of the documentation.</p>
 </section>
 </section>
 <section id="api-documentation">
@@ -1204,6 +1204,7 @@ and taught by Justin Bois at Caltech is an excellent resource.</p>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
 </ul>
 </div>
 </section>
@@ -1260,6 +1261,7 @@ Licensed under the MIT License.</p>
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

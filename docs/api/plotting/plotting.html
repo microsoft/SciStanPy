@@ -46,9 +46,8 @@ plotting operations and are not typically called directly by end users.</p>
 visualizations that can be easily customized and extended. All plotting
 functions support both standard NumPy arrays and interactive widgets
 for dynamic exploration of model results.</p>
-<p>Key Features:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>Key Features:</dt><dd><ul class="simple">
 <li><p>ECDF and KDE plots for distribution visualization</p></li>
 <li><p>Quantile plots with confidence intervals</p></li>
 <li><p>Model calibration diagnostics</p></li>
@@ -56,7 +55,8 @@ for dynamic exploration of model results.</p>
 <li><p>Interactive plotting with widget support</p></li>
 <li><p>Customizable styling and overlays</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <p>Functions are organized by visualization type and complexity, from simple
 distribution plots to sophisticated multi-panel diagnostic displays.</p>
 <section id="dataframe-construction">
@@ -91,15 +91,13 @@ entire array. (Default: None)</p></li>
 <dd class="field-odd"><p>npt.NDArray</p>
 </dd>
 </dl>
-<p>Aggregation Rules:</p>
-<blockquote>
-<div><ul class="simple">
+<dl>
+<dt>Aggregation Rules:</dt><dd><ul class="simple">
 <li><p>If independent_dim is None: Returns flattened 1D array</p></li>
 <li><p>If independent_dim is specified: Returns 2D array with shape
 (-1, n_independent) where -1 represents the product of all other dimensions</p></li>
 </ul>
-</div></blockquote>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Flatten completely</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">flat</span> <span class="o">=</span> <span class="n">aggregate_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># Shape: (150,)</span>
@@ -143,17 +141,15 @@ structures and automatically generates necessary metadata for plotting.</p>
 <dd class="field-odd"><p>pd.DataFrame</p>
 </dd>
 </dl>
-<p>The function handles:</p>
-<blockquote>
-<div><ul class="simple">
+<dl>
+<dt>The function handles:</dt><dd><ul class="simple">
 <li><p>Data aggregation according to independent dimension</p></li>
 <li><p>Automatic label generation when not provided</p></li>
 <li><p>ECDF calculation for cumulative plots</p></li>
 <li><p>Trace separation with NaN boundaries for line plots</p></li>
 <li><p>Proper sorting for visualization functions</p></li>
 </ul>
-</div></blockquote>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Samples from a model with 100 traces, 50 time points, and 10 parameters</span>
 <span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># 100 traces, 50 time points, 10 params</span>
 
@@ -212,14 +208,12 @@ on the data distribution.</p>
 <dd class="field-odd"><p>Union[list[HVType], hvplot.interactive.Interactive]</p>
 </dd>
 </dl>
-<p>The function creates:</p>
-<blockquote>
-<div><ul class="simple">
+<dl>
+<dt>The function creates:</dt><dd><ul class="simple">
 <li><p>KDE plot: Smooth density estimate with automatic bandwidth</p></li>
 <li><p>ECDF plot: Step function showing cumulative probabilities</p></li>
 </ul>
-</div></blockquote>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;param&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plots</span> <span class="o">=</span> <span class="n">plot_ecdf_kde</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s1">&#39;param&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># plots[0] is KDE, plots[1] is ECDF</span>
@@ -268,13 +262,13 @@ and ‘Cumulative Probability’ columns.</p></li>
 <dd class="field-odd"><p>Union[list[HVType], hvplot.interactive.Interactive]</p>
 </dd>
 </dl>
-<p>The visualization includes:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>The visualization includes:</dt><dd><ul class="simple">
 <li><p>Multi-line ECDF plot: One curve per group with color coding</p></li>
 <li><p>Violin plot: Density distributions by group with colorbar</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <p>Groups are automatically colored using the Inferno colormap.</p>
 <dl>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># DataFrame with &#39;param&#39; values and &#39;Independent Label&#39; grouping</span>
@@ -328,14 +322,12 @@ Different groups are separated by NaN rows.</p></li>
 <dd class="field-odd"><p>Union[HVType, hvplot.interactive.Interactive]</p>
 </dd>
 </dl>
-<p>Datashading options:</p>
-<blockquote>
-<div><ul class="simple">
+<dl>
+<dt>Datashading options:</dt><dd><ul class="simple">
 <li><p>True: Uses count aggregation with Inferno colormap (large data)</p></li>
 <li><p>False: Uses dynamic line plotting with lime color (small data)</p></li>
 </ul>
-</div></blockquote>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Plot parameter evolution over time/conditions</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plot</span> <span class="o">=</span> <span class="n">plot_relationship</span><span class="p">(</span><span class="n">time_series_df</span><span class="p">,</span> <span class="s1">&#39;param&#39;</span><span class="p">,</span> <span class="n">datashade</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
@@ -375,15 +367,13 @@ data characteristics.</p>
 <dd class="field-odd"><p>Callable</p>
 </dd>
 </dl>
-<p>Selection Logic:</p>
-<blockquote>
-<div><ul class="simple">
+<dl>
+<dt>Selection Logic:</dt><dd><ul class="simple">
 <li><p>No independent_dim: Returns <code class="docutils literal notranslate"><span class="pre">plot_ecdf_kde</span></code> (univariate analysis)</p></li>
 <li><p>Independent_dim but no labels: Returns <code class="docutils literal notranslate"><span class="pre">plot_ecdf_violin</span></code> (multi-group)</p></li>
 <li><p>Both independent_dim and labels: Returns <code class="docutils literal notranslate"><span class="pre">plot_relationship</span></code> (dependency)</p></li>
 </ul>
-</div></blockquote>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">plotter</span> <span class="o">=</span> <span class="n">choose_plotting_function</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># ECDF/KDE</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plotter</span> <span class="o">=</span> <span class="n">choose_plotting_function</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>     <span class="c1"># ECDF/Violin</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plotter</span> <span class="o">=</span> <span class="n">choose_plotting_function</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">time_labels</span><span class="p">)</span>  <span class="c1"># Relationship</span>
@@ -542,9 +532,8 @@ calculation details.</p>
 <dd class="field-odd"><p>tuple[hv.Overlay, npt.NDArray[np.floating]]</p>
 </dd>
 </dl>
-<p>The calibration plot shows:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>The calibration plot shows:</dt><dd><ul class="simple">
 <li><dl class="simple">
 <dt>ECDF curves for each observation. Note that the curve represents observations</dt><dd><p>for the full set of parameters, not individual parameters.</p>
 </dd>
@@ -556,8 +545,7 @@ area between the observed ECDF and the ideal uniform ECDF using the trapezoidal
 rule for numerical integration. The lower the deviance, the better the
 calibration.</p></li>
 </ul>
-</div></blockquote>
-<dl class="simple">
+</dd>
 <dt>Interpretation:</dt><dd><ul class="simple">
 <li><p>Points near diagonal: Well-calibrated</p></li>
 <li><p>Narrow (overrepresentation of mid quartiles) but symmetric ECDF curve:
@@ -671,16 +659,14 @@ uses <cite>np.quantile</cite> (Default: False).</p></li>
 are invalid</p>
 </dd>
 </dl>
-<p>Features:</p>
-<blockquote>
-<div><ul class="simple">
+<dl>
+<dt>Features:</dt><dd><ul class="simple">
 <li><p>Automatic quantile symmetrization (adds complement quantiles)</p></li>
 <li><p>Nested confidence intervals with graduated transparency</p></li>
 <li><p>Customizable styling for all plot components</p></li>
 <li><p>Optional hover labels for interactive exploration</p></li>
 </ul>
-</div></blockquote>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">obs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
@@ -732,23 +718,19 @@ Defaults to x.size // 100 if not specified.</p></li>
 <dd class="field-even"><p><strong>ValueError</strong> – If x and y arrays have different shapes or are not 1D</p>
 </dd>
 </dl>
-<p>The hexagonal binning:</p>
-<blockquote>
-<div><ul class="simple">
+<dl>
+<dt>The hexagonal binning:</dt><dd><ul class="simple">
 <li><p>Aggregates points into hexagonal cells</p></li>
 <li><p>Colors cells by point density using viridis colormap</p></li>
 <li><p>Includes colorbar for density interpretation</p></li>
 </ul>
-</div></blockquote>
-<p>The rolling mean:</p>
-<blockquote>
-<div><ul class="simple">
+</dd>
+<dt>The rolling mean:</dt><dd><ul class="simple">
 <li><p>Computed over sorted x values to show trend</p></li>
 <li><p>Window size automatically scaled to data size</p></li>
 <li><p>Styled for clear visibility over density plot</p></li>
 </ul>
-</div></blockquote>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Large dataset with trend</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>
@@ -873,6 +855,7 @@ the appropriate display options for each case.</p>
 <li class="toctree-l2"><a class="reference internal" href="../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

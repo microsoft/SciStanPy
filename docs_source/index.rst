@@ -155,7 +155,7 @@ As with the PyTorch model, if the ``default_data`` argument was provided to the 
 
 The :py:class:`~scistanpy.model.results.hmc.SampleResults` instance that is returned by the :py:meth:`~scistanpy.model.model.Model.mcmc` method contains the samples drawn during sampling. The :py:class:`~scistanpy.model.results.hmc.SampleResults` class is an extension of the :py:class:`~scistanpy.model.results.mle.MLEInferenceRes` class introduced above. It shares the same methods and properties, plus some others. Most notable among the additional methods are :py:meth:`~scistanpy.model.results.hmc.SampleResults.diagnose`, which runs diagnostic checks on MCMC samples (see `Stan's documentation <https://mc-stan.org/learn-stan/diagnostics-warnings.html>`_ for a review of the different diagnostics), :py:meth:`~scistanpy.model.results.hmc.SampleResults.plot_sample_failure_quantile_traces`, which provides an interactive dashboard for visualizing *samples* that failed diagnostic checks, and :py:meth:`~scistanpy.model.results.hmc.SampleResults.plot_variable_failure_quantile_traces`, which provides an interactive dashboard for visualizing *variables* (i.e., parameters) that failed diagnostic checks.
 
-Additional examples demonstrating usage of the above features can be found in the :doc:`examples/index` section of the documentation.
+For additional examples for specific use cases, check the :doc:`examples/index` section of the documentation.
 
 API Documentation
 =================
@@ -185,6 +185,7 @@ All Submodules
 .. toctree::
 
    api/index
+   examples/index
 
 Copyright and License
 =====================

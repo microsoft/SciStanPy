@@ -97,12 +97,11 @@ class StanCodeBase(ABC, list):
     syntax for different program blocks (model, transformed parameters, etc.).
 
     Key Features:
-
-    - Hierarchical organization of code blocks and loops
-    - Automatic Stan syntax generation for different program sections
-    - Component filtering and organization based on block requirements
-    - Proper indentation and formatting management
-    - Loop optimization and combination capabilities
+        - Hierarchical organization of code blocks and loops
+        - Automatic Stan syntax generation for different program sections
+        - Component filtering and organization based on block requirements
+        - Proper indentation and formatting management
+        - Loop optimization and combination capabilities
     """
 
     def __init__(self, parent_loop: Optional["StanCodeBase"]):
@@ -201,11 +200,10 @@ class StanCodeBase(ABC, list):
         :rtype: str
 
         The method handles:
-
-        - Component filtering based on block requirements
-        - For-loop combination and optimization
-        - Proper Stan syntax generation and formatting
-        - Empty block handling and omission
+            - Component filtering based on block requirements
+            - For-loop combination and optimization
+            - Proper Stan syntax generation and formatting
+            - Empty block handling and omission
         """
 
         def filter_generated_quantities(
@@ -439,10 +437,9 @@ class StanCodeBase(ABC, list):
         :rtype: str
 
         This method handles:
-
-        - Consistent indentation based on scope depth
-        - Automatic semicolon insertion for statements
-        - Proper formatting for control structures and comments
+            - Consistent indentation based on scope depth
+            - Automatic semicolon insertion for statements
+            - Proper formatting for control structures and comments
         """
         # Get the indentation level
         indendation_level = (
@@ -578,12 +575,11 @@ class StanForLoop(StanCodeBase):
     :ivar parent_loop: Reference to parent code block
 
     Key Features:
-
-    - Automatic loop range calculation based on component dimensions
-    - Loop combination optimization for compatible adjacent loops
-    - Singleton loop detection and elimination
-    - Proper index variable management and scope resolution
-    - Hierarchical ancestry tracking for scope navigation
+        - Automatic loop range calculation based on component dimensions
+        - Loop combination optimization for compatible adjacent loops
+        - Singleton loop detection and elimination
+        - Proper index variable management and scope resolution
+        - Hierarchical ancestry tracking for scope navigation
 
     The class automatically determines loop ranges by analyzing the dimensions
     of nested model components and provides optimization features like loop
@@ -837,20 +833,18 @@ class StanProgram(StanCodeBase):
         (i.e., the names of observable parameters).
 
     The class performs comprehensive analysis of the SciStanPy model to:
-
-    - Build dependency graphs and determine component ordering
-    - Generate appropriate variable names avoiding conflicts
-    - Organize components into proper Stan program structure
-    - Create optimized loop constructs for multi-dimensional components
-    - Generate all required Stan program blocks with proper syntax
+        - Build dependency graphs and determine component ordering
+        - Generate appropriate variable names avoiding conflicts
+        - Organize components into proper Stan program structure
+        - Create optimized loop constructs for multi-dimensional components
+        - Generate all required Stan program blocks with proper syntax
 
     The code is generated following the below procedure:
-
-    1. Dependency Analysis: Build component dependency graph
-    2. Depth Assignment: Determine nesting levels for components
-    3. Loop Organization: Create optimized for-loop structures
-    4. Block Generation: Generate all Stan program blocks
-    5. Code Formatting: Apply Stan canonical formatting
+        1. Dependency Analysis: Build component dependency graph
+        2. Depth Assignment: Determine nesting levels for components
+        3. Loop Organization: Create optimized for-loop structures
+        4. Block Generation: Generate all Stan program blocks
+        5. Code Formatting: Apply Stan canonical formatting
     """
 
     def __init__(self, model: "scistanpy.Model"):
@@ -935,10 +929,10 @@ class StanProgram(StanCodeBase):
         :raises ValueError: If variable name collisions are detected
 
         Analyzes the model to categorize variables into:
-        - All variable names (for conflict detection)
-        - Parameter names (for Stan parameters block)
-        - Auto-gathered names (constants from model)
-        - User-provided names (observables requiring external data)
+            - All variable names (for conflict detection)
+            - Parameter names (for Stan parameters block)
+            - Auto-gathered names (constants from model)
+            - User-provided names (observables requiring external data)
         """
         # Get the names of all the variables in the model
         name_counts = Counter(node.model_varname for node in self.node_to_depth)
@@ -986,10 +980,10 @@ class StanProgram(StanCodeBase):
         """Organize model components into proper Stan program structure.
 
         This method performs the core compilation process:
-        1. Determines topological ordering of components based on dependencies
-        2. Organizes components into appropriate loop structures
-        3. Creates and optimizes for-loop constructs
-        4. Eliminates singleton loops for efficiency
+            1. Determines topological ordering of components based on dependencies
+            2. Organizes components into appropriate loop structures
+            3. Creates and optimizes for-loop constructs
+            4. Eliminates singleton loops for efficiency
 
         The compilation process ensures that all dependencies are satisfied
         and that the resulting Stan code is properly structured and efficient.
@@ -1398,10 +1392,10 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
     :rtype: Callable[P, R]
 
     The inner function handles:
-    - Automatic seed generation from global RNG if not provided
-    - Data gathering and validation from SciStanPy model
-    - Warning messages for experimental functions
-    - Proper argument handling and forwarding
+        - Automatic seed generation from global RNG if not provided
+        - Data gathering and validation from SciStanPy model
+        - Warning messages for experimental functions
+        - Proper argument handling and forwarding
     """
 
     @functools.wraps(func)
@@ -1471,11 +1465,11 @@ class StanModel(CmdStanModel):
     :ivar stan_executable_path: Path to compiled Stan executable
 
     Key Features:
-    - Automatic Stan code generation from SciStanPy models
-    - Enhanced sampling with prior initialization and validation
-    - Automatic data gathering for observables and constants
-    - Comprehensive result processing and structuring
-    - Integration with ArviZ for Bayesian workflow support
+        - Automatic Stan code generation from SciStanPy models
+        - Enhanced sampling with prior initialization and validation
+        - Automatic data gathering for observables and constants
+        - Comprehensive result processing and structuring
+        - Integration with ArviZ for Bayesian workflow support
 
     The class handles the complete workflow from SciStanPy model to Stan
     execution, providing an interface that abstracts away the complexities of Stan
@@ -1574,10 +1568,10 @@ class StanModel(CmdStanModel):
         input required for Stan sampling.
 
         Data Processing:
-        - Validates all required observables are provided
-        - Checks shape compatibility between data and model specifications
-        - Automatically gathers constants and hyperparameters from model
-        - Handles variable name transformation (dots to double underscores)
+            - Validates all required observables are provided
+            - Checks shape compatibility between data and model specifications
+            - Automatically gathers constants and hyperparameters from model
+            - Handles variable name transformation (dots to double underscores)
         """
         # Make sure we have all the observables that the user must provide. Report
         # any missing or extra observables
@@ -1708,11 +1702,11 @@ class StanModel(CmdStanModel):
         :rtype: results.SampleResults
 
         Enhanced Features:
-        - Automatic data gathering from SciStanPy model
-        - Prior-based initialization when requested
-        - Result processing and structuring
-        - Memory-efficient handling of large result arrays
-        - Integration with SciStanPy's result analysis tools
+            - Automatic data gathering from SciStanPy model
+            - Prior-based initialization when requested
+            - Result processing and structuring
+            - Memory-efficient handling of large result arrays
+            - Integration with SciStanPy's result analysis tools
 
         The method provides an interface that handles all the complexities of data
         preparation and result processing while maintaining full compatibility with

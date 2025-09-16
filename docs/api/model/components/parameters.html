@@ -308,11 +308,13 @@ maps between the two naming conventions.</p>
 </dl>
 <p>Observable parameters represent known data rather than unknown variables
 to be inferred. This method:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p>Sets the observable flag to True</p></li>
 <li><p>Removes PyTorch parameterization (observables aren’t optimized)</p></li>
 <li><p>Enables generation of appropriate Stan code for data blocks</p></li>
 </ul>
+</div></blockquote>
 <p>This method will typically not be needed, as SciStanPy automatically assigns
 parameters with no children in the depenency graph as observables.</p>
 <dl>
@@ -1433,15 +1435,15 @@ x^{\alpha - 1} (1 - x)^{\beta - 1} \text{ for } 0 &lt; x &lt; 1 \\
 </tbody>
 </table>
 </div></blockquote>
-<p>Common Applications:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>Common Applications:</dt><dd><ul class="simple">
 <li><p>Prior distributions for probabilities</p></li>
 <li><p>Modeling proportions and percentages</p></li>
 <li><p>Bayesian A/B testing</p></li>
 <li><p>Mixture model component weights</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Beta.LOWER_BOUND">
 <span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Beta.LOWER_BOUND" title="Link to this definition">¶</a></dt>
@@ -1628,14 +1630,14 @@ x^{-\alpha - 1} e^{-\beta / x} \text{ for } x &gt; 0 \\
 </tbody>
 </table>
 </div></blockquote>
-<p>Common Applications:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>Common Applications:</dt><dd><ul class="simple">
 <li><p>Conjugate prior for normal variance</p></li>
 <li><p>Hierarchical modeling of scale parameters</p></li>
 <li><p>Bayesian regression variance modeling</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.InverseGamma.LOWER_BOUND">
 <span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">custom_types.Float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.InverseGamma.LOWER_BOUND" title="Link to this definition">¶</a></dt>
@@ -1790,15 +1792,13 @@ Y &amp;= \log(X) \sim \text{ExpExponential}(\beta), \text{where } \\ \\
 P(y | \beta) &amp;= \beta * \exp(y - \beta * \exp(y)) \text{ for } y \in (-\infty, \infty)
 \end{align*}\end{split}\]</div>
 </dd>
-</dl>
-<p>Properties:</p>
-<blockquote>
-<div><ul class="simple">
+<dt>Properties:</dt><dd><ul class="simple">
 <li><p>Support: <span class="math notranslate nohighlight">\((-\infty, \infty)\)</span></p></li>
 <li><p>Related to Gumbel distribution family</p></li>
 <li><p>Useful for log-scale modeling of exponential processes</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <p>This distribution requires custom Stan functions for implementation (see
 <a class="reference internal" href="../stan/stan_functions.html"><span class="doc">Stan Functions Library Reference</span></a>) which are automatically included in any Stan
 program defined using this distribution.</p>
@@ -1877,7 +1877,7 @@ Pareto Type II distribution with location parameter set to 0.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>lambda</strong> (<em>custom_types.ContinuousParameterType</em>) – Scale parameter</p></li>
+<li><p><strong>lambda_</strong> (<em>custom_types.ContinuousParameterType</em>) – Scale parameter</p></li>
 <li><p><strong>alpha</strong> (<em>custom_types.ContinuousParameterType</em>) – Shape parameter</p></li>
 <li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
 </ul>
@@ -1910,15 +1910,15 @@ P(x | \lambda, \alpha) &amp;= \frac{\alpha}{\lambda} *
 </tbody>
 </table>
 </div></blockquote>
-<p>Common Applications:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>Common Applications:</dt><dd><ul class="simple">
 <li><p>Modeling income distributions</p></li>
 <li><p>Network analysis (degree distributions)</p></li>
 <li><p>Reliability engineering</p></li>
 <li><p>Extreme value modeling</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Lomax.LOWER_BOUND">
 <span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Float'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="s"><span class="pre">'custom_types.Integer'</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Lomax.LOWER_BOUND" title="Link to this definition">¶</a></dt>
@@ -1976,7 +1976,7 @@ maps between the two naming conventions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>lambda</strong> (<em>custom_types.ContinuousParameterType</em>) – Scale parameter for underlying Lomax</p></li>
+<li><p><strong>lambda_</strong> (<em>custom_types.ContinuousParameterType</em>) – Scale parameter for underlying Lomax</p></li>
 <li><p><strong>alpha</strong> (<em>custom_types.ContinuousParameterType</em>) – Shape parameter for underlying Lomax</p></li>
 <li><p><strong>kwargs</strong> – Additional keyword arguments passed to parent class</p></li>
 </ul>
@@ -2089,13 +2089,13 @@ P(X = k | N, \theta) &amp;= \binom{N}{k} \theta^k (1 - \theta)^{N - k}
 </tbody>
 </table>
 </div></blockquote>
-<p>Common Applications:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>Common Applications:</dt><dd><ul class="simple">
 <li><p>Number of successes in fixed trials</p></li>
 <li><p>Proportion data with known denominators</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Binomial.POSITIVE_PARAMS">
 <span class="sig-name descname"><span class="pre">POSITIVE_PARAMS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'N',</span> <span class="pre">'theta'}</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Binomial.POSITIVE_PARAMS" title="Link to this definition">¶</a></dt>
@@ -2172,15 +2172,15 @@ P(X = k | \lambda) &amp;= \frac{\lambda^k e^{-\lambda}}{k!}
 </tbody>
 </table>
 </div></blockquote>
-<p>Common Applications:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>Common Applications:</dt><dd><ul class="simple">
 <li><p>Event counting (arrivals, defects, etc.)</p></li>
 <li><p>Modeling rare events</p></li>
 <li><p>Count regression</p></li>
 <li><p>Queueing theory</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Poisson.POSITIVE_PARAMS">
 <span class="sig-name descname"><span class="pre">POSITIVE_PARAMS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'lambda_'}</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Poisson.POSITIVE_PARAMS" title="Link to this definition">¶</a></dt>
@@ -2279,12 +2279,12 @@ for all <span class="math notranslate nohighlight">\(\alpha_i &gt; 1\)</span></p
 </tbody>
 </table>
 </div></blockquote>
-<p>Common Applications:</p>
-<blockquote>
-<div><ul class="simple">
+<dl class="simple">
+<dt>Common Applications:</dt><dd><ul class="simple">
 <li><p>Modeling categorical probabilities</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>SciStanPy’s implementation of the Dirichlet distribution allows for defining
@@ -2380,16 +2380,14 @@ y_i \in (-\infty, \infty),
 \text{where } \Gamma(z) &amp;= \int_0^\infty t^{z-1} e^{-t} dt
 \end{align*}\end{split}\]</div>
 </dd>
-</dl>
-<p>Properties:</p>
-<blockquote>
-<div><ul class="simple">
+<dt>Properties:</dt><dd><ul class="simple">
 <li><p>Log-probability is computed in the log-simplex space</p></li>
 <li><p>More numerically stable for extreme concentration parameters</p></li>
 <li><p>Suitable for high-dimensional simplexes</p></li>
 <li><p>Useful for modeling compositional data on log scale</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The Exp-Dirichlet distribution is not natively supported in Stan, so this
@@ -2532,17 +2530,15 @@ P(X = x | N, \theta) &amp;= \frac{N!}{\prod_{i=1}^K x_i!} \prod_{i=1}^K
 </tbody>
 </table>
 </dd>
-</dl>
-<p>Common Applications:</p>
-<blockquote>
-<div><ul class="simple">
+<dt>Common Applications:</dt><dd><ul class="simple">
 <li><p>Categorical count data</p></li>
 <li><p>Multinomial logistic regression</p></li>
 <li><p>Natural language processing (word counts)</p></li>
 <li><p>Genetics (allele frequencies)</p></li>
 <li><p>Marketing (customer choice modeling)</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.parameters.Multinomial.SCIPY_DIST">
 <span class="sig-name descname"><span class="pre">SCIPY_DIST</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_continuous</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">stats.rv_discrete</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;scistanpy.model.components.custom_distributions.custom_scipy_dists.CustomMultinomial</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#scistanpy.model.components.parameters.Multinomial.SCIPY_DIST" title="Link to this definition">¶</a></dt>
@@ -3143,6 +3139,7 @@ parameters and applying appropriate transformations.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

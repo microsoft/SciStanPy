@@ -261,9 +261,9 @@ class PriorPredictiveCheck:
         like cumulative probabilities for ECDF plots.
 
         The processing logic adapts based on the selected plot type:
-        - ECDF plots: Computes cumulative probabilities and sorts appropriately
-        - Relationship plots: Sorts by independent variable and adds separators
-        - Other plots: Basic reshaping and filtering
+            - ECDF plots: Computes cumulative probabilities and sorts appropriately
+            - Relationship plots: Sorts by independent variable and adds separators
+            - Other plots: Basic reshaping and filtering
 
         The method respects the current widget selections for target parameter,
         grouping dimension, and independent variable.
@@ -508,10 +508,9 @@ class PriorPredictiveCheck:
         :type event: Event
 
         Plot Type Logic:
-
-        - ECDF and KDE: Always available for any parameter
-        - Violin: Available when grouping dimension is selected
-        - Relationship: Available when both grouping and independent variable are selected
+            - ECDF and KDE: Always available for any parameter
+            - Violin: Available when grouping dimension is selected
+            - Relationship: Available when both grouping and independent variable are selected
 
         The method automatically selects the most sophisticated available plot
         type as the default when options change.
@@ -549,9 +548,8 @@ class PriorPredictiveCheck:
         :rtype: pn.Row
 
         The layout consists of:
-
-        - Left panel: Model hyperparameter sliders and viewing options
-        - Right panel: Interactive plot display that updates based on selections
+            - Left panel: Model hyperparameter sliders and viewing options
+            - Right panel: Interactive plot display that updates based on selections
 
         Example:
             >>> check = PriorPredictiveCheck(model)
@@ -591,12 +589,11 @@ class PriorPredictiveCheck:
         :rtype: dict
 
         The returned dictionary includes:
-
-        - 'kind': Set to 'kde' for kernel density estimation
-        - 'x': `None` for KDE plots.
-        - 'y': Target parameter name for the y-axis
-        - 'by': Independent label for grouping (if applicable)
-        - 'datashade': Disabled (False) for KDE plots to maintain clarity
+            - 'kind': Set to 'kde' for kernel density estimation
+            - 'x': `None` for KDE plots.
+            - 'y': Target parameter name for the y-axis
+            - 'by': Independent label for grouping (if applicable)
+            - 'datashade': Disabled (False) for KDE plots to maintain clarity
         """
         return {
             "kind": "kde",
@@ -617,13 +614,12 @@ class PriorPredictiveCheck:
         :rtype: dict
 
         The returned dictionary includes:
-
-        - 'kind': Set to 'line' for step-like ECDF appearance
-        - 'x': Target parameter values
-        - 'y': 'Cumulative Probability' (computed during data processing)
-        - 'by': Independent label for grouping multiple ECDFs
-        - 'datashade': Disabled (False) for ECDF plots to maintain clarity
-        - 'hover': Set to 'hline' for horizontal hover lines
+            - 'kind': Set to 'line' for step-like ECDF appearance
+            - 'x': Target parameter values
+            - 'y': 'Cumulative Probability' (computed during data processing)
+            - 'by': Independent label for grouping multiple ECDFs
+            - 'datashade': Disabled (False) for ECDF plots to maintain clarity
+            - 'hover': Set to 'hline' for horizontal hover lines
         """
         return {
             "kind": "line",
@@ -645,16 +641,14 @@ class PriorPredictiveCheck:
         :rtype: dict
 
         The method handles multiple grouping scenarios:
-
-        - Single grouping by dimension index
-        - Grouping by both dimension and independent variable
-        - Automatic determination of primary vs. secondary grouping
+            - Single grouping by dimension index
+            - Grouping by both dimension and independent variable
+            - Automatic determination of primary vs. secondary grouping
 
         The returned dictionary includes:
-
-        - 'args': Tuple of (groups..., values) for HoloViews Violin constructor
-        - 'kdims': List of key dimension names
-        - 'vdims': Value dimension name (target parameter)
+            - 'args': Tuple of (groups..., values) for HoloViews Violin constructor
+            - 'kdims': List of key dimension names
+            - 'vdims': Value dimension name (target parameter)
         """
         # This is only an option if we have a grouping dimension
         group_indices = self._processed_data[self.group_dim_dropdown.value].to_numpy()
@@ -704,13 +698,13 @@ class PriorPredictiveCheck:
         :rtype: dict
 
         The returned dictionary includes:
-        - kind: Set to 'line' for continuous relationships
-        - x: Independent variable name
-        - y: Target parameter name
-        - datashade: Enabled (True) for performance with large datasets
-        - dynamic: Disabled (False), resulting in all data being embedded in output
-        - aggregator: Set to 'count' for density-based coloring
-        - cmap: 'inferno' colormap
+            - kind: Set to 'line' for continuous relationships
+            - x: Independent variable name
+            - y: Target parameter name
+            - datashade: Enabled (True) for performance with large datasets
+            - dynamic: Disabled (False), resulting in all data being embedded in output
+            - aggregator: Set to 'count' for density-based coloring
+            - cmap: 'inferno' colormap
         """
         return {
             "kind": "line",
@@ -735,9 +729,9 @@ class PriorPredictiveCheck:
         :rtype: Optional[str]
 
         Priority order:
-        1. Independent variable dropdown selection (if not empty)
-        2. Group dimension dropdown selection (if not empty)
-        3. None (for simple univariate plots)
+            1. Independent variable dropdown selection (if not empty)
+            2. Group dimension dropdown selection (if not empty)
+            3. None (for simple univariate plots)
 
         This property enables consistent handling of grouping and independent
         variables across different visualization types.

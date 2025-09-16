@@ -110,13 +110,15 @@ automatic differentiation capabilities and Stan code generation.</p>
 parameters to be combined using natural mathematical syntax. Each operator
 creates an appropriate TransformedParameter instance that represents the
 mathematical operation.</p>
-<p>The mixin supports the following Python arithmetic operators:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The mixin supports the following Python arithmetic operators:</dt><dd><ul class="simple">
 <li><p>Addition (<code class="docutils literal notranslate"><span class="pre">+</span></code>), subtraction (<code class="docutils literal notranslate"><span class="pre">-</span></code>)</p></li>
 <li><p>Multiplication (<code class="docutils literal notranslate"><span class="pre">*</span></code>), division (<code class="docutils literal notranslate"><span class="pre">/</span></code>)</p></li>
 <li><p>Exponentiation (<code class="docutils literal notranslate"><span class="pre">**</span></code>)</p></li>
 <li><p>Unary negation (<code class="docutils literal notranslate"><span class="pre">-</span></code>)</p></li>
 </ul>
+</dd>
+</dl>
 <p>Each operation supports both left and right operand positioning, enabling
 flexible mathematical expressions with mixed parameter and constant types.</p>
 <dl>
@@ -299,17 +301,23 @@ operations when the transformation is not named.</p>
 <p>This class provides the foundation for parameters that result from mathematical
 operations on other parameters. It handles both the computational aspects
 (sampling, PyTorch operations) and code generation aspects (Stan assignments).</p>
-<p>Transformed parameters support:
-- Sampling through parent parameter sampling and operation application
-- PyTorch operations with automatic differentiation
-- Stan code generation for transformed parameters block
-- Further transformation through operator overloading</p>
+<dl class="simple">
+<dt>Transformed parameters support:</dt><dd><ul class="simple">
+<li><p>Sampling through parent parameter sampling and operation application</p></li>
+<li><p>PyTorch operations with automatic differentiation</p></li>
+<li><p>Stan code generation for transformed parameters block</p></li>
+<li><p>Further transformation through operator overloading</p></li>
+</ul>
+</dd>
+</dl>
 <p>The class provides the infrastructure for creating complex mathematical
 expressions while maintaining compatibility with all SciStanPy backends.</p>
-<p>Subclasses must implement:
-- run_np_torch_op: The core mathematical operation
-- write_stan_operation: Stan code generation for the operation</p>
 <dl class="simple">
+<dt>Subclasses must implement:</dt><dd><ul class="simple">
+<li><p>run_np_torch_op: The core mathematical operation</p></li>
+<li><p>write_stan_operation: Stan code generation for the operation</p></li>
+</ul>
+</dd>
 <dt>Example Usage:</dt><dd><p>TransformedParameter subclasses are typically created through operator
 overloading or the <cite>operations</cite> submodule rather than direct instantiation,
 but can be used directly for custom operations.</p>
@@ -1160,11 +1168,15 @@ the <code class="xref py py-func docutils literal notranslate"><span class="pre"
 <dd><p>Bases: <a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction" title="scistanpy.model.components.transformations.transformed_parameters.Reduction"><code class="xref py py-class docutils literal notranslate"><span class="pre">Reduction</span></code></a></p>
 <p>Log-sum-exp reduction transformation.</p>
 <p>Computes the logarithm of the sum of exponentials along the last dimension.</p>
-<p>This transformation is fundamental for:
-- Normalizing log-probabilities
-- Computing partition functions
-- Stable softmax computations
-- Log-space mixture models</p>
+<dl class="simple">
+<dt>This transformation is fundamental for:</dt><dd><ul class="simple">
+<li><p>Normalizing log-probabilities</p></li>
+<li><p>Computing partition functions</p></li>
+<li><p>Stable softmax computations</p></li>
+<li><p>Log-space mixture models</p></li>
+</ul>
+</dd>
+</dl>
 <p>This transformation is accessed through the <a class="reference internal" href="../../../operations.html#scistanpy.operations.logsumexp" title="scistanpy.operations.logsumexp"><code class="xref py py-func docutils literal notranslate"><span class="pre">logsumexp()</span></code></a>
 function.</p>
 <div class="admonition important">
@@ -1413,11 +1425,15 @@ if unbounded.</p>
 </ul>
 </dd>
 </dl>
-<p>This parameterization is ideal for:
-- Extreme parameter regimes
-- Log-scale statistical modeling
-- When initial conditions are naturally in log-space
-- Maximum numerical precision requirements</p>
+<dl class="simple">
+<dt>This parameterization is ideal for:</dt><dd><ul class="simple">
+<li><p>Extreme parameter regimes</p></li>
+<li><p>Log-scale statistical modeling</p></li>
+<li><p>When initial conditions are naturally in log-space</p></li>
+<li><p>Maximum numerical precision requirements</p></li>
+</ul>
+</dd>
+</dl>
 <p>This transformation is accessed through the
 <a class="reference internal" href="../../../operations.html#scistanpy.operations.log_sigmoid_growth" title="scistanpy.operations.log_sigmoid_growth"><code class="xref py py-func docutils literal notranslate"><span class="pre">log_sigmoid_growth()</span></code></a> function.</p>
 <dl class="py attribute">
@@ -1465,16 +1481,22 @@ rather than carrying capacity.</p>
 </ul>
 </dd>
 </dl>
-<p>Mathematical Properties:
-- Parameterizes sigmoid growth by initial value x0
-- Uses log-add-exp trick for numerical stability
-- Avoids direct computation of large exponentials
-- Maintains sigmoid growth dynamics</p>
-<p>This parameterization is useful when:
-- Initial conditions are better known than carrying capacity (e.g., biological systems)
-- Numerical stability is crucial
-- Working with extreme parameter values
-- Modeling relative growth from baseline</p>
+<dl class="simple">
+<dt>Mathematical Properties:</dt><dd><ul class="simple">
+<li><p>Parameterizes sigmoid growth by initial value x0</p></li>
+<li><p>Uses log-add-exp trick for numerical stability</p></li>
+<li><p>Avoids direct computation of large exponentials</p></li>
+<li><p>Maintains sigmoid growth dynamics</p></li>
+</ul>
+</dd>
+<dt>This parameterization is useful when:</dt><dd><ul class="simple">
+<li><p>Initial conditions are better known than carrying capacity (e.g., biological systems)</p></li>
+<li><p>Numerical stability is crucial</p></li>
+<li><p>Working with extreme parameter values</p></li>
+<li><p>Modeling relative growth from baseline</p></li>
+</ul>
+</dd>
+</dl>
 <p>This transformation is accessed through the
 <a class="reference internal" href="../../../operations.html#scistanpy.operations.sigmoid_growth_init_param" title="scistanpy.operations.sigmoid_growth_init_param"><code class="xref py py-func docutils literal notranslate"><span class="pre">sigmoid_growth_init_param()</span></code></a> function.</p>
 <dl class="py attribute">
@@ -1522,15 +1544,21 @@ providing numerical stability and guaranteed positive outputs.</p>
 </ul>
 </dd>
 </dl>
-<p>Mathematical Properties:
-- Fully operates in log-space for numerical stability
-- Parameterized by log of initial conditions
-- Maintains sigmoid growth dynamics</p>
-<p>This parameterization is ideal for:
-- Extreme parameter regimes
-- Log-scale statistical modeling
-- When initial conditions are naturally in log-space
-- Maximum numerical precision requirements</p>
+<dl class="simple">
+<dt>Mathematical Properties:</dt><dd><ul class="simple">
+<li><p>Fully operates in log-space for numerical stability</p></li>
+<li><p>Parameterized by log of initial conditions</p></li>
+<li><p>Maintains sigmoid growth dynamics</p></li>
+</ul>
+</dd>
+<dt>This parameterization is ideal for:</dt><dd><ul class="simple">
+<li><p>Extreme parameter regimes</p></li>
+<li><p>Log-scale statistical modeling</p></li>
+<li><p>When initial conditions are naturally in log-space</p></li>
+<li><p>Maximum numerical precision requirements</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization.LOWER_BOUND">
 <span class="sig-name descname"><span class="pre">LOWER_BOUND</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.LogSigmoidGrowthInitParametrization.LOWER_BOUND" title="Link to this definition">¶</a></dt>
@@ -2003,6 +2031,7 @@ and conversion from Python’s negative indexing convention.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

@@ -122,8 +122,8 @@ whose mean is given by a single element of <code class="docutils literal notrans
 </div>
 <div class="admonition hint">
 <p class="admonition-title">Hint</p>
-<p>Follow these best practices when building models:</p>
-<ol class="arabic simple">
+<dl class="simple">
+<dt>Follow these best practices when building models:</dt><dd><ol class="arabic simple">
 <li><p>Use descriptive component names that reflect their scientific meaning</p></li>
 <li><p>Set <code class="docutils literal notranslate"><span class="pre">default_data</span></code> for models with fixed datasets to streamline workflows</p></li>
 <li><p>Start with prior predictive checks before fitting to real data</p></li>
@@ -131,6 +131,8 @@ whose mean is given by a single element of <code class="docutils literal notrans
 <li><p>Choose appropriate backends for different tasks (PyTorch for MLE, Stan for MCMC)</p></li>
 <li><p>Validate models incrementally by building from simple to complex</p></li>
 </ol>
+</dd>
+</dl>
 </div>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.model.Model.all_model_components">
@@ -413,7 +415,7 @@ both immediate execution and delayed runs for batch processing.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>output_dir</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Directory for compilation and output files. Defaults to None,
 in which case all raw outputs will be saved to a temporary directory and
-be accessible only for the lifetime of this Python process.</p></li>
+be accessible only for the lifetime of this object.</p></li>
 <li><p><strong>force_compile</strong> (<em>bool</em>) – Whether to force recompilation of Stan model. Defaults
 to False.</p></li>
 <li><p><strong>stanc_options</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Options for Stan compiler. Defaults to None (uses
@@ -502,15 +504,15 @@ initialization if not provided.</p></li>
 <dd class="field-odd"><p>mle_module.MLE</p>
 </dd>
 </dl>
-<p>The optimization process:</p>
-<ul class="simple">
+<dl>
+<dt>The optimization process:</dt><dd><ul class="simple">
 <li><p>Converts model to PyTorch and moves to specified device</p></li>
 <li><p>Trains for <cite>epochs</cite> number of epochs or until there has been no improvement
 for <cite>early_stop</cite> number epochs.</p></li>
 <li><p>Tracks loss trajectory for convergence assessment</p></li>
 <li><p>Returns parameter estimates and fitted distributions</p></li>
 </ul>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Basic MLE with default settings</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># GPU-accelerated with custom settings</span>
@@ -648,20 +650,20 @@ slider values and clicking “update model”.</p>
 <dd class="field-odd"><p>pn.Row</p>
 </dd>
 </dl>
-<p>The dashboard includes:</p>
-<ul class="simple">
+<dl>
+<dt>The dashboard includes:</dt><dd><ul class="simple">
 <li><p>Sliders for all adjustable model hyperparameters</p></li>
 <li><p>Multiple visualization modes (ECDF, KDE, violin, relationship plots)</p></li>
 <li><p>Real-time updates as parameters are modified</p></li>
 <li><p>Options for different grouping and display configurations</p></li>
 </ul>
-<p>This is useful for:</p>
-<ul class="simple">
+</dd>
+<dt>This is useful for:</dt><dd><ul class="simple">
 <li><p>Prior specification and calibration</p></li>
 <li><p>Understanding model behavior before data fitting</p></li>
 <li><p>Identifying unrealistic prior assumptions</p></li>
 </ul>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create interactive dashboard</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dashboard</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">prior_predictive</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dashboard</span><span class="o">.</span><span class="n">servable</span><span class="p">()</span>  <span class="c1"># For web deployment</span>
@@ -708,14 +710,14 @@ None if delay_run=True</p>
 <p>The method automatically updates the model name to indicate
 simulation when using the default name, helping distinguish
 simulated from real data analyses.</p>
-<p>This is crucial for:</p>
-<ul class="simple">
+<dl>
+<dt>This is crucial for:</dt><dd><ul class="simple">
 <li><p>Validating MCMC implementation correctness</p></li>
 <li><p>Testing posterior recovery in known-truth scenarios</p></li>
 <li><p>Assessing sampler efficiency and convergence</p></li>
 <li><p>Debugging model specification issues</p></li>
 </ul>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Simulate and sample with immediate execution</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sim_data</span><span class="p">,</span> <span class="n">mcmc_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate_mcmc</span><span class="p">(</span><span class="n">chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">iter_sampling</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </pre></div>
@@ -748,12 +750,14 @@ the model to this simulated data using maximum likelihood estimation.</p>
 <dd class="field-odd"><p>tuple[dict[str, npt.NDArray], mle_module.MLE]</p>
 </dd>
 </dl>
-<p>This is particularly useful for:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>This is particularly useful for:</dt><dd><ul class="simple">
 <li><p>Model validation and debugging</p></li>
 <li><p>Assessing parameter identifiability (e.g. by running multiple simulations)</p></li>
 <li><p>Verifying implementation correctness</p></li>
 </ul>
+</dd>
+</dl>
 <p>The simulated data is automatically passed to the MLE fitting
 procedure, overriding any data specification in kwargs.</p>
 <dl>
@@ -969,6 +973,7 @@ feedback during the potentially long-running sampling process.</p>
 <li class="toctree-l2"><a class="reference internal" href="../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

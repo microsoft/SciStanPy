@@ -42,11 +42,10 @@ class MetaOperation(type):
         :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter`
 
     The metaclass performs the following validations and setup:
-
-    - Ensures ``DISTCLASS`` attribute exists
-    - Validates ``DISTCLASS`` inheritance from
-      :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter`
-    - Inherits documentation from the ``DISTCLASS`` to the ``__call__`` method
+        - Ensures ``DISTCLASS`` attribute exists
+        - Validates ``DISTCLASS`` inheritance from
+          :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter`
+        - Inherits documentation from the ``DISTCLASS`` to the ``__call__`` method
     """
 
     def __new__(mcs, name, bases, attrs):
@@ -130,14 +129,13 @@ class Operation:
         :rtype: Union[transformed_parameters.TransformedParameter, Any]
 
         The method behavior depends on input types:
-
-        - If any argument is a SciStanPy model component: Returns a
-          :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter`
-          instance for later evaluation
-        - If all arguments are numerical data: Performs immediate computation using
-          the underlying
-          :py:meth:`TransformedParameter.run_np_torch_op() <scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op>`
-          method to compute and return the result directly.
+            - If any argument is a SciStanPy model component: Returns a
+              :py:class:`~scistanpy.model.components.transformations.transformed_parameters.TransformedParameter`
+              instance for later evaluation
+            - If all arguments are numerical data: Performs immediate computation using
+              the underlying
+              :py:meth:`TransformedParameter.run_np_torch_op() <scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op>`
+              method to compute and return the result directly.
         """
         # If any of the args or kwargs are scistanpy parameters, return an instance
         # of the appropriate TransformedParameter class. This effectively delays

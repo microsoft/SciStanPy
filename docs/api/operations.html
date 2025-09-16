@@ -74,13 +74,15 @@ class. In general, users will not need to interact with this metaclass directly.
 </ul>
 </dd>
 </dl>
-<p>The metaclass performs the following validations and setup:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The metaclass performs the following validations and setup:</dt><dd><ul class="simple">
 <li><p>Ensures <code class="docutils literal notranslate"><span class="pre">DISTCLASS</span></code> attribute exists</p></li>
 <li><p>Validates <code class="docutils literal notranslate"><span class="pre">DISTCLASS</span></code> inheritance from
 <a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a></p></li>
 <li><p>Inherits documentation from the <code class="docutils literal notranslate"><span class="pre">DISTCLASS</span></code> to the <code class="docutils literal notranslate"><span class="pre">__call__</span></code> method</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -142,8 +144,8 @@ operation on numerical data.</p>
 <dd class="field-odd"><p>Union[<a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter">transformed_parameters.TransformedParameter</a>, Any]</p>
 </dd>
 </dl>
-<p>The method behavior depends on input types:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The method behavior depends on input types:</dt><dd><ul class="simple">
 <li><p>If any argument is a SciStanPy model component: Returns a
 <a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedParameter</span></code></a>
 instance for later evaluation</p></li>
@@ -152,6 +154,8 @@ the underlying
 <a class="reference internal" href="model/components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter.run_np_torch_op"><code class="xref py py-meth docutils literal notranslate"><span class="pre">TransformedParameter.run_np_torch_op()</span></code></a>
 method to compute and return the result directly.</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -641,6 +645,7 @@ parametrized using initial population abundance rather than carrying capacity. S
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

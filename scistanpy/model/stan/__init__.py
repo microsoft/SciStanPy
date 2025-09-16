@@ -14,7 +14,6 @@ Python model definitions into Stan code while preserving the probabilistic struc
 and mathematical relationships.
 
 **Key Components:**
-
     - Automatic Code Generation: Converts SciStanPy models to Stan language
     - Compilation Management: Handles Stan-to-C++ compilation with caching
     - Sampling Interface: Provides high-level interface to Stan sampling algorithms
@@ -26,10 +25,10 @@ and mathematical relationships.
     with SciStanPy-specific mathematical operations. These functions are
     automatically included in generated Stan programs and provide:
 
-    - Specialized probability distributions
-    - Custom transformation functions
-    - Optimized mathematical operations
-    - SciStanPy-specific utility functions
+        - Specialized probability distributions
+        - Custom transformation functions
+        - Optimized mathematical operations
+        - SciStanPy-specific utility functions
 """
 
 import os.path

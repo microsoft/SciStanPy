@@ -103,12 +103,12 @@ notebooks, Panel applications, or web interfaces.</p>
 <dd class="field-even"><p>pn.Row</p>
 </dd>
 </dl>
-<p>The layout consists of:</p>
-<ul class="simple">
+<dl>
+<dt>The layout consists of:</dt><dd><ul class="simple">
 <li><p>Left panel: Model hyperparameter sliders and viewing options</p></li>
 <li><p>Right panel: Interactive plot display that updates based on selections</p></li>
 </ul>
-<dl>
+</dd>
 <dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">check</span> <span class="o">=</span> <span class="n">PriorPredictiveCheck</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dashboard</span> <span class="o">=</span> <span class="n">check</span><span class="o">.</span><span class="n">display</span><span class="p">()</span> <span class="c1"># For Jupyter notebook</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dashboard</span><span class="o">.</span><span class="n">servable</span><span class="p">()</span>  <span class="c1"># For web deployment</span>
@@ -133,8 +133,8 @@ calculations and appropriate hover interactions.</p>
 <dd class="field-even"><p>dict</p>
 </dd>
 </dl>
-<p>The returned dictionary includes:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The returned dictionary includes:</dt><dd><ul class="simple">
 <li><p>‘kind’: Set to ‘line’ for step-like ECDF appearance</p></li>
 <li><p>‘x’: Target parameter values</p></li>
 <li><p>‘y’: ‘Cumulative Probability’ (computed during data processing)</p></li>
@@ -142,6 +142,8 @@ calculations and appropriate hover interactions.</p>
 <li><p>‘datashade’: Disabled (False) for ECDF plots to maintain clarity</p></li>
 <li><p>‘hover’: Set to ‘hline’ for horizontal hover lines</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -159,14 +161,16 @@ and styling options.</p>
 <dd class="field-even"><p>dict</p>
 </dd>
 </dl>
-<p>The returned dictionary includes:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The returned dictionary includes:</dt><dd><ul class="simple">
 <li><p>‘kind’: Set to ‘kde’ for kernel density estimation</p></li>
 <li><p>‘x’: <cite>None</cite> for KDE plots.</p></li>
 <li><p>‘y’: Target parameter name for the y-axis</p></li>
 <li><p>‘by’: Independent label for grouping (if applicable)</p></li>
 <li><p>‘datashade’: Disabled (False) for KDE plots to maintain clarity</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -184,14 +188,18 @@ respect to independent variables, using datashading for performance.</p>
 <dd class="field-even"><p>dict</p>
 </dd>
 </dl>
-<p>The returned dictionary includes:
-- kind: Set to ‘line’ for continuous relationships
-- x: Independent variable name
-- y: Target parameter name
-- datashade: Enabled (True) for performance with large datasets
-- dynamic: Disabled (False), resulting in all data being embedded in output
-- aggregator: Set to ‘count’ for density-based coloring
-- cmap: ‘inferno’ colormap</p>
+<dl class="simple">
+<dt>The returned dictionary includes:</dt><dd><ul class="simple">
+<li><p>kind: Set to ‘line’ for continuous relationships</p></li>
+<li><p>x: Independent variable name</p></li>
+<li><p>y: Target parameter name</p></li>
+<li><p>datashade: Enabled (True) for performance with large datasets</p></li>
+<li><p>dynamic: Disabled (False), resulting in all data being embedded in output</p></li>
+<li><p>aggregator: Set to ‘count’ for density-based coloring</p></li>
+<li><p>cmap: ‘inferno’ colormap</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -209,18 +217,20 @@ appropriate categorization based on data structure.</p>
 <dd class="field-even"><p>dict</p>
 </dd>
 </dl>
-<p>The method handles multiple grouping scenarios:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The method handles multiple grouping scenarios:</dt><dd><ul class="simple">
 <li><p>Single grouping by dimension index</p></li>
 <li><p>Grouping by both dimension and independent variable</p></li>
 <li><p>Automatic determination of primary vs. secondary grouping</p></li>
 </ul>
-<p>The returned dictionary includes:</p>
-<ul class="simple">
+</dd>
+<dt>The returned dictionary includes:</dt><dd><ul class="simple">
 <li><p>‘args’: Tuple of (groups…, values) for HoloViews Violin constructor</p></li>
 <li><p>‘kdims’: List of key dimension names</p></li>
 <li><p>‘vdims’: Value dimension name (target parameter)</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -273,12 +283,14 @@ as more structure is specified.</p>
 <dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – Panel event (used for callback compatibility is not used)</p>
 </dd>
 </dl>
-<p>Plot Type Logic:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>Plot Type Logic:</dt><dd><ul class="simple">
 <li><p>ECDF and KDE: Always available for any parameter</p></li>
 <li><p>Violin: Available when grouping dimension is selected</p></li>
 <li><p>Relationship: Available when both grouping and independent variable are selected</p></li>
 </ul>
+</dd>
+</dl>
 <p>The method automatically selects the most sophisticated available plot
 type as the default when options change.</p>
 </dd></dl>
@@ -341,6 +353,7 @@ type as the default when options change.</p>
 <li class="toctree-l2"><a class="reference internal" href="../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

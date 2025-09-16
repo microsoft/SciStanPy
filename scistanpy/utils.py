@@ -7,11 +7,11 @@
 This module provides various utility functions and classes that support
 the core functionality of SciStanPy, including:
 
-- Lazy importing mechanisms for performance optimization
-- Mathematical utility functions for numerical stability
-- Array chunking utilities for efficient memory management
-- Context managers for external library integration
-- Optimized statistical computation functions
+    - Lazy importing mechanisms for performance optimization
+    - Mathematical utility functions for numerical stability
+    - Array chunking utilities for efficient memory management
+    - Context managers for external library integration
+    - Optimized statistical computation functions
 
 Users will not typically need to interact with this module directly--it is designed
 to be used internally by SciStanPy.
@@ -288,13 +288,12 @@ def get_chunk_shape(
     :raises IndexError: If frozen_dims contains invalid dimension indices
 
     The algorithm:
-
-    1. Calculates memory usage per array element based on precision
-    2. Sets frozen dimensions to their full size
-    3. Iteratively determines chunk sizes for remaining dimensions
-    4. Ensures total chunk memory stays within the specified limit (or as close to
-       it as possible if frozen dimensions result in a smallest possible size above
-       the limit)
+        1. Calculates memory usage per array element based on precision
+        2. Sets frozen dimensions to their full size
+        3. Iteratively determines chunk sizes for remaining dimensions
+        4. Ensures total chunk memory stays within the specified limit (or as close to
+           it as possible if frozen dimensions result in a smallest possible size above
+           the limit)
 
     Example:
         >>> # Chunk a (1000, 2000, 100) array, keeping last dim intact
@@ -440,10 +439,10 @@ def faster_autocorrelation(x):
     :rtype: npt.NDArray[np.floating]
 
     The function:
-    1. Builds masks for non-NaN values in each row
-    2. Computes pairwise correlations using only overlapping valid data
-    3. Uses matrix symmetry to avoid redundant calculations
-    4. Provides progress tracking for long computations
+        1. Builds masks for non-NaN values in each row
+        2. Computes pairwise correlations using only overlapping valid data
+        3. Uses matrix symmetry to avoid redundant calculations
+        4. Provides progress tracking for long computations
 
     Example:
         >>> import numpy as np

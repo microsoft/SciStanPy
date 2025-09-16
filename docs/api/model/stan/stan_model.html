@@ -80,14 +80,16 @@ required by Stan programs.</p>
 <p>The class serves as both a container for model components and for-loop
 constructs, and as a code generator that can produce appropriate Stan
 syntax for different program blocks (model, transformed parameters, etc.).</p>
-<p>Key Features:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>Key Features:</dt><dd><ul class="simple">
 <li><p>Hierarchical organization of code blocks and loops</p></li>
 <li><p>Automatic Stan syntax generation for different program sections</p></li>
 <li><p>Component filtering and organization based on block requirements</p></li>
 <li><p>Proper indentation and formatting management</p></li>
 <li><p>Loop optimization and combination capabilities</p></li>
 </ul>
+</dd>
+</dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanCodeBase.allowed_index_names">
 <em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">allowed_index_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.allowed_index_names" title="Link to this definition">¶</a></dt>
@@ -162,12 +164,14 @@ Defaults to None.</p></li>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
-<p>This method handles:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>This method handles:</dt><dd><ul class="simple">
 <li><p>Consistent indentation based on scope depth</p></li>
 <li><p>Automatic semicolon insertion for statements</p></li>
 <li><p>Proper formatting for control structures and comments</p></li>
 </ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py property">
@@ -368,14 +372,16 @@ compatible loops, and proper nesting within the code hierarchy.</p>
 <dd class="field-even"><p><strong>parent_loop</strong> – Reference to parent code block</p>
 </dd>
 </dl>
-<p>Key Features:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>Key Features:</dt><dd><ul class="simple">
 <li><p>Automatic loop range calculation based on component dimensions</p></li>
 <li><p>Loop combination optimization for compatible adjacent loops</p></li>
 <li><p>Singleton loop detection and elimination</p></li>
 <li><p>Proper index variable management and scope resolution</p></li>
 <li><p>Hierarchical ancestry tracking for scope navigation</p></li>
 </ul>
+</dd>
+</dl>
 <p>The class automatically determines loop ranges by analyzing the dimensions
 of nested model components and provides optimization features like loop
 combination to generate efficient Stan code.</p>
@@ -625,22 +631,24 @@ gathered from the SciStanPy model.</p></li>
 </ul>
 </dd>
 </dl>
-<p>The class performs comprehensive analysis of the SciStanPy model to:</p>
-<ul class="simple">
+<dl class="simple">
+<dt>The class performs comprehensive analysis of the SciStanPy model to:</dt><dd><ul class="simple">
 <li><p>Build dependency graphs and determine component ordering</p></li>
 <li><p>Generate appropriate variable names avoiding conflicts</p></li>
 <li><p>Organize components into proper Stan program structure</p></li>
 <li><p>Create optimized loop constructs for multi-dimensional components</p></li>
 <li><p>Generate all required Stan program blocks with proper syntax</p></li>
 </ul>
-<p>The code is generated following the below procedure:</p>
-<ol class="arabic simple">
+</dd>
+<dt>The code is generated following the below procedure:</dt><dd><ol class="arabic simple">
 <li><p>Dependency Analysis: Build component dependency graph</p></li>
 <li><p>Depth Assignment: Determine nesting levels for components</p></li>
 <li><p>Loop Organization: Create optimized for-loop structures</p></li>
 <li><p>Block Generation: Generate all Stan program blocks</p></li>
 <li><p>Code Formatting: Apply Stan canonical formatting</p></li>
 </ol>
+</dd>
+</dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanProgram.allowed_index_names">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">allowed_index_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanProgram.allowed_index_names" title="Link to this definition">¶</a></dt>
@@ -713,11 +721,15 @@ proper formatting and structure.</p>
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanProgram.compile">
 <span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanProgram.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanProgram.compile" title="Link to this definition">¶</a></dt>
 <dd><p>Organize model components into proper Stan program structure.</p>
-<p>This method performs the core compilation process:
-1. Determines topological ordering of components based on dependencies
-2. Organizes components into appropriate loop structures
-3. Creates and optimizes for-loop constructs
-4. Eliminates singleton loops for efficiency</p>
+<dl class="simple">
+<dt>This method performs the core compilation process:</dt><dd><ol class="arabic simple">
+<li><p>Determines topological ordering of components based on dependencies</p></li>
+<li><p>Organizes components into appropriate loop structures</p></li>
+<li><p>Creates and optimizes for-loop constructs</p></li>
+<li><p>Eliminates singleton loops for efficiency</p></li>
+</ol>
+</dd>
+</dl>
 <p>The compilation process ensures that all dependencies are satisfied
 and that the resulting Stan code is properly structured and efficient.</p>
 </dd></dl>
@@ -835,11 +847,15 @@ user_provided_varnames)</p>
 <dd class="field-odd"><p><strong>ValueError</strong> – If variable name collisions are detected</p>
 </dd>
 </dl>
-<p>Analyzes the model to categorize variables into:
-- All variable names (for conflict detection)
-- Parameter names (for Stan parameters block)
-- Auto-gathered names (constants from model)
-- User-provided names (observables requiring external data)</p>
+<dl class="simple">
+<dt>Analyzes the model to categorize variables into:</dt><dd><ul class="simple">
+<li><p>All variable names (for conflict detection)</p></li>
+<li><p>Parameter names (for Stan parameters block)</p></li>
+<li><p>Auto-gathered names (constants from model)</p></li>
+<li><p>User-provided names (observables requiring external data)</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py property">
@@ -975,7 +991,7 @@ transformations and derived quantities.</p>
 
 <dl>
 <dd><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><span class="pre">Model</span></a></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>,</dd>
 <dd><em class="sig-param"><span class="n"><span class="pre">force_compile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>,</dd>
 <dd><em class="sig-param"><span class="n"><span class="pre">stanc_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
 <dd><em class="sig-param"><span class="n"><span class="pre">cpp_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
@@ -993,7 +1009,7 @@ sampling interfaces, and comprehensive result processing.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>scistanpy.Model</em>) – SciStanPy model to compile to Stan</p></li>
-<li><p><strong>output_dir</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Directory for Stan files and compilation. Defaults to None (temporary).</p></li>
+<li><p><strong>output_dir</strong> (<em>str</em>) – Directory for Stan files and compilation.</p></li>
 <li><p><strong>force_compile</strong> (<em>bool</em>) – Whether to force recompilation. Defaults to False.</p></li>
 <li><p><strong>stanc_options</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Options for Stan compiler. Defaults to None (uses defaults).</p></li>
 <li><p><strong>cpp_options</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Options for C++ compilation. Defaults to None (uses defaults).</p></li>
@@ -1010,12 +1026,16 @@ sampling interfaces, and comprehensive result processing.</p>
 </ul>
 </dd>
 </dl>
-<p>Key Features:
-- Automatic Stan code generation from SciStanPy models
-- Enhanced sampling with prior initialization and validation
-- Automatic data gathering for observables and constants
-- Comprehensive result processing and structuring
-- Integration with ArviZ for Bayesian workflow support</p>
+<dl class="simple">
+<dt>Key Features:</dt><dd><ul class="simple">
+<li><p>Automatic Stan code generation from SciStanPy models</p></li>
+<li><p>Enhanced sampling with prior initialization and validation</p></li>
+<li><p>Automatic data gathering for observables and constants</p></li>
+<li><p>Comprehensive result processing and structuring</p></li>
+<li><p>Integration with ArviZ for Bayesian workflow support</p></li>
+</ul>
+</dd>
+</dl>
 <p>The class handles the complete workflow from SciStanPy model to Stan
 execution, providing an interface that abstracts away the complexities of Stan
 code generation and compilation management.</p>
@@ -1093,11 +1113,15 @@ SciStanPy model for inspection or external use.</p>
 <p>This method combines user-provided observable data with automatically
 gathered constants and hyperparameters to create the complete data
 input required for Stan sampling.</p>
-<p>Data Processing:
-- Validates all required observables are provided
-- Checks shape compatibility between data and model specifications
-- Automatically gathers constants and hyperparameters from model
-- Handles variable name transformation (dots to double underscores)</p>
+<dl class="simple">
+<dt>Data Processing:</dt><dd><ul class="simple">
+<li><p>Validates all required observables are provided</p></li>
+<li><p>Checks shape compatibility between data and model specifications</p></li>
+<li><p>Automatically gathers constants and hyperparameters from model</p></li>
+<li><p>Handles variable name transformation (dots to double underscores)</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -1311,12 +1335,16 @@ Defaults to None (uses Dask default).</p></li>
 <dd class="field-odd"><p>results.SampleResults</p>
 </dd>
 </dl>
-<p>Enhanced Features:
-- Automatic data gathering from SciStanPy model
-- Prior-based initialization when requested
-- Result processing and structuring
-- Memory-efficient handling of large result arrays
-- Integration with SciStanPy’s result analysis tools</p>
+<dl class="simple">
+<dt>Enhanced Features:</dt><dd><ul class="simple">
+<li><p>Automatic data gathering from SciStanPy model</p></li>
+<li><p>Prior-based initialization when requested</p></li>
+<li><p>Result processing and structuring</p></li>
+<li><p>Memory-efficient handling of large result arrays</p></li>
+<li><p>Integration with SciStanPy’s result analysis tools</p></li>
+</ul>
+</dd>
+</dl>
 <p>The method provides an interface that handles all the complexities of data
 preparation and result processing while maintaining full compatibility with
 CmdStanPy’s sampling options.</p>
@@ -1536,6 +1564,7 @@ of SciStanPy for debugging or optimization purposes.</p>
 <li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

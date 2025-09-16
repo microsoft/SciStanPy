@@ -49,7 +49,6 @@
 <span class="sd">for dynamic exploration of model results.</span>
 
 <span class="sd">Key Features:</span>
-
 <span class="sd">    - ECDF and KDE plots for distribution visualization</span>
 <span class="sd">    - Quantile plots with confidence intervals</span>
 <span class="sd">    - Model calibration diagnostics</span>
@@ -119,7 +118,6 @@
 <span class="sd">    :rtype: npt.NDArray</span>
 
 <span class="sd">    Aggregation Rules:</span>
-
 <span class="sd">        - If independent_dim is None: Returns flattened 1D array</span>
 <span class="sd">        - If independent_dim is specified: Returns 2D array with shape</span>
 <span class="sd">          (-1, n_independent) where -1 represents the product of all other dimensions</span>
@@ -226,7 +224,6 @@
 <span class="sd">    :rtype: Union[list[HVType], hvplot.interactive.Interactive]</span>
 
 <span class="sd">    The function creates:</span>
-
 <span class="sd">        - KDE plot: Smooth density estimate with automatic bandwidth</span>
 <span class="sd">        - ECDF plot: Step function showing cumulative probabilities</span>
 
@@ -276,7 +273,6 @@
 <span class="sd">    :rtype: Union[list[HVType], hvplot.interactive.Interactive]</span>
 
 <span class="sd">    The visualization includes:</span>
-
 <span class="sd">        - Multi-line ECDF plot: One curve per group with color coding</span>
 <span class="sd">        - Violin plot: Density distributions by group with colorbar</span>
 
@@ -349,7 +345,6 @@
 <span class="sd">    :rtype: Union[HVType, hvplot.interactive.Interactive]</span>
 
 <span class="sd">    Datashading options:</span>
-
 <span class="sd">        - True: Uses count aggregation with Inferno colormap (large data)</span>
 <span class="sd">        - False: Uses dynamic line plotting with lime color (small data)</span>
 
@@ -403,7 +398,6 @@
 <span class="sd">    :rtype: Callable</span>
 
 <span class="sd">    Selection Logic:</span>
-
 <span class="sd">        - No independent_dim: Returns ``plot_ecdf_kde`` (univariate analysis)</span>
 <span class="sd">        - Independent_dim but no labels: Returns ``plot_ecdf_violin`` (multi-group)</span>
 <span class="sd">        - Both independent_dim and labels: Returns ``plot_relationship`` (dependency)</span>
@@ -449,7 +443,6 @@
 <span class="sd">    :rtype: pd.DataFrame</span>
 
 <span class="sd">    The function handles:</span>
-
 <span class="sd">        - Data aggregation according to independent dimension</span>
 <span class="sd">        - Automatic label generation when not provided</span>
 <span class="sd">        - ECDF calculation for cumulative plots</span>
@@ -758,7 +751,6 @@
 <span class="sd">    :rtype: tuple[hv.Overlay, npt.NDArray[np.floating]]</span>
 
 <span class="sd">    The calibration plot shows:</span>
-
 <span class="sd">        - ECDF curves for each observation. Note that the curve represents observations</span>
 <span class="sd">            for the full set of parameters, not individual parameters.</span>
 <span class="sd">        - Ideal calibration line (diagonal from (0,0) to (1,1))</span>
@@ -956,7 +948,6 @@
 <span class="sd">        are invalid</span>
 
 <span class="sd">    Features:</span>
-
 <span class="sd">        - Automatic quantile symmetrization (adds complement quantiles)</span>
 <span class="sd">        - Nested confidence intervals with graduated transparency</span>
 <span class="sd">        - Customizable styling for all plot components</span>
@@ -1127,13 +1118,11 @@
 <span class="sd">    :raises ValueError: If x and y arrays have different shapes or are not 1D</span>
 
 <span class="sd">    The hexagonal binning:</span>
-
 <span class="sd">        - Aggregates points into hexagonal cells</span>
 <span class="sd">        - Colors cells by point density using viridis colormap</span>
 <span class="sd">        - Includes colorbar for density interpretation</span>
 
 <span class="sd">    The rolling mean:</span>
-
 <span class="sd">        - Computed over sorted x values to show trend</span>
 <span class="sd">        - Window size automatically scaled to data size</span>
 <span class="sd">        - Styled for clear visibility over density plot</span>
@@ -1202,6 +1191,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

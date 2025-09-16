@@ -585,9 +585,9 @@
 <span class="sd">        Observable parameters represent known data rather than unknown variables</span>
 <span class="sd">        to be inferred. This method:</span>
 
-<span class="sd">        - Sets the observable flag to True</span>
-<span class="sd">        - Removes PyTorch parameterization (observables aren&#39;t optimized)</span>
-<span class="sd">        - Enables generation of appropriate Stan code for data blocks</span>
+<span class="sd">            - Sets the observable flag to True</span>
+<span class="sd">            - Removes PyTorch parameterization (observables aren&#39;t optimized)</span>
+<span class="sd">            - Enables generation of appropriate Stan code for data blocks</span>
 
 <span class="sd">        This method will typically not be needed, as SciStanPy automatically assigns</span>
 <span class="sd">        parameters with no children in the depenency graph as observables.</span>
@@ -1555,7 +1555,6 @@
 <span class="sd">             - :math:`\frac{\alpha \beta}{(\alpha + \beta)^2 (\alpha + \beta + 1)}`</span>
 
 <span class="sd">    Common Applications:</span>
-
 <span class="sd">        - Prior distributions for probabilities</span>
 <span class="sd">        - Modeling proportions and percentages</span>
 <span class="sd">        - Bayesian A/B testing</span>
@@ -1659,7 +1658,6 @@
 <span class="sd">              - :math:`\frac{\beta^2}{(\alpha - 1)^2(\alpha - 2)}` for :math:`\alpha &gt; 2`</span>
 
 <span class="sd">    Common Applications:</span>
-
 <span class="sd">        - Conjugate prior for normal variance</span>
 <span class="sd">        - Hierarchical modeling of scale parameters</span>
 <span class="sd">        - Bayesian regression variance modeling</span>
@@ -1741,7 +1739,6 @@
 <span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-
 <span class="sd">        - Support: :math:`(-\infty, \infty)`</span>
 <span class="sd">        - Related to Gumbel distribution family</span>
 <span class="sd">        - Useful for log-scale modeling of exponential processes</span>
@@ -1789,8 +1786,8 @@
 <span class="sd">    Implements the Lomax distribution, which is a special case of the</span>
 <span class="sd">    Pareto Type II distribution with location parameter set to 0.</span>
 
-<span class="sd">    :param lambda_: Scale parameter</span>
-<span class="sd">    :type lambda_: custom_types.ContinuousParameterType</span>
+<span class="sd">    :param lambda\_: Scale parameter</span>
+<span class="sd">    :type lambda\_: custom_types.ContinuousParameterType</span>
 <span class="sd">    :param alpha: Shape parameter</span>
 <span class="sd">    :type alpha: custom_types.ContinuousParameterType</span>
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
@@ -1817,7 +1814,6 @@
 
 
 <span class="sd">    Common Applications:</span>
-
 <span class="sd">        - Modeling income distributions</span>
 <span class="sd">        - Network analysis (degree distributions)</span>
 <span class="sd">        - Reliability engineering</span>
@@ -1860,8 +1856,8 @@
 <span class="sd">    Implements the distribution of :math:`Y` where :math:`\exp(Y) \sim</span>
 <span class="sd">    \text{Lomax}(\lambda, \alpha)`.</span>
 
-<span class="sd">    :param lambda_: Scale parameter for underlying Lomax</span>
-<span class="sd">    :type lambda_: custom_types.ContinuousParameterType</span>
+<span class="sd">    :param lambda\_: Scale parameter for underlying Lomax</span>
+<span class="sd">    :type lambda\_: custom_types.ContinuousParameterType</span>
 <span class="sd">    :param alpha: Shape parameter for underlying Lomax</span>
 <span class="sd">    :type alpha: custom_types.ContinuousParameterType</span>
 <span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
@@ -1947,7 +1943,6 @@
 <span class="sd">                :math:`\alpha_i, \alpha_j &gt; 1`</span>
 
 <span class="sd">    Common Applications:</span>
-
 <span class="sd">        - Modeling categorical probabilities</span>
 
 <span class="sd">    .. note::</span>
@@ -2039,7 +2034,6 @@
 <span class="sd">            \end{align*}</span>
 
 <span class="sd">    Properties:</span>
-
 <span class="sd">        - Log-probability is computed in the log-simplex space</span>
 <span class="sd">        - More numerically stable for extreme concentration parameters</span>
 <span class="sd">        - Suitable for high-dimensional simplexes</span>
@@ -2214,7 +2208,6 @@
 <span class="sd">                - :math:`\lfloor (N + 1) \theta \rfloor`</span>
 
 <span class="sd">    Common Applications:</span>
-
 <span class="sd">        - Number of successes in fixed trials</span>
 <span class="sd">        - Proportion data with known denominators</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -2261,7 +2254,6 @@
 <span class="sd">               - :math:`\lfloor \lambda \rfloor`</span>
 
 <span class="sd">    Common Applications:</span>
-
 <span class="sd">        - Event counting (arrivals, defects, etc.)</span>
 <span class="sd">        - Modeling rare events</span>
 <span class="sd">        - Count regression</span>
@@ -2352,7 +2344,6 @@
 <span class="sd">              - :math:`-N \theta_i \theta_j`</span>
 
 <span class="sd">    Common Applications:</span>
-
 <span class="sd">        - Categorical count data</span>
 <span class="sd">        - Multinomial logistic regression</span>
 <span class="sd">        - Natural language processing (word counts)</span>
@@ -2640,6 +2631,7 @@
 <script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">SciStanPy API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Examples</a></li>
 </ul>
 
 <div class="relations">

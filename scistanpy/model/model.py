@@ -188,13 +188,12 @@ class Model:
 
     .. hint::
         Follow these best practices when building models:
-
-        1. Use descriptive component names that reflect their scientific meaning
-        2. Set ``default_data`` for models with fixed datasets to streamline workflows
-        3. Start with prior predictive checks before fitting to real data
-        4. Use simulation methods to validate model implementation
-        5. Choose appropriate backends for different tasks (PyTorch for MLE, Stan for MCMC)
-        6. Validate models incrementally by building from simple to complex
+            1. Use descriptive component names that reflect their scientific meaning
+            2. Set ``default_data`` for models with fixed datasets to streamline workflows
+            3. Start with prior predictive checks before fitting to real data
+            4. Use simulation methods to validate model implementation
+            5. Choose appropriate backends for different tasks (PyTorch for MLE, Stan for MCMC)
+            6. Validate models incrementally by building from simple to complex
 
     """
 
@@ -324,10 +323,10 @@ class Model:
         :rtype: dict[str, abstract_model_component.AbstractModelComponent]
 
         The mapping includes:
-        - All observable parameters and their dependencies
-        - Transformed data components
-        - Constants and hyperparameters
-        - Transformed parameters used in the model
+            - All observable parameters and their dependencies
+            - Transformed data components
+            - Constants and hyperparameters
+            - Transformed parameters used in the model
 
         The method ensures no duplicate variable names exist and validates
         the integrity of the component dependency graph.
@@ -446,10 +445,10 @@ class Model:
         :raises ValueError: If array dimensions don't match expected model structure
 
         The method:
-        - Identifies and removes singleton dimensions
-        - Assigns appropriate dimension names based on model structure
-        - Handles sample dimensions for drawn data (e.g., from prior predictive checks)
-        - Ensures dimensional consistency across all processed arrays
+            - Identifies and removes singleton dimensions
+            - Assigns appropriate dimension names based on model structure
+            - Handles sample dimensions for drawn data (e.g., from prior predictive checks)
+            - Ensures dimensional consistency across all processed arrays
         """
         # Get a mapping from dimension keys to dimension names
         dims = self.get_dimname_map()
@@ -506,9 +505,9 @@ class Model:
         :rtype: xr.Dataset
 
         The resulting dataset includes:
-        - Data variables for all non-constant components
-        - Coordinates for multi-dimensional constants
-        - Proper dimension naming and alignment
+            - Data variables for all non-constant components
+            - Coordinates for multi-dimensional constants
+            - Proper dimension naming and alignment
         """
         # Split into components and draws and components and values
         model_comps, unpacked_draws = zip(
@@ -715,12 +714,11 @@ class Model:
         :rtype: mle_module.MLE
 
         The optimization process:
-
-        - Converts model to PyTorch and moves to specified device
-        - Trains for `epochs` number of epochs or until there has been no improvement
-          for `early_stop` number epochs.
-        - Tracks loss trajectory for convergence assessment
-        - Returns parameter estimates and fitted distributions
+            - Converts model to PyTorch and moves to specified device
+            - Trains for `epochs` number of epochs or until there has been no improvement
+              for `early_stop` number epochs.
+            - Tracks loss trajectory for convergence assessment
+            - Returns parameter estimates and fitted distributions
 
         Example:
             >>> # Basic MLE with default settings
@@ -814,10 +812,9 @@ class Model:
         :rtype: tuple[dict[str, npt.NDArray], mle_module.MLE]
 
         This is particularly useful for:
-
-        - Model validation and debugging
-        - Assessing parameter identifiability (e.g. by running multiple simulations)
-        - Verifying implementation correctness
+            - Model validation and debugging
+            - Assessing parameter identifiability (e.g. by running multiple simulations)
+            - Verifying implementation correctness
 
         The simulated data is automatically passed to the MLE fitting
         procedure, overriding any data specification in kwargs.
@@ -1016,11 +1013,10 @@ class Model:
         simulated from real data analyses.
 
         This is crucial for:
-
-        - Validating MCMC implementation correctness
-        - Testing posterior recovery in known-truth scenarios
-        - Assessing sampler efficiency and convergence
-        - Debugging model specification issues
+            - Validating MCMC implementation correctness
+            - Testing posterior recovery in known-truth scenarios
+            - Assessing sampler efficiency and convergence
+            - Debugging model specification issues
 
         Example:
             >>> # Simulate and sample with immediate execution
@@ -1053,17 +1049,15 @@ class Model:
         :rtype: pn.Row
 
         The dashboard includes:
-
-        - Sliders for all adjustable model hyperparameters
-        - Multiple visualization modes (ECDF, KDE, violin, relationship plots)
-        - Real-time updates as parameters are modified
-        - Options for different grouping and display configurations
+            - Sliders for all adjustable model hyperparameters
+            - Multiple visualization modes (ECDF, KDE, violin, relationship plots)
+            - Real-time updates as parameters are modified
+            - Options for different grouping and display configurations
 
         This is useful for:
-
-        - Prior specification and calibration
-        - Understanding model behavior before data fitting
-        - Identifying unrealistic prior assumptions
+            - Prior specification and calibration
+            - Understanding model behavior before data fitting
+            - Identifying unrealistic prior assumptions
 
         Example:
             >>> # Create interactive dashboard
@@ -1085,10 +1079,10 @@ class Model:
         :rtype: str
 
         The representation includes organized sections for:
-        - Constants and hyperparameters
-        - Transformed parameters
-        - Regular parameters
-        - Observable parameters
+            - Constants and hyperparameters
+            - Transformed parameters
+            - Regular parameters
+            - Observable parameters
 
         Each section lists components with their specifications and
         current values, providing a complete overview of model structure.
