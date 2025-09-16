@@ -5,10 +5,10 @@ from typing import Literal
 # Default values for hyperparameters
 DEFAULT_HYPERPARAMS = {
     "alpha": 0.1,
-    "exp_beta": 4.0,
+    "exp_beta": 10.0,
     "exp_beta_nuclease": 10.0,
-    "lambda_": 1.0,
-    "lomax_alpha": 1.0,
+    "lambda_": 0.1,
+    "lomax_alpha": 5.0,
     "lomax_alpha_nuclease": 5.0,
     "c_alpha": 4.0,
     "c_beta": 8.0,

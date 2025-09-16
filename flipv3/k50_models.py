@@ -55,8 +55,8 @@ class K50Model(Model):
         qpcr_log2_survival_sigma_sigma: "custom_types.Float" = 0.1,
         protease_dg_sigma_sigma: "custom_types.Float" = 0.1,
         protease_conc_sigma_sigma: "custom_types.Float" = 0.1,
-        expected_dg_unfolding: "custom_types.Float" = 5.0,  # Assume stable for non-scrambled
-        expected_dg_unfolding_scrambled: "custom_types.Float" = -5.0,  # Assume unstable for scrambled
+        expected_dg_unfolding: "custom_types.Float" = 5.0,  # Non-scrambled stable
+        expected_dg_unfolding_scrambled: "custom_types.Float" = -5.0,  # Scrambled unstable
         dg_unfolding_sigma: "custom_types.Float" = 5.0,
         pssm_mus: npt.NDArray[np.float64] | None = None,
         pssm_sigmas: npt.NDArray[np.float64] | None = None,
