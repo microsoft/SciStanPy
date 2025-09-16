@@ -3,6 +3,12 @@ SciStanPy: Intuitive Bayesian Modeling for Scientists
 
 Welcome to SciStanPy, a Python framework that makes Bayesian statistical modeling accessible to scientists and researchers. This page covers installation only. For comprehensive documentation, see the [documentation](https://microsoft.github.io/scistanpy/). For worked examples, take a look at the `examples` subfolder of this repository. A static version of these examples can also be found in the documentation [here](https://microsoft.github.io/scistanpy/examples).
 
+**NOTE**: This is an Alpha release! Please:
+1. Open issues for all encountered issues
+2. Provide feedback! What works well? What can be improved?
+
+Best efforts will be made to preserve the existing API structure, but it may change as feedback arrives.
+
 # Installation
 To start, clone SciStanPy from GitHub:
 
