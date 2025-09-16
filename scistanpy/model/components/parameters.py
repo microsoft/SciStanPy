@@ -1652,8 +1652,8 @@ class Lomax(ContinuousDistribution):
     Implements the Lomax distribution, which is a special case of the
     Pareto Type II distribution with location parameter set to 0.
 
-    :param lambda_: Scale parameter
-    :type lambda_: custom_types.ContinuousParameterType
+    :param lambda\_: Scale parameter
+    :type lambda\_: custom_types.ContinuousParameterType
     :param alpha: Shape parameter
     :type alpha: custom_types.ContinuousParameterType
     :param kwargs: Additional keyword arguments passed to parent class
@@ -1720,8 +1720,8 @@ class ExpLomax(ContinuousDistribution):
     Implements the distribution of :math:`Y` where :math:`\exp(Y) \sim
     \text{Lomax}(\lambda, \alpha)`.
 
-    :param lambda_: Scale parameter for underlying Lomax
-    :type lambda_: custom_types.ContinuousParameterType
+    :param lambda\_: Scale parameter for underlying Lomax
+    :type lambda\_: custom_types.ContinuousParameterType
     :param alpha: Shape parameter for underlying Lomax
     :type alpha: custom_types.ContinuousParameterType
     :param kwargs: Additional keyword arguments passed to parent class

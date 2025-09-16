@@ -639,7 +639,10 @@ class ExpDirichlet(
         # Make adjustments
         return (
             base_log_prob
-            + 0.5 * torch.log(value.size(-1))
+            + 0.5
+            * torch.log(
+                torch.tensor(value.size(-1), dtype=value.dtype, device=value.device)
+            )
             - value[..., torch.tensor([-1], device=value.device)]
         )
 

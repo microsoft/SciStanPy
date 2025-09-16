@@ -19,13 +19,15 @@ including Stan for Hamiltonai Monte Carlo sampling and PyTorch for maximum likel
 estimation.
 """
 
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines, line-too-long
 
 from __future__ import annotations
 
 import os.path
 import pickle
+import weakref
 
+from tempfile import TemporaryDirectory
 from typing import Any, Iterable, Literal, Optional, overload, TYPE_CHECKING, Union
 
 import numpy as np
@@ -885,7 +887,7 @@ class Model:
 
         :param output_dir: Directory for compilation and output files. Defaults to None,
             in which case all raw outputs will be saved to a temporary directory and
-            be accessible only for the lifetime of this Python process.
+            be accessible only for the lifetime of this object.
         :type output_dir: Optional[str]
         :param force_compile: Whether to force recompilation of Stan model. Defaults
             to False.
@@ -942,6 +944,16 @@ class Model:
                 "An output directory must be provided if `delay_run` is True."
             )
 
+        # Build the output directory if not provided
+        if output_dir is None:
+            tempdir = TemporaryDirectory()
+            weakref.finalize(self, tempdir.cleanup)
+            output_dir = tempdir.name
+
+        # Full path of output directory
+        output_dir = os.path.abspath(output_dir)
+        sample_kwargs["output_dir"] = output_dir
+
         # Build the Stan model
         model = self.to_stan(
             output_dir=output_dir,
@@ -951,9 +963,6 @@ class Model:
             user_header=user_header,
             model_name=model_name,
         )
-
-        # Update the output directory in the sample kwargs
-        sample_kwargs["output_dir"] = os.path.abspath(model.output_dir)
 
         # If delaying, then we save the data needed for sampling and return
         if delay_run:

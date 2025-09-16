@@ -26,11 +26,9 @@ from __future__ import annotations
 import functools
 import os.path
 import warnings
-import weakref
 
 from abc import ABC, abstractmethod
 from collections import Counter
-from tempfile import TemporaryDirectory
 from typing import (
     Any,
     Callable,
@@ -1454,8 +1452,8 @@ class StanModel(CmdStanModel):
 
     :param model: SciStanPy model to compile to Stan
     :type model: scistanpy.Model
-    :param output_dir: Directory for Stan files and compilation. Defaults to None (temporary).
-    :type output_dir: Optional[str]
+    :param output_dir: Directory for Stan files and compilation.
+    :type output_dir: str
     :param force_compile: Whether to force recompilation. Defaults to False.
     :type force_compile: bool
     :param stanc_options: Options for Stan compiler. Defaults to None (uses defaults).
@@ -1488,7 +1486,7 @@ class StanModel(CmdStanModel):
     def __init__(
         self,
         model: "scistanpy.Model",
-        output_dir: Optional[str] = None,
+        output_dir: str,
         force_compile: bool = DEFAULT_FORCE_COMPILE,
         stanc_options: Optional[dict[str, Any]] = None,
         cpp_options: Optional[dict[str, Any]] = None,
@@ -1511,7 +1509,9 @@ class StanModel(CmdStanModel):
         self.program = StanProgram(model)
 
         # Set the output directory
-        self._set_output_dir(output_dir)
+        if not os.path.exists(output_dir):
+            raise ValueError(f"Output directory {output_dir} does not exist")
+        self.output_dir = output_dir
 
         # Get the model name
         self.stan_executable_path = os.path.join(self.output_dir, model_name)
@@ -1532,31 +1532,6 @@ class StanModel(CmdStanModel):
             cpp_options=cpp_options,
             user_header=user_header,
         )
-
-    def _set_output_dir(self, output_dir: Optional[str]) -> None:
-        """Configure output directory with automatic cleanup for temporary directories.
-
-        :param output_dir: Directory path or None for temporary directory
-        :type output_dir: Optional[str]
-
-        :raises FileNotFoundError: If specified directory doesn't exist
-
-        Sets up the output directory for Stan files, creating a temporary
-        directory with automatic cleanup if none is specified.
-        """
-        # Make a temporary directory if none is specified. Set up a weak reference
-        # to clean up the temporary directory when the model is deleted.
-        if output_dir is None:
-            tempdir = TemporaryDirectory()
-            weakref.finalize(self, tempdir.cleanup)
-            output_dir = tempdir.name
-
-        # Make sure the output directory exists
-        if not os.path.exists(output_dir):
-            raise FileNotFoundError(f"Output directory {output_dir} does not exist.")
-
-        # Set the output directory
-        self.output_dir = output_dir
 
     def write_stan_program(self) -> None:
         """Write and format the generated Stan program to disk.

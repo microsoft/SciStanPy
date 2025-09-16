@@ -117,7 +117,7 @@ def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
 
 class MLEInferenceRes:
     """Analysis interface for bootstrapped samples from
-    :py:class`~scistanpy.model.results.mle.MLE` instances.
+    :py:class:`~scistanpy.model.results.mle.MLE` instances.
 
     This class provides tools for analyzing and visualizing MLE
     results from SciStanPy models. It wraps ArviZ InferenceData objects with
