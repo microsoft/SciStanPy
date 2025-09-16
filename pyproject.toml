@@ -1,14 +1,54 @@
 [build-system]
-requires = ["setuptools >= 61.0"]
+requires = ["artifacts-keyring",  "keyring", "setuptools >= 61.0", "sphinx", "twine"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "scistanpy"
-description = "Package for analyzing deep mutational scanning data using Stan."
-dynamic = ["version"]
 authors = [{name = "Bruce Wittmann", email = "bwittmann@microsoft.com"}]
 classifiers=[
-    "Programming Language :: Python :: 3",
-    "License :: Microsoft License",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Private :: Do Not Upload",
+    "Topic :: Scientific/Engineering"
 ]
+dependencies = [
+    "arviz>=0.21",
+    "biopython",
+    "cmdstanpy[all]",
+    "dask",
+    "datashader",
+    "hvplot",
+    "jupyter",
+    "jupyter_bokeh",
+    "numpy",
+    "panel",
+    "pandas",
+    "pyopencl",
+    "scipy",
+    "torch",
+    "torchvision",
+    "typeguard",
+    "xarray",
+]
+description = "Package for Bayesian analysis of scientific data using Stan and PyTorch."
+dynamic = ["version"]
+keywords = ["stan", "pystan", "python", "pytorch", "bayesian", "statistics", "data analysis"]
+license = "MIT"
+license-files = ["LICENSE.txt", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md", "SECURITY.md"]
+name = "scistanpy"
+readme = "README.md"
+requires-python = ">= 3.12"
+
+[project.scripts]
+install_cmdstan = "cmdstanpy.utils.cmdstan:install_cmdstan"
+
+[project.urls]
+Documentation = "https://microsoft.github.io/scistanpy/"
+Repository = "https://github.com/microsoft/scistanpy"
+Issues = "https://github.com/microsoft/scistanpy/issues"
+
+
