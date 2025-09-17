@@ -1,0 +1,6 @@
+include CONTRIBUTING.md
+include CODE_OF_CONDUCT.md
+include LICENSE.txt
+include README.md
+include SECURITY.md
+include scistanpy/model/stan/*.stanfunctions

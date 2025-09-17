@@ -51,4 +51,5 @@ Documentation = "https://microsoft.github.io/scistanpy/"
 Repository = "https://github.com/microsoft/scistanpy"
 Issues = "https://github.com/microsoft/scistanpy/issues"
 
-
+[tool.setuptools]
+include-package-data = true
