@@ -22,7 +22,7 @@ If you are not planning to contribute to SciStanPy, you can install with `pip` a
 pip install .
 ```
 
-Once Python dependencies are installed with `pip`, install `cmdstan` with the command `install_cmdstan`. Installation of SciStanPy is now complete! Take a look [here](https://microsoft.github.io/scistanpy/) for a quick-start guide.
+Once Python dependencies are installed with `pip`, install `cmdstan` with the command `install_cmdstan`. Installation of SciStanPy is now complete! Take a look [here](https://microsoft.github.io/SciStanPy/) for a quick-start guide.
 
 If you are a developer looking to contribute to SciStanPy (or if you are a casual user who wants to use the development environment), install via `conda` as below:
 
