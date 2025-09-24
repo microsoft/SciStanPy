@@ -24,6 +24,7 @@ instance or (2) use this module implicitly when fitting a SciStanPy model via th
 from __future__ import annotations
 
 import functools
+import json
 import os.path
 import warnings
 import weakref
@@ -115,12 +116,17 @@ class StanCodeBase(ABC, list):
         # Record the parent loop
         self.parent_loop = parent_loop
 
-    def recurse_for_loops(self) -> Generator["StanForLoop", None, None]:
+    def recurse_for_loops(
+        self, yield_self: bool = True
+    ) -> Generator["StanForLoop", None, None]:
         """Generate all for-loops in the program hierarchy.
 
         This method recursively traverses the code structure to yield all
         for-loop constructs, enabling comprehensive analysis and optimization
         of the loop structure.
+
+        :param yield_self: Whether to include this loop in the output. Defaults to True.
+        :type yield_self: bool
 
         :yields: All StanForLoop instances in the hierarchy
         :rtype: Generator[StanForLoop, None, None]
@@ -129,8 +135,9 @@ class StanCodeBase(ABC, list):
         level before recursing into nested loops, ensuring proper processing
         order for loop optimization procedures.
         """
-        # Yield this loop
-        yield self
+        # Yield this loop if requested
+        if yield_self:
+            yield self
 
         # Loop over all nested loops and yield from them as well
         for loop in self.nested_loops:
@@ -278,11 +285,22 @@ class StanCodeBase(ABC, list):
                 # combine it with the previous loop (if there was one).
                 if isinstance(current_component, StanForLoop):
 
-                    # Combine with the previous for-loop if it is compatible
+                    # Combine with the previous for-loop if it is compatible. Loops
+                    # are compatible if depths and end values are the same AND if
+                    # subloops do NOT have equal end values (this avoids cases where
+                    # a nested loop calls a component in an outer loop that is not
+                    # yet populated).
                     if (
                         prev_loop is not None
                         and current_component.end == prev_loop.end
                         and current_component.depth == prev_loop.depth
+                        and all(
+                            nested_loop.end != prev_loop.end
+                            for nested_loop in current_component.recurse_for_loops(
+                                yield_self=False
+                            )
+                            if filter_func(nested_loop)
+                        )
                     ):
 
                         # Extend a copy of the previous loop with the current component
@@ -1071,7 +1089,9 @@ class StanProgram(StanCodeBase):
             or component.parent_loop is not None
         ]
 
-    def recurse_for_loops(self) -> Generator[StanForLoop, None, None]:
+    def recurse_for_loops(  # pylint: disable=arguments-differ
+        self,
+    ) -> Generator[StanForLoop, None, None]:
         """Generate all for-loops in the program (excluding self).
 
         :yields: All StanForLoop instances in the program
@@ -1080,8 +1100,7 @@ class StanProgram(StanCodeBase):
         This method yields only the nested for-loops, not the program itself, which
         is different from the `StanForLoop` sibling class.
         """
-        for loop in self.nested_loops:
-            yield from loop.recurse_for_loops()
+        yield from super().recurse_for_loops(yield_self=False)
 
     def append(
         self,
@@ -1438,6 +1457,21 @@ def _update_cmdstanpy_func(func: Callable[P, R], warn: bool = False) -> Callable
         # values for the observables. We will get the rest of the inputs from the
         # SciStanPy model.
         kwargs["data"] = stan_model.gather_inputs(**kwargs["data"])
+
+        # Save data to json format in the output directory for later reference
+        json_path = os.path.join(stan_model.output_dir, "data.json")
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    k: (v.tolist() if isinstance(v, np.ndarray) else v)
+                    for k, v in kwargs["data"].items()
+                },
+                f,
+                indent=4,
+            )
+
+        # Use the json file as the data input
+        kwargs["data"] = json_path
 
         # Run the wrapped function
         return func(stan_model, **kwargs)
