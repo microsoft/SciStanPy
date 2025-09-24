@@ -290,17 +290,26 @@ deterministic data transformations.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.stan.stan_model.StanCodeBase.recurse_for_loops">
-<span class="sig-name descname"><span class="pre">recurse_for_loops</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Generator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop" title="scistanpy.model.stan.stan_model.StanForLoop"><span class="pre">StanForLoop</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase.recurse_for_loops"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.recurse_for_loops" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">recurse_for_loops</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="n"><span class="pre">yield_self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Generator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop" title="scistanpy.model.stan.stan_model.StanForLoop"><span class="pre">StanForLoop</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/stan/stan_model.html#StanCodeBase.recurse_for_loops"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.stan.stan_model.StanCodeBase.recurse_for_loops" title="Link to this definition">¶</a></dt>
 <dd><p>Generate all for-loops in the program hierarchy.</p>
 <p>This method recursively traverses the code structure to yield all
 for-loop constructs, enabling comprehensive analysis and optimization
 of the loop structure.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Yields<span class="colon">:</span></dt>
-<dd class="field-odd"><p>All StanForLoop instances in the hierarchy</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>yield_self</strong> (<em>bool</em>) – Whether to include this loop in the output. Defaults to True.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>Generator[<a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop" title="scistanpy.model.stan.stan_model.StanForLoop">StanForLoop</a>, None, None]</p>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p>All StanForLoop instances in the hierarchy</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Generator[<a class="reference internal" href="#scistanpy.model.stan.stan_model.StanForLoop" title="scistanpy.model.stan.stan_model.StanForLoop">StanForLoop</a>, None, None]</p>
 </dd>
 </dl>
 <p>The traversal follows a depth-first pattern, yielding the current

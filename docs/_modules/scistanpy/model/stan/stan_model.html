@@ -57,6 +57,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
@@ -149,12 +150,17 @@
 
 <div class="viewcode-block" id="StanCodeBase.recurse_for_loops">
 <a class="viewcode-back" href="../../../../api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanCodeBase.recurse_for_loops">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">recurse_for_loops</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="s2">&quot;StanForLoop&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">recurse_for_loops</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">yield_self</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="s2">&quot;StanForLoop&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate all for-loops in the program hierarchy.</span>
 
 <span class="sd">        This method recursively traverses the code structure to yield all</span>
 <span class="sd">        for-loop constructs, enabling comprehensive analysis and optimization</span>
 <span class="sd">        of the loop structure.</span>
+
+<span class="sd">        :param yield_self: Whether to include this loop in the output. Defaults to True.</span>
+<span class="sd">        :type yield_self: bool</span>
 
 <span class="sd">        :yields: All StanForLoop instances in the hierarchy</span>
 <span class="sd">        :rtype: Generator[StanForLoop, None, None]</span>
@@ -163,8 +169,9 @@
 <span class="sd">        level before recursing into nested loops, ensuring proper processing</span>
 <span class="sd">        order for loop optimization procedures.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Yield this loop</span>
-        <span class="k">yield</span> <span class="bp">self</span>
+        <span class="c1"># Yield this loop if requested</span>
+        <span class="k">if</span> <span class="n">yield_self</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">self</span>
 
         <span class="c1"># Loop over all nested loops and yield from them as well</span>
         <span class="k">for</span> <span class="n">loop</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nested_loops</span><span class="p">:</span>
@@ -318,11 +325,22 @@
                 <span class="c1"># combine it with the previous loop (if there was one).</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_component</span><span class="p">,</span> <span class="n">StanForLoop</span><span class="p">):</span>
 
-                    <span class="c1"># Combine with the previous for-loop if it is compatible</span>
+                    <span class="c1"># Combine with the previous for-loop if it is compatible. Loops</span>
+                    <span class="c1"># are compatible if depths and end values are the same AND if</span>
+                    <span class="c1"># subloops do NOT have equal end values (this avoids cases where</span>
+                    <span class="c1"># a nested loop calls a component in an outer loop that is not</span>
+                    <span class="c1"># yet populated).</span>
                     <span class="k">if</span> <span class="p">(</span>
                         <span class="n">prev_loop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                         <span class="ow">and</span> <span class="n">current_component</span><span class="o">.</span><span class="n">end</span> <span class="o">==</span> <span class="n">prev_loop</span><span class="o">.</span><span class="n">end</span>
                         <span class="ow">and</span> <span class="n">current_component</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="n">prev_loop</span><span class="o">.</span><span class="n">depth</span>
+                        <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+                            <span class="n">nested_loop</span><span class="o">.</span><span class="n">end</span> <span class="o">!=</span> <span class="n">prev_loop</span><span class="o">.</span><span class="n">end</span>
+                            <span class="k">for</span> <span class="n">nested_loop</span> <span class="ow">in</span> <span class="n">current_component</span><span class="o">.</span><span class="n">recurse_for_loops</span><span class="p">(</span>
+                                <span class="n">yield_self</span><span class="o">=</span><span class="kc">False</span>
+                            <span class="p">)</span>
+                            <span class="k">if</span> <span class="n">filter_func</span><span class="p">(</span><span class="n">nested_loop</span><span class="p">)</span>
+                        <span class="p">)</span>
                     <span class="p">):</span>
 
                         <span class="c1"># Extend a copy of the previous loop with the current component</span>
@@ -1157,7 +1175,9 @@
 
 <div class="viewcode-block" id="StanProgram.recurse_for_loops">
 <a class="viewcode-back" href="../../../../api/model/stan/stan_model.html#scistanpy.model.stan.stan_model.StanProgram.recurse_for_loops">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">recurse_for_loops</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">StanForLoop</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">recurse_for_loops</span><span class="p">(</span>  <span class="c1"># pylint: disable=arguments-differ</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">StanForLoop</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate all for-loops in the program (excluding self).</span>
 
 <span class="sd">        :yields: All StanForLoop instances in the program</span>
@@ -1166,8 +1186,7 @@
 <span class="sd">        This method yields only the nested for-loops, not the program itself, which</span>
 <span class="sd">        is different from the `StanForLoop` sibling class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">loop</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nested_loops</span><span class="p">:</span>
-            <span class="k">yield from</span> <span class="n">loop</span><span class="o">.</span><span class="n">recurse_for_loops</span><span class="p">()</span></div>
+        <span class="k">yield from</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">recurse_for_loops</span><span class="p">(</span><span class="n">yield_self</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StanProgram.append">
@@ -1529,6 +1548,21 @@
         <span class="c1"># values for the observables. We will get the rest of the inputs from the</span>
         <span class="c1"># SciStanPy model.</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stan_model</span><span class="o">.</span><span class="n">gather_inputs</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Save data to json format in the output directory for later reference</span>
+        <span class="n">json_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">stan_model</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">&quot;data.json&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">},</span>
+                <span class="n">f</span><span class="p">,</span>
+                <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Use the json file as the data input</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json_path</span>
 
         <span class="c1"># Run the wrapped function</span>
         <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="n">stan_model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
