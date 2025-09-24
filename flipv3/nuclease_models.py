@@ -95,9 +95,12 @@ class G1Template(Model):
         # conditions and another that results naturally from varying levels of
         # protein expression due to differing codon usage
         self.experimental_noise = parameters.HalfNormal(sigma=experimental_noise_sigma)
-        self.codon_noise = parameters.HalfNormal(
-            sigma=codon_noise_sigma, shape=(self.n_variants,)
+        self.codon_noise = parameters.Gamma(
+            alpha=10.0, beta=2.0, shape=(self.n_variants,)
         )
+        # self.codon_noise = parameters.HalfNormal(
+        #     sigma=codon_noise_sigma, shape=(self.n_variants,)
+        # )
 
         # All variants are each described by a mean log fluorescence
         # pylint: disable=no-member
@@ -119,16 +122,14 @@ class G1Template(Model):
         # fluorescence greater than a given threshold is given by evaluating the
         # survival function of the log normal distribution that describes the distribution
         # at the fluorescence value of the threshold
-        self.log_theta_low = operations.normalize_log(
-            parameters.Normal.log_ccdf(
-                x=self.log_lt,
-                mu=self.experimental_mean_log_fluorescence,
-                sigma=self.codon_noise,
-                shape=self.experimental_mean_log_fluorescence.shape,
-            )
-            + self.log_theta_t0
+        self.log_survival_low = parameters.Normal.log_ccdf(
+            x=self.log_lt,
+            mu=self.experimental_mean_log_fluorescence,
+            sigma=self.codon_noise,
+            shape=self.experimental_mean_log_fluorescence.shape,
         )
-        self.log_theta_high = operations.normalize_log(
+        self.log_theta_low_unnorm = self.log_survival_low + self.log_theta_t0
+        self.log_theta_high_unnorm = (
             parameters.Normal.log_ccdf(
                 x=self.log_ht,
                 mu=self.experimental_mean_log_fluorescence,
@@ -137,6 +138,10 @@ class G1Template(Model):
             )
             + self.log_theta_t0
         )
+
+        # Normalize to get proportions
+        self.log_theta_low = operations.normalize_log(self.log_theta_low_unnorm)
+        self.log_theta_high = operations.normalize_log(self.log_theta_high_unnorm)
 
         # Now model input counts
         for i, name in enumerate(("ic1", "ic2", "ic3")):
@@ -371,7 +376,7 @@ class LomaxFluorescenceMixIn:
 
     def _set_base_log_fluorescence(  # pylint: disable=unused-argument
         self,
-        lambda_: "custom_types.Float" = DEFAULT_HYPERPARAMS["lambda_"],
+        lambda_: "custom_types.Float" = DEFAULT_HYPERPARAMS["lambda_nuclease"],
         lomax_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["lomax_alpha_nuclease"],
         **kwargs,
     ):

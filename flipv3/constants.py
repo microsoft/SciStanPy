@@ -8,8 +8,9 @@ DEFAULT_HYPERPARAMS = {
     "exp_beta": 10.0,
     "exp_beta_nuclease": 10.0,
     "lambda_": 0.1,
+    "lambda_nuclease": 0.1,
     "lomax_alpha": 5.0,
-    "lomax_alpha_nuclease": 5.0,
+    "lomax_alpha_nuclease": 2.0,
     "c_alpha": 4.0,
     "c_beta": 8.0,
     "r_sigma_sigma": 0.01,
@@ -17,7 +18,7 @@ DEFAULT_HYPERPARAMS = {
     "inv_r_beta": 1.0,
     "alpha_alpha": 5.0,
     "alpha_beta": 5.0,
-    "codon_noise_sigma": 0.1,
+    "codon_noise_sigma": 10.0,
     "experimental_noise_sigma": 0.01,
 }
 
