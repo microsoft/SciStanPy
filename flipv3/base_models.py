@@ -188,7 +188,6 @@ class HierarchicalEnrichmentMeta(FlatEnrichmentMeta):
             A gamma distribution defines the inverse of the growth rate.
             """
             # Assign the inverse growth rate
-            assert gr_func is None
             self.inv_r_mean = parameters.Gamma(
                 alpha=inv_r_alpha, beta=inv_r_beta, shape=(self.n_variants,)
             )
