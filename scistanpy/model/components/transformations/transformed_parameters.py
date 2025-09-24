@@ -2455,7 +2455,8 @@ class IndexParameter(TransformedParameter):
                 processed_inds.append(self.neg_to_pos(ind, shape_ind) + 1)
                 shape_ind += 1
 
-            # `None` values add a new dimension to the output.
+            # `None` values add a new dimension to the output but does not advance
+            # the shape index
             elif ind is None:
                 shape.append(1)
 
@@ -2465,6 +2466,9 @@ class IndexParameter(TransformedParameter):
                     "Indexing supported by slicing, numpy arrays, and integers only."
                     f"Got {type(ind)}"
                 )
+
+        # Extend shape by remaining dimensions
+        shape.extend(self._dist_shape[shape_ind:])
 
         # Remove None values from the shape
         return tuple(shape), tuple(processed_inds), parents
