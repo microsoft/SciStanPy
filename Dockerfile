@@ -57,5 +57,6 @@ RUN chmod -R 777 /opt/conda/bin/cmdstan
 # Install scistanpy
 COPY pyproject.toml setup.py /opt/SciStanPy/
 COPY scistanpy/ /opt/SciStanPy/scistanpy/
+COPY flipv3/ /opt/SciStanPy/flipv3/
 WORKDIR /opt/SciStanPy
 RUN python3 -m pip install --no-cache-dir -e .
