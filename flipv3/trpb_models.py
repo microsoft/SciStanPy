@@ -285,7 +285,11 @@ def get_trpb_model(
 
 
 def get_trpb_instance(
-    filepath: str, lib: TrpBLibrary, growth_curve: GrowthCurve, growth_rate: GrowthRate
+    filepath: str,
+    lib: TrpBLibrary,
+    growth_curve: GrowthCurve,
+    growth_rate: GrowthRate,
+    **hyperparams,
 ) -> BaseTrpBTemplate:
     """Gets an instance of the appropriate class for the given library and growth curve."""
     # Load the data and remove fields we do not need
@@ -296,5 +300,5 @@ def get_trpb_instance(
 
     # Build the model
     return get_trpb_model(lib=lib, growth_curve=growth_curve, growth_rate=growth_rate)(
-        **dataset
+        **dataset, **hyperparams
     )

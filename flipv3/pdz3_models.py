@@ -23,7 +23,7 @@ class BasePDZ3(BaseEnrichmentTemplate):  # pylint: disable=abstract-method
         timepoint_counts: npt.NDArray[np.int64],
         alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
         alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
-        **kwargs
+        **kwargs,
     ):
 
         # Confirm input shapes
@@ -38,14 +38,14 @@ class BasePDZ3(BaseEnrichmentTemplate):  # pylint: disable=abstract-method
             timepoint_counts=timepoint_counts,
             alpha_alpha=alpha_alpha,
             alpha_beta=alpha_beta,
-            **kwargs
+            **kwargs,
         )
 
     def _set_starting_props(
         self,
         alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
         alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
-        **kwargs
+        **kwargs,
     ):
 
         # Set a prior on the Dirichlet alpha parameters. We expect the starting
@@ -112,7 +112,7 @@ def get_pdz3_model(
 
 
 def get_pdz3_instance(
-    filepath: str, growth_curve: GrowthCurve, growth_rate: GrowthRate
+    filepath: str, growth_curve: GrowthCurve, growth_rate: GrowthRate, **hyperparams
 ) -> BasePDZ3:
     """Gets an instance of the appropriate class for the given library and growth curve."""
     # Load the data and remove fields we do not need
@@ -120,4 +120,6 @@ def get_pdz3_instance(
     dataset.pop("variants")
 
     # Build the instance
-    return get_pdz3_model(growth_curve=growth_curve, growth_rate=growth_rate)(**dataset)
+    return get_pdz3_model(growth_curve=growth_curve, growth_rate=growth_rate)(
+        **dataset, **hyperparams
+    )

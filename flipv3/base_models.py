@@ -59,7 +59,7 @@ class FlatEnrichmentMeta(BaseEnrichmentMeta):
             self, beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["exp_beta"], **kwargs
         ):
             """Set the growth rate to exponential."""
-            return parameters.ExpExponential(beta=beta, shape=self.n_variants)
+            return parameters.Exponential(beta=beta, shape=self.n_variants)
 
         def lomax_growth_rate(  # pylint: disable=unused-argument
             self,
@@ -68,7 +68,7 @@ class FlatEnrichmentMeta(BaseEnrichmentMeta):
             **kwargs,
         ):
             """Set the growth rate to Lomax."""
-            return parameters.ExpLomax(
+            return parameters.Lomax(
                 lambda_=lambda_, alpha=lomax_alpha, shape=self.n_variants
             )
 
@@ -136,8 +136,25 @@ class HierarchicalEnrichmentMeta(FlatEnrichmentMeta):
 
     def _def_growth_rate(cls):
         """Sets the growth rate for the model based on the growth rate type."""
-        # Run the parent method to get the mean growth rate function
-        gr_func = super()._def_growth_rate()
+
+        def exponential_growth_rate(  # pylint: disable=unused-argument
+            self,
+            beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["exp_beta"],
+            **kwargs,
+        ):
+            """Set the growth rate to exponential."""
+            return parameters.ExpExponential(beta=beta, shape=self.n_variants)
+
+        def lomax_growth_rate(  # pylint: disable=unused-argument
+            self,
+            lambda_: "custom_types.Float" = DEFAULT_HYPERPARAMS["lambda_"],
+            lomax_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["lomax_alpha"],
+            **kwargs,
+        ):
+            """Set the growth rate to Lomax."""
+            return parameters.ExpLomax(
+                lambda_=lambda_, alpha=lomax_alpha, shape=self.n_variants
+            )
 
         def lomax_exp_growth_rate(
             self,
@@ -183,10 +200,11 @@ class HierarchicalEnrichmentMeta(FlatEnrichmentMeta):
             )
 
         # Different function for different growth rates
-        if cls.GROWTH_RATE in {
-            "lomax",
-            "exponential",
-        }:
+        if cls.GROWTH_RATE == "lomax":
+            gr_func = lomax_growth_rate
+            return lomax_exp_growth_rate
+        elif cls.GROWTH_RATE == "exponential":
+            gr_func = exponential_growth_rate
             return lomax_exp_growth_rate
         elif cls.GROWTH_RATE == "gamma":
             return gamma_inv_growth_rate

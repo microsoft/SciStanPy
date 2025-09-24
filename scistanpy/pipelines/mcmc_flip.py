@@ -67,7 +67,7 @@ def define_base_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--growth_curve",
         type=str,
-        choices=["exponential", "logistic"],
+        choices=["exponential", "sigmoid"],
         required=True,
         help="Growth function to use.",
     )
@@ -150,6 +150,38 @@ def parse_args():
         ),
     )
 
+    # Hyperparameters
+    parser.add_argument(
+        "--beta",
+        type=float,
+        default=None,
+        help="Beta hyperparameter for exponential growth rate.",
+    )
+    parser.add_argument(
+        "--lambda_",
+        type=float,
+        default=None,
+        help="Lambda hyperparameter for Lomax growth rate.",
+    )
+    parser.add_argument(
+        "--lomax_alpha",
+        type=float,
+        default=None,
+        help="Alpha hyperparameter for Lomax growth rate.",
+    )
+    parser.add_argument(
+        "--inv_r_alpha",
+        type=float,
+        default=None,
+        help="Alpha hyperparameter for Gamma growth rate.",
+    )
+    parser.add_argument(
+        "--inv_r_beta",
+        type=float,
+        default=None,
+        help="Beta hyperparameter for Gamma growth rate.",
+    )
+
     return parser.parse_args()
 
 
@@ -213,6 +245,12 @@ def prep_run(args: argparse.Namespace) -> "Model":
         instance_kwargs["filepath"] += ".tsv"
     else:
         raise ValueError(f"Unsupported dataset: {args.dataset}")
+
+    # Add hyperparameters if provided
+    for param in ("beta", "lambda_", "lomax_alpha", "inv_r_alpha", "inv_r_beta"):
+        val = getattr(args, param)
+        if val is not None:
+            instance_kwargs[param] = val
 
     return instance_factory(**instance_kwargs)
 
