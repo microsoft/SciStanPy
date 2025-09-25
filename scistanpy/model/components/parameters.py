@@ -53,6 +53,7 @@ from __future__ import annotations
 
 import functools
 import re
+import warnings
 
 from abc import ABCMeta
 from typing import Callable, Optional, overload, TYPE_CHECKING, Union
@@ -292,9 +293,10 @@ class ClassOrInstanceMethod:
         return inner
 
 
-class Parameter(
-    abstract_model_component.AbstractModelComponent, metaclass=ParameterMeta
-):
+# class Parameter(
+#     abstract_model_component.AbstractModelComponent, metaclass=ParameterMeta
+# ):
+class Parameter(abstract_model_component.AbstractModelComponent):
     """Base class for all probabilistic parameters in SciStanPy models.
 
     This class provides the foundational infrastructure for representing random
@@ -344,25 +346,29 @@ class Parameter(
     HAS_RAW_VARNAME: bool = False
     """Whether the parameter intrinsically uses a raw/transformed parameterization."""
 
-    CDF: type[cdfs.CDF]
+    # CDF: type[cdfs.CDF]
+    CDF = None
     """
     Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.CDF`
     describing the cumulative distribution function for the parameter.
     """
 
-    SF: type[cdfs.SurvivalFunction]
+    # SF: type[cdfs.SurvivalFunction]
+    SF = None
     """
     Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.SurvivalFunction`
     describing the survival function for the parameter.
     """
 
-    LOG_CDF: type[cdfs.LogCDF]
+    # LOG_CDF: type[cdfs.LogCDF]
+    LOG_CDF = None
     """
     Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.LogCDF`
     describing the log cumulative distribution function for the parameter.
     """
 
-    LOG_SF: type[cdfs.LogSurvivalFunction]
+    # LOG_SF: type[cdfs.LogSurvivalFunction]
+    LOG_SF = None
     """
     Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.LogSurvivalFunction`
     describing the log survival function for the parameter.
@@ -799,6 +805,11 @@ class Parameter(
             >>> normal_param = Normal(mu=0.0, sigma=1.0)
             >>> cdf = normal_param.cdf(x=data)
         """
+        warnings.warn(
+            "`CDF`, `SF` and the log versions of these functions have a critical bug"
+            " that makes code using them innaccurate. Do not use these until a fix "
+            "has been implemented."
+        )
         return cls.CDF(**params)
 
     @ClassOrInstanceMethod
@@ -831,6 +842,11 @@ class Parameter(
             >>> normal_param = Normal(mu=0.0, sigma=1.0)
             >>> sf = normal_param.ccdf(x=data)
         """
+        warnings.warn(
+            "`CDF`, `SF` and the log versions of these functions have a critical bug"
+            " that makes code using them innaccurate. Do not use these until a fix "
+            "has been implemented."
+        )
         return cls.SF(**params)
 
     @ClassOrInstanceMethod
@@ -854,6 +870,11 @@ class Parameter(
             in which case parameters must be explicitly provided, or an instance
             method (in which case instance parameter values will be used).
         """
+        warnings.warn(
+            "`CDF`, `SF` and the log versions of these functions have a critical bug"
+            " that makes code using them innaccurate. Do not use these until a fix "
+            "has been implemented."
+        )
         return cls.LOG_CDF(**params)
 
     @ClassOrInstanceMethod
@@ -880,6 +901,11 @@ class Parameter(
             method, in which case parameters must be explicitly provided, or an
             instance method (in which case instance parameter values will be used).
         """
+        warnings.warn(
+            "`CDF`, `SF` and the log versions of these functions have a critical bug"
+            " that makes code using them innaccurate. Do not use these until a fix "
+            "has been implemented."
+        )
         return cls.LOG_SF(**params)
 
     # pylint: enable=no-self-argument

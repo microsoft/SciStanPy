@@ -33,6 +33,8 @@ parameters.Parameter`.
 
 from __future__ import annotations
 
+import warnings
+
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
@@ -124,6 +126,12 @@ class CDFLike(transformed_parameters.TransformedParameter):
         The initialization process validates that all required distribution
         parameters are provided and no unexpected parameters are included.
         """
+        warnings.warn(
+            "`CDF`, `SF` and the log versions of these functions have a critical bug"
+            " that makes code using them innaccurate. Do not use these until a fix "
+            "has been implemented."
+        )
+
         # Check if the parameters passed are the ones required for the CDF
         self.check_parameters(set(params.keys()))
 
