@@ -1,0 +1,226 @@
+real normal_lcdf_custom(real x, real mu, real sigma) {
+    // Compute the log CDF of the normal distribution using an asymptotic expansion
+    // for the lower tail to improve numerical stability.
+    // Normalize the input
+    real z = (x - mu) / sigma;
+
+    // For z > -20, use the standard log CDF computation. For z <= -20, use the
+    // asymptotic expansion.
+    if (z > -20.0) {
+        return log(0.5) + log(erfc(-z / sqrt(2.0)));
+    } else {
+        return -0.5 * z^2 - log(abs(z)) - 0.5 * log(2.0 * pi());
+    }
+}
+
+vector normal_lcdf_custom(vector x, vector mu, vector sigma) {
+    // Alternate implementation with vectorized `x`, `mu`, and `sigma`.
+    int N = num_elements(x);
+    vector[N] result;
+
+    // Ensure all input vectors have the same length
+    if (num_elements(mu) != N || num_elements(sigma) != N) {
+        reject("Input vectors must have the same length.");
+    }
+
+    // Compute the log CDF for each element
+    for (n in 1:N) {
+        result[n] = normal_lcdf_custom(x[n], mu[n], sigma[n]);
+    }
+    return result;
+}
+
+vector normal_lcdf_custom(vector x, real mu, real sigma) {
+    // Alternate implementation with vectorized `x` and scalar `mu` and `sigma`.
+
+    // Vectorize mu and sigma
+    int N = num_elements(x);
+    vector[N] mu_vec = rep_vector(mu, N);
+    vector[N] sigma_vec = rep_vector(sigma, N);
+
+    return normal_lcdf_custom(x, mu_vec, sigma_vec);
+}
+
+vector normal_lcdf_custom(real x, vector mu, real sigma) {
+    // Alternate implementation with scalar `x` and `sigma`, and vectorized `mu`.
+
+    // Vectorize mu
+    int N = num_elements(mu);
+    vector[N] sigma_vec = rep_vector(sigma, N);
+    vector[N] x_vec = rep_vector(x, N);
+
+    return normal_lcdf_custom(x_vec, mu, sigma_vec);
+}
+
+vector normal_lcdf_custom(real x, real mu, vector sigma) {
+    // Alternate implementation with scalar `x` and `mu`, and vectorized `sigma`.
+
+    // Vectorize mu
+    int N = num_elements(sigma);
+    vector[N] mu_vec = rep_vector(mu, N);
+    vector[N] x_vec = rep_vector(x, N);
+
+    return normal_lcdf_custom(x_vec, mu_vec, sigma);
+}
+
+vector normal_lcdf_custom(vector x, vector mu, real sigma) {
+    // Alternate implementation with vectorized `x` and `mu`, and scalar `sigma`.
+
+    // Vectorize sigma
+    int N = num_elements(x);
+    if (num_elements(mu) != N) {
+        reject("Input vectors must have the same length.");
+    }
+    vector[N] sigma_vec = rep_vector(sigma, N);
+
+    return normal_lcdf_custom(x, mu, sigma_vec);
+}
+
+vector normal_lcdf_custom(real x, vector mu, vector sigma) {
+    // Alternate implementation with scalar `x` and vectorized `mu` and `sigma`.
+
+    // Vectorize x
+    int N = num_elements(mu);
+    if (num_elements(sigma) != N) {
+        reject("Input vectors must have the same length.");
+    }
+    vector[N] x_vec = rep_vector(x, N);
+
+    return normal_lcdf_custom(x_vec, mu, sigma);
+}
+
+vector normal_lcdf_custom(vector x, real mu, vector sigma) {
+    // Alternate implementation with vectorized `x` and `sigma`, and scalar `mu`.
+
+    // Vectorize mu
+    int N = num_elements(x);
+    if (num_elements(sigma) != N) {
+        reject("Input vectors must have the same length.");
+    }
+    vector[N] mu_vec = rep_vector(mu, N);
+
+    return normal_lcdf_custom(x, mu_vec, sigma);
+}
+
+real normal_lccdf_custom(real x, real mu, real sigma) {
+    // Compute the log survival function (log CCDF) of the normal distribution
+    // using an asymptotic expansion for the upper tail to improve numerical stability.
+    return normal_lcdf_custom(-x, -mu, sigma);
+}
+
+vector normal_lccdf_custom(vector x, vector mu, vector sigma) {
+    // Alternate implementation with vectorized `x`, `mu`, and `sigma`.
+    return normal_lcdf_custom(-x, -mu, sigma);
+}
+
+vector normal_lccdf_custom(vector x, real mu, real sigma) {
+    // Alternate implementation with vectorized `x` and scalar `mu` and `sigma`.
+    return normal_lcdf_custom(-x, -mu, sigma);
+}
+
+vector normal_lccdf_custom(real x, vector mu, real sigma) {
+    // Alternate implementation with scalar `x` and `sigma`, and vectorized `mu`.
+    return normal_lcdf_custom(-x, -mu, sigma);
+}
+
+vector normal_lccdf_custom(real x, real mu, vector sigma) {
+    // Alternate implementation with scalar `x` and `mu`, and vectorized `sigma`.
+    return normal_lcdf_custom(-x, -mu, sigma);
+}
+
+vector normal_lccdf_custom(vector x, vector mu, real sigma) {
+    // Alternate implementation with vectorized `x` and `mu`, and scalar `sigma`.
+    return normal_lcdf_custom(-x, -mu, sigma);
+}
+
+vector normal_lccdf_custom(real x, vector mu, vector sigma) {
+    // Alternate implementation with scalar `x` and vectorized `mu` and `sigma`.
+    return normal_lcdf_custom(-x, -mu, sigma);
+}
+
+vector normal_lccdf_custom(vector x, real mu, vector sigma) {
+    // Alternate implementation with vectorized `x` and `sigma`, and scalar `mu`.
+    return normal_lcdf_custom(-x, -mu, sigma);
+}
+
+real lognormal_lcdf_custom(real x, real mu, real sigma) {
+    // Compute the log CDF of the log-normal distribution using an asymptotic expansion
+    // for the lower tail to improve numerical stability.
+    return normal_lcdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lcdf_custom(vector x, vector mu, vector sigma) {
+    // Alternate implementation with vectorized `x`, `mu`, and `sigma`.
+    return normal_lcdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lcdf_custom(vector x, real mu, real sigma) {
+    // Alternate implementation with vectorized `x` and scalar `mu` and `sigma`.
+    return normal_lcdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lcdf_custom(real x, vector mu, real sigma) {
+    // Alternate implementation with scalar `x` and `sigma`, and vectorized `mu`.
+    return normal_lcdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lcdf_custom(real x, real mu, vector sigma) {
+    // Alternate implementation with scalar `x` and `mu`, and vectorized `sigma`.
+    return normal_lcdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lcdf_custom(vector x, vector mu, real sigma) {
+    // Alternate implementation with vectorized `x` and `mu`, and scalar `sigma`.
+    return normal_lcdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lcdf_custom(real x, vector mu, vector sigma) {
+    // Alternate implementation with scalar `x` and vectorized `mu` and `sigma`.
+    return normal_lcdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lcdf_custom(vector x, real mu, vector sigma) {
+    // Alternate implementation with vectorized `x` and `sigma`, and scalar `mu`.
+    return normal_lcdf_custom(log(x), mu, sigma);
+}
+
+real lognormal_lccdf_custom(real x, real mu, real sigma) {
+    // Compute the log survival function (log CCDF) of the log-normal distribution
+    // using an asymptotic expansion for the upper tail to improve numerical stability.
+    return normal_lccdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lccdf_custom(vector x, vector mu, vector sigma) {
+    // Alternate implementation with vectorized `x`, `mu`, and `sigma`.
+    return normal_lccdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lccdf_custom(vector x, real mu, real sigma) {
+    // Alternate implementation with vectorized `x` and scalar `mu` and `sigma`.
+    return normal_lccdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lccdf_custom(real x, vector mu, real sigma) {
+    // Alternate implementation with scalar `x` and `sigma`, and vectorized `mu`.
+    return normal_lccdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lccdf_custom(real x, real mu, vector sigma) {
+    // Alternate implementation with scalar `x` and `mu`, and vectorized `sigma`.
+    return normal_lccdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lccdf_custom(vector x, vector mu, real sigma) {
+    // Alternate implementation with vectorized `x` and `mu`, and scalar `sigma`.
+    return normal_lccdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lccdf_custom(real x, vector mu, vector sigma) {
+    // Alternate implementation with scalar `x` and vectorized `mu` and `sigma`.
+    return normal_lccdf_custom(log(x), mu, sigma);
+}
+
+vector lognormal_lccdf_custom(vector x, real mu, vector sigma) {
+    // Alternate implementation with vectorized `x` and `sigma`, and scalar `mu`.
+    return normal_lccdf_custom(log(x), mu, sigma);
+}

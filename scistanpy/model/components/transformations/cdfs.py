@@ -33,8 +33,6 @@ parameters.Parameter`.
 
 from __future__ import annotations
 
-import warnings
-
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
@@ -46,7 +44,7 @@ from scistanpy.model.components.transformations import transformed_parameters
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
-    from scistanpy.model.components import parameters
+    from scistanpy.model.components import abstract_model_component, parameters
 
 
 class CDFLike(transformed_parameters.TransformedParameter):
@@ -126,12 +124,6 @@ class CDFLike(transformed_parameters.TransformedParameter):
         The initialization process validates that all required distribution
         parameters are provided and no unexpected parameters are included.
         """
-        warnings.warn(
-            "`CDF`, `SF` and the log versions of these functions have a critical bug"
-            " that makes code using them innaccurate. Do not use these until a fix "
-            "has been implemented."
-        )
-
         # Check if the parameters passed are the ones required for the CDF
         self.check_parameters(set(params.keys()))
 
@@ -244,6 +236,82 @@ class CDFLike(transformed_parameters.TransformedParameter):
                 "Expected numpy or torch."
             )
 
+    def get_supporting_functions(self) -> list[str]:
+        """Defines a set of supporting Stan functions required by this transformation.
+
+        :returns: List of supporting Stan function names
+        :rtype: list[str]
+
+        This method extends the base class implementation to include any
+        additional supporting functions needed for survival function computations.
+        """
+
+        def get_type(obj: "abstract_model_component.AbstractModelComponent") -> str:
+            return "real" if obj.ndim == 0 or obj.shape[-1] == 1 else "vector"
+
+        # Get base supporting functions
+        supporting_funcs = super().get_supporting_functions()
+
+        # Get the typing of inputs and outputs
+        outtype = get_type(self)
+        xtype = get_type(self.x)
+        paramtypes = {
+            k: get_type(self[k]) for k in self.__class__.PARAMETER.STAN_TO_SCIPY_NAMES
+        }
+
+        # Build the function signature
+        signature = (
+            f"{outtype} {self.custom_fname}("
+            + f"{xtype} x, "
+            + ", ".join(f"{v} {k}" for k, v in paramtypes.items())
+            + ")"
+        )
+
+        # Build the function body
+        body = (
+            f"{self.true_fname}(x | "
+            + ", ".join(
+                f"{k}[i]" if v == "vector" else k for k, v in paramtypes.items()
+            )
+            + ");"
+        )
+
+        # Define the function
+        if outtype == "real":
+
+            # If output is a scalar, all inputs must be scalars
+            assert xtype == "real" and all(v == "real" for v in paramtypes.values())
+
+            # Add the function definition
+            supporting_funcs.append(f"{signature}{{\nreturn {body}\n}}")
+
+        else:
+
+            # If the output is a vector, at least one input must be a vector
+            assert any(v == "vector" for v in paramtypes.values())
+            assert all(
+                self[k].shape[-1] == self.shape[-1]
+                for k, v in paramtypes.items()
+                if v == "vector"
+            )
+            assert xtype == "real" or (
+                xtype == "vector" and self.x.shape[-1] == self.shape[-1]
+            )
+
+            # We also need a for loop to handle vectorized inputs
+            supporting_funcs.append(
+                signature
+                + "{\n"
+                + f"vector[{self.shape[-1]}] out;\n"
+                + f"for (i in 1:{self.shape[-1]}) {{\n"
+                + f"    out[i] = {body}\n"
+                + "    }\n"
+                + "print(min(out));\n"
+                + "return out;\n}"
+            )
+
+        return supporting_funcs
+
     def write_stan_operation(self, **kwargs) -> str:
         """Generate Stan code for the ``CDFLike`` operation.
 
@@ -263,13 +331,41 @@ class CDFLike(transformed_parameters.TransformedParameter):
         Where the parameters are ordered according to the distribution's
         Stan parameter ordering conventions.
         """
-        # Get the function and arguments for the operation
-        func = f"{self.__class__.PARAMETER.STAN_DIST}_{self.STAN_SUFFIX}"
+        # Get the arguments for the operation
         args = ", ".join(
             kwargs[name] for name in self.__class__.PARAMETER.STAN_TO_SCIPY_NAMES
         )
 
-        return f"{func}({kwargs['x']} | {args})"
+        return f"{self.custom_fname}({kwargs['x']}, {args})"
+
+    @property
+    def true_fname(self) -> str:
+        """Get the name of the true Stan distribution function for this CDFLike
+        transformation.
+
+        :returns: True Stan distribution function name
+        :rtype: str
+
+        This property constructs the name of the true Stan distribution function
+        that performs the actual CDF-like computation. This is used within the
+        custom function to delegate the computation while allowing for custom
+        parameter handling.
+        """
+        return f"{self.__class__.PARAMETER.STAN_DIST}_{self.STAN_SUFFIX}"
+
+    @property
+    def custom_fname(self) -> str:
+        """Get the name of the custom Stan function for this CDFLike transformation.
+
+        :returns: Custom Stan function name
+        :rtype: str
+
+        This property constructs the name of the custom Stan function that
+        wraps the standard distribution function with appropriate parameter
+        ordering and transformations. We wrap the standard function to allow for
+        vector outputs rather than summed outputs.
+        """
+        return f"{self.true_fname}_custom"
 
 
 class CDF(CDFLike):
@@ -470,6 +566,16 @@ class LogCDF(CDFLike):
                 "Expected numpy or torch."
             )
 
+    def get_supporting_functions(self) -> list[str]:
+        """
+        Get supporting Stan functions required by this transformation. This uses
+        the base class implementation unless the associated Parameter class has
+        a CUSTOM_LCDF_STANFILE defined, in which case that file is used instead.
+        """
+        if self.__class__.PARAMETER.CUSTOM_LCDF_STANFILE:
+            return [f"#include {self.__class__.PARAMETER.CUSTOM_LCDF_STANFILE}"]
+        return super().get_supporting_functions()
+
 
 class LogSurvivalFunction(CDFLike):
     r"""Logarithmic survival function transformation.
@@ -546,3 +652,13 @@ class LogSurvivalFunction(CDFLike):
                 f"Unsupported module {type(output)} for log survival function operation. "
                 "Expected numpy or torch."
             )
+
+    def get_supporting_functions(self) -> list[str]:
+        """
+        Get supporting Stan functions required by this transformation. This uses
+        the base class implementation unless the associated Parameter class has
+        a CUSTOM_LSF_STANFILE defined, in which case that file is used instead.
+        """
+        if self.__class__.PARAMETER.CUSTOM_LSF_STANFILE:
+            return [f"#include {self.__class__.PARAMETER.CUSTOM_LSF_STANFILE}"]
+        return super().get_supporting_functions()
