@@ -308,6 +308,7 @@ class CDFLike(transformed_parameters.TransformedParameter):
                 + f"for (i in 1:{self.shape[-1]}) {{\n"
                 + f"    out[i] = {body}\n"
                 + "    }\n"
+                + "print(min(out));\n"
                 + "return out;\n}"
             )
 
@@ -567,6 +568,16 @@ class LogCDF(CDFLike):
                 "Expected numpy or torch."
             )
 
+    def get_supporting_functions(self) -> list[str]:
+        """
+        Get supporting Stan functions required by this transformation. This uses
+        the base class implementation unless the associated Parameter class has
+        a CUSTOM_LCDF_STANFILE defined, in which case that file is used instead.
+        """
+        if self.__class__.PARAMETER.CUSTOM_LCDF_STANFILE:
+            return [f"#include {self.__class__.PARAMETER.CUSTOM_LCDF_STANFILE}"]
+        return super().get_supporting_functions()
+
 
 class LogSurvivalFunction(CDFLike):
     r"""Logarithmic survival function transformation.
@@ -643,3 +654,13 @@ class LogSurvivalFunction(CDFLike):
                 f"Unsupported module {type(output)} for log survival function operation. "
                 "Expected numpy or torch."
             )
+
+    def get_supporting_functions(self) -> list[str]:
+        """
+        Get supporting Stan functions required by this transformation. This uses
+        the base class implementation unless the associated Parameter class has
+        a CUSTOM_LSF_STANFILE defined, in which case that file is used instead.
+        """
+        if self.__class__.PARAMETER.CUSTOM_LSF_STANFILE:
+            return [f"#include {self.__class__.PARAMETER.CUSTOM_LSF_STANFILE}"]
+        return super().get_supporting_functions()
