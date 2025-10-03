@@ -12,8 +12,10 @@ import os.path
 from typing import TYPE_CHECKING
 
 from scistanpy.model.results import SampleResults
-from flipv3.trpb_models import get_trpb_instance
+from flipv3.constants import DEFAULT_HYPERPARAMS
+from flipv3.nuclease_models import get_nuc_instance
 from flipv3.pdz3_models import get_pdz3_instance
+from flipv3.trpb_models import get_trpb_instance
 
 
 if TYPE_CHECKING:
@@ -34,6 +36,7 @@ VALID_COMBINATIONS = {
         "four-site",
     },
     "pdz": {"cript-c", "cript-n", "cis", "trans-1", "trans-2"},
+    "nuc": {"G1", "G2", "G3", "G4"},
 }
 
 
@@ -43,41 +46,42 @@ def define_base_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(add_help=False)
 
     # A few required arguments
-    parser.add_argument(
+    required_group = parser.add_argument_group("required arguments")
+    required_group.add_argument(
         "--dataset",
         type=str,
-        choices=["trpb", "pdz"],
+        choices=["trpb", "pdz", "nuc"],
         required=True,
         help="Datset on which to run HMC.",
     )
-    parser.add_argument(
+    required_group.add_argument(
         "--subset",
         type=str,
         required=True,
         help="Name of the specific dataset to use (e.g., libA for trpb)",
     )
-
-    parser.add_argument(
-        "--growth_rate",
+    required_group.add_argument(
+        "--fitness_dist",
         type=str,
         choices=["exponential", "gamma", "lomax"],
         required=True,
         help="Distribution that defines the mean rate of the model.",
     )
-    parser.add_argument(
+    required_group.add_argument(
         "--growth_curve",
         type=str,
         choices=["exponential", "sigmoid"],
-        required=True,
-        help="Growth function to use.",
+        required=False,
+        default=None,
+        help="Growth function to use. Required for trpb and pdz datasets.",
     )
-    parser.add_argument(
+    required_group.add_argument(
         "--flip_data",
         type=str,
         required=True,
         help="Path to the folder containing all raw flip data.",
     )
-    parser.add_argument(
+    required_group.add_argument(
         "--output_dir",
         type=str,
         required=True,
@@ -85,21 +89,26 @@ def define_base_parser() -> argparse.ArgumentParser:
     )
 
     # Now some optionals
-    parser.add_argument(
+    optional_group = parser.add_argument_group("optional arguments")
+    optional_group.add_argument(
         "--seed",
         type=int,
         default=1025,
         help="Random seed for reproducibility.",
     )
-    parser.add_argument(
-        "--ignore_od",
-        action="store_false",
-        dest="include_od",
-        help=(
-            "If set, the model will not include optical density (OD) data. This is "
-            "only applicable for TrpB datasets."
-        ),
+
+    # Now some hyperparameters that can be overridden
+    hyperparam_group = parser.add_argument_group(
+        "hyperparameters",
+        description="Hyperparameter values. Individual args ignored when not relevant.",
     )
+    for k, v in DEFAULT_HYPERPARAMS.items():
+        hyperparam_group.add_argument(
+            f"--{k}",
+            type=float,
+            default=None,
+            help=f"{k} hyperparameter. Default = {v}.",
+        )
 
     return parser
 
@@ -113,73 +122,43 @@ def parse_args():
     )
 
     # Add arguments specific to this pipeline
-    parser.add_argument(
+    optional_group = parser._action_groups[3]  # pylint: disable=protected-access
+    assert optional_group.title == "optional arguments"
+    optional_group.add_argument(
         "--n_chains",
         type=int,
         default=8,
         help="Number of chains to run. Default = 8.",
     )
-    parser.add_argument(
+    optional_group.add_argument(
         "--n_warmup",
         type=int,
         default=2000,
         help="Number of warmup iterations. Default = 2000.",
     )
-    parser.add_argument(
+    optional_group.add_argument(
         "--n_samples",
         type=int,
         default=2000,
         help="Number of samples to draw after warmup. Default = 2000.",
     )
-    parser.add_argument(
+    optional_group.add_argument(
         "--use_dask",
         action="store_true",
         help="Use Dask when diagnosing the model.",
     )
-    parser.add_argument(
+    optional_group.add_argument(
         "--force_compile",
         action="store_true",
         help="Force compilation of the model even if it is already compiled.",
     )
-    parser.add_argument(
+    optional_group.add_argument(
         "--conversion_catchup",
         action="store_true",
         help=(
             "If set, the pipeline will not run HMC but will instead catch up on "
             "previous runs that failed during the csv-to-nc conversion step."
         ),
-    )
-
-    # Hyperparameters
-    parser.add_argument(
-        "--beta",
-        type=float,
-        default=None,
-        help="Beta hyperparameter for exponential growth rate.",
-    )
-    parser.add_argument(
-        "--lambda_",
-        type=float,
-        default=None,
-        help="Lambda hyperparameter for Lomax growth rate.",
-    )
-    parser.add_argument(
-        "--lomax_alpha",
-        type=float,
-        default=None,
-        help="Alpha hyperparameter for Lomax growth rate.",
-    )
-    parser.add_argument(
-        "--inv_r_alpha",
-        type=float,
-        default=None,
-        help="Alpha hyperparameter for Gamma growth rate.",
-    )
-    parser.add_argument(
-        "--inv_r_beta",
-        type=float,
-        default=None,
-        help="Beta hyperparameter for Gamma growth rate.",
     )
 
     return parser.parse_args()
@@ -208,6 +187,12 @@ def check_base_args(args: argparse.Namespace) -> None:
     if args.seed <= 0:
         raise ValueError("Seed must be a positive integer.")
 
+    # If dataset is trpb or pdz, growth_curve is required
+    if args.dataset in {"trpb", "pdz"} and args.growth_curve is None:
+        raise ValueError(
+            f"Growth curve is required for dataset {args.dataset} but was not provided."
+        )
+
 
 def check_args(args: argparse.Namespace) -> None:
     """Checks command line arguments for validity."""
@@ -231,26 +216,49 @@ def prep_run(args: argparse.Namespace) -> "Model":
     os.makedirs(args.output_dir, exist_ok=True)
 
     # Build the model instance
-    instance_kwargs = {
-        "filepath": os.path.join(args.flip_data, "counts", args.dataset, args.subset),
-        "growth_curve": args.growth_curve,
-        "growth_rate": args.growth_rate,
-    }
-    if args.dataset == "trpb":
-        instance_factory = get_trpb_instance
-        instance_kwargs["filepath"] += ".csv"
-        instance_kwargs["lib"] = args.subset
-    elif args.dataset == "pdz":
-        instance_factory = get_pdz3_instance
-        instance_kwargs["filepath"] += ".tsv"
+    if args.dataset in {"trpb", "pdz"}:
+
+        # Build shared kwargs
+        instance_kwargs = {
+            "filepath": os.path.join(
+                args.flip_data, "counts", args.dataset, args.subset
+            ),
+            "growth_curve": args.growth_curve,
+            "growth_rate": args.fitness_dist,
+        }
+
+        # Select the right factory function and finalize kwargs
+        if args.dataset == "trpb":
+            instance_factory = get_trpb_instance
+            instance_kwargs["filepath"] += ".csv"
+            instance_kwargs["lib"] = args.subset
+        else:
+            instance_factory = get_pdz3_instance
+            instance_kwargs["filepath"] += ".tsv"
+
+    elif args.dataset == "nuc":
+
+        # Build shared kwargs
+        instance_kwargs = {
+            "dirpath": os.path.join(args.flip_data, "counts", "nuclease"),
+            "lib": args.subset,
+            "dist": args.fitness_dist,
+        }
+
+        # Select instance factory
+        instance_factory = get_nuc_instance
+
     else:
         raise ValueError(f"Unsupported dataset: {args.dataset}")
 
-    # Add hyperparameters if provided
-    for param in ("beta", "lambda_", "lomax_alpha", "inv_r_alpha", "inv_r_beta"):
-        val = getattr(args, param)
-        if val is not None:
-            instance_kwargs[param] = val
+    # Add hyperparameters that are provided
+    instance_kwargs.update(
+        {
+            k: v
+            for k, v in vars(args).items()
+            if k in DEFAULT_HYPERPARAMS and v is not None
+        }
+    )
 
     return instance_factory(**instance_kwargs)
 
@@ -259,7 +267,9 @@ def run_hmc(args: argparse.Namespace) -> None:
     """Run HMC for the specified dataset and model."""
     # Prepare the run
     model = prep_run(args)
-    model_name = f"{args.dataset}_{args.subset}_{args.growth_rate}_{args.growth_curve}"
+    model_name = f"{args.dataset}_{args.subset}_{args.fitness_dist}"
+    if args.growth_curve:
+        model_name += f"_{args.growth_curve}"
 
     # Run HMC unless we are catching up due to a failed csv-to-nc conversion
     if args.conversion_catchup:

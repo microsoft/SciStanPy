@@ -299,11 +299,7 @@ class PDZDatasetType(TypedDict):
     fiducial_indices: dict[str, np.ndarray[np.int64]]
 
 
-def load_nuclease_data(
-    processed_data_dir: str,
-    processed_fiducial_data_dir: str,
-    gen: Literal["G1", "G2", "G3", "G4"],
-):
+def load_nuclease_data(data_dir: str, gen: Literal["G1", "G2", "G3", "G4"]) -> dict:
     """
     Loads the Nuclease dataset. The data is described in
     [this](https://doi.org/10.1016/j.cels.2025.101236) paper and was downloaded
@@ -365,7 +361,7 @@ def load_nuclease_data(
             ignore_index=True,
         )
 
-    def load_g1(filepath: str, negative_filepath: str) -> dict:
+    def load_g1() -> dict:
         """
         Load the G1 dataset.
         """
@@ -403,7 +399,7 @@ def load_nuclease_data(
         # Package the
         return dataset
 
-    def load_g2(filepath: str, negative_filepath: str) -> dict:
+    def load_g2() -> dict:
 
         # Load raw dataset
         df = combine_dset_elements(filepath, negative_filepath)
@@ -423,7 +419,7 @@ def load_nuclease_data(
 
         return dataset
 
-    def load_g3(filepath: str, negative_filepath: str) -> dict:
+    def load_g3() -> dict:
         """
         Load the G3 dataset.
         """
@@ -449,7 +445,7 @@ def load_nuclease_data(
 
         return dataset
 
-    def load_g4(filepath: str, negative_filepath: str) -> dict:
+    def load_g4() -> dict:
 
         # Load the G4 datasets
         df = combine_dset_elements(filepath, negative_filepath)
@@ -474,28 +470,11 @@ def load_nuclease_data(
         return dataset
 
     # Different load function depending on generation
-    if gen == "G1":
-        return load_g1(
-            filepath=f"{processed_data_dir}/g1.csv",
-            negative_filepath=f"{processed_fiducial_data_dir}/g1_neg_control.csv",
-        )
-    elif gen == "G2":
-        return load_g2(
-            filepath=f"{processed_data_dir}/g2.csv",
-            negative_filepath=f"{processed_fiducial_data_dir}/g2_neg_control.csv",
-        )
-    elif gen == "G3":
-        return load_g3(
-            filepath=f"{processed_data_dir}/g3.csv",
-            negative_filepath=f"{processed_fiducial_data_dir}/g3_neg_control.csv",
-        )
-    elif gen == "G4":
-        return load_g4(
-            filepath=f"{processed_data_dir}/g4.csv",
-            negative_filepath=f"{processed_fiducial_data_dir}/g4_neg_control.csv",
-        )
+    filepath = os.path.join(data_dir, f"{gen.lower()}.csv")
+    negative_filepath = os.path.join(data_dir, f"{gen.lower()}_neg_control.csv")
 
-    raise ValueError(f"Unknown generation: {gen}")
+    # Load the appropriate dataset
+    return {"G1": load_g1, "G2": load_g2, "G3": load_g3, "G4": load_g4}[gen]()
 
 
 def load_k50_data(

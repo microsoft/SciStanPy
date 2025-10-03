@@ -1,12 +1,13 @@
 """Holds models for the nuclease dataset"""
 
-from typing import TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
 from scistanpy import Constant, Model, operations, parameters
 from .constants import DEFAULT_HYPERPARAMS
+from .flip_dsets import load_nuclease_data
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
@@ -31,8 +32,11 @@ class G1Template(Model):
         ht: npt.NDArray[np.float64],
         alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
         alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
-        codon_noise_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS[
-            "codon_noise_sigma"
+        codon_noise_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS[
+            "codon_noise_alpha"
+        ],
+        codon_noise_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS[
+            "codon_noise_beta"
         ],
         experimental_noise_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS[
             "experimental_noise_sigma"
@@ -96,11 +100,8 @@ class G1Template(Model):
         # protein expression due to differing codon usage
         self.experimental_noise = parameters.HalfNormal(sigma=experimental_noise_sigma)
         self.codon_noise = parameters.Gamma(
-            alpha=10.0, beta=2.0, shape=(self.n_variants,)
+            alpha=codon_noise_alpha, beta=codon_noise_beta, shape=(self.n_variants,)
         )
-        # self.codon_noise = parameters.HalfNormal(
-        #     sigma=codon_noise_sigma, shape=(self.n_variants,)
-        # )
 
         # All variants are each described by a mean log fluorescence
         # pylint: disable=no-member
@@ -189,8 +190,11 @@ class G2Template(Model):
         ft: npt.NDArray[np.floating],
         alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
         alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
-        codon_noise_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS[
-            "codon_noise_sigma"
+        codon_noise_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS[
+            "codon_noise_alpha"
+        ],
+        codon_noise_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS[
+            "codon_noise_beta"
         ],
         **kwargs,
     ):
@@ -256,8 +260,8 @@ class G2Template(Model):
         # pylint: enable=no-member
 
         # We have noise in the system due to varying codon expression levels
-        self.codon_noise = parameters.HalfNormal(
-            sigma=codon_noise_sigma, shape=(self.n_variants,)
+        self.codon_noise = parameters.Gamma(
+            alpha=codon_noise_alpha, beta=codon_noise_beta, shape=(self.n_variants,)
         )
 
         # Update the initial distributions based on a normal survival function,
@@ -301,8 +305,11 @@ class G3G4Template(Model):
         oc1: npt.NDArray[np.int64],
         ft: npt.NDArray[np.floating],
         alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"],
-        codon_noise_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS[
-            "codon_noise_sigma"
+        codon_noise_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS[
+            "codon_noise_alpha"
+        ],
+        codon_noise_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS[
+            "codon_noise_beta"
         ],
         **kwargs,
     ):
@@ -340,8 +347,8 @@ class G3G4Template(Model):
         # pylint: enable=no-member
 
         # Set codon noise
-        self.codon_noise = parameters.HalfNormal(
-            sigma=codon_noise_sigma, shape=(self.n_variants,)
+        self.codon_noise = parameters.Gamma(
+            alpha=codon_noise_alpha, beta=codon_noise_beta, shape=(self.n_variants,)
         )
 
         # Pass through the survival function
@@ -420,3 +427,58 @@ class G3G4Lomax(G3G4Template, LomaxFluorescenceMixIn):
 
 class G3G4Exponential(G3G4Template, ExpFluorescenceMixIn):
     """Describes the G3/G4 phase with exponentially-distributed fluorescence"""
+
+
+NUC_MODELS = {
+    ("G1", "lomax"): G1Lomax,
+    ("G1", "exponential"): G1Exponential,
+    ("G2", "lomax"): G2Lomax,
+    ("G2", "exponential"): G2Exponential,
+    ("G3", "lomax"): G3G4Lomax,
+    ("G3", "exponential"): G3G4Exponential,
+    ("G4", "lomax"): G3G4Lomax,
+    ("G4", "exponential"): G3G4Exponential,
+}
+
+
+def get_nuc_model(
+    lib: Literal["G1", "G2", "G3", "G4"], dist: Literal["lomax", "exponential"]
+) -> type[Model]:
+    """Get the appropriate nuclease model based on library and distribution type.
+
+    :param lib: The generation/library to use. One of "G1", "G2", "G3", or "G4".
+    :type lib: Literal["G1", "G2", "G3", "G4"]
+    :param dist: The distribution type for fluorescence. Either "lomax" or "exponential".
+    :type dist: Literal["lomax", "exponential"]
+
+    :return: An instance of the specified model class.
+    :rtype: Model
+    """
+    return NUC_MODELS[(lib, dist)]
+
+
+def get_nuc_instance(
+    dirpath: str,
+    lib: Literal["G1", "G2", "G3", "G4"],
+    dist: Literal["lomax", "exponential"],
+    **hyperparams,
+) -> Model:
+    """Get an instance of the specified nuclease model with data loaded from the given filepath.
+
+    :param dirpath: Path to the directory containing count files.
+    :type dirpath: str
+    :param lib: The generation/library to use. One of "G1", "G2", "G3", or "G4".
+    :type lib: Literal["G1", "G2", "G3", "G4"]
+    :param dist: The distribution type for fluorescence. Either "lomax" or "exponential".
+    :type dist: Literal["lomax", "exponential"]
+    :param kwargs: Additional keyword arguments to pass to the model constructor.
+
+    :return: An instance of the specified model class with data loaded.
+    :rtype: Model
+    """
+    # Load the data and remove fields that are not needed
+    dataset = load_nuclease_data(dirpath, gen=lib)
+    dataset.pop("variants")
+
+    # Build the model
+    return get_nuc_model(lib=lib, dist=dist)(**dataset, **hyperparams)
