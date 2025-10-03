@@ -1050,6 +1050,18 @@ class Reduction(UnaryTransformedParameter):
         """
         return super().get_assign_depth() + 1
 
+    def get_transformation_assignment(self, index_opts: tuple[str, ...] | None):
+        """
+        Generates the transformation for reductions. This is identical to the parent
+        method, only with an additional level of indexing for when the reduction
+        does not keep dimensions.
+        """
+        # pylint: disable=no-value-for-parameter
+        return super().get_transformation_assignment(
+            index_opts=index_opts,
+            assignment_kwargs={"end_dim": -1 if self.keepdims else None},
+        )
+
 
 class LogSumExpParameter(Reduction):
     """Log-sum-exp reduction transformation.
@@ -1057,10 +1069,10 @@ class LogSumExpParameter(Reduction):
     Computes the logarithm of the sum of exponentials along the last dimension.
 
     This transformation is fundamental for:
-        - Normalizing log-probabilities
-        - Computing partition functions
-        - Stable softmax computations
-        - Log-space mixture models
+    - Normalizing log-probabilities
+    - Computing partition functions
+    - Stable softmax computations
+    - Log-space mixture models
 
     This transformation is accessed through the :py:func:`~scistanpy.operations.logsumexp`
     function.
