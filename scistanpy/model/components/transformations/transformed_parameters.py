@@ -1051,6 +1051,17 @@ class Reduction(UnaryTransformedParameter):
         """
         return super().get_assign_depth() + 1
 
+    def get_transformation_assignment(self, index_opts: tuple[str, ...] | None):
+        """
+        Generates the transformation for reductions. This is identical to the parent
+        method, only with an additional level of indexing for when the reduction
+        does not keep dimensions.
+        """
+        return super().get_transformation_assignment(
+            index_opts=index_opts,
+            assignment_kwargs={"end_dim": -1 if self.keepdims else None},
+        )
+
 
 class LogSumExpParameter(Reduction):
     """Log-sum-exp reduction transformation.
