@@ -6,7 +6,7 @@ target:
   name: msrresrchvc
 
 environment:
-  image: scistanpy:0.0.9
+  image: scistanpy:0.0.10
   registry: bjwamltcr.azurecr.io
 
 data:
@@ -80,4 +80,4 @@ search:
   sampling: grid
   params:
     - name: dset_ind
-      values: choice("1", "2", "3", "4", "5", "6", "18", "22", "23", "24", "25", "26", "27", "28", "29", "30", "35", "40", "41", "42", "46", "47", "48", "52", "53", "54")
+      values: choice("1", "2", "3", "4", "5", "6", "55", "56", "57", "58", "59", "60", "61", "62")

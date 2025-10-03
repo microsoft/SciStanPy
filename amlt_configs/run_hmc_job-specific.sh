@@ -20,5 +20,4 @@ python mcmc_flip.py \
     --flip_data "$AMLT_DATA_DIR" \
     --output_dir "$AMLT_DIRSYNC_DIR" \
     --use_dask \
-    --force_compile \
-    --ignore_od
+    --force_compile

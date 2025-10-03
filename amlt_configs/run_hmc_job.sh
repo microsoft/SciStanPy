@@ -22,10 +22,9 @@ and the growth rate modeled by the $rate_dist distribution."
 python mcmc_flip.py \
     --dataset "$dataset" \
     --subset "$subset" \
-    --growth_rate "$rate_dist" \
+    --fitness_dist "$rate_dist" \
     --growth_curve "$growth_func" \
     --flip_data "$AMLT_DATA_DIR" \
     --output_dir "$AMLT_DIRSYNC_DIR" \
     --use_dask \
-    --force_compile \
-    --ignore_od
+    --force_compile

@@ -22,7 +22,7 @@ and the growth rate modeled by the $rate_dist distribution."
 python mle_flip.py \
     --dataset "$dataset" \
     --subset "$subset" \
-    --rate_dist "$rate_dist" \
+    --fitness_dist "$rate_dist" \
     --growth_func "$growth_func" \
     --flip_data "$AMLT_DATA_DIR" \
     --output_dir "$AMLT_OUTPUT_DIR" \
