@@ -16,9 +16,9 @@ DEFAULT_HYPERPARAMS = {
     "r_sigma_sigma": 0.01,
     "inv_r_alpha": 7.0,
     "inv_r_beta": 1.0,
-    "alpha_alpha": 5.0,
-    "alpha_beta": 5.0,
-    "codon_noise_alpha": 10.0,
+    "alpha_alpha": 2.0,
+    "alpha_beta": 8.0,
+    "codon_noise_alpha": 2.0,
     "codon_noise_beta": 2.0,
     "experimental_noise_sigma": 0.01,
 }

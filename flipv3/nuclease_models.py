@@ -123,13 +123,15 @@ class G1Template(Model):
         # fluorescence greater than a given threshold is given by evaluating the
         # survival function of the log normal distribution that describes the distribution
         # at the fluorescence value of the threshold
-        self.log_survival_low = parameters.Normal.log_ccdf(
-            x=self.log_lt,
-            mu=self.experimental_mean_log_fluorescence,
-            sigma=self.codon_noise,
-            shape=self.experimental_mean_log_fluorescence.shape,
+        self.log_theta_low_unnorm = (
+            parameters.Normal.log_ccdf(
+                x=self.log_lt,
+                mu=self.experimental_mean_log_fluorescence,
+                sigma=self.codon_noise,
+                shape=self.experimental_mean_log_fluorescence.shape,
+            )
+            + self.log_theta_t0
         )
-        self.log_theta_low_unnorm = self.log_survival_low + self.log_theta_t0
         self.log_theta_high_unnorm = (
             parameters.Normal.log_ccdf(
                 x=self.log_ht,
