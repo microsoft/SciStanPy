@@ -19,7 +19,7 @@ import numpy as np
 import torch
 
 # Define the version
-__version__ = "0.0.11"
+__version__ = "0.0.12"
 
 # Set up type checking
 install_import_hook("scistanpy")

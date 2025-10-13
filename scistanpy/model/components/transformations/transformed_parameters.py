@@ -1057,6 +1057,7 @@ class Reduction(UnaryTransformedParameter):
         method, only with an additional level of indexing for when the reduction
         does not keep dimensions.
         """
+        # pylint: disable=no-value-for-parameter
         return super().get_transformation_assignment(
             index_opts=index_opts,
             assignment_kwargs={"end_dim": -1 if self.keepdims else None},
