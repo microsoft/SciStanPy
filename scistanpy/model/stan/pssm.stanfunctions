@@ -5,7 +5,7 @@ real convolve(array[] vector weights, array[] int seq) {
     // Convolves a sequence. The weights should be L x N, where `N` is the size
     // of the alphabet (e.g., 20 for amino acids) and `L` is the length of the
     // sequence. The sequence should be an array of L integers, where each position
-    // gives the index of an amino acid.
+    // gives the (0-based) index of an amino acid.
 
     // Error if the two inputs are different lengths
     if (dims(weights)[1] != dims(seq)[1]) {
@@ -15,7 +15,8 @@ real convolve(array[] vector weights, array[] int seq) {
     // Sum the weights
     real out = 0.0;
     for (i in 1:num_elements(seq)) {
-        out += weights[i][seq[i]];  // Fixed: array of vectors uses [] indexing
+        print("i: ", i, ", seq[i]: ", seq[i]);
+        out += weights[i][seq[i]+ 1];  // +1 for 1-based indexing (input is 0-based)
     }
     return out;
 }
