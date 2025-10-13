@@ -10,7 +10,7 @@ from scistanpy.model.components.transformations.transformed_parameters import (
     TransformedParameter,
 )
 
-from flipv3.flip_dsets import AA_TO_ORDINAL
+from flipv3.flip_dsets import AA_TO_ORDINAL, load_k50_data
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
@@ -28,7 +28,6 @@ class K50Model(Model):
 
     def __init__(
         self,
-        *,
         qpcr_log_protease_conc: npt.NDArray[np.float64],
         qpcr_log2_survival: npt.NDArray[np.float64],
         log_expected_protease_conc: npt.NDArray[np.float64],
@@ -497,3 +496,13 @@ class K50Model(Model):
         return -operations.exp(
             log_kmax_t + log_conc - log_K50 - operations.log1p_exp(log_conc - log_K50)
         )
+
+
+def get_k50_instance(data_dir: str) -> K50Model:
+    """Gets an instance of the K50 model for the given data directory."""
+    # Load the data
+    k50_data = load_k50_data(data_dir)
+    k50_data.pop("seq_ids")
+
+    # Return the instance
+    return K50Model(**k50_data)

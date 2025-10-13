@@ -3,38 +3,51 @@ description: Approximates the MAP for the FLIPv3 landscapes.
 target:
   service: sing
   workspace_name: bjwamltws
-  name: msrresrchlab
+  name: msrresrchvc
+  # name: msrresrchlab
 
 environment:
-  image: scistanpy:0.0.7
+  image: scistanpy:0.0.12
   registry: bjwamltcr.azurecr.io
 
 data:
-  remote_dir: data/scistanpy/flip3_data/
+  remote_dir: data/dms_stan/flip3_data/
 
 code:
   local_dir: $CONFIG_DIR
 
-search:
-  max_trials: 750
-  parallel_trials: 32
-  job_template:
-    name: "{experiment_name:s}_{dset_ind:s}_{rate_dist:s}_{growth_func:s}"
-    sku: 32G1-V100
-    preemptible: False
+# search:
+#   max_trials: 750
+#   parallel_trials: 32
+#   job_template:
+#     name: "{experiment_name:s}_{dset_ind:s}"
+#     sku: 32G1-V100
+#     preemptible: False
+#     command:
+#       - bash run_mle_job-specific.sh {dset_ind}
+#     submit_args:
+#       max_run_duration_seconds: 1209600
+#       env:
+#         _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/84a94086-6c26-4611-8249-b3549944c86c/resourcegroups/bjwamlt/providers/Microsoft.ManagedIdentity/userAssignedIdentities/bjwamltuami
+#     identity: managed
+#   type: hyperdrive
+#   sampling: grid
+#   params:
+#     - name: dset_ind
+#       values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")
+
+jobs:
+  - name: k50_mle
+    sku: 80G1-A100
+    sla_tier: premium
     command:
-      - bash run_map_job.sh {dset_ind} {rate_dist} {growth_func}
+      - cd /opt/SciStanPy/scistanpy/pipelines
+      - python mle_flip.py
+        --dataset k50
+        --flip_data "$$AMLT_DATA_DIR"
+        --output_dir "$$AMLT_OUTPUT_DIR"
     submit_args:
       max_run_duration_seconds: 1209600
       env:
         _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/84a94086-6c26-4611-8249-b3549944c86c/resourcegroups/bjwamlt/providers/Microsoft.ManagedIdentity/userAssignedIdentities/bjwamltuami
     identity: managed
-  type: hyperdrive
-  sampling: grid
-  params:
-    - name: dset_ind
-      values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
-    - name: rate_dist
-      values: choice("gamma", "exponential", "lomax")
-    - name: growth_func
-      values: choice("exponential", "logistic")

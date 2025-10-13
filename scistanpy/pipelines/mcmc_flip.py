@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 from scistanpy.model.results import SampleResults
 from flipv3.constants import DEFAULT_HYPERPARAMS
+from flipv3.k50_models import get_k50_instance
 from flipv3.nuclease_models import get_nuc_instance
 from flipv3.pdz3_models import get_pdz3_instance
 from flipv3.trpb_models import get_trpb_instance
@@ -37,6 +38,7 @@ VALID_COMBINATIONS = {
     },
     "pdz": {"cript-c", "cript-n", "cis", "trans-1", "trans-2"},
     "nuc": {"G1", "G2", "G3", "G4"},
+    "k50": {None},
 }
 
 
@@ -50,21 +52,23 @@ def define_base_parser() -> argparse.ArgumentParser:
     required_group.add_argument(
         "--dataset",
         type=str,
-        choices=["trpb", "pdz", "nuc"],
+        choices=["trpb", "pdz", "nuc", "k50"],
         required=True,
         help="Datset on which to run HMC.",
     )
     required_group.add_argument(
         "--subset",
         type=str,
-        required=True,
+        required=False,
         help="Name of the specific dataset to use (e.g., libA for trpb)",
+        default=None,
     )
     required_group.add_argument(
         "--fitness_dist",
         type=str,
         choices=["exponential", "gamma", "lomax"],
-        required=True,
+        required=False,
+        default=None,
         help="Distribution that defines the mean rate of the model.",
     )
     required_group.add_argument(
@@ -193,6 +197,19 @@ def check_base_args(args: argparse.Namespace) -> None:
             f"Growth curve is required for dataset {args.dataset} but was not provided."
         )
 
+    # If the dataset is anything but k50, then there must be a subset and there
+    # must be a fitness distribution
+    if args.dataset != "k50":
+        if args.subset is None:
+            raise ValueError(
+                f"Subset is required for dataset {args.dataset} but was not provided."
+            )
+        if args.fitness_dist is None:
+            raise ValueError(
+                f"Fitness distribution is required for dataset {args.dataset} but "
+                "was not provided."
+            )
+
 
 def check_args(args: argparse.Namespace) -> None:
     """Checks command line arguments for validity."""
@@ -212,7 +229,9 @@ def prep_run(args: argparse.Namespace) -> "Model":
     """
     # Finalize the output path. This is the provided output location with additional
     # folders for the dataset and subset added on.
-    args.output_dir = os.path.join(args.output_dir, args.dataset, args.subset)
+    args.output_dir = os.path.join(
+        args.output_dir, args.dataset, args.subset if args.subset else ""
+    )
     os.makedirs(args.output_dir, exist_ok=True)
 
     # Build the model instance
@@ -247,6 +266,16 @@ def prep_run(args: argparse.Namespace) -> "Model":
 
         # Select instance factory
         instance_factory = get_nuc_instance
+
+    elif args.dataset == "k50":
+
+        # Build shared kwargs
+        instance_kwargs = {
+            "data_dir": os.path.join(args.flip_data, "counts", "tsuboyama")
+        }
+
+        # Select instance factory
+        instance_factory = get_k50_instance
 
     else:
         raise ValueError(f"Unsupported dataset: {args.dataset}")

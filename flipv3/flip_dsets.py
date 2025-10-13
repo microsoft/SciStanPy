@@ -477,9 +477,7 @@ def load_nuclease_data(data_dir: str, gen: Literal["G1", "G2", "G3", "G4"]) -> d
     return {"G1": load_g1, "G2": load_g2, "G3": load_g3, "G4": load_g4}[gen]()
 
 
-def load_k50_data(
-    count_filedir: str, scramble_filepath: str, qpcr_raw_filepath: str
-) -> dict:
+def load_k50_data(data_dir: str) -> dict:
     """Loads the data from Tsuboyama et al."""
 
     def load_raw() -> tuple[
@@ -500,7 +498,7 @@ def load_k50_data(
 
             # Load the dataframe, remove unnecessary columns, and combine duplicates
             df = (
-                pd.read_csv(os.path.join(count_filedir, f"NGS_count_lib{df_ind}.csv"))
+                pd.read_csv(os.path.join(data_dir, f"NGS_count_lib{df_ind}.csv"))
                 .drop(columns=["name", "dna_seq"])
                 .groupby("aa_seq", as_index=False)
                 .sum()
@@ -546,7 +544,9 @@ def load_k50_data(
 
         # Get the scrambled sequence indices
         scrambled_inds = np.unique(
-            pd.read_csv(scramble_filepath).aa_seq_experimental.map(seqids).to_numpy()
+            pd.read_csv(os.path.join(data_dir, "K50_scrambles_for_STEP3.csv"))
+            .aa_seq_experimental.map(seqids)
+            .to_numpy()
         )
         assert not np.isnan(scrambled_inds).any()
 
@@ -594,7 +594,7 @@ def load_k50_data(
         """Loads raw qpcr data"""
 
         # Load qpcr data and separate trypsin from chymotrypsin
-        qpcr = pd.read_csv(qpcr_raw_filepath)
+        qpcr = pd.read_csv(os.path.join(data_dir, "Raw_qPCR_data_FigS1.csv"))
         tryp = qpcr[qpcr.protease == "trypsin"]
         chymo = qpcr[qpcr.protease == "chymotrypsin"]
 

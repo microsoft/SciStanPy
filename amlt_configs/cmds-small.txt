@@ -60,3 +60,4 @@
 --dataset nuc --subset G3 --fitness_dist lomax --n_warmup 4000 --lomax_alpha_nuclease 3.0
 --dataset nuc --subset G4 --fitness_dist exponential --n_warmup 4000 --exp_beta_nuclease 2.0
 --dataset nuc --subset G4 --fitness_dist lomax --n_warmup 4000 --lomax_alpha_nuclease 2.0
+-- dataset k50

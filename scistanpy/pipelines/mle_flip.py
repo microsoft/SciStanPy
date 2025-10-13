@@ -22,8 +22,10 @@ def parse_args() -> argparse.Namespace:
         parents=[define_base_parser()],
     )
 
-    # Add arguments specific to this pipeline
-    parser.add_argument(
+    # Add options specific to this pipeline
+    optional_group = parser._action_groups[3]  # pylint: disable=protected-access
+    assert optional_group.title == "optional arguments"
+    optional_group.add_argument(
         "--n_epochs",
         type=int,
         default=DEFAULT_N_EPOCHS,
@@ -32,7 +34,7 @@ def parse_args() -> argparse.Namespace:
             f"Default = {DEFAULT_N_EPOCHS}."
         ),
     )
-    parser.add_argument(
+    optional_group.add_argument(
         "--early_stopping",
         type=int,
         default=DEFAULT_EARLY_STOP,
@@ -41,13 +43,13 @@ def parse_args() -> argparse.Namespace:
             f"Default = {DEFAULT_EARLY_STOP}."
         ),
     )
-    parser.add_argument(
+    optional_group.add_argument(
         "--lr",
         type=float,
         default=DEFAULT_LR,
         help=f"Learning rate for the optimizer. Default = {DEFAULT_LR}.",
     )
-    parser.add_argument(
+    optional_group.add_argument(
         "--device",
         type=str,
         default=0 if torch.cuda.is_available() else "cpu",
@@ -62,7 +64,7 @@ def parse_args() -> argparse.Namespace:
             f"{'0' if torch.cuda.is_available() else 'cpu'}."
         ),
     )
-    parser.add_argument(
+    optional_group.add_argument(
         "--sample_batch_size",
         type=int,
         default=1,
