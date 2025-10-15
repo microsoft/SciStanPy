@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
-from scistanpy import parameters
+from scistanpy import operations, parameters
 from .base_models import BaseEnrichmentTemplate, HierarchicalEnrichmentMeta
 from .constants import DEFAULT_HYPERPARAMS, GrowthCurve, GrowthRate
 from .flip_dsets import load_pdz_dataset
@@ -48,15 +48,16 @@ class BasePDZ3(BaseEnrichmentTemplate):  # pylint: disable=abstract-method
         **kwargs,
     ):
 
-        # Set a prior on the Dirichlet alpha parameters. We expect the starting
-        # proportions from different experiments to be similar
-        self.alpha = parameters.Gamma(
+        # Set a prior on the Dirichlet alpha parameters. We model log-alpha for
+        # numerical stability.
+        self.log_alpha = parameters.ExpGamma(
             alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_variants,)
         )
 
         # Set the initial proportions
         return parameters.ExpDirichlet(
-            alpha=self.alpha, shape=self.default_data["starting_counts"].shape
+            alpha=operations.exp(self.log_alpha),
+            shape=self.default_data["starting_counts"].shape,
         )
 
 

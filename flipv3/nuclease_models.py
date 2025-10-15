@@ -85,14 +85,15 @@ class G1Template(Model):
                 Constant(np.sum(array, axis=-1, keepdims=True), togglable=False),
             )
 
-        # We need a shared alpha as a hyperparameter on the starting counts
-        self.alpha = parameters.Gamma(
+        # We need a shared alpha as a hyperparameter on the starting counts. We
+        # model log-alpha for numerical stability.
+        self.log_alpha = parameters.ExpGamma(
             alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_variants,)
         )
 
         # Starting proportions are described by a Dirichlet distribution
         self.log_theta_t0 = parameters.ExpDirichlet(
-            alpha=self.alpha, shape=(3, self.n_variants)
+            alpha=operations.exp(self.log_alpha), shape=(3, self.n_variants)
         )
 
         # We have two sources of noise in fluorescence: One from differing experimental
@@ -236,12 +237,12 @@ class G2Template(Model):
         self.log_thresholds = Constant(np.log(ft), togglable=False)
 
         # The input libraries should be correlated, but might have slightly different
-        # proportions
-        self.alpha = parameters.Gamma(
+        # proportions. We model log alpha for numerical stability.
+        self.log_alpha = parameters.ExpGamma(
             alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_variants,)
         )
         self.log_theta_t0 = parameters.ExpDirichlet(
-            alpha=self.alpha, shape=(2, self.n_variants)
+            alpha=operations.exp(self.log_alpha), shape=(2, self.n_variants)
         )
 
         # Model input counts
