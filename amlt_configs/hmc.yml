@@ -6,7 +6,7 @@ target:
   name: msrresrchvc
 
 environment:
-  image: scistanpy:0.0.11
+  image: scistanpy:0.0.13
   registry: bjwamltcr.azurecr.io
 
 data:
@@ -67,7 +67,7 @@ search:
   job_template:
     name: "{experiment_name:s}_{dset_ind:s}"
     sku: 8C15
-    preemptible: False
+    sla_tier: premium
     command:
       - bash run_hmc_job-specific.sh {dset_ind}
     submit_args:

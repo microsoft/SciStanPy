@@ -7,7 +7,7 @@ target:
   # name: msrresrchlab
 
 environment:
-  image: scistanpy:0.0.12
+  image: scistanpy:0.0.14
   registry: bjwamltcr.azurecr.io
 
 data:
@@ -37,7 +37,7 @@ code:
 #       values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")
 
 jobs:
-  - name: k50_mle
+  - name: k50_mle_lr0-01
     sku: 80G1-A100
     sla_tier: premium
     command:
@@ -46,6 +46,22 @@ jobs:
         --dataset k50
         --flip_data "$$AMLT_DATA_DIR"
         --output_dir "$$AMLT_OUTPUT_DIR"
+        --lr 0.01
+    submit_args:
+      max_run_duration_seconds: 1209600
+      env:
+        _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/84a94086-6c26-4611-8249-b3549944c86c/resourcegroups/bjwamlt/providers/Microsoft.ManagedIdentity/userAssignedIdentities/bjwamltuami
+    identity: managed
+  - name: k50_mle_lr0-1
+    sku: 80G1-A100
+    sla_tier: premium
+    command:
+      - cd /opt/SciStanPy/scistanpy/pipelines
+      - python mle_flip.py
+        --dataset k50
+        --flip_data "$$AMLT_DATA_DIR"
+        --output_dir "$$AMLT_OUTPUT_DIR"
+        --lr 0.1
     submit_args:
       max_run_duration_seconds: 1209600
       env:

@@ -100,7 +100,9 @@ def run_mle(args: argparse.Namespace) -> None:
     )
 
     # Save the loss curve
-    base_outfile = f"{args.dataset}_{args.subset}_{args.rate_dist}_{args.growth_func}"
+    base_outfile = (
+        f"{args.dataset}_{args.subset}_{args.fitness_dist}_{args.growth_curve}"
+    )
     mle.losses.to_csv(
         os.path.join(args.output_dir, f"{base_outfile}_loss-curve.csv"), index=False
     )
