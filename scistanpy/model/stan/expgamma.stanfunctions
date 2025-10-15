@@ -1,0 +1,32 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+real expgamma_lpdf(real y, real alpha, real beta) {
+    // If exp(y) is gamma distributed, then y is exp-gamma distributed.
+    // Equivalently, if y is gamma distributed, then log(y) is exp-gamma
+    // distributed.
+    return alpha * (log(beta) + y) - beta * exp(y) - lgamma(alpha);
+}
+
+real expgamma_lpdf(vector y, vector alpha, vector beta) {
+    // Vectorized version of the exp-gamma log probability density function
+    return dot_product(alpha, log(beta) + y) - dot_product(beta, exp(y)) - sum(lgamma(alpha));
+}
+
+real expgamma_lpdf(vector y, real alpha, real beta) {
+    // Vectorized version of the exp-gamma log probability density function
+    // with a single alpha and beta
+    return sum(alpha * (log(beta) + y) - beta * exp(y) - lgamma(alpha));
+}
+
+real expgamma_lpdf(vector y, real alpha, vector beta) {
+    // Vectorized version of the exp-gamma log probability density function
+    // with a single alpha and a vector of betas
+    return sum(alpha * (log(beta) + y) - beta .* exp(y) - lgamma(alpha));
+}
+
+real expgamma_lpdf(vector y, vector alpha, real beta) {
+    // Vectorized version of the exp-gamma log probability density function
+    // with a vector of alphas and a single beta
+    return sum(alpha .* (log(beta) + y) - beta * exp(y) - lgamma(alpha));
+}

@@ -759,6 +759,12 @@ expexponential = LogUnivariateScipyTransform(stats.expon)
 :py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform`.
 """
 
+expgamma = LogUnivariateScipyTransform(stats.gamma)
+"""
+``scipy.stats.gamma`` transformed to the log scale using
+:py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform`.
+"""
+
 explomax = LogUnivariateScipyTransform(stats.lomax)
 """
 ``scipy.stats.lomax`` transformed to the log scale using

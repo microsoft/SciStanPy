@@ -1515,6 +1515,55 @@ class Gamma(ContinuousDistribution):
     }  # Transform beta to match the scipy distribution's scale parameter
 
 
+class ExpGamma(Gamma):
+    r"""Exp-Gamma distribution (log of gamma random variable).
+
+    Implements the distribution of :math:`Y` where :math:`\exp(Y) \sim
+    \text{Gamma}(\alpha, \beta)`.
+
+    :param alpha: Shape parameter for the underlying gamma
+    :type alpha: custom_types.ContinuousParameterType
+    :param beta: Rate parameter for the underlying gamma
+    :type beta: custom_types.ContinuousParameterType
+    :param kwargs: Additional keyword arguments passed to parent class
+
+    Mathematical Definition:
+        .. math::
+            \begin{align*}
+            \text{If } X &\sim \text{Gamma}(\alpha, \beta), \text{then } \\ \\
+            Y &= \log(X) \sim \text{ExpGamma}(\alpha, \beta), \text{where } \\ \\
+            P(y | \alpha, \beta) &= \frac{\beta^\alpha}{\Gamma(\alpha)} *
+            \exp(\alpha y - \beta * \exp(y)) \text{ for } y \in (-\infty, \infty)
+            \end{align*}
+
+    Properties:
+
+        - Support: :math:`(-\infty, \infty)`
+        - Related to log-normal and Gumbel distribution families
+        - Useful for log-scale modeling of positive continuous quantities
+
+    This distribution requires custom Stan functions for implementation (see
+    :doc:`../stan/stan_functions`) which are automatically included in any Stan
+    program defined using this distribution.
+    """
+
+    LOWER_BOUND = None
+    STAN_DIST = "expgamma"
+    SCIPY_DIST = custom_scipy_dists.expgamma
+    TORCH_DIST = custom_torch_dists.ExpGamma
+
+    def get_supporting_functions(self) -> list[str]:
+        """Return list of required Stan function includes.
+
+        :returns: List containing the expgamma.stanfunctions include
+        :rtype: list[str]
+
+        This distribution requires custom Stan functions for proper implementation
+        of the exp-gamma density and random number generation
+        """
+        return super().get_supporting_functions() + ["#include expgamma.stanfunctions"]
+
+
 class InverseGamma(ContinuousDistribution):
     r"""Inverse gamma distribution parameter.
 
@@ -1639,11 +1688,6 @@ class ExpExponential(Exponential):
     STAN_DIST = "expexponential"
     SCIPY_DIST = custom_scipy_dists.expexponential
     TORCH_DIST = custom_torch_dists.ExpExponential
-    STAN_TO_SCIPY_NAMES = {"beta": "scale"}
-    STAN_TO_TORCH_NAMES = {"beta": "rate"}
-    STAN_TO_SCIPY_TRANSFORMS = {
-        "beta": _inverse_transform
-    }  # Transform beta to match the scipy distribution's scale parameter
 
     def get_supporting_functions(self) -> list[str]:
         """Return list of required Stan function includes.

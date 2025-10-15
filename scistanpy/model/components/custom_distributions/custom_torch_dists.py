@@ -585,6 +585,46 @@ class ExpExponential(
         super().__init__(base_dist, transforms, *args, **kwargs)
 
 
+class ExpGamma(
+    dist.transformed_distribution.TransformedDistribution, CustomDistribution
+):
+    r"""Exponential-Gamma distribution implementation.
+
+    This distribution is created by taking the logarithm of a Gamma-distributed
+    random variable. It's useful for modeling log-scale phenomena that exhibit
+    gamma-like behavior.
+
+    :param concentration: Shape parameter for the underlying Gamma distribution
+    :type concentration: torch.Tensor
+    :param rate: Rate parameter for the underlying Gamma distribution
+    :type rate: torch.Tensor
+    :param args: Additional arguments for the base distribution
+    :param kwargs: Additional keyword arguments for the base distribution
+
+    Mathematical Definition:
+        .. math::
+            \begin{align*}
+            \text{If } X &\sim \text{Gamma}(\text{concentration}, \text{rate}), \text{then } \\ \\
+                Y &= \log(X) \sim \text{ExpGamma}(\text{concentration}, \text{rate})
+            \end{align*}
+    """
+
+    def __init__(
+        self, concentration: torch.Tensor, rate: torch.Tensor, *args, **kwargs
+    ):
+        """Initialize Exponential-Gamma distribution.
+
+        :param concentration: Shape parameter for base Gamma distribution
+        :param rate: Rate parameter for base Gamma distribution
+        :param args: Additional arguments
+        :param kwargs: Additional keyword arguments
+        """
+        # Build the base distribution (Gamma) and transforms (log)
+        base_dist = dist.Gamma(concentration=concentration, rate=rate)
+        transforms = [dist.transforms.ExpTransform().inv]
+        super().__init__(base_dist, transforms, *args, **kwargs)
+
+
 class ExpDirichlet(
     dist.transformed_distribution.TransformedDistribution, CustomDistribution
 ):
