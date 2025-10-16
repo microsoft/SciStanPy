@@ -21,15 +21,13 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-
 from types import ModuleType
-from typing import Collection, Literal, overload, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Collection, Literal, Union, overload
 
 import dask.config
 import numpy as np
 import numpy.typing as npt
 import torch
-
 from arviz.utils import Dask
 from scipy import stats
 from tqdm import tqdm

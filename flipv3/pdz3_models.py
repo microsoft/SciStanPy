@@ -6,6 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 from scistanpy import operations, parameters
+
 from .base_models import BaseEnrichmentTemplate, HierarchicalEnrichmentMeta
 from .constants import DEFAULT_HYPERPARAMS, GrowthCurve, GrowthRate
 from .flip_dsets import load_pdz_dataset

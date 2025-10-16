@@ -11,12 +11,11 @@ capabilities of Stan with the flexibility of PyTorch for neural network
 components.
 """
 
-from typing import Optional, TYPE_CHECKING
-
-from typeguard import install_import_hook
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 import torch
+from typeguard import install_import_hook
 
 # Define the version
 __version__ = "0.0.14"

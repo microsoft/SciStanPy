@@ -28,35 +28,32 @@ import json
 import os.path
 import warnings
 import weakref
-
 from abc import ABC, abstractmethod
 from collections import Counter
 from tempfile import TemporaryDirectory
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Generator,
     Literal,
     Optional,
     ParamSpec,
-    TYPE_CHECKING,
     TypeVar,
     Union,
 )
 
 import numpy as np
 import numpy.typing as npt
-
 from cmdstanpy import CmdStanModel, format_stan_file
 
 import scistanpy
-
 from scistanpy import utils
 from scistanpy.defaults import (
     DEFAULT_CPP_OPTIONS,
     DEFAULT_FORCE_COMPILE,
-    DEFAULT_MODEL_NAME,
     DEFAULT_INDEX_ORDER,
+    DEFAULT_MODEL_NAME,
     DEFAULT_STANC_OPTIONS,
     DEFAULT_USER_HEADER,
 )

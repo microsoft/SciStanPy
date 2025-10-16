@@ -23,15 +23,13 @@ Key Features:
     - GPU acceleration and device management
 """
 
-import warnings
-
-from typing import Optional, TYPE_CHECKING, Union
-
 import itertools
+import warnings
+from typing import TYPE_CHECKING, Optional, Union
+
 import numpy.typing as npt
 import torch
 import torch.nn as nn
-
 from tqdm import tqdm
 
 from scistanpy.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS

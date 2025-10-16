@@ -5,12 +5,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
+from flipv3.flip_dsets import AA_TO_ORDINAL, load_k50_data
 from scistanpy import Constant, Model, operations, parameters
 from scistanpy.model.components.transformations.transformed_parameters import (
     TransformedParameter,
 )
-
-from flipv3.flip_dsets import AA_TO_ORDINAL, load_k50_data
 
 if TYPE_CHECKING:
     from scistanpy import custom_types

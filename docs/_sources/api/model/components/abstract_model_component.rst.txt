@@ -12,4 +12,3 @@ AbstractModelComponent
    :members:
    :undoc-members:
    :show-inheritance:
-

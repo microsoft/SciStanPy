@@ -29,9 +29,8 @@ from __future__ import annotations
 
 import itertools
 import re
-
 from copy import deepcopy
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import holoviews as hv
 import hvplot.pandas  # pylint: disable=unused-import
@@ -40,7 +39,6 @@ import pandas as pd
 import panel as pn
 import panel.widgets as pnw
 import xarray as xr
-
 from param.parameterized import Event
 
 from scistanpy.model.components import constants

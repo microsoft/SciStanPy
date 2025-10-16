@@ -1,0 +1,54 @@
+# GitLeaks configuration for comprehensive secret scanning
+title = "SciStanPy GitLeaks Configuration"
+
+[extend]
+# Use the default GitLeaks rules as a base
+useDefault = true
+
+[[rules]]
+description = "Generic API Key"
+id = "generic-api-key"
+regex = '''(?i)(?:api[_-]?key|apikey|secret[_-]?key|secretkey)['"]*\s*[:=]\s*['"][a-zA-Z0-9_\-]{16,}['"]'''
+tags = ["key", "API"]
+
+[[rules]]
+description = "Azure Storage Account Key"
+id = "azure-storage-key"
+regex = '''DefaultEndpointsProtocol=https;AccountName=[a-zA-Z0-9]+;AccountKey=[a-zA-Z0-9+/=]{88,}==;EndpointSuffix=core\.windows\.net'''
+tags = ["key", "Azure"]
+
+[[rules]]
+description = "Database Connection String"
+id = "database-connection"
+regex = '''(?i)(?:database|db)[_-]?(?:url|uri|connection)['"]*\s*[:=]\s*['"][^'"]{20,}['"]'''
+tags = ["database", "connection"]
+
+[[rules]]
+description = "JWT Token"
+id = "jwt-token"
+regex = '''eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*'''
+tags = ["jwt", "token"]
+
+[allowlist]
+description = "Allowlisted files and patterns"
+files = [
+    '''(.*\.md)|(.*\.txt)|(.*\.lock)|(.*\.yml)|(.*\.yaml)$''',
+    '''.secrets.baseline$''',
+    '''package-lock\.json$''',
+    '''yarn\.lock$''',
+]
+
+regexes = [
+    '''dummy|test|example|placeholder|fake|mock''',
+    '''<[A-Z_]+>''',  # Template variables like <API_KEY>
+    '''your_[a-z_]+_here''',  # Placeholder patterns
+    '''\$\{[A-Z_]+\}''',  # Environment variable patterns
+]
+
+paths = [
+    '''.git/''',
+    '''node_modules/''',
+    '''venv/''',
+    '''.venv/''',
+    '''__pycache__/''',
+]

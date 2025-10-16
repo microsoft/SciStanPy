@@ -21,7 +21,6 @@ by SciStanPy.
 """
 
 import string
-
 from typing import Any
 
 # Fitting defaults

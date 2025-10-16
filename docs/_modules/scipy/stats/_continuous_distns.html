@@ -13,23 +13,23 @@
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-   
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-  
 
-  
-  
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+
+
+
+
 
   </head><body>
-  
+
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
+
 
           <div class="body" role="main">
-            
+
   <h1>Source code for scipy.stats._continuous_distns</h1><div class="highlight"><pre>
 <span></span><span class="c1">#</span>
 <span class="c1"># Author:  Travis Oliphant  2002-2011 with contributions from</span>
@@ -3261,7 +3261,7 @@
         <span class="k">if</span> <span class="s1">&#39;k&#39;</span> <span class="ow">in</span> <span class="n">moments</span><span class="p">:</span>
             <span class="n">k</span> <span class="o">=</span> <span class="n">xpx</span><span class="o">.</span><span class="n">apply_where</span><span class="p">(</span>
                 <span class="n">c</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span>
-                <span class="k">lambda</span> <span class="n">xi</span><span class="p">:</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">xi</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">xi</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">xi</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> 
+                <span class="k">lambda</span> <span class="n">xi</span><span class="p">:</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">xi</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">xi</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">xi</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span>
                            <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">xi</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">4</span><span class="o">*</span><span class="n">xi</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">,</span>
                 <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
@@ -3405,7 +3405,7 @@
         <span class="c1"># Returns log(-log(cdf(x, c)))</span>
         <span class="k">return</span> <span class="n">xpx</span><span class="o">.</span><span class="n">apply_where</span><span class="p">(</span>
             <span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">x</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">c</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span>
-            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">c</span><span class="o">*</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="n">c</span><span class="p">,</span> 
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">c</span><span class="o">*</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="n">c</span><span class="p">,</span>
             <span class="n">fill_value</span><span class="o">=-</span><span class="n">x</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
@@ -3472,7 +3472,7 @@
 
         <span class="c1"># mean</span>
         <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">c</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="o">-</span><span class="n">gamk</span><span class="p">)</span>
-        
+
         <span class="c1"># variance</span>
         <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">c</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">g1</span><span class="o">**</span><span class="mf">2.0</span><span class="o">*</span><span class="n">gam2k</span><span class="p">)</span>
 
@@ -3480,12 +3480,12 @@
         <span class="k">def</span><span class="w"> </span><span class="nf">sk1_eval</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
             <span class="k">def</span><span class="w"> </span><span class="nf">sk1_eval_f</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g2mg12</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="n">g3</span> <span class="o">+</span> <span class="p">(</span><span class="n">g2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">g2mg12</span><span class="p">)</span><span class="o">*</span><span class="n">g1</span><span class="p">)</span><span class="o">/</span><span class="n">g2mg12</span><span class="o">**</span><span class="mf">1.5</span>
-            <span class="k">return</span> <span class="n">xpx</span><span class="o">.</span><span class="n">apply_where</span><span class="p">(</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">1.</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">),</span> 
+            <span class="k">return</span> <span class="n">xpx</span><span class="o">.</span><span class="n">apply_where</span><span class="p">(</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">1.</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">),</span>
                                    <span class="n">sk1_eval_f</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
         <span class="n">sk_fill</span> <span class="o">=</span> <span class="mi">12</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span><span class="o">*</span><span class="n">_ZETA3</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">**</span><span class="mi">3</span>
         <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g2mg12</span><span class="p">)</span>
-        <span class="n">sk</span> <span class="o">=</span> <span class="n">xpx</span><span class="o">.</span><span class="n">apply_where</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="o">**</span><span class="mf">0.29</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">),</span> 
+        <span class="n">sk</span> <span class="o">=</span> <span class="n">xpx</span><span class="o">.</span><span class="n">apply_where</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="o">**</span><span class="mf">0.29</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">),</span>
                              <span class="n">sk1_eval</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">sk_fill</span><span class="p">)</span>
 
         <span class="c1"># kurtosis</span>
@@ -3495,7 +3495,7 @@
             <span class="k">return</span> <span class="n">xpx</span><span class="o">.</span><span class="n">apply_where</span><span class="p">(</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">1.</span><span class="o">/</span><span class="mi">4</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ku1_eval_f</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
         <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">,</span> <span class="n">g2mg12</span><span class="p">)</span>
-        <span class="n">ku</span> <span class="o">=</span> <span class="n">xpx</span><span class="o">.</span><span class="n">apply_where</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="o">**</span><span class="mf">0.23</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">),</span> 
+        <span class="n">ku</span> <span class="o">=</span> <span class="n">xpx</span><span class="o">.</span><span class="n">apply_where</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="o">**</span><span class="mf">0.23</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">),</span>
                              <span class="n">ku1_eval</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mf">12.0</span><span class="o">/</span><span class="mf">5.0</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sk</span><span class="p">,</span> <span class="n">ku</span>
@@ -6680,7 +6680,7 @@
         <span class="k">return</span> <span class="n">xpx</span><span class="o">.</span><span class="n">apply_where</span><span class="p">(</span>
             <span class="n">g</span> <span class="o">&lt;</span> <span class="n">_XMIN</span><span class="p">,</span> <span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span>
             <span class="k">lambda</span> <span class="n">g</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">+</span> <span class="n">sc</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">c</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">c</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">g</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>            
+            <span class="k">lambda</span> <span class="n">g</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
         <span class="c1"># See the comments for _cdf() for how x &lt; _LOGXMIN is handled.</span>
@@ -12517,7 +12517,7 @@
 </pre></div>
 
           </div>
-          
+
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="Main">
@@ -12568,15 +12568,15 @@
     </div>
     <div class="footer">
       &#169;2025, Microsoft Corporation.
-      
+
       |
       Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
-      
+
     </div>
 
-    
 
-    
+
+
   </body>
 </html>

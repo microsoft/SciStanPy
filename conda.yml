@@ -15,15 +15,17 @@ dependencies:
   - panel
   - pip
   - pocl
+  - pre-commit
+  - pytest
   - python=3.12
   - pyviz::datashader
   - sphinx
   - watchfiles
   - pip:
-    - torch --index-url https://download.pytorch.org/whl/cu128
-    - torchvision --index-url https://download.pytorch.org/whl/cu128
-    - torchaudio --index-url https://download.pytorch.org/whl/cu128
-    - twine
-    - keyring
-    - artifacts-keyring
-    - -e .
+      - torch --index-url https://download.pytorch.org/whl/cu128
+      - torchvision --index-url https://download.pytorch.org/whl/cu128
+      - torchaudio --index-url https://download.pytorch.org/whl/cu128
+      - twine
+      - keyring
+      - artifacts-keyring
+      - -e .

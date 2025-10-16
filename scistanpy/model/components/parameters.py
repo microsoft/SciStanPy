@@ -53,21 +53,18 @@ from __future__ import annotations
 
 import functools
 import re
-
 from abc import ABCMeta
-from typing import Callable, Optional, overload, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Callable, Optional, Union, overload
 
 import numpy as np
 import numpy.typing as npt
 import torch
 import torch.distributions as dist
 import torch.nn as nn
-
 from scipy import stats
 
 import scistanpy
 from scistanpy import utils
-
 from scistanpy.model.components import abstract_model_component
 from scistanpy.model.components.custom_distributions import (
     custom_scipy_dists,

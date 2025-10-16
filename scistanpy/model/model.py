@@ -25,8 +25,7 @@ from __future__ import annotations
 
 import os.path
 import pickle
-
-from typing import Any, Iterable, Literal, Optional, overload, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Union, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -47,12 +46,10 @@ from scistanpy.defaults import (
     DEFAULT_USER_HEADER,
 )
 from scistanpy.model.components import abstract_model_component
-from scistanpy.model.components import (
-    constants as constants_module,
-    parameters as parameters_module,
-)
+from scistanpy.model.components import constants as constants_module
+from scistanpy.model.components import parameters as parameters_module
+from scistanpy.model.components.transformations import transformed_data
 from scistanpy.model.components.transformations import (
-    transformed_data,
     transformed_parameters as transformed_parameters_module,
 )
 

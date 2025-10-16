@@ -34,15 +34,15 @@ from __future__ import annotations
 
 from functools import partial, wraps
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
-    Optional,
-    overload,
     Literal,
+    Optional,
     ParamSpec,
-    TYPE_CHECKING,
     TypeVar,
     Union,
+    overload,
 )
 
 import holoviews as hv
@@ -53,7 +53,6 @@ import numpy.typing as npt
 import pandas as pd
 import panel.widgets as pnw
 import torch
-
 from scipy import stats
 
 if TYPE_CHECKING:

@@ -1,16 +1,20 @@
-FLIPv3 Models
-=============
+# FLIPv3 Models
+
 This file describes the models applied to the different datasets in FLIPv3.
 
 ## TrpB
+
 The TrpB landscapes are constructed by measuring the counts of different variants over a series of timesteps before fitting a growth curve to that data for each variant. The parameters of the fit curves define a measure of variant fitness.
 
 ### Data
+
 There are two measured quantities in the TrpB datasets:
+
 1. The counts, which we define as the tensor $\left\{C \in \Z^{R \times T \times K} \vert c_{rtk} \ge 0\right\}$, where $R$ gives the number of replicates, $T$ gives the number of timepoints, $K$ gives the size of the library, $r$ is the replicate index, $t$ is the timepoint index, and $k$ is the variant index.
 2. The time, which we define as the vector $\left\{x \in \R^T \vert x_t \ge 0.0\right\}$.
 
 ### Parameters
+
 We model counts as being drawn from either a multinomial, binomial, or Poisson distribution. In that order, these are parametrized as
 
 $$

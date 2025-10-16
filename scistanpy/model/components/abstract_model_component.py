@@ -54,14 +54,14 @@ models while maintaining type safety and automatic Stan code generation.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Literal, Optional, overload, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union, overload
 
 import numpy as np
 import numpy.typing as npt
 import torch
 
-from scistanpy.exceptions import NumpySampleError
 from scistanpy import utils
+from scistanpy.exceptions import NumpySampleError
 
 # Lazy imports for performance and to avoid circular imports
 constants_module = utils.lazy_import("scistanpy.model.components.constants")

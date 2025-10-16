@@ -2,7 +2,6 @@
 
 import os.path
 import warnings
-
 from abc import ABC, abstractmethod
 from typing import Literal
 
@@ -11,13 +10,12 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import xarray as xr
-
 from scipy import stats
 
+from flipv3.flip_dsets import load_pdz_dataset, load_trpb_dataset
 from scistanpy.model.results import MLEInferenceRes, SampleResults
 from scistanpy.plotting import quantile_plot
 from scistanpy.utils import faster_autocorrelation
-from flipv3.flip_dsets import load_trpb_dataset, load_pdz_dataset
 
 LOAD_DATASET_MAP = {
     "trpb": (load_trpb_dataset, ".csv"),

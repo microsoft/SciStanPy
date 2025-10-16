@@ -1,8 +1,9 @@
-Growth Models
-=============
+# Growth Models
+
 This file describes the different models of organismal growth that are included in SciStanPy.
 
 ## Competitive Lotka-Volterra
+
 The base growth model that we start from is the [Lotka-Volterra equation for competitive growth](https://journals.biologists.com/jeb/article/9/4/389/22702/Experimental-Studies-on-the-Struggle-for):
 
 $$
@@ -24,6 +25,7 @@ $$
 This generalized equation can be used to describe the relative abundances of different competing populations. The remainder of this document is dedicated to showing how different assumptions can result in various alternate parametrizations.
 
 ## Adjusted Exponential
+
 Let's assume that each population of variants imparts equivalent stress on the others. In other words, we will have $\alpha_{ij} = \alpha$ for all $i$ and all $j$. In this case, Eq. 2 simplifies to
 
 $$
@@ -85,6 +87,7 @@ x_i &= \textrm{e} ^ {r_it + C_i}. \\
 $$
 
 ## Modified Sigmoid Growth
+
 It might not necessarily be reasonable to assume that all variants have equivalent impact on one another. Indeed, we may want to assume that each population of variants imparts a different-strength effect on the others. In this case, we can write Eq. 2 as
 
 $$

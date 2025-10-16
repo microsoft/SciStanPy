@@ -43,28 +43,26 @@ import itertools
 import os.path
 import re
 import warnings
-
 from glob import glob
 from typing import (
+    TYPE_CHECKING,
     Any,
     Generator,
     Literal,
     Optional,
-    overload,
     Sequence,
-    TYPE_CHECKING,
     Union,
+    overload,
 )
 
 import arviz as az
 import dask
-import holoviews as hv
 import h5netcdf
+import holoviews as hv
 import numpy as np
 import numpy.typing as npt
 import panel as pn
 import xarray as xr
-
 from cmdstanpy.cmdstan_args import CmdStanArgs, SamplerArgs
 from cmdstanpy.stanfit import CmdStanMCMC, RunSet
 from cmdstanpy.utils import check_sampler_csv, scan_config
@@ -81,7 +79,7 @@ from scistanpy.model.components.transformations import transformed_parameters
 from scistanpy.model.results import mle
 
 if TYPE_CHECKING:
-    from scistanpy import custom_types, Model
+    from scistanpy import Model, custom_types
 
 # pylint: disable=too-many-lines
 

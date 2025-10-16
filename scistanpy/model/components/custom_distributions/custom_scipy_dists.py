@@ -20,15 +20,12 @@ from __future__ import annotations
 
 import functools
 import inspect
-
 from abc import ABC, abstractmethod
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import numpy as np
 import numpy.typing as npt
-
-from scipy import special
-from scipy import stats
+from scipy import special, stats
 
 if TYPE_CHECKING:
     from scistanpy import custom_types

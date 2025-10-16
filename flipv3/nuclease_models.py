@@ -1,11 +1,12 @@
 """Holds models for the nuclease dataset"""
 
-from typing import Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import numpy.typing as npt
 
 from scistanpy import Constant, Model, operations, parameters
+
 from .constants import DEFAULT_HYPERPARAMS
 from .flip_dsets import load_nuclease_data
 

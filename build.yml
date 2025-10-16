@@ -1,5 +1,5 @@
 trigger:
-- main
+  - main
 
 pool:
   vmImage: windows-latest
@@ -9,71 +9,71 @@ variables:
   LGTM.UploadSnapshot: true
 
 steps:
-#####################################################
-# Credential Scanner
-#####################################################
-- task: CredScan@3
-#####################################################
+  #####################################################
+  # Credential Scanner
+  #####################################################
+  - task: CredScan@3
+  #####################################################
 
-#####################################################
-# CodeQL 3000
-#####################################################
-- task: CodeQL3000Init@0
-- task: CodeQL3000Finalize@0
-#####################################################
+  #####################################################
+  # CodeQL 3000
+  #####################################################
+  - task: CodeQL3000Init@0
+  - task: CodeQL3000Finalize@0
+  #####################################################
 
-#####################################################
-# If CodeQL3000 is not instaled on your ADO Project
-# Comment the CodeQL block above and uncomment the CodeQL block below
-# Update the programing language as neede
-#####################################################
+  #####################################################
+  # If CodeQL3000 is not instaled on your ADO Project
+  # Comment the CodeQL block above and uncomment the CodeQL block below
+  # Update the programing language as neede
+  #####################################################
 
-#####################################################
-# CodeQL
-#####################################################
-# - task: Semmle@1
-#   inputs:
-#     sourceCodeDirectory: '$(Build.SourcesDirectory)'
-#     language: 'csharp'
-#     querySuite: 'Recommended'
-#     timeout: '1800'
-#     ram: '16384'
-#     addProjectDirToScanningExclusionList: true
-#   env:
-#     SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-#####################################################
+  #####################################################
+  # CodeQL
+  #####################################################
+  # - task: Semmle@1
+  #   inputs:
+  #     sourceCodeDirectory: '$(Build.SourcesDirectory)'
+  #     language: 'csharp'
+  #     querySuite: 'Recommended'
+  #     timeout: '1800'
+  #     ram: '16384'
+  #     addProjectDirToScanningExclusionList: true
+  #   env:
+  #     SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+  #####################################################
 
-#####################################################
-# Component Governance
-#####################################################
-- task: ComponentGovernanceComponentDetection@0
-  inputs:
-    scanType: 'Register'
-    verbosity: 'Verbose'
-    alertWarningLevel: 'High'
-#####################################################
+  #####################################################
+  # Component Governance
+  #####################################################
+  - task: ComponentGovernanceComponentDetection@0
+    inputs:
+      scanType: "Register"
+      verbosity: "Verbose"
+      alertWarningLevel: "High"
+  #####################################################
 
-#####################################################
-# Component Governance for Docker Images
-#####################################################
-- task: ComponentGovernanceComponentDetection@0
-  inputs:
-    scanType: 'Register'
-    verbosity: 'Verbose'
-    dockerImagesToScan: '$(Build.SourcesDirectory)'
-    alertWarningLevel: 'High'
-#####################################################
+  #####################################################
+  # Component Governance for Docker Images
+  #####################################################
+  - task: ComponentGovernanceComponentDetection@0
+    inputs:
+      scanType: "Register"
+      verbosity: "Verbose"
+      dockerImagesToScan: "$(Build.SourcesDirectory)"
+      alertWarningLevel: "High"
+  #####################################################
 
-#####################################################
-# Public Security Tools builds artifacts
-#####################################################
-- task: PublishSecurityAnalysisLogs@3
-  inputs:
-    ArtifactName: 'CodeAnalysisLogs'
-    ArtifactType: 'Container'
-    PublishProcessedResults: true
-    AllTools: true
-    ToolLogsNotFoundAction: 'Standard'
+  #####################################################
+  # Public Security Tools builds artifacts
+  #####################################################
+  - task: PublishSecurityAnalysisLogs@3
+    inputs:
+      ArtifactName: "CodeAnalysisLogs"
+      ArtifactType: "Container"
+      PublishProcessedResults: true
+      AllTools: true
+      ToolLogsNotFoundAction: "Standard"
 #####################################################
 
 #####################################################
@@ -90,8 +90,8 @@ steps:
 
 # Schedule
 schedules:
-- cron: '00 00 * * 01'
-  displayName: Weekly build
-  branches:
-    include: 
-    - main
+  - cron: "00 00 * * 01"
+    displayName: Weekly build
+    branches:
+      include:
+        - main

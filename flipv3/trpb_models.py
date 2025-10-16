@@ -1,11 +1,12 @@
 """Code for building TrpB models for the three- and four-site libraries."""
 
-from typing import Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import numpy.typing as npt
 
 from scistanpy import Constant, parameters
+
 from .base_models import (
     BaseEnrichmentTemplate,
     FlatEnrichmentMeta,

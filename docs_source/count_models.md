@@ -1,5 +1,5 @@
-Count Models
-=====================
+# Count Models
+
 This file describes the distributions available for modeling next generation sequencing counts datasets in SciStanPy.
 
 ## The Multinomial Distribution
@@ -27,6 +27,7 @@ where $\theta_k$ is the probability of an event happening and $c_k$ is the numbe
 The binomial distribution differs from the multinomial in that it does not consider the joint probability of all variants in the population, treating the distribution of counts seen for each variant independently. In other words, there is no requirement that $\sum_{i=1}^k\theta_i = 1$ for the binomial distribution as there is for the multinomial.
 
 ## The Poisson Distribution
+
 In the limit of $N \rightarrow \infty$ and $\theta_k \rightarrow 0$, the binomial distribution can be approximated as a Poisson distribution. In DMS studies, we typically are evaluating many variants (meaning $\theta_k$ should be low, at least for early timepoints) with high throughput next generation sequencing (meaning $N$ should be high). The Poisson approximation of the binomial distribution may thus be valid.
 
 In SciStanPy, the probability mass function for the Poisson distribution is parametrized as follows:
@@ -36,4 +37,3 @@ P(c_k \vert \lambda_k ) = \frac{\lambda_k^{c_k}}{c_k!}\textrm{e}^{-\lambda_k}
 $$
 
 The parameter $\lambda$ approximates $N\theta_k$.
-

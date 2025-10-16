@@ -51,4 +51,14 @@ Documentation = "https://microsoft.github.io/scistanpy/"
 Repository = "https://github.com/microsoft/scistanpy"
 Issues = "https://github.com/microsoft/scistanpy/issues"
 
+# Bandit security linting configuration
+[tool.bandit]
+exclude_dirs = ["tests", "build", "dist"]
+skips = ["B101", "B601", "B301", "B302", "B403", "B404"]  # Skip assert_used, shell=True, and pickle usage (common in scientific code)
 
+# isort import sorting configuration
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["scistanpy"]

@@ -8,16 +8,14 @@ from __future__ import annotations
 
 import argparse
 import os.path
-
 from typing import TYPE_CHECKING
 
-from scistanpy.model.results import SampleResults
 from flipv3.constants import DEFAULT_HYPERPARAMS
 from flipv3.k50_models import get_k50_instance
 from flipv3.nuclease_models import get_nuc_instance
 from flipv3.pdz3_models import get_pdz3_instance
 from flipv3.trpb_models import get_trpb_instance
-
+from scistanpy.model.results import SampleResults
 
 if TYPE_CHECKING:
     from scistanpy.model import Model

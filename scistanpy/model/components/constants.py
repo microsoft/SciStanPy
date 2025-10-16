@@ -41,7 +41,7 @@ important for interactive model manipulation during prior predictive checks.
 
 from __future__ import annotations
 
-from typing import Literal, Optional, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
 import numpy.typing as npt

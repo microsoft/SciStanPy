@@ -2,13 +2,11 @@
 
 import os.path
 import re
-
 from typing import Literal, TypedDict
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-
 from Bio.Seq import Seq
 
 # Note any timepoints that are skipped in the dataset. The key is the dataset

@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 from scistanpy import Constant, Model, operations, parameters
+
 from .constants import DEFAULT_HYPERPARAMS
 
 if TYPE_CHECKING:

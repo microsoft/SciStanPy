@@ -12,7 +12,7 @@ automatic differentiation capabilities and Stan code generation.
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Callable, Optional, overload, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Callable, Optional, Union, overload
 
 import numpy as np
 import numpy.typing as npt

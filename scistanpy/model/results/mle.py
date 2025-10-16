@@ -51,15 +51,14 @@ more sophisticated inference procedures like MCMC sampling.
 from __future__ import annotations
 
 import warnings
-
 from typing import (
+    TYPE_CHECKING,
     Generator,
     Literal,
     Optional,
-    overload,
     Sequence,
-    TYPE_CHECKING,
     Union,
+    overload,
 )
 
 import arviz as az
@@ -71,7 +70,6 @@ import pandas as pd
 import panel as pn
 import torch
 import xarray as xr
-
 from scipy import stats
 
 from scistanpy import plotting

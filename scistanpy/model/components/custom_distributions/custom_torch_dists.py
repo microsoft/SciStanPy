@@ -18,7 +18,7 @@ Key Features:
 
 from __future__ import annotations
 
-from typing import Optional, ParamSpec, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, ParamSpec
 
 import torch
 import torch.distributions as dist
