@@ -48,7 +48,6 @@ import numpy.typing as npt
 from cmdstanpy import CmdStanModel, format_stan_file
 
 import scistanpy
-from scistanpy import utils
 from scistanpy.defaults import (
     DEFAULT_CPP_OPTIONS,
     DEFAULT_FORCE_COMPILE,
@@ -58,7 +57,7 @@ from scistanpy.defaults import (
     DEFAULT_USER_HEADER,
 )
 from scistanpy.model import stan
-from scistanpy.model.components import abstract_model_component, constants, parameters
+from scistanpy.model.components import abstract_model_component
 from scistanpy.model.components.transformations import (
     transformed_data,
     transformed_parameters,
@@ -66,8 +65,6 @@ from scistanpy.model.components.transformations import (
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
-
-results = utils.lazy_import("scistanpy.model.results")
 
 # pylint: disable=too-many-lines
 
@@ -224,7 +221,7 @@ class StanCodeBase(ABC, list):
             observables.
             """
             return (
-                isinstance(nested_component, parameters.Parameter)
+                isinstance(nested_component, scistanpy.parameters.Parameter)
                 and nested_component.observable
             ) or isinstance(nested_component, StanForLoop)
 
@@ -239,7 +236,7 @@ class StanCodeBase(ABC, list):
             blocks. We take Parameters and named TransformedParameters.
             """
             return isinstance(
-                nested_component, (parameters.Parameter, StanForLoop)
+                nested_component, (scistanpy.parameters.Parameter, StanForLoop)
             ) or (
                 isinstance(
                     nested_component, transformed_parameters.TransformedParameter
@@ -921,7 +918,7 @@ class StanProgram(StanCodeBase):
         # Get all constants, named or otherwise
         model_constants = list(
             filter(
-                lambda x: isinstance(x, constants.Constant),
+                lambda x: isinstance(x, scistanpy.Constant),
                 self.model.all_model_components,
             )
         )
@@ -967,19 +964,19 @@ class StanProgram(StanCodeBase):
         all_paramnames = {
             node.model_varname
             for node in self.node_to_depth
-            if isinstance(node, parameters.Parameter) and not node.observable
+            if isinstance(node, scistanpy.parameters.Parameter) and not node.observable
         }
 
         # Get all data inputs
         auto_gathered_data = {
             node.model_varname
             for node in self.node_to_depth
-            if isinstance(node, constants.Constant)
+            if isinstance(node, scistanpy.Constant)
         }
         user_provided_varnames = {
             node.model_varname
             for node in self.node_to_depth
-            if isinstance(node, parameters.Parameter) and node.observable
+            if isinstance(node, scistanpy.parameters.Parameter) and node.observable
         }
 
         return all_varnames, all_paramnames, auto_gathered_data, user_provided_varnames
@@ -1148,13 +1145,13 @@ class StanProgram(StanCodeBase):
         # This is because the MultinomialLogit component will include the Multinomial
         # functions, so we don't need to include them again.
         if any(
-            isinstance(component, parameters.MultinomialLogit)
+            isinstance(component, scistanpy.parameters.MultinomialLogit)
             for component in model_components
         ):
             model_components = [
                 component
                 for component in model_components
-                if not isinstance(component, parameters.Multinomial)
+                if not isinstance(component, scistanpy.parameters.Multinomial)
             ]
 
         # Get all supporting functions
@@ -1194,8 +1191,11 @@ class StanProgram(StanCodeBase):
         declarations = [
             component.get_stan_parameter_declaration()
             for component in self.model.all_model_components
-            if (isinstance(component, parameters.Parameter) and component.observable)
-            or isinstance(component, constants.Constant)
+            if (
+                isinstance(component, scistanpy.parameters.Parameter)
+                and component.observable
+            )
+            or isinstance(component, scistanpy.Constant)
         ]
 
         # Combine declarations and wrap in the data block
@@ -1294,7 +1294,7 @@ class StanProgram(StanCodeBase):
                 and (component.is_named or component.force_name)
             )
             or (
-                isinstance(component, parameters.Parameter)
+                isinstance(component, scistanpy.parameters.Parameter)
                 and component.HAS_RAW_VARNAME
             )
         ]
@@ -1320,7 +1320,8 @@ class StanProgram(StanCodeBase):
         declarations = [
             component.get_generated_quantity_declaration()
             for component in self.recurse_model_components()
-            if isinstance(component, parameters.Parameter) and component.observable
+            if isinstance(component, scistanpy.parameters.Parameter)
+            and component.observable
         ]
 
         # Combine declarations
@@ -1704,7 +1705,8 @@ class StanModel(CmdStanModel):
             for component, draw in self.model.draw(
                 n=chains, named_only=False, seed=seed
             ).items()
-            if isinstance(component, parameters.Parameter) and not component.observable
+            if isinstance(component, scistanpy.parameters.Parameter)
+            and not component.observable
         }
 
         # The draws should overlap perfectly with the parameters of the model
@@ -1747,7 +1749,7 @@ class StanModel(CmdStanModel):
         mib_per_chunk: custom_types.Integer | None = None,
         use_dask: bool = False,
         **kwargs,
-    ) -> "results.SampleResults":
+    ) -> "scistanpy.results.SampleResults":
         """Execute MCMC sampling with enhanced SciStanPy integration.
 
         :param args: Positional arguments passed to CmdStanModel.sample
@@ -1761,7 +1763,7 @@ class StanModel(CmdStanModel):
         :param kwargs: Keyword arguments passed to CmdStanModel.sample
 
         :returns: Comprehensive sampling results with SciStanPy integration
-        :rtype: results.SampleResults
+        :rtype: scistanpy.results.SampleResults
 
         Enhanced Features:
         - Automatic data gathering from SciStanPy model
@@ -1795,7 +1797,7 @@ class StanModel(CmdStanModel):
         fit = updated_parent_sample(self, **kwargs)
 
         # Build the results object
-        return results.SampleResults(
+        return scistanpy.results.SampleResults(
             model=self.model,
             fit=fit,
             precision=precision,

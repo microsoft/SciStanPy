@@ -52,6 +52,3 @@ and :py:meth:`scistanpy.model.model.Model.mcmc`, such as below:
     >>> sample_failures, var_failures = mcmc_results.diagnose()
     >>> analyzer = mcmc_results.plot_variable_failure_quantile_traces()
 """
-
-from scistanpy.model.results.hmc import SampleResults
-from scistanpy.model.results.mle import MLEInferenceRes

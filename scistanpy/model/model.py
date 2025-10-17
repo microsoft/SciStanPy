@@ -18,6 +18,8 @@ construction through simple attribute assignment. It supports multiple backends
 including Stan for Hamiltonai Monte Carlo sampling and PyTorch for maximum likelihood
 estimation.
 """
+# TODO: Revert to best parameters once early stopping is triggered in MLE
+# TODO: Save batches of posterior samples to disk during MLE to reduce memory usage
 
 # pylint: disable=too-many-lines
 
@@ -33,7 +35,7 @@ import panel as pn
 import torch
 import xarray as xr
 
-from scistanpy import utils
+import scistanpy
 from scistanpy.defaults import (
     DEFAULT_CPP_OPTIONS,
     DEFAULT_DIM_NAMES,
@@ -45,22 +47,19 @@ from scistanpy.defaults import (
     DEFAULT_STANC_OPTIONS,
     DEFAULT_USER_HEADER,
 )
+from scistanpy.model import nn_module
 from scistanpy.model.components import abstract_model_component
-from scistanpy.model.components import constants as constants_module
-from scistanpy.model.components import parameters as parameters_module
-from scistanpy.model.components.transformations import transformed_data
 from scistanpy.model.components.transformations import (
-    transformed_parameters as transformed_parameters_module,
+    transformed_data,
+    transformed_parameters,
 )
+from scistanpy.model.results import mle as mle_module
+from scistanpy.model.stan import stan_model
+from scistanpy.plotting import prior_predictive as prior_predictive_module
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
     from scistanpy.model.results import hmc as hmc_results
-
-mle_module = utils.lazy_import("scistanpy.model.results.mle")
-nn_module = utils.lazy_import("scistanpy.model.nn_module")
-prior_predictive_module = utils.lazy_import("scistanpy.plotting.prior_predictive")
-stan_model = utils.lazy_import("scistanpy.model.stan.stan_model")
 
 
 def model_comps_to_dict(
@@ -344,7 +343,7 @@ class Model:
                 model_varname_to_object[observable.model_varname] = observable
 
                 # Add all parents to the mapping and make sure
-                # `parameters_module.Parameter` instances are explicitly defined.
+                # `scistanpy.parameters.Parameter` instances are explicitly defined.
                 for *_, parent in observable.walk_tree(walk_down=False):
 
                     # If the parent is already in the mapping, make sure it is the
@@ -358,7 +357,6 @@ class Model:
 
         def record_transformed_data() -> None:
             """Updates the mapping with all transformed data components."""
-
             # Add all TransformedData instances to the mapping
             for component in list(model_varname_to_object.values()):
                 for child in component._children:  # pylint: disable=protected-access
@@ -510,7 +508,7 @@ class Model:
             *[
                 [comp, draw]
                 for comp, draw in draws.items()
-                if not isinstance(comp, constants_module.Constant)
+                if not isinstance(comp, scistanpy.Constant)
             ]
         )
         coordinates = list(
@@ -519,7 +517,7 @@ class Model:
                     [parent, parent.value]
                     for component in self.all_model_components
                     for parent in component.parents
-                    if isinstance(parent, constants_module.Constant)
+                    if isinstance(parent, scistanpy.Constant)
                     and np.prod(parent.shape) > 1
                 ]
             )
@@ -692,7 +690,9 @@ class Model:
             epoch as the model must be evaluated over all observable data to calculate
             loss. Defaults to 100000.
         :type epochs: custom_types.Integer
-        :param early_stop: Epochs without improvement before stopping. Defaults to 10.
+        :param early_stop: Epochs without improvement before stopping. If early
+            stopping is triggered, the model parameters are reverted to the best
+            observed state. Defaults to 10.
         :type early_stop: custom_types.Integer
         :param lr: Learning rate for optimization. Defaults to 0.001.
         :type lr: custom_types.Float
@@ -1086,7 +1086,7 @@ class Model:
             "Constants": [
                 el
                 for el in self.all_model_components
-                if isinstance(el, constants_module.Constant)
+                if isinstance(el, scistanpy.Constant)
             ],
             "Transformed Parameters": self.transformed_parameters,
             "Parameters": self.parameters,
@@ -1289,29 +1289,29 @@ class Model:
         return self._model_varname_to_object
 
     @property
-    def parameters(self) -> tuple[parameters_module.Parameter, ...]:
+    def parameters(self) -> tuple[scistanpy.parameters.Parameter, ...]:
         """Get all non-observable parameters in the model.
 
         :returns: Tuple of parameter components that are not observables
-        :rtype: tuple[parameters_module.Parameter, ...]
+        :rtype: tuple[scistanpy.parameters.Parameter, ...]
 
         These are the latent variables and hyperparameters that will be
         inferred during MCMC sampling or optimized during MLE fitting.
         """
         return tuple(
             filter(
-                lambda x: isinstance(x, parameters_module.Parameter)
+                lambda x: isinstance(x, scistanpy.parameters.Parameter)
                 and not x.observable,
                 self.all_model_components,
             )
         )
 
     @property
-    def parameter_dict(self) -> dict[str, parameters_module.Parameter]:
+    def parameter_dict(self) -> dict[str, scistanpy.parameters.Parameter]:
         """Get non-observable parameters as a dictionary.
 
         :returns: Dictionary mapping names to non-observable parameters
-        :rtype: dict[str, parameters_module.Parameter]
+        :rtype: dict[str, scistanpy.parameters.Parameter]
 
         Provides convenient named access to the model's latent parameters
         for inspection and programmatic manipulation.
@@ -1319,11 +1319,11 @@ class Model:
         return model_comps_to_dict(self.parameters)
 
     @property
-    def hyperparameters(self) -> tuple[parameters_module.Parameter, ...]:
+    def hyperparameters(self) -> tuple[scistanpy.parameters.Parameter, ...]:
         """Get hyperparameters (parameters with only constant parents).
 
         :returns: Tuple of parameters that depend only on constants
-        :rtype: tuple[parameters_module.Parameter, ...]
+        :rtype: tuple[scistanpy.parameters.Parameter, ...]
 
         Hyperparameters are the highest-level parameters in the model
         hierarchy, typically representing prior distribution parameters
@@ -1332,11 +1332,11 @@ class Model:
         return tuple(filter(lambda x: x.is_hyperparameter, self.parameters))
 
     @property
-    def hyperparameter_dict(self) -> dict[str, parameters_module.Parameter]:
+    def hyperparameter_dict(self) -> dict[str, scistanpy.parameters.Parameter]:
         """Get hyperparameters as a dictionary.
 
         :returns: Dictionary mapping names to hyperparameters
-        :rtype: dict[str, parameters_module.Parameter]
+        :rtype: dict[str, scistanpy.parameters.Parameter]
 
         Provides convenient access to the model's hyperparameters by name
         for prior specification and sensitivity analysis.
@@ -1346,11 +1346,11 @@ class Model:
     @property
     def transformed_parameters(
         self,
-    ) -> tuple[transformed_parameters_module.TransformedParameter, ...]:
+    ) -> tuple[transformed_parameters.TransformedParameter, ...]:
         """Get all named transformed parameters in the model.
 
         :returns: Tuple of transformed parameter components
-        :rtype: tuple[transformed_parameters_module.TransformedParameter, ...]
+        :rtype: tuple[transformed_parameters.parameters.TransformedParameter, ...]
 
         Transformed parameters are deterministic functions of other model
         components, representing computed quantities like sums, products,
@@ -1358,9 +1358,7 @@ class Model:
         """
         return tuple(
             filter(
-                lambda x: isinstance(
-                    x, transformed_parameters_module.TransformedParameter
-                ),
+                lambda x: isinstance(x, transformed_parameters.TransformedParameter),
                 self.named_model_components,
             )
         )
@@ -1368,11 +1366,11 @@ class Model:
     @property
     def transformed_parameter_dict(
         self,
-    ) -> dict[str, transformed_parameters_module.TransformedParameter]:
+    ) -> dict[str, transformed_parameters.parameters.TransformedParameter]:
         """Get named transformed parameters as a dictionary.
 
         :returns: Dictionary mapping names to transformed parameters
-        :rtype: dict[str, transformed_parameters_module.TransformedParameter]
+        :rtype: dict[str, transformed_parameters.parameters.TransformedParameter]
 
         Enables convenient access to transformed parameters for model
         inspection and derived quantity analysis.
@@ -1380,28 +1378,28 @@ class Model:
         return model_comps_to_dict(self.transformed_parameters)
 
     @property
-    def constants(self) -> tuple[constants_module.Constant, ...]:
+    def constants(self) -> tuple[scistanpy.Constant, ...]:
         """Get all named constants in the model.
 
         :returns: Tuple of constant components
-        :rtype: tuple[constants_module.Constant, ...]
+        :rtype: tuple[scistanpy.Constant, ...]
 
         Constants represent fixed values and hyperparameter specifications
         that do not change during inference or optimization procedures.
         """
         return tuple(
             filter(
-                lambda x: isinstance(x, constants_module.Constant),
+                lambda x: isinstance(x, scistanpy.Constant),
                 self.named_model_components,
             )
         )
 
     @property
-    def constant_dict(self) -> dict[str, constants_module.Constant]:
+    def constant_dict(self) -> dict[str, scistanpy.Constant]:
         """Get named constants as a dictionary.
 
         :returns: Dictionary mapping names to constant components
-        :rtype: dict[str, constants_module.Constant]
+        :rtype: dict[str, scistanpy.Constant]
 
         Provides convenient access to model constants for hyperparameter
         inspection and sensitivity analysis workflows.
@@ -1409,11 +1407,11 @@ class Model:
         return model_comps_to_dict(self.constants)
 
     @property
-    def observables(self) -> tuple[parameters_module.Parameter, ...]:
+    def observables(self) -> tuple[scistanpy.parameters.Parameter, ...]:
         """Get all observable parameters in the model (observables are always named).
 
         :returns: Tuple of parameters marked as observable
-        :rtype: tuple[parameters_module.Parameter, ...]
+        :rtype: tuple[scistanpy.parameters.Parameter, ...]
 
         Observable parameters represent the data-generating components
         of the model - the variables for which observed data will be
@@ -1421,17 +1419,18 @@ class Model:
         """
         return tuple(
             filter(
-                lambda x: isinstance(x, parameters_module.Parameter) and x.observable,
+                lambda x: isinstance(x, scistanpy.parameters.Parameter)
+                and x.observable,
                 self.named_model_components,
             )
         )
 
     @property
-    def observable_dict(self) -> dict[str, parameters_module.Parameter]:
+    def observable_dict(self) -> dict[str, scistanpy.parameters.Parameter]:
         """Get observable parameters as a dictionary.
 
         :returns: Dictionary mapping names to observable parameters
-        :rtype: dict[str, parameters_module.Parameter]
+        :rtype: dict[str, scistanpy.parameters.Parameter]
 
         Enables convenient access to observable parameters for data
         specification and model validation workflows.

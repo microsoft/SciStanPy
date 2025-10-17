@@ -20,8 +20,9 @@ import scipy.special as sp
 import torch
 import torch.nn.functional as F
 
+import scistanpy
 from scistanpy import utils
-from scistanpy.model.components import abstract_model_component, constants
+from scistanpy.model.components import abstract_model_component
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
@@ -2341,7 +2342,7 @@ class IndexParameter(TransformedParameter):
     ) -> tuple[
         tuple[int, ...],
         tuple["custom_types.IndexType", ...],
-        dict[str, constants.Constant],
+        dict[str, scistanpy.Constant],
     ]:
         """Process and validate all indexing specifications.
 
@@ -2427,7 +2428,7 @@ class IndexParameter(TransformedParameter):
 
             # Build a constant for the index. This involves adjusting the indices
             # to be Stan-compatible (1-indexed, no negative indices).
-            constant_arr = constants.Constant(
+            constant_arr = scistanpy.Constant(
                 self.neg_to_pos(ind, shape_ind) + 1, togglable=False
             )
 
@@ -2442,7 +2443,7 @@ class IndexParameter(TransformedParameter):
         shape = []  # This parameter's shape
         processed_inds = []  # Indices processed for use in Stan
         shape_ind = 0  # Current dimension in the indexed parameter
-        parents: dict[str, constants.Constant] = {}  # Constants for arrays
+        parents: dict[str, scistanpy.Constant] = {}  # Constants for arrays
         int_arr_len = 0  # Length of integer arrays
 
         # Process indices
@@ -2565,7 +2566,7 @@ class IndexParameter(TransformedParameter):
                 current_component.append(str(ind))
 
             # If an array, we need to use the constant that we defined
-            elif isinstance(ind, constants.Constant):
+            elif isinstance(ind, scistanpy.Constant):
 
                 # Must be a 1D array
                 assert isinstance(ind.value, np.ndarray)

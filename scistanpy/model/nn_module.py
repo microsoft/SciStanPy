@@ -32,8 +32,8 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
+import scistanpy
 from scistanpy.defaults import DEFAULT_EARLY_STOP, DEFAULT_LR, DEFAULT_N_EPOCHS
-from scistanpy.model.components import constants, parameters
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
@@ -182,7 +182,9 @@ class PyTorchModel(nn.Module):
             temp_log_prob = param.get_torch_logprob(observed=data.get(name))
 
             # Log probability should be 0-dimensional if anything but a Multinomial
-            assert temp_log_prob.ndim == 0 or isinstance(param, parameters.Multinomial)
+            assert temp_log_prob.ndim == 0 or isinstance(
+                param, scistanpy.parameters.Multinomial
+            )
 
             # Add to the total log probability
             log_prob += temp_log_prob.sum()
@@ -208,7 +210,8 @@ class PyTorchModel(nn.Module):
         This method performs complete model training using the Adam optimizer
         with configurable early stopping, learning rate, and mixed precision
         support. It automatically handles device placement, gradient computation,
-        and convergence monitoring.
+        and convergence monitoring. When early stopping is triggered, the model
+        parameters are reverted to the best observed state.
 
         :param epochs: Maximum number of training epochs. Defaults to 100000.
         :type epochs: custom_types.Integer
@@ -271,6 +274,7 @@ class PyTorchModel(nn.Module):
         best_loss = float("inf")  # Records the best loss
         loss_trajectory = [None] * (epochs + 1)  # Records all losses
         n_without_improvement = 0  # Epochs without improvement
+        best_state = {}  # State dict of best model
 
         # Run optimization
         with tqdm(total=epochs, desc="Epochs", postfix={"-log pdf/pmf": "N/A"}) as pbar:
@@ -294,19 +298,23 @@ class PyTorchModel(nn.Module):
                 log_loss = log_loss.item()
                 loss_trajectory[epoch] = log_loss
 
-                # Update best loss
+                # Update best loss and record the state dictionary if improved
                 if log_loss < best_loss:
                     n_without_improvement = 0
                     best_loss = log_loss
+                    best_state = {
+                        k: v.clone().detach() for k, v in self.state_dict().items()
+                    }
                 else:
                     n_without_improvement += 1
 
                 # Update progress bar
                 pbar.update(1)
-                pbar.set_postfix({"-log pdf/pmf": f"{log_loss:.2f}"})
+                pbar.set_postfix({"-log likelihood": f"{log_loss:.2f}"})
 
-                # Check for early stopping
+                # Check for early stopping and revert to best state if triggered
                 if early_stop > 0 and n_without_improvement >= early_stop:
+                    self.load_state_dict(best_state)
                     break
 
             # Note that early stopping was not triggered if the loop completes
@@ -413,7 +421,7 @@ class PyTorchModel(nn.Module):
         # constants and not parameters)
         # pylint: disable=protected-access
         for constant in filter(
-            lambda x: isinstance(x, constants.Constant),
+            lambda x: isinstance(x, scistanpy.Constant),
             self.model.all_model_components,
         ):
             constant._torch_parametrization = getattr(

@@ -41,7 +41,7 @@ import panel.widgets as pnw
 import xarray as xr
 from param.parameterized import Event
 
-from scistanpy.model.components import constants
+import scistanpy
 
 if TYPE_CHECKING:
     from scistanpy import model as ssp_model
@@ -92,7 +92,7 @@ class PriorPredictiveCheck:
             options=[
                 k
                 for k, v in self.model.named_model_components_dict.items()
-                if not isinstance(v, constants.Constant)
+                if not isinstance(v, scistanpy.Constant)
             ],
             value=self.model.observables[0].model_varname,
         )
@@ -173,7 +173,7 @@ class PriorPredictiveCheck:
 
             # Skip non-constants and non-togglable parameters
             if (
-                not isinstance(hyperparam_val, constants.Constant)
+                not isinstance(hyperparam_val, scistanpy.Constant)
                 or not hyperparam_val.is_togglable
             ):
                 continue

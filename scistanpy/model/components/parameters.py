@@ -64,18 +64,15 @@ import torch.nn as nn
 from scipy import stats
 
 import scistanpy
-from scistanpy import utils
 from scistanpy.model.components import abstract_model_component
 from scistanpy.model.components.custom_distributions import (
     custom_scipy_dists,
     custom_torch_dists,
 )
-from scistanpy.model.components.transformations import transformed_parameters
-
-cdfs = utils.lazy_import("scistanpy.model.components.transformations.cdfs")
-constants = utils.lazy_import("scistanpy.model.components.constants")
-transformed_data = utils.lazy_import(
-    "scistanpy.model.components.transformations.transformed_data"
+from scistanpy.model.components.transformations import (
+    cdfs,
+    transformed_data,
+    transformed_parameters,
 )
 
 if TYPE_CHECKING:
@@ -940,7 +937,7 @@ class Parameter(
         Hyperparameters are top-level parameters in the model hierarchy
         that depend only on fixed constants rather than other random variables.
         """
-        return all(isinstance(parent, constants.Constant) for parent in self.parents)
+        return all(isinstance(parent, scistanpy.Constant) for parent in self.parents)
 
     @property
     def torch_parametrization(self) -> torch.Tensor:
@@ -1910,7 +1907,7 @@ class Dirichlet(ContinuousDistribution):
                     "If alpha is a float or int, then shape must be provided"
                 )
             alpha = np.full(kwargs["shape"], float(alpha))
-        elif isinstance(alpha, constants.Constant) and isinstance(
+        elif isinstance(alpha, scistanpy.Constant) and isinstance(
             alpha.value, (float, int)
         ):
             alpha.value = np.full(alpha.shape, float(alpha.value))

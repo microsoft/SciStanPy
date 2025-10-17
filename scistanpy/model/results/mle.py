@@ -74,6 +74,8 @@ from scipy import stats
 
 from scistanpy import plotting
 
+from .netcdf_conversion import SciStanPyToNetCDFConverter
+
 if TYPE_CHECKING:
     from scistanpy import custom_types
     from scistanpy import model as ssp_model
@@ -1152,7 +1154,8 @@ class MLE:
         seed: Optional[custom_types.Integer],
         as_xarray: Literal[True],
         as_inference_data: Literal[False],
-        batch_size: Optional[custom_types.Integer] = None,
+        batch_size: Optional[custom_types.Integer],
+        use_dask: bool,
     ) -> xr.Dataset: ...
 
     @overload
@@ -1162,10 +1165,11 @@ class MLE:
         *,
         seed: Optional[custom_types.Integer],
         as_xarray: Literal[False],
-        batch_size: Optional[custom_types.Integer] = None,
+        batch_size: Optional[custom_types.Integer],
+        use_dask: bool,
     ) -> dict[str, npt.NDArray]: ...
 
-    def draw(self, n, *, seed=None, as_xarray=False, batch_size=None):
+    def draw(self, n, *, seed=None, as_xarray=False, batch_size=None, use_dask=False):
         """Generate samples from all fitted parameter distributions.
 
         This method draws samples from the fitted distributions of all model
@@ -1180,6 +1184,8 @@ class MLE:
         :type as_xarray: bool
         :param batch_size: Batch size for memory-efficient sampling. Defaults to None.
         :type batch_size: Optional[custom_types.Integer]
+        :param use_dask: Whether to use Dask for parallel processing. Defaults to False.
+        :type use_dask: bool
 
         :returns: Sampled parameter values in requested format
         :rtype: Union[dict[str, npt.NDArray], xr.Dataset]
@@ -1228,6 +1234,7 @@ class MLE:
         *,
         seed: Optional[custom_types.Integer] = None,
         batch_size: Optional[custom_types.Integer] = None,
+        use_dask: bool = False,
     ) -> MLEInferenceRes:
         """Create ArviZ-compatible inference data object from MLE results.
 
@@ -1243,6 +1250,8 @@ class MLE:
         :type seed: Optional[custom_types.Integer]
         :param batch_size: Batch size for memory-efficient sampling. Defaults to None.
         :type batch_size: Optional[custom_types.Integer]
+        :param use_dask: Whether to use Dask for parallel processing. Defaults to False.
+        :type use_dask: bool
 
         :returns: Structured inference data object with all MLE results
         :rtype: results.MLEInferenceRes

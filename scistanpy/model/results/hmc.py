@@ -74,21 +74,13 @@ from scistanpy.defaults import (
     DEFAULT_ESS_THRESH,
     DEFAULT_RHAT_THRESH,
 )
-from scistanpy.model.components import parameters
-from scistanpy.model.components.transformations import transformed_parameters
 from scistanpy.model.results import mle
+from scistanpy.model.results.netcdf_conversion import SciStanPyToNetCDFConverter
 
 if TYPE_CHECKING:
     from scistanpy import Model, custom_types
 
 # pylint: disable=too-many-lines
-
-# Maps between the precision of the data and the numpy types
-_NP_TYPE_MAP = {
-    "double": {"float": np.float64, "int": np.int64},
-    "single": {"float": np.float32, "int": np.int32},
-    "half": {"float": np.float16, "int": np.int16},
-}
 
 
 def _symmetrize_quantiles(
@@ -507,7 +499,7 @@ class VariableAnalyzer:
         return self.layout
 
 
-class CmdStanMCMCToNetCDFConverter:
+class CmdStanMCMCToNetCDFConverter(SciStanPyToNetCDFConverter):
     """Object responsible for converting CmdStan CSV output to NetCDF format. This
     class is used internally by the :py:func:`~scistanpy.model.results.hmc.cmdstan_csv_to_netcdf`
     function and should not be instantiated directly in most use cases.
@@ -517,19 +509,12 @@ class CmdStanMCMCToNetCDFConverter:
     It properly organizes data into appropriate groups and handles dimension
     naming and chunking strategies.
 
-    :param fit: CmdStanMCMC object or path to CSV files
-    :type fit: Union[CmdStanMCMC, str, list[str], os.PathLike]
+    :param results: CmdStanMCMC object or path to CSV files
+    :type results: Union[CmdStanMCMC, str, list[str], os.PathLike]
     :param model: SciStanPy model object for metadata extraction
     :type model: Model
     :param data: Optional observed data dictionary. Defaults to None.
     :type data: Optional[dict[str, Any]]
-
-    :ivar fit: CmdStanMCMC object containing sampling results
-    :ivar model: Reference to the original SciStanPy model
-    :ivar data: Observed data used for model fitting
-    :ivar config: Configuration dictionary from Stan sampling
-    :ivar num_draws: Total number of draws including warmup if saved
-    :ivar varname_to_column_order: Mapping from variables to csv column indices
 
     The converter handles:
 
@@ -541,7 +526,7 @@ class CmdStanMCMCToNetCDFConverter:
 
     def __init__(
         self,
-        fit: CmdStanMCMC | str | list[str] | os.PathLike,
+        results: CmdStanMCMC | str | list[str] | os.PathLike,
         model: "Model",
         data: dict[str, Any] | None = None,
     ):
@@ -550,20 +535,22 @@ class CmdStanMCMCToNetCDFConverter:
         in the fit object. This includes the names of the variables, their shapes,
         and their types. This information is used to create the HDF5 file.
         """
-        # If `fit` is a string, we assume we need to load it from disk
-        if isinstance(fit, str):
-            fit = fit_from_csv_noload(fit)
 
-        # The fit and model are stored as attributes
-        self.fit = fit
-        self.model = model
-        self.data = data
+        # If `results` is a string, we assume we need to load it from disk
+        if isinstance(results, str):
+            results = fit_from_csv_noload(results)
+
+        # Init parent class
+        super().__init__(results=results, model=model, data=data)
+
+        # Additional placeholder for method data types
+        self.method_var_dtypes: dict[str, Union[type[np.floating], type[np.integer]]]
 
         # Record the config object
-        self.config = fit.metadata.cmdstan_config
+        self.config = results.metadata.cmdstan_config
 
         # The number of chains is per thread. We want the number of chains total
-        self.config["total_chains"] = len(fit.runset.csv_files)
+        self.num_chains = len(results.runset.csv_files)
 
         # How many samples are we expecting?
         self.num_draws = self.config["num_samples"] + (
@@ -595,13 +582,14 @@ class CmdStanMCMCToNetCDFConverter:
                 if (match_obj := ind_re.search(col))
                 else ()
             )
-            for col in self.fit.column_names
+            for col in self.results.column_names
         ]
 
         # Now we assign the row-major argsort of indices to each variable
         varname_to_column_order = {}
         for varname, var in itertools.chain(
-            self.fit.metadata.method_vars.items(), self.fit.metadata.stan_vars.items()
+            self.results.metadata.method_vars.items(),
+            self.results.metadata.stan_vars.items(),
         ):
 
             # Slice out the indices for this variable
@@ -623,6 +611,94 @@ class CmdStanMCMCToNetCDFConverter:
             )
 
         return varname_to_column_order
+
+    def _write_attributes(self, netcdf_file: h5netcdf.File) -> None:
+
+        # Run inherited method
+        super()._write_attributes(netcdf_file)
+
+        # Write attributes to the file
+        for attr in (
+            "stan_version_major",
+            "stan_version_minor",
+            "stan_version_patch",
+            "model",
+            "start_datetime",
+            "method",
+            "num_samples",
+            "num_warmup",
+            "save_warmup",
+            "max_depth",
+            "num_chains",
+            "data_file",
+            "diagnostic_file",
+            "seed",
+            "sig_figs",
+            "num_threads",
+            "stanc_version",
+        ):
+            netcdf_file.attrs[attr] = self.results.metadata.cmdstan_config[attr]
+
+    def _create_netcdf_groups(
+        self, netcdf_file: h5netcdf.File
+    ) -> dict[str, h5netcdf.Group]:
+
+        # Run inherited method to get the basic groups
+        groups = super()._create_netcdf_groups(netcdf_file)
+
+        # Build the meta data group
+        groups["metadata_group"] = netcdf_file.create_group("sample_stats")
+
+        # Get the data types for the method and stan variables
+        # pylint: disable=protected-access
+        self.method_var_dtypes = {
+            "lp__": self.__class__._NP_TYPE_MAP[self.precision]["float"],
+            "accept_stat__": self.__class__._NP_TYPE_MAP[self.precision]["float"],
+            "stepsize__": self.__class__._NP_TYPE_MAP[self.precision]["float"],
+            "treedepth__": self.__class__._NP_TYPE_MAP[self.precision]["int"],
+            "n_leapfrog__": self.__class__._NP_TYPE_MAP[self.precision]["int"],
+            "divergent__": self.__class__._NP_TYPE_MAP[self.precision]["int"],
+            "energy__": self.__class__._NP_TYPE_MAP[self.precision]["float"],
+        }
+
+        # Create variables for each of the method variables. Build a mapping
+        # from the variable name to the dataset object. We store all of the
+        # method variables with a single chunk.
+        self.varname_to_dset.update(
+            {
+                varname: groups["metadata_group"].create_variable(
+                    name=varname,
+                    dimensions=("chain", "draw"),
+                    dtype=self.method_var_dtypes[varname],
+                    chunks=(self.num_chains, self.num_draws),
+                )
+                for varname in self.results.metadata.method_vars.keys()
+            }
+        )
+
+        return groups
+
+    def _stream_draws(
+        self,
+    ) -> Generator[tuple[int, int, dict[str, npt.NDArray]], None, None]:
+
+        # Now we populate the datasets with the data from the csv files
+        for chain_ind, csv_file in enumerate(
+            tqdm(sorted(self.results.runset.csv_files), desc="Converting CSV to NetCDF")
+        ):
+            for draw_ind, draw in enumerate(
+                tqdm(
+                    self._parse_csv(filename=csv_file),
+                    total=self.num_draws,
+                    desc=f"Processing chain {chain_ind + 1}",
+                    leave=False,
+                    position=1,
+                )
+            ):
+                yield chain_ind, draw_ind, draw
+
+            # We must have all the draws for this chain
+            assert draw_ind == self.num_draws - 1  # pylint: disable=W0631
 
     def write_netcdf(
         self,
@@ -656,247 +732,21 @@ class CmdStanMCMCToNetCDFConverter:
         # If no filename is provided, we create one based on the csv files
         filename = (
             filename
-            or os.path.commonprefix(self.fit.runset.csv_files).rstrip("_") + ".nc"
+            or os.path.commonprefix(self.results.runset.csv_files).rstrip("_") + ".nc"
         )
 
-        # Get the data types for the method and stan variables
-        method_var_dtypes = {
-            "lp__": _NP_TYPE_MAP[precision]["float"],
-            "accept_stat__": _NP_TYPE_MAP[precision]["float"],
-            "stepsize__": _NP_TYPE_MAP[precision]["float"],
-            "treedepth__": _NP_TYPE_MAP[precision]["int"],
-            "n_leapfrog__": _NP_TYPE_MAP[precision]["int"],
-            "divergent__": _NP_TYPE_MAP[precision]["int"],
-            "energy__": _NP_TYPE_MAP[precision]["float"],
-        }
-        stan_var_dtypes, stan_var_dimnames = self._get_stan_var_dtypes_dimnames(
-            precision
+        # Run inherited method
+        return super().write_netcdf(
+            filename=filename, precision=precision, mib_per_chunk=mib_per_chunk
         )
-        assert not set(stan_var_dtypes.keys()).intersection(
-            set(method_var_dtypes.keys())
-        ), "Stan variable names should not overlap with method variable names."
-
-        # Create the HDF5 file
-        with h5netcdf.File(filename, "w") as netcdf_file:
-
-            # Write attributes to the file
-            for attr in (
-                "stan_version_major",
-                "stan_version_minor",
-                "stan_version_patch",
-                "model",
-                "start_datetime",
-                "method",
-                "num_samples",
-                "num_warmup",
-                "save_warmup",
-                "max_depth",
-                "num_chains",
-                "data_file",
-                "diagnostic_file",
-                "seed",
-                "sig_figs",
-                "num_threads",
-                "stanc_version",
-            ):
-                netcdf_file.attrs[attr] = self.fit.metadata.cmdstan_config[attr]
-
-            # Set dimensions
-            netcdf_file.dimensions = {
-                "chain": self.config["total_chains"],
-                "draw": self.num_draws,
-                **{
-                    dimname: dimsize
-                    for varinfo in filter(
-                        lambda x: len(x) > 0, stan_var_dimnames.values()
-                    )
-                    for dimname, dimsize in varinfo
-                },
-            }
-
-            # We need a group for metadata, samples, posterior predictive checks,
-            # observations, and transformed parameters.
-            metadata_group = netcdf_file.create_group("sample_stats")
-            sample_group = netcdf_file.create_group("posterior")
-            ppc_group = netcdf_file.create_group("posterior_predictive")
-            observed_group = netcdf_file.create_group("observed_data")
-
-            # Create variables for each of the method variables. Build a mapping
-            # from the variable name to the dataset object. We store all of the
-            # method variables with a single chunk.
-            varname_to_dset = {
-                varname: metadata_group.create_variable(
-                    name=varname,
-                    dimensions=("chain", "draw"),
-                    dtype=method_var_dtypes[varname],
-                    chunks=(self.config["total_chains"], self.num_draws),
-                )
-                for varname in self.fit.metadata.method_vars.keys()
-            }
-
-            # Now we can create a dataset for each stan variable. We update the
-            # mapping from the variable name to the dataset object
-            for varname, stan_dtype in stan_var_dtypes.items():
-
-                # Get the shape of the variable
-                if len(shape_info := stan_var_dimnames[varname]) == 0:
-                    named_shape, true_shape = (), ()
-                else:
-                    named_shape, true_shape = zip(*shape_info)
-
-                # Calculate the chunk shape. We always hold the first two dimensions
-                # frozen. This is because the first two dimensions are what we
-                # are typically performing operations over.
-                chunk_shape = utils.get_chunk_shape(
-                    array_shape=(
-                        self.config["total_chains"],
-                        self.num_draws,
-                        *true_shape,
-                    ),
-                    array_precision=precision,
-                    mib_per_chunk=mib_per_chunk,
-                    frozen_dims=(0, 1),
-                )
-
-                # We record without the '_ppc' suffix
-                recorded_varname = varname.removesuffix("_ppc")
-
-                # Build the group
-                group = ppc_group if varname.endswith("_ppc") else sample_group
-                varname_to_dset[varname] = group.create_variable(
-                    name=recorded_varname,
-                    dimensions=("chain", "draw", *named_shape),
-                    dtype=stan_dtype,
-                    chunks=chunk_shape,
-                )
-
-                # If an observable, also create a dataset in the observed group
-                # and populate it with the data
-                if varname.endswith("_ppc") and self.data is not None:
-                    observed_group.create_variable(
-                        name=recorded_varname,
-                        data=self.data[recorded_varname].squeeze(),
-                        dimensions=named_shape,
-                        dtype=stan_dtype,
-                        chunks=chunk_shape[2:],
-                    )
-
-            # Now we populate the datasets with the data from the csv files
-            for chain_ind, csv_file in enumerate(
-                tqdm(sorted(self.fit.runset.csv_files), desc="Converting CSV to NetCDF")
-            ):
-                for draw_ind, draw in enumerate(
-                    tqdm(
-                        self._parse_csv(
-                            filename=csv_file,
-                            method_var_dtypes=method_var_dtypes,
-                            stan_var_dtypes=stan_var_dtypes,
-                        ),
-                        total=self.num_draws,
-                        desc=f"Processing chain {chain_ind + 1}",
-                        leave=False,
-                        position=1,
-                    )
-                ):
-                    for varname, varvals in draw.items():
-                        varname_to_dset[varname][
-                            chain_ind, draw_ind
-                        ] = varvals.squeeze()
-
-                # We must have all the draws for this chain
-                assert draw_ind == self.num_draws - 1  # pylint: disable=W0631
-
-        return filename
-
-    def _get_stan_var_dtypes_dimnames(
-        self, precision: Literal["double", "single", "half"]
-    ) -> tuple[
-        dict[str, Union[type[np.floating], type[np.integer]]],
-        dict[str, tuple[tuple[str, int], ...]],
-    ]:
-        """Determine data types and dimension names for Stan variables.
-
-        :param precision: Numerical precision specification
-        :type precision: Literal["double", "single", "half"]
-
-        :returns: Tuple of (data_types_dict, dimension_names_dict)
-        :rtype: tuple[dict[str, Union[type[np.floating], type[np.integer]]],
-            dict[str, tuple[tuple[str, int], ...]]]
-
-        This method analyzes the SciStanPy model to determine appropriate
-        NumPy data types and dimension naming schemes for all variables
-        that will be stored in the NetCDF file.
-        """
-
-        def get_dimname() -> tuple[tuple[str, int], ...] | tuple[()]:
-            """Retrieves the dimension names for the current component."""
-            # Get the name of the dimensions
-            named_shape = []
-            for dimind, dimsize in enumerate(component.shape[::-1]):
-
-                # See if we can get the name of the dimension. If we cannot, this must
-                # be a singleton dimension
-                if (dimname := dim_map.get((dimind, dimsize))) is None:
-                    assert dimsize == 1
-                    continue
-
-                # If we have a name, record
-                named_shape.append((dimname, dimsize))
-
-            # If we have no dimensions, we return an empty tuple
-            if len(named_shape) == 0:
-                return ()
-
-            # We have our named shape
-            return tuple(named_shape[::-1])
-
-        # We will need the map from dimension depth and size to dimension name
-        dim_map = self.model.get_dimname_map()
-
-        # Datatypes for the stan variables
-        stan_var_dtypes = {}
-        stan_var_dimnames = {}
-        for varname, component in self.model.named_model_components_dict.items():
-
-            # We only take parameters and transformed parameters
-            if not isinstance(
-                component,
-                (parameters.Parameter, transformed_parameters.TransformedParameter),
-            ):
-                continue
-
-            # Update the varname if needed
-            if isinstance(component, parameters.Parameter) and component.observable:
-                varname = f"{varname}_ppc"
-
-            # Record the datatype
-            stan_var_dtypes[varname] = _NP_TYPE_MAP[precision][
-                (
-                    "int"
-                    if isinstance(component, parameters.DiscreteDistribution)
-                    else "float"
-                )
-            ]
-
-            # Record the dimension names
-            stan_var_dimnames[varname] = get_dimname()
-
-        return stan_var_dtypes, stan_var_dimnames
 
     def _parse_csv(
-        self,
-        filename: str,
-        method_var_dtypes: dict[str, Union[type[np.floating], type[np.integer]]],
-        stan_var_dtypes: dict[str, Union[type[np.floating], type[np.integer]]],
+        self, filename: str
     ) -> Generator[dict[str, npt.NDArray], None, None]:
         """Parse CSV file and yield properly formatted arrays.
 
         :param filename: Path to CSV file to parse
         :type filename: str
-        :param method_var_dtypes: Data types for method variables
-        :type method_var_dtypes: dict[str, Union[type[np.floating], type[np.integer]]]
-        :param stan_var_dtypes: Data types for Stan variables
-        :type stan_var_dtypes: dict[str, Union[type[np.floating], type[np.integer]]]
 
         :yields: Dictionary of variable names to properly shaped arrays for each draw
         :rtype: Generator[dict[str, npt.NDArray], None, None]
@@ -920,13 +770,13 @@ class CmdStanMCMCToNetCDFConverter:
                 # Build the arrays for each variable
                 processed_vals = {}
                 for varname, dtype in itertools.chain(
-                    method_var_dtypes.items(), stan_var_dtypes.items()
+                    self.method_var_dtypes.items(), self.var_dtypes.items()
                 ):
 
                     # Get the variable object from the metadata
                     var = getattr(
-                        self.fit.metadata,
-                        "stan_vars" if varname in stan_var_dtypes else "method_vars",
+                        self.results.metadata,
+                        "stan_vars" if varname in self.var_dtypes else "method_vars",
                     )[varname]
 
                     # Using that variable object, slice out the data, convert to
@@ -1007,7 +857,7 @@ def cmdstan_csv_to_netcdf(
         data = model.default_data
 
     # Build the converter
-    converter = CmdStanMCMCToNetCDFConverter(fit=path, model=model, data=data)
+    converter = CmdStanMCMCToNetCDFConverter(results=path, model=model, data=data)
 
     # Run conversion
     return converter.write_netcdf(
@@ -1365,7 +1215,8 @@ class SampleResults(mle.MLEInferenceRes):
         return summaries
 
     def calculate_diagnostics(self) -> xr.Dataset:
-        """Shortcut to running :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.calculate_summaries`
+        """Shortcut to running
+        :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.calculate_summaries`
         with ``kind="diagnostics"`` and no other arguments.
 
         :returns: Dataset containing diagnostic metrics

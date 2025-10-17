@@ -60,21 +60,20 @@ import numpy as np
 import numpy.typing as npt
 import torch
 
+import scistanpy
 from scistanpy import utils
 from scistanpy.exceptions import NumpySampleError
 
-# Lazy imports for performance and to avoid circular imports
-constants_module = utils.lazy_import("scistanpy.model.components.constants")
-parameters = utils.lazy_import("scistanpy.model.components.parameters")
+if TYPE_CHECKING:
+    from scistanpy import custom_types
+
+# Lazy imports for objects that depend on this module to avoid circular imports
 transformed_data = utils.lazy_import(
     "scistanpy.model.components.transformations.transformed_data"
 )
 transformed_parameters = utils.lazy_import(
     "scistanpy.model.components.transformations.transformed_parameters"
 )
-
-if TYPE_CHECKING:
-    from scistanpy import custom_types
 
 
 class AbstractModelComponent(ABC):
@@ -321,7 +320,7 @@ class AbstractModelComponent(ABC):
             else:
                 lower_bound = None
                 upper_bound = None
-            self._parents[name] = constants_module.Constant(
+            self._parents[name] = scistanpy.Constant(
                 value=val,
                 lower_bound=lower_bound,
                 upper_bound=upper_bound,
@@ -865,7 +864,7 @@ class AbstractModelComponent(ABC):
             if (
                 isinstance(
                     param,
-                    (constants_module.Constant, parameters.Parameter),
+                    (scistanpy.Constant, scistanpy.parameters.Parameter),
                 )
                 or param.is_named
                 or param.force_name
@@ -1282,7 +1281,7 @@ class AbstractModelComponent(ABC):
         return {
             name: component
             for name, component in self._parents.items()
-            if isinstance(component, constants_module.Constant)
+            if isinstance(component, scistanpy.Constant)
         }
 
     @property
