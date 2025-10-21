@@ -78,7 +78,6 @@ from .netcdf_conversion import SciStanPyToNetCDFConverter
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
-    from scistanpy import model as ssp_model
 
 
 def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
@@ -113,6 +112,71 @@ def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
 
     # Shift the arrays and apply log10
     return tuple(np.log10(arg - min_val + 1) for arg in args)
+
+
+class MLEToNetCDFConverter(SciStanPyToNetCDFConverter):
+    """
+    Used for building inference objects from MLE results where the posterior predictive
+    samples are too large to fit into memory at once. In this case, we stream the
+    posterior predictive samples into the NetCDF file in batches.
+    """
+
+    def __init__(
+        self,
+        results: "MLE",
+        model: "scistanpy.Model",
+        data: dict[str, npt.NDArray],
+        n: int,
+        seed: Optional["custom_types.Integer"] = None,
+        batch_size: Optional["custom_types.Integer"] = None,
+    ):
+
+        # Initialize the base class
+        super().__init__(results=results, model=model, data=data)
+
+        # Record number of draws and chains (always 1 chain)
+        self.n_chains = 1
+        self.n_draws = n
+
+        # Record seed and batch size
+        self.seed = seed
+        self.batch_size = batch_size or 1
+
+    # TODO: Add MLE result to the inference object!
+
+    def _stream_draws(
+        self,
+    ) -> Generator[tuple[int, int, dict[str, npt.NDArrayLike]], None, None]:
+
+        # Set the random seed if provided
+        if self.seed is not None:
+            torch.manual_seed(self.seed)
+
+        # Loop until we have the requested number of draws
+        total_draws = 0
+        with tqdm(total=self.n_draws, desc="Bootstrapping PPC samples") as pbar:
+            while total_draws < self.n_draws:
+
+                # Get a set of draws. Note that the model.draw method returns a
+                # dictionary of numpy arrays. With `batch_size = None`, it returns
+                # all requested draws at once. We query this repeatedly to draw
+                # in batches.
+                batch_size = min(self.batch_size, self.n_draws - total_draws)
+                draws = self.model.draw(
+                    n=batch_size,
+                    seed=None,  # We have already set the seed globally
+                    as_xarray=False,
+                    batch_size=None,
+                )
+
+                # Process all draws. Chain ind is always 0 for MLE results.
+                new_total = total_draws + batch_size
+                for batch_ind, draw_ind in enumerate(range(total_draws, new_total)):
+                    yield 0, draw_ind, {k: v[batch_ind] for k, v in draws.items()}
+
+                # Update the total draws and progress bar
+                total_draws = new_total
+                pbar.update(batch_size)
 
 
 class MLEInferenceRes:
@@ -1004,7 +1068,7 @@ class MLE:
     comprehensive interface for working with MLE results.
 
     :param model: Original SciStanPy model
-    :type model: ssp_model.Model
+    :type model: scistanpy.Model
     :param mle_estimate: Dictionary of parameter names to their MLE values
     :type mle_estimate: dict[str, npt.NDArray]
     :param distributions: Dictionary of parameter names to fitted distributions
@@ -1058,7 +1122,7 @@ class MLE:
 
     def __init__(
         self,
-        model: "ssp_model.Model",
+        model: "scistanpy.Model",
         mle_estimate: dict[str, npt.NDArray],
         distributions: dict[str, torch.distributions.Distribution],
         losses: npt.NDArray,
@@ -1155,7 +1219,6 @@ class MLE:
         as_xarray: Literal[True],
         as_inference_data: Literal[False],
         batch_size: Optional[custom_types.Integer],
-        use_dask: bool,
     ) -> xr.Dataset: ...
 
     @overload
@@ -1166,10 +1229,9 @@ class MLE:
         seed: Optional[custom_types.Integer],
         as_xarray: Literal[False],
         batch_size: Optional[custom_types.Integer],
-        use_dask: bool,
     ) -> dict[str, npt.NDArray]: ...
 
-    def draw(self, n, *, seed=None, as_xarray=False, batch_size=None, use_dask=False):
+    def draw(self, n, *, seed=None, as_xarray=False, batch_size=None):
         """Generate samples from all fitted parameter distributions.
 
         This method draws samples from the fitted distributions of all model
@@ -1184,8 +1246,6 @@ class MLE:
         :type as_xarray: bool
         :param batch_size: Batch size for memory-efficient sampling. Defaults to None.
         :type batch_size: Optional[custom_types.Integer]
-        :param use_dask: Whether to use Dask for parallel processing. Defaults to False.
-        :type use_dask: bool
 
         :returns: Sampled parameter values in requested format
         :rtype: Union[dict[str, npt.NDArray], xr.Dataset]
@@ -1301,6 +1361,8 @@ class MLE:
             ...     n=5000, batch_size=500, seed=42
             ... )
         """
+        # TODO: Add MLE result to the inference object!
+
         # Get the samples from the posterior
         draws = self.draw(n, seed=seed, as_xarray=True, batch_size=batch_size)
 
