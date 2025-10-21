@@ -125,6 +125,7 @@ class G1Template(Model):
         # fluorescence greater than a given threshold is given by evaluating the
         # survival function of the log normal distribution that describes the distribution
         # at the fluorescence value of the threshold
+        # pylint: disable=no-value-for-parameter
         self.log_theta_low_unnorm = (
             parameters.Normal.log_ccdf(
                 x=self.log_lt,
@@ -143,6 +144,7 @@ class G1Template(Model):
             )
             + self.log_theta_t0
         )
+        # pylint: enable=no-value-for-parameter
 
         # Normalize to get proportions
         self.log_theta_low = operations.normalize_log(self.log_theta_low_unnorm)
@@ -273,6 +275,7 @@ class G2Template(Model):
         for i, (gate, source) in enumerate((("c86", 0), ("c93", 1), ("c975", 0))):
 
             # Update proportions
+            # pylint: disable=no-value-for-parameter
             log_theta_name = f"log_theta_{gate}"
             setattr(
                 self,
@@ -352,10 +355,11 @@ class G3G4Template(Model):
 
         # Set codon noise
         self.codon_noise = parameters.Gamma(
-            alpha=codon_noise_alpha, beta=codon_noise_beta, shape=(self.n_variants,)
+            alpha=codon_noise_alpha, beta=codon_noise_beta
         )
 
         # Pass through the survival function
+        # pylint: disable=no-value-for-parameter
         self.log_theta_filtered = operations.normalize_log(
             parameters.Normal.log_ccdf(
                 x=self.log_thresholds,
@@ -368,6 +372,7 @@ class G3G4Template(Model):
             )
             + self.log_theta_t0
         )
+        # pylint: enable=no-value-for-parameter
 
         # Model counts
         self.ic1 = parameters.MultinomialLogTheta(
