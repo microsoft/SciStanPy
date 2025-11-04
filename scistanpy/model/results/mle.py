@@ -51,67 +51,23 @@ more sophisticated inference procedures like MCMC sampling.
 from __future__ import annotations
 
 import warnings
-from typing import (
-    TYPE_CHECKING,
-    Generator,
-    Literal,
-    Optional,
-    Sequence,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Generator, Literal, Optional, Union, overload
 
 import arviz as az
-import holoviews as hv
 import hvplot.pandas  # pylint: disable=unused-import
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-import panel as pn
 import torch
 import xarray as xr
-from scipy import stats
+from tqdm import tqdm
 
-from scistanpy import plotting
+import scistanpy
 
-from .netcdf_conversion import SciStanPyToNetCDFConverter
+from .base_classes import InferenceRes, SciStanPyToNetCDFConverter
 
 if TYPE_CHECKING:
     from scistanpy import custom_types
-
-
-def _log10_shift(*args: npt.NDArray) -> tuple[npt.NDArray, ...]:
-    """Apply log10 transformation with automatic shifting for non-positive values.
-
-    This utility function handles logarithmic transformation of arrays that may
-    contain non-positive values by finding the global minimum across all arrays
-    and shifting them to ensure all values are positive before applying log10.
-
-    :param args: Arrays to transform with log10 after shifting
-    :type args: npt.NDArray
-
-    :returns: Tuple of log10-transformed arrays after appropriate shifting
-    :rtype: tuple[npt.NDArray, ...]
-
-    The function:
-    1. Finds the absolute minimum value across all input arrays
-    2. Shifts all arrays by (1 - min_value) to ensure minimum becomes 1
-    3. Applies log10 transformation to all shifted arrays
-
-    This ensures logarithmic scaling is possible even when data contains
-    zero or negative values, which is common in certain statistical contexts.
-
-    Example:
-        >>> arr1 = np.array([-5, 0, 5])
-        >>> arr2 = np.array([-2, 3, 8])
-        >>> log_arr1, log_arr2 = _log10_shift(arr1, arr2)
-        >>> # All values are now log10-transformed with proper scaling
-    """
-    # Get the minimum value across all arrays
-    min_val = min(np.min(arg) for arg in args)
-
-    # Shift the arrays and apply log10
-    return tuple(np.log10(arg - min_val + 1) for arg in args)
 
 
 class MLEToNetCDFConverter(SciStanPyToNetCDFConverter):
@@ -135,8 +91,8 @@ class MLEToNetCDFConverter(SciStanPyToNetCDFConverter):
         super().__init__(results=results, model=model, data=data)
 
         # Record number of draws and chains (always 1 chain)
-        self.n_chains = 1
-        self.n_draws = n
+        self.num_chains = 1
+        self.num_draws = n
 
         # Record seed and batch size
         self.seed = seed
@@ -146,7 +102,7 @@ class MLEToNetCDFConverter(SciStanPyToNetCDFConverter):
 
     def _stream_draws(
         self,
-    ) -> Generator[tuple[int, int, dict[str, npt.NDArrayLike]], None, None]:
+    ) -> Generator[tuple[int, int, dict[str, npt.NDArray]], None, None]:
 
         # Set the random seed if provided
         if self.seed is not None:
@@ -154,808 +110,33 @@ class MLEToNetCDFConverter(SciStanPyToNetCDFConverter):
 
         # Loop until we have the requested number of draws
         total_draws = 0
-        with tqdm(total=self.n_draws, desc="Bootstrapping PPC samples") as pbar:
-            while total_draws < self.n_draws:
+        with tqdm(total=self.num_draws, desc="Bootstrapping PPC samples") as pbar:
+            while total_draws < self.num_draws:
 
                 # Get a set of draws. Note that the model.draw method returns a
                 # dictionary of numpy arrays. With `batch_size = None`, it returns
                 # all requested draws at once. We query this repeatedly to draw
                 # in batches.
-                batch_size = min(self.batch_size, self.n_draws - total_draws)
-                draws = self.model.draw(
+                batch_size = min(self.batch_size, self.num_draws - total_draws)
+                draws = self.results.draw(
                     n=batch_size,
                     seed=None,  # We have already set the seed globally
                     as_xarray=False,
                     batch_size=None,
                 )
 
-                # Process all draws. Chain ind is always 0 for MLE results.
+                # Process all draws. Chain ind is always 0 for MLE results. Add
+                # 'ppc' to observables
                 new_total = total_draws + batch_size
                 for batch_ind, draw_ind in enumerate(range(total_draws, new_total)):
-                    yield 0, draw_ind, {k: v[batch_ind] for k, v in draws.items()}
+                    yield 0, draw_ind, {
+                        k + "_ppc" if self.model[k].observable else k: v[batch_ind]
+                        for k, v in draws.items()
+                    }
 
                 # Update the total draws and progress bar
                 total_draws = new_total
                 pbar.update(batch_size)
-
-
-class MLEInferenceRes:
-    """Analysis interface for bootstrapped samples from
-    :py:class`~scistanpy.model.results.mle.MLE` instances.
-
-    This class provides tools for analyzing and visualizing MLE
-    results from SciStanPy models. It wraps ArviZ InferenceData objects with
-    specialized methods for posterior predictive checking, calibration analysis,
-    and model validation.
-
-    :param inference_obj: ArviZ InferenceData object or path to saved results
-    :type inference_obj: Union[az.InferenceData, str]
-
-    :ivar inference_obj: Stored ArviZ InferenceData object with all results
-
-    :raises ValueError: If inference_obj is neither string nor InferenceData
-    :raises ValueError: If required groups (posterior, posterior_predictive) are missing
-
-    The class expects the InferenceData object to contain:
-
-    - **posterior**: Samples from fitted parameter distributions
-    - **posterior_predictive**: Samples from observable distributions
-    - **observed_data**: Original observed data used for fitting
-
-    Key Capabilities:
-
-    - Posterior predictive checking with multiple visualization modes
-    - Quantitative model calibration assessment
-    - Interactive diagnostic dashboards
-    - Summary statistics computation and caching
-
-    Example:
-       .. code-block:: python
-
-        import scistanpy as ssp
-        import numpy as np
-
-        # Get MLE results
-        mle_result = model.mle(data=observed_data)
-
-        # Create inference analysis object
-        mle_analysis = mle_result.get_inference_obj()
-
-        # Run comprehensive posterior predictive checking
-        dashboard = mle_analysis.run_ppc()
-
-        # Save results for later analysis
-        mle_analysis.save_netcdf('mle_analysis.nc')
-    """
-
-    def __init__(self, inference_obj: az.InferenceData | str):
-        """Base class just initializes the ArviZ object."""
-        # If the ArviZ object is a string, we assume it is a path to a netcdf file
-        # and load it from there
-        if isinstance(inference_obj, str):
-            self.inference_obj = az.from_netcdf(inference_obj)
-
-        # If the ArviZ object is an inference data object, we assume it is already
-        # built and just assign it to the class
-        elif isinstance(inference_obj, az.InferenceData):
-            self.inference_obj = inference_obj
-
-        # Otherwise, we raise an error
-        else:
-            raise ValueError(
-                "inference_obj must be either a string or an InferenceData object"
-            )
-
-        # The arviz object must have a posterior, a posterior_predictive, and
-        # an observed_data group
-        if missing_groups := (
-            {"posterior", "posterior_predictive"} - set(self.inference_obj.groups())
-        ):
-            raise ValueError(
-                f"ArviZ object is missing the following groups: {', '.join(missing_groups)}"
-            )
-
-    def save_netcdf(self, filename: str) -> None:
-        """Save the ArviZ InferenceData object to NetCDF format.
-
-        :param filename: Path where to save the NetCDF file
-        :type filename: str
-
-        This method provides persistent storage of analysis results.
-
-        Example:
-            >>> mle_analysis.save_netcdf('my_mle_results.nc')
-            >>> # Later: reload with MLEInferenceRes('my_mle_results.nc')
-        """
-        self.inference_obj.to_netcdf(filename)
-
-    def _update_group(
-        self, attrname: str, new_group: xr.Dataset, force_del: bool = False
-    ) -> None:
-        """Update or add a group to the ArviZ InferenceData object.
-
-        :param attrname: Name of the group to update or create
-        :type attrname: str
-        :param new_group: New dataset to add or use for updating
-        :type new_group: xr.Dataset
-        :param force_del: Whether to force deletion before adding. Defaults to False.
-        :type force_del: bool
-
-        This internal method manages the ArviZ object structure, enabling
-        addition of computed statistics and derived quantities while
-        maintaining data integrity.
-        """
-        # If the group already exists and we are not forcing a delete, we just update
-        # the group.
-        if hasattr(self.inference_obj, attrname) and not force_del:
-            getattr(self.inference_obj, attrname).update(new_group)
-            return
-
-        # Otherwise, if we are forcing a delete, we delete the group before adding
-        # the new one
-        if force_del:
-            delattr(self.inference_obj, attrname)
-        self.inference_obj.add_groups({attrname: new_group})
-
-    def calculate_summaries(
-        self,
-        var_names: list[str] | None = None,
-        filter_vars: Literal[None, "like", "regex"] = None,
-        kind: Literal["all", "stats", "diagnostics"] = "stats",
-        round_to: "custom_types.Integer" = 2,
-        circ_var_names: list[str] | None = None,
-        stat_focus: str = "mean",
-        stat_funcs: Optional[Union[dict[str, callable], callable]] = None,
-        extend: bool = True,
-        hdi_prob: "custom_types.Float" = 0.94,
-        skipna: bool = False,
-    ) -> xr.Dataset:
-        """Compute summary statistics for MLE results.
-
-        This method wraps ArviZ's summary functionality while adding the computed
-        statistics to the InferenceData object for persistence and reuse. See
-        `az.summary` for detailed descriptions of arguments.
-
-        :param var_names: Variable names to include in summary. Defaults to None (all variables).
-        :type var_names: Optional[list[str]]
-        :param filter_vars: Variable filtering method. Defaults to None.
-        :type filter_vars: Optional[Literal[None, "like", "regex"]]
-        :param kind: Type of statistics to compute. Defaults to "stats".
-        :type kind: Literal["all", "stats", "diagnostics"]
-        :param round_to: Number of decimal places for rounding. Defaults to 2.
-        :type round_to: custom_types.Integer
-        :param circ_var_names: Names of circular variables. Defaults to None.
-        :type circ_var_names: Optional[list[str]]
-        :param stat_focus: Primary statistic for focus. Defaults to "mean".
-        :type stat_focus: str
-        :param stat_funcs: Custom statistic functions. Defaults to None.
-        :type stat_funcs: Optional[Union[dict[str, callable], callable]]
-        :param extend: Use functions provided by `stat_funcs`. Defaults to True.
-            Only meaningful when `stat_funcs` is provided.
-        :type extend: bool
-        :param hdi_prob: Probability for highest density interval. Defaults to 0.94.
-        :type hdi_prob: custom_types.Float
-        :param skipna: Whether to skip NaN values. Defaults to False.
-        :type skipna: bool
-
-        :returns: Dataset containing computed summary statistics
-        :rtype: xr.Dataset
-
-        :raises ValueError: If diagnostics requested without chain dimension existing
-            in `self.inference_obj.posterior.dims`
-        :raises ValueError: If diagnostics requested with single chain.
-
-        The computed statistics are automatically added to the InferenceData
-        object under the ``variable_summary_stats`` group for persistence.
-
-        Example:
-            >>> # Compute basic statistics
-            >>> stats = mle_analysis.calculate_summaries()
-            >>> # Compute diagnostics for multi-chain results
-            >>> diag = mle_analysis.calculate_summaries(kind="diagnostics")
-        """
-        # If there is no chain and draw dimension, we cannot run diagnostics
-        if "chain" not in self.inference_obj.posterior.dims:
-            raise ValueError(
-                "Cannot run diagnostics on a dataset without chain and draw dimensions."
-            )
-
-        # If there is only one chain, we cannot run diagnostics
-        if kind != "stats" and self.inference_obj.posterior.sizes["chain"] <= 1:
-            raise ValueError(
-                "Cannot run diagnostics on a dataset run using a single chain"
-            )
-
-        # Get the summary statistics
-        summaries = az.summary(
-            data=self.inference_obj,
-            var_names=var_names,
-            filter_vars=filter_vars,
-            fmt="xarray",
-            kind=kind,
-            round_to=round_to,
-            circ_var_names=circ_var_names,
-            stat_focus=stat_focus,
-            stat_funcs=stat_funcs,
-            extend=extend,
-            hdi_prob=hdi_prob,
-            skipna=skipna,
-        )
-
-        # Build or update the group
-        self._update_group("variable_summary_stats", summaries)
-
-        return summaries
-
-    def _iter_pp_obs(
-        self,
-    ) -> Generator[tuple[str, npt.NDArray, npt.NDArray], None, None]:
-        """Iterate over posterior predictive samples and corresponding observations.
-
-        :yields: Tuples of (variable_name, reference_samples, observed_data)
-        :rtype: Generator[tuple[str, npt.NDArray, npt.NDArray], None, None]
-
-        This internal method provides a standardized interface for accessing
-        posterior predictive samples and observed data, handling dimension
-        reshaping and alignment automatically.
-
-        The yielded arrays are formatted as:
-        - reference_samples: 2D array (n_samples, n_features)
-        - observed_data: 1D array (n_features,)
-
-        This standardization enables consistent processing across all
-        diagnostic and visualization methods.
-        """
-        # Loop over the posterior predictive samples
-        for varname, reference in self.inference_obj.posterior_predictive.items():
-
-            # Get the observed data and convert reference and observed to numpy
-            # arrays.
-            observed = self.inference_obj.observed_data[  # pylint: disable=no-member
-                varname
-            ].to_numpy()
-            reference = np.moveaxis(
-                reference.stack(
-                    samples=["chain", "draw"], features=[], create_index=False
-                ).to_numpy(),
-                -1,
-                0,
-            )
-
-            # Dims must align
-            assert observed.shape == reference.shape[1:]
-
-            yield varname, reference.reshape(reference.shape[0], -1), observed.reshape(
-                -1
-            )
-
-    @overload
-    def check_calibration(
-        self,
-        *,
-        return_deviance: Literal[False],
-        display: Literal[True],
-        width: "custom_types.Integer",
-        height: "custom_types.Integer",
-    ) -> hv.Layout: ...
-
-    @overload
-    def check_calibration(
-        self,
-        *,
-        return_deviance: Literal[False],
-        display: Literal[False],
-        width: "custom_types.Integer",
-        height: "custom_types.Integer",
-    ) -> dict[str, hv.Overlay]: ...
-
-    @overload
-    def check_calibration(
-        self,
-        *,
-        return_deviance: Literal[True],
-        display: Literal[False],
-        width: "custom_types.Integer",
-        height: "custom_types.Integer",
-    ) -> tuple[dict[str, hv.Overlay], dict[str, float]]: ...
-
-    def check_calibration(
-        self, *, return_deviance=False, display=True, width=600, height=600
-    ):
-        """Assess model calibration through posterior predictive quantile analysis.
-
-        This method evaluates how well the model's posterior predictive distribution
-        matches the observed data by analyzing the distribution of quantiles. Well-
-        calibrated models should produce observed data that are uniformly distributed
-        across the quantiles of the posterior predictive distribution.
-
-        :param return_deviance: Whether to return quantitative deviance metrics.
-            Defaults to False.
-        :type return_deviance: bool
-        :param display: Whether to return formatted layout for display. Defaults to True.
-        :type display: bool
-        :param width: Width of individual plots in pixels. Defaults to 600.
-        :type width: custom_types.Integer
-        :param height: Height of individual plots in pixels. Defaults to 600.
-        :type height: custom_types.Integer
-
-        :returns: Calibration plots and optionally deviance metrics
-        :rtype: Union[hv.Layout, dict[str, hv.Overlay], tuple[dict[str, hv.Overlay],
-            dict[str, float]]]
-
-        :raises ValueError: If both display and return_deviance are True
-
-        Internally, this method is just a wrapper around
-        :py:func:`ssp.plotting.plot_calibration <scistanpy.plotting.plot_calibration>`.
-        See that function for a detailed description of the calibration assessment
-        method and returned plots.
-
-        Example:
-            >>> # Visual assessment
-            >>> cal_layout = mle_analysis.check_calibration()
-            >>> # Quantitative assessment
-            >>> plots, deviances = mle_analysis.check_calibration(
-            ...     return_deviance=True, display=False
-            ... )
-            >>> print(f"Mean deviance: {np.mean(list(deviances.values())):.3f}")
-        """
-        # We cannot have both `display` and `return_deviance` set to True
-        if display and return_deviance:
-            raise ValueError(
-                "Cannot have both `display` and `return_deviance` set to True."
-            )
-
-        # Loop over the posterior predictive samples
-        plots: dict[str, hv.Overlay] = {}
-        deviances: dict[str, "custom_types.Float"] = {}
-        for varname, reference, observed in self._iter_pp_obs():
-
-            # Build calibration plots and record deviance
-            plot, dev = plotting.plot_calibration(reference, observed[None])
-            dev = dev.item()
-            deviances[varname] = dev
-
-            # Finalize the plot with a text annotation and updates to the axes
-            plots[varname] = (
-                plot
-                * hv.Text(
-                    0.95,
-                    0.0,
-                    f"Absolute Deviance: {dev:.2f}",
-                    halign="right",
-                    valign="bottom",
-                )
-            ).opts(
-                title=f"ECDF of Quantiles: {varname}",
-                xlabel="Quantiles",
-                ylabel="Cumulative Probability",
-                width=width,
-                height=height,
-            )
-
-        # If requested, display the plots
-        if display:
-            return hv.Layout(plots.values()).cols(1)
-
-        # If requested, return the plots and the deviance
-        if return_deviance:
-            return plots, deviances
-
-        # Otherwise, just return the plots
-        return plots
-
-    @overload
-    def plot_posterior_predictive_samples(
-        self,
-        *,
-        quantiles: Sequence["custom_types.Float"],
-        use_ranks: bool,
-        logy: bool,
-        display: Literal[True],
-        width: "custom_types.Integer",
-        height: "custom_types.Integer",
-    ) -> hv.Layout: ...
-
-    @overload
-    def plot_posterior_predictive_samples(
-        self,
-        *,
-        quantiles: Sequence["custom_types.Float"],
-        use_ranks: bool,
-        logy: bool,
-        display: Literal[False],
-        width: "custom_types.Integer",
-        height: "custom_types.Integer",
-    ) -> dict[str, hv.Overlay]: ...
-
-    def plot_posterior_predictive_samples(
-        self,
-        *,
-        quantiles=(0.025, 0.25, 0.5),
-        use_ranks=True,
-        logy=False,
-        display=True,
-        width=600,
-        height=400,
-    ):
-        """Visualize observed data against posterior predictive uncertainty intervals.
-
-        This method creates plots showing how observed data relates to the uncertainty
-        quantified by posterior predictive samples. The posterior predictive samples
-        are displayed as confidence intervals, with observed data overlaid as points.
-
-        :param quantiles: Quantiles defining confidence intervals. Defaults to
-            (0.025, 0.25, 0.5). Note: quantiles are automatically symmetrized and
-            median is always included.
-        :type quantiles: Sequence[custom_types.Float]
-        :param use_ranks: Whether to use ranks instead of raw values for x-axis.
-            Defaults to True.
-        :type use_ranks: bool
-        :param logy: Whether to use logarithmic y-axis scaling. Defaults to False.
-        :type logy: bool
-        :param display: Whether to return formatted layout for display. Defaults to True.
-        :type display: bool
-        :param width: Width of individual plots in pixels. Defaults to 600.
-        :type width: custom_types.Integer
-        :param height: Height of individual plots in pixels. Defaults to 400.
-        :type height: custom_types.Integer
-
-        :returns: Posterior predictive plots in requested format
-        :rtype: Union[hv.Layout, dict[str, hv.Overlay]]
-
-        Visualization Features:
-
-        - Confidence intervals shown as nested colored regions
-        - Observed data displayed as scatter points
-        - Optional rank transformation for better visualization of skewed data
-        - Logarithmic scaling with automatic shifting for non-positive values
-        - Interactive hover labels showing data point identifiers
-
-        The rank transformation is particularly useful when observed values have
-        highly skewed distributions, as it emphasizes the ordering rather than
-        the absolute magnitudes.
-
-        Example:
-            >>> # Standard posterior predictive plot
-            >>> pp_layout = mle_analysis.plot_posterior_predictive_samples()
-            >>> # Custom quantiles with logarithmic scaling
-            >>> pp_plots = mle_analysis.plot_posterior_predictive_samples(
-            ...     quantiles=(0.05, 0.5, 0.95), logy=True, display=False
-            ... )
-        """
-        # Process each observed variable
-        plots: dict[str, hv.Overlay] = {}
-        for varname, reference, observed in self._iter_pp_obs():
-
-            # Get the x-axis data
-            x = stats.rankdata(observed, method="ordinal") if use_ranks else observed
-
-            # If using a log-y axis, shift the y-data
-            if logy:
-                reference, observed = _log10_shift(reference, observed)
-
-            # Get labels
-            labels = np.array(
-                [
-                    ".".join(map(str, indices))
-                    for indices in np.ndindex(
-                        self.inference_obj.observed_data[  # pylint: disable=no-member
-                            varname
-                        ].shape
-                    )
-                ]
-            )
-
-            # Sort data for plotting the areas and lines
-            sorted_inds = np.argsort(x)
-            x, reference, observed, labels = (
-                x[sorted_inds],
-                reference[:, sorted_inds],
-                observed[sorted_inds],
-                labels[sorted_inds],
-            )
-
-            # Build the plot
-            plots[varname] = plotting.quantile_plot(
-                x=x,
-                reference=reference,
-                quantiles=quantiles,
-                observed=observed,
-                labels={varname: labels},
-                include_median=False,
-                overwrite_input=True,
-                observed_type="scatter",
-            ).opts(
-                xlabel=f"Observed Value {'Rank' if use_ranks else ''}: {varname}",
-                ylabel=f"Value{' log10' if logy else ''}: {varname}",
-                title=f"Posterior Predictive Samples: {varname}",
-                width=width,
-                height=height,
-            )
-
-        # If requested, display the plots
-        if display:
-            return hv.Layout(plots.values()).cols(1).opts(shared_axes=False)
-
-        return plots
-
-    @overload
-    def plot_observed_quantiles(
-        self,
-        *,
-        use_ranks: bool,
-        display: Literal[True],
-        width: "custom_types.Integer",
-        height: "custom_types.Integer",
-        windowsize: Optional["custom_types.Integer"],
-    ) -> hv.Layout: ...
-
-    @overload
-    def plot_observed_quantiles(
-        self,
-        *,
-        use_ranks: bool,
-        display: Literal[False],
-        width: "custom_types.Integer",
-        height: "custom_types.Integer",
-        windowsize: Optional["custom_types.Integer"],
-    ) -> dict[str, hv.Overlay]: ...
-
-    def plot_observed_quantiles(
-        self, *, use_ranks=True, display=True, width=600, height=400, windowsize=None
-    ):
-        """Visualize systematic patterns in observed data quantiles.
-
-        This method creates hexagonal density plots showing the relationship between
-        observed data values (or their ranks) and their corresponding quantiles
-        within the posterior predictive distribution. A rolling mean overlay
-        highlights systematic trends.
-
-        :param use_ranks: Whether to use ranks instead of raw values for x-axis. Defaults to True.
-        :type use_ranks: bool
-        :param display: Whether to return formatted layout for display. Defaults to True.
-        :type display: bool
-        :param width: Width of individual plots in pixels. Defaults to 600.
-        :type width: custom_types.Integer
-        :param height: Height of individual plots in pixels. Defaults to 400.
-        :type height: custom_types.Integer
-        :param windowsize: Size of rolling window for trend line. Defaults to None (automatic).
-        :type windowsize: Optional[custom_types.Integer]
-
-        :returns: Quantile plots in requested format
-        :rtype: Union[hv.Layout, dict[str, hv.Overlay]]
-
-        Visualization Components:
-
-        - Hexagonal binning showing density of (value, quantile) pairs
-        - Rolling mean trend line highlighting systematic patterns
-        - Colormap indicating point density for pattern identification
-
-        Pattern Interpretation:
-
-        - Horizontal trend line around 0.5 with uniformly distributed points indicates
-          good calibration
-        - Systematic deviations suggest model bias or miscalibration
-
-        The hexagonal binning is particularly effective for visualizing large
-        datasets where individual points would create overplotting issues.
-
-        Example:
-            >>> # Standard quantile analysis
-            >>> quant_layout = mle_analysis.plot_observed_quantiles()
-            >>> # Custom window size for trend analysis
-            >>> quant_plots = mle_analysis.plot_observed_quantiles(
-            ...     windowsize=50, use_ranks=False, display=False
-            ... )
-        """
-        # Loop over quantiles for different observed variables
-        plots: dict[str, hv.Overlay] = {}
-        for varname, reference, observed in self._iter_pp_obs():
-
-            # Get the quantiles of the observed data relative to the reference
-            y = plotting.calculate_relative_quantiles(
-                reference, observed[None] if observed.ndim == 1 else observed
-            )
-
-            # Flatten the data and update x to use rankings if requested
-            x, y = observed.ravel(), y.ravel()
-            x = stats.rankdata(x, method="ordinal") if use_ranks else x
-
-            # Build the plot
-            plots[varname] = plotting.hexgrid_with_mean(
-                x=x, y=y, mean_windowsize=windowsize
-            ).opts(
-                xlabel=f"Observed Value {'Rank' if use_ranks else ''}: {varname}",
-                ylabel=f"Observed Quantile: {varname}",
-                title=f"Observed Quantiles: {varname}",
-                width=width,
-                height=height,
-            )
-
-        # If requested, display the plots
-        if display:
-            return hv.Layout(plots.values()).cols(1).opts(shared_axes=False)
-
-        return plots
-
-    @overload
-    def run_ppc(
-        self,
-        *,
-        use_ranks: bool,
-        display: Literal[True],
-        square_ecdf: bool,
-        windowsize: Optional["custom_types.Integer"],
-        quantiles: Sequence["custom_types.Float"],
-        logy_ppc_samples: bool,
-        subplot_width: "custom_types.Integer",
-        subplot_height: "custom_types.Integer",
-    ) -> pn.Column: ...
-
-    @overload
-    def run_ppc(
-        self,
-        *,
-        use_ranks: bool,
-        display: Literal[False],
-        square_ecdf: bool,
-        windowsize: Optional["custom_types.Integer"],
-        quantiles: Sequence["custom_types.Float"],
-        logy_ppc_samples: bool,
-        subplot_width: "custom_types.Integer",
-        subplot_height: "custom_types.Integer",
-    ) -> list[dict[str, hv.Overlay]]: ...
-
-    def run_ppc(
-        self,
-        *,
-        use_ranks=True,
-        display=True,
-        square_ecdf=True,
-        windowsize=None,
-        quantiles=(0.025, 0.25, 0.5),
-        logy_ppc_samples=False,
-        subplot_width=600,
-        subplot_height=400,
-    ):
-        """Execute comprehensive posterior predictive checking analysis.
-
-        This method provides a complete posterior predictive checking workflow by
-        combining multiple diagnostic approaches into a unified analysis. It runs
-        the methods
-        :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.plot_posterior_predictive_samples`,
-        :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.plot_observed_quantiles`,
-        and :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.check_calibration`,
-        combining their outputs into either an interactive dashboard or a list of
-        individual plot dictionaries.
-
-        :param use_ranks: Whether to use ranks instead of raw values for x-axes.
-            Defaults to True.
-        :type use_ranks: bool
-        :param display: Whether to return interactive dashboard layout. Defaults to True.
-        :type display: bool
-        :param square_ecdf: Whether to make ECDF plots square (width=height). Defaults
-            to True.
-        :type square_ecdf: bool
-        :param windowsize: Size of rolling window for trend analysis. Defaults to
-            None (automatic).
-        :type windowsize: Optional[custom_types.Integer]
-        :param quantiles: Quantiles for confidence intervals. Defaults to (0.025,
-            0.25, 0.5).
-        :type quantiles: Sequence[custom_types.Float]
-        :param logy_ppc_samples: Whether to use log scale for posterior predictive
-            plots. Defaults to False.
-        :type logy_ppc_samples: bool
-        :param subplot_width: Width of individual subplots in pixels. Defaults to 600.
-        :type subplot_width: custom_types.Integer
-        :param subplot_height: Height of individual subplots in pixels. Defaults to 400.
-        :type subplot_height: custom_types.Integer
-
-        :returns: Interactive dashboard or list of plot dictionaries
-        :rtype: Union[pn.Column, list[dict[str, hv.Overlay]]]
-
-        Dashboard Features:
-        - Interactive variable selection across all diagnostic types
-        - Consistent formatting and scaling across related plots
-        - Automatic layout optimization for comparison and analysis
-        - Widget-based navigation for multi-variable models
-
-        Between the three plots generated, this method provides a holistic view of
-        model performance in terms of:
-        - **Predictive accuracy**: How well do predictions match observations?
-        - **Calibration quality**: Are prediction intervals properly calibrated?
-        - **Systematic bias**: Are there patterns indicating model inadequacy?
-
-        Example:
-            >>> # Complete interactive analysis
-            >>> dashboard = mle_analysis.run_ppc()
-            >>> dashboard  # Display in notebook
-            >>>
-            >>> # Programmatic access to individual components
-            >>> ppc_plots, quant_plots, cal_plots = mle_analysis.run_ppc(display=False)
-        """
-        # Get ecdf widths and heights
-        if square_ecdf:
-            ecdf_width = subplot_width
-            ecdf_height = ecdf_width
-        else:
-            ecdf_width = subplot_width
-            ecdf_height = subplot_height
-
-        # Get the different plots
-        plots = [
-            self.plot_posterior_predictive_samples(
-                quantiles=quantiles,
-                use_ranks=use_ranks,
-                logy=logy_ppc_samples,
-                display=False,
-                width=subplot_width,
-                height=subplot_height,
-            ),
-            self.plot_observed_quantiles(
-                use_ranks=use_ranks,
-                display=False,
-                width=subplot_width,
-                height=subplot_height,
-                windowsize=windowsize,
-            ),
-            self.check_calibration(
-                return_deviance=False,
-                display=False,
-                width=ecdf_width,
-                height=ecdf_height,
-            ),
-        ]
-
-        # If not displaying, return the plots
-        if not display:
-            return plots
-
-        # Otherwise, display the plots
-        plots, widget = pn.panel(
-            hv.Layout(
-                [
-                    hv.HoloMap(plots[0], kdims="Variable").opts(
-                        hv.opts.Scatter(framewise=True),
-                        hv.opts.Area(framewise=True),
-                    ),
-                    hv.HoloMap(plots[1], kdims="Variable").opts(
-                        hv.opts.HexTiles(framewise=True, axiswise=True, min_count=0),
-                        hv.opts.Curve(framewise=True, color="darkgray"),
-                    ),
-                    hv.HoloMap(plots[2], kdims="Variable").opts(
-                        hv.opts.Curve(framewise=True),
-                    ),
-                ]
-            )
-            .opts(shared_axes=False)
-            .cols(1)
-        )
-        widget.align = ("start", "start")
-
-        return pn.Column(widget, plots)
-
-    @classmethod
-    def from_disk(cls, path: str) -> "MLEInferenceRes":
-        """Load ``MLEInferenceRes`` object from saved NetCDF file.
-
-        :param path: Path to NetCDF file containing saved InferenceData
-        :type path: str
-
-        :returns: Reconstructed ``MLEInferenceRes`` object with all analysis capabilities
-        :rtype: MLEInferenceRes
-
-        This class method enables loading of previously saved analysis results,
-        preserving all computed statistics and enabling continued analysis from
-        where previous sessions left off.
-
-        Example:
-            >>> # Load previously saved results
-            >>> mle_analysis = MLEInferenceRes.from_disk('saved_results.nc')
-            >>> # Continue analysis with full functionality
-            >>> dashboard = mle_analysis.run_ppc()
-        """
-        return cls(az.from_netcdf(path))
 
 
 class MLEParam:
@@ -1056,6 +237,163 @@ class MLEParam:
                 for batch_size in batch_sizes
             ]
         )
+
+
+class MLEInferenceRes(InferenceRes):
+    """Object that holds results from maximum likelihood estimation.
+
+    This class extends the base InferenceRes to handle MLE-specific
+    functionality, particularly the construction of ArviZ InferenceData
+    objects from MLE results. It supports both in-memory and Dask-based
+    processing for large datasets.
+
+    :param model: Original SciStanPy model
+    :type model: Union[scistanpy.Model, None]
+    :param results: MLE results object
+    :type results: Union[MLE, None]
+    :param data: Observed data used for parameter estimation
+    :type data: dict[str, npt.NDArray]
+    :param precision: Numerical precision for stored samples when using Dask.
+        Options are "double", "single", or "half". Defaults to "single".
+    :type precision: Literal["double", "single", "half"]
+    :param inference_obj: Pre-existing ArviZ InferenceData object or filename.
+        If None, it will be built from MLE results. Defaults to None.
+    :type inference_obj: Optional[az.InferenceData | str]
+    :param mib_per_chunk: Memory chunk size in MiB when using Dask. If None,
+        defaults to automatic chunk sizing. Defaults to None.
+    :type mib_per_chunk: Optional[custom_types.Integer]
+    :param use_dask: Whether to use Dask for parallel processing. Defaults to False.
+    :type use_dask: bool
+    :param output_filename: If provided, saves the inference data to this NetCDF
+        file. If None and `use_dask` is True, a temporary file is used. Defaults to `None`.
+    :type output_filename: Optional[str]
+    :param n: Number of samples to generate for the inference object.
+    :type n: custom_types.Integer
+    :param seed: Random seed for reproducible sample generation. Defaults to None.
+    :type seed: Optional[custom_types.Integer]
+    :param batch_size: Batch size for memory-efficient sampling. Defaults to None.
+    :type batch_size: Optional[custom_types.Integer]
+    """
+
+    RESULTS_TO_NETCDF_CONVERTER = MLEToNetCDFConverter
+
+    def __init__(
+        self,
+        *,
+        model: Union["scistanpy.Model", None] = None,
+        results: Union["MLE", None] = None,
+        data: dict[str, npt.NDArray] = None,
+        precision: Literal["double", "single", "half"] = "single",
+        inference_obj: Optional[az.InferenceData | str] = None,
+        mib_per_chunk: custom_types.Integer | None = None,
+        use_dask: bool = False,
+        output_filename: str | None = None,
+        n: int,
+        seed: Optional["custom_types.Integer"] = None,
+        batch_size: Optional["custom_types.Integer"] = None,
+    ):
+        # Store values for 'n', 'seed', and 'batch_size'
+        self.n = n
+        self.seed = seed
+        self.batch_size = batch_size
+
+        # Call the parent constructor
+        super().__init__(
+            model=model,
+            results=results,
+            data=data,
+            precision=precision,
+            inference_obj=inference_obj,
+            mib_per_chunk=mib_per_chunk,
+            use_dask=use_dask,
+            output_filename=output_filename,
+        )
+
+    def _build_inference_obj(
+        self,
+        data: dict[str, npt.NDArray],
+        precision: Literal["double", "single", "half"],
+        mib_per_chunk: custom_types.Integer | None,
+        output_filename: str | None,
+        **converter_kwargs: Any,
+    ) -> str | az.InferenceData:
+        """Build the ArviZ InferenceData object from MLE results.
+
+        This method constructs the InferenceData object by drawing samples
+        from the fitted parameter distributions and organizing them into
+        the appropriate groups.
+
+        :param data: Observed data used for parameter estimation
+        :type data: dict[str, npt.NDArray]
+        :param precision: Numerical precision for stored samples when using Dask.
+            Options are "double", "single", or "half". Defaults to "single".
+        :type precision: Literal["double", "single", "half"]
+        :param mib_per_chunk: Memory chunk size in MiB when using Dask. If None,
+            defaults to automatic chunk sizing. Defaults to None.
+        :type mib_per_chunk: Optional[custom_types.Integer]
+        :param output_filename: If provided, saves the inference data to this NetCDF
+            file. If None and `use_dask` is True, a temporary file is used. Defaults to `None`.
+        :type output_filename: Optional[str]
+        :param converter_kwargs: Additional keyword arguments for the converter.
+        :type converter_kwargs: Any
+
+        :returns: Structured inference data object with all MLE results if not
+            using Dask; otherwise, returns the filename of the saved NetCDF file.
+        :rtype: az.InferenceData | str
+        """
+        # We use the parent method if running with dask
+        if self.use_dask:
+            return super()._build_inference_obj(
+                data=data,
+                precision=precision,
+                mib_per_chunk=mib_per_chunk,
+                output_filename=output_filename,
+                n=self.n,
+                seed=self.seed,
+                batch_size=self.batch_size,
+                **converter_kwargs,
+            )
+
+        # Otherwise, we need to draw samples and directly build the inference
+        # data object
+        draws = self.results.draw(
+            n=self.n, seed=self.seed, as_xarray=True, batch_size=self.batch_size
+        )
+
+        # Rename the "n" dimension to "sample" and add a dummy "chain" dimension
+        draws = draws.rename_dims({"n": "draw"})
+        draws = draws.expand_dims("chain", 0)
+
+        # Now separate out the observables from the latent variables. Build
+        # the initial inference data object with the latent variables
+        inference_data = az.convert_to_inference_data(
+            draws[
+                [
+                    varname
+                    for varname, mle_param in self.results.model_varname_to_mle.items()
+                    if not self.model.all_model_components_dict[varname].observable
+                ]
+            ]
+        )
+
+        # Add the observables and the observed data to the inference data object
+        # pylint: disable=protected-access
+        inference_data.add_groups(
+            observed_data=xr.Dataset(
+                data_vars={
+                    k: self.model._compress_for_xarray(v)[0] for k, v in data.items()
+                }
+            ),
+            posterior_predictive=draws[
+                [
+                    varname
+                    for varname, mle_param in self.results.model_varname_to_mle.items()
+                    if self.model.all_model_components_dict[varname].observable
+                ]
+            ],
+        )
+
+        return inference_data
 
 
 class MLE:
@@ -1295,6 +633,9 @@ class MLE:
         seed: Optional[custom_types.Integer] = None,
         batch_size: Optional[custom_types.Integer] = None,
         use_dask: bool = False,
+        netcdf_filename: str | None = None,
+        precision: Literal["double", "single", "half"] = "single",
+        mib_per_chunk: custom_types.Integer | None = None,
     ) -> MLEInferenceRes:
         """Create ArviZ-compatible inference data object from MLE results.
 
@@ -1312,6 +653,16 @@ class MLE:
         :type batch_size: Optional[custom_types.Integer]
         :param use_dask: Whether to use Dask for parallel processing. Defaults to False.
         :type use_dask: bool
+        :param netcdf_filename: If provided, saves the inference data to this NetCDF
+            file. If None and `use_dask` is True, a temporary file is used. Defaults
+            to `None`.
+        :type netcdf_filename: Optional[str]
+        :param precision: Numerical precision for stored samples when using Dask.
+            Options are "double", "single", or "half". Defaults to "single".
+        :type precision: Literal["double", "single", "half"]
+        :param mib_per_chunk: Memory chunk size in MiB when using Dask. If None,
+            defaults to automatic chunk sizing. Defaults to None.
+        :type mib_per_chunk: Optional[custom_types.Integer]
 
         :returns: Structured inference data object with all MLE results
         :rtype: results.MLEInferenceRes
@@ -1361,44 +712,16 @@ class MLE:
             ...     n=5000, batch_size=500, seed=42
             ... )
         """
-        # TODO: Add MLE result to the inference object!
-
-        # Get the samples from the posterior
-        draws = self.draw(n, seed=seed, as_xarray=True, batch_size=batch_size)
-
-        # Otherwise, we also are going to want to attach the observed data
-        # to the InferenceData object. First, rename the "n" dimension to "sample"
-        # and add a dummy "chain" dimension
-        draws = draws.rename_dims({"n": "draw"})
-        draws = draws.expand_dims("chain", 0)
-
-        # Now separate out the observables from the latent variables. Build
-        # the initial inference data object with the latent variables
-        inference_data = az.convert_to_inference_data(
-            draws[
-                [
-                    varname
-                    for varname, mle_param in self.model_varname_to_mle.items()
-                    if not self.model.all_model_components_dict[varname].observable
-                ]
-            ]
+        return MLEInferenceRes(
+            model=self.model,
+            results=self,
+            data=self.data,
+            precision=precision,
+            inference_obj=None,
+            mib_per_chunk=mib_per_chunk,
+            use_dask=use_dask,
+            output_filename=netcdf_filename,
+            n=n,
+            seed=seed,
+            batch_size=batch_size,
         )
-
-        # Add the observables and the observed data to the inference data object
-        # pylint: disable=protected-access
-        inference_data.add_groups(
-            observed_data=xr.Dataset(
-                data_vars={
-                    k: self.model._compress_for_xarray(v)[0]
-                    for k, v in self.data.items()
-                }
-            ),
-            posterior_predictive=draws[
-                [
-                    varname
-                    for varname, mle_param in self.model_varname_to_mle.items()
-                    if self.model.all_model_components_dict[varname].observable
-                ]
-            ],
-        )
-        return MLEInferenceRes(inference_data)

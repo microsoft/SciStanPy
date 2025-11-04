@@ -1799,7 +1799,7 @@ class StanModel(CmdStanModel):
         # Build the results object
         return scistanpy.results.SampleResults(
             model=self.model,
-            fit=fit,
+            results=fit,
             precision=precision,
             mib_per_chunk=mib_per_chunk,
             use_dask=use_dask,

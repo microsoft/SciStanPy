@@ -98,6 +98,11 @@ def define_base_parser() -> argparse.ArgumentParser:
         default=1025,
         help="Random seed for reproducibility.",
     )
+    optional_group.add_argument(
+        "--use_dask",
+        action="store_true",
+        help="Use Dask when possible.",
+    )
 
     # Now some hyperparameters that can be overridden
     hyperparam_group = parser.add_argument_group(
@@ -143,11 +148,6 @@ def parse_args():
         type=int,
         default=2000,
         help="Number of samples to draw after warmup. Default = 2000.",
-    )
-    optional_group.add_argument(
-        "--use_dask",
-        action="store_true",
-        help="Use Dask when diagnosing the model.",
     )
     optional_group.add_argument(
         "--force_compile",
@@ -304,7 +304,7 @@ def run_hmc(args: argparse.Namespace) -> None:
         # Load the fit object from the csv files
         res = SampleResults(
             model=model,
-            fit=os.path.join(args.output_dir, f"{model_name}*.csv"),
+            results=os.path.join(args.output_dir, f"{model_name}*.csv"),
             use_dask=args.use_dask,
         )
 

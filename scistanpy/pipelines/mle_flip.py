@@ -113,9 +113,20 @@ def run_mle(args: argparse.Namespace) -> None:
         **{k: v.mle for k, v in mle.model_varname_to_mle.items() if v.mle is not None},
     )
 
-    # Draw samples from the MLE and save them
-    samples = mle.get_inference_obj(seed=args.seed, batch_size=args.sample_batch_size)
-    samples.save_netcdf(os.path.join(args.output_dir, f"{base_outfile}_samples.nc"))
+    # Draw samples from the MLE
+    nc_filename = os.path.join(args.output_dir, f"{base_outfile}_samples.nc")
+    inference_kwargs = {
+        "seed": args.seed,
+        "batch_size": args.sample_batch_size,
+        "use_dask": args.use_dask,
+    }
+    if args.use_dask:
+        inference_kwargs["netcdf_filename"] = nc_filename
+    samples = mle.get_inference_obj(**inference_kwargs)
+
+    # The sample has already been saved if using Dask. Otherwise, save it here.
+    if not args.use_dask:
+        samples.save_netcdf(nc_filename)
 
 
 def main():

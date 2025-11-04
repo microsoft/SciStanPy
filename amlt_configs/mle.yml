@@ -7,7 +7,7 @@ target:
   # name: msrresrchlab
 
 environment:
-  image: scistanpy:0.0.14
+  image: scistanpy:0.0.15
   registry: bjwamltcr.azurecr.io
 
 data:
@@ -47,6 +47,7 @@ jobs:
         --flip_data "$$AMLT_DATA_DIR"
         --output_dir "$$AMLT_OUTPUT_DIR"
         --lr 0.01
+        --use_dask
     submit_args:
       max_run_duration_seconds: 1209600
       env:
@@ -62,6 +63,7 @@ jobs:
         --flip_data "$$AMLT_DATA_DIR"
         --output_dir "$$AMLT_OUTPUT_DIR"
         --lr 0.1
+        --use_dask
     submit_args:
       max_run_duration_seconds: 1209600
       env:

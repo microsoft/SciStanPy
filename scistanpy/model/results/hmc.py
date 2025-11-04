@@ -44,19 +44,9 @@ import os.path
 import re
 import warnings
 from glob import glob
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Generator,
-    Literal,
-    Optional,
-    Sequence,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Generator, Literal, Sequence, Union, overload
 
 import arviz as az
-import dask
 import h5netcdf
 import holoviews as hv
 import numpy as np
@@ -68,14 +58,16 @@ from cmdstanpy.stanfit import CmdStanMCMC, RunSet
 from cmdstanpy.utils import check_sampler_csv, scan_config
 from tqdm import tqdm
 
-from scistanpy import plotting, utils
+from scistanpy import plotting
 from scistanpy.defaults import (
     DEFAULT_EBFMI_THRESH,
     DEFAULT_ESS_THRESH,
     DEFAULT_RHAT_THRESH,
 )
-from scistanpy.model.results import mle
-from scistanpy.model.results.netcdf_conversion import SciStanPyToNetCDFConverter
+from scistanpy.model.results.base_classes import (
+    InferenceRes,
+    SciStanPyToNetCDFConverter,
+)
 
 if TYPE_CHECKING:
     from scistanpy import Model, custom_types
@@ -501,8 +493,8 @@ class VariableAnalyzer:
 
 class CmdStanMCMCToNetCDFConverter(SciStanPyToNetCDFConverter):
     """Object responsible for converting CmdStan CSV output to NetCDF format. This
-    class is used internally by the :py:func:`~scistanpy.model.results.hmc.cmdstan_csv_to_netcdf`
-    function and should not be instantiated directly in most use cases.
+    class is used internally and should not be instantiated directly in most use
+    cases.
 
     This class handles the conversion of CmdStan CSV output files to NetCDF
     format, providing efficient storage and access for large MCMC datasets.
@@ -700,46 +692,6 @@ class CmdStanMCMCToNetCDFConverter(SciStanPyToNetCDFConverter):
             # We must have all the draws for this chain
             assert draw_ind == self.num_draws - 1  # pylint: disable=W0631
 
-    def write_netcdf(
-        self,
-        filename: str | None = None,
-        precision: Literal["double", "single", "half"] = "single",
-        mib_per_chunk: custom_types.Integer | None = None,
-    ) -> str:
-        """Write the converted data to NetCDF format.
-
-        :param filename: Output filename. Auto-generated if None. Defaults to None.
-        :type filename: Optional[str]
-        :param precision: Numerical precision for arrays. Defaults to "single".
-        :type precision: Literal["double", "single", "half"]
-        :param mib_per_chunk: Memory limit per chunk in MiB. Defaults to None, meaning
-            use Dask default.
-        :type mib_per_chunk: Optional[custom_types.Integer]
-
-        :returns: Path to the created NetCDF file
-        :rtype: str
-
-        This method orchestrates the complete conversion process:
-        1. Creates NetCDF file with appropriate structure
-        2. Sets up dimensions based on model and data characteristics
-        3. Creates variables with optimal chunking strategies
-        4. Populates data from CSV files with progress tracking
-
-        The resulting NetCDF file contains properly organized groups for
-        posterior samples, posterior predictive samples, sample statistics,
-        and observed data.
-        """
-        # If no filename is provided, we create one based on the csv files
-        filename = (
-            filename
-            or os.path.commonprefix(self.results.runset.csv_files).rstrip("_") + ".nc"
-        )
-
-        # Run inherited method
-        return super().write_netcdf(
-            filename=filename, precision=precision, mib_per_chunk=mib_per_chunk
-        )
-
     def _parse_csv(
         self, filename: str
     ) -> Generator[dict[str, npt.NDArray], None, None]:
@@ -800,186 +752,7 @@ class CmdStanMCMCToNetCDFConverter(SciStanPyToNetCDFConverter):
                 yield processed_vals
 
 
-def cmdstan_csv_to_netcdf(
-    path: str | list[str] | os.PathLike | CmdStanMCMC,
-    model: "Model",
-    data: dict[str, Any] | None = None,
-    output_filename: str | None = None,
-    precision: Literal["double", "single", "half"] = "single",
-    mib_per_chunk: custom_types.Integer | None = None,
-) -> str:
-    """Convert CmdStan CSV output to NetCDF format.
-
-    This function provides a high-level interface for converting CmdStan
-    sampling results from CSV format to NetCDF, enabling efficient storage
-    and processing of large MCMC datasets.
-
-    :param path: Path to CSV files or CmdStanMCMC object
-    :type path: Union[str, list[str], os.PathLike, CmdStanMCMC]
-    :param model: SciStanPy model used for sampling
-    :type model: Model
-    :param data: Observed data dictionary. Uses model default if None. Defaults to None.
-    :type data: Optional[dict[str, Any]]
-    :param output_filename: Output NetCDF filename. Auto-generated if None. Defaults to None.
-    :type output_filename: Optional[str]
-    :param precision: Numerical precision for stored arrays. Defaults to "single".
-    :type precision: Literal["double", "single", "half"]
-    :param mib_per_chunk: Memory limit per chunk in MiB. Defaults to None, meaning
-        use Dask default.
-    :type mib_per_chunk: Optional[custom_types.Integer]
-
-    :returns: Path to created NetCDF file
-    :rtype: str
-
-    The conversion process:
-
-    1. Analyzes model structure to determine optimal storage layout
-    2. Creates NetCDF file with appropriate groups and dimensions
-    3. Converts CSV data with proper chunking for memory efficiency
-    4. Organizes results into ArviZ-compatible structure
-
-    Benefits of NetCDF format:
-
-    - Significantly faster loading compared to CSV
-    - Memory-efficient access with chunking support
-    - Metadata preservation and self-describing format
-    - Integration with scientific Python ecosystem
-
-    Example:
-        >>> netcdf_path = cmdstan_csv_to_netcdf(
-        ...     'model_output*.csv', model, precision='single'
-        ... )
-        >>> results = SampleResults.from_disk(netcdf_path)
-    """
-    # If no data, check for default data in the model. Otherwise, data provided
-    # takes priority
-    if data is None and model.has_default_data:
-        data = model.default_data
-
-    # Build the converter
-    converter = CmdStanMCMCToNetCDFConverter(results=path, model=model, data=data)
-
-    # Run conversion
-    return converter.write_netcdf(
-        filename=output_filename,
-        precision=precision,
-        mib_per_chunk=mib_per_chunk,
-    )
-
-
-def dask_enabled_summary_stats(inference_obj: az.InferenceData) -> xr.Dataset:
-    """Compute summary statistics using Dask for memory efficiency. This is used
-    inside the :py:meth:`SampleResults.calculate_summaries()
-    <scistanpy.model.results.hmc.SampleResults.calculate_summaries>` method when
-    Dask is enabled.
-
-    :param inference_obj: ArviZ InferenceData object containing posterior samples
-    :type inference_obj: az.InferenceData
-
-    :returns: Dataset containing computed summary statistics
-    :rtype: xr.Dataset
-
-    This function computes basic summary statistics (mean, standard deviation,
-    and highest density intervals) using Dask for memory-efficient computation
-    on large datasets that might not fit in memory.
-
-    The function leverages Dask's lazy evaluation to:
-
-    - Queue multiple computations for efficient execution
-    - Minimize memory usage through chunked processing
-    - Provide progress tracking for long-running computations
-
-    Computed Statistics:
-
-    - Mean across chains and draws
-    - Standard deviation across chains and draws
-    - 94% highest density intervals
-
-    Example:
-        >>> stats = dask_enabled_summary_stats(inference_data)
-        >>> print(stats.sel(metric='mean'))
-    """
-    # Queue up the delayed computations
-    with utils.az_dask():
-        delayed_summaries = [
-            inference_obj.posterior.mean(dim=("chain", "draw")),
-            inference_obj.posterior.std(dim=("chain", "draw")),
-            az.hdi(
-                inference_obj,
-                hdi_prob=0.94,
-                dask_gufunc_kwargs={"output_sizes": {"hdi": 2}},
-            ),
-        ]
-
-        # Compute the results
-        mean, std, hdi = dask.compute(*delayed_summaries)
-
-    # Concatenate the results
-    return xr.concat(
-        [
-            mean.assign_coords(metric=["mean"]),
-            std.assign_coords(metric=["sd"]),
-            hdi.assign_coords(hdi=["hdi_3%", "hdi_97%"]).rename(hdi="metric"),
-        ],
-        dim="metric",
-    )
-
-
-def dask_enabled_diagnostics(inference_obj: az.InferenceData) -> xr.Dataset:
-    """Compute MCMC diagnostics using Dask for memory efficiency. This is used
-    inside the :py:meth:`SampleResults.calculate_summaries()
-    <scistanpy.model.results.hmc.SampleResults.calculate_summaries>` method when
-    Dask is enabled.
-
-    :param inference_obj: ArviZ InferenceData object containing posterior samples
-    :type inference_obj: az.InferenceData
-
-    :returns: Dataset containing computed diagnostic metrics
-    :rtype: xr.Dataset
-
-    This function computes comprehensive MCMC diagnostic metrics using Dask
-    for memory-efficient computation on large datasets. All diagnostics are
-    computed simultaneously to maximize efficiency.
-
-    Computed Diagnostics:
-
-    - Monte Carlo standard errors (mean and sd methods)
-    - Effective sample sizes (bulk and tail)
-    - R-hat convergence diagnostic
-
-    The Dask implementation enables:
-
-    - Parallel computation across available cores
-    - Memory-efficient processing of large datasets
-    - Automatic load balancing and optimization
-
-    Example:
-        >>> diagnostics = dask_enabled_diagnostics(inference_data)
-        >>> print(diagnostics.sel(metric='r_hat'))
-    """
-    # Run computations
-    with utils.az_dask():
-        diagnostics = dask.compute(
-            az.mcse(inference_obj.posterior, method="mean"),
-            az.mcse(inference_obj.posterior, method="sd"),
-            az.ess(inference_obj.posterior, method="bulk"),
-            az.ess(inference_obj.posterior, method="tail"),
-            az.rhat(inference_obj.posterior),
-        )
-
-    # Concatenate the results and return
-    return xr.concat(
-        [
-            dset.assign_coords(metric=[metric])
-            for metric, dset in zip(
-                ["mcse_mean", "mcse_sd", "ess_bulk", "ess_tail", "r_hat"], diagnostics
-            )
-        ],
-        dim="metric",
-    )
-
-
-class SampleResults(mle.MLEInferenceRes):
+class SampleResults(InferenceRes):
     """Comprehensive analysis interface for HMC sampling results. This class should
     never be instantiated directly. Instead, use the `from_disk` method to load the
     appropriate results object from disk.
@@ -991,8 +764,8 @@ class SampleResults(mle.MLEInferenceRes):
 
     :param model: SciStanPy model used for sampling. Defaults to None.
     :type model: Optional[Model]
-    :param fit: CmdStanMCMC object or path to CSV files. Defaults to None.
-    :type fit: Optional[Union[str, list[str], os.PathLike, CmdStanMCMC]]
+    :param results: CmdStanMCMC object or path to CSV files. Defaults to None.
+    :type results: Optional[Union[str, list[str], os.PathLike, CmdStanMCMC]]
     :param data: Observed data dictionary. Defaults to None.
     :type data: Optional[dict[str, npt.NDArray]]
     :param precision: Numerical precision for arrays. Defaults to "single".
@@ -1003,9 +776,8 @@ class SampleResults(mle.MLEInferenceRes):
     :type mib_per_chunk: Optional[custom_types.Integer]
     :param use_dask: Whether to use Dask for computation. Defaults to False.
     :type use_dask: bool
-
-    :ivar fit: CmdStanMCMC object containing sampling metadata
-    :ivar use_dask: Flag controlling Dask usage for computation
+    :param output_filename: Output NetCDF filename. Defaults to None.
+    :type output_filename: Optional[Union[str, os.PathLike]]
 
     The class provides comprehensive functionality for:
 
@@ -1048,171 +820,38 @@ class SampleResults(mle.MLEInferenceRes):
             mcmc_results.plot_variable_failure_quantile_traces()
     """
 
+    RESULTS_TO_NETCDF_CONVERTER = CmdStanMCMCToNetCDFConverter
+
     def __init__(
         self,
+        *,
         model: Union["Model", None] = None,
-        fit: str | list[str] | os.PathLike | CmdStanMCMC | None = None,
-        data: dict[str, npt.NDArray] | None = None,
+        results: str | list[str] | os.PathLike | CmdStanMCMC | None = None,
+        data: Union[dict[str, npt.NDArray], None] = None,
         precision: Literal["double", "single", "half"] = "single",
-        inference_obj: Optional[az.InferenceData | str] = None,
-        mib_per_chunk: custom_types.Integer | None = None,
+        inference_obj: Union[az.InferenceData, str, None] = None,
+        mib_per_chunk: Union[custom_types.Integer, None] = None,
         use_dask: bool = False,
+        output_filename: Union[str, os.PathLike, None] = None,
     ):
-        # Store the CmdStanMCMC object
-        self.fit = fit
+        """Initializes the SampleResults object by setting up the necessary parameters."""
+        # If no filename is provided, we create one based on the csv files
+        output_filename = (
+            output_filename
+            or os.path.commonprefix(results.runset.csv_files).rstrip("_") + ".nc"
+        )
 
-        # Note whether we are using dask
-        self.use_dask = use_dask
-
-        # If the inference object is None, we assume that we need to create a NETCDF
-        # file from the CmdStanMCMC object.
-        if inference_obj is None:
-
-            # Compile results to a NetCDF file
-            inference_obj = cmdstan_csv_to_netcdf(
-                path=fit,
-                model=model,
-                data=data,
-                precision=precision,
-                mib_per_chunk=mib_per_chunk,
-            )
-
-        # If the inference object is a string, we assume that it is a NetCDF file
-        # to be loaded from disk
-        if isinstance(inference_obj, str):
-
-            # Load the inference object. Ignore warnings about chunking.
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore",
-                    category=UserWarning,
-                    message="The specified chunks separate the stored chunks along dimension",
-                )
-                inference_obj = az.from_netcdf(
-                    filename=inference_obj,
-                    engine="h5netcdf",
-                    group_kwargs={
-                        k: {"chunks": "auto" if use_dask else None}
-                        for k in ("posterior", "posterior_predictive", "sample_stats")
-                    },
-                )
-
-        # Initialize the parent class
-        super().__init__(inference_obj)
-
-    def calculate_summaries(
-        self,
-        var_names: list[str] | None = None,
-        filter_vars: Literal[None, "like", "regex"] = None,
-        kind: Literal["all", "stats", "diagnostics"] = "all",
-        round_to: custom_types.Integer = 2,
-        circ_var_names: list[str] | None = None,
-        stat_focus: str = "mean",
-        stat_funcs: Optional[Union[dict[str, callable], callable]] = None,
-        extend: bool = True,
-        hdi_prob: custom_types.Float = 0.94,
-        skipna: bool = False,
-        diagnostic_varnames: Sequence[str] = (
-            "mcse_mean",
-            "mcse_sd",
-            "ess_bulk",
-            "ess_tail",
-            "r_hat",
-        ),
-    ) -> xr.Dataset:
-        """Compute comprehensive summary statistics and diagnostics for MCMC results.
-
-        This method extends the parent class functionality to provide HMC-specific
-        diagnostic capabilities, including automatic separation of statistics and
-        diagnostics into appropriate InferenceData groups. See ``az.summary`` for
-        more detail on arguments.
-
-        :param var_names: Variable names to include. Defaults to None (all variables).
-        :type var_names: Optional[list[str]]
-        :param filter_vars: Variable filtering method. Defaults to None.
-        :type filter_vars: Optional[Literal[None, "like", "regex"]]
-        :param kind: Type of computations to perform. Defaults to "all".
-        :type kind: Literal["all", "stats", "diagnostics"]
-        :param round_to: Decimal places for rounding. Defaults to 2.
-        :type round_to: custom_types.Integer
-        :param circ_var_names: Names of circular variables. Defaults to None.
-        :type circ_var_names: Optional[list[str]]
-        :param stat_focus: Primary statistic for focus. Defaults to "mean".
-        :type stat_focus: str
-        :param stat_funcs: Custom statistic functions. Defaults to None.
-        :type stat_funcs: Optional[Union[dict[str, callable], callable]]
-        :param extend: Whether to include extended statistics. Defaults to True.
-            Only meaningful if `stat_funcs` is not `None`.
-        :type extend: bool
-        :param hdi_prob: Probability for highest density interval. Defaults to 0.94.
-        :type hdi_prob: custom_types.Float
-        :param skipna: Whether to skip NaN values. Defaults to False.
-        :type skipna: bool
-        :param diagnostic_varnames: Names of diagnostic metrics. Defaults to ("mcse_mean",
-            "mcse_sd", "ess_bulk", "ess_tail", "r_hat").
-        :type diagnostic_varnames: Sequence[str]
-
-        :returns: Combined dataset with all computed metrics
-        :rtype: xr.Dataset
-
-        Enhanced Features:
-
-        - Automatic Dask acceleration for large datasets
-        - Separation of statistics and diagnostics into appropriate groups
-        - Memory-efficient computation strategies
-
-        The method automatically updates the InferenceData object with new groups:
-
-        - variable_summary_stats: Basic summary statistics
-        - variable_diagnostic_stats: MCMC diagnostic metrics
-        """
-        # We use custom functions if we are using dask
-        if self.use_dask:
-
-            # Calculate the two datasets
-            summary_stats = dask_enabled_summary_stats(self.inference_obj)
-            diagnostics = dask_enabled_diagnostics(self.inference_obj)
-
-            # Combine datasets to get the summaries
-            if kind == "all":
-                summaries = xr.concat([summary_stats, diagnostics], dim="metric")
-            elif kind == "stats":
-                summaries = summary_stats
-            elif kind == "diagnostics":
-                summaries = diagnostics
-
-        # Otherwise, we use the default ArviZ functions
-        else:
-            # Run the inherited method to get the summary statistics
-            summaries = super().calculate_summaries(
-                var_names=var_names,
-                filter_vars=filter_vars,
-                kind=kind,
-                round_to=round_to,
-                circ_var_names=circ_var_names,
-                stat_focus=stat_focus,
-                stat_funcs=stat_funcs,
-                extend=extend,
-                hdi_prob=hdi_prob,
-                skipna=skipna,
-            )
-
-            # Identify the diagnostic and summary statistics
-            noted_diagnostics = set(diagnostic_varnames)
-            calculated_metrics = set(summaries.metric.values.tolist())
-
-            diagnostic_metrics = list(noted_diagnostics & calculated_metrics)
-            stat_metrics = list(calculated_metrics - noted_diagnostics)
-
-            summary_stats = summaries.sel(metric=stat_metrics)
-            diagnostics = summaries.sel(metric=diagnostic_metrics)
-
-        # Update the groups
-        if kind == "all" or kind == "diagnostics":
-            self._update_group("variable_diagnostic_stats", diagnostics)
-        if kind == "all" or kind == "stats":
-            self._update_group("variable_summary_stats", summary_stats)
-        return summaries
+        # Run parent init
+        super().__init__(
+            model=model,
+            results=results,
+            data=data,
+            precision=precision,
+            inference_obj=inference_obj,
+            mib_per_chunk=mib_per_chunk,
+            use_dask=use_dask,
+            output_filename=output_filename,
+        )
 
     def calculate_diagnostics(self) -> xr.Dataset:
         """Shortcut to running
@@ -1917,7 +1556,7 @@ class SampleResults(mle.MLEInferenceRes):
         # Initialize the object
         return cls(
             model=None,
-            fit=None if csv_files is None else fit_from_csv_noload(csv_files),
+            results=None if csv_files is None else fit_from_csv_noload(csv_files),
             inference_obj=path,
             use_dask=use_dask,
         )
@@ -1965,9 +1604,6 @@ def fit_from_csv_noload(path: str | list[str] | os.PathLike) -> CmdStanMCMC:
         >>>
         >>> # Load from explicit list
         >>> fit = fit_from_csv_noload(['chain1.csv', 'chain2.csv'])
-        >>>
-        >>> # Use for conversion without memory loading
-        >>> netcdf_path = cmdstan_csv_to_netcdf(fit, model)
     """
 
     def identify_files() -> list[str]:
