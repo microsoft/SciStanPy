@@ -44,15 +44,14 @@
 <span class="sd">components.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">typeguard</span><span class="w"> </span><span class="kn">import</span> <span class="n">install_import_hook</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typeguard</span><span class="w"> </span><span class="kn">import</span> <span class="n">install_import_hook</span>
 
 <span class="c1"># Define the version</span>
-<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.0.7&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.0.15&quot;</span>
 
 <span class="c1"># Set up type checking</span>
 <span class="n">install_import_hook</span><span class="p">(</span><span class="s2">&quot;scistanpy&quot;</span><span class="p">)</span>
@@ -118,13 +117,10 @@
 
 <span class="c1"># Import objects that should be easily accessible from the package level</span>
 <span class="c1"># pylint: disable=wrong-import-position</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">operations</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">results</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">parameters</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constant</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
-
-<span class="c1"># Lazy imports for performance and to avoid circular imports</span>
-<span class="n">parameters</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;scistanpy.model.components.parameters&quot;</span><span class="p">)</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;scistanpy.model.results&quot;</span><span class="p">)</span>
 </pre></div>
 
           </div>

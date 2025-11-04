@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Base Classes API Reference &#8212; SciStanPy Alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=6b921976"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Maximum Likelihood Estimation Results API Reference" href="mle.html" />
+    <link rel="prev" title="Model Results API Reference" href="index.html" />
+
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+
+
+
+
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+
+
+          <div class="body" role="main">
+
+  <section id="module-scistanpy.model.results.base_classes">
+<span id="base-classes-api-reference"></span><h1>Base Classes API Reference<a class="headerlink" href="#module-scistanpy.model.results.base_classes" title="Link to this heading">¶</a></h1>
+<p>Base classes for converting SciStanPy results to NetCDF format and analysis.</p>
+<p>This module provides the foundational classes for converting SciStanPy modeling results
+(from HMC or MLE methods) into structured NetCDF format and conducting posterior predictive
+checking analysis. The module includes:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#scistanpy.model.results.base_classes.SciStanPyToNetCDFConverter" title="scistanpy.model.results.base_classes.SciStanPyToNetCDFConverter"><code class="xref py py-class docutils literal notranslate"><span class="pre">SciStanPyToNetCDFConverter</span></code></a>: Abstract base class for NetCDF conversion</p></li>
+<li><p><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes" title="scistanpy.model.results.base_classes.InferenceRes"><code class="xref py py-class docutils literal notranslate"><span class="pre">InferenceRes</span></code></a>: Abstract base class for result analysis and visualization</p></li>
+<li><p>Helper functions for statistical computations and transformations</p></li>
+</ul>
+<p>The NetCDF conversion process enables efficient storage and retrieval of large datasets
+with proper chunking strategies and data type optimization. The analysis classes
+provide comprehensive posterior predictive checking workflows including calibration
+assessment, model validation, and interactive visualization capabilities.</p>
+<section id="core-base-classes">
+<h2>Core Base Classes<a class="headerlink" href="#core-base-classes" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.SciStanPyToNetCDFConverter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.base_classes.</span></span><span class="sig-name descname"><span class="pre">SciStanPyToNetCDFConverter</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="n"><span class="pre">results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><span class="pre">Model</span></a></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#SciStanPyToNetCDFConverter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.SciStanPyToNetCDFConverter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for converting SciStanPy inference results to NetCDF format.</p>
+<p>This class provides the foundational structure for converting various types of
+SciStanPy inference results (HMC, MLE, etc.) into standardized NetCDF files
+with proper chunking, data type optimization, and group organization.</p>
+<p>This class serves as the base for method-specific converters:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="hmc.html#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter" title="scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter"><code class="xref py py-class docutils literal notranslate"><span class="pre">CmdStanMCMCToNetCDFConverter</span></code></a></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MLEToNetCDFConverter</span></code></p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>results</strong> (<em>Any</em>) – Raw inference results object from SciStanPy methods</p></li>
+<li><p><strong>model</strong> (<em>scistanpy.Model</em>) – SciStanPy model object containing parameter definitions and metadata</p></li>
+<li><p><strong>data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Observed data dictionary used for model fitting, by default None</p></li>
+</ul>
+</dd>
+</dl>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">ivar results<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Stored reference to the original inference results</p>
+</dd>
+<dt class="field-even">ivar model<span class="colon">:</span></dt>
+<dd class="field-even"><p>Reference to the SciStanPy model object</p>
+</dd>
+<dt class="field-odd">ivar data<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Observed data used during model fitting</p>
+</dd>
+<dt class="field-even">ivar num_chains<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of chains (must be set by subclasses)</p>
+</dd>
+<dt class="field-odd">ivar num_draws<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Number of draws per chain (must be set by subclasses)</p>
+</dd>
+<dt class="field-even">ivar precision<span class="colon">:</span></dt>
+<dd class="field-even"><p>Numerical precision for stored arrays</p>
+</dd>
+<dt class="field-odd">ivar var_dtypes<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping from variable names to appropriate NumPy data types</p>
+</dd>
+<dt class="field-even">ivar varname_to_dset<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping from variable names to NetCDF dataset objects</p>
+</dd>
+</dl>
+</section>
+<section id="notes">
+<h3>Notes<a class="headerlink" href="#notes" title="Link to this heading">¶</a></h3>
+<p>Subclasses must implement:</p>
+<ul class="simple">
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_stream_draws()</span></code>: Method to yield individual draws from results</p></li>
+<li><p>Set <code class="docutils literal notranslate"><span class="pre">num_chains</span></code> and <code class="docutils literal notranslate"><span class="pre">num_draws</span></code> attributes during initialization</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.SciStanPyToNetCDFConverter.write_netcdf">
+<span class="sig-name descname"><span class="pre">write_netcdf</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'double'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'single'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'half'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'single'</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">mib_per_chunk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#SciStanPyToNetCDFConverter.write_netcdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.SciStanPyToNetCDFConverter.write_netcdf" title="Link to this definition">¶</a></dt>
+<dd><p>Write inference results to NetCDF file.</p>
+<p>Orchestrates the complete conversion process from raw inference results
+to a structured, chunked NetCDF file compatible with ArviZ and other
+analysis tools.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – Output filename for the NetCDF file</p></li>
+<li><p><strong>precision</strong> (<em>Literal</em><em>[</em><em>&quot;double&quot;</em><em>, </em><em>&quot;single&quot;</em><em>, </em><em>&quot;half&quot;</em><em>]</em>) – Numerical precision for stored arrays</p></li>
+<li><p><strong>mib_per_chunk</strong> (<em>custom_types.Integer</em><em> | </em><em>None</em>) – Memory limit per chunk in MiB for chunking strategy</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the created NetCDF file</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">num_chains</span></code> or <code class="docutils literal notranslate"><span class="pre">num_draws</span></code> have not been set
+by subclass</p>
+</dd>
+</dl>
+<section id="id1">
+<h4>Notes<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h4>
+<p>The conversion process follows these steps:</p>
+<ol class="arabic simple">
+<li><p><strong>Validation</strong>: Ensures required attributes are set by subclasses</p></li>
+<li><p><strong>Type analysis</strong>: Determines data types and dimensions for all variables</p></li>
+<li><p><strong>File structure</strong>: Creates NetCDF file with groups and dimensions</p></li>
+<li><p><strong>Variable creation</strong>: Sets up chunked variables with optimal storage</p></li>
+<li><p><strong>Data population</strong>: Streams and writes inference results to file</p></li>
+</ol>
+<p>The resulting NetCDF structure includes:</p>
+<ul class="simple">
+<li><p><strong>posterior</strong> group: Parameter samples organized by chain/draw</p></li>
+<li><p><strong>posterior_predictive</strong> group: Observable predictions</p></li>
+<li><p><strong>observed_data</strong> group: Original observed data</p></li>
+</ul>
+<dl class="simple">
+<dt>Chunking Strategy:</dt><dd><p>The first two dimensions (chain, draw) are kept intact in each chunk,
+while remaining dimensions are chunked based on memory constraints.
+This enables efficient operations over chains and draws.</p>
+</dd>
+</dl>
+</section>
+<section id="examples">
+<h4>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">converter</span> <span class="o">=</span> <span class="n">MyConverter</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">netcdf_path</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">write_netcdf</span><span class="p">(</span>
+    <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;results.nc&#39;</span><span class="p">,</span>
+    <span class="n">precision</span><span class="o">=</span><span class="s1">&#39;single&#39;</span><span class="p">,</span>
+    <span class="n">mib_per_chunk</span><span class="o">=</span><span class="mi">128</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.InferenceRes">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.base_classes.</span></span><span class="sig-name descname"><span class="pre">InferenceRes</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../model.html#scistanpy.model.model.Model" title="scistanpy.model.model.Model"><span class="pre">Model</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarType_co</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'double'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'single'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'half'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'single'</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">inference_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">InferenceData</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">mib_per_chunk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">use_dask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#InferenceRes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.InferenceRes" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for analyzing and visualizing SciStanPy inference results.</p>
+<p>Provides comprehensive tools for posterior predictive checking, model validation,
+calibration assessment, and interactive visualization of results from SciStanPy
+inference methods (HMC, MLE, etc.).</p>
+<p>This class wraps ArviZ InferenceData objects with specialized methods tailored
+for SciStanPy workflows, enabling seamless analysis and visualization of
+complex probabilistic models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>scistanpy.Model</em><em> | </em><em>None</em>) – SciStanPy model object used for inference, by default None</p></li>
+<li><p><strong>results</strong> (<em>Any</em><em> | </em><em>None</em>) – Raw inference results object, by default None</p></li>
+<li><p><strong>data</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>npt.NDArray</em><em>] </em><em>| </em><em>None</em>) – Observed data dictionary used for model fitting, by default None</p></li>
+<li><p><strong>precision</strong> (<em>Literal</em><em>[</em><em>'double'</em><em>, </em><em>'single'</em><em>, </em><em>'half'</em><em>]</em>) – Numerical precision for NetCDF storage. Default is ‘single’.</p></li>
+<li><p><strong>inference_obj</strong> (<em>az.InferenceData</em><em> | </em><em>str</em><em> | </em><em>None</em>) – Either an existing ArviZ InferenceData object or path
+to NetCDF file, by default None (build from results)</p></li>
+<li><p><strong>mib_per_chunk</strong> (<em>int</em><em> | </em><em>None</em>) – Memory limit per chunk in MiB for Dask processing, by
+default None</p></li>
+<li><p><strong>use_dask</strong> (<em>bool</em>) – Whether to enable Dask for memory-efficient computation</p></li>
+<li><p><strong>output_filename</strong> (<em>str</em><em> | </em><em>None</em>) – Filename for NetCDF output when building from results,
+by default None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>model</strong> – Reference to the SciStanPy model object</p></li>
+<li><p><strong>results</strong> – Stored raw inference results</p></li>
+<li><p><strong>use_dask</strong> – Whether Dask processing is enabled</p></li>
+<li><p><strong>inference_obj</strong> – ArviZ InferenceData object containing all results and analysis</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">RESULTS_TO_NETCDF_CONVERTER</span></code> is not set by subclass</p></li>
+<li><p><strong>ValueError</strong> – If inference_obj is neither string nor InferenceData object</p></li>
+<li><p><strong>ValueError</strong> – If required groups (posterior, posterior_predictive) are missing</p></li>
+</ul>
+</dd>
+</dl>
+<section id="id2">
+<h3>Notes<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<p>The class expects the InferenceData object to contain specific groups:</p>
+<ul class="simple">
+<li><p><strong>posterior</strong>: Parameter samples from fitted distributions</p></li>
+<li><p><strong>posterior_predictive</strong>: Observable samples for model checking</p></li>
+<li><p><strong>observed_data</strong>: Original observed data used for fitting</p></li>
+</ul>
+<p>Key capabilities provided:</p>
+<ul class="simple">
+<li><p><strong>Posterior predictive checking</strong>: Multiple visualization modes for model validation</p></li>
+<li><p><strong>Calibration assessment</strong>: Quantitative evaluation of prediction quality</p></li>
+<li><p><strong>Interactive dashboards</strong>: Widget-based exploration of results</p></li>
+<li><p><strong>Summary statistics</strong>: Efficient computation with optional Dask acceleration</p></li>
+<li><p><strong>Persistent storage</strong>: NetCDF serialization for reproducible analysis</p></li>
+</ul>
+<p>Subclasses must implement:</p>
+<ul class="simple">
+<li><p>Set <code class="docutils literal notranslate"><span class="pre">RESULTS_TO_NETCDF_CONVERTER</span></code> class attribute</p></li>
+<li><p>Override <code class="docutils literal notranslate"><span class="pre">_build_inference_obj</span></code> if custom conversion logic needed</p></li>
+</ul>
+</section>
+<section id="id3">
+<h3>Examples<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<p>Typical usage through method-specific subclasses:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ssp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Fit model using MLE</span>
+<span class="n">mle_result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mle</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">observed_data</span><span class="p">)</span>
+
+<span class="c1"># Create analysis object</span>
+<span class="n">analysis</span> <span class="o">=</span> <span class="n">mle_result</span><span class="o">.</span><span class="n">get_inference_obj</span><span class="p">()</span>
+
+<span class="c1"># Run comprehensive posterior predictive checking</span>
+<span class="n">dashboard</span> <span class="o">=</span> <span class="n">analysis</span><span class="o">.</span><span class="n">run_ppc</span><span class="p">()</span>
+
+<span class="c1"># Compute summary statistics</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">analysis</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">()</span>
+
+<span class="c1"># Save for later analysis</span>
+<span class="n">analysis</span><span class="o">.</span><span class="n">save_netcdf</span><span class="p">(</span><span class="s1">&#39;mle_analysis.nc&#39;</span><span class="p">)</span>
+
+<span class="c1"># Load saved analysis</span>
+<span class="n">loaded_analysis</span> <span class="o">=</span> <span class="n">MLEInferenceRes</span><span class="o">.</span><span class="n">from_disk</span><span class="p">(</span><span class="s1">&#39;mle_analysis.nc&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="see-also">
+<h3>See Also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h3>
+<p>scistanpy.model.results.hmc.SampleResults : HMC-specific implementation
+scistanpy.model.results.mle.MLEInferenceRes : MLE-specific implementation</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.InferenceRes.RESULTS_TO_NETCDF_CONVERTER">
+<span class="sig-name descname"><span class="pre">RESULTS_TO_NETCDF_CONVERTER</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#scistanpy.model.results.base_classes.SciStanPyToNetCDFConverter" title="scistanpy.model.results.base_classes.SciStanPyToNetCDFConverter"><span class="pre">SciStanPyToNetCDFConverter</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#scistanpy.model.results.base_classes.InferenceRes.RESULTS_TO_NETCDF_CONVERTER" title="Link to this definition">¶</a></dt>
+<dd><p>Converter class for writing results to NetCDF format.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.InferenceRes.calculate_summaries">
+<span class="sig-name descname"><span class="pre">calculate_summaries</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="n"><span class="pre">var_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">filter_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'like'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'regex'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'all'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'stats'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'diagnostics'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'stats'</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">round_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">circ_var_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">stat_focus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mean'</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">stat_funcs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">callable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">extend</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">hdi_prob</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">floating</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.94</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">skipna</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">diagnostic_varnames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">('mcse_mean',</span> <span class="pre">'mcse_sd',</span> <span class="pre">'ess_bulk',</span> <span class="pre">'ess_tail',</span> <span class="pre">'r_hat')</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#InferenceRes.calculate_summaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.InferenceRes.calculate_summaries" title="Link to this definition">¶</a></dt>
+<dd><p>Compute comprehensive summary statistics and diagnostics for inference results.</p>
+<p>Computes summary statistics and/or MCMC diagnostics with automatic caching
+to the InferenceData object for persistence and reuse. Supports both standard
+ArviZ computations and memory-efficient Dask processing for large datasets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>var_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Variable names to include in summary, by default None (all variables)</p></li>
+<li><p><strong>filter_vars</strong> (<em>{None</em><em>, </em><em>&quot;like&quot;</em><em>, </em><em>&quot;regex&quot;}</em><em>, </em><em>optional</em>) – Variable filtering method, by default None</p></li>
+<li><p><strong>kind</strong> (<em>{&quot;all&quot;</em><em>, </em><em>&quot;stats&quot;</em><em>, </em><em>&quot;diagnostics&quot;}</em><em>, </em><em>default &quot;stats&quot;</em>) – Type of statistics to compute</p></li>
+<li><p><strong>round_to</strong> (<em>int</em><em>, </em><em>default 2</em>) – Number of decimal places for rounding results</p></li>
+<li><p><strong>circ_var_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Names of circular variables for specialized handling, by default None</p></li>
+<li><p><strong>stat_focus</strong> (<em>str</em><em>, </em><em>default &quot;mean&quot;</em>) – Primary statistic for focus in ArviZ computations</p></li>
+<li><p><strong>stat_funcs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>callable</em><em>] or </em><em>callable</em><em>, </em><em>optional</em>) – Custom statistic functions, by default None</p></li>
+<li><p><strong>extend</strong> (<em>bool</em><em>, </em><em>default True</em>) – Whether to extend default functions with custom ones (when
+stat_funcs provided)</p></li>
+<li><p><strong>hdi_prob</strong> (<em>float</em><em>, </em><em>default 0.94</em>) – Probability for highest density interval computation</p></li>
+<li><p><strong>skipna</strong> (<em>bool</em><em>, </em><em>default False</em>) – Whether to skip NaN values in computations</p></li>
+<li><p><strong>diagnostic_varnames</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em><em>, </em><em>default</em><em> (</em><em>&quot;mcse_mean&quot;</em><em>, </em><em>&quot;mcse_sd&quot;</em><em>,
+</em><em>&quot;ess_bulk&quot;</em><em>, </em><em>&quot;ess_tail&quot;</em><em>, </em><em>&quot;r_hat&quot;</em><em>)</em>) – Names of diagnostic metrics for classification</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset containing requested statistics with ‘metric’ dimension</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If diagnostics requested without ‘chain’ dimension in posterior</p></li>
+<li><p><strong>ValueError</strong> – If diagnostics requested with single chain (&lt; 2 chains)</p></li>
+<li><p><strong>ValueError</strong> – If invalid <code class="docutils literal notranslate"><span class="pre">kind</span></code> parameter provided</p></li>
+</ul>
+</dd>
+</dl>
+<section id="id4">
+<h4>Notes<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h4>
+<p><strong>Automatic Caching</strong>: Computed results are automatically added to the
+InferenceData object:</p>
+<ul class="simple">
+<li><p>Summary statistics → <code class="docutils literal notranslate"><span class="pre">variable_summary_stats</span></code> group</p></li>
+<li><p>Diagnostics → <code class="docutils literal notranslate"><span class="pre">variable_diagnostic_stats</span></code> group</p></li>
+</ul>
+<p><strong>Processing Modes</strong>:</p>
+<ul class="simple">
+<li><p><strong>Standard mode</strong> (use_dask=False): Uses ArviZ’s <code class="docutils literal notranslate"><span class="pre">az.summary</span></code> function</p></li>
+<li><p><strong>Dask mode</strong> (use_dask=True): Uses optimized Dask implementations
+(<a class="reference internal" href="#scistanpy.model.results.base_classes.dask_enabled_summary_stats" title="scistanpy.model.results.base_classes.dask_enabled_summary_stats"><code class="xref py py-func docutils literal notranslate"><span class="pre">dask_enabled_summary_stats()</span></code></a>, <a class="reference internal" href="#scistanpy.model.results.base_classes.dask_enabled_diagnostics" title="scistanpy.model.results.base_classes.dask_enabled_diagnostics"><code class="xref py py-func docutils literal notranslate"><span class="pre">dask_enabled_diagnostics()</span></code></a>)</p></li>
+</ul>
+<p><strong>Diagnostic Requirements</strong>: MCMC diagnostics require:</p>
+<ul class="simple">
+<li><p>Multiple chains (≥ 2) for meaningful convergence assessment</p></li>
+<li><p>‘chain’ and ‘draw’ dimensions in posterior samples</p></li>
+</ul>
+<p>The Dask implementations provide significant performance improvements
+for large datasets by leveraging parallel computation and memory-efficient
+chunked processing.</p>
+</section>
+<section id="id5">
+<h4>Examples<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h4>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Compute basic summary statistics</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stats</span> <span class="o">=</span> <span class="n">analysis</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mean_values</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Compute comprehensive diagnostics for multi-chain results</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">diagnostics</span> <span class="o">=</span> <span class="n">analysis</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;diagnostics&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rhat_values</span> <span class="o">=</span> <span class="n">diagnostics</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;r_hat&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">converged</span> <span class="o">=</span> <span class="p">(</span><span class="n">rhat_values</span> <span class="o">&lt;</span> <span class="mf">1.01</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Compute everything with custom HDI probability</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">all_stats</span> <span class="o">=</span> <span class="n">analysis</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="n">hdi_prob</span><span class="o">=</span><span class="mf">0.89</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h4>See Also<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h4>
+<p>az.summary : Underlying ArviZ summary function (standard mode)</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.InferenceRes.check_calibration">
+<span class="sig-name descname"><span class="pre">check_calibration</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">return_deviance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">False</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">True</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Layout</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#InferenceRes.check_calibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.InferenceRes.check_calibration" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">check_calibration</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">return_deviance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">False</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">False</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Overlay</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">check_calibration</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">return_deviance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">True</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">False</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Overlay</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Assess model calibration through posterior predictive quantile analysis.</p>
+<p>This method evaluates how well the model’s posterior predictive distribution
+matches the observed data by analyzing the distribution of quantiles. Well-
+calibrated models should produce observed data that are uniformly distributed
+across the quantiles of the posterior predictive distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>return_deviance</strong> (<em>bool</em>) – Whether to return quantitative deviance metrics.
+Defaults to False.</p></li>
+<li><p><strong>display</strong> (<em>bool</em>) – Whether to return formatted layout for display. Defaults to True.</p></li>
+<li><p><strong>width</strong> (<em>custom_types.Integer</em>) – Width of individual plots in pixels. Defaults to 600.</p></li>
+<li><p><strong>height</strong> (<em>custom_types.Integer</em>) – Height of individual plots in pixels. Defaults to 600.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Calibration plots and optionally deviance metrics</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[hv.Layout, dict[str, hv.Overlay], tuple[dict[str, hv.Overlay],
+dict[str, float]]]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If both display and return_deviance are True</p>
+</dd>
+</dl>
+<p>Internally, this method is just a wrapper around
+<code class="xref py py-func docutils literal notranslate"><span class="pre">ssp.plotting.plot_calibration</span></code>.
+See that function for a detailed description of the calibration assessment
+method and returned plots.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Visual assessment</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cal_layout</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">check_calibration</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Quantitative assessment</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plots</span><span class="p">,</span> <span class="n">deviances</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">check_calibration</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">return_deviance</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean deviance: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">deviances</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.InferenceRes.from_disk">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_disk</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">use_dask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes" title="scistanpy.model.results.base_classes.InferenceRes"><span class="pre">InferenceRes</span></a></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#InferenceRes.from_disk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.InferenceRes.from_disk" title="Link to this definition">¶</a></dt>
+<dd><p>Load InferenceRes object from saved NetCDF file with full analysis capabilities.</p>
+<p>Reconstructs a complete analysis object from a previously saved NetCDF
+file, restoring all inference results, computed statistics, and enabling
+continued analysis from where previous sessions left off.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to NetCDF file containing saved ArviZ InferenceData</p></li>
+<li><p><strong>use_dask</strong> (<em>bool</em><em>, </em><em>default False</em>) – Whether to enable Dask for memory-efficient processing
+of loaded data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Reconstructed InferenceRes object with all methods available</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes" title="scistanpy.model.results.base_classes.InferenceRes">InferenceRes</a></p>
+</dd>
+</dl>
+<section id="id7">
+<h4>Notes<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h4>
+<p>The loaded object provides complete functionality:</p>
+<ul class="simple">
+<li><p>All original inference results (posterior, posterior_predictive, etc.)</p></li>
+<li><p>Previously computed summary statistics and diagnostics (if any)</p></li>
+<li><p>Full visualization and analysis capabilities</p></li>
+<li><p>Ability to compute additional statistics or save updates</p></li>
+</ul>
+<p>When <code class="docutils literal notranslate"><span class="pre">use_dask=True</span></code>, the loaded data is configured for chunked
+processing, enabling analysis of large datasets that exceed memory
+capacity.</p>
+<p>This method is particularly useful for:</p>
+<ul class="simple">
+<li><p>Resuming interrupted analysis workflows</p></li>
+<li><p>Sharing analysis results between collaborators</p></li>
+<li><p>Creating reproducible analysis pipelines</p></li>
+<li><p>Separating computation from visualization/reporting</p></li>
+</ul>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.InferenceRes.plot_observed_quantiles">
+<span class="sig-name descname"><span class="pre">plot_observed_quantiles</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">use_ranks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">True</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">windowsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Layout</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#InferenceRes.plot_observed_quantiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.InferenceRes.plot_observed_quantiles" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">plot_observed_quantiles</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">use_ranks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">False</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">windowsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Overlay</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Visualize systematic patterns in observed data quantiles.</p>
+<p>This method creates hexagonal density plots showing the relationship between
+observed data values (or their ranks) and their corresponding quantiles
+within the posterior predictive distribution. A rolling mean overlay
+highlights systematic trends.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_ranks</strong> (<em>bool</em>) – Whether to use ranks instead of raw values for x-axis. Defaults to True.</p></li>
+<li><p><strong>display</strong> (<em>bool</em>) – Whether to return formatted layout for display. Defaults to True.</p></li>
+<li><p><strong>width</strong> (<em>custom_types.Integer</em>) – Width of individual plots in pixels. Defaults to 600.</p></li>
+<li><p><strong>height</strong> (<em>custom_types.Integer</em>) – Height of individual plots in pixels. Defaults to 400.</p></li>
+<li><p><strong>windowsize</strong> (<em>Optional</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Size of rolling window for trend line. Defaults to None (automatic).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Quantile plots in requested format</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[hv.Layout, dict[str, hv.Overlay]]</p>
+</dd>
+</dl>
+<p>Visualization Components:</p>
+<ul class="simple">
+<li><p>Hexagonal binning showing density of (value, quantile) pairs</p></li>
+<li><p>Rolling mean trend line highlighting systematic patterns</p></li>
+<li><p>Colormap indicating point density for pattern identification</p></li>
+</ul>
+<p>Pattern Interpretation:</p>
+<ul class="simple">
+<li><p>Horizontal trend line around 0.5 with uniformly distributed points indicates
+good calibration</p></li>
+<li><p>Systematic deviations suggest model bias or miscalibration</p></li>
+</ul>
+<p>The hexagonal binning is particularly effective for visualizing large
+datasets where individual points would create overplotting issues.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Standard quantile analysis</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">quant_layout</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">plot_observed_quantiles</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Custom window size for trend analysis</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">quant_plots</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">plot_observed_quantiles</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">windowsize</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">use_ranks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.InferenceRes.plot_posterior_predictive_samples">
+<span class="sig-name descname"><span class="pre">plot_posterior_predictive_samples</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">use_ranks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">logy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">True</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Layout</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#InferenceRes.plot_posterior_predictive_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.InferenceRes.plot_posterior_predictive_samples" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">plot_posterior_predictive_samples</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">use_ranks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">logy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">False</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Overlay</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Visualize observed data against posterior predictive uncertainty intervals.</p>
+<p>This method creates plots showing how observed data relates to the uncertainty
+quantified by posterior predictive samples. The posterior predictive samples
+are displayed as confidence intervals, with observed data overlaid as points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>quantiles</strong> (<em>Sequence</em><em>[</em><em>custom_types.Float</em><em>]</em>) – Quantiles defining confidence intervals. Defaults to
+(0.025, 0.25, 0.5). Note: quantiles are automatically symmetrized and
+median is always included.</p></li>
+<li><p><strong>use_ranks</strong> (<em>bool</em>) – Whether to use ranks instead of raw values for x-axis.
+Defaults to True.</p></li>
+<li><p><strong>logy</strong> (<em>bool</em>) – Whether to use logarithmic y-axis scaling. Defaults to False.</p></li>
+<li><p><strong>display</strong> (<em>bool</em>) – Whether to return formatted layout for display. Defaults to True.</p></li>
+<li><p><strong>width</strong> (<em>custom_types.Integer</em>) – Width of individual plots in pixels. Defaults to 600.</p></li>
+<li><p><strong>height</strong> (<em>custom_types.Integer</em>) – Height of individual plots in pixels. Defaults to 400.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Posterior predictive plots in requested format</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[hv.Layout, dict[str, hv.Overlay]]</p>
+</dd>
+</dl>
+<p>Visualization Features:</p>
+<ul class="simple">
+<li><p>Confidence intervals shown as nested colored regions</p></li>
+<li><p>Observed data displayed as scatter points</p></li>
+<li><p>Optional rank transformation for better visualization of skewed data</p></li>
+<li><p>Logarithmic scaling with automatic shifting for non-positive values</p></li>
+<li><p>Interactive hover labels showing data point identifiers</p></li>
+</ul>
+<p>The rank transformation is particularly useful when observed values have
+highly skewed distributions, as it emphasizes the ordering rather than
+the absolute magnitudes.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Standard posterior predictive plot</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pp_layout</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">plot_posterior_predictive_samples</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Custom quantiles with logarithmic scaling</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pp_plots</span> <span class="o">=</span> <span class="n">mle_analysis</span><span class="o">.</span><span class="n">plot_posterior_predictive_samples</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">quantiles</span><span class="o">=</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span> <span class="n">logy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.InferenceRes.run_ppc">
+<span class="sig-name descname"><span class="pre">run_ppc</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">use_ranks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">True</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">square_ecdf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">windowsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">logy_ppc_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">subplot_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">subplot_height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Column</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#InferenceRes.run_ppc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.InferenceRes.run_ppc" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">run_ppc</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">use_ranks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">False</span></span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">square_ecdf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">windowsize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">floating</span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">logy_ppc_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">subplot_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">subplot_height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">integer</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Overlay</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Execute comprehensive posterior predictive checking analysis.</p>
+<p>This method provides a complete posterior predictive checking workflow by
+combining multiple diagnostic approaches into a unified analysis. It runs
+the methods
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_posterior_predictive_samples()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_observed_quantiles()</span></code>,
+and <code class="xref py py-meth docutils literal notranslate"><span class="pre">check_calibration()</span></code>,
+combining their outputs into either an interactive dashboard or a list of
+individual plot dictionaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_ranks</strong> (<em>bool</em>) – Whether to use ranks instead of raw values for x-axes.
+Defaults to True.</p></li>
+<li><p><strong>display</strong> (<em>bool</em>) – Whether to return interactive dashboard layout. Defaults to True.</p></li>
+<li><p><strong>square_ecdf</strong> (<em>bool</em>) – Whether to make ECDF plots square (width=height). Defaults
+to True.</p></li>
+<li><p><strong>windowsize</strong> (<em>Optional</em><em>[</em><em>custom_types.Integer</em><em>]</em>) – Size of rolling window for trend analysis. Defaults to
+None (automatic).</p></li>
+<li><p><strong>quantiles</strong> (<em>Sequence</em><em>[</em><em>custom_types.Float</em><em>]</em>) – Quantiles for confidence intervals. Defaults to (0.025,
+0.25, 0.5).</p></li>
+<li><p><strong>logy_ppc_samples</strong> (<em>bool</em>) – Whether to use log scale for posterior predictive
+plots. Defaults to False.</p></li>
+<li><p><strong>subplot_width</strong> (<em>custom_types.Integer</em>) – Width of individual subplots in pixels. Defaults to 600.</p></li>
+<li><p><strong>subplot_height</strong> (<em>custom_types.Integer</em>) – Height of individual subplots in pixels. Defaults to 400.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Interactive dashboard or list of plot dictionaries</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[pn.Column, list[dict[str, hv.Overlay]]]</p>
+</dd>
+</dl>
+<p>Dashboard Features:</p>
+<ul class="simple">
+<li><p>Interactive variable selection across all diagnostic types</p></li>
+<li><p>Consistent formatting and scaling across related plots</p></li>
+<li><p>Automatic layout optimization for comparison and analysis</p></li>
+<li><p>Widget-based navigation for multi-variable models</p></li>
+</ul>
+<p>Between the three plots generated, this method provides a holistic view of
+model performance in terms of:</p>
+<ul class="simple">
+<li><p><strong>Predictive accuracy</strong>: How well do predictions match observations?</p></li>
+<li><p><strong>Calibration quality</strong>: Are prediction intervals properly calibrated?</p></li>
+<li><p><strong>Systematic bias</strong>: Are there patterns indicating model inadequacy?</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.InferenceRes.save_netcdf">
+<span class="sig-name descname"><span class="pre">save_netcdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#InferenceRes.save_netcdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.InferenceRes.save_netcdf" title="Link to this definition">¶</a></dt>
+<dd><p>Save the ArviZ InferenceData object to NetCDF format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>str</em>) – Path where to save the NetCDF file</p>
+</dd>
+</dl>
+<p>This method provides persistent storage of analysis results.</p>
+<dl>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mle_analysis</span><span class="o">.</span><span class="n">save_netcdf</span><span class="p">(</span><span class="s1">&#39;my_mle_results.nc&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Later: reload with MLEInferenceRes(&#39;my_mle_results.nc&#39;)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+<section id="supporting-functions">
+<h2>Supporting Functions<a class="headerlink" href="#supporting-functions" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.dask_enabled_summary_stats">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.base_classes.</span></span><span class="sig-name descname"><span class="pre">dask_enabled_summary_stats</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="n"><span class="pre">inference_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">InferenceData</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#dask_enabled_summary_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.dask_enabled_summary_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Compute summary statistics using Dask for memory-efficient processing.</p>
+<p>Computes essential summary statistics for posterior samples using Dask’s
+lazy evaluation and chunked processing, enabling analysis of large datasets
+that exceed available memory.</p>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>inference_obj<span class="classifier">az.InferenceData</span></dt><dd><p>ArviZ InferenceData object containing posterior samples with ‘chain’
+and ‘draw’ dimensions</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>xr.Dataset</dt><dd><p>Dataset with ‘metric’ dimension containing computed statistics:</p>
+<ul class="simple">
+<li><p>‘mean’: Mean across chains and draws</p></li>
+<li><p>‘sd’: Standard deviation across chains and draws</p></li>
+<li><p>‘hdi_3%’, ‘hdi_97%’: 94% highest density interval bounds</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="id8">
+<h3>Notes<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<p>This function is used internally by <a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes.calculate_summaries" title="scistanpy.model.results.base_classes.InferenceRes.calculate_summaries"><code class="xref py py-meth docutils literal notranslate"><span class="pre">InferenceRes.calculate_summaries()</span></code></a>
+when Dask processing is enabled. It provides memory-efficient computation
+through:</p>
+<ul class="simple">
+<li><p><strong>Lazy evaluation</strong>: Computations are queued and optimized before execution</p></li>
+<li><p><strong>Chunked processing</strong>: Large arrays processed in manageable chunks</p></li>
+<li><p><strong>Parallel execution</strong>: Multiple statistics computed simultaneously</p></li>
+<li><p><strong>Memory optimization</strong>: Intermediate results released automatically</p></li>
+</ul>
+<p>The computed statistics collapse the ‘chain’ and ‘draw’ dimensions, producing
+summary values for each parameter across all samples.</p>
+</section>
+<section id="id9">
+<h3>Examples<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Direct usage (typically called internally)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stats</span> <span class="o">=</span> <span class="n">dask_enabled_summary_stats</span><span class="p">(</span><span class="n">inference_data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mean_values</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hdi_lower</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;hdi_3%&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hdi_upper</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;hdi_97%&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id10">
+<h3>See Also<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
+<p>dask_enabled_diagnostics : Compute MCMC diagnostics with Dask
+InferenceRes.calculate_summaries : High-level interface for summary statistics</p>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scistanpy.model.results.base_classes.dask_enabled_diagnostics">
+<span class="sig-prename descclassname"><span class="pre">scistanpy.model.results.base_classes.</span></span><span class="sig-name descname"><span class="pre">dask_enabled_diagnostics</span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><em class="sig-param"><span class="n"><span class="pre">inference_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">InferenceData</span></span></em>,</dd>
+</dl>
+
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="../../../_modules/scistanpy/model/results/base_classes.html#dask_enabled_diagnostics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.results.base_classes.dask_enabled_diagnostics" title="Link to this definition">¶</a></dt>
+<dd><p>Compute comprehensive MCMC diagnostics using Dask for memory efficiency.</p>
+<p>Computes a full suite of MCMC convergence and efficiency diagnostics using
+Dask’s parallel processing capabilities, enabling analysis of large multi-chain
+datasets that exceed available memory.</p>
+<section id="id11">
+<h3>Parameters<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>inference_obj<span class="classifier">az.InferenceData</span></dt><dd><p>ArviZ InferenceData object containing posterior samples with ‘chain’
+and ‘draw’ dimensions from multi-chain MCMC sampling</p>
+</dd>
+</dl>
+</section>
+<section id="id12">
+<h3>Returns<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>xr.Dataset</dt><dd><p>Dataset with ‘metric’ dimension containing diagnostic statistics:</p>
+<ul class="simple">
+<li><p>‘mcse_mean’: Monte Carlo standard error for mean estimates</p></li>
+<li><p>‘mcse_sd’: Monte Carlo standard error for standard deviation estimates</p></li>
+<li><p>‘ess_bulk’: Bulk effective sample size</p></li>
+<li><p>‘ess_tail’: Tail effective sample size</p></li>
+<li><p>‘r_hat’: R-hat convergence diagnostic</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="id13">
+<h3>Notes<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
+<p>This function is used internally by <a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes.calculate_summaries" title="scistanpy.model.results.base_classes.InferenceRes.calculate_summaries"><code class="xref py py-meth docutils literal notranslate"><span class="pre">InferenceRes.calculate_summaries()</span></code></a>
+when Dask processing is enabled and multiple chains are available. It provides
+memory-efficient computation of diagnostics through:</p>
+<ul class="simple">
+<li><p><strong>Parallel execution</strong>: All diagnostics computed simultaneously</p></li>
+<li><p><strong>Chunked processing</strong>: Large arrays handled in memory-efficient chunks</p></li>
+<li><p><strong>Automatic optimization</strong>: Dask optimizes computation graph for efficiency</p></li>
+<li><p><strong>Load balancing</strong>: Work distributed across available CPU cores</p></li>
+</ul>
+<p>Diagnostic Interpretation:</p>
+<ul class="simple">
+<li><p><strong>MCSE</strong>: Quantifies uncertainty in Monte Carlo estimates</p></li>
+<li><p><strong>ESS</strong>: Measures effective independent samples (should be &gt;&gt; 100)</p></li>
+<li><p><strong>R-hat</strong>: Convergence indicator (should be &lt; 1.01 for good convergence)</p></li>
+</ul>
+</section>
+<section id="id14">
+<h3>Examples<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Direct usage (typically called internally)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">diagnostics</span> <span class="o">=</span> <span class="n">dask_enabled_diagnostics</span><span class="p">(</span><span class="n">inference_data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rhat_values</span> <span class="o">=</span> <span class="n">diagnostics</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;r_hat&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ess_bulk</span> <span class="o">=</span> <span class="n">diagnostics</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;ess_bulk&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Check convergence</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">converged</span> <span class="o">=</span> <span class="p">(</span><span class="n">rhat_values</span> <span class="o">&lt;</span> <span class="mf">1.01</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="id15">
+<h3>See Also<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h3>
+<p>dask_enabled_summary_stats : Compute summary statistics with Dask
+InferenceRes.calculate_summaries : High-level interface for diagnostics</p>
+</section>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">SciStanPy</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">SciStanPy API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../custom_types.html">Custom Types API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../defaults.html">Defaults API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../exceptions.html">Exceptions API Reference</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Model SubPackage API Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../components/index.html">Model Components API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../model.html">Model API Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../nn_module.html">Neural Network Module API Reference</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">Model Results API Reference</a><ul class="current">
+<li class="toctree-l5 current"><a class="current reference internal" href="#">Base Classes API Reference</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#core-base-classes">Core Base Classes</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.base_classes.SciStanPyToNetCDFConverter"><code class="docutils literal notranslate"><span class="pre">SciStanPyToNetCDFConverter</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.base_classes.SciStanPyToNetCDFConverter.write_netcdf"><code class="docutils literal notranslate"><span class="pre">SciStanPyToNetCDFConverter.write_netcdf()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes"><code class="docutils literal notranslate"><span class="pre">InferenceRes</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes.RESULTS_TO_NETCDF_CONVERTER"><code class="docutils literal notranslate"><span class="pre">InferenceRes.RESULTS_TO_NETCDF_CONVERTER</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes.calculate_summaries"><code class="docutils literal notranslate"><span class="pre">InferenceRes.calculate_summaries()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes.check_calibration"><code class="docutils literal notranslate"><span class="pre">InferenceRes.check_calibration()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes.from_disk"><code class="docutils literal notranslate"><span class="pre">InferenceRes.from_disk()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes.plot_observed_quantiles"><code class="docutils literal notranslate"><span class="pre">InferenceRes.plot_observed_quantiles()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes.plot_posterior_predictive_samples"><code class="docutils literal notranslate"><span class="pre">InferenceRes.plot_posterior_predictive_samples()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes.run_ppc"><code class="docutils literal notranslate"><span class="pre">InferenceRes.run_ppc()</span></code></a></li>
+<li class="toctree-l8"><a class="reference internal" href="#scistanpy.model.results.base_classes.InferenceRes.save_netcdf"><code class="docutils literal notranslate"><span class="pre">InferenceRes.save_netcdf()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="#supporting-functions">Supporting Functions</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.base_classes.dask_enabled_summary_stats"><code class="docutils literal notranslate"><span class="pre">dask_enabled_summary_stats()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="#scistanpy.model.results.base_classes.dask_enabled_diagnostics"><code class="docutils literal notranslate"><span class="pre">dask_enabled_diagnostics()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="mle.html">Maximum Likelihood Estimation Results API Reference</a></li>
+<li class="toctree-l5"><a class="reference internal" href="hmc.html">Hamiltonian Monte Carlo Results API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../stan/index.html">Stan Submodule API Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../plotting/index.html">Plotting Subpackage API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../operations.html">Operations API Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils API Reference</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">SciStanPy API Reference</a><ul>
+  <li><a href="../index.html">Model SubPackage API Reference</a><ul>
+  <li><a href="index.html">Model Results API Reference</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Model Results API Reference</a></li>
+      <li>Next: <a href="mle.html" title="next chapter">Maximum Likelihood Estimation Results API Reference</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Microsoft Corporation.
+
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+
+      |
+      <a href="../../../_sources/api/model/results/base_classes.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+
+
+
+  </body>
+</html>

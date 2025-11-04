@@ -53,15 +53,12 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">special</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">special</span><span class="p">,</span> <span class="n">stats</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
@@ -879,6 +876,12 @@
 <span class="n">expexponential</span> <span class="o">=</span> <span class="n">LogUnivariateScipyTransform</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">expon</span><span class="p">)</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">``scipy.stats.expon`` transformed to the log scale using</span>
+<span class="sd">:py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">expgamma</span> <span class="o">=</span> <span class="n">LogUnivariateScipyTransform</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">``scipy.stats.gamma`` transformed to the log scale using</span>
 <span class="sd">:py:class:`~scistanpy.model.components.custom_distributions.custom_scipy_dists.LogUnivariateScipyTransform`.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 

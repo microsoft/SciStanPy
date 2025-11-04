@@ -35,6 +35,8 @@ import scistanpy
 from scistanpy import custom_types, plotting, utils
 from scistanpy.model.components.transformations import transformed_parameters
 
+# pylint: disable=too-many-lines
+
 
 class SciStanPyToNetCDFConverter(ABC):
     """Abstract base class for converting SciStanPy inference results to NetCDF format.
@@ -135,7 +137,8 @@ class SciStanPyToNetCDFConverter(ABC):
             element maps variable names to NumPy data types, while the second maps
             variable names to dimension specifications as tuples of (dimension_name,
             dimension_size) pairs.
-        :rtype: tuple[dict[str, Union[type[np.floating], type[np.integer]]], dict[str, tuple[tuple[str, int], ...]]]
+        :rtype: tuple[dict[str, Union[type[np.floating], type[np.integer]]],
+            dict[str, tuple[tuple[str, int], ...]]]
 
         Notes
         -----
@@ -940,14 +943,16 @@ class InferenceRes(ABC):
         :type stat_focus: str, default "mean"
         :param stat_funcs: Custom statistic functions, by default None
         :type stat_funcs: dict[str, callable] or callable, optional
-        :param extend: Whether to extend default functions with custom ones (when stat_funcs provided)
+        :param extend: Whether to extend default functions with custom ones (when
+            stat_funcs provided)
         :type extend: bool, default True
         :param hdi_prob: Probability for highest density interval computation
         :type hdi_prob: float, default 0.94
         :param skipna: Whether to skip NaN values in computations
         :type skipna: bool, default False
         :param diagnostic_varnames: Names of diagnostic metrics for classification
-        :type diagnostic_varnames: Sequence[str], default ("mcse_mean", "mcse_sd", "ess_bulk", "ess_tail", "r_hat")
+        :type diagnostic_varnames: Sequence[str], default ("mcse_mean", "mcse_sd",
+            "ess_bulk", "ess_tail", "r_hat")
 
         :returns: Dataset containing requested statistics with 'metric' dimension
         :rtype: xr.Dataset

@@ -8,5 +8,6 @@ This module is further broken down into the following submodules, each holding r
 .. toctree::
    :maxdepth: 1
 
+   base_classes
    mle
    hmc

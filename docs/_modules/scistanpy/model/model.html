@@ -51,6 +51,8 @@
 <span class="sd">including Stan for Hamiltonai Monte Carlo sampling and PyTorch for maximum likelihood</span>
 <span class="sd">estimation.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># TODO: Revert to best parameters once early stopping is triggered in MLE</span>
+<span class="c1"># TODO: Save batches of posterior samples to disk during MLE to reduce memory usage</span>
 
 <span class="c1"># pylint: disable=too-many-lines</span>
 
@@ -58,8 +60,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">overload</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
@@ -67,7 +68,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEFAULT_CPP_OPTIONS</span><span class="p">,</span>
     <span class="n">DEFAULT_DIM_NAMES</span><span class="p">,</span>
@@ -79,24 +80,19 @@
     <span class="n">DEFAULT_STANC_OPTIONS</span><span class="p">,</span>
     <span class="n">DEFAULT_USER_HEADER</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn_module</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstract_model_component</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">constants</span> <span class="k">as</span> <span class="n">constants_module</span><span class="p">,</span>
-    <span class="n">parameters</span> <span class="k">as</span> <span class="n">parameters_module</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.transformations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">transformed_data</span><span class="p">,</span>
-    <span class="n">transformed_parameters</span> <span class="k">as</span> <span class="n">transformed_parameters_module</span><span class="p">,</span>
+    <span class="n">transformed_parameters</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.results</span><span class="w"> </span><span class="kn">import</span> <span class="n">mle</span> <span class="k">as</span> <span class="n">mle_module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.stan</span><span class="w"> </span><span class="kn">import</span> <span class="n">stan_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">prior_predictive</span> <span class="k">as</span> <span class="n">prior_predictive_module</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.results</span><span class="w"> </span><span class="kn">import</span> <span class="n">hmc</span> <span class="k">as</span> <span class="n">hmc_results</span>
-
-<span class="n">mle_module</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;scistanpy.model.results.mle&quot;</span><span class="p">)</span>
-<span class="n">nn_module</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;scistanpy.model.nn_module&quot;</span><span class="p">)</span>
-<span class="n">prior_predictive_module</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;scistanpy.plotting.prior_predictive&quot;</span><span class="p">)</span>
-<span class="n">stan_model</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;scistanpy.model.stan.stan_model&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">model_comps_to_dict</span><span class="p">(</span>
@@ -122,6 +118,8 @@
     <span class="k">return</span> <span class="p">{</span><span class="n">comp</span><span class="o">.</span><span class="n">model_varname</span><span class="p">:</span> <span class="n">comp</span> <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">model_comps</span><span class="p">}</span>
 
 
+<div class="viewcode-block" id="run_delayed_mcmc">
+<a class="viewcode-back" href="../../../api/model/model.html#scistanpy.model.model.run_delayed_mcmc">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_delayed_mcmc</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;hmc_results.SampleResults&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a delayed MCMC run from a pickled configuration file.</span>
 
@@ -157,7 +155,8 @@
         <span class="n">inits</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;inits&quot;</span><span class="p">],</span>
         <span class="n">data</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">],</span>
         <span class="o">**</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;sample_kwargs&quot;</span><span class="p">],</span>
-    <span class="p">)</span>
+    <span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="Model">
@@ -382,7 +381,7 @@
                 <span class="n">model_varname_to_object</span><span class="p">[</span><span class="n">observable</span><span class="o">.</span><span class="n">model_varname</span><span class="p">]</span> <span class="o">=</span> <span class="n">observable</span>
 
                 <span class="c1"># Add all parents to the mapping and make sure</span>
-                <span class="c1"># `parameters_module.Parameter` instances are explicitly defined.</span>
+                <span class="c1"># `scistanpy.parameters.Parameter` instances are explicitly defined.</span>
                 <span class="k">for</span> <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">observable</span><span class="o">.</span><span class="n">walk_tree</span><span class="p">(</span><span class="n">walk_down</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
                     <span class="c1"># If the parent is already in the mapping, make sure it is the</span>
@@ -396,7 +395,6 @@
 
         <span class="k">def</span><span class="w"> </span><span class="nf">record_transformed_data</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Updates the mapping with all transformed data components.&quot;&quot;&quot;</span>
-
             <span class="c1"># Add all TransformedData instances to the mapping</span>
             <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">model_varname_to_object</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
                 <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">component</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>  <span class="c1"># pylint: disable=protected-access</span>
@@ -551,7 +549,7 @@
             <span class="o">*</span><span class="p">[</span>
                 <span class="p">[</span><span class="n">comp</span><span class="p">,</span> <span class="n">draw</span><span class="p">]</span>
                 <span class="k">for</span> <span class="n">comp</span><span class="p">,</span> <span class="n">draw</span> <span class="ow">in</span> <span class="n">draws</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="n">constants_module</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
         <span class="n">coordinates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
@@ -560,7 +558,7 @@
                     <span class="p">[</span><span class="n">parent</span><span class="p">,</span> <span class="n">parent</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
                     <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_model_components</span>
                     <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">component</span><span class="o">.</span><span class="n">parents</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">constants_module</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
                     <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
                 <span class="p">]</span>
             <span class="p">)</span>
@@ -744,7 +742,9 @@
 <span class="sd">            epoch as the model must be evaluated over all observable data to calculate</span>
 <span class="sd">            loss. Defaults to 100000.</span>
 <span class="sd">        :type epochs: custom_types.Integer</span>
-<span class="sd">        :param early_stop: Epochs without improvement before stopping. Defaults to 10.</span>
+<span class="sd">        :param early_stop: Epochs without improvement before stopping. If early</span>
+<span class="sd">            stopping is triggered, the model parameters are reverted to the best</span>
+<span class="sd">            observed state. Defaults to 10.</span>
 <span class="sd">        :type early_stop: custom_types.Integer</span>
 <span class="sd">        :param lr: Learning rate for optimization. Defaults to 0.001.</span>
 <span class="sd">        :type lr: custom_types.Float</span>
@@ -1151,7 +1151,7 @@
             <span class="s2">&quot;Constants&quot;</span><span class="p">:</span> <span class="p">[</span>
                 <span class="n">el</span>
                 <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_model_components</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">constants_module</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
             <span class="p">],</span>
             <span class="s2">&quot;Transformed Parameters&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformed_parameters</span><span class="p">,</span>
             <span class="s2">&quot;Parameters&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
@@ -1354,29 +1354,29 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_varname_to_object</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">parameters_module</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">scistanpy</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all non-observable parameters in the model.</span>
 
 <span class="sd">        :returns: Tuple of parameter components that are not observables</span>
-<span class="sd">        :rtype: tuple[parameters_module.Parameter, ...]</span>
+<span class="sd">        :rtype: tuple[scistanpy.parameters.Parameter, ...]</span>
 
 <span class="sd">        These are the latent variables and hyperparameters that will be</span>
 <span class="sd">        inferred during MCMC sampling or optimized during MLE fitting.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
             <span class="nb">filter</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">parameters_module</span><span class="o">.</span><span class="n">Parameter</span><span class="p">)</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">observable</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">all_model_components</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">parameter_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">parameters_module</span><span class="o">.</span><span class="n">Parameter</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parameter_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get non-observable parameters as a dictionary.</span>
 
 <span class="sd">        :returns: Dictionary mapping names to non-observable parameters</span>
-<span class="sd">        :rtype: dict[str, parameters_module.Parameter]</span>
+<span class="sd">        :rtype: dict[str, scistanpy.parameters.Parameter]</span>
 
 <span class="sd">        Provides convenient named access to the model&#39;s latent parameters</span>
 <span class="sd">        for inspection and programmatic manipulation.</span>
@@ -1384,11 +1384,11 @@
         <span class="k">return</span> <span class="n">model_comps_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">hyperparameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">parameters_module</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hyperparameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">scistanpy</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get hyperparameters (parameters with only constant parents).</span>
 
 <span class="sd">        :returns: Tuple of parameters that depend only on constants</span>
-<span class="sd">        :rtype: tuple[parameters_module.Parameter, ...]</span>
+<span class="sd">        :rtype: tuple[scistanpy.parameters.Parameter, ...]</span>
 
 <span class="sd">        Hyperparameters are the highest-level parameters in the model</span>
 <span class="sd">        hierarchy, typically representing prior distribution parameters</span>
@@ -1397,11 +1397,11 @@
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">is_hyperparameter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">hyperparameter_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">parameters_module</span><span class="o">.</span><span class="n">Parameter</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hyperparameter_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get hyperparameters as a dictionary.</span>
 
 <span class="sd">        :returns: Dictionary mapping names to hyperparameters</span>
-<span class="sd">        :rtype: dict[str, parameters_module.Parameter]</span>
+<span class="sd">        :rtype: dict[str, scistanpy.parameters.Parameter]</span>
 
 <span class="sd">        Provides convenient access to the model&#39;s hyperparameters by name</span>
 <span class="sd">        for prior specification and sensitivity analysis.</span>
@@ -1411,11 +1411,11 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transformed_parameters</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">transformed_parameters_module</span><span class="o">.</span><span class="n">TransformedParameter</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">transformed_parameters</span><span class="o">.</span><span class="n">TransformedParameter</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all named transformed parameters in the model.</span>
 
 <span class="sd">        :returns: Tuple of transformed parameter components</span>
-<span class="sd">        :rtype: tuple[transformed_parameters_module.TransformedParameter, ...]</span>
+<span class="sd">        :rtype: tuple[transformed_parameters.parameters.TransformedParameter, ...]</span>
 
 <span class="sd">        Transformed parameters are deterministic functions of other model</span>
 <span class="sd">        components, representing computed quantities like sums, products,</span>
@@ -1423,9 +1423,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
             <span class="nb">filter</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span>
-                    <span class="n">x</span><span class="p">,</span> <span class="n">transformed_parameters_module</span><span class="o">.</span><span class="n">TransformedParameter</span>
-                <span class="p">),</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">transformed_parameters</span><span class="o">.</span><span class="n">TransformedParameter</span><span class="p">),</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">named_model_components</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -1433,11 +1431,11 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transformed_parameter_dict</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">transformed_parameters_module</span><span class="o">.</span><span class="n">TransformedParameter</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">transformed_parameters</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">TransformedParameter</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get named transformed parameters as a dictionary.</span>
 
 <span class="sd">        :returns: Dictionary mapping names to transformed parameters</span>
-<span class="sd">        :rtype: dict[str, transformed_parameters_module.TransformedParameter]</span>
+<span class="sd">        :rtype: dict[str, transformed_parameters.parameters.TransformedParameter]</span>
 
 <span class="sd">        Enables convenient access to transformed parameters for model</span>
 <span class="sd">        inspection and derived quantity analysis.</span>
@@ -1445,28 +1443,28 @@
         <span class="k">return</span> <span class="n">model_comps_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transformed_parameters</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">constants</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">constants_module</span><span class="o">.</span><span class="n">Constant</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constants</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">scistanpy</span><span class="o">.</span><span class="n">Constant</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all named constants in the model.</span>
 
 <span class="sd">        :returns: Tuple of constant components</span>
-<span class="sd">        :rtype: tuple[constants_module.Constant, ...]</span>
+<span class="sd">        :rtype: tuple[scistanpy.Constant, ...]</span>
 
 <span class="sd">        Constants represent fixed values and hyperparameter specifications</span>
 <span class="sd">        that do not change during inference or optimization procedures.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
             <span class="nb">filter</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">constants_module</span><span class="o">.</span><span class="n">Constant</span><span class="p">),</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">Constant</span><span class="p">),</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">named_model_components</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">constant_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">constants_module</span><span class="o">.</span><span class="n">Constant</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constant_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">Constant</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get named constants as a dictionary.</span>
 
 <span class="sd">        :returns: Dictionary mapping names to constant components</span>
-<span class="sd">        :rtype: dict[str, constants_module.Constant]</span>
+<span class="sd">        :rtype: dict[str, scistanpy.Constant]</span>
 
 <span class="sd">        Provides convenient access to model constants for hyperparameter</span>
 <span class="sd">        inspection and sensitivity analysis workflows.</span>
@@ -1474,11 +1472,11 @@
         <span class="k">return</span> <span class="n">model_comps_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constants</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">observables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">parameters_module</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">observables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">scistanpy</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all observable parameters in the model (observables are always named).</span>
 
 <span class="sd">        :returns: Tuple of parameters marked as observable</span>
-<span class="sd">        :rtype: tuple[parameters_module.Parameter, ...]</span>
+<span class="sd">        :rtype: tuple[scistanpy.parameters.Parameter, ...]</span>
 
 <span class="sd">        Observable parameters represent the data-generating components</span>
 <span class="sd">        of the model - the variables for which observed data will be</span>
@@ -1486,17 +1484,18 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
             <span class="nb">filter</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">parameters_module</span><span class="o">.</span><span class="n">Parameter</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">observable</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">observable</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">named_model_components</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">observable_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">parameters_module</span><span class="o">.</span><span class="n">Parameter</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">observable_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get observable parameters as a dictionary.</span>
 
 <span class="sd">        :returns: Dictionary mapping names to observable parameters</span>
-<span class="sd">        :rtype: dict[str, parameters_module.Parameter]</span>
+<span class="sd">        :rtype: dict[str, scistanpy.parameters.Parameter]</span>
 
 <span class="sd">        Enables convenient access to observable parameters for data</span>
 <span class="sd">        specification and model validation workflows.</span>

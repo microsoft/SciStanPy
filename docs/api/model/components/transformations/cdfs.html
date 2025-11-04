@@ -162,6 +162,40 @@ parameters required by the underlying probability distribution, with
 no additional or missing parameters.</p>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.CDFLike.custom_fname">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">custom_fname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.CDFLike.custom_fname" title="Link to this definition">¶</a></dt>
+<dd><p>Get the name of the custom Stan function for this CDFLike transformation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Custom Stan function name</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<p>This property constructs the name of the custom Stan function that
+wraps the standard distribution function with appropriate parameter
+ordering and transformations. We wrap the standard function to allow for
+vector outputs rather than summed outputs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.CDFLike.get_supporting_functions">
+<span class="sig-name descname"><span class="pre">get_supporting_functions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/cdfs.html#CDFLike.get_supporting_functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.CDFLike.get_supporting_functions" title="Link to this definition">¶</a></dt>
+<dd><p>Defines a set of supporting Stan functions required by this transformation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of supporting Stan function names</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
+</dd>
+</dl>
+<p>This method extends the base class implementation to include any
+additional supporting functions needed for survival function computations.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.CDFLike.run_np_torch_op">
 <em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">draws</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/cdfs.html#CDFLike.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.CDFLike.run_np_torch_op" title="Link to this definition">¶</a></dt>
@@ -194,6 +228,25 @@ computational backend and applies appropriate parameter transformations.</p>
 <p>The method separates the evaluation point (<code class="docutils literal notranslate"><span class="pre">x</span></code>) from distribution
 parameters and handles backend-specific parameter naming and
 transformation requirements.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.CDFLike.true_fname">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">true_fname</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.CDFLike.true_fname" title="Link to this definition">¶</a></dt>
+<dd><p>Get the name of the true Stan distribution function for this CDFLike
+transformation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True Stan distribution function name</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<p>This property constructs the name of the true Stan distribution function
+that performs the actual CDF-like computation. This is used within the
+custom function to delegate the computation while allowing for custom
+parameter handling.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -403,6 +456,14 @@ Should be set by subclasses.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.LogCDF.get_supporting_functions">
+<span class="sig-name descname"><span class="pre">get_supporting_functions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/cdfs.html#LogCDF.get_supporting_functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.LogCDF.get_supporting_functions" title="Link to this definition">¶</a></dt>
+<dd><p>Get supporting Stan functions required by this transformation. This uses
+the base class implementation unless the associated Parameter class has
+a CUSTOM_LCDF_STANFILE defined, in which case that file is used instead.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.LogCDF.run_np_torch_op">
 <span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">draws</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/cdfs.html#LogCDF.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.LogCDF.run_np_torch_op" title="Link to this definition">¶</a></dt>
 <dd><p>Execute log CDF computation with appropriate numerical handling.</p>
@@ -608,6 +669,14 @@ Should be set by subclasses.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.get_supporting_functions">
+<span class="sig-name descname"><span class="pre">get_supporting_functions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/cdfs.html#LogSurvivalFunction.get_supporting_functions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.get_supporting_functions" title="Link to this definition">¶</a></dt>
+<dd><p>Get supporting Stan functions required by this transformation. This uses
+the base class implementation unless the associated Parameter class has
+a CUSTOM_LSF_STANFILE defined, in which case that file is used instead.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.run_np_torch_op">
 <span class="sig-name descname"><span class="pre">run_np_torch_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">draws</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/cdfs.html#LogSurvivalFunction.run_np_torch_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.run_np_torch_op" title="Link to this definition">¶</a></dt>
 <dd><p>Execute log survival function computation with numerical stability.</p>
@@ -688,7 +757,10 @@ Should be set by subclasses.</p>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.STAN_SUFFIX"><code class="docutils literal notranslate"><span class="pre">CDFLike.STAN_SUFFIX</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.TORCH_FUNC"><code class="docutils literal notranslate"><span class="pre">CDFLike.TORCH_FUNC</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.check_parameters"><code class="docutils literal notranslate"><span class="pre">CDFLike.check_parameters()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.custom_fname"><code class="docutils literal notranslate"><span class="pre">CDFLike.custom_fname</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.get_supporting_functions"><code class="docutils literal notranslate"><span class="pre">CDFLike.get_supporting_functions()</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">CDFLike.run_np_torch_op()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.true_fname"><code class="docutils literal notranslate"><span class="pre">CDFLike.true_fname</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.CDFLike.write_stan_operation"><code class="docutils literal notranslate"><span class="pre">CDFLike.write_stan_operation()</span></code></a></li>
 </ul>
 </li>
@@ -708,6 +780,7 @@ Should be set by subclasses.</p>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF.SCIPY_FUNC"><code class="docutils literal notranslate"><span class="pre">LogCDF.SCIPY_FUNC</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF.STAN_SUFFIX"><code class="docutils literal notranslate"><span class="pre">LogCDF.STAN_SUFFIX</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF.TORCH_FUNC"><code class="docutils literal notranslate"><span class="pre">LogCDF.TORCH_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF.get_supporting_functions"><code class="docutils literal notranslate"><span class="pre">LogCDF.get_supporting_functions()</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogCDF.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">LogCDF.run_np_torch_op()</span></code></a></li>
 </ul>
 </li>
@@ -724,6 +797,7 @@ Should be set by subclasses.</p>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.SCIPY_FUNC"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction.SCIPY_FUNC</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.STAN_SUFFIX"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction.STAN_SUFFIX</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.TORCH_FUNC"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction.TORCH_FUNC</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.get_supporting_functions"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction.get_supporting_functions()</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.run_np_torch_op"><code class="docutils literal notranslate"><span class="pre">LogSurvivalFunction.run_np_torch_op()</span></code></a></li>
 </ul>
 </li>

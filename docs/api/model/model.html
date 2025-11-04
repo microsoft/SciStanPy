@@ -174,7 +174,7 @@ components, enabling full programmatic access to the model structure.</p>
 <dd class="field-odd"><p>Dictionary mapping names to constant components</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict[str, constants_module.Constant]</p>
+<dd class="field-even"><p>dict[str, scistanpy.Constant]</p>
 </dd>
 </dl>
 <p>Provides convenient access to model constants for hyperparameter
@@ -190,7 +190,7 @@ inspection and sensitivity analysis workflows.</p>
 <dd class="field-odd"><p>Tuple of constant components</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple[constants_module.Constant, …]</p>
+<dd class="field-even"><p>tuple[scistanpy.Constant, …]</p>
 </dd>
 </dl>
 <p>Constants represent fixed values and hyperparameter specifications
@@ -343,7 +343,7 @@ whether default data is available for automatic use in methods.</p>
 <dd class="field-odd"><p>Dictionary mapping names to hyperparameters</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict[str, parameters_module.Parameter]</p>
+<dd class="field-even"><p>dict[str, scistanpy.parameters.Parameter]</p>
 </dd>
 </dl>
 <p>Provides convenient access to the model’s hyperparameters by name
@@ -359,7 +359,7 @@ for prior specification and sensitivity analysis.</p>
 <dd class="field-odd"><p>Tuple of parameters that depend only on constants</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple[parameters_module.Parameter, …]</p>
+<dd class="field-even"><p>tuple[scistanpy.parameters.Parameter, …]</p>
 </dd>
 </dl>
 <p>Hyperparameters are the highest-level parameters in the model
@@ -486,7 +486,9 @@ model parameters along with optimization diagnostics.</p>
 <li><p><strong>epochs</strong> (<em>custom_types.Integer</em>) – Maximum number of training epochs. Note that one step is one
 epoch as the model must be evaluated over all observable data to calculate
 loss. Defaults to 100000.</p></li>
-<li><p><strong>early_stop</strong> (<em>custom_types.Integer</em>) – Epochs without improvement before stopping. Defaults to 10.</p></li>
+<li><p><strong>early_stop</strong> (<em>custom_types.Integer</em>) – Epochs without improvement before stopping. If early
+stopping is triggered, the model parameters are reverted to the best
+observed state. Defaults to 10.</p></li>
 <li><p><strong>lr</strong> (<em>custom_types.Float</em>) – Learning rate for optimization. Defaults to 0.001.</p></li>
 <li><p><strong>data</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>torch.Tensor</em><em>, </em><em>npt.NDArray</em><em>]</em><em>]</em><em>]</em>) – Observed data for observables. Uses default_data provided at
 initialization if not provided.</p></li>
@@ -571,7 +573,7 @@ string names for programmatic model inspection and manipulation.</p>
 <dd class="field-odd"><p>Dictionary mapping names to observable parameters</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict[str, parameters_module.Parameter]</p>
+<dd class="field-even"><p>dict[str, scistanpy.parameters.Parameter]</p>
 </dd>
 </dl>
 <p>Enables convenient access to observable parameters for data
@@ -587,7 +589,7 @@ specification and model validation workflows.</p>
 <dd class="field-odd"><p>Tuple of parameters marked as observable</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple[parameters_module.Parameter, …]</p>
+<dd class="field-even"><p>tuple[scistanpy.parameters.Parameter, …]</p>
 </dd>
 </dl>
 <p>Observable parameters represent the data-generating components
@@ -604,7 +606,7 @@ provided during inference procedures.</p>
 <dd class="field-odd"><p>Dictionary mapping names to non-observable parameters</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict[str, parameters_module.Parameter]</p>
+<dd class="field-even"><p>dict[str, scistanpy.parameters.Parameter]</p>
 </dd>
 </dl>
 <p>Provides convenient named access to the model’s latent parameters
@@ -620,7 +622,7 @@ for inspection and programmatic manipulation.</p>
 <dd class="field-odd"><p>Tuple of parameter components that are not observables</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple[parameters_module.Parameter, …]</p>
+<dd class="field-even"><p>tuple[scistanpy.parameters.Parameter, …]</p>
 </dd>
 </dl>
 <p>These are the latent variables and hyperparameters that will be
@@ -814,14 +816,14 @@ it for Hamilitonian Monte-Carlo sampling.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="scistanpy.model.model.Model.transformed_parameter_dict">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transformed_parameter_dict</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="components/transformations/transformed_parameters.html#scistanpy.model.components.transformations.transformed_parameters.TransformedParameter" title="scistanpy.model.components.transformations.transformed_parameters.TransformedParameter"><span class="pre">TransformedParameter</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.model.Model.transformed_parameter_dict" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">transformed_parameter_dict</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">transformed_parameters.parameters.TransformedParameter</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#scistanpy.model.model.Model.transformed_parameter_dict" title="Link to this definition">¶</a></dt>
 <dd><p>Get named transformed parameters as a dictionary.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Dictionary mapping names to transformed parameters</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict[str, transformed_parameters_module.TransformedParameter]</p>
+<dd class="field-even"><p>dict[str, transformed_parameters.parameters.TransformedParameter]</p>
 </dd>
 </dl>
 <p>Enables convenient access to transformed parameters for model
@@ -837,7 +839,7 @@ inspection and derived quantity analysis.</p>
 <dd class="field-odd"><p>Tuple of transformed parameter components</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple[transformed_parameters_module.TransformedParameter, …]</p>
+<dd class="field-even"><p>tuple[transformed_parameters.parameters.TransformedParameter, …]</p>
 </dd>
 </dl>
 <p>Transformed parameters are deterministic functions of other model

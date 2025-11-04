@@ -76,54 +76,36 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">glob</span><span class="w"> </span><span class="kn">import</span> <span class="n">glob</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Any</span><span class="p">,</span>
-    <span class="n">Generator</span><span class="p">,</span>
-    <span class="n">Literal</span><span class="p">,</span>
-    <span class="n">Optional</span><span class="p">,</span>
-    <span class="n">overload</span><span class="p">,</span>
-    <span class="n">Sequence</span><span class="p">,</span>
-    <span class="n">TYPE_CHECKING</span><span class="p">,</span>
-    <span class="n">Union</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">overload</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">dask</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">holoviews</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">h5netcdf</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">holoviews</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">panel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pn</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">cmdstanpy.cmdstan_args</span><span class="w"> </span><span class="kn">import</span> <span class="n">CmdStanArgs</span><span class="p">,</span> <span class="n">SamplerArgs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cmdstanpy.stanfit</span><span class="w"> </span><span class="kn">import</span> <span class="n">CmdStanMCMC</span><span class="p">,</span> <span class="n">RunSet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cmdstanpy.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_sampler_csv</span><span class="p">,</span> <span class="n">scan_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">plotting</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">plotting</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEFAULT_EBFMI_THRESH</span><span class="p">,</span>
     <span class="n">DEFAULT_ESS_THRESH</span><span class="p">,</span>
     <span class="n">DEFAULT_RHAT_THRESH</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">parameters</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.transformations</span><span class="w"> </span><span class="kn">import</span> <span class="n">transformed_parameters</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.results</span><span class="w"> </span><span class="kn">import</span> <span class="n">mle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.results.base_classes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InferenceRes</span><span class="p">,</span>
+    <span class="n">SciStanPyToNetCDFConverter</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span><span class="p">,</span> <span class="n">Model</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">custom_types</span>
 
 <span class="c1"># pylint: disable=too-many-lines</span>
-
-<span class="c1"># Maps between the precision of the data and the numpy types</span>
-<span class="n">_NP_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;double&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;float&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">},</span>
-    <span class="s2">&quot;single&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;float&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">},</span>
-    <span class="s2">&quot;half&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;float&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">},</span>
-<span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_symmetrize_quantiles</span><span class="p">(</span>
@@ -550,29 +532,22 @@
 
 <div class="viewcode-block" id="CmdStanMCMCToNetCDFConverter">
 <a class="viewcode-back" href="../../../../api/model/results/hmc.html#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">CmdStanMCMCToNetCDFConverter</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CmdStanMCMCToNetCDFConverter</span><span class="p">(</span><span class="n">SciStanPyToNetCDFConverter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Object responsible for converting CmdStan CSV output to NetCDF format. This</span>
-<span class="sd">    class is used internally by the :py:func:`~scistanpy.model.results.hmc.cmdstan_csv_to_netcdf`</span>
-<span class="sd">    function and should not be instantiated directly in most use cases.</span>
+<span class="sd">    class is used internally and should not be instantiated directly in most use</span>
+<span class="sd">    cases.</span>
 
 <span class="sd">    This class handles the conversion of CmdStan CSV output files to NetCDF</span>
 <span class="sd">    format, providing efficient storage and access for large MCMC datasets.</span>
 <span class="sd">    It properly organizes data into appropriate groups and handles dimension</span>
 <span class="sd">    naming and chunking strategies.</span>
 
-<span class="sd">    :param fit: CmdStanMCMC object or path to CSV files</span>
-<span class="sd">    :type fit: Union[CmdStanMCMC, str, list[str], os.PathLike]</span>
+<span class="sd">    :param results: CmdStanMCMC object or path to CSV files</span>
+<span class="sd">    :type results: Union[CmdStanMCMC, str, list[str], os.PathLike]</span>
 <span class="sd">    :param model: SciStanPy model object for metadata extraction</span>
 <span class="sd">    :type model: Model</span>
 <span class="sd">    :param data: Optional observed data dictionary. Defaults to None.</span>
 <span class="sd">    :type data: Optional[dict[str, Any]]</span>
-
-<span class="sd">    :ivar fit: CmdStanMCMC object containing sampling results</span>
-<span class="sd">    :ivar model: Reference to the original SciStanPy model</span>
-<span class="sd">    :ivar data: Observed data used for model fitting</span>
-<span class="sd">    :ivar config: Configuration dictionary from Stan sampling</span>
-<span class="sd">    :ivar num_draws: Total number of draws including warmup if saved</span>
-<span class="sd">    :ivar varname_to_column_order: Mapping from variables to csv column indices</span>
 
 <span class="sd">    The converter handles:</span>
 
@@ -584,7 +559,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">fit</span><span class="p">:</span> <span class="n">CmdStanMCMC</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span>
+        <span class="n">results</span><span class="p">:</span> <span class="n">CmdStanMCMC</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;Model&quot;</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
@@ -593,20 +568,22 @@
 <span class="sd">        in the fit object. This includes the names of the variables, their shapes,</span>
 <span class="sd">        and their types. This information is used to create the HDF5 file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># If `fit` is a string, we assume we need to load it from disk</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">fit</span> <span class="o">=</span> <span class="n">fit_from_csv_noload</span><span class="p">(</span><span class="n">fit</span><span class="p">)</span>
 
-        <span class="c1"># The fit and model are stored as attributes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">fit</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="c1"># If `results` is a string, we assume we need to load it from disk</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">fit_from_csv_noload</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+        <span class="c1"># Init parent class</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># Additional placeholder for method data types</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method_var_dtypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">]]]</span>
 
         <span class="c1"># Record the config object</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">cmdstan_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">cmdstan_config</span>
 
         <span class="c1"># The number of chains is per thread. We want the number of chains total</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;total_chains&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">runset</span><span class="o">.</span><span class="n">csv_files</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_chains</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">runset</span><span class="o">.</span><span class="n">csv_files</span><span class="p">)</span>
 
         <span class="c1"># How many samples are we expecting?</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_draws</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;num_samples&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span>
@@ -638,13 +615,14 @@
                 <span class="k">if</span> <span class="p">(</span><span class="n">match_obj</span> <span class="o">:=</span> <span class="n">ind_re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">col</span><span class="p">))</span>
                 <span class="k">else</span> <span class="p">()</span>
             <span class="p">)</span>
-            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">column_names</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">column_names</span>
         <span class="p">]</span>
 
         <span class="c1"># Now we assign the row-major argsort of indices to each variable</span>
         <span class="n">varname_to_column_order</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">method_vars</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">stan_vars</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">method_vars</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">stan_vars</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
         <span class="p">):</span>
 
             <span class="c1"># Slice out the indices for this variable</span>
@@ -667,282 +645,101 @@
 
         <span class="k">return</span> <span class="n">varname_to_column_order</span>
 
-<div class="viewcode-block" id="CmdStanMCMCToNetCDFConverter.write_netcdf">
-<a class="viewcode-back" href="../../../../api/model/results/hmc.html#scistanpy.model.results.hmc.CmdStanMCMCToNetCDFConverter.write_netcdf">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">write_netcdf</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">precision</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span> <span class="s2">&quot;half&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span>
-        <span class="n">mib_per_chunk</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the converted data to NetCDF format.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_write_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">netcdf_file</span><span class="p">:</span> <span class="n">h5netcdf</span><span class="o">.</span><span class="n">File</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 
-<span class="sd">        :param filename: Output filename. Auto-generated if None. Defaults to None.</span>
-<span class="sd">        :type filename: Optional[str]</span>
-<span class="sd">        :param precision: Numerical precision for arrays. Defaults to &quot;single&quot;.</span>
-<span class="sd">        :type precision: Literal[&quot;double&quot;, &quot;single&quot;, &quot;half&quot;]</span>
-<span class="sd">        :param mib_per_chunk: Memory limit per chunk in MiB. Defaults to None, meaning</span>
-<span class="sd">            use Dask default.</span>
-<span class="sd">        :type mib_per_chunk: Optional[custom_types.Integer]</span>
+        <span class="c1"># Run inherited method</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_write_attributes</span><span class="p">(</span><span class="n">netcdf_file</span><span class="p">)</span>
 
-<span class="sd">        :returns: Path to the created NetCDF file</span>
-<span class="sd">        :rtype: str</span>
+        <span class="c1"># Write attributes to the file</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">&quot;stan_version_major&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;stan_version_minor&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;stan_version_patch&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;start_datetime&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;num_samples&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;num_warmup&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;save_warmup&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;max_depth&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;num_chains&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;data_file&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;diagnostic_file&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;seed&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sig_figs&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;num_threads&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;stanc_version&quot;</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">netcdf_file</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">cmdstan_config</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
 
-<span class="sd">        This method orchestrates the complete conversion process:</span>
-<span class="sd">        1. Creates NetCDF file with appropriate structure</span>
-<span class="sd">        2. Sets up dimensions based on model and data characteristics</span>
-<span class="sd">        3. Creates variables with optimal chunking strategies</span>
-<span class="sd">        4. Populates data from CSV files with progress tracking</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_netcdf_groups</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">netcdf_file</span><span class="p">:</span> <span class="n">h5netcdf</span><span class="o">.</span><span class="n">File</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">h5netcdf</span><span class="o">.</span><span class="n">Group</span><span class="p">]:</span>
 
-<span class="sd">        The resulting NetCDF file contains properly organized groups for</span>
-<span class="sd">        posterior samples, posterior predictive samples, sample statistics,</span>
-<span class="sd">        and observed data.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># If no filename is provided, we create one based on the csv files</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">filename</span>
-            <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">commonprefix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">runset</span><span class="o">.</span><span class="n">csv_files</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.nc&quot;</span>
-        <span class="p">)</span>
+        <span class="c1"># Run inherited method to get the basic groups</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_create_netcdf_groups</span><span class="p">(</span><span class="n">netcdf_file</span><span class="p">)</span>
+
+        <span class="c1"># Build the meta data group</span>
+        <span class="n">groups</span><span class="p">[</span><span class="s2">&quot;metadata_group&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">netcdf_file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;sample_stats&quot;</span><span class="p">)</span>
 
         <span class="c1"># Get the data types for the method and stan variables</span>
-        <span class="n">method_var_dtypes</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;lp__&quot;</span><span class="p">:</span> <span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;float&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;accept_stat__&quot;</span><span class="p">:</span> <span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;float&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;stepsize__&quot;</span><span class="p">:</span> <span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;float&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;treedepth__&quot;</span><span class="p">:</span> <span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;int&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;n_leapfrog__&quot;</span><span class="p">:</span> <span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;int&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;divergent__&quot;</span><span class="p">:</span> <span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;int&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;energy__&quot;</span><span class="p">:</span> <span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;float&quot;</span><span class="p">],</span>
+        <span class="c1"># pylint: disable=protected-access</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method_var_dtypes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;lp__&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;float&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;accept_stat__&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;float&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;stepsize__&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;float&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;treedepth__&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;int&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;n_leapfrog__&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;int&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;divergent__&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;int&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;energy__&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">precision</span><span class="p">][</span><span class="s2">&quot;float&quot;</span><span class="p">],</span>
         <span class="p">}</span>
-        <span class="n">stan_var_dtypes</span><span class="p">,</span> <span class="n">stan_var_dimnames</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_stan_var_dtypes_dimnames</span><span class="p">(</span>
-            <span class="n">precision</span>
-        <span class="p">)</span>
-        <span class="k">assert</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">stan_var_dtypes</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
-            <span class="nb">set</span><span class="p">(</span><span class="n">method_var_dtypes</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-        <span class="p">),</span> <span class="s2">&quot;Stan variable names should not overlap with method variable names.&quot;</span>
 
-        <span class="c1"># Create the HDF5 file</span>
-        <span class="k">with</span> <span class="n">h5netcdf</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">netcdf_file</span><span class="p">:</span>
-
-            <span class="c1"># Write attributes to the file</span>
-            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span>
-                <span class="s2">&quot;stan_version_major&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;stan_version_minor&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;stan_version_patch&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;model&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;start_datetime&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;method&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;num_samples&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;num_warmup&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;save_warmup&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;max_depth&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;num_chains&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;data_file&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;diagnostic_file&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;seed&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;sig_figs&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;num_threads&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;stanc_version&quot;</span><span class="p">,</span>
-            <span class="p">):</span>
-                <span class="n">netcdf_file</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">cmdstan_config</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
-
-            <span class="c1"># Set dimensions</span>
-            <span class="n">netcdf_file</span><span class="o">.</span><span class="n">dimensions</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;chain&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;total_chains&quot;</span><span class="p">],</span>
-                <span class="s2">&quot;draw&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_draws</span><span class="p">,</span>
-                <span class="o">**</span><span class="p">{</span>
-                    <span class="n">dimname</span><span class="p">:</span> <span class="n">dimsize</span>
-                    <span class="k">for</span> <span class="n">varinfo</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span>
-                        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">stan_var_dimnames</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                    <span class="p">)</span>
-                    <span class="k">for</span> <span class="n">dimname</span><span class="p">,</span> <span class="n">dimsize</span> <span class="ow">in</span> <span class="n">varinfo</span>
-                <span class="p">},</span>
-            <span class="p">}</span>
-
-            <span class="c1"># We need a group for metadata, samples, posterior predictive checks,</span>
-            <span class="c1"># observations, and transformed parameters.</span>
-            <span class="n">metadata_group</span> <span class="o">=</span> <span class="n">netcdf_file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;sample_stats&quot;</span><span class="p">)</span>
-            <span class="n">sample_group</span> <span class="o">=</span> <span class="n">netcdf_file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;posterior&quot;</span><span class="p">)</span>
-            <span class="n">ppc_group</span> <span class="o">=</span> <span class="n">netcdf_file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;posterior_predictive&quot;</span><span class="p">)</span>
-            <span class="n">observed_group</span> <span class="o">=</span> <span class="n">netcdf_file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;observed_data&quot;</span><span class="p">)</span>
-
-            <span class="c1"># Create variables for each of the method variables. Build a mapping</span>
-            <span class="c1"># from the variable name to the dataset object. We store all of the</span>
-            <span class="c1"># method variables with a single chunk.</span>
-            <span class="n">varname_to_dset</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="n">varname</span><span class="p">:</span> <span class="n">metadata_group</span><span class="o">.</span><span class="n">create_variable</span><span class="p">(</span>
+        <span class="c1"># Create variables for each of the method variables. Build a mapping</span>
+        <span class="c1"># from the variable name to the dataset object. We store all of the</span>
+        <span class="c1"># method variables with a single chunk.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">varname_to_dset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">varname</span><span class="p">:</span> <span class="n">groups</span><span class="p">[</span><span class="s2">&quot;metadata_group&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">create_variable</span><span class="p">(</span>
                     <span class="n">name</span><span class="o">=</span><span class="n">varname</span><span class="p">,</span>
                     <span class="n">dimensions</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;chain&quot;</span><span class="p">,</span> <span class="s2">&quot;draw&quot;</span><span class="p">),</span>
-                    <span class="n">dtype</span><span class="o">=</span><span class="n">method_var_dtypes</span><span class="p">[</span><span class="n">varname</span><span class="p">],</span>
-                    <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;total_chains&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_draws</span><span class="p">),</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">method_var_dtypes</span><span class="p">[</span><span class="n">varname</span><span class="p">],</span>
+                    <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_chains</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_draws</span><span class="p">),</span>
                 <span class="p">)</span>
-                <span class="k">for</span> <span class="n">varname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">method_vars</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">varname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">method_vars</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
             <span class="p">}</span>
+        <span class="p">)</span>
 
-            <span class="c1"># Now we can create a dataset for each stan variable. We update the</span>
-            <span class="c1"># mapping from the variable name to the dataset object</span>
-            <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">stan_dtype</span> <span class="ow">in</span> <span class="n">stan_var_dtypes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">groups</span>
 
-                <span class="c1"># Get the shape of the variable</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape_info</span> <span class="o">:=</span> <span class="n">stan_var_dimnames</span><span class="p">[</span><span class="n">varname</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">named_shape</span><span class="p">,</span> <span class="n">true_shape</span> <span class="o">=</span> <span class="p">(),</span> <span class="p">()</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">named_shape</span><span class="p">,</span> <span class="n">true_shape</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">shape_info</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_stream_draws</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 
-                <span class="c1"># Calculate the chunk shape. We always hold the first two dimensions</span>
-                <span class="c1"># frozen. This is because the first two dimensions are what we</span>
-                <span class="c1"># are typically performing operations over.</span>
-                <span class="n">chunk_shape</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_chunk_shape</span><span class="p">(</span>
-                    <span class="n">array_shape</span><span class="o">=</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;total_chains&quot;</span><span class="p">],</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">num_draws</span><span class="p">,</span>
-                        <span class="o">*</span><span class="n">true_shape</span><span class="p">,</span>
-                    <span class="p">),</span>
-                    <span class="n">array_precision</span><span class="o">=</span><span class="n">precision</span><span class="p">,</span>
-                    <span class="n">mib_per_chunk</span><span class="o">=</span><span class="n">mib_per_chunk</span><span class="p">,</span>
-                    <span class="n">frozen_dims</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="c1"># Now we populate the datasets with the data from the csv files</span>
+        <span class="k">for</span> <span class="n">chain_ind</span><span class="p">,</span> <span class="n">csv_file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="n">tqdm</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">runset</span><span class="o">.</span><span class="n">csv_files</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Converting CSV to NetCDF&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">for</span> <span class="n">draw_ind</span><span class="p">,</span> <span class="n">draw</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="n">tqdm</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_parse_csv</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">csv_file</span><span class="p">),</span>
+                    <span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_draws</span><span class="p">,</span>
+                    <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Processing chain </span><span class="si">{</span><span class="n">chain_ind</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">position</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="p">)</span>
-
-                <span class="c1"># We record without the &#39;_ppc&#39; suffix</span>
-                <span class="n">recorded_varname</span> <span class="o">=</span> <span class="n">varname</span><span class="o">.</span><span class="n">removesuffix</span><span class="p">(</span><span class="s2">&quot;_ppc&quot;</span><span class="p">)</span>
-
-                <span class="c1"># Build the group</span>
-                <span class="n">group</span> <span class="o">=</span> <span class="n">ppc_group</span> <span class="k">if</span> <span class="n">varname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_ppc&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">sample_group</span>
-                <span class="n">varname_to_dset</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">create_variable</span><span class="p">(</span>
-                    <span class="n">name</span><span class="o">=</span><span class="n">recorded_varname</span><span class="p">,</span>
-                    <span class="n">dimensions</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;chain&quot;</span><span class="p">,</span> <span class="s2">&quot;draw&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">named_shape</span><span class="p">),</span>
-                    <span class="n">dtype</span><span class="o">=</span><span class="n">stan_dtype</span><span class="p">,</span>
-                    <span class="n">chunks</span><span class="o">=</span><span class="n">chunk_shape</span><span class="p">,</span>
-                <span class="p">)</span>
-
-                <span class="c1"># If an observable, also create a dataset in the observed group</span>
-                <span class="c1"># and populate it with the data</span>
-                <span class="k">if</span> <span class="n">varname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_ppc&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">observed_group</span><span class="o">.</span><span class="n">create_variable</span><span class="p">(</span>
-                        <span class="n">name</span><span class="o">=</span><span class="n">recorded_varname</span><span class="p">,</span>
-                        <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">recorded_varname</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span>
-                        <span class="n">dimensions</span><span class="o">=</span><span class="n">named_shape</span><span class="p">,</span>
-                        <span class="n">dtype</span><span class="o">=</span><span class="n">stan_dtype</span><span class="p">,</span>
-                        <span class="n">chunks</span><span class="o">=</span><span class="n">chunk_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:],</span>
-                    <span class="p">)</span>
-
-            <span class="c1"># Now we populate the datasets with the data from the csv files</span>
-            <span class="k">for</span> <span class="n">chain_ind</span><span class="p">,</span> <span class="n">csv_file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
-                <span class="n">tqdm</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">runset</span><span class="o">.</span><span class="n">csv_files</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Converting CSV to NetCDF&quot;</span><span class="p">)</span>
             <span class="p">):</span>
-                <span class="k">for</span> <span class="n">draw_ind</span><span class="p">,</span> <span class="n">draw</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
-                    <span class="n">tqdm</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_csv</span><span class="p">(</span>
-                            <span class="n">filename</span><span class="o">=</span><span class="n">csv_file</span><span class="p">,</span>
-                            <span class="n">method_var_dtypes</span><span class="o">=</span><span class="n">method_var_dtypes</span><span class="p">,</span>
-                            <span class="n">stan_var_dtypes</span><span class="o">=</span><span class="n">stan_var_dtypes</span><span class="p">,</span>
-                        <span class="p">),</span>
-                        <span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_draws</span><span class="p">,</span>
-                        <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Processing chain </span><span class="si">{</span><span class="n">chain_ind</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                        <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                        <span class="n">position</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="p">):</span>
-                    <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">varvals</span> <span class="ow">in</span> <span class="n">draw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                        <span class="n">varname_to_dset</span><span class="p">[</span><span class="n">varname</span><span class="p">][</span>
-                            <span class="n">chain_ind</span><span class="p">,</span> <span class="n">draw_ind</span>
-                        <span class="p">]</span> <span class="o">=</span> <span class="n">varvals</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+                <span class="k">yield</span> <span class="n">chain_ind</span><span class="p">,</span> <span class="n">draw_ind</span><span class="p">,</span> <span class="n">draw</span>
 
-                <span class="c1"># We must have all the draws for this chain</span>
-                <span class="k">assert</span> <span class="n">draw_ind</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_draws</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># pylint: disable=W0631</span>
-
-        <span class="k">return</span> <span class="n">filename</span></div>
-
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_stan_var_dtypes_dimnames</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span> <span class="s2">&quot;half&quot;</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
-        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">]]],</span>
-        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="o">...</span><span class="p">]],</span>
-    <span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Determine data types and dimension names for Stan variables.</span>
-
-<span class="sd">        :param precision: Numerical precision specification</span>
-<span class="sd">        :type precision: Literal[&quot;double&quot;, &quot;single&quot;, &quot;half&quot;]</span>
-
-<span class="sd">        :returns: Tuple of (data_types_dict, dimension_names_dict)</span>
-<span class="sd">        :rtype: tuple[dict[str, Union[type[np.floating], type[np.integer]]],</span>
-<span class="sd">            dict[str, tuple[tuple[str, int], ...]]]</span>
-
-<span class="sd">        This method analyzes the SciStanPy model to determine appropriate</span>
-<span class="sd">        NumPy data types and dimension naming schemes for all variables</span>
-<span class="sd">        that will be stored in the NetCDF file.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">get_dimname</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[()]:</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;Retrieves the dimension names for the current component.&quot;&quot;&quot;</span>
-            <span class="c1"># Get the name of the dimensions</span>
-            <span class="n">named_shape</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">dimind</span><span class="p">,</span> <span class="n">dimsize</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
-
-                <span class="c1"># See if we can get the name of the dimension. If we cannot, this must</span>
-                <span class="c1"># be a singleton dimension</span>
-                <span class="k">if</span> <span class="p">(</span><span class="n">dimname</span> <span class="o">:=</span> <span class="n">dim_map</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">dimind</span><span class="p">,</span> <span class="n">dimsize</span><span class="p">)))</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">assert</span> <span class="n">dimsize</span> <span class="o">==</span> <span class="mi">1</span>
-                    <span class="k">continue</span>
-
-                <span class="c1"># If we have a name, record</span>
-                <span class="n">named_shape</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dimname</span><span class="p">,</span> <span class="n">dimsize</span><span class="p">))</span>
-
-            <span class="c1"># If we have no dimensions, we return an empty tuple</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">named_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">()</span>
-
-            <span class="c1"># We have our named shape</span>
-            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">named_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-
-        <span class="c1"># We will need the map from dimension depth and size to dimension name</span>
-        <span class="n">dim_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_dimname_map</span><span class="p">()</span>
-
-        <span class="c1"># Datatypes for the stan variables</span>
-        <span class="n">stan_var_dtypes</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">stan_var_dimnames</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">component</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">named_model_components_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-
-            <span class="c1"># We only take parameters and transformed parameters</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
-                <span class="n">component</span><span class="p">,</span>
-                <span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">transformed_parameters</span><span class="o">.</span><span class="n">TransformedParameter</span><span class="p">),</span>
-            <span class="p">):</span>
-                <span class="k">continue</span>
-
-            <span class="c1"># Update the varname if needed</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">parameters</span><span class="o">.</span><span class="n">Parameter</span><span class="p">)</span> <span class="ow">and</span> <span class="n">component</span><span class="o">.</span><span class="n">observable</span><span class="p">:</span>
-                <span class="n">varname</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">varname</span><span class="si">}</span><span class="s2">_ppc&quot;</span>
-
-            <span class="c1"># Record the datatype</span>
-            <span class="n">stan_var_dtypes</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span> <span class="o">=</span> <span class="n">_NP_TYPE_MAP</span><span class="p">[</span><span class="n">precision</span><span class="p">][</span>
-                <span class="p">(</span>
-                    <span class="s2">&quot;int&quot;</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">parameters</span><span class="o">.</span><span class="n">DiscreteDistribution</span><span class="p">)</span>
-                    <span class="k">else</span> <span class="s2">&quot;float&quot;</span>
-                <span class="p">)</span>
-            <span class="p">]</span>
-
-            <span class="c1"># Record the dimension names</span>
-            <span class="n">stan_var_dimnames</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_dimname</span><span class="p">()</span>
-
-        <span class="k">return</span> <span class="n">stan_var_dtypes</span><span class="p">,</span> <span class="n">stan_var_dimnames</span>
+            <span class="c1"># We must have all the draws for this chain</span>
+            <span class="k">assert</span> <span class="n">draw_ind</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_draws</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># pylint: disable=W0631</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_csv</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">method_var_dtypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">]]],</span>
-        <span class="n">stan_var_dtypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">]]],</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse CSV file and yield properly formatted arrays.</span>
 
 <span class="sd">        :param filename: Path to CSV file to parse</span>
 <span class="sd">        :type filename: str</span>
-<span class="sd">        :param method_var_dtypes: Data types for method variables</span>
-<span class="sd">        :type method_var_dtypes: dict[str, Union[type[np.floating], type[np.integer]]]</span>
-<span class="sd">        :param stan_var_dtypes: Data types for Stan variables</span>
-<span class="sd">        :type stan_var_dtypes: dict[str, Union[type[np.floating], type[np.integer]]]</span>
 
 <span class="sd">        :yields: Dictionary of variable names to properly shaped arrays for each draw</span>
 <span class="sd">        :rtype: Generator[dict[str, npt.NDArray], None, None]</span>
@@ -966,13 +763,13 @@
                 <span class="c1"># Build the arrays for each variable</span>
                 <span class="n">processed_vals</span> <span class="o">=</span> <span class="p">{}</span>
                 <span class="k">for</span> <span class="n">varname</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span>
-                    <span class="n">method_var_dtypes</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">stan_var_dtypes</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">method_var_dtypes</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">var_dtypes</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                 <span class="p">):</span>
 
                     <span class="c1"># Get the variable object from the metadata</span>
                     <span class="n">var</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
-                        <span class="s2">&quot;stan_vars&quot;</span> <span class="k">if</span> <span class="n">varname</span> <span class="ow">in</span> <span class="n">stan_var_dtypes</span> <span class="k">else</span> <span class="s2">&quot;method_vars&quot;</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
+                        <span class="s2">&quot;stan_vars&quot;</span> <span class="k">if</span> <span class="n">varname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">var_dtypes</span> <span class="k">else</span> <span class="s2">&quot;method_vars&quot;</span><span class="p">,</span>
                     <span class="p">)[</span><span class="n">varname</span><span class="p">]</span>
 
                     <span class="c1"># Using that variable object, slice out the data, convert to</span>
@@ -997,197 +794,9 @@
 
 
 
-<div class="viewcode-block" id="cmdstan_csv_to_netcdf">
-<a class="viewcode-back" href="../../../../api/model/results/hmc.html#scistanpy.model.results.hmc.cmdstan_csv_to_netcdf">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">cmdstan_csv_to_netcdf</span><span class="p">(</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="n">CmdStanMCMC</span><span class="p">,</span>
-    <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;Model&quot;</span><span class="p">,</span>
-    <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">output_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">precision</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span> <span class="s2">&quot;half&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span>
-    <span class="n">mib_per_chunk</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert CmdStan CSV output to NetCDF format.</span>
-
-<span class="sd">    This function provides a high-level interface for converting CmdStan</span>
-<span class="sd">    sampling results from CSV format to NetCDF, enabling efficient storage</span>
-<span class="sd">    and processing of large MCMC datasets.</span>
-
-<span class="sd">    :param path: Path to CSV files or CmdStanMCMC object</span>
-<span class="sd">    :type path: Union[str, list[str], os.PathLike, CmdStanMCMC]</span>
-<span class="sd">    :param model: SciStanPy model used for sampling</span>
-<span class="sd">    :type model: Model</span>
-<span class="sd">    :param data: Observed data dictionary. Uses model default if None. Defaults to None.</span>
-<span class="sd">    :type data: Optional[dict[str, Any]]</span>
-<span class="sd">    :param output_filename: Output NetCDF filename. Auto-generated if None. Defaults to None.</span>
-<span class="sd">    :type output_filename: Optional[str]</span>
-<span class="sd">    :param precision: Numerical precision for stored arrays. Defaults to &quot;single&quot;.</span>
-<span class="sd">    :type precision: Literal[&quot;double&quot;, &quot;single&quot;, &quot;half&quot;]</span>
-<span class="sd">    :param mib_per_chunk: Memory limit per chunk in MiB. Defaults to None, meaning</span>
-<span class="sd">        use Dask default.</span>
-<span class="sd">    :type mib_per_chunk: Optional[custom_types.Integer]</span>
-
-<span class="sd">    :returns: Path to created NetCDF file</span>
-<span class="sd">    :rtype: str</span>
-
-<span class="sd">    The conversion process:</span>
-
-<span class="sd">    1. Analyzes model structure to determine optimal storage layout</span>
-<span class="sd">    2. Creates NetCDF file with appropriate groups and dimensions</span>
-<span class="sd">    3. Converts CSV data with proper chunking for memory efficiency</span>
-<span class="sd">    4. Organizes results into ArviZ-compatible structure</span>
-
-<span class="sd">    Benefits of NetCDF format:</span>
-
-<span class="sd">    - Significantly faster loading compared to CSV</span>
-<span class="sd">    - Memory-efficient access with chunking support</span>
-<span class="sd">    - Metadata preservation and self-describing format</span>
-<span class="sd">    - Integration with scientific Python ecosystem</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; netcdf_path = cmdstan_csv_to_netcdf(</span>
-<span class="sd">        ...     &#39;model_output*.csv&#39;, model, precision=&#39;single&#39;</span>
-<span class="sd">        ... )</span>
-<span class="sd">        &gt;&gt;&gt; results = SampleResults.from_disk(netcdf_path)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># If no data, check for default data in the model. Otherwise, data provided</span>
-    <span class="c1"># takes priority</span>
-    <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">has_default_data</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">default_data</span>
-
-    <span class="c1"># Build the converter</span>
-    <span class="n">converter</span> <span class="o">=</span> <span class="n">CmdStanMCMCToNetCDFConverter</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-
-    <span class="c1"># Run conversion</span>
-    <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">write_netcdf</span><span class="p">(</span>
-        <span class="n">filename</span><span class="o">=</span><span class="n">output_filename</span><span class="p">,</span>
-        <span class="n">precision</span><span class="o">=</span><span class="n">precision</span><span class="p">,</span>
-        <span class="n">mib_per_chunk</span><span class="o">=</span><span class="n">mib_per_chunk</span><span class="p">,</span>
-    <span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="dask_enabled_summary_stats">
-<a class="viewcode-back" href="../../../../api/model/results/hmc.html#scistanpy.model.results.hmc.dask_enabled_summary_stats">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">dask_enabled_summary_stats</span><span class="p">(</span><span class="n">inference_obj</span><span class="p">:</span> <span class="n">az</span><span class="o">.</span><span class="n">InferenceData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute summary statistics using Dask for memory efficiency. This is used</span>
-<span class="sd">    inside the :py:meth:`SampleResults.calculate_summaries()</span>
-<span class="sd">    &lt;scistanpy.model.results.hmc.SampleResults.calculate_summaries&gt;` method when</span>
-<span class="sd">    Dask is enabled.</span>
-
-<span class="sd">    :param inference_obj: ArviZ InferenceData object containing posterior samples</span>
-<span class="sd">    :type inference_obj: az.InferenceData</span>
-
-<span class="sd">    :returns: Dataset containing computed summary statistics</span>
-<span class="sd">    :rtype: xr.Dataset</span>
-
-<span class="sd">    This function computes basic summary statistics (mean, standard deviation,</span>
-<span class="sd">    and highest density intervals) using Dask for memory-efficient computation</span>
-<span class="sd">    on large datasets that might not fit in memory.</span>
-
-<span class="sd">    The function leverages Dask&#39;s lazy evaluation to:</span>
-
-<span class="sd">    - Queue multiple computations for efficient execution</span>
-<span class="sd">    - Minimize memory usage through chunked processing</span>
-<span class="sd">    - Provide progress tracking for long-running computations</span>
-
-<span class="sd">    Computed Statistics:</span>
-
-<span class="sd">    - Mean across chains and draws</span>
-<span class="sd">    - Standard deviation across chains and draws</span>
-<span class="sd">    - 94% highest density intervals</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; stats = dask_enabled_summary_stats(inference_data)</span>
-<span class="sd">        &gt;&gt;&gt; print(stats.sel(metric=&#39;mean&#39;))</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Queue up the delayed computations</span>
-    <span class="k">with</span> <span class="n">utils</span><span class="o">.</span><span class="n">az_dask</span><span class="p">():</span>
-        <span class="n">delayed_summaries</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;chain&quot;</span><span class="p">,</span> <span class="s2">&quot;draw&quot;</span><span class="p">)),</span>
-            <span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;chain&quot;</span><span class="p">,</span> <span class="s2">&quot;draw&quot;</span><span class="p">)),</span>
-            <span class="n">az</span><span class="o">.</span><span class="n">hdi</span><span class="p">(</span>
-                <span class="n">inference_obj</span><span class="p">,</span>
-                <span class="n">hdi_prob</span><span class="o">=</span><span class="mf">0.94</span><span class="p">,</span>
-                <span class="n">dask_gufunc_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;output_sizes&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;hdi&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}},</span>
-            <span class="p">),</span>
-        <span class="p">]</span>
-
-        <span class="c1"># Compute the results</span>
-        <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">hdi</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="o">*</span><span class="n">delayed_summaries</span><span class="p">)</span>
-
-    <span class="c1"># Concatenate the results</span>
-    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-        <span class="p">[</span>
-            <span class="n">mean</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">]),</span>
-            <span class="n">std</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sd&quot;</span><span class="p">]),</span>
-            <span class="n">hdi</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">hdi</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;hdi_3%&quot;</span><span class="p">,</span> <span class="s2">&quot;hdi_97%&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">hdi</span><span class="o">=</span><span class="s2">&quot;metric&quot;</span><span class="p">),</span>
-        <span class="p">],</span>
-        <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;metric&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="dask_enabled_diagnostics">
-<a class="viewcode-back" href="../../../../api/model/results/hmc.html#scistanpy.model.results.hmc.dask_enabled_diagnostics">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">dask_enabled_diagnostics</span><span class="p">(</span><span class="n">inference_obj</span><span class="p">:</span> <span class="n">az</span><span class="o">.</span><span class="n">InferenceData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute MCMC diagnostics using Dask for memory efficiency. This is used</span>
-<span class="sd">    inside the :py:meth:`SampleResults.calculate_summaries()</span>
-<span class="sd">    &lt;scistanpy.model.results.hmc.SampleResults.calculate_summaries&gt;` method when</span>
-<span class="sd">    Dask is enabled.</span>
-
-<span class="sd">    :param inference_obj: ArviZ InferenceData object containing posterior samples</span>
-<span class="sd">    :type inference_obj: az.InferenceData</span>
-
-<span class="sd">    :returns: Dataset containing computed diagnostic metrics</span>
-<span class="sd">    :rtype: xr.Dataset</span>
-
-<span class="sd">    This function computes comprehensive MCMC diagnostic metrics using Dask</span>
-<span class="sd">    for memory-efficient computation on large datasets. All diagnostics are</span>
-<span class="sd">    computed simultaneously to maximize efficiency.</span>
-
-<span class="sd">    Computed Diagnostics:</span>
-
-<span class="sd">    - Monte Carlo standard errors (mean and sd methods)</span>
-<span class="sd">    - Effective sample sizes (bulk and tail)</span>
-<span class="sd">    - R-hat convergence diagnostic</span>
-
-<span class="sd">    The Dask implementation enables:</span>
-
-<span class="sd">    - Parallel computation across available cores</span>
-<span class="sd">    - Memory-efficient processing of large datasets</span>
-<span class="sd">    - Automatic load balancing and optimization</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; diagnostics = dask_enabled_diagnostics(inference_data)</span>
-<span class="sd">        &gt;&gt;&gt; print(diagnostics.sel(metric=&#39;r_hat&#39;))</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Run computations</span>
-    <span class="k">with</span> <span class="n">utils</span><span class="o">.</span><span class="n">az_dask</span><span class="p">():</span>
-        <span class="n">diagnostics</span> <span class="o">=</span> <span class="n">dask</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span>
-            <span class="n">az</span><span class="o">.</span><span class="n">mcse</span><span class="p">(</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">),</span>
-            <span class="n">az</span><span class="o">.</span><span class="n">mcse</span><span class="p">(</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;sd&quot;</span><span class="p">),</span>
-            <span class="n">az</span><span class="o">.</span><span class="n">ess</span><span class="p">(</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;bulk&quot;</span><span class="p">),</span>
-            <span class="n">az</span><span class="o">.</span><span class="n">ess</span><span class="p">(</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;tail&quot;</span><span class="p">),</span>
-            <span class="n">az</span><span class="o">.</span><span class="n">rhat</span><span class="p">(</span><span class="n">inference_obj</span><span class="o">.</span><span class="n">posterior</span><span class="p">),</span>
-        <span class="p">)</span>
-
-    <span class="c1"># Concatenate the results and return</span>
-    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-        <span class="p">[</span>
-            <span class="n">dset</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="p">[</span><span class="n">metric</span><span class="p">])</span>
-            <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">dset</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-                <span class="p">[</span><span class="s2">&quot;mcse_mean&quot;</span><span class="p">,</span> <span class="s2">&quot;mcse_sd&quot;</span><span class="p">,</span> <span class="s2">&quot;ess_bulk&quot;</span><span class="p">,</span> <span class="s2">&quot;ess_tail&quot;</span><span class="p">,</span> <span class="s2">&quot;r_hat&quot;</span><span class="p">],</span> <span class="n">diagnostics</span>
-            <span class="p">)</span>
-        <span class="p">],</span>
-        <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;metric&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
-
-
-
 <div class="viewcode-block" id="SampleResults">
 <a class="viewcode-back" href="../../../../api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SampleResults</span><span class="p">(</span><span class="n">mle</span><span class="o">.</span><span class="n">MLEInferenceRes</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SampleResults</span><span class="p">(</span><span class="n">InferenceRes</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Comprehensive analysis interface for HMC sampling results. This class should</span>
 <span class="sd">    never be instantiated directly. Instead, use the `from_disk` method to load the</span>
 <span class="sd">    appropriate results object from disk.</span>
@@ -1199,8 +808,8 @@
 
 <span class="sd">    :param model: SciStanPy model used for sampling. Defaults to None.</span>
 <span class="sd">    :type model: Optional[Model]</span>
-<span class="sd">    :param fit: CmdStanMCMC object or path to CSV files. Defaults to None.</span>
-<span class="sd">    :type fit: Optional[Union[str, list[str], os.PathLike, CmdStanMCMC]]</span>
+<span class="sd">    :param results: CmdStanMCMC object or path to CSV files. Defaults to None.</span>
+<span class="sd">    :type results: Optional[Union[str, list[str], os.PathLike, CmdStanMCMC]]</span>
 <span class="sd">    :param data: Observed data dictionary. Defaults to None.</span>
 <span class="sd">    :type data: Optional[dict[str, npt.NDArray]]</span>
 <span class="sd">    :param precision: Numerical precision for arrays. Defaults to &quot;single&quot;.</span>
@@ -1211,9 +820,8 @@
 <span class="sd">    :type mib_per_chunk: Optional[custom_types.Integer]</span>
 <span class="sd">    :param use_dask: Whether to use Dask for computation. Defaults to False.</span>
 <span class="sd">    :type use_dask: bool</span>
-
-<span class="sd">    :ivar fit: CmdStanMCMC object containing sampling metadata</span>
-<span class="sd">    :ivar use_dask: Flag controlling Dask usage for computation</span>
+<span class="sd">    :param output_filename: Output NetCDF filename. Defaults to None.</span>
+<span class="sd">    :type output_filename: Optional[Union[str, os.PathLike]]</span>
 
 <span class="sd">    The class provides comprehensive functionality for:</span>
 
@@ -1256,179 +864,44 @@
 <span class="sd">            mcmc_results.plot_variable_failure_quantile_traces()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">RESULTS_TO_NETCDF_CONVERTER</span> <span class="o">=</span> <span class="n">CmdStanMCMCToNetCDFConverter</span>
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;Model&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">fit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="n">CmdStanMCMC</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">results</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="n">CmdStanMCMC</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">precision</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span> <span class="s2">&quot;half&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span>
-        <span class="n">inference_obj</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">az</span><span class="o">.</span><span class="n">InferenceData</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">mib_per_chunk</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">inference_obj</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">az</span><span class="o">.</span><span class="n">InferenceData</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mib_per_chunk</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">use_dask</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">output_filename</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="c1"># Store the CmdStanMCMC object</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">fit</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes the SampleResults object by setting up the necessary parameters.&quot;&quot;&quot;</span>
+        <span class="c1"># If no filename is provided, we create one based on the csv files</span>
+        <span class="n">output_filename</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">output_filename</span>
+            <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">commonprefix</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">runset</span><span class="o">.</span><span class="n">csv_files</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.nc&quot;</span>
+        <span class="p">)</span>
 
-        <span class="c1"># Note whether we are using dask</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">use_dask</span> <span class="o">=</span> <span class="n">use_dask</span>
-
-        <span class="c1"># If the inference object is None, we assume that we need to create a NETCDF</span>
-        <span class="c1"># file from the CmdStanMCMC object.</span>
-        <span class="k">if</span> <span class="n">inference_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-
-            <span class="c1"># Compile results to a NetCDF file</span>
-            <span class="n">inference_obj</span> <span class="o">=</span> <span class="n">cmdstan_csv_to_netcdf</span><span class="p">(</span>
-                <span class="n">path</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-                <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-                <span class="n">precision</span><span class="o">=</span><span class="n">precision</span><span class="p">,</span>
-                <span class="n">mib_per_chunk</span><span class="o">=</span><span class="n">mib_per_chunk</span><span class="p">,</span>
-            <span class="p">)</span>
-
-        <span class="c1"># If the inference object is a string, we assume that it is a NetCDF file</span>
-        <span class="c1"># to be loaded from disk</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inference_obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-
-            <span class="c1"># Load the inference object. Ignore warnings about chunking.</span>
-            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
-                <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
-                    <span class="s2">&quot;ignore&quot;</span><span class="p">,</span>
-                    <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;The specified chunks separate the stored chunks along dimension&quot;</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">inference_obj</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">from_netcdf</span><span class="p">(</span>
-                    <span class="n">filename</span><span class="o">=</span><span class="n">inference_obj</span><span class="p">,</span>
-                    <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;h5netcdf&quot;</span><span class="p">,</span>
-                    <span class="n">group_kwargs</span><span class="o">=</span><span class="p">{</span>
-                        <span class="n">k</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;chunks&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span> <span class="k">if</span> <span class="n">use_dask</span> <span class="k">else</span> <span class="kc">None</span><span class="p">}</span>
-                        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;posterior&quot;</span><span class="p">,</span> <span class="s2">&quot;posterior_predictive&quot;</span><span class="p">,</span> <span class="s2">&quot;sample_stats&quot;</span><span class="p">)</span>
-                    <span class="p">},</span>
-                <span class="p">)</span>
-
-        <span class="c1"># Initialize the parent class</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">inference_obj</span><span class="p">)</span>
-
-<div class="viewcode-block" id="SampleResults.calculate_summaries">
-<a class="viewcode-back" href="../../../../api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.calculate_summaries">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_summaries</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">var_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">filter_vars</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;like&quot;</span><span class="p">,</span> <span class="s2">&quot;regex&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;stats&quot;</span><span class="p">,</span> <span class="s2">&quot;diagnostics&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
-        <span class="n">round_to</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Integer</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">circ_var_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">stat_focus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span>
-        <span class="n">stat_funcs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">callable</span><span class="p">],</span> <span class="nb">callable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">extend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">hdi_prob</span><span class="p">:</span> <span class="n">custom_types</span><span class="o">.</span><span class="n">Float</span> <span class="o">=</span> <span class="mf">0.94</span><span class="p">,</span>
-        <span class="n">skipna</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">diagnostic_varnames</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">&quot;mcse_mean&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;mcse_sd&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;ess_bulk&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;ess_tail&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;r_hat&quot;</span><span class="p">,</span>
-        <span class="p">),</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute comprehensive summary statistics and diagnostics for MCMC results.</span>
-
-<span class="sd">        This method extends the parent class functionality to provide HMC-specific</span>
-<span class="sd">        diagnostic capabilities, including automatic separation of statistics and</span>
-<span class="sd">        diagnostics into appropriate InferenceData groups. See ``az.summary`` for</span>
-<span class="sd">        more detail on arguments.</span>
-
-<span class="sd">        :param var_names: Variable names to include. Defaults to None (all variables).</span>
-<span class="sd">        :type var_names: Optional[list[str]]</span>
-<span class="sd">        :param filter_vars: Variable filtering method. Defaults to None.</span>
-<span class="sd">        :type filter_vars: Optional[Literal[None, &quot;like&quot;, &quot;regex&quot;]]</span>
-<span class="sd">        :param kind: Type of computations to perform. Defaults to &quot;all&quot;.</span>
-<span class="sd">        :type kind: Literal[&quot;all&quot;, &quot;stats&quot;, &quot;diagnostics&quot;]</span>
-<span class="sd">        :param round_to: Decimal places for rounding. Defaults to 2.</span>
-<span class="sd">        :type round_to: custom_types.Integer</span>
-<span class="sd">        :param circ_var_names: Names of circular variables. Defaults to None.</span>
-<span class="sd">        :type circ_var_names: Optional[list[str]]</span>
-<span class="sd">        :param stat_focus: Primary statistic for focus. Defaults to &quot;mean&quot;.</span>
-<span class="sd">        :type stat_focus: str</span>
-<span class="sd">        :param stat_funcs: Custom statistic functions. Defaults to None.</span>
-<span class="sd">        :type stat_funcs: Optional[Union[dict[str, callable], callable]]</span>
-<span class="sd">        :param extend: Whether to include extended statistics. Defaults to True.</span>
-<span class="sd">            Only meaningful if `stat_funcs` is not `None`.</span>
-<span class="sd">        :type extend: bool</span>
-<span class="sd">        :param hdi_prob: Probability for highest density interval. Defaults to 0.94.</span>
-<span class="sd">        :type hdi_prob: custom_types.Float</span>
-<span class="sd">        :param skipna: Whether to skip NaN values. Defaults to False.</span>
-<span class="sd">        :type skipna: bool</span>
-<span class="sd">        :param diagnostic_varnames: Names of diagnostic metrics. Defaults to (&quot;mcse_mean&quot;,</span>
-<span class="sd">            &quot;mcse_sd&quot;, &quot;ess_bulk&quot;, &quot;ess_tail&quot;, &quot;r_hat&quot;).</span>
-<span class="sd">        :type diagnostic_varnames: Sequence[str]</span>
-
-<span class="sd">        :returns: Combined dataset with all computed metrics</span>
-<span class="sd">        :rtype: xr.Dataset</span>
-
-<span class="sd">        Enhanced Features:</span>
-
-<span class="sd">        - Automatic Dask acceleration for large datasets</span>
-<span class="sd">        - Separation of statistics and diagnostics into appropriate groups</span>
-<span class="sd">        - Memory-efficient computation strategies</span>
-
-<span class="sd">        The method automatically updates the InferenceData object with new groups:</span>
-
-<span class="sd">        - variable_summary_stats: Basic summary statistics</span>
-<span class="sd">        - variable_diagnostic_stats: MCMC diagnostic metrics</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># We use custom functions if we are using dask</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_dask</span><span class="p">:</span>
-
-            <span class="c1"># Calculate the two datasets</span>
-            <span class="n">summary_stats</span> <span class="o">=</span> <span class="n">dask_enabled_summary_stats</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="p">)</span>
-            <span class="n">diagnostics</span> <span class="o">=</span> <span class="n">dask_enabled_diagnostics</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_obj</span><span class="p">)</span>
-
-            <span class="c1"># Combine datasets to get the summaries</span>
-            <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
-                <span class="n">summaries</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">summary_stats</span><span class="p">,</span> <span class="n">diagnostics</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s2">&quot;metric&quot;</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;stats&quot;</span><span class="p">:</span>
-                <span class="n">summaries</span> <span class="o">=</span> <span class="n">summary_stats</span>
-            <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;diagnostics&quot;</span><span class="p">:</span>
-                <span class="n">summaries</span> <span class="o">=</span> <span class="n">diagnostics</span>
-
-        <span class="c1"># Otherwise, we use the default ArviZ functions</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Run the inherited method to get the summary statistics</span>
-            <span class="n">summaries</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">calculate_summaries</span><span class="p">(</span>
-                <span class="n">var_names</span><span class="o">=</span><span class="n">var_names</span><span class="p">,</span>
-                <span class="n">filter_vars</span><span class="o">=</span><span class="n">filter_vars</span><span class="p">,</span>
-                <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span>
-                <span class="n">round_to</span><span class="o">=</span><span class="n">round_to</span><span class="p">,</span>
-                <span class="n">circ_var_names</span><span class="o">=</span><span class="n">circ_var_names</span><span class="p">,</span>
-                <span class="n">stat_focus</span><span class="o">=</span><span class="n">stat_focus</span><span class="p">,</span>
-                <span class="n">stat_funcs</span><span class="o">=</span><span class="n">stat_funcs</span><span class="p">,</span>
-                <span class="n">extend</span><span class="o">=</span><span class="n">extend</span><span class="p">,</span>
-                <span class="n">hdi_prob</span><span class="o">=</span><span class="n">hdi_prob</span><span class="p">,</span>
-                <span class="n">skipna</span><span class="o">=</span><span class="n">skipna</span><span class="p">,</span>
-            <span class="p">)</span>
-
-            <span class="c1"># Identify the diagnostic and summary statistics</span>
-            <span class="n">noted_diagnostics</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">diagnostic_varnames</span><span class="p">)</span>
-            <span class="n">calculated_metrics</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">summaries</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
-
-            <span class="n">diagnostic_metrics</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">noted_diagnostics</span> <span class="o">&amp;</span> <span class="n">calculated_metrics</span><span class="p">)</span>
-            <span class="n">stat_metrics</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">calculated_metrics</span> <span class="o">-</span> <span class="n">noted_diagnostics</span><span class="p">)</span>
-
-            <span class="n">summary_stats</span> <span class="o">=</span> <span class="n">summaries</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="n">stat_metrics</span><span class="p">)</span>
-            <span class="n">diagnostics</span> <span class="o">=</span> <span class="n">summaries</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="n">diagnostic_metrics</span><span class="p">)</span>
-
-        <span class="c1"># Update the groups</span>
-        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span> <span class="ow">or</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;diagnostics&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_update_group</span><span class="p">(</span><span class="s2">&quot;variable_diagnostic_stats&quot;</span><span class="p">,</span> <span class="n">diagnostics</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span> <span class="ow">or</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;stats&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_update_group</span><span class="p">(</span><span class="s2">&quot;variable_summary_stats&quot;</span><span class="p">,</span> <span class="n">summary_stats</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">summaries</span></div>
-
+        <span class="c1"># Run parent init</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">precision</span><span class="o">=</span><span class="n">precision</span><span class="p">,</span>
+            <span class="n">inference_obj</span><span class="o">=</span><span class="n">inference_obj</span><span class="p">,</span>
+            <span class="n">mib_per_chunk</span><span class="o">=</span><span class="n">mib_per_chunk</span><span class="p">,</span>
+            <span class="n">use_dask</span><span class="o">=</span><span class="n">use_dask</span><span class="p">,</span>
+            <span class="n">output_filename</span><span class="o">=</span><span class="n">output_filename</span><span class="p">,</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="SampleResults.calculate_diagnostics">
 <a class="viewcode-back" href="../../../../api/model/results/hmc.html#scistanpy.model.results.hmc.SampleResults.calculate_diagnostics">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_diagnostics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shortcut to running :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.calculate_summaries`</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shortcut to running</span>
+<span class="sd">        :py:meth:`~scistanpy.model.results.mle.MLEInferenceRes.calculate_summaries`</span>
 <span class="sd">        with ``kind=&quot;diagnostics&quot;`` and no other arguments.</span>
 
 <span class="sd">        :returns: Dataset containing diagnostic metrics</span>
@@ -2150,7 +1623,7 @@
         <span class="c1"># Initialize the object</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">fit</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">csv_files</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fit_from_csv_noload</span><span class="p">(</span><span class="n">csv_files</span><span class="p">),</span>
+            <span class="n">results</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">csv_files</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fit_from_csv_noload</span><span class="p">(</span><span class="n">csv_files</span><span class="p">),</span>
             <span class="n">inference_obj</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
             <span class="n">use_dask</span><span class="o">=</span><span class="n">use_dask</span><span class="p">,</span>
         <span class="p">)</span></div>
@@ -2202,9 +1675,6 @@
 <span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; # Load from explicit list</span>
 <span class="sd">        &gt;&gt;&gt; fit = fit_from_csv_noload([&#39;chain1.csv&#39;, &#39;chain2.csv&#39;])</span>
-<span class="sd">        &gt;&gt;&gt;</span>
-<span class="sd">        &gt;&gt;&gt; # Use for conversion without memory loading</span>
-<span class="sd">        &gt;&gt;&gt; netcdf_path = cmdstan_csv_to_netcdf(fit, model)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">identify_files</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>

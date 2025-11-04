@@ -34,13 +34,14 @@ repos:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
         exclude: |
-          (?x)^(
-            .*\.lock$|
-            .*\.min\.js$|
-            .*\.map$|
-            package-lock\.json$|
-            yarn\.lock$
-          )$
+              (?x)^(
+              .*\.lock$|
+              .*\.min\.js$|
+              .*\.map$|
+              package-lock\.json$|
+              yarn\.lock$|
+              docs/\.buildinfo$
+              )$
         fail_fast: true
 
   # GitLeaks for additional secret scanning

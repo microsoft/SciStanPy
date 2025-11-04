@@ -62,9 +62,8 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">holoviews</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hvplot.pandas</span>  <span class="c1"># pylint: disable=unused-import</span>
@@ -73,10 +72,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">panel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pn</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">panel.widgets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pnw</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">param.parameterized</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">constants</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">model</span> <span class="k">as</span> <span class="n">ssp_model</span>
@@ -129,7 +127,7 @@
             <span class="n">options</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">k</span>
                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">named_model_components_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
             <span class="p">],</span>
             <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">observables</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">model_varname</span><span class="p">,</span>
         <span class="p">)</span>
@@ -210,7 +208,7 @@
 
             <span class="c1"># Skip non-constants and non-togglable parameters</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hyperparam_val</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
+                <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hyperparam_val</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
                 <span class="ow">or</span> <span class="ow">not</span> <span class="n">hyperparam_val</span><span class="o">.</span><span class="n">is_togglable</span>
             <span class="p">):</span>
                 <span class="k">continue</span>

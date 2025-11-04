@@ -251,7 +251,8 @@ parameter values for further analysis or model comparison.</p>
 <p>This method performs complete model training using the Adam optimizer
 with configurable early stopping, learning rate, and mixed precision
 support. It automatically handles device placement, gradient computation,
-and convergence monitoring.</p>
+and convergence monitoring. When early stopping is triggered, the model
+parameters are reverted to the best observed state.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

@@ -1135,6 +1135,14 @@ is always one greater than the parent class.</p>
 last dimension and don’t require complex indexing adjustments.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="scistanpy.model.components.transformations.transformed_parameters.Reduction.get_transformation_assignment">
+<span class="sig-name descname"><span class="pre">get_transformation_assignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/scistanpy/model/components/transformations/transformed_parameters.html#Reduction.get_transformation_assignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_transformation_assignment" title="Link to this definition">¶</a></dt>
+<dd><p>Generates the transformation for reductions. This is identical to the parent
+method, only with an additional level of indexing for when the reduction
+does not keep dimensions.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -1926,6 +1934,7 @@ and conversion from Python’s negative indexing convention.</p>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction.TORCH_FUNC"><code class="docutils literal notranslate"><span class="pre">Reduction.TORCH_FUNC</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_assign_depth"><code class="docutils literal notranslate"><span class="pre">Reduction.get_assign_depth()</span></code></a></li>
 <li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_index_offset"><code class="docutils literal notranslate"><span class="pre">Reduction.get_index_offset()</span></code></a></li>
+<li class="toctree-l10"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.Reduction.get_transformation_assignment"><code class="docutils literal notranslate"><span class="pre">Reduction.get_transformation_assignment()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l9"><a class="reference internal" href="#scistanpy.model.components.transformations.transformed_parameters.SumParameter"><code class="docutils literal notranslate"><span class="pre">SumParameter</span></code></a></li>

@@ -51,7 +51,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">ParamSpec</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dist</span>
@@ -666,6 +666,46 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">ExpGamma</span><span class="p">(</span>
+    <span class="n">dist</span><span class="o">.</span><span class="n">transformed_distribution</span><span class="o">.</span><span class="n">TransformedDistribution</span><span class="p">,</span> <span class="n">CustomDistribution</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exponential-Gamma distribution implementation.</span>
+
+<span class="sd">    This distribution is created by taking the logarithm of a Gamma-distributed</span>
+<span class="sd">    random variable. It&#39;s useful for modeling log-scale phenomena that exhibit</span>
+<span class="sd">    gamma-like behavior.</span>
+
+<span class="sd">    :param concentration: Shape parameter for the underlying Gamma distribution</span>
+<span class="sd">    :type concentration: torch.Tensor</span>
+<span class="sd">    :param rate: Rate parameter for the underlying Gamma distribution</span>
+<span class="sd">    :type rate: torch.Tensor</span>
+<span class="sd">    :param args: Additional arguments for the base distribution</span>
+<span class="sd">    :param kwargs: Additional keyword arguments for the base distribution</span>
+
+<span class="sd">    Mathematical Definition:</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \text{If } X &amp;\sim \text{Gamma}(\text{concentration}, \text{rate}), \text{then } \\ \\</span>
+<span class="sd">                Y &amp;= \log(X) \sim \text{ExpGamma}(\text{concentration}, \text{rate})</span>
+<span class="sd">            \end{align*}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">concentration</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">rate</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize Exponential-Gamma distribution.</span>
+
+<span class="sd">        :param concentration: Shape parameter for base Gamma distribution</span>
+<span class="sd">        :param rate: Rate parameter for base Gamma distribution</span>
+<span class="sd">        :param args: Additional arguments</span>
+<span class="sd">        :param kwargs: Additional keyword arguments</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Build the base distribution (Gamma) and transforms (log)</span>
+        <span class="n">base_dist</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">concentration</span><span class="o">=</span><span class="n">concentration</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="n">rate</span><span class="p">)</span>
+        <span class="n">transforms</span> <span class="o">=</span> <span class="p">[</span><span class="n">dist</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">ExpTransform</span><span class="p">()</span><span class="o">.</span><span class="n">inv</span><span class="p">]</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">base_dist</span><span class="p">,</span> <span class="n">transforms</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="ExpDirichlet">
 <a class="viewcode-back" href="../../../../../api/model/components/custom_distributions/custom_torch_dists.html#scistanpy.model.components.custom_distributions.custom_torch_dists.ExpDirichlet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExpDirichlet</span><span class="p">(</span>
@@ -724,7 +764,7 @@
         <span class="c1"># Make adjustments</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">base_log_prob</span>
-            <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">device</span><span class="p">))</span>
             <span class="o">-</span> <span class="n">value</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">device</span><span class="p">)]</span>
         <span class="p">)</span></div>
 </div>

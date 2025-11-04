@@ -86,32 +86,26 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABCMeta</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">overload</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dist</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">stats</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">scistanpy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstract_model_component</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.custom_distributions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">custom_scipy_dists</span><span class="p">,</span>
     <span class="n">custom_torch_dists</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.transformations</span><span class="w"> </span><span class="kn">import</span> <span class="n">transformed_parameters</span>
-
-<span class="n">cdfs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;scistanpy.model.components.transformations.cdfs&quot;</span><span class="p">)</span>
-<span class="n">constants</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span><span class="s2">&quot;scistanpy.model.components.constants&quot;</span><span class="p">)</span>
-<span class="n">transformed_data</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">lazy_import</span><span class="p">(</span>
-    <span class="s2">&quot;scistanpy.model.components.transformations.transformed_data&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components.transformations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">cdfs</span><span class="p">,</span>
+    <span class="n">transformed_data</span><span class="p">,</span>
+    <span class="n">transformed_parameters</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -410,6 +404,19 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Subclass of :py:class:`~scistanpy.model.components.transformations.cdfs.LogSurvivalFunction`</span>
 <span class="sd">    describing the log survival function for the parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">CUSTOM_LCDF_STANFILE</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Indicates whether the default, autogenerated log CDF Stan function should</span>
+<span class="sd">    be replaced (see :py:meth:`~scistanpy.model.components.transformations.cdfs.CDFLike.get_supporting_functions`)</span>
+<span class="sd">    with a custom implementation. If non-empty, this string should be the file name</span>
+<span class="sd">    of a Stan functions file located in the ``scistanpy/model/stan/`` directory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">CUSTOM_LSF_STANFILE</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Same purpose as ``CUSTOM_LCDF_STANFILE``, but for log survival functions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">SCIPY_DIST</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">stats</span><span class="o">.</span><span class="n">rv_continuous</span><span class="p">]</span> <span class="o">|</span> <span class="nb">type</span><span class="p">[</span><span class="n">stats</span><span class="o">.</span><span class="n">rv_discrete</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1019,7 +1026,7 @@
 <span class="sd">        Hyperparameters are top-level parameters in the model hierarchy</span>
 <span class="sd">        that depend only on fixed constants rather than other random variables.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span> <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span> <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">torch_parametrization</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
@@ -1223,6 +1230,8 @@
     <span class="n">TORCH_DIST</span> <span class="o">=</span> <span class="n">custom_torch_dists</span><span class="o">.</span><span class="n">Normal</span>
     <span class="n">STAN_TO_SCIPY_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mu&quot;</span><span class="p">:</span> <span class="s2">&quot;loc&quot;</span><span class="p">,</span> <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="s2">&quot;scale&quot;</span><span class="p">}</span>
     <span class="n">STAN_TO_TORCH_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mu&quot;</span><span class="p">:</span> <span class="s2">&quot;loc&quot;</span><span class="p">,</span> <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="s2">&quot;scale&quot;</span><span class="p">}</span>
+    <span class="n">CUSTOM_LCDF_STANFILE</span> <span class="o">=</span> <span class="s2">&quot;stable_normal_cdflike.stanfunctions&quot;</span>
+    <span class="n">CUSTOM_LSF_STANFILE</span> <span class="o">=</span> <span class="s2">&quot;stable_normal_cdflike.stanfunctions&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1623,6 +1632,55 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">ExpGamma</span><span class="p">(</span><span class="n">Gamma</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Exp-Gamma distribution (log of gamma random variable).</span>
+
+<span class="sd">    Implements the distribution of :math:`Y` where :math:`\exp(Y) \sim</span>
+<span class="sd">    \text{Gamma}(\alpha, \beta)`.</span>
+
+<span class="sd">    :param alpha: Shape parameter for the underlying gamma</span>
+<span class="sd">    :type alpha: custom_types.ContinuousParameterType</span>
+<span class="sd">    :param beta: Rate parameter for the underlying gamma</span>
+<span class="sd">    :type beta: custom_types.ContinuousParameterType</span>
+<span class="sd">    :param kwargs: Additional keyword arguments passed to parent class</span>
+
+<span class="sd">    Mathematical Definition:</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \begin{align*}</span>
+<span class="sd">            \text{If } X &amp;\sim \text{Gamma}(\alpha, \beta), \text{then } \\ \\</span>
+<span class="sd">            Y &amp;= \log(X) \sim \text{ExpGamma}(\alpha, \beta), \text{where } \\ \\</span>
+<span class="sd">            P(y | \alpha, \beta) &amp;= \frac{\beta^\alpha}{\Gamma(\alpha)} *</span>
+<span class="sd">            \exp(\alpha y - \beta * \exp(y)) \text{ for } y \in (-\infty, \infty)</span>
+<span class="sd">            \end{align*}</span>
+
+<span class="sd">    Properties:</span>
+
+<span class="sd">        - Support: :math:`(-\infty, \infty)`</span>
+<span class="sd">        - Related to log-normal and Gumbel distribution families</span>
+<span class="sd">        - Useful for log-scale modeling of positive continuous quantities</span>
+
+<span class="sd">    This distribution requires custom Stan functions for implementation (see</span>
+<span class="sd">    :doc:`../stan/stan_functions`) which are automatically included in any Stan</span>
+<span class="sd">    program defined using this distribution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">LOWER_BOUND</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">STAN_DIST</span> <span class="o">=</span> <span class="s2">&quot;expgamma&quot;</span>
+    <span class="n">SCIPY_DIST</span> <span class="o">=</span> <span class="n">custom_scipy_dists</span><span class="o">.</span><span class="n">expgamma</span>
+    <span class="n">TORCH_DIST</span> <span class="o">=</span> <span class="n">custom_torch_dists</span><span class="o">.</span><span class="n">ExpGamma</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of required Stan function includes.</span>
+
+<span class="sd">        :returns: List containing the expgamma.stanfunctions include</span>
+<span class="sd">        :rtype: list[str]</span>
+
+<span class="sd">        This distribution requires custom Stan functions for proper implementation</span>
+<span class="sd">        of the exp-gamma density and random number generation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_supporting_functions</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;#include expgamma.stanfunctions&quot;</span><span class="p">]</span>
+
+
 <div class="viewcode-block" id="InverseGamma">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.InverseGamma">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InverseGamma</span><span class="p">(</span><span class="n">ContinuousDistribution</span><span class="p">):</span>
@@ -1755,11 +1813,6 @@
     <span class="n">STAN_DIST</span> <span class="o">=</span> <span class="s2">&quot;expexponential&quot;</span>
     <span class="n">SCIPY_DIST</span> <span class="o">=</span> <span class="n">custom_scipy_dists</span><span class="o">.</span><span class="n">expexponential</span>
     <span class="n">TORCH_DIST</span> <span class="o">=</span> <span class="n">custom_torch_dists</span><span class="o">.</span><span class="n">ExpExponential</span>
-    <span class="n">STAN_TO_SCIPY_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;beta&quot;</span><span class="p">:</span> <span class="s2">&quot;scale&quot;</span><span class="p">}</span>
-    <span class="n">STAN_TO_TORCH_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;beta&quot;</span><span class="p">:</span> <span class="s2">&quot;rate&quot;</span><span class="p">}</span>
-    <span class="n">STAN_TO_SCIPY_TRANSFORMS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;beta&quot;</span><span class="p">:</span> <span class="n">_inverse_transform</span>
-    <span class="p">}</span>  <span class="c1"># Transform beta to match the scipy distribution&#39;s scale parameter</span>
 
 <div class="viewcode-block" id="ExpExponential.get_supporting_functions">
 <a class="viewcode-back" href="../../../../api/model/components/parameters.html#scistanpy.model.components.parameters.ExpExponential.get_supporting_functions">[docs]</a>
@@ -1997,7 +2050,7 @@
                     <span class="s2">&quot;If alpha is a float or int, then shape must be provided&quot;</span>
                 <span class="p">)</span>
             <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;shape&quot;</span><span class="p">],</span> <span class="nb">float</span><span class="p">(</span><span class="n">alpha</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">scistanpy</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="n">alpha</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="n">alpha</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">alpha</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">alpha</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>

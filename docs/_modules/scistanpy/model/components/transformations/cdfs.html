@@ -79,7 +79,7 @@
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_types</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">parameters</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scistanpy.model.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstract_model_component</span><span class="p">,</span> <span class="n">parameters</span>
 
 
 <div class="viewcode-block" id="CDFLike">
@@ -279,6 +279,85 @@
             <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="CDFLike.get_supporting_functions">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.get_supporting_functions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Defines a set of supporting Stan functions required by this transformation.</span>
+
+<span class="sd">        :returns: List of supporting Stan function names</span>
+<span class="sd">        :rtype: list[str]</span>
+
+<span class="sd">        This method extends the base class implementation to include any</span>
+<span class="sd">        additional supporting functions needed for survival function computations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_type</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="s2">&quot;abstract_model_component.AbstractModelComponent&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;real&quot;</span> <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;vector&quot;</span>
+
+        <span class="c1"># Get base supporting functions</span>
+        <span class="n">supporting_funcs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_supporting_functions</span><span class="p">()</span>
+
+        <span class="c1"># Get the typing of inputs and outputs</span>
+        <span class="n">outtype</span> <span class="o">=</span> <span class="n">get_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">xtype</span> <span class="o">=</span> <span class="n">get_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">paramtypes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">get_type</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_TO_SCIPY_NAMES</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Build the function signature</span>
+        <span class="n">signature</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">outtype</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_fname</span><span class="si">}</span><span class="s2">(&quot;</span>
+            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">xtype</span><span class="si">}</span><span class="s2"> x, &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">paramtypes</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Build the function body</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">true_fname</span><span class="si">}</span><span class="s2">(x | &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">[i]&quot;</span> <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s2">&quot;vector&quot;</span> <span class="k">else</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">paramtypes</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;);&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Define the function</span>
+        <span class="k">if</span> <span class="n">outtype</span> <span class="o">==</span> <span class="s2">&quot;real&quot;</span><span class="p">:</span>
+
+            <span class="c1"># If output is a scalar, all inputs must be scalars</span>
+            <span class="k">assert</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s2">&quot;real&quot;</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">v</span> <span class="o">==</span> <span class="s2">&quot;real&quot;</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">paramtypes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+            <span class="c1"># Add the function definition</span>
+            <span class="n">supporting_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">signature</span><span class="si">}</span><span class="se">{{\n</span><span class="s2">return </span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="se">\n}}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="c1"># If the output is a vector, at least one input must be a vector</span>
+            <span class="k">assert</span> <span class="nb">any</span><span class="p">(</span><span class="n">v</span> <span class="o">==</span> <span class="s2">&quot;vector&quot;</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">paramtypes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">paramtypes</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s2">&quot;vector&quot;</span>
+            <span class="p">)</span>
+            <span class="k">assert</span> <span class="n">xtype</span> <span class="o">==</span> <span class="s2">&quot;real&quot;</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">xtype</span> <span class="o">==</span> <span class="s2">&quot;vector&quot;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="c1"># We also need a for loop to handle vectorized inputs</span>
+            <span class="n">supporting_funcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">signature</span>
+                <span class="o">+</span> <span class="s2">&quot;{</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;vector[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">] out;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;for (i in 1:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">) </span><span class="se">{{\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;    out[i] = </span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;    }</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;print(min(out));</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;return out;</span><span class="se">\n</span><span class="s2">}&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">supporting_funcs</span></div>
+
+
 <div class="viewcode-block" id="CDFLike.write_stan_operation">
 <a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.CDFLike.write_stan_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write_stan_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -300,14 +379,42 @@
 <span class="sd">        Where the parameters are ordered according to the distribution&#39;s</span>
 <span class="sd">        Stan parameter ordering conventions.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Get the function and arguments for the operation</span>
-        <span class="n">func</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_DIST</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">STAN_SUFFIX</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="c1"># Get the arguments for the operation</span>
         <span class="n">args</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_TO_SCIPY_NAMES</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">func</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">)&quot;</span></div>
-</div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_fname</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">args</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">true_fname</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the name of the true Stan distribution function for this CDFLike</span>
+<span class="sd">        transformation.</span>
+
+<span class="sd">        :returns: True Stan distribution function name</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        This property constructs the name of the true Stan distribution function</span>
+<span class="sd">        that performs the actual CDF-like computation. This is used within the</span>
+<span class="sd">        custom function to delegate the computation while allowing for custom</span>
+<span class="sd">        parameter handling.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">STAN_DIST</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">STAN_SUFFIX</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">custom_fname</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the name of the custom Stan function for this CDFLike transformation.</span>
+
+<span class="sd">        :returns: Custom Stan function name</span>
+<span class="sd">        :rtype: str</span>
+
+<span class="sd">        This property constructs the name of the custom Stan function that</span>
+<span class="sd">        wraps the standard distribution function with appropriate parameter</span>
+<span class="sd">        ordering and transformations. We wrap the standard function to allow for</span>
+<span class="sd">        vector outputs rather than summed outputs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">true_fname</span><span class="si">}</span><span class="s2">_custom&quot;</span></div>
 
 
 
@@ -524,6 +631,19 @@
                 <span class="sa">f</span><span class="s2">&quot;Unsupported module </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">output</span><span class="p">)</span><span class="si">}</span><span class="s2"> for log CDF operation. &quot;</span>
                 <span class="s2">&quot;Expected numpy or torch.&quot;</span>
             <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LogCDF.get_supporting_functions">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogCDF.get_supporting_functions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get supporting Stan functions required by this transformation. This uses</span>
+<span class="sd">        the base class implementation unless the associated Parameter class has</span>
+<span class="sd">        a CUSTOM_LCDF_STANFILE defined, in which case that file is used instead.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">CUSTOM_LCDF_STANFILE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;#include </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">CUSTOM_LCDF_STANFILE</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_supporting_functions</span><span class="p">()</span></div>
 </div>
 
 
@@ -607,6 +727,19 @@
                 <span class="sa">f</span><span class="s2">&quot;Unsupported module </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">output</span><span class="p">)</span><span class="si">}</span><span class="s2"> for log survival function operation. &quot;</span>
                 <span class="s2">&quot;Expected numpy or torch.&quot;</span>
             <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LogSurvivalFunction.get_supporting_functions">
+<a class="viewcode-back" href="../../../../../api/model/components/transformations/cdfs.html#scistanpy.model.components.transformations.cdfs.LogSurvivalFunction.get_supporting_functions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_supporting_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get supporting Stan functions required by this transformation. This uses</span>
+<span class="sd">        the base class implementation unless the associated Parameter class has</span>
+<span class="sd">        a CUSTOM_LSF_STANFILE defined, in which case that file is used instead.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">CUSTOM_LSF_STANFILE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;#include </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">PARAMETER</span><span class="o">.</span><span class="n">CUSTOM_LSF_STANFILE</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_supporting_functions</span><span class="p">()</span></div>
 </div>
 
 </pre></div>
