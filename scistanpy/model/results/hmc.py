@@ -836,10 +836,10 @@ class SampleResults(InferenceRes):
     ):
         """Initializes the SampleResults object by setting up the necessary parameters."""
         # If no filename is provided, we create one based on the csv files
-        output_filename = (
-            output_filename
-            or os.path.commonprefix(results.runset.csv_files).rstrip("_") + ".nc"
-        )
+        if isinstance(results, CmdStanMCMC) and output_filename is None:
+            output_filename = (
+                os.path.commonprefix(results.runset.csv_files).rstrip("_") + ".nc"
+            )
 
         # Run parent init
         super().__init__(
