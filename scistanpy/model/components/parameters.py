@@ -1407,6 +1407,8 @@ class LogNormal(ContinuousDistribution):
     STAN_TO_SCIPY_NAMES = {"mu": "scale", "sigma": "s"}
     STAN_TO_TORCH_NAMES = {"mu": "loc", "sigma": "scale"}
     STAN_TO_SCIPY_TRANSFORMS = {"mu": _exp_transform}
+    CUSTOM_LCDF_STANFILE = "stable_normal_cdflike.stanfunctions"
+    CUSTOM_LSF_STANFILE = "stable_normal_cdflike.stanfunctions"
 
 
 class Beta(ContinuousDistribution):
