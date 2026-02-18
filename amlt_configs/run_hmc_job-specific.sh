@@ -6,7 +6,7 @@
 job_ind=$1
 
 # Pull the dataset information from the cmds.txt file
-IFS=" " read -r -a cmd <<< "$(sed -n "${job_ind}p" cmds-small.txt)"
+IFS=" " read -r -a cmd <<< "$(sed -n "${job_ind}p" cmds.txt)"
 
 # Switch to the code directory
 cd /opt/SciStanPy/scistanpy/pipelines || exit

@@ -52,12 +52,42 @@
 --dataset trpb --subset libI --fitness_dist exponential --growth_curve sigmoid --n_warmup 6000
 --dataset trpb --subset libI --fitness_dist lomax --growth_curve sigmoid --n_warmup 6000
 --dataset trpb --subset libI --fitness_dist gamma --growth_curve sigmoid --n_warmup 6000
---dataset nuc --subset G1 --fitness_dist exponential --n_warmup 4000
---dataset nuc --subset G1 --fitness_dist lomax --n_warmup 4000
---dataset nuc --subset G2 --fitness_dist exponential --n_warmup 2000
---dataset nuc --subset G2 --fitness_dist lomax --n_warmup 2000
---dataset nuc --subset G3 --fitness_dist exponential --n_warmup 4000
---dataset nuc --subset G3 --fitness_dist lomax --n_warmup 4000
---dataset nuc --subset G4 --fitness_dist exponential --n_warmup 4000
---dataset nuc --subset G4 --fitness_dist lomax --n_warmup 4000
--- dataset k50
+--dataset nuc --subset G1 --fitness_dist exponential --n_warmup 4000 --n_samples 4000
+--dataset nuc --subset G1 --fitness_dist lomax --n_warmup 4000 --n_samples 4000
+--dataset nuc --subset G2 --fitness_dist exponential --n_warmup 2000 --exp_beta 12.5
+--dataset nuc --subset G2 --fitness_dist lomax --n_warmup 2000 --lomax_alpha 4.0
+--dataset nuc --subset G3 --fitness_dist exponential --n_warmup 4000 --exp_beta 15.0 --codon_noise_beta 10.0
+--dataset nuc --subset G3 --fitness_dist lomax --n_warmup 4000 --lomax_alpha 6.0 --codon_noise_beta 10.0
+--dataset nuc --subset G4 --fitness_dist exponential --n_warmup 4000 --exp_beta 17.5
+--dataset nuc --subset G4 --fitness_dist lomax --n_warmup 4000 --lomax_alpha 8.0
+--dataset k50
+--dataset trpb --subset four-site --fitness_dist exponential --growth_curve exponential
+--dataset trpb --subset four-site --fitness_dist lomax --growth_curve exponential
+--dataset trpb --subset four-site --fitness_dist gamma --growth_curve exponential
+--dataset trpb --subset four-site --fitness_dist exponential --growth_curve sigmoid
+--dataset trpb --subset four-site --fitness_dist lomax --growth_curve sigmoid
+--dataset trpb --subset four-site --fitness_dist gamma --growth_curve sigmoid
+--dataset pdz --subset cript-c --fitness_dist exponential --growth_curve exponential
+--dataset pdz --subset cript-c --fitness_dist lomax --growth_curve exponential
+--dataset pdz --subset cript-c --fitness_dist gamma --growth_curve exponential
+--dataset pdz --subset cript-c --fitness_dist exponential --growth_curve sigmoid
+--dataset pdz --subset cript-c --fitness_dist lomax --growth_curve sigmoid
+--dataset pdz --subset cript-c --fitness_dist gamma --growth_curve sigmoid
+--dataset pdz --subset cript-n --fitness_dist exponential --growth_curve exponential
+--dataset pdz --subset cript-n --fitness_dist lomax --growth_curve exponential
+--dataset pdz --subset cript-n --fitness_dist gamma --growth_curve exponential
+--dataset pdz --subset cript-n --fitness_dist exponential --growth_curve sigmoid
+--dataset pdz --subset cript-n --fitness_dist lomax --growth_curve sigmoid
+--dataset pdz --subset cript-n --fitness_dist gamma --growth_curve sigmoid
+--dataset pdz --subset trans-1 --fitness_dist exponential --growth_curve exponential
+--dataset pdz --subset trans-1 --fitness_dist lomax --growth_curve exponential
+--dataset pdz --subset trans-1 --fitness_dist gamma --growth_curve exponential
+--dataset pdz --subset trans-1 --fitness_dist exponential --growth_curve sigmoid
+--dataset pdz --subset trans-1 --fitness_dist lomax --growth_curve sigmoid
+--dataset pdz --subset trans-1 --fitness_dist gamma --growth_curve sigmoid
+--dataset pdz --subset trans-2 --fitness_dist exponential --growth_curve exponential
+--dataset pdz --subset trans-2 --fitness_dist lomax --growth_curve exponential
+--dataset pdz --subset trans-2 --fitness_dist gamma --growth_curve exponential
+--dataset pdz --subset trans-2 --fitness_dist exponential --growth_curve sigmoid
+--dataset pdz --subset trans-2 --fitness_dist lomax --growth_curve sigmoid
+--dataset pdz --subset trans-2 --fitness_dist gamma --growth_curve sigmoid
