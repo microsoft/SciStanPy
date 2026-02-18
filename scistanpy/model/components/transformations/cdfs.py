@@ -308,7 +308,6 @@ class CDFLike(transformed_parameters.TransformedParameter):
                 + f"for (i in 1:{self.shape[-1]}) {{\n"
                 + f"    out[i] = {body}\n"
                 + "    }\n"
-                + "print(min(out));\n"
                 + "return out;\n}"
             )
 
@@ -340,6 +339,10 @@ class CDFLike(transformed_parameters.TransformedParameter):
 
         return f"{self.custom_fname}({kwargs['x']}, {args})"
 
+    def _get_true_fname(self) -> str:
+        """Helper for `true_fname` property to allow for overriding in child classes"""
+        return f"{self.model_varname}_{self.STAN_SUFFIX}"
+
     @property
     def true_fname(self) -> str:
         """Get the name of the true Stan distribution function for this CDFLike
@@ -353,7 +356,7 @@ class CDFLike(transformed_parameters.TransformedParameter):
         custom function to delegate the computation while allowing for custom
         parameter handling.
         """
-        return f"{self.__class__.PARAMETER.STAN_DIST}_{self.STAN_SUFFIX}"
+        return self._get_true_fname()
 
     @property
     def custom_fname(self) -> str:
@@ -578,6 +581,15 @@ class LogCDF(CDFLike):
             return [f"#include {self.__class__.PARAMETER.CUSTOM_LCDF_STANFILE}"]
         return super().get_supporting_functions()
 
+    def _get_true_fname(self) -> str:
+        """
+        If a custom LCDF Stan file is defined, we need to use the function defined
+        in that file rather than the standard one.
+        """
+        if self.__class__.PARAMETER.CUSTOM_LCDF_STANFILE:
+            return f"{self.__class__.PARAMETER.STAN_DIST}_{self.STAN_SUFFIX}"
+        return super()._get_true_fname()
+
 
 class LogSurvivalFunction(CDFLike):
     r"""Logarithmic survival function transformation.
@@ -664,3 +676,12 @@ class LogSurvivalFunction(CDFLike):
         if self.__class__.PARAMETER.CUSTOM_LSF_STANFILE:
             return [f"#include {self.__class__.PARAMETER.CUSTOM_LSF_STANFILE}"]
         return super().get_supporting_functions()
+
+    def _get_true_fname(self) -> str:
+        """
+        If a custom LSF Stan file is defined, we need to use the function defined
+        in that file rather than the standard one.
+        """
+        if self.__class__.PARAMETER.CUSTOM_LSF_STANFILE:
+            return f"{self.__class__.PARAMETER.STAN_DIST}_{self.STAN_SUFFIX}"
+        return super()._get_true_fname()
