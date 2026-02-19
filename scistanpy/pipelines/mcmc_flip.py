@@ -116,6 +116,25 @@ def define_base_parser() -> argparse.ArgumentParser:
             default=None,
             help=f"{k} hyperparameter. Default = {v}.",
         )
+    hyperparam_group.add_argument(
+        "--centered",
+        action="store_false",
+        target="noncentered",
+        help=(
+            "By default, models are non-centered. Set this flag to use a centered "
+            "parameterization instead."
+        ),
+    )
+    hyperparam_group.add_argument(
+        "--experimental_dist",
+        type=str,
+        choices=["normal", "lognormal"],
+        default="lognormal",
+        help=(
+            "When modeling experimental noise, do we model it as a normal distribution "
+            "or a lognormal distribution? Default is lognormal."
+        ),
+    )
 
     return parser
 
@@ -286,6 +305,8 @@ def prep_run(args: argparse.Namespace) -> "Model":
             if k in DEFAULT_HYPERPARAMS and v is not None
         }
     )
+    instance_kwargs["noncentered"] = args.noncentered
+    instance_kwargs["experimental_dist"] = args.experimental_dist
 
     return instance_factory(**instance_kwargs)
 
@@ -297,6 +318,10 @@ def run_hmc(args: argparse.Namespace) -> None:
     model_name = f"{args.dataset}_{args.subset}_{args.fitness_dist}"
     if args.growth_curve:
         model_name += f"_{args.growth_curve}"
+
+    # Print the model summary before running HMC
+    print("Model summary:")
+    print(model)
 
     # Run HMC unless we are catching up due to a failed csv-to-nc conversion
     if args.conversion_catchup:

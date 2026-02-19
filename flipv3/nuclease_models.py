@@ -31,8 +31,7 @@ class G1Template(Model):
         hc3: npt.NDArray[np.int64],
         lt: npt.NDArray[np.float64],
         ht: npt.NDArray[np.float64],
-        alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
-        alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
+        alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"],
         codon_noise_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS[
             "codon_noise_alpha"
         ],
@@ -63,8 +62,8 @@ class G1Template(Model):
 
         # The fluorescence gates are constants. We need to add a dimension to make
         # them compatible with the other arrays
-        self.log_lt = Constant(np.log(lt[:, None]), togglable=False)
-        self.log_ht = Constant(np.log(ht[:, None]), togglable=False)
+        self.lt = Constant(lt[:, None], togglable=False)
+        self.ht = Constant(ht[:, None], togglable=False)
 
         # Run inherited init to assign default data
         count_arrays = {
@@ -86,15 +85,9 @@ class G1Template(Model):
                 Constant(np.sum(array, axis=-1, keepdims=True), togglable=False),
             )
 
-        # We need a shared alpha as a hyperparameter on the starting counts. We
-        # model log-alpha for numerical stability.
-        self.log_alpha = parameters.ExpGamma(
-            alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_variants,)
-        )
-
         # Starting proportions are described by a Dirichlet distribution
         self.log_theta_t0 = parameters.ExpDirichlet(
-            alpha=operations.exp(self.log_alpha), shape=(3, self.n_variants)
+            alpha=alpha, shape=(3, self.n_variants)
         )
 
         # We have two sources of noise in fluorescence: One from differing experimental
@@ -102,7 +95,7 @@ class G1Template(Model):
         # protein expression due to differing codon usage
         self.experimental_noise = parameters.HalfNormal(sigma=experimental_noise_sigma)
         self.codon_noise = parameters.Gamma(
-            alpha=codon_noise_alpha, beta=codon_noise_beta, shape=(self.n_variants,)
+            alpha=codon_noise_alpha, beta=codon_noise_beta
         )
 
         # All variants are each described by a mean log fluorescence
@@ -116,6 +109,7 @@ class G1Template(Model):
             mu=self.absolute_mean_log_fluorescence,
             sigma=self.experimental_noise,
             shape=(3, self.n_variants),
+            noncentered=False,
         )
 
         # We assume that any noise from the detector is caught in the experimental
@@ -127,8 +121,8 @@ class G1Template(Model):
         # at the fluorescence value of the threshold
         # pylint: disable=no-value-for-parameter
         self.log_theta_low_unnorm = (
-            parameters.Normal.log_ccdf(
-                x=self.log_lt,
+            parameters.LogNormal.log_ccdf(
+                x=self.lt,
                 mu=self.experimental_mean_log_fluorescence,
                 sigma=self.codon_noise,
                 shape=self.experimental_mean_log_fluorescence.shape,
@@ -136,8 +130,8 @@ class G1Template(Model):
             + self.log_theta_t0
         )
         self.log_theta_high_unnorm = (
-            parameters.Normal.log_ccdf(
-                x=self.log_ht,
+            parameters.LogNormal.log_ccdf(
+                x=self.ht,
                 mu=self.experimental_mean_log_fluorescence,
                 sigma=self.codon_noise,
                 shape=self.experimental_mean_log_fluorescence.shape,
@@ -194,8 +188,7 @@ class G2Template(Model):
         c93: npt.NDArray[np.int64],
         c975: npt.NDArray[np.int64],
         ft: npt.NDArray[np.floating],
-        alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
-        alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
+        alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"],
         codon_noise_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS[
             "codon_noise_alpha"
         ],
@@ -237,15 +230,11 @@ class G2Template(Model):
             )
 
         # Fluorescence gates are constant. Record their logs.
-        self.log_thresholds = Constant(np.log(ft), togglable=False)
+        self.thresholds = Constant(ft, togglable=False)
 
-        # The input libraries should be correlated, but might have slightly different
-        # proportions. We model log alpha for numerical stability.
-        self.log_alpha = parameters.ExpGamma(
-            alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_variants,)
-        )
+        # Set input proportions
         self.log_theta_t0 = parameters.ExpDirichlet(
-            alpha=operations.exp(self.log_alpha), shape=(2, self.n_variants)
+            alpha=alpha, shape=(2, self.n_variants)
         )
 
         # Model input counts
@@ -267,7 +256,7 @@ class G2Template(Model):
 
         # We have noise in the system due to varying codon expression levels
         self.codon_noise = parameters.Gamma(
-            alpha=codon_noise_alpha, beta=codon_noise_beta, shape=(self.n_variants,)
+            alpha=codon_noise_alpha, beta=codon_noise_beta
         )
 
         # Update the initial distributions based on a normal survival function,
@@ -281,8 +270,8 @@ class G2Template(Model):
                 self,
                 log_theta_name,
                 operations.normalize_log(
-                    parameters.Normal.log_ccdf(
-                        x=self.log_thresholds[i],
+                    parameters.LogNormal.log_ccdf(
+                        x=self.thresholds[i],
                         mu=self.log_fluorescence,
                         sigma=self.codon_noise,
                         shape=(self.n_variants,),
@@ -318,6 +307,7 @@ class G3G4Template(Model):
         codon_noise_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS[
             "codon_noise_beta"
         ],
+        experimental_dist: Literal["normal", "lognormal"] = "lognormal",
         **kwargs,
     ):
 
@@ -325,6 +315,13 @@ class G3G4Template(Model):
         assert ic1.ndim == ft.ndim == 1
         assert oc1.ndim == 2
         assert ic1.shape[-1] == oc1.shape[-1]
+
+        # Validate experimental distribution input
+        if experimental_dist not in {"normal", "lognormal"}:
+            raise ValueError(
+                f"Invalid value for experimental_dist: {experimental_dist}. "
+                "Must be 'normal' or 'lognormal'."
+            )
 
         # Get number of variants
         self.n_variants = ic1.shape[-1]
@@ -340,7 +337,7 @@ class G3G4Template(Model):
                 f"total_{name}",
                 Constant(np.sum(val, axis=-1, keepdims=True), togglable=False),
             )
-        self.log_thresholds = Constant(np.log(ft[:, None]), togglable=False)
+        self.thresholds = Constant(ft[:, None], togglable=False)
 
         # No prior on the alpha parameter for this model as there is only one input
         # population
@@ -358,19 +355,31 @@ class G3G4Template(Model):
             alpha=codon_noise_alpha, beta=codon_noise_beta
         )
 
-        # Pass through the survival function
+        # Different paths depending on whether our survival function is normal or
+        # lognormal. If normal, we exponentiate the log fluorescence to get the mean
+        # of the normal distribution. If lognormal, we can use the log fluorescence
+        # directly as the mean of the log normal distribution.
+        shared_args = {
+            "x": self.thresholds,
+            "sigma": self.codon_noise,
+            "shape": (
+                self.thresholds.shape[0],
+                self.n_variants,
+            ),
+        }
+        if experimental_dist == "normal":
+            log_survival = parameters.Normal.log_ccdf(
+                mu=operations.exp(self.log_fluorescence), **shared_args
+            )
+        else:
+            log_survival = parameters.LogNormal.log_ccdf(
+                mu=self.log_fluorescence, **shared_args
+            )
+
+        # Get log theta after filtering
         # pylint: disable=no-value-for-parameter
         self.log_theta_filtered = operations.normalize_log(
-            parameters.Normal.log_ccdf(
-                x=self.log_thresholds,
-                mu=self.log_fluorescence,
-                sigma=self.codon_noise,
-                shape=(
-                    self.log_thresholds.shape[0],
-                    self.n_variants,
-                ),
-            )
-            + self.log_theta_t0
+            log_survival + self.log_theta_t0
         )
         # pylint: enable=no-value-for-parameter
 
@@ -392,8 +401,8 @@ class LomaxFluorescenceMixIn:
 
     def _set_base_log_fluorescence(  # pylint: disable=unused-argument
         self,
-        lambda_: "custom_types.Float" = DEFAULT_HYPERPARAMS["lambda_nuclease"],
-        lomax_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["lomax_alpha_nuclease"],
+        lambda_: "custom_types.Float" = DEFAULT_HYPERPARAMS["lambda_"],
+        lomax_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["lomax_alpha"],
         **kwargs,
     ):
         # pylint: disable = no-member
@@ -407,7 +416,7 @@ class ExpFluorescenceMixIn:
 
     def _set_base_log_fluorescence(  # pylint: disable=unused-argument
         self,
-        beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["exp_beta_nuclease"],
+        beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["exp_beta"],
         **kwargs,
     ):
         # pylint: disable = no-member

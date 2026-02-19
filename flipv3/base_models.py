@@ -1,7 +1,7 @@
 """Holds base models shared by all FLIP datasets"""
 
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -159,25 +159,44 @@ class HierarchicalEnrichmentMeta(FlatEnrichmentMeta):
 
         def lomax_exp_growth_rate(
             self,
-            r_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS["r_sigma_sigma"],
+            r_sigma: "custom_types.Float" = DEFAULT_HYPERPARAMS["r_sigma"],
+            noncentered: bool = True,
+            experimental_dist: Literal["normal", "lognormal"] = "lognormal",
             **kwargs,
         ):
             """
             The returned function is the mean growth rate. We add noise for the
             hierarchical models.
             """
+            # Validate input
+            if experimental_dist not in {"normal", "lognormal"}:
+                raise ValueError(
+                    f"Invalid value for experimental_dist: {experimental_dist}. "
+                    "Must be 'normal' or 'lognormal'."
+                )
+
             # Assign the mean growth rate
             self.log_r_mean = gr_func(self, **kwargs)
 
-            # Set the standard deviation for the growth rate
-            # self.r_sigma = parameters.HalfNormal(sigma=r_sigma_sigma)
-            return operations.exp(
-                parameters.Normal(
-                    mu=self.log_r_mean,
-                    sigma=r_sigma,
-                    shape=(self.n_replicates, self.n_variants),
-                )
+            # Update the mean depending on the experimental distribution
+            mu = (
+                operations.exp(self.log_r_mean)
+                if experimental_dist == "normal"
+                else self.log_r_mean
             )
+
+            # Get the growth rates
+            gr = parameters.Normal(
+                mu=mu,
+                sigma=r_sigma,
+                shape=(self.n_replicates, self.n_variants),
+                noncentered=noncentered,
+            )
+
+            # Exponentiate if the experimental distribution is lognormal
+            if experimental_dist == "lognormal":
+                return operations.exp(gr)
+            return gr
 
         def gamma_inv_growth_rate(  # pylint: disable=unused-argument
             self,

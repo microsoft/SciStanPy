@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
-from scistanpy import operations, parameters
+from scistanpy import parameters
 
 from .base_models import BaseEnrichmentTemplate, HierarchicalEnrichmentMeta
 from .constants import DEFAULT_HYPERPARAMS, GrowthCurve, GrowthRate
@@ -22,8 +22,7 @@ class BasePDZ3(BaseEnrichmentTemplate):  # pylint: disable=abstract-method
         self,
         starting_counts: npt.NDArray[np.int64],
         timepoint_counts: npt.NDArray[np.int64],
-        alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
-        alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
+        alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"],
         **kwargs,
     ):
 
@@ -37,27 +36,19 @@ class BasePDZ3(BaseEnrichmentTemplate):  # pylint: disable=abstract-method
         super().__init__(
             starting_counts=starting_counts,
             timepoint_counts=timepoint_counts,
-            alpha_alpha=alpha_alpha,
-            alpha_beta=alpha_beta,
+            alpha=alpha,
             **kwargs,
         )
 
     def _set_starting_props(
         self,
-        alpha_alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_alpha"],
-        alpha_beta: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha_beta"],
+        alpha: "custom_types.Float" = DEFAULT_HYPERPARAMS["alpha"],
         **kwargs,
     ):
 
-        # Set a prior on the Dirichlet alpha parameters. We model log-alpha for
-        # numerical stability.
-        self.log_alpha = parameters.ExpGamma(
-            alpha=alpha_alpha, beta=alpha_beta, shape=(self.n_variants,)
-        )
-
         # Set the initial proportions
         return parameters.ExpDirichlet(
-            alpha=operations.exp(self.log_alpha),
+            alpha=alpha,
             shape=self.default_data["starting_counts"].shape,
         )
 

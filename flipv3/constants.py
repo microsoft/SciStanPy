@@ -6,21 +6,16 @@ from typing import Literal
 DEFAULT_HYPERPARAMS = {
     "alpha": 0.1,
     "exp_beta": 10.0,
-    "exp_beta_nuclease": 10.0,
-    "lambda_": 0.1,
-    "lambda_nuclease": 0.1,
-    "lomax_alpha": 5.0,
-    "lomax_alpha_nuclease": 5.0,
+    "lambda_": 1.0,
+    "lomax_alpha": 2.0,
     "c_alpha": 4.0,
     "c_beta": 8.0,
-    "r_sigma_sigma": 0.01,
-    "inv_r_alpha": 7.0,
-    "inv_r_beta": 1.0,
-    "alpha_alpha": 2.0,
-    "alpha_beta": 2.0,
+    "r_sigma": 0.1,
+    "inv_r_alpha": 2.0,
+    "inv_r_beta": 0.5,
     "codon_noise_alpha": 2.0,
     "codon_noise_beta": 2.0,
-    "experimental_noise_sigma": 0.01,
+    "experimental_noise_sigma": 0.5,
 }
 
 # Types for model options
