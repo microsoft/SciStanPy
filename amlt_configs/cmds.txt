@@ -1,9 +1,9 @@
---dataset pdz --subset cis --fitness_dist exponential --growth_curve exponential
---dataset pdz --subset cis --fitness_dist gamma --growth_curve exponential --n_samples 4000
---dataset pdz --subset cis --fitness_dist lomax --growth_curve exponential
---dataset pdz --subset cis --fitness_dist exponential --growth_curve sigmoid
---dataset pdz --subset cis --fitness_dist gamma --growth_curve sigmoid --n_samples 4000
---dataset pdz --subset cis --fitness_dist lomax --growth_curve sigmoid --alpha 5.0 --centered
+--dataset pdz --subset cis --fitness_dist exponential --growth_curve exponential --experimental_dist normal --centered
+--dataset pdz --subset cis --fitness_dist gamma --growth_curve exponential --n_warmup 6000 --n_samples 4000
+--dataset pdz --subset cis --fitness_dist lomax --growth_curve exponential --experimental_dist normal
+--dataset pdz --subset cis --fitness_dist exponential --growth_curve sigmoid --experimental_dist normal
+--dataset pdz --subset cis --fitness_dist gamma --growth_curve sigmoid --n_warmup 6000 --n_samples 4000
+--dataset pdz --subset cis --fitness_dist lomax --growth_curve sigmoid --alpha 5.0 --n_warmup 6000 --experimental_dist normal
 --dataset trpb --subset libA --fitness_dist exponential --growth_curve exponential
 --dataset trpb --subset libA --fitness_dist lomax --growth_curve exponential
 --dataset trpb --subset libA --fitness_dist exponential --growth_curve sigmoid
@@ -16,50 +16,50 @@
 --dataset trpb --subset libC --fitness_dist lomax --growth_curve exponential
 --dataset trpb --subset libC --fitness_dist exponential --growth_curve sigmoid
 --dataset trpb --subset libC --fitness_dist lomax --growth_curve sigmoid
---dataset trpb --subset libD --fitness_dist exponential --growth_curve exponential
---dataset trpb --subset libD --fitness_dist lomax --growth_curve exponential
+--dataset trpb --subset libD --fitness_dist exponential --growth_curve exponential --centered --experimental_dist normal
+--dataset trpb --subset libD --fitness_dist lomax --growth_curve exponential --experimental_dist normal
 --dataset trpb --subset libD --fitness_dist gamma --growth_curve exponential
---dataset trpb --subset libD --fitness_dist exponential --growth_curve sigmoid --centered
---dataset trpb --subset libD --fitness_dist lomax --growth_curve sigmoid --centered
---dataset trpb --subset libD --fitness_dist gamma --growth_curve sigmoid
---dataset trpb --subset libE --fitness_dist exponential --growth_curve exponential --centered
---dataset trpb --subset libE --fitness_dist lomax --growth_curve exponential  --centered
---dataset trpb --subset libE --fitness_dist gamma --growth_curve exponential
---dataset trpb --subset libE --fitness_dist exponential --growth_curve sigmoid  --centered  --alpha 5.0
---dataset trpb --subset libE --fitness_dist lomax --growth_curve sigmoid  --centered --alpha 5.0
---dataset trpb --subset libE --fitness_dist gamma --growth_curve sigmoid --alpha 5.0
---dataset trpb --subset libF --fitness_dist exponential --growth_curve exponential
---dataset trpb --subset libF --fitness_dist lomax --growth_curve exponential
+--dataset trpb --subset libD --fitness_dist exponential --growth_curve sigmoid --n_warmup 6000 --experimental_dist normal
+--dataset trpb --subset libD --fitness_dist lomax --growth_curve sigmoid --n_warmup 6000 --experimental_dist normal
+--dataset trpb --subset libD --fitness_dist gamma --growth_curve sigmoid --n_warmup 6000
+--dataset trpb --subset libE --fitness_dist exponential --growth_curve exponential --n_warmup 6000 --experimental_dist normal
+--dataset trpb --subset libE --fitness_dist lomax --growth_curve exponential --n_warmup 6000 --experimental_dist normal
+--dataset trpb --subset libE --fitness_dist gamma --growth_curve exponential --n_warmup 6000
+--dataset trpb --subset libE --fitness_dist exponential --growth_curve sigmoid --n_warmup 6000 --alpha 5.0 --experimental_dist normal
+--dataset trpb --subset libE --fitness_dist lomax --growth_curve sigmoid --n_warmup 6000 --alpha 5.0 --experimental_dist normal
+--dataset trpb --subset libE --fitness_dist gamma --growth_curve sigmoid --n_warmup 6000 --alpha 5.0
+--dataset trpb --subset libF --fitness_dist exponential --growth_curve exponential --centered --experimental_dist normal
+--dataset trpb --subset libF --fitness_dist lomax --growth_curve exponential --centered --experimental_dist normal
 --dataset trpb --subset libF --fitness_dist gamma --growth_curve exponential
---dataset trpb --subset libF --fitness_dist exponential --growth_curve sigmoid
---dataset trpb --subset libF --fitness_dist lomax --growth_curve sigmoid --centered --alpha 5.0
---dataset trpb --subset libF --fitness_dist gamma --growth_curve sigmoid --alpha 5.0
---dataset trpb --subset libG --fitness_dist exponential --growth_curve exponential
---dataset trpb --subset libG --fitness_dist lomax --growth_curve exponential
---dataset trpb --subset libG --fitness_dist gamma --growth_curve exponential
---dataset trpb --subset libG --fitness_dist exponential --growth_curve sigmoid --centered --alpha 5.0
---dataset trpb --subset libG --fitness_dist lomax --growth_curve sigmoid --centered --alpha 5.0
---dataset trpb --subset libG --fitness_dist gamma --growth_curve sigmoid --alpha 5.0
---dataset trpb --subset libH --fitness_dist exponential --growth_curve exponential
---dataset trpb --subset libH --fitness_dist lomax --growth_curve exponential
---dataset trpb --subset libH --fitness_dist gamma --growth_curve exponential
---dataset trpb --subset libH --fitness_dist exponential --growth_curve sigmoid --centered --alpha 5.0
---dataset trpb --subset libH --fitness_dist lomax --growth_curve sigmoid --centered --alpha 5.0
---dataset trpb --subset libH --fitness_dist gamma --growth_curve sigmoid --alpha 5.0
---dataset trpb --subset libI --fitness_dist exponential --growth_curve exponential
---dataset trpb --subset libI --fitness_dist lomax --growth_curve exponential
+--dataset trpb --subset libF --fitness_dist exponential --growth_curve sigmoid --centered --experimental_dist normal
+--dataset trpb --subset libF --fitness_dist lomax --growth_curve sigmoid --n_warmup 6000 --alpha 5.0 --experimental_dist normal
+--dataset trpb --subset libF --fitness_dist gamma --growth_curve sigmoid --alpha 5.0 --n_warmup 6000
+--dataset trpb --subset libG --fitness_dist exponential --growth_curve exponential --n_warmup 6000 --centered --experimental_dist normal
+--dataset trpb --subset libG --fitness_dist lomax --growth_curve exponential --centered --experimental_dist normal
+--dataset trpb --subset libG --fitness_dist gamma --growth_curve exponential --n_warmup 4000
+--dataset trpb --subset libG --fitness_dist exponential --growth_curve sigmoid --n_warmup 6000 --alpha 5.0 --experimental_dist normal
+--dataset trpb --subset libG --fitness_dist lomax --growth_curve sigmoid --n_warmup 6000 --alpha 5.0 --experimental_dist normal
+--dataset trpb --subset libG --fitness_dist gamma --growth_curve sigmoid --n_warmup 6000 --alpha 5.0
+--dataset trpb --subset libH --fitness_dist exponential --growth_curve exponential --centered --experimental_dist normal
+--dataset trpb --subset libH --fitness_dist lomax --growth_curve exponential --centered --experimental_dist normal
+--dataset trpb --subset libH --fitness_dist gamma --growth_curve exponential --n_warmup 4000
+--dataset trpb --subset libH --fitness_dist exponential --growth_curve sigmoid --n_warmup 6000 --alpha 5.0 --experimental_dist normal
+--dataset trpb --subset libH --fitness_dist lomax --growth_curve sigmoid --n_warmup 6000 --alpha 5.0 --experimental_dist normal
+--dataset trpb --subset libH --fitness_dist gamma --growth_curve sigmoid --n_warmup 6000 --alpha 5.0
+--dataset trpb --subset libI --fitness_dist exponential --growth_curve exponential --centered --experimental_dist normal
+--dataset trpb --subset libI --fitness_dist lomax --growth_curve exponential --centered --experimental_dist normal
 --dataset trpb --subset libI --fitness_dist gamma --growth_curve exponential
---dataset trpb --subset libI --fitness_dist exponential --growth_curve sigmoid --centered --alpha 5.0
---dataset trpb --subset libI --fitness_dist lomax --growth_curve sigmoid --centered --alpha 5.0
---dataset trpb --subset libI --fitness_dist gamma --growth_curve sigmoid --centered --alpha 5.0
---dataset nuc --subset G1 --fitness_dist exponential --n_samples 4000 --alpha 5.0
---dataset nuc --subset G1 --fitness_dist lomax --n_samples 4000 --alpha 5.0
---dataset nuc --subset G2 --fitness_dist exponential --exp_beta 12.5 --alpha 5.0
---dataset nuc --subset G2 --fitness_dist lomax --lomax_alpha 4.0 --alpha 5.0
---dataset nuc --subset G3 --fitness_dist exponential --exp_beta 15.0 --alpha 5.0 --experimental_dist normal
---dataset nuc --subset G3 --fitness_dist lomax --lomax_alpha 6.0 --alpha 5.0  --experimental_dist normal
---dataset nuc --subset G4 --fitness_dist exponential --exp_beta 17.5 --alpha 5.0
---dataset nuc --subset G4 --fitness_dist lomax --lomax_alpha 8.0 --alpha 5.0
+--dataset trpb --subset libI --fitness_dist exponential --growth_curve sigmoid --n_warmup 6000 --alpha 5.0 --experimental_dist normal
+--dataset trpb --subset libI --fitness_dist lomax --growth_curve sigmoid --n_warmup 6000 --alpha 5.0 --experimental_dist normal
+--dataset trpb --subset libI --fitness_dist gamma --growth_curve sigmoid --n_warmup 6000 --alpha 5.0
+--dataset nuc --subset G1 --fitness_dist exponential --n_samples 4000 --alpha 5.0 --centered
+--dataset nuc --subset G1 --fitness_dist lomax --n_samples 4000 --alpha 5.0 --centered
+--dataset nuc --subset G2 --fitness_dist exponential --exp_beta 12.5 --alpha 5.0 --centered
+--dataset nuc --subset G2 --fitness_dist lomax --lomax_alpha 4.0 --alpha 5.0 --centered --n_warmup 4000 --n_samples 3000
+--dataset nuc --subset G3 --fitness_dist exponential --exp_beta 15.0 --alpha 5.0 --experimental_dist normal --centered
+--dataset nuc --subset G3 --fitness_dist lomax --lomax_alpha 6.0 --alpha 5.0  --experimental_dist normal --centered
+--dataset nuc --subset G4 --fitness_dist exponential --exp_beta 17.5 --alpha 5.0 --centered
+--dataset nuc --subset G4 --fitness_dist lomax --lomax_alpha 8.0 --alpha 5.0 --centered
 --dataset k50
 --dataset trpb --subset four-site --fitness_dist exponential --growth_curve exponential --n_samples 1000
 --dataset trpb --subset four-site --fitness_dist lomax --growth_curve exponential --n_samples 1000
