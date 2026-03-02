@@ -119,7 +119,7 @@ def define_base_parser() -> argparse.ArgumentParser:
     hyperparam_group.add_argument(
         "--centered",
         action="store_false",
-        target="noncentered",
+        dest="noncentered",
         help=(
             "By default, models are non-centered. Set this flag to use a centered "
             "parameterization instead."
