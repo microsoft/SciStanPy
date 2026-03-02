@@ -1654,7 +1654,7 @@ def fit_from_csv_noload(path: str | list[str] | os.PathLike) -> CmdStanMCMC:
         if config_dict["method"] != "sample":
             raise ValueError(
                 "Expecting Stan CSV output files from method sample, "
-                f" found outputs from method {config_dict["method"]}"
+                f" found outputs from method {config_dict['method']}"
             )
 
         return config_dict
