@@ -17,6 +17,7 @@ RUN apt-get update \
         dpkg \
         libc-bin \
         libcap2 \
+        libcurl3-gnutls \
         libgnutls30 \
         libgssapi-krb5-2 \
         libpam-modules \
@@ -35,24 +36,30 @@ RUN apt-get update \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Python 3.12 as default and ensure pip is available
+# Set Python 3.12 as default and ensure pip is available. Delete unwanted Python
+# versions.
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
     && update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
-    && python3 -m ensurepip --upgrade
+    && python3 -m ensurepip --upgrade \
+    && rm -rf /usr/lib/python2.7 /usr/lib/python3 /usr/lib/python3.10 \
+    && rm -rf /usr/local/lib/python3.10 \
+    && rm -f /usr/bin/python3.10 /usr/bin/python2.7
 
 # Install Python packages via pip
 # hadolint ignore=DL3013
 RUN python3 -m pip install --no-cache-dir \
-    "arviz>=0.21" \
+    "arviz>=0.21,<1.0.0" \
     biopython \
     "cmdstanpy[all]==1.2.5" \
     "dask[complete]" \
     datashader \
+    h5netcdf \
     hvplot \
     "idna>=3.7" \
     jupyter \
     jupyter-bokeh \
     "jupyter-core>=5.8.1" \
+    "numpy<=2.3.5" \
     panel \
     "pillow>=11.3.0" \
     "requests>=2.32.0" \
