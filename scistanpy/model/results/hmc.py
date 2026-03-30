@@ -39,12 +39,23 @@ memory efficiency and computational performance for complex models.
 
 from __future__ import annotations
 
+import functools
+import inspect
 import itertools
 import os.path
 import re
 import warnings
 from glob import glob
-from typing import TYPE_CHECKING, Any, Generator, Literal, Sequence, Union, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Generator,
+    Literal,
+    Sequence,
+    Union,
+    overload,
+)
 
 import arviz as az
 import h5netcdf
@@ -836,10 +847,14 @@ class SampleResults(InferenceRes):
     ):
         """Initializes the SampleResults object by setting up the necessary parameters."""
         # If no filename is provided, we create one based on the csv files
-        if isinstance(results, CmdStanMCMC) and output_filename is None:
-            output_filename = (
-                os.path.commonprefix(results.runset.csv_files).rstrip("_") + ".nc"
-            )
+        if output_filename is None:
+            csv_files = None
+            if isinstance(results, CmdStanMCMC):
+                csv_files = results.runset.csv_files
+            elif isinstance(results, list[str]):
+                csv_files = results
+            if csv_files is not None:
+                output_filename = os.path.commonprefix(csv_files).rstrip("_") + ".nc"
 
         # Run parent init
         super().__init__(
@@ -1478,7 +1493,7 @@ class SampleResults(InferenceRes):
         return analyzer.display()
 
     @classmethod
-    def from_disk(
+    def from_disk(  # pylint: disable=arguments-renamed
         cls,
         path: str,
         csv_files: list[str] | str | None = None,
@@ -1562,6 +1577,44 @@ class SampleResults(InferenceRes):
         )
 
 
+def identify_csv_files(
+    path: str | list[str] | os.PathLike, allow_missing: bool = False
+) -> list[str]:
+    """Identifies CSV files from the given path."""
+    csvfiles = []
+    if isinstance(path, list):
+        csvfiles = path
+    elif isinstance(path, str) and "*" in path:
+        splits = os.path.split(path)
+        if splits[0] is not None:
+            if not (os.path.exists(splits[0]) and os.path.isdir(splits[0])):
+                raise ValueError(
+                    f"Invalid path specification, {path} unknown directory: {splits[0]}"
+                )
+        csvfiles = glob(path)
+    elif isinstance(path, (str, os.PathLike)):
+        if os.path.exists(path) and os.path.isdir(path):
+            for file in os.listdir(path):
+                if os.path.splitext(file)[1] == ".csv":
+                    csvfiles.append(os.path.join(path, file))
+        elif os.path.exists(path):
+            csvfiles.append(str(path))
+        else:
+            raise ValueError(f"Invalid path specification: {path}")
+    else:
+        raise ValueError(f"Invalid path specification: {path}")
+
+    if len(csvfiles) == 0:
+        if allow_missing:
+            return []
+        raise ValueError(f"No CSV files found in directory {path}")
+    for file in csvfiles:
+        if not (os.path.exists(file) and os.path.splitext(file)[1] == ".csv"):
+            raise ValueError(f"Bad CSV file path spec, includes non-csv file: {file}")
+
+    return csvfiles
+
+
 def fit_from_csv_noload(path: str | list[str] | os.PathLike) -> CmdStanMCMC:
     """Create CmdStanMCMC object from CSV files without loading data into memory.
     This function is adapted from ``cmdstanpy.from_csv``.
@@ -1605,41 +1658,6 @@ def fit_from_csv_noload(path: str | list[str] | os.PathLike) -> CmdStanMCMC:
         >>> # Load from explicit list
         >>> fit = fit_from_csv_noload(['chain1.csv', 'chain2.csv'])
     """
-
-    def identify_files() -> list[str]:
-        """Identifies CSV files from the given path."""
-        csvfiles = []
-        if isinstance(path, list):
-            csvfiles = path
-        elif isinstance(path, str) and "*" in path:
-            splits = os.path.split(path)
-            if splits[0] is not None:
-                if not (os.path.exists(splits[0]) and os.path.isdir(splits[0])):
-                    raise ValueError(
-                        f"Invalid path specification, {path} unknown directory: {splits[0]}"
-                    )
-            csvfiles = glob(path)
-        elif isinstance(path, (str, os.PathLike)):
-            if os.path.exists(path) and os.path.isdir(path):
-                for file in os.listdir(path):
-                    if os.path.splitext(file)[1] == ".csv":
-                        csvfiles.append(os.path.join(path, file))
-            elif os.path.exists(path):
-                csvfiles.append(str(path))
-            else:
-                raise ValueError(f"Invalid path specification: {path}")
-        else:
-            raise ValueError(f"Invalid path specification: {path}")
-
-        if len(csvfiles) == 0:
-            raise ValueError(f"No CSV files found in directory {path}")
-        for file in csvfiles:
-            if not (os.path.exists(file) and os.path.splitext(file)[1] == ".csv"):
-                raise ValueError(
-                    f"Bad CSV file path spec, includes non-csv file: {file}"
-                )
-
-        return csvfiles
 
     def get_config_dict() -> dict[str, Any]:
         """Reads the first CSV file and returns the configuration dictionary."""
@@ -1717,7 +1735,278 @@ def fit_from_csv_noload(path: str | list[str] | os.PathLike) -> CmdStanMCMC:
         return fit
 
     # Run the functions to parse the CSV files
-    csvfiles = identify_files()
+    csvfiles = identify_csv_files(path)
     config_dict = get_config_dict()
     sampler_args = build_sampler_args()
     return build_fit()
+
+
+def get_n_samples(csv_file: str) -> int:
+    """
+    Counts the number of samples in a csv file output by Stan. Specifically, this
+    returns the number of rows in a csv file that do not start with a '#' minus
+    one (to account for the header row).
+
+    :param csv_file: Path to the csv file.
+    :type csv_file: str
+
+    :returns: Number of samples in the csv file
+    :rtype: int
+    """
+    with open(csv_file, "r", encoding="utf-8") as f:
+        return sum(1 for row in f if not row.startswith("#")) - 1
+
+
+def _check_outdir_exists[T, **P](f: Callable[P, T]) -> Callable[P, T]:
+    """
+    Function to check if a directory exists. If it does, returns the result of the
+    decorated function. If it does not and we are allowing missing, returns None.
+    If it does not and we are not allowing missing, raises an error.
+    """
+
+    @functools.wraps(f)
+    def inner(*args: P.args, **kwargs: P.kwargs) -> T | None:
+
+        # The first argument should be the output directory
+        paramspec = inspect.signature(f).parameters
+        if len(paramspec) == 0:
+            raise ValueError(
+                "The decorated function must have at least one argument for the output directory."
+            )
+        if next(iter(paramspec)) != "outdir":
+            raise ValueError(
+                "The first argument of the decorated function must be `outdir`."
+            )
+
+        # Combine args and kwargs
+        combined = {**dict(zip(paramspec.keys(), args)), **kwargs}
+
+        # `allow_missing` should be a keyword argument
+        if "allow_missing" not in paramspec:
+            raise ValueError(
+                "The decorated function must have an `allow_missing` keyword argument."
+            )
+
+        # If the directory exists, we can run the function
+        if os.path.exists(combined["outdir"]):
+            return f(**combined)
+
+        # If the directory does not exist and we are allowing missing, return `None`
+        if combined["allow_missing"]:
+            return None
+
+        # If the directory does not exist and we are not allowing missing, raise
+        # an error
+        raise ValueError(f"Output directory {combined['outdir']} does not exist.")
+
+    return inner
+
+
+@_check_outdir_exists
+def sampling_complete(
+    outdir: str,
+    expected_samples: int,
+    expected_chains: int,
+    allow_missing: bool = False,  # pylint: disable=unused-argument
+) -> bool:
+    """
+    Determines if HMC sampling is complete. Sampling is complete if we have the
+    expected number of csv files and each csv file has the expected number of samples.
+
+    :param outdir: Path to the directory containing the csv files.
+    :type outdir: str
+    :param expected_samples: The expected number of samples in each csv file.
+    :type expected_samples: int
+    :param expected_chains: The expected number of csv files (chains).
+    :type expected_chains: int
+    :param allow_missing: Whether to allow a missing `outdir` directory. If True,
+        a missing `outdir` will cause the function to return False rather than raise
+        an error. Defaults to False.
+    :type allow_missing: bool
+
+    :returns: True if sampling is complete, False otherwise.
+    :rtype: bool
+
+    :raises ValueError: If we find more csv files than expected or if any csv file
+        has more samples than expected.
+    """
+
+    def isolate_timestamps() -> tuple[dict[int, int], dict[int, list[str]], list[int]]:
+        """
+        Counts the number of unique timestamps in the csv file names.
+
+        :returns: A tuple of (timestamp_counts, timestamp_to_files, unique_timestamps),
+            where timestamp_counts is a dictionary mapping timestamps to counts,
+            timestamp_to_files is a dictionary mapping timestamps to lists of csv
+            files, and unique_timestamps is a list of unique timestamps sorted from
+            earliest to latest.
+        :rtype: tuple[dict[int, int], dict[int, list[str]], list[int]]
+        """
+        # Build the regex
+        csv_timestamp_parser = re.compile(r".+-([0-9]{14})_([0-9]+)\.csv")
+
+        # Identify timestamps and counts for each csv file
+        timestamp_counts: dict[int, int] = {}
+        timestamp_to_files: dict[int, list[str]] = {}
+        for csv_file in csv_files:
+            if match := csv_timestamp_parser.match(os.path.basename(csv_file)):
+                timestamp = int(match.group(1))
+                if timestamp not in timestamp_counts:
+                    timestamp_counts[timestamp] = 0
+                    timestamp_to_files[timestamp] = []
+                timestamp_counts[timestamp] += 1
+                timestamp_to_files[timestamp].append(csv_file)
+            else:
+                warnings.warn(f"Could not extract timestamp from csv file: {csv_file}.")
+
+        # Get the unique timestamps sorted from earliest to latest
+        unique_timestamps = sorted(timestamp_counts.keys())
+
+        return timestamp_counts, timestamp_to_files, unique_timestamps
+
+    # Identify csv files
+    csv_files = identify_csv_files(outdir, allow_missing=True)
+
+    # If we get more csv files than expected, warn the user and take the latest
+    # files. If we get fewer, sampling is not complete.
+    if (n_files := len(csv_files)) > expected_chains:
+
+        # Isolate timestamps from the csv file names
+        timestamp_counts, timestamp_to_files, unique_timestamps = isolate_timestamps()
+
+        # The latest timestamp should correspond to the current sampling run, so
+        # we isolate the csv files with that timestamp. If there are not exactly
+        # the number of expected chains with that timestamp, we have an error.
+        if len(unique_timestamps) == 0:
+            raise ValueError(
+                f"Found more CSV files ({n_files}) than expected ({expected_chains}), "
+                "but could not isolate files from the current sampling run based on "
+                "timestamps in the file names."
+            )
+        if timestamp_counts[unique_timestamps[-1]] != expected_chains:
+            raise ValueError(
+                f"Found more CSV files ({n_files}) than expected ({expected_chains}), "
+                "and while we were able to isolate the files from the current sampling "
+                "run based on timestamps in the file names, we found a different number "
+                f"of files with the latest timestamp ({timestamp_counts[unique_timestamps[-1]]}) "
+                f"than expected ({expected_chains})."
+            )
+        csv_files = timestamp_to_files[unique_timestamps[-1]]
+        warnings.warn(
+            f"Found more CSV files ({n_files}) than expected ({expected_chains}). "
+            f"Isolated {len(csv_files)} files with the latest timestamp ({unique_timestamps[-1]}). "
+        )
+    elif n_files < expected_chains:
+        return False
+
+    # If any csv file has less samples than expected, sampling is not complete.
+    # If any csv file has more samples than expected, we have an error
+    over, under = {}, {}
+    for csv_file in csv_files:
+        n_samples = get_n_samples(csv_file)
+        if n_samples > expected_samples:
+            over[csv_file] = n_samples
+        elif n_samples < expected_samples:
+            under[csv_file] = n_samples
+    if over:
+        raise ValueError(
+            f"Found more samples than expected ({expected_samples}) in the following "
+            f"files: {over}"
+        )
+    elif under:
+        return False
+
+    # If we get here, sampling is complete
+    return True
+
+
+def isolate_sample_res(
+    outdir: str, diagnosed: bool = False
+) -> Union[SampleResults, None]:
+    """
+    Returns the SampleResults found at `outdir` corresponding to either the diagnosed
+    or non-diagnosed NetCDF file in the given directory, if it exists. If there
+    is none or the file is corrupted, returns None. If there is more than one,
+    raises a ValueError.
+    """
+    # Get netcdf files
+    filter_func = (
+        (lambda f: f.endswith("diagnosed.nc"))
+        if diagnosed
+        else (lambda f: not f.endswith("diagnosed.nc"))
+    )
+    sample_file = [f for f in glob(os.path.join(outdir, "*.nc")) if filter_func(f)]
+
+    # If we have more than 1, we have an error. If we have 0, we do not have NetCDF
+    # files.
+    if (n_files := len(sample_file)) > 1:
+        raise ValueError(
+            f"Found more {'diagnosed' if diagnosed else 'non-diagnosed'} NetCDF "
+            f"files ({n_files}) than expected (1) in {outdir}."
+        )
+    elif n_files == 0:
+        return None
+
+    # If we have 1, but we cannot load it, we need to rebuild the file, so we also
+    # return None in that case. If we can load it, return the results.
+    try:
+        return SampleResults.from_disk(sample_file[0], skip_fit=True)
+    except (KeyError, OSError, AttributeError):
+        return None
+
+
+@_check_outdir_exists
+def load_converted(
+    outdir: str,
+    expected_samples: int,
+    expected_chains: int,
+    allow_missing: bool = False,  # pylint: disable=unused-argument
+    diagnosed: bool = False,
+) -> Union[SampleResults, None]:
+    """
+    Determines if the csv-to-nc conversion is complete. The conversion is complete
+    if we have exactly one non-diagnosed NetCDF file and that file has the expected
+    number of samples and chains.
+
+    :param outdir: Path to the directory containing the NetCDF files.
+    :type outdir: str
+    :param expected_samples: The expected number of samples in the NetCDF file.
+    :type expected_samples: int
+    :param expected_chains: The expected number of chains in the NetCDF file.
+    :type expected_chains: int
+    :param allow_missing: Whether to allow a missing `outdir` directory. If True,
+        a missing `outdir` will cause the function to return False rather than raise
+        an error. Defaults to False.
+    :type allow_missing: bool
+    :param diagnosed: Whether to look for the diagnosed NetCDF file rather than the
+        non-diagnosed one. Defaults to False.
+    :type diagnosed: bool
+
+    :returns: The SampleResults object if the conversion is complete, None otherwise.
+    :rtype: Union[SampleResults, None]
+
+    :raises ValueError: If we find more than one non-diagnosed NetCDF file or if the
+        NetCDF file has more samples or chains than expected.
+    """
+    # Do we have NetCDF files? If not, conversion is not complete.
+    if (res := isolate_sample_res(outdir, diagnosed=diagnosed)) is None:
+        return None
+
+    # Do we have the expected number of samples and chains? If not, this is an error.
+    if (
+        found_chains := res.inference_obj.sample_stats.sizes["chain"]
+    ) != expected_chains:
+        raise ValueError(
+            f"Found more chains ({found_chains}) than expected ({expected_chains}) "
+            "in converted NetCDF."
+        )
+    if (
+        found_samples := res.inference_obj.sample_stats.sizes["draw"]
+    ) != expected_samples:
+        raise ValueError(
+            f"Found more samples ({found_samples}) than expected ({expected_samples}) "
+            "in converted NetCDF."
+        )
+
+    # If we get here, the conversion is complete
+    return res

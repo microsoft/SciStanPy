@@ -15,7 +15,7 @@ from flipv3.k50_models import get_k50_instance
 from flipv3.nuclease_models import get_nuc_instance
 from flipv3.pdz3_models import get_pdz3_instance
 from flipv3.trpb_models import get_trpb_instance
-from scistanpy.model.results.hmc import SampleResults
+from scistanpy.model.results.hmc import SampleResults, load_converted, sampling_complete
 
 if TYPE_CHECKING:
     from scistanpy.model import Model
@@ -181,6 +181,19 @@ def parse_args():
             "previous runs that failed during the csv-to-nc conversion step."
         ),
     )
+    optional_group.add_argument(
+        "--amlt_ckpt",
+        action="store_true",
+        help=(
+            "Set if running on Amulet and we want to be able to recover from a checkpoint "
+            "state if one was set. Checkpointing is minimal due to the sequential "
+            "nature of HMC, but it is helpful for restarting during (1) the csv-to-nc "
+            "conversion step or (2) calculation of diagnostics, as these are the "
+            "steps most likely to fail due to disk issues and/or when resources "
+            "appear idle and so are terminated by AML. If set, the pipeline will "
+            "look at outputs and automatically determine where to restart from."
+        ),
+    )
 
     return parser.parse_args()
 
@@ -232,6 +245,10 @@ def check_args(args: argparse.Namespace) -> None:
     """Checks command line arguments for validity."""
     # Check base arguments
     check_base_args(args)
+
+    # `amlt_ckpt` and `conversion_catchup` cannot both be set
+    if args.amlt_ckpt and args.conversion_catchup:
+        raise ValueError("Cannot set both amlt_ckpt and conversion_catchup to True.")
 
     # Chains, warmup, and samples must be positive integers
     for arg in ("n_chains", "n_warmup", "n_samples"):
@@ -323,13 +340,69 @@ def run_hmc(args: argparse.Namespace) -> None:
     print("Model summary:")
     print(model)
 
-    # Run HMC unless we are catching up due to a failed csv-to-nc conversion
-    if args.conversion_catchup:
+    # If running on amulet, we want to make sure we're checking the actual output
+    # directory, not the dirsync directory
+    amlt_output_dir = (
+        os.path.join(
+            os.environ["AMLT_OUTPUT_DIR"],
+            args.dataset,
+            args.subset if args.subset else "",
+        )
+        if args.amlt_ckpt
+        else None
+    )
+
+    # If running with Amulet checkpointing enabled, check for existing diagnosed
+    # netcdf to report diagnostics from. We mainly need this when log streaming
+    # failed during or prior to diagnostics reporting.
+    converted_kwargs = {
+        "outdir": amlt_output_dir,
+        "expected_samples": args.n_samples,
+        "expected_chains": args.n_chains,
+        "allow_missing": True,
+    }
+    if (
+        args.amlt_ckpt
+        and (res := load_converted(diagnosed=True, **converted_kwargs)) is not None
+    ):
+        print(
+            "Detected that diagnostics are already calculated. Displaying diagnostics..."
+        )
+        res.identify_failed_diagnostics()
+        return
+
+    # If running with Amulet checkpointing enabled and we do not detect a diagnosed
+    # file, check for existing netcdf to restart from for diagnostics calculation.
+    if (
+        args.amlt_ckpt
+        and (res := load_converted(diagnosed=False, **converted_kwargs)) is not None
+    ):
+        print(
+            "Detected that csv-to-nc conversion is complete. Starting at diagnostics "
+            "calculation."
+        )
+
+    # If we are catching up due to a failed csv-to-nc conversion OR if we are running
+    # on Amulet with checkpointing AND we detect that sampling is complete but
+    # that diagnostics have not been run.
+    elif args.conversion_catchup or (
+        args.amlt_ckpt and sampling_complete(**converted_kwargs)
+    ):
+
+        # Report
+        if args.amlt_ckpt:
+            print(
+                "Detected that sampling is complete but that conversion to NetCDF "
+                "failed. Starting at conversion from csv to nc."
+            )
 
         # Load the fit object from the csv files
         res = SampleResults(
             model=model,
-            results=os.path.join(args.output_dir, f"{model_name}*.csv"),
+            results=os.path.join(
+                amlt_output_dir if args.amlt_ckpt else args.output_dir,
+                f"{model_name}*.csv",
+            ),
             use_dask=args.use_dask,
         )
 

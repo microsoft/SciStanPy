@@ -18,7 +18,7 @@ import torch
 from typeguard import install_import_hook
 
 # Define the version
-__version__ = "0.0.33"
+__version__ = "0.0.38"
 
 # Set up type checking
 install_import_hook("scistanpy")
