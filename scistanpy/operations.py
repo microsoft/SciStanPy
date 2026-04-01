@@ -152,8 +152,12 @@ class Operation:
         ):
             return self.__class__.DISTCLASS(*args, **kwargs)
 
-        # Otherwise, call the `run_np_torch_op` method as a static method
-        return self.__class__.DISTCLASS.run_np_torch_op(None, *args, **kwargs)
+        # Otherwise, call the `run_np_torch_op` method as a static method.
+        # We pass the class itself as `self` so that class-level attributes
+        # (e.g., Reduction.TORCH_FUNC, Reduction.NP_FUNC) remain accessible
+        # via `self.ATTR` without triggering __init__.
+        DISTCLASS = self.__class__.DISTCLASS  # pylint: disable=invalid-name
+        return DISTCLASS.run_np_torch_op(DISTCLASS, *args, **kwargs)
 
 
 def build_operation(

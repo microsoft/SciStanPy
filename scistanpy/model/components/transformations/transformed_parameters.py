@@ -1011,8 +1011,9 @@ class Reduction(UnaryTransformedParameter):
         The method automatically selects between PyTorch and NumPy reduction
         functions and applies them along the last dimension.
         """
-        # Keepdim can only be provided if called as a static method
-        if self is None:
+        # Keepdim can only be provided if called as a static method (i.e., not
+        # through a model component instance with an initialized model).
+        if not hasattr(self, 'keepdims'):
             keepdim = bool(keepdim)
         elif keepdim is not None:
             raise ValueError(
@@ -1022,10 +1023,14 @@ class Reduction(UnaryTransformedParameter):
         else:
             keepdim = self.keepdims
 
+        # Resolve the class for function dispatch. When called from
+        # Operation.__call__, self is the class itself; otherwise it's an instance.
+        cls = self if isinstance(self, type) else type(self)
+
         if isinstance(dist1, torch.Tensor):
-            return self.__class__.TORCH_FUNC(dist1, keepdim=keepdim, dim=-1)
+            return cls.TORCH_FUNC(dist1, keepdim=keepdim, dim=-1)
         else:
-            return self.__class__.NP_FUNC(dist1, keepdims=keepdim, axis=-1)
+            return cls.NP_FUNC(dist1, keepdims=keepdim, axis=-1)
 
     def get_index_offset(
         self,
