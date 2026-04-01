@@ -56,6 +56,12 @@ Issues = "https://github.com/microsoft/scistanpy/issues"
 exclude_dirs = ["tests", "build", "dist"]
 skips = ["B101", "B601", "B301", "B302", "B403", "B404"]  # Skip assert_used, shell=True, and pickle usage (common in scientific code)
 
+# Pytest configuration
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:Early stopping not triggered:UserWarning:scistanpy.model.nn_module",
+]
+
 # isort import sorting configuration
 [tool.isort]
 profile = "black"
