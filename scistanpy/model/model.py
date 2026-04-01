@@ -1019,14 +1019,10 @@ class Model:
             kwargs["model_name"] = f"{DEFAULT_MODEL_NAME}-simulated"
 
         # Get the data
-        sim_data = self._get_simulation_data(seed=kwargs.get("seed"))
-        kwargs["data"] = sim_data
+        kwargs["data"] = self._get_simulation_data(seed=kwargs.get("seed"))
 
         # Run MCMC
-        result = self.mcmc(delay_run=delay_run, **kwargs)
-        if delay_run:
-            return None
-        return sim_data, result
+        return kwargs["data"], self.mcmc(delay_run=delay_run, **kwargs)
 
     def prior_predictive(self, *, copy_model: bool = False) -> pn.Row:
         """Create interactive prior predictive check visualization.
