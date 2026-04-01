@@ -36,7 +36,7 @@ The module is designed to handle both small-scale interactive analysis and
 large-scale batch processing of MCMC results, with particular attention to
 memory efficiency and computational performance for complex models.
 """
-
+# pylint: disable=invalid-name
 from __future__ import annotations
 
 import functools
@@ -848,12 +848,19 @@ class SampleResults(InferenceRes):
         """Initializes the SampleResults object by setting up the necessary parameters."""
         # If no filename is provided, we create one based on the csv files
         if output_filename is None:
-            csv_files = None
+            csv_files = []
             if isinstance(results, CmdStanMCMC):
                 csv_files = results.runset.csv_files
-            elif isinstance(results, list[str]):
+            elif isinstance(results, list):
+                if any(not isinstance(res, str) for res in results):
+                    raise ValueError(
+                        "If `results` is a list, all elements must be strings representing "
+                        "file paths."
+                    )
                 csv_files = results
-            if csv_files is not None:
+            elif isinstance(results, str) and "*" in results:
+                csv_files = glob(results)
+            if csv_files:
                 output_filename = os.path.commonprefix(csv_files).rstrip("_") + ".nc"
 
         # Run parent init

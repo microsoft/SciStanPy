@@ -75,7 +75,7 @@ def check_observable_data(model: "ssp_model.Model", data: dict[str, torch.Tensor
     # If there are missing or extra, raise an error
     if missing:
         raise ValueError(
-            "The provided data must match the observable distribution names."
+            "The provided data must match the observable distribution names. "
             f"The following observables are missing: {', '.join(missing)}"
         )
     if extra:

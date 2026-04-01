@@ -153,7 +153,7 @@ class Operation:
             return self.__class__.DISTCLASS(*args, **kwargs)
 
         # Otherwise, call the `run_np_torch_op` method as a static method
-        return self.__class__.DISTCLASS.run_np_torch_op(self=None, *args, **kwargs)
+        return self.__class__.DISTCLASS.run_np_torch_op(None, *args, **kwargs)
 
 
 def build_operation(
@@ -232,29 +232,6 @@ Computes the absolute value of the input parameter or numerical data. See also,
 
       # With numerical data
       result = ssp.operations.abs_([-1.0, -2.0, 3.0])  # Returns [1.0, 2.0, 3.0]
-"""
-
-binary_exponential_growth = build_operation(
-    transformed_parameters.BinaryExponentialGrowth
-)
-"""Binary exponential growth operation.
-
-Models exponential growth over two timepoints, taking in the population size at
-the starting time (assumed to be at t = 0) and outputting the population size at
-the ending time (assumed to be at = 1). See also,
-:py:class:`~scistanpy.model.components.transformations.transformed_parameters.BinaryExponentialGrowth`.
-
-   **Usage:**
-
-   .. code-block:: python
-
-      # Two-timepoint exponential growth
-      initial_size = ssp.parameters.LogNormal(mu=np.log(50), sigma=0.2)
-      growth_rate = ssp.parameters.Normal(mu=0.2, sigma=0.1)
-
-      final_size = ssp.operations.binary_exponential_growth(
-          A=initial_size, r=growth_rate
-      )
 """
 
 binary_log_exponential_growth = build_operation(

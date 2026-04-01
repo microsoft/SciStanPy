@@ -16,6 +16,7 @@ maintaining proper type hints for development and documentation tools.
     <https://github.com/agronholm/typeguard>`_ package.
 """
 
+from types import EllipsisType
 from typing import TYPE_CHECKING, Union
 
 # Everything in this file is only imported if TYPE_CHECKING is True.
@@ -133,7 +134,7 @@ Simplified version of :class:`ProcessedTestRes` containing only the essential ar
 """
 
 # Type for indexing
-IndexType = Union["npt.NDArray[np.integer]", slice, int, Ellipsis, None]
+IndexType = Union["npt.NDArray[np.integer]", slice, int, EllipsisType, None]
 """Type alias for array indexing operations.
 
 Covers all valid indexing types for NumPy arrays and similar data structures,

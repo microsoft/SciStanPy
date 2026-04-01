@@ -277,7 +277,7 @@ class ClassOrInstanceMethod:
                 # Run the wrapped method using provided kwargs
                 return self.func(owner, **kwargs)
 
-            # If the instance is not provided, we run the wrapped method using the
+            # If the instance is provided, we run the wrapped method using the
             # parent parameter values
             return self.func(
                 owner, **instance._parents, **kwargs  # pylint: disable=protected-access
