@@ -484,7 +484,7 @@ class SurvivalFunction(CDFLike):
         output = super().run_np_torch_op(**draws)
 
         # If using numpy, just return
-        if isinstance(output, np.ndarray):
+        if isinstance(output, (np.ndarray, np.generic)):
             return output
 
         # If using torch, subtract from 1 to get the survival function
@@ -555,7 +555,7 @@ class LogCDF(CDFLike):
         # As above, get the output of the parent method and return it directly
         # if using numpy.
         output = super().run_np_torch_op(**draws)
-        if isinstance(output, np.ndarray):
+        if isinstance(output, (np.ndarray, np.generic)):
             return output
 
         # If using torch, return the log CDF
@@ -652,7 +652,7 @@ class LogSurvivalFunction(CDFLike):
         output = super().run_np_torch_op(**draws)
 
         # If using numpy, return the log survival function directly
-        if isinstance(output, np.ndarray):
+        if isinstance(output, (np.ndarray, np.generic)):
             return output
 
         # If using torch, return the log of 1 minus the CDF
