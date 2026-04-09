@@ -124,11 +124,11 @@ class MLEToNetCDFConverter(SciStanPyToNetCDFConverter):
                 )
 
                 # Process all draws. Chain ind is always 0 for MLE results. Add
-                # 'ppc' to observables
+                # '_ppc' suffix to observables.
                 new_total = total_draws + batch_size
                 for batch_ind, draw_ind in enumerate(range(total_draws, new_total)):
                     yield 0, draw_ind, {
-                        k + "_ppc" if self.model[k].observable else k: v[batch_ind]
+                        (k + "_ppc" if self.model[k].observable else k): v[batch_ind]
                         for k, v in draws.items()
                     }
 
@@ -307,9 +307,6 @@ class MLEInferenceRes(InferenceRes):
             output_filename=output_filename,
         )
 
-        # Add mle data as a group in the inference object
-        self._append_mle(output_filename=output_filename)
-
     def _build_inference_obj(
         self,
         data: dict[str, npt.NDArray],
@@ -342,9 +339,12 @@ class MLEInferenceRes(InferenceRes):
             using Dask; otherwise, returns the filename of the saved NetCDF file.
         :rtype: az.InferenceData | str
         """
+        # Build the MLE point-estimate dataset.
+        mle_dataset = self._build_mle_dataset()
+
         # We use the parent method if running with dask
         if self.use_dask:
-            return super()._build_inference_obj(
+            filename = super()._build_inference_obj(
                 data=data,
                 precision=precision,
                 mib_per_chunk=mib_per_chunk,
@@ -354,6 +354,12 @@ class MLEInferenceRes(InferenceRes):
                 batch_size=self.batch_size,
                 **converter_kwargs,
             )
+
+            # Append the MLE group to the NetCDF file *before* it is loaded
+            # by the base class, avoiding the file-already-open conflict.
+            mle_dataset.to_netcdf(filename, mode="a", group="mle", engine="h5netcdf")
+
+            return filename
 
         # Otherwise, we need to draw samples and directly build the inference
         # data object
@@ -394,43 +400,33 @@ class MLEInferenceRes(InferenceRes):
             ],
         )
 
+        # Add the MLE group directly to the in-memory inference data
+        inference_data.add_groups(mle=mle_dataset)
+
         return inference_data
 
-    def _append_mle(self, output_filename: Optional[str] = None) -> None:
-        """Adds MLE point estimates as a group in the inference object."""
-        # Null op if we don't have results to append. This happens when we are loading
-        # from disk
-        if self.results is None:
-            return
+    def _build_mle_dataset(self) -> xr.Dataset:
+        """Build an xarray Dataset of MLE point estimates.
 
-        # Identify the MLE results and convert them to an xarray dataset. We prepend
-        # a dummy "draws" axis to be able to reused the model's existing converter
-        # method for converting to xarray format.
+        Constructs a Dataset containing the MLE values for all parameters
+        that have non-None estimates. Dimensions match those of the posterior
+        draws (minus the sample/draw dimension).
+
+        :returns: Dataset of MLE point estimates.
+        :rtype: xr.Dataset
+        """
+        # Collect MLE values, prepending a dummy sample axis for
+        # compatibility with _dict_to_xarray
         extracted_mle = {
-            self.model.all_model_components_dict[varname]: (mle_param.mle[np.newaxis])
+            self.model.all_model_components_dict[varname]: mle_param.mle[np.newaxis]
             for varname, mle_param in self.results.model_varname_to_mle.items()
             if mle_param.mle is not None
         }
-        assert (
-            len(extracted_mle) > 0
-        ), "No MLE estimates found to append to inference object."
+        assert len(extracted_mle) > 0, "No MLE estimates found"
 
-        # Convert the MLE estimates to an xarray dataset and add it as a group in
-        # the inference object.
-        mle_dataset = self.model._dict_to_xarray(  # pylint: disable=protected-access
-            extracted_mle
-        )
-        mle_dataset = mle_dataset.squeeze("n", drop=True)  # Remove dummy dim
-        self.inference_obj.add_groups(mle=mle_dataset)
-
-        # When using dask, the NetCDF file has already been written
-        # by the converter. Append the MLE group so it is persisted
-        # on disk as well.
-        if self.use_dask:
-            assert output_filename is not None
-            mle_dataset.to_netcdf(
-                output_filename, mode="a", group="mle", engine="h5netcdf"
-            )
+        # pylint: disable=protected-access
+        mle_dataset = self.model._dict_to_xarray(extracted_mle)
+        return mle_dataset.squeeze("n", drop=True)
 
 
 class MLE:
@@ -515,10 +511,12 @@ class MLE:
         self.data = data
 
         # Store inputs. Each key in the mle estimate will be mapped to an instance
-        # variable
+        # variable. We only keep named model components here (presumably, unnamed
+        # components are not of interest)
         self.model_varname_to_mle: dict[str, MLEParam] = {
             key: MLEParam(name=key, value=mle_estimate.get(key), distribution=value)
             for key, value in distributions.items()
+            if key in model.named_model_components_dict
         }
 
         # Set an attribute for all MLE parameters
