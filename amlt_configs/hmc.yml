@@ -6,7 +6,7 @@ target:
   name: msrresrchvc
 
 environment:
-  image: scistanpy:0.0.33
+  image: scistanpy:0.0.39
   registry: bjwamltcr.azurecr.io
 
 data:
@@ -36,7 +36,7 @@ search:
   # sampling: grid
   # params:
   #   - name: dset_ind
-  #     values: choice("64", "65", "66", "67", "68", "69")
+  #     values: choice("64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93")
   # max_trials: 750
   # parallel_trials: 100
   # job_template:
@@ -58,27 +58,6 @@ search:
   # params:
   #   - name: dset_ind
   #     values: choice("70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93")
-  # max_trials: 750
-  # parallel_trials: 100
-  # job_template:
-  #   name: "{experiment_name:s}_{dset_ind:s}"
-  #   sku: 8C15
-  #   sla_tier: premium
-  #   command:
-  #     - bash run_hmc_job-specific.sh {dset_ind}
-  #     - touch $$AMLT_DIRSYNC_DIR/.amlt_flush_upload
-  #     - while [ ! -f "$$AMLT_DIRSYNC_DIR/.amlt_flush_upload" ]; do sleep 1; echo "waiting"; done
-  #   submit_args:
-  #     max_run_duration_seconds: 1209600
-  #     env:
-  #       _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/84a94086-6c26-4611-8249-b3549944c86c/resourcegroups/bjwamlt/providers/Microsoft.ManagedIdentity/userAssignedIdentities/bjwamltuami
-  #       AMLT_DIRSYNC_FREQ: 600
-  #   identity: managed
-  # type: hyperdrive
-  # sampling: grid
-  # params:
-  #   - name: dset_ind
-  #     values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62")
   max_trials: 750
   parallel_trials: 100
   job_template:
@@ -99,4 +78,25 @@ search:
   sampling: grid
   params:
     - name: dset_ind
-      values: choice("1", "2", "3", "4", "5", "38", "60")
+      values: choice("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62")
+  # max_trials: 750
+  # parallel_trials: 100
+  # job_template:
+  #   name: "{experiment_name:s}_{dset_ind:s}"
+  #   sku: 8C15
+  #   sla_tier: premium
+  #   command:
+  #     - bash run_hmc_job-specific.sh {dset_ind}
+  #     - touch $$AMLT_DIRSYNC_DIR/.amlt_flush_upload
+  #     - while [ ! -f "$$AMLT_DIRSYNC_DIR/.amlt_flush_upload" ]; do sleep 1; echo "waiting"; done
+  #   submit_args:
+  #     max_run_duration_seconds: 1209600
+  #     env:
+  #       _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/84a94086-6c26-4611-8249-b3549944c86c/resourcegroups/bjwamlt/providers/Microsoft.ManagedIdentity/userAssignedIdentities/bjwamltuami
+  #       AMLT_DIRSYNC_FREQ: 600
+  #   identity: managed
+  # type: hyperdrive
+  # sampling: grid
+  # params:
+  #   - name: dset_ind
+  #     values: choice("1", "2", "3", "4", "5", "38", "60")

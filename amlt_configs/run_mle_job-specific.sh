@@ -5,8 +5,8 @@
 # Handle arguments
 job_ind=$1
 
-# Pull the dataset information from the cmds.txt file
-IFS=" " read -r -a cmd <<< "$(sed -n "${job_ind}p" cmds-small.txt)"
+# Pull the dataset information from the cmds-mle.txt file
+IFS=" " read -r -a cmd <<< "$(sed -n "${job_ind}p" cmds-mle.txt)"
 
 # Switch to the code directory
 cd /opt/SciStanPy/scistanpy/pipelines || exit
@@ -18,4 +18,5 @@ printf 'Full command: %s\n' "${cmd[@]}"
 python mle_flip.py \
     "${cmd[@]}" \
     --flip_data "$AMLT_DATA_DIR" \
-    --output_dir "$AMLT_OUTPUT_DIR"
+    --output_dir "$AMLT_OUTPUT_DIR" \
+    --use_dask
