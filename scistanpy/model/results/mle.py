@@ -98,11 +98,9 @@ class MLEToNetCDFConverter(SciStanPyToNetCDFConverter):
         self.seed = seed
         self.batch_size = batch_size or 1
 
-    # TODO: Add MLE result to the inference object!
-
     def _stream_draws(
         self,
-    ) -> Generator[tuple[int, int, dict[str, npt.NDArray]], None, None]:
+    ) -> Generator[tuple[int, int, dict[str, npt.ArrayLike]], None, None]:
 
         # Set the random seed if provided
         if self.seed is not None:
@@ -282,13 +280,13 @@ class MLEInferenceRes(InferenceRes):
         *,
         model: Union["scistanpy.Model", None] = None,
         results: Union["MLE", None] = None,
-        data: dict[str, npt.NDArray] = None,
+        data: Optional[dict[str, npt.NDArray]] = None,
         precision: Literal["double", "single", "half"] = "single",
         inference_obj: Optional[az.InferenceData | str] = None,
         mib_per_chunk: custom_types.Integer | None = None,
         use_dask: bool = False,
         output_filename: str | None = None,
-        n: int,
+        n: int = 1000,
         seed: Optional["custom_types.Integer"] = None,
         batch_size: Optional["custom_types.Integer"] = None,
     ):
@@ -308,6 +306,9 @@ class MLEInferenceRes(InferenceRes):
             use_dask=use_dask,
             output_filename=output_filename,
         )
+
+        # Add mle data as a group in the inference object
+        self._append_mle(output_filename=output_filename)
 
     def _build_inference_obj(
         self,
@@ -394,6 +395,42 @@ class MLEInferenceRes(InferenceRes):
         )
 
         return inference_data
+
+    def _append_mle(self, output_filename: Optional[str] = None) -> None:
+        """Adds MLE point estimates as a group in the inference object."""
+        # Null op if we don't have results to append. This happens when we are loading
+        # from disk
+        if self.results is None:
+            return
+
+        # Identify the MLE results and convert them to an xarray dataset. We prepend
+        # a dummy "draws" axis to be able to reused the model's existing converter
+        # method for converting to xarray format.
+        extracted_mle = {
+            self.model.all_model_components_dict[varname]: (mle_param.mle[np.newaxis])
+            for varname, mle_param in self.results.model_varname_to_mle.items()
+            if mle_param.mle is not None
+        }
+        assert (
+            len(extracted_mle) > 0
+        ), "No MLE estimates found to append to inference object."
+
+        # Convert the MLE estimates to an xarray dataset and add it as a group in
+        # the inference object.
+        mle_dataset = self.model._dict_to_xarray(  # pylint: disable=protected-access
+            extracted_mle
+        )
+        mle_dataset = mle_dataset.squeeze("n", drop=True)  # Remove dummy dim
+        self.inference_obj.add_groups(mle=mle_dataset)
+
+        # When using dask, the NetCDF file has already been written
+        # by the converter. Append the MLE group so it is persisted
+        # on disk as well.
+        if self.use_dask:
+            assert output_filename is not None
+            mle_dataset.to_netcdf(
+                output_filename, mode="a", group="mle", engine="h5netcdf"
+            )
 
 
 class MLE:

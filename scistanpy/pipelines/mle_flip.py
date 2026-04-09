@@ -107,12 +107,6 @@ def run_mle(args: argparse.Namespace) -> None:
         os.path.join(args.output_dir, f"{base_outfile}_loss-curve.csv"), index=False
     )
 
-    # Save the MLE values
-    np.savez(
-        os.path.join(args.output_dir, f"{base_outfile}_mle.npz"),
-        **{k: v.mle for k, v in mle.model_varname_to_mle.items() if v.mle is not None},
-    )
-
     # Draw samples from the MLE
     nc_filename = os.path.join(args.output_dir, f"{base_outfile}_samples.nc")
     inference_kwargs = {
